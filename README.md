@@ -12,9 +12,15 @@ Lo sviluppo segue la spec di prodotto/tecnica in
 
 ## Stato del progetto
 
-**FASE 0 --- Bootstrap** completata. Nessuna funzionalità di prodotto è
-ancora stata implementata: questa fase crea solo lo scheletro tecnico del
-repository.
+**FASE 0 --- Bootstrap** e **FASE 1 --- Shell dell'app** completate.
+
+La FASE 1 aggiunge landing, login, registrazione, dashboard vuota e la
+navigazione principale (Dashboard, Vault, Scadenze, Asset, Contatti,
+Capsule, AI, Impostazioni). L'autenticazione è ancora **mockata**
+lato client (`src/lib/auth/mock-session.ts`): non c'è alcun account
+reale, nessuna verifica delle credenziali e nessuna password persistita.
+Serve solo a rendere la shell navigabile end-to-end prima di collegare
+Supabase Auth in FASE 2, che sostituirà interamente questo modulo.
 
 ## Stack
 
@@ -102,9 +108,11 @@ Vedi [HINTHIAL_MVP.md](./HINTHIAL_MVP.md) sezione 3 per i dettagli.
 ## Cosa NON è ancora implementato
 
 Coerentemente con il piano a fasi, in questa release non sono presenti:
-autenticazione reale, cifratura, vault, scadenze, asset, contatti
-fiduciari, capsule, export, AI. Vedi sezione 12 della spec per l'elenco
-completo di ciò che non va costruito nella prima versione del prodotto.
+autenticazione reale (Supabase Auth), cifratura, vault, scadenze, asset,
+contatti fiduciari, capsule, export, AI. Le pagine di queste sezioni
+esistono solo come placeholder navigabili. Vedi sezione 12 della spec per
+l'elenco completo di ciò che non va costruito nella prima versione del
+prodotto.
 
 ## Come contribuire (per Claude Code / agenti)
 
