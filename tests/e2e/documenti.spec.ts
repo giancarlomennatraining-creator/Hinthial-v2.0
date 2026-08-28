@@ -6,6 +6,10 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 test("configura la cifratura, carica, apre e cancella un documento", async ({
   page,
 }) => {
+  // Real PBKDF2 (600,000 iterations, x2) in-browser during setup can push
+  // this past the default 30s test timeout under load.
+  test.slow();
+
   const user = uniqueTestUser();
   await createConfirmedTestUser(user);
 
@@ -15,7 +19,7 @@ test("configura la cifratura, carica, apre e cancella un documento", async ({
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "Documenti" }).click();
+  await page.getByRole("link", { name: "Documenti", exact: true }).click();
   await expect(page).toHaveURL(/\/documenti$/);
 
   // --- Setup della master key (primo accesso) ---
@@ -24,7 +28,11 @@ test("configura la cifratura, carica, apre e cancella un documento", async ({
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
 
-  await expect(page.getByRole("heading", { name: "Salva la tua recovery key" })).toBeVisible();
+  // PBKDF2 at 600,000 iterations (x2: setup + immediate unlock) can
+  // genuinely take a while in-browser under load --- give it room.
+  await expect(
+    page.getByRole("heading", { name: "Salva la tua recovery key" }),
+  ).toBeVisible({ timeout: 45_000 });
   const recoveryKey = await page.locator("code").innerText();
   expect(recoveryKey).toMatch(/^[0-9A-F]{4}(-[0-9A-F]{4}){23}$/);
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
@@ -66,6 +74,8 @@ test("configura la cifratura, carica, apre e cancella un documento", async ({
 test("un secondo login richiede lo sblocco con la master password", async ({
   page,
 }) => {
+  test.slow();
+
   const user = uniqueTestUser();
   await createConfirmedTestUser(user);
 
@@ -75,10 +85,13 @@ test("un secondo login richiede lo sblocco con la master password", async ({
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "Documenti" }).click();
+  await page.getByRole("link", { name: "Documenti", exact: true }).click();
   await page.getByLabel("Master password", { exact: true }).fill("un-altra-master-password");
   await page.getByLabel("Conferma master password").fill("un-altra-master-password");
   await page.getByRole("button", { name: "Crea" }).click();
+  await expect(
+    page.getByLabel("Ho salvato la recovery key in un posto sicuro."),
+  ).toBeVisible({ timeout: 45_000 });
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByText("Nessun documento ancora")).toBeVisible();

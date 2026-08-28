@@ -1,10 +1,10 @@
-import { PlaceholderSection } from "@/components/ui/PlaceholderSection";
+"use client";
+
+import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
+import { RemindersPanel } from "@/components/reminders/RemindersPanel";
 
 export default function RemindersPage() {
   return (
-    <PlaceholderSection
-      title="Scadenze"
-      description="Qui troverai lo scadenzario di documenti, contratti e polizze. Questa sezione sarà sviluppata in FASE 5."
-    />
+    <RequireMasterKey>{(masterKey) => <RemindersPanel masterKey={masterKey} />}</RequireMasterKey>
   );
 }

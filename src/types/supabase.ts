@@ -158,6 +158,9 @@ export type Database = {
           size: number;
           category_id: string | null;
           version: number;
+          expires_at: string | null;
+          encrypted_notes: string | null;
+          encrypted_tags: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -171,6 +174,9 @@ export type Database = {
           size: number;
           category_id?: string | null;
           version?: number;
+          expires_at?: string | null;
+          encrypted_notes?: string | null;
+          encrypted_tags?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -184,6 +190,9 @@ export type Database = {
           size?: number;
           category_id?: string | null;
           version?: number;
+          expires_at?: string | null;
+          encrypted_notes?: string | null;
+          encrypted_tags?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -200,6 +209,54 @@ export type Database = {
             columns: ["category_id"];
             isOneToOne: false;
             referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reminders: {
+        Row: {
+          id: string;
+          owner_id: string;
+          encrypted_title: string;
+          due_at: string;
+          related_document_id: string | null;
+          completed: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          encrypted_title: string;
+          due_at: string;
+          related_document_id?: string | null;
+          completed?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          encrypted_title?: string;
+          due_at?: string;
+          related_document_id?: string | null;
+          completed?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reminders_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reminders_related_document_id_fkey";
+            columns: ["related_document_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
             referencedColumns: ["id"];
           },
         ];

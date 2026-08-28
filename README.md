@@ -13,8 +13,9 @@ Lo sviluppo segue la spec di prodotto/tecnica in
 ## Stato del progetto
 
 **FASE 0 --- Bootstrap**, **FASE 1 --- Shell dell'app**,
-**FASE 2 --- Supabase Auth + database**, **FASE 3 --- Crypto foundation**
-e **FASE 4 --- Vault documentale** completate.
+**FASE 2 --- Supabase Auth + database**, **FASE 3 --- Crypto foundation**,
+**FASE 4 --- Vault documentale** e **FASE 5 --- Metadata e scadenze**
+completate.
 
 La FASE 2 sostituisce l'autenticazione mockata della FASE 1 con
 **Supabase Auth reale**: registrazione, login, logout, gestione sessione
@@ -62,6 +63,19 @@ pagina dedicata (`/verifica-account`) con un pulsante verso il login,
 invece che sull'endpoint di verifica ospitato da Supabase (richiede
 configurazione manuale nel Dashboard, vedi sezione Setup).
 
+La FASE 5 aggiunge a **Documenti**: scadenza opzionale, note cifrate e
+tag cifrati (un pulsante "+ dettagli" li rivela in fase di upload;
+ogni documento è anche modificabile in seguito tramite "Modifica" ---
+mai il file o il nome, solo categoria/scadenza/note/tag). Nuova
+sezione **Scadenze** (`/reminders`): promemoria con titolo cifrato,
+data, stato completato/non completato, collegabili opzionalmente a un
+documento. La **Dashboard** mostra ora 3 widget (prossime scadenze,
+documenti recenti, elementi da completare/scaduti) quando la
+cifratura è sbloccata; il saluto resta visibile comunque, con un
+prompt a sbloccare/configurare se serve. "Relazione con asset" (sezione
+5 della spec) è rimandata alla FASE 6, quando l'entità Asset esisterà:
+per ora un reminder può collegarsi solo a un documento.
+
 ## Stack
 
 - **Frontend**: Next.js (App Router) + React + TypeScript (strict) + Tailwind CSS
@@ -83,8 +97,9 @@ src/
     ui/
     layout/
     crypto/         # sessione Master Key: provider, form di setup/sblocco (FASE 4)
-    documenti/      # pannello lista/upload/apri/elimina (FASE 4)
-    dashboard/
+    documenti/      # pannello lista/upload/apri/elimina/modifica (FASE 4-5)
+    reminders/      # pannello scadenze: crea/completa/elimina (FASE 5)
+    dashboard/      # saluto + 3 widget, gated separatamente dai widget (FASE 5)
   lib/            # infrastruttura
     auth/           # Server Actions (signUp/signIn/signOut), current-user
     db/supabase/    # client Supabase (browser/server/middleware)
@@ -93,7 +108,8 @@ src/
     audit/          # log-event.ts --- eventi tecnici non sensibili
     ai/             # FASE 10+
   domain/
-    documents/      # tipi + repository (FASE 4): categorie, upload/apri/elimina
+    documents/      # tipi + repository (FASE 4-5): categorie, upload/apri/elimina/modifica
+    reminders/      # tipi + repository (FASE 5): crea/completa/elimina
   types/          # tipi condivisi (incl. supabase.ts, schema del DB)
   proxy.ts        # refresh della sessione Supabase su ogni richiesta
 
@@ -103,6 +119,7 @@ tests/
     rls.integration.test.ts  # RLS su DB reale
   e2e/
     documenti.spec.ts  # setup master key, upload, apertura, eliminazione (FASE 4)
+    scadenze.spec.ts   # reminder, metadati documento, widget dashboard (FASE 5)
 
 supabase/
   migrations/     # migration SQL, applicate con `supabase db push`
@@ -211,11 +228,12 @@ Vedi [HINTHIAL_MVP.md](./HINTHIAL_MVP.md) sezione 3 per i dettagli.
 ## Cosa NON è ancora implementato
 
 Coerentemente con il piano a fasi, in questa release non sono presenti:
-scadenze, asset, contatti fiduciari, capsule, export, AI. Le pagine di
-queste sezioni esistono solo come placeholder navigabili, protette da
-autenticazione reale ma senza logica di prodotto. Documenti (FASE 4) è
-implementato ma minimale: niente rinomina/modifica, niente gestione
-categorie oltre alle 10 di default, niente relazioni con asset (FASE 6).
+asset, contatti fiduciari, capsule, export, AI. Le pagine di queste
+sezioni esistono solo come placeholder navigabili, protette da
+autenticazione reale ma senza logica di prodotto. Documenti resta
+minimale: niente rinomina/sostituzione file, niente gestione categorie
+oltre alle 10 di default. Un reminder può collegarsi solo a un
+documento --- la "relazione con asset" vera e propria arriva in FASE 6.
 Vedi sezione 12 della spec per l'elenco completo di ciò che non va
 costruito nella prima versione del prodotto.
 

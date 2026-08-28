@@ -18,7 +18,83 @@ import {
   uploadEncryptedPayload,
 } from "@/lib/storage/documents-bucket";
 import { logAuditEvent } from "@/lib/audit/log-event";
-import type { Category, DocumentListItem } from "@/domain/documents/types";
+import type {
+  Category,
+  DocumentListItem,
+  DocumentMetadataInput,
+} from "@/domain/documents/types";
+
+const DOCUMENT_COLUMNS =
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, expires_at, encrypted_notes, encrypted_tags, created_at";
+
+type DocumentRow = {
+  id: string;
+  encrypted_filename: string;
+  wrapped_document_key: string;
+  storage_path: string;
+  mime_type: string;
+  size: number;
+  category_id: string | null;
+  expires_at: string | null;
+  encrypted_notes: string | null;
+  encrypted_tags: string | null;
+  created_at: string;
+};
+
+/** null/empty in -> null out: nothing to encrypt, nothing stored. */
+async function encryptOptionalText(
+  masterKey: CryptoKey,
+  text: string,
+): Promise<string | null> {
+  if (!text.trim()) return null;
+  return serializeEnvelope(await encryptBytes(masterKey, utf8ToBytes(text)));
+}
+
+async function decryptOptionalText(
+  masterKey: CryptoKey,
+  serialized: string | null,
+): Promise<string> {
+  if (!serialized) return "";
+  const bytes = await decryptBytes(masterKey, parseEnvelope(serialized));
+  return bytesToUtf8(bytes);
+}
+
+async function encryptTags(masterKey: CryptoKey, tags: string[]): Promise<string | null> {
+  if (tags.length === 0) return null;
+  return serializeEnvelope(await encryptBytes(masterKey, utf8ToBytes(JSON.stringify(tags))));
+}
+
+async function decryptTags(masterKey: CryptoKey, serialized: string | null): Promise<string[]> {
+  if (!serialized) return [];
+  const bytes = await decryptBytes(masterKey, parseEnvelope(serialized));
+  const parsed: unknown = JSON.parse(bytesToUtf8(bytes));
+  return Array.isArray(parsed) ? parsed.filter((t): t is string => typeof t === "string") : [];
+}
+
+async function toDocumentListItem(
+  masterKey: CryptoKey,
+  row: DocumentRow,
+): Promise<DocumentListItem> {
+  const [filenameBytes, notes, tags] = await Promise.all([
+    decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
+    decryptOptionalText(masterKey, row.encrypted_notes),
+    decryptTags(masterKey, row.encrypted_tags),
+  ]);
+
+  return {
+    id: row.id,
+    filename: bytesToUtf8(filenameBytes),
+    mimeType: row.mime_type,
+    size: row.size,
+    categoryId: row.category_id,
+    createdAt: row.created_at,
+    storagePath: row.storage_path,
+    wrappedDocumentKey: row.wrapped_document_key,
+    expiresAt: row.expires_at,
+    notes,
+    tags,
+  };
+}
 
 export async function listCategories(supabase: SupabaseClient<Database>): Promise<Category[]> {
   const { data, error } = await supabase
@@ -33,9 +109,10 @@ export async function listCategories(supabase: SupabaseClient<Database>): Promis
 }
 
 /**
- * Lists the current user's documents, decrypting each filename
- * client-side with the (already unlocked) Master Key. The server only
- * ever returns ciphertext; decryption happens here, not on the server.
+ * Lists the current user's documents, decrypting each filename/notes/
+ * tags client-side with the (already unlocked) Master Key. The server
+ * only ever returns ciphertext; decryption happens here, not on the
+ * server.
  */
 export async function listDocuments(
   supabase: SupabaseClient<Database>,
@@ -43,48 +120,38 @@ export async function listDocuments(
 ): Promise<DocumentListItem[]> {
   const { data, error } = await supabase
     .from("documents")
-    .select(
-      "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, created_at",
-    )
+    .select(DOCUMENT_COLUMNS)
     .order("created_at", { ascending: false });
 
   if (error) {
     throw new Error(`Impossibile caricare i documenti: ${error.message}`);
   }
 
-  return Promise.all(
-    (data ?? []).map(async (row) => {
-      const filenameBytes = await decryptBytes(masterKey, parseEnvelope(row.encrypted_filename));
-      return {
-        id: row.id,
-        filename: bytesToUtf8(filenameBytes),
-        mimeType: row.mime_type,
-        size: row.size,
-        categoryId: row.category_id,
-        createdAt: row.created_at,
-        storagePath: row.storage_path,
-        wrappedDocumentKey: row.wrapped_document_key,
-      };
-    }),
-  );
+  return Promise.all((data ?? []).map((row) => toDocumentListItem(masterKey, row)));
 }
 
 /**
  * Encrypts `file` client-side (content under a fresh Document Key,
- * filename under the Master Key directly) and uploads only ciphertext:
- * the payload to Storage, everything else to the `documents` row. The
- * server never sees the plaintext file or its real name.
+ * filename/notes/tags under the Master Key directly) and uploads only
+ * ciphertext: the payload to Storage, everything else to the
+ * `documents` row. The server never sees the plaintext file or any of
+ * this metadata.
  */
 export async function uploadDocument(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
   ownerId: string,
   file: File,
-  categoryId: string | null,
+  metadata: DocumentMetadataInput,
 ): Promise<void> {
   const plaintext = new Uint8Array(await file.arrayBuffer());
-  const { wrappedDocumentKey, payload } = await encryptDocument(masterKey, plaintext);
-  const encryptedFilename = await encryptBytes(masterKey, utf8ToBytes(file.name));
+  const [{ wrappedDocumentKey, payload }, encryptedFilename, encryptedNotes, encryptedTags] =
+    await Promise.all([
+      encryptDocument(masterKey, plaintext),
+      encryptBytes(masterKey, utf8ToBytes(file.name)),
+      encryptOptionalText(masterKey, metadata.notes),
+      encryptTags(masterKey, metadata.tags),
+    ]);
 
   const documentId = crypto.randomUUID();
   const storagePath = documentStoragePath(ownerId, documentId);
@@ -99,7 +166,10 @@ export async function uploadDocument(
     storage_path: storagePath,
     mime_type: file.type || "application/octet-stream",
     size: file.size,
-    category_id: categoryId,
+    category_id: metadata.categoryId,
+    expires_at: metadata.expiresAt,
+    encrypted_notes: encryptedNotes,
+    encrypted_tags: encryptedTags,
   });
 
   if (error) {
@@ -109,6 +179,37 @@ export async function uploadDocument(
   }
 
   await logAuditEvent(supabase, ownerId, "document_created");
+}
+
+/**
+ * Updates a document's metadata (category, expiry, notes, tags) ---
+ * never the file content or its name. Re-encrypts notes/tags with the
+ * Master Key, same as at upload time.
+ */
+export async function updateDocumentMetadata(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  documentId: string,
+  metadata: DocumentMetadataInput,
+): Promise<void> {
+  const [encryptedNotes, encryptedTags] = await Promise.all([
+    encryptOptionalText(masterKey, metadata.notes),
+    encryptTags(masterKey, metadata.tags),
+  ]);
+
+  const { error } = await supabase
+    .from("documents")
+    .update({
+      category_id: metadata.categoryId,
+      expires_at: metadata.expiresAt,
+      encrypted_notes: encryptedNotes,
+      encrypted_tags: encryptedTags,
+    })
+    .eq("id", documentId);
+
+  if (error) {
+    throw new Error(`Impossibile aggiornare il documento: ${error.message}`);
+  }
 }
 
 /** Downloads and decrypts a document's content client-side. */

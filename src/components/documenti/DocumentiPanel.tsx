@@ -7,9 +7,16 @@ import {
   downloadDocument,
   listCategories,
   listDocuments,
+  updateDocumentMetadata,
   uploadDocument,
 } from "@/domain/documents/repository";
 import type { Category, DocumentListItem } from "@/domain/documents/types";
+import {
+  DocumentMetadataFields,
+  EMPTY_METADATA_FIELDS,
+  parseTagsInput,
+  type DocumentMetadataFieldsValue,
+} from "@/components/documenti/DocumentMetadataFields";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -36,6 +43,25 @@ function saveBytesAsFile(bytes: Uint8Array, filename: string, mimeType: string):
   URL.revokeObjectURL(url);
 }
 
+function docToFields(doc: DocumentListItem): DocumentMetadataFieldsValue {
+  return {
+    categoryId: doc.categoryId ?? "",
+    expiresAt: doc.expiresAt ? doc.expiresAt.slice(0, 10) : "",
+    notes: doc.notes,
+    tagsInput: doc.tags.join(", "),
+  };
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function expiryStatus(expiresAt: string | null): "none" | "overdue" | "soon" | "ok" {
+  if (!expiresAt) return "none";
+  const daysLeft = (new Date(expiresAt).getTime() - Date.now()) / DAY_MS;
+  if (daysLeft < 0) return "overdue";
+  if (daysLeft <= 30) return "soon";
+  return "ok";
+}
+
 export function DocumentiPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
 
@@ -45,7 +71,14 @@ export function DocumentiPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [showUploadDetails, setShowUploadDetails] = useState(false);
+  const [uploadFields, setUploadFields] = useState<DocumentMetadataFieldsValue>(
+    EMPTY_METADATA_FIELDS,
+  );
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editFields, setEditFields] = useState<DocumentMetadataFieldsValue>(
+    EMPTY_METADATA_FIELDS,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
@@ -85,7 +118,14 @@ export function DocumentiPanel({ masterKey }: { masterKey: CryptoKey }) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
 
-      await uploadDocument(supabase, masterKey, user.id, file, selectedCategoryId || null);
+      await uploadDocument(supabase, masterKey, user.id, file, {
+        categoryId: uploadFields.categoryId || null,
+        expiresAt: uploadFields.expiresAt || null,
+        notes: uploadFields.notes,
+        tags: parseTagsInput(uploadFields.tagsInput),
+      });
+      setUploadFields(EMPTY_METADATA_FIELDS);
+      setShowUploadDetails(false);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare il documento.");
@@ -128,6 +168,30 @@ export function DocumentiPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
+  function startEditing(doc: DocumentListItem) {
+    setEditingId(doc.id);
+    setEditFields(docToFields(doc));
+  }
+
+  async function handleSaveEdit(doc: DocumentListItem) {
+    setBusyDocId(doc.id);
+    setError(null);
+    try {
+      await updateDocumentMetadata(supabase, masterKey, doc.id, {
+        categoryId: editFields.categoryId || null,
+        expiresAt: editFields.expiresAt || null,
+        notes: editFields.notes,
+        tags: parseTagsInput(editFields.tagsInput),
+      });
+      setEditingId(null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile aggiornare il documento.");
+    } finally {
+      setBusyDocId(null);
+    }
+  }
+
   function categoryFor(doc: DocumentListItem): Category | undefined {
     return categories.find((c) => c.id === doc.categoryId);
   }
@@ -143,31 +207,36 @@ export function DocumentiPanel({ masterKey }: { masterKey: CryptoKey }) {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <select
-          value={selectedCategoryId}
-          onChange={(e) => setSelectedCategoryId(e.target.value)}
-          aria-label="Categoria"
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-        >
-          <option value="">Nessuna categoria</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.icon} {category.name}
-            </option>
-          ))}
-        </select>
+      <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowUploadDetails((v) => !v)}
+            className="text-sm font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
+          >
+            {showUploadDetails ? "Nascondi dettagli" : "+ Categoria, scadenza, tag, note"}
+          </button>
 
-        <label className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover">
-          {uploading ? "Caricamento…" : "Aggiungi documento"}
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            disabled={uploading}
-            onChange={handleFileSelected}
+          <label className="ml-auto rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover">
+            {uploading ? "Caricamento…" : "Aggiungi documento"}
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              disabled={uploading}
+              onChange={handleFileSelected}
+            />
+          </label>
+        </div>
+
+        {showUploadDetails ? (
+          <DocumentMetadataFields
+            idPrefix="upload"
+            categories={categories}
+            value={uploadFields}
+            onChange={setUploadFields}
           />
-        </label>
+        ) : null}
       </div>
 
       {error ? (
@@ -189,6 +258,43 @@ export function DocumentiPanel({ masterKey }: { masterKey: CryptoKey }) {
           {documents.map((doc) => {
             const category = categoryFor(doc);
             const busy = busyDocId === doc.id;
+            const status = expiryStatus(doc.expiresAt);
+            const isEditing = editingId === doc.id;
+
+            if (isEditing) {
+              return (
+                <li key={doc.id} className="flex flex-col gap-3 p-4">
+                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {doc.filename}
+                  </p>
+                  <DocumentMetadataFields
+                    idPrefix={`edit-${doc.id}`}
+                    categories={categories}
+                    value={editFields}
+                    onChange={setEditFields}
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => handleSaveEdit(doc)}
+                      className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                    >
+                      {busy ? "Salvataggio…" : "Salva"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setEditingId(null)}
+                      className="text-sm font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
+                    >
+                      Annulla
+                    </button>
+                  </div>
+                </li>
+              );
+            }
+
             return (
               <li key={doc.id} className="flex items-center justify-between gap-4 p-4">
                 <div className="min-w-0">
@@ -198,9 +304,45 @@ export function DocumentiPanel({ masterKey }: { masterKey: CryptoKey }) {
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     {category ? `${category.icon} ${category.name} · ` : ""}
                     {formatSize(doc.size)} · {formatDate(doc.createdAt)}
+                    {doc.expiresAt ? (
+                      <>
+                        {" · "}
+                        <span
+                          className={
+                            status === "overdue"
+                              ? "font-medium text-red-600 dark:text-red-400"
+                              : status === "soon"
+                                ? "font-medium text-orange-600 dark:text-orange-400"
+                                : ""
+                          }
+                        >
+                          scade {formatDate(doc.expiresAt)}
+                        </span>
+                      </>
+                    ) : null}
                   </p>
+                  {doc.tags.length > 0 ? (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {doc.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="flex shrink-0 gap-3">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => startEditing(doc)}
+                    className="text-sm font-medium text-zinc-600 underline-offset-2 hover:underline disabled:opacity-50 dark:text-zinc-400"
+                  >
+                    Modifica
+                  </button>
                   <button
                     type="button"
                     disabled={busy}
