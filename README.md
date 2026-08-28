@@ -157,6 +157,13 @@ Il test e2e di registrazione (`la registrazione crea un account`) usa
 l'indirizzo email opzionale `E2E_REGISTRATION_TEST_EMAIL` (vedi
 `.env.example`); se non configurato viene saltato automaticamente.
 
+**`npm run reset-dev-data`** --- solo sviluppo: elimina tutti gli utenti
+(a cascata: profili, categorie, documenti, configurazione di cifratura)
+e svuota il bucket Storage, lasciando intatti schema e migration. Utile
+per ripartire da zero durante i test manuali. Richiede
+`SUPABASE_SERVICE_ROLE_KEY` in `.env.local`. **Mai** su un progetto con
+dati reali.
+
 ## Sicurezza e privacy --- principi guida
 
 - La cifratura dei contenuti avviene **lato client**, prima di qualsiasi
