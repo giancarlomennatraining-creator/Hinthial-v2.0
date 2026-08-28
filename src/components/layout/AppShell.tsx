@@ -19,8 +19,9 @@ export function AppShell({
   return (
     <div className="flex min-h-screen flex-1 flex-col md:flex-row">
       <aside className="flex flex-col gap-6 border-b border-zinc-200 p-4 md:w-56 md:shrink-0 md:border-b-0 md:border-r md:p-6 dark:border-zinc-800">
-        <span className="px-3 text-lg font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-          HINTHIAL
+        <span className="px-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
+          <img src="/brand/logo.svg" alt="HINTHIAL" className="h-8 w-auto" />
         </span>
         <MainNav />
         <div className="mt-auto flex flex-col gap-2 px-3 pt-6">

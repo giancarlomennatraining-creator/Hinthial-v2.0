@@ -14,6 +14,7 @@ senza bisogno di ulteriori modifiche):
 | `logo.svg` | Logo/simbolo principale | SVG (vettoriale, si adatta a qualsiasi dimensione) |
 | `logo-dark.svg` | Variante per sfondo scuro (opzionale, se diversa da `logo.svg`) | SVG |
 | `wordmark.svg` | La scritta "HINTHIAL" nel lettering ufficiale, se separata dal simbolo | SVG |
+| `logo-lockup.svg` | Logo + nome combinati in un'unica immagine (usata nelle schermate di login/registrazione) | SVG |
 | `favicon.png` | Icona per la scheda del browser | PNG, 512x512px (Next.js genera le altre dimensioni) |
 
 SVG è preferibile perché resta nitido a ogni dimensione (sidebar,
