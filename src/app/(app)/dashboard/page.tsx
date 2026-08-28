@@ -1,17 +1,12 @@
-"use client";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
-import { AppShell } from "@/components/layout/AppShell";
-import { useMockSession } from "@/lib/auth/use-mock-session";
-
-export default function DashboardPage() {
-  const state = useMockSession();
-  const displayName =
-    state.status === "authenticated" ? state.session.displayName : "";
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
 
   return (
-    <AppShell>
+    <>
       <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-        {displayName ? `Ciao, ${displayName}` : "Dashboard"}
+        {user ? `Ciao, ${user.displayName}` : "Dashboard"}
       </h1>
       <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
         Questa è la tua dashboard. Scadenze, documenti recenti e attività da
@@ -24,6 +19,6 @@ export default function DashboardPage() {
           primo documento.
         </p>
       </div>
-    </AppShell>
+    </>
   );
 }

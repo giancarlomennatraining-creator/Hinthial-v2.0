@@ -1,41 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
-import { createMockSession } from "@/lib/auth/mock-session";
+import { useActionState } from "react";
+import { signUp } from "@/lib/auth/actions";
+import { initialAuthActionState } from "@/lib/auth/action-state";
 import { TextField } from "@/components/ui/TextField";
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const [displayName, setDisplayName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!displayName || !email || !password) {
-      setError("Compila tutti i campi.");
-      return;
-    }
-    if (password.length < 8) {
-      setError("La password deve avere almeno 8 caratteri.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Le password non coincidono.");
-      return;
-    }
-
-    // FASE 1: creazione account mockata lato client, nessun account reale
-    // né password persistita. Supabase Auth arriva in FASE 2; la master
-    // password per la cifratura (concetto separato) arriva in FASE 3.
-    createMockSession({ email, displayName });
-    router.push("/dashboard");
-  }
+  const [state, formAction, pending] = useActionState(
+    signUp,
+    initialAuthActionState,
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,51 +23,52 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <form action={formAction} className="flex flex-col gap-4">
         <TextField
           id="displayName"
+          name="displayName"
           label="Nome"
           type="text"
           autoComplete="name"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
+          required
         />
         <TextField
           id="email"
+          name="email"
           label="Email"
           type="email"
           autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          required
         />
         <TextField
           id="password"
+          name="password"
           label="Password"
           type="password"
           autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          required
         />
         <TextField
           id="confirmPassword"
+          name="confirmPassword"
           label="Conferma password"
           type="password"
           autoComplete="new-password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
         />
 
-        {error ? (
+        {state.error ? (
           <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-            {error}
+            {state.error}
           </p>
         ) : null}
 
         <button
           type="submit"
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          disabled={pending}
+          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
-          Crea account
+          {pending ? "Creazione account…" : "Crea account"}
         </button>
       </form>
 

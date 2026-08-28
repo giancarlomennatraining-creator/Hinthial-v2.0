@@ -1,30 +1,62 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+import {
+  createConfirmedTestUser,
+  deleteUserByEmail,
+  uniqueTestUser,
+  type TestUser,
+} from "./test-users";
 
-test("un utente può registrarsi, vedere la dashboard e navigare la shell", async ({
-  page,
-}) => {
-  await page.goto("/");
-  await page.getByRole("link", { name: "Crea account" }).click();
+// Requires a configured Supabase project (.env.local) --- see README.md.
+// Emails created via createConfirmedTestUser are cleaned up afterwards
+// by tests/e2e/global-teardown.ts.
+//
+// Only "la registrazione crea un account" goes through the real signUp()
+// UI flow, and needs E2E_REGISTRATION_TEST_EMAIL configured (skipped
+// otherwise): an unverified Resend sender can only deliver to the
+// Supabase project owner's own address, so this test reuses that one
+// fixed address and deletes any pre-existing account for it first, to
+// stay repeatable. Every other test just needs "a logged-in user", so it
+// pre-creates a random one via the admin API and exercises the real
+// *login* form instead.
 
-  await expect(page).toHaveURL(/\/register$/);
-  await page.getByLabel("Nome").fill("Ada Lovelace");
-  await page.getByLabel("Email").fill("ada@example.com");
-  await page.getByLabel("Password", { exact: true }).fill("password123");
-  await page.getByLabel("Conferma password").fill("password123");
+async function loginAndLandOnDashboard(page: Page, user: TestUser) {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password").fill(user.password);
+  await page.getByRole("button", { name: "Accedi" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+}
+
+const registrationTestEmail = process.env.E2E_REGISTRATION_TEST_EMAIL;
+
+test("la registrazione crea un account", async ({ page }) => {
+  test.skip(
+    !registrationTestEmail,
+    "E2E_REGISTRATION_TEST_EMAIL non configurata in .env.local",
+  );
+
+  const user: TestUser = {
+    displayName: "Ada Lovelace",
+    email: registrationTestEmail!,
+    password: "password123",
+  };
+  await deleteUserByEmail(user.email);
+
+  await page.goto("/register");
+  await page.getByLabel("Nome").fill(user.displayName);
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password", { exact: true }).fill(user.password);
+  await page.getByLabel("Conferma password").fill(user.password);
   await page.getByRole("button", { name: "Crea account" }).click();
 
-  await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole("heading", { name: "Ciao, Ada Lovelace" })).toBeVisible();
-
-  // La navigazione principale porta alle altre sezioni della shell.
-  await page.getByRole("link", { name: "Vault" }).click();
-  await expect(page).toHaveURL(/\/vault$/);
-  await expect(page.getByRole("heading", { name: "Vault" })).toBeVisible();
-
-  // Il logout invalida la sessione mock e riporta alla landing.
-  await page.getByRole("button", { name: "Esci" }).click();
-  await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("link", { name: "Accedi" })).toBeVisible();
+  // Two valid outcomes depending on whether "Confirm email" is enabled
+  // on this Supabase project: an immediate session (redirect to the
+  // dashboard) or a "check your email" notice. The app handles both.
+  await expect(
+    page
+      .getByRole("heading", { name: `Ciao, ${user.displayName}` })
+      .or(page.getByText("Controlla la tua email per confermare")),
+  ).toBeVisible({ timeout: 15_000 });
 });
 
 test("le route protette reindirizzano al login se non autenticati", async ({
@@ -34,27 +66,51 @@ test("le route protette reindirizzano al login se non autenticati", async ({
   await expect(page).toHaveURL(/\/login$/);
 });
 
-test("login esistente porta alla dashboard", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("Email").fill("ada@example.com");
-  await page.getByLabel("Password").fill("password123");
-  await page.getByRole("button", { name: "Accedi" }).click();
+test("un utente autenticato può navigare la shell e fare logout", async ({
+  page,
+}) => {
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
 
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await loginAndLandOnDashboard(page, user);
+  await expect(
+    page.getByRole("heading", { name: `Ciao, ${user.displayName}` }),
+  ).toBeVisible();
+
+  // La navigazione principale porta alle altre sezioni della shell.
+  await page.getByRole("link", { name: "Vault" }).click();
+  await expect(page).toHaveURL(/\/vault$/);
+  await expect(page.getByRole("heading", { name: "Vault" })).toBeVisible();
+
+  // Il logout invalida la sessione e riporta alla landing.
+  await page.getByRole("button", { name: "Esci" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("link", { name: "Accedi" })).toBeVisible();
+});
+
+test("login con un account esistente porta alla dashboard", async ({
+  page,
+}) => {
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+
+  await loginAndLandOnDashboard(page, user);
+  await expect(
+    page.getByRole("heading", { name: `Ciao, ${user.displayName}` }),
+  ).toBeVisible();
 });
 
 test("un refresh a pagina intera su una route protetta resta autenticato", async ({
   page,
 }) => {
-  await page.goto("/login");
-  await page.getByLabel("Email").fill("ada@example.com");
-  await page.getByLabel("Password").fill("password123");
-  await page.getByRole("button", { name: "Accedi" }).click();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
 
-  // Un hard reload rilegge la sessione da localStorage passando per una
-  // nuova idratazione server->client: non deve rimbalzare su /login.
+  await loginAndLandOnDashboard(page, user);
+
   await page.reload();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole("heading", { name: "Ciao, ada" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: `Ciao, ${user.displayName}` }),
+  ).toBeVisible();
 });

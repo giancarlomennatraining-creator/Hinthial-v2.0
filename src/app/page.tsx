@@ -1,10 +1,8 @@
-"use client";
-
 import Link from "next/link";
-import { useMockSession } from "@/lib/auth/use-mock-session";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
-export default function Home() {
-  const state = useMockSession();
+export default async function Home() {
+  const user = await getCurrentUser();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-zinc-50 px-6 text-center font-sans dark:bg-black">
@@ -17,7 +15,7 @@ export default function Home() {
         serve.
       </p>
 
-      {state.status === "authenticated" ? (
+      {user ? (
         <Link
           href="/dashboard"
           className="rounded-md bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
