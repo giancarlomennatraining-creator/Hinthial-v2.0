@@ -18,10 +18,12 @@ describe("MainNav", () => {
       "Contatti",
       "Capsule",
       "AI",
-      "Impostazioni",
     ]) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     }
+
+    // "Impostazioni" ora vive nel menu utente (UserMenu), non qui.
+    expect(screen.queryByRole("link", { name: "Impostazioni" })).not.toBeInTheDocument();
   });
 
   it("marks the link matching the current path as the current page", () => {

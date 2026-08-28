@@ -86,7 +86,9 @@ test("un utente autenticato può navigare la shell e fare logout", async ({
   await expect(page).toHaveURL(/\/assets$/);
   await expect(page.getByRole("heading", { name: "Asset" })).toBeVisible();
 
-  // Il logout invalida la sessione e riporta alla landing.
+  // Il logout (nel menu utente, aperto cliccando il nome) invalida la
+  // sessione e riporta alla landing.
+  await page.getByRole("button", { name: user.displayName }).click();
   await page.getByRole("button", { name: "Esci" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("link", { name: "Accedi" })).toBeVisible();

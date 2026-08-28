@@ -1,9 +1,9 @@
-import { signOut } from "@/lib/auth/actions";
 import { MainNav } from "@/components/layout/MainNav";
+import { UserMenu } from "@/components/layout/UserMenu";
 import { MasterKeyProvider } from "@/components/crypto/MasterKeyProvider";
 
 /**
- * Shared chrome for the authenticated app (sidebar nav + logout).
+ * Shared chrome for the authenticated app (sidebar nav + user menu).
  *
  * Purely presentational --- the caller (src/app/(app)/layout.tsx) is
  * responsible for checking that a user is signed in before rendering
@@ -24,18 +24,8 @@ export function AppShell({
           <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-auto w-full" />
         </span>
         <MainNav />
-        <div className="mt-auto flex flex-col gap-2 px-3 pt-6">
-          <span className="truncate text-xs text-zinc-500 dark:text-zinc-500">
-            {displayName}
-          </span>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="self-start text-sm font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
-            >
-              Esci
-            </button>
-          </form>
+        <div className="mt-auto">
+          <UserMenu displayName={displayName} />
         </div>
       </aside>
       <main className="flex-1 p-6 md:p-10">
