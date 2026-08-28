@@ -2,13 +2,22 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      # A Supabase project is required from FASE 2 onward: Server
+      # Components/Actions call Supabase at build time too. Configure
+      # these as repository secrets (Settings -> Secrets and variables ->
+      # Actions). SUPABASE_SERVICE_ROLE_KEY is optional --- only the RLS
+      # integration test uses it, and it skips gracefully without it.
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     steps:
       - uses: actions/checkout@v4
 
