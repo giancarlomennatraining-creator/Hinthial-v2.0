@@ -93,7 +93,7 @@ export function SetupMasterKeyForm() {
           type="button"
           disabled={!confirmedSaved || busy}
           onClick={handleConfirm}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
         >
           {busy ? "Attendere…" : "Continua"}
         </button>
@@ -141,7 +141,7 @@ export function SetupMasterKeyForm() {
         <button
           type="submit"
           disabled={busy}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
         >
           {busy ? "Configurazione…" : "Crea"}
         </button>

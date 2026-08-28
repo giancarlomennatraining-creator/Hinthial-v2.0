@@ -19,7 +19,7 @@ export default async function Home() {
       {user ? (
         <Link
           href="/dashboard"
-          className="rounded-md bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="rounded-md bg-brand px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-hover"
         >
           Vai alla dashboard
         </Link>
@@ -27,7 +27,7 @@ export default async function Home() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link
             href="/register"
-            className="rounded-md bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="rounded-md bg-brand px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-hover"
           >
             Crea account
           </Link>
