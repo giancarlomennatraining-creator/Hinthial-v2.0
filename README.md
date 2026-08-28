@@ -12,8 +12,9 @@ Lo sviluppo segue la spec di prodotto/tecnica in
 
 ## Stato del progetto
 
-**FASE 0 --- Bootstrap**, **FASE 1 --- Shell dell'app** e
-**FASE 2 --- Supabase Auth + database** completate.
+**FASE 0 --- Bootstrap**, **FASE 1 --- Shell dell'app**,
+**FASE 2 --- Supabase Auth + database** e
+**FASE 3 --- Crypto foundation** completate.
 
 La FASE 2 sostituisce l'autenticazione mockata della FASE 1 con
 **Supabase Auth reale**: registrazione, login, logout, gestione sessione
@@ -26,11 +27,22 @@ sessione valida. Ogni login/logout viene registrato in `audit_events`
 attiva su tutte le tabelle e verificata da un test di integrazione
 dedicato (vedi sotto).
 
+La FASE 3 introduce il modulo di cifratura client-side isolato
+(`src/lib/crypto/`, protocollo documentato in
+[`src/lib/crypto/PROTOCOL.md`](./src/lib/crypto/PROTOCOL.md)): master
+key, chiave derivata dalla master password (PBKDF2), recovery key
+(HKDF), chiavi per documento, tutto su AES-256-GCM via Web Crypto API.
+**Non è ancora collegato a nessuna UI o a Supabase** --- è un modulo
+isolato e testato in autonomia (66 test), come richiesto dal piano a
+fasi; l'integrazione nel Vault arriva in FASE 4. **Non ancora
+production-ready senza revisione di sicurezza professionale** (vedi il
+protocollo per i punti aperti).
+
 ## Stack
 
 - **Frontend**: Next.js (App Router) + React + TypeScript (strict) + Tailwind CSS
 - **Backend/DB**: Supabase (PostgreSQL, Auth, Row Level Security) --- collegato dalla FASE 2; Storage ancora da collegare (FASE 4)
-- **Crittografia**: modulo client-side dedicato, libreria consolidata, mai primitive custom (FASE 3)
+- **Crittografia**: Web Crypto API nativa (AES-256-GCM, PBKDF2, HKDF), nessuna libreria/primitiva custom --- modulo isolato da FASE 3, non ancora integrato nella UI (FASE 4)
 - **Test**: Vitest (unit) + Playwright (e2e)
 - **Lint/Type checking**: ESLint + TypeScript strict mode
 
@@ -51,7 +63,7 @@ src/
   lib/            # infrastruttura
     auth/           # Server Actions (signUp/signIn/signOut), current-user
     db/supabase/    # client Supabase (browser/server/middleware)
-    crypto/         # FASE 3
+    crypto/         # modulo di cifratura isolato (FASE 3) + PROTOCOL.md
     storage/        # FASE 4
     audit/          # log-event.ts --- eventi tecnici non sensibili
     ai/             # FASE 10+
@@ -60,7 +72,9 @@ src/
   proxy.ts        # refresh della sessione Supabase su ogni richiesta
 
 tests/
-  unit/           # test Vitest, incl. rls.integration.test.ts (RLS su DB reale)
+  unit/
+    crypto/         # test del modulo di cifratura (FASE 3)
+    rls.integration.test.ts  # RLS su DB reale
   e2e/            # test Playwright
 
 supabase/
@@ -130,9 +144,11 @@ l'indirizzo email opzionale `E2E_REGISTRATION_TEST_EMAIL` (vedi
 - La cifratura dei contenuti avviene **lato client**, prima di qualsiasi
   upload. Il server non deve mai ricevere plaintext dei documenti né la
   master password.
-- Nessuna primitiva crittografica custom: si useranno librerie
-  consolidate, con revisione di sicurezza dedicata prima di considerare
-  il modulo crypto production-ready.
+- Nessuna primitiva crittografica custom: solo Web Crypto API nativa
+  (AES-256-GCM, PBKDF2, HKDF). Protocollo completo in
+  [`src/lib/crypto/PROTOCOL.md`](./src/lib/crypto/PROTOCOL.md), incluso
+  l'elenco esplicito di ciò che manca prima di essere production-ready
+  (richiede una revisione di sicurezza dedicata).
 - Row Level Security su ogni tabella: ogni record è accessibile solo al
   proprietario --- verificato da `tests/unit/rls.integration.test.ts`
   contro un database reale (due utenti usa-e-getta, mai dati reali).
@@ -145,11 +161,13 @@ Vedi [HINTHIAL_MVP.md](./HINTHIAL_MVP.md) sezione 3 per i dettagli.
 ## Cosa NON è ancora implementato
 
 Coerentemente con il piano a fasi, in questa release non sono presenti:
-cifratura, vault, scadenze, asset, contatti fiduciari, capsule, export,
-AI. Le pagine di queste sezioni esistono solo come placeholder
-navigabili, protetti da autenticazione reale ma senza logica di
-prodotto. Vedi sezione 12 della spec per l'elenco completo di ciò che
-non va costruito nella prima versione del prodotto.
+vault, scadenze, asset, contatti fiduciari, capsule, export, AI. Le
+pagine di queste sezioni esistono solo come placeholder navigabili,
+protetti da autenticazione reale ma senza logica di prodotto. Il modulo
+di cifratura (FASE 3) esiste ed è testato, ma non è ancora collegato a
+nessuna UI o al database --- quell'integrazione è FASE 4. Vedi sezione
+12 della spec per l'elenco completo di ciò che non va costruito nella
+prima versione del prodotto.
 
 ## Come contribuire (per Claude Code / agenti)
 
