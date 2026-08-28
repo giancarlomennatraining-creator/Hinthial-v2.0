@@ -21,7 +21,7 @@ export function AppShell({
       <aside className="flex flex-col gap-6 border-b border-zinc-200 p-4 md:w-56 md:shrink-0 md:border-b-0 md:border-r md:p-6 dark:border-zinc-800">
         <span className="px-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
-          <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-8 w-auto" />
+          <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-auto w-full" />
         </span>
         <MainNav />
         <div className="mt-auto flex flex-col gap-2 px-3 pt-6">
