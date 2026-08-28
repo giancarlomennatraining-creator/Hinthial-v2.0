@@ -21,7 +21,7 @@ export function MainNav() {
             className={cn(
               "rounded-md px-3 py-2 text-sm font-medium transition-colors",
               isActive
-                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                ? "bg-brand text-white"
                 : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-50",
             )}
           >
