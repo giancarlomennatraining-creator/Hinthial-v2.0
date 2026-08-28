@@ -13,8 +13,8 @@ Lo sviluppo segue la spec di prodotto/tecnica in
 ## Stato del progetto
 
 **FASE 0 --- Bootstrap**, **FASE 1 --- Shell dell'app**,
-**FASE 2 --- Supabase Auth + database** e
-**FASE 3 --- Crypto foundation** completate.
+**FASE 2 --- Supabase Auth + database**, **FASE 3 --- Crypto foundation**
+e **FASE 4 --- Vault documentale** completate.
 
 La FASE 2 sostituisce l'autenticazione mockata della FASE 1 con
 **Supabase Auth reale**: registrazione, login, logout, gestione sessione
@@ -32,17 +32,32 @@ La FASE 3 introduce il modulo di cifratura client-side isolato
 [`src/lib/crypto/PROTOCOL.md`](./src/lib/crypto/PROTOCOL.md)): master
 key, chiave derivata dalla master password (PBKDF2), recovery key
 (HKDF), chiavi per documento, tutto su AES-256-GCM via Web Crypto API.
-**Non è ancora collegato a nessuna UI o a Supabase** --- è un modulo
-isolato e testato in autonomia (66 test), come richiesto dal piano a
-fasi; l'integrazione nel Vault arriva in FASE 4. **Non ancora
-production-ready senza revisione di sicurezza professionale** (vedi il
-protocollo per i punti aperti).
+Al momento della FASE 3 il modulo non era ancora collegato a nessuna UI:
+era isolato e testato in autonomia (66 test). **Non ancora
+production-ready senza revisione di sicurezza professionale** resta
+vero (vedi il protocollo per i punti aperti).
+
+La FASE 4 collega finalmente tutto in **Documenti**
+(`/documenti`, `src/app/(app)/documenti/`): al primo accesso l'utente
+crea una **master password** (diversa dalla password dell'account) che
+genera la Master Key e mostra una **recovery key** una sola volta
+(`src/components/crypto/`); da quel momento la Master Key resta solo in
+memoria lato client per la sessione (persa a un refresh completo, per
+design --- va risbloccata). Upload: il file viene cifrato nel browser
+(contenuto sotto una Document Key dedicata, nome file sotto la Master
+Key) prima di lasciare il dispositivo; il ciphertext del contenuto va su
+**Supabase Storage** (bucket privato, RLS per-utente), i metadati
+tecnici e le chiavi cifrate su Postgres (`documents`, `categories`,
+`encryption_setup`). Apertura/download decrittano nel browser;
+l'eliminazione rimuove sia la riga sia il blob. Le 10 categorie
+iniziali (sezione 5 della spec) sono seedate automaticamente alla
+registrazione.
 
 ## Stack
 
 - **Frontend**: Next.js (App Router) + React + TypeScript (strict) + Tailwind CSS
-- **Backend/DB**: Supabase (PostgreSQL, Auth, Row Level Security) --- collegato dalla FASE 2; Storage ancora da collegare (FASE 4)
-- **Crittografia**: Web Crypto API nativa (AES-256-GCM, PBKDF2, HKDF), nessuna libreria/primitiva custom --- modulo isolato da FASE 3, non ancora integrato nella UI (FASE 4)
+- **Backend/DB**: Supabase (PostgreSQL, Auth, Row Level Security, Storage) --- tutto collegato dalla FASE 4
+- **Crittografia**: Web Crypto API nativa (AES-256-GCM, PBKDF2, HKDF), nessuna libreria/primitiva custom --- modulo da FASE 3, integrato nella UI da FASE 4
 - **Test**: Vitest (unit) + Playwright (e2e)
 - **Lint/Type checking**: ESLint + TypeScript strict mode
 
@@ -52,22 +67,24 @@ protocollo per i punti aperti).
 src/
   app/            # route Next.js (App Router)
     (auth)/         # login, registrazione --- nessuna sessione richiesta
-    (app)/          # dashboard, vault, reminders, assets, contacts,
+    (app)/          # dashboard, documenti, reminders, assets, contacts,
                      # capsules, ai, settings --- layout condiviso che
                      # richiede una sessione Supabase valida
   components/     # componenti UI
     ui/
     layout/
-    vault/
+    crypto/         # sessione Master Key: provider, form di setup/sblocco (FASE 4)
+    documenti/      # pannello lista/upload/apri/elimina (FASE 4)
     dashboard/
   lib/            # infrastruttura
     auth/           # Server Actions (signUp/signIn/signOut), current-user
     db/supabase/    # client Supabase (browser/server/middleware)
     crypto/         # modulo di cifratura isolato (FASE 3) + PROTOCOL.md
-    storage/        # FASE 4
+    storage/        # bucket Storage per i payload cifrati (FASE 4)
     audit/          # log-event.ts --- eventi tecnici non sensibili
     ai/             # FASE 10+
-  domain/         # logica di dominio: documents, assets, reminders, contacts, capsules
+  domain/
+    documents/      # tipi + repository (FASE 4): categorie, upload/apri/elimina
   types/          # tipi condivisi (incl. supabase.ts, schema del DB)
   proxy.ts        # refresh della sessione Supabase su ogni richiesta
 
@@ -75,7 +92,8 @@ tests/
   unit/
     crypto/         # test del modulo di cifratura (FASE 3)
     rls.integration.test.ts  # RLS su DB reale
-  e2e/            # test Playwright
+  e2e/
+    documenti.spec.ts  # setup master key, upload, apertura, eliminazione (FASE 4)
 
 supabase/
   migrations/     # migration SQL, applicate con `supabase db push`
@@ -149,10 +167,17 @@ l'indirizzo email opzionale `E2E_REGISTRATION_TEST_EMAIL` (vedi
   [`src/lib/crypto/PROTOCOL.md`](./src/lib/crypto/PROTOCOL.md), incluso
   l'elenco esplicito di ciò che manca prima di essere production-ready
   (richiede una revisione di sicurezza dedicata).
-- Row Level Security su ogni tabella: ogni record è accessibile solo al
-  proprietario --- verificato da `tests/unit/rls.integration.test.ts`
-  contro un database reale (due utenti usa-e-getta, mai dati reali).
-- Il database contiene solo metadati tecnici minimi indispensabili.
+- Row Level Security su ogni tabella (incl. `storage.objects`, per-utente
+  via il primo segmento del path) --- ogni record/file è accessibile
+  solo al proprietario, verificato da
+  `tests/unit/rls.integration.test.ts` contro un database reale (due
+  utenti usa-e-getta, mai dati reali).
+- Il database contiene solo metadati tecnici minimi indispensabili
+  (mime type, dimensione, categoria, timestamp); nome file e contenuto
+  sono sempre inviati già cifrati.
+- La Master Key esiste solo cifrata sul server (`encryption_setup`,
+  wrappata da password e da recovery key); in chiaro vive solo in
+  memoria lato client, per la durata della sessione.
 - La `SUPABASE_SERVICE_ROLE_KEY` non è mai usata dall'app: esiste solo
   nei test, per creare/eliminare utenti di prova via API admin.
 
@@ -161,13 +186,13 @@ Vedi [HINTHIAL_MVP.md](./HINTHIAL_MVP.md) sezione 3 per i dettagli.
 ## Cosa NON è ancora implementato
 
 Coerentemente con il piano a fasi, in questa release non sono presenti:
-vault, scadenze, asset, contatti fiduciari, capsule, export, AI. Le
-pagine di queste sezioni esistono solo come placeholder navigabili,
-protetti da autenticazione reale ma senza logica di prodotto. Il modulo
-di cifratura (FASE 3) esiste ed è testato, ma non è ancora collegato a
-nessuna UI o al database --- quell'integrazione è FASE 4. Vedi sezione
-12 della spec per l'elenco completo di ciò che non va costruito nella
-prima versione del prodotto.
+scadenze, asset, contatti fiduciari, capsule, export, AI. Le pagine di
+queste sezioni esistono solo come placeholder navigabili, protette da
+autenticazione reale ma senza logica di prodotto. Documenti (FASE 4) è
+implementato ma minimale: niente rinomina/modifica, niente gestione
+categorie oltre alle 10 di default, niente relazioni con asset (FASE 6).
+Vedi sezione 12 della spec per l'elenco completo di ciò che non va
+costruito nella prima versione del prodotto.
 
 ## Come contribuire (per Claude Code / agenti)
 

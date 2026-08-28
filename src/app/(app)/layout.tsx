@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { AppShell } from "@/components/layout/AppShell";
 
 /**
- * Shared layout for every authenticated section (dashboard, vault,
+ * Shared layout for every authenticated section (dashboard, documenti,
  * reminders, assets, contacts, capsules, ai, settings). A route group
  * ((app)) so it applies to all of them without adding a URL segment.
  *

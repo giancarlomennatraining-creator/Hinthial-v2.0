@@ -78,9 +78,11 @@ test("un utente autenticato può navigare la shell e fare logout", async ({
   ).toBeVisible();
 
   // La navigazione principale porta alle altre sezioni della shell.
-  await page.getByRole("link", { name: "Vault" }).click();
-  await expect(page).toHaveURL(/\/vault$/);
-  await expect(page.getByRole("heading", { name: "Vault" })).toBeVisible();
+  // (Non "Documenti": per un utente senza cifratura configurata mostra
+  // il setup della master key --- coperto da tests/e2e/documenti.spec.ts.)
+  await page.getByRole("link", { name: "Scadenze" }).click();
+  await expect(page).toHaveURL(/\/reminders$/);
+  await expect(page.getByRole("heading", { name: "Scadenze" })).toBeVisible();
 
   // Il logout invalida la sessione e riporta alla landing.
   await page.getByRole("button", { name: "Esci" }).click();

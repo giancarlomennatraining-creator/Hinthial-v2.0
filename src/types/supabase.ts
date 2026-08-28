@@ -20,6 +20,8 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+type AuditEventTypeColumn = "login" | "logout" | "document_created" | "document_deleted";
+
 export type Database = {
   public: {
     Tables: {
@@ -56,19 +58,19 @@ export type Database = {
         Row: {
           id: string;
           owner_id: string;
-          event_type: "login" | "logout";
+          event_type: AuditEventTypeColumn;
           created_at: string;
         };
         Insert: {
           id?: string;
           owner_id: string;
-          event_type: "login" | "logout";
+          event_type: AuditEventTypeColumn;
           created_at?: string;
         };
         Update: {
           id?: string;
           owner_id?: string;
-          event_type?: "login" | "logout";
+          event_type?: AuditEventTypeColumn;
           created_at?: string;
         };
         Relationships: [
@@ -77,6 +79,127 @@ export type Database = {
             columns: ["owner_id"];
             isOneToOne: false;
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      encryption_setup: {
+        Row: {
+          owner_id: string;
+          master_key_wrapped_by_password: string;
+          master_key_wrapped_by_recovery_key: string;
+          pbkdf2_params: string;
+          created_at: string;
+        };
+        Insert: {
+          owner_id: string;
+          master_key_wrapped_by_password: string;
+          master_key_wrapped_by_recovery_key: string;
+          pbkdf2_params: string;
+          created_at?: string;
+        };
+        Update: {
+          owner_id?: string;
+          master_key_wrapped_by_password?: string;
+          master_key_wrapped_by_recovery_key?: string;
+          pbkdf2_params?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "encryption_setup_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: true;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      categories: {
+        Row: {
+          id: string;
+          owner_id: string;
+          name: string;
+          icon: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          name: string;
+          icon: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          name?: string;
+          icon?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "categories_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      documents: {
+        Row: {
+          id: string;
+          owner_id: string;
+          encrypted_filename: string;
+          wrapped_document_key: string;
+          storage_path: string;
+          mime_type: string;
+          size: number;
+          category_id: string | null;
+          version: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          encrypted_filename: string;
+          wrapped_document_key: string;
+          storage_path: string;
+          mime_type: string;
+          size: number;
+          category_id?: string | null;
+          version?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          encrypted_filename?: string;
+          wrapped_document_key?: string;
+          storage_path?: string;
+          mime_type?: string;
+          size?: number;
+          category_id?: string | null;
+          version?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "documents_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "documents_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
             referencedColumns: ["id"];
           },
         ];

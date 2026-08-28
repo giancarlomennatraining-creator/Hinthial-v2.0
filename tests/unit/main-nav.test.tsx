@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { MainNav } from "@/components/layout/MainNav";
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/vault",
+  usePathname: () => "/documenti",
 }));
 
 describe("MainNav", () => {
@@ -12,7 +12,7 @@ describe("MainNav", () => {
 
     for (const label of [
       "Dashboard",
-      "Vault",
+      "Documenti",
       "Scadenze",
       "Asset",
       "Contatti",
@@ -27,7 +27,7 @@ describe("MainNav", () => {
   it("marks the link matching the current path as the current page", () => {
     render(<MainNav />);
 
-    expect(screen.getByRole("link", { name: "Vault" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Documenti" })).toHaveAttribute(
       "aria-current",
       "page",
     );

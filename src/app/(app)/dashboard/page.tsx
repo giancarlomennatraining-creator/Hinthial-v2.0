@@ -15,7 +15,7 @@ export default async function DashboardPage() {
 
       <div className="mt-6 rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Nessun contenuto ancora. Inizia dal Vault per aggiungere il tuo
+          Nessun contenuto ancora. Inizia da Documenti per aggiungere il tuo
           primo documento.
         </p>
       </div>

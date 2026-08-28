@@ -1,5 +1,6 @@
 import { signOut } from "@/lib/auth/actions";
 import { MainNav } from "@/components/layout/MainNav";
+import { MasterKeyProvider } from "@/components/crypto/MasterKeyProvider";
 
 /**
  * Shared chrome for the authenticated app (sidebar nav + logout).
@@ -36,7 +37,9 @@ export function AppShell({
           </form>
         </div>
       </aside>
-      <main className="flex-1 p-6 md:p-10">{children}</main>
+      <main className="flex-1 p-6 md:p-10">
+        <MasterKeyProvider>{children}</MasterKeyProvider>
+      </main>
     </div>
   );
 }
