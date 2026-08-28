@@ -6,9 +6,9 @@ export default async function Home() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-zinc-50 px-6 text-center font-sans dark:bg-black">
-      <h1>
+      <h1 className="w-full max-w-md">
         {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
-        <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-16 w-auto" />
+        <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-auto w-full" />
       </h1>
       <p className="max-w-md text-base text-zinc-600 dark:text-zinc-400">
         Metti ordine nella tua vita digitale, proteggi ciò che conta e rendi
