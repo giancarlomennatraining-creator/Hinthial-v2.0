@@ -26,7 +26,7 @@ test("configura la cifratura, carica, apre e cancella un documento", async ({
 
   await expect(page.getByRole("heading", { name: "Salva la tua recovery key" })).toBeVisible();
   const recoveryKey = await page.locator("code").innerText();
-  expect(recoveryKey).toMatch(/^[0-9A-F]{4}(-[0-9A-F]{4}){15}$/);
+  expect(recoveryKey).toMatch(/^[0-9A-F]{4}(-[0-9A-F]{4}){23}$/);
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
 

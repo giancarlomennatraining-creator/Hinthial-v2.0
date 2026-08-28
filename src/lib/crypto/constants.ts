@@ -13,8 +13,14 @@ export const KEY_LENGTH_BYTES = 32;
 /** PBKDF2 salt length. */
 export const SALT_LENGTH_BYTES = 16;
 
-/** Recovery key length --- 256 bits, matching an AES-256 key. */
-export const RECOVERY_KEY_LENGTH_BYTES = 32;
+/**
+ * Recovery key length --- 384 bits. Deliberately more than the 256 bits
+ * an AES-256 key needs (HKDF happily condenses any amount of good input
+ * entropy down to the required output length): a longer, more visibly
+ * "random-looking" secret is harder to mistake for something guessable
+ * when a user is transcribing/storing it by hand.
+ */
+export const RECOVERY_KEY_LENGTH_BYTES = 48;
 
 /** Domain-separation string for deriving a key from the recovery key via HKDF. */
 export const RECOVERY_KEY_HKDF_INFO = "hinthial:recovery-key:v1";

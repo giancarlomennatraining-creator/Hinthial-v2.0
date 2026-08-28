@@ -9,10 +9,10 @@ import { utf8ToBytes, bytesToUtf8 } from "@/lib/crypto/codec";
 import { InvalidFormatError, DecryptionError } from "@/lib/crypto/errors";
 
 describe("recovery key", () => {
-  it("generates a 256-bit key formatted as dash-grouped hex", () => {
+  it("generates a 384-bit key formatted as dash-grouped hex", () => {
     const { raw, formatted } = generateRecoveryKey();
-    expect(raw.length).toBe(32);
-    expect(formatted).toMatch(/^[0-9A-F]{4}(-[0-9A-F]{4}){15}$/);
+    expect(raw.length).toBe(48);
+    expect(formatted).toMatch(/^[0-9A-F]{4}(-[0-9A-F]{4}){23}$/);
   });
 
   it("generates a different key every time", () => {
@@ -33,7 +33,10 @@ describe("recovery key", () => {
 
   it.each([
     ["too short", "ABCD-1234"],
-    ["not hex", "ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ"],
+    [
+      "not hex",
+      "ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ",
+    ],
     ["empty", ""],
   ])("rejects an invalid recovery key format: %s", (_label, input) => {
     expect(() => parseRecoveryKey(input)).toThrow(InvalidFormatError);
