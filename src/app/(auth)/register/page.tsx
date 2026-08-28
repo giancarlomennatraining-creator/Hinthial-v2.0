@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { signUp } from "@/lib/auth/actions";
 import { initialAuthActionState } from "@/lib/auth/action-state";
 import { TextField } from "@/components/ui/TextField";
+import { PasswordStrengthMeter } from "@/components/ui/PasswordStrengthMeter";
 
 export default function RegisterPage() {
   const [state, formAction, pending] = useActionState(
     signUp,
     initialAuthActionState,
   );
+  const [password, setPassword] = useState("");
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,14 +42,19 @@ export default function RegisterPage() {
           autoComplete="email"
           required
         />
-        <TextField
-          id="password"
-          name="password"
-          label="Password"
-          type="password"
-          autoComplete="new-password"
-          required
-        />
+        <div className="flex flex-col gap-2">
+          <TextField
+            id="password"
+            name="password"
+            label="Password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <PasswordStrengthMeter password={password} />
+        </div>
         <TextField
           id="confirmPassword"
           name="confirmPassword"

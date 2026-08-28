@@ -53,6 +53,15 @@ l'eliminazione rimuove sia la riga sia il blob. Le 10 categorie
 iniziali (sezione 5 della spec) sono seedate automaticamente alla
 registrazione.
 
+**Rifiniture successive**: la registrazione mostra ora un indicatore di
+robustezza della password in tempo reale, con la lista dei criteri
+soddisfatti man mano che si digita (`src/lib/auth/password-strength.ts`,
+non blocca l'invio oltre al minimo di 8 caratteri già richiesto --- è
+solo un aiuto visivo). Il link di conferma email ora atterra su una
+pagina dedicata (`/verifica-account`) con un pulsante verso il login,
+invece che sull'endpoint di verifica ospitato da Supabase (richiede
+configurazione manuale nel Dashboard, vedi sezione Setup).
+
 ## Stack
 
 - **Frontend**: Next.js (App Router) + React + TypeScript (strict) + Tailwind CSS
@@ -124,9 +133,18 @@ cp .env.example .env.local
    ```bash
    npx supabase db push --db-url "<connection string da Project Settings → Database>"
    ```
-4. In **Authentication → Sign In / Providers → Email**, disattiva **"Confirm email"**
-   (consigliato per lo sviluppo: login/registrazione funzionano subito, senza
-   dover confermare un indirizzo email ogni volta).
+4. **"Confirm email"** (Authentication → Sign In / Providers → Email):
+   disattivato è più comodo per lo sviluppo (login/registrazione
+   funzionano subito). Se invece la attivi, per far funzionare la
+   pagina "Account verificato" (`/auth/confirm`, vedi sotto) devi anche:
+   - **Authentication → URL Configuration → Site URL** = l'URL della tua
+     app (es. `http://localhost:3000` in sviluppo);
+   - **Authentication → Emails → Templates → Confirm signup**: sostituisci
+     il link nel template con
+     `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup`
+     (il link di default punta all'endpoint `/verify` ospitato da
+     Supabase, che non imposta il cookie di sessione nel modo giusto per
+     questo setup SSR).
 5. **Consigliato**: configura un provider SMTP personalizzato (es.
    [Resend](https://resend.com), gratuito) in **Authentication → SMTP Settings**.
    Il mailer condiviso di Supabase è limitato a **2 email/ora**, un limite che si
