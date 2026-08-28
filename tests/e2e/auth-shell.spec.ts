@@ -51,11 +51,12 @@ test("la registrazione crea un account", async ({ page }) => {
 
   // Two valid outcomes depending on whether "Confirm email" is enabled
   // on this Supabase project: an immediate session (redirect to the
-  // dashboard) or a "check your email" notice. The app handles both.
+  // dashboard) or a redirect to the dedicated "check your email" page.
+  // The app handles both.
   await expect(
     page
       .getByRole("heading", { name: `Ciao, ${user.displayName}` })
-      .or(page.getByText("Controlla la tua email per confermare")),
+      .or(page.getByRole("heading", { name: "Controlla la tua email" })),
   ).toBeVisible({ timeout: 15_000 });
 });
 

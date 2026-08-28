@@ -60,11 +60,9 @@ export async function signUp(
   if (!data.session) {
     // Email confirmation is enabled on this project: there is no active
     // session yet, so redirecting to the dashboard would just bounce
-    // straight back to /login.
-    return {
-      error:
-        "Account creato. Controlla la tua email per confermare l'indirizzo prima di accedere.",
-    };
+    // straight back to /login. Send the user to a dedicated page
+    // instead of showing an inline message on the register form.
+    redirect(`/controlla-email?email=${encodeURIComponent(email)}`);
   }
 
   // Email confirmation disabled --- signUp already returned an active
