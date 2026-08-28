@@ -73,7 +73,9 @@ Principio architetturale: separare sempre **UI**, **domain logic**,
 
 ## Requisiti
 
-- Node.js 20+ (LTS)
+- Node.js 24+ (LTS) --- versioni precedenti (es. 20) hanno un'incompatibilità
+  nota tra `jsdom` e `undici` (`webidl.util.markAsUncloneable is not a
+  function`) che fa fallire i test unitari
 - npm
 
 ## Setup
