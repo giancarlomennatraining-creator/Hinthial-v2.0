@@ -20,7 +20,17 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-type AuditEventTypeColumn = "login" | "logout" | "document_created" | "document_deleted";
+type AuditEventTypeColumn =
+  | "login"
+  | "logout"
+  | "document_created"
+  | "document_deleted"
+  | "trusted_contact_added";
+
+type TrustedContactStatusColumn = "pending" | "active" | "revoked";
+
+type CapsuleStatusColumn = "draft" | "ready" | "shared";
+type CapsuleAccessConditionColumn = "manual";
 
 export type Database = {
   public: {
@@ -28,19 +38,22 @@ export type Database = {
       profiles: {
         Row: {
           id: string;
-          display_name: string;
+          first_name: string;
+          last_name: string;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
-          display_name: string;
+          first_name: string;
+          last_name: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
-          display_name?: string;
+          first_name?: string;
+          last_name?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -147,6 +160,48 @@ export type Database = {
           },
         ];
       };
+      assets: {
+        Row: {
+          id: string;
+          owner_id: string;
+          encrypted_name: string;
+          category_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          encrypted_name: string;
+          category_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          encrypted_name?: string;
+          category_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assets_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assets_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       documents: {
         Row: {
           id: string;
@@ -157,6 +212,7 @@ export type Database = {
           mime_type: string;
           size: number;
           category_id: string | null;
+          related_asset_id: string | null;
           version: number;
           expires_at: string | null;
           encrypted_notes: string | null;
@@ -173,6 +229,7 @@ export type Database = {
           mime_type: string;
           size: number;
           category_id?: string | null;
+          related_asset_id?: string | null;
           version?: number;
           expires_at?: string | null;
           encrypted_notes?: string | null;
@@ -189,6 +246,7 @@ export type Database = {
           mime_type?: string;
           size?: number;
           category_id?: string | null;
+          related_asset_id?: string | null;
           version?: number;
           expires_at?: string | null;
           encrypted_notes?: string | null;
@@ -211,6 +269,13 @@ export type Database = {
             referencedRelation: "categories";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "documents_related_asset_id_fkey";
+            columns: ["related_asset_id"];
+            isOneToOne: false;
+            referencedRelation: "assets";
+            referencedColumns: ["id"];
+          },
         ];
       };
       reminders: {
@@ -220,6 +285,7 @@ export type Database = {
           encrypted_title: string;
           due_at: string;
           related_document_id: string | null;
+          related_asset_id: string | null;
           completed: boolean;
           created_at: string;
           updated_at: string;
@@ -230,6 +296,7 @@ export type Database = {
           encrypted_title: string;
           due_at: string;
           related_document_id?: string | null;
+          related_asset_id?: string | null;
           completed?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -240,6 +307,7 @@ export type Database = {
           encrypted_title?: string;
           due_at?: string;
           related_document_id?: string | null;
+          related_asset_id?: string | null;
           completed?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -257,6 +325,92 @@ export type Database = {
             columns: ["related_document_id"];
             isOneToOne: false;
             referencedRelation: "documents";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reminders_related_asset_id_fkey";
+            columns: ["related_asset_id"];
+            isOneToOne: false;
+            referencedRelation: "assets";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      trusted_contacts: {
+        Row: {
+          id: string;
+          owner_id: string;
+          encrypted_name: string;
+          encrypted_email: string;
+          role: string;
+          status: TrustedContactStatusColumn;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          encrypted_name: string;
+          encrypted_email: string;
+          role: string;
+          status?: TrustedContactStatusColumn;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          encrypted_name?: string;
+          encrypted_email?: string;
+          role?: string;
+          status?: TrustedContactStatusColumn;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "trusted_contacts_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      capsules: {
+        Row: {
+          id: string;
+          owner_id: string;
+          encrypted_payload: string;
+          status: CapsuleStatusColumn;
+          access_condition: CapsuleAccessConditionColumn;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          encrypted_payload: string;
+          status?: CapsuleStatusColumn;
+          access_condition?: CapsuleAccessConditionColumn;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          encrypted_payload?: string;
+          status?: CapsuleStatusColumn;
+          access_condition?: CapsuleAccessConditionColumn;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "capsules_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
             referencedColumns: ["id"];
           },
         ];

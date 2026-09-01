@@ -5,7 +5,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * its own migration to widen the `audit_events.event_type` check
  * constraint) --- see supabase/migrations and HINTHIAL_MVP.md sezione 5.
  */
-export type AuditEventType = "login" | "logout" | "document_created" | "document_deleted";
+export type AuditEventType =
+  | "login"
+  | "logout"
+  | "document_created"
+  | "document_deleted"
+  | "trusted_contact_added";
 
 /**
  * Records a technical, non-sensitive audit event. Never pass content,

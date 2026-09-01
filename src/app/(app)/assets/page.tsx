@@ -1,10 +1,13 @@
-import { PlaceholderSection } from "@/components/ui/PlaceholderSection";
+"use client";
+
+import { Suspense } from "react";
+import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
+import { AssetsPanel } from "@/components/assets/AssetsPanel";
 
 export default function AssetsPage() {
   return (
-    <PlaceholderSection
-      title="Asset"
-      description="Qui potrai censire immobili, veicoli, beni e contratti, e collegarli a documenti e scadenze. Questa sezione sarà sviluppata in FASE 6."
-    />
+    <Suspense>
+      <RequireMasterKey>{(masterKey) => <AssetsPanel masterKey={masterKey} />}</RequireMasterKey>
+    </Suspense>
   );
 }

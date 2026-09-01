@@ -4,12 +4,11 @@ export interface ReminderListItem {
   title: string;
   dueAt: string;
   completed: boolean;
-  /**
-   * Placeholder relation until FASE 6 (Asset) generalizes it --- for now
-   * a reminder can only relate to a document.
-   */
+  /** Independent of relatedAssetId: a reminder can relate to a document, an asset, both, or neither. */
   relatedDocumentId: string | null;
   relatedDocumentFilename: string | null;
+  relatedAssetId: string | null;
+  relatedAssetName: string | null;
   createdAt: string;
 }
 
@@ -17,4 +16,5 @@ export interface ReminderInput {
   title: string;
   dueAt: string;
   relatedDocumentId: string | null;
+  relatedAssetId: string | null;
 }

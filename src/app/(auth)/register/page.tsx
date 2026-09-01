@@ -26,14 +26,28 @@ export default function RegisterPage() {
       </div>
 
       <form action={formAction} className="flex flex-col gap-4">
-        <TextField
-          id="displayName"
-          name="displayName"
-          label="Nome"
-          type="text"
-          autoComplete="name"
-          required
-        />
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <TextField
+              id="firstName"
+              name="firstName"
+              label="Nome"
+              type="text"
+              autoComplete="given-name"
+              required
+            />
+          </div>
+          <div className="flex-1">
+            <TextField
+              id="lastName"
+              name="lastName"
+              label="Cognome"
+              type="text"
+              autoComplete="family-name"
+              required
+            />
+          </div>
+        </div>
         <TextField
           id="email"
           name="email"

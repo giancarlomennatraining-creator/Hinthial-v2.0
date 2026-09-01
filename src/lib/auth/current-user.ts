@@ -4,6 +4,9 @@ import { createClient } from "@/lib/db/supabase/server";
 export interface CurrentUser {
   id: string;
   email: string | null;
+  firstName: string;
+  lastName: string;
+  /** "{firstName} {lastName}" (trimmed) --- convenience for UI text (greeting, menu). */
   displayName: string;
 }
 
@@ -23,13 +26,18 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name")
+    .select("first_name, last_name")
     .eq("id", user.id)
     .single();
+
+  const firstName = profile?.first_name ?? user.email?.split("@")[0] ?? "Utente";
+  const lastName = profile?.last_name ?? "";
 
   return {
     id: user.id,
     email: user.email ?? null,
-    displayName: profile?.display_name ?? user.email?.split("@")[0] ?? "Utente",
+    firstName,
+    lastName,
+    displayName: [firstName, lastName].filter(Boolean).join(" "),
   };
 });

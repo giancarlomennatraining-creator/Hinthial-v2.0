@@ -1,15 +1,22 @@
 import { createClient } from "@supabase/supabase-js";
 
 export interface TestUser {
-  displayName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
+}
+
+/** "{firstName} {lastName}" --- matches the app's own concatenation (see current-user.ts). */
+export function fullName(user: TestUser): string {
+  return `${user.firstName} ${user.lastName}`;
 }
 
 export function uniqueTestUser(): TestUser {
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   return {
-    displayName: "Ada Lovelace",
+    firstName: "Ada",
+    lastName: "Lovelace",
     // Supabase's signUp() rejects reserved placeholder domains like
     // example.com as "invalid" --- mailinator.com is a real, existing
     // domain, so it passes validation (delivery doesn't matter: "Confirm
@@ -44,7 +51,7 @@ export async function createConfirmedTestUser(user: TestUser): Promise<void> {
     email: user.email,
     password: user.password,
     email_confirm: true,
-    user_metadata: { display_name: user.displayName },
+    user_metadata: { first_name: user.firstName, last_name: user.lastName },
   });
 
   if (error) {
@@ -66,11 +73,34 @@ function adminClient() {
 }
 
 /**
+ * Generates a valid recovery OTP for an existing user via the admin API,
+ * without actually sending an email --- lets the password-reset e2e tests
+ * exercise the real verifyOtp()/updateUser() flow without depending on
+ * inbox delivery (same reason signUp() below needs a real address it can
+ * reach).
+ */
+export async function generateRecoveryOtp(email: string): Promise<string> {
+  const admin = adminClient();
+
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: "recovery",
+    email,
+  });
+
+  if (error || !data.properties?.email_otp) {
+    throw new Error(`Impossibile generare un codice di recupero: ${error?.message}`);
+  }
+
+  return data.properties.email_otp;
+}
+
+/**
  * Deletes any existing auth user with the given email, if one exists.
  * Used to make the real signUp() e2e test repeatable when it must use a
  * fixed, real email address (see E2E_REGISTRATION_TEST_EMAIL in
- * README.md --- Resend's unverified sender can only deliver to the
- * Supabase project owner's own address).
+ * README.md --- a dedicated test address, not anyone's personal one:
+ * this wipes and recreates whatever account sits at that address on
+ * every run).
  */
 export async function deleteUserByEmail(email: string): Promise<void> {
   const admin = adminClient();

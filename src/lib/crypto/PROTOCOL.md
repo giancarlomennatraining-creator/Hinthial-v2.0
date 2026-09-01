@@ -43,7 +43,7 @@ Document Key (DK) ---encrypts---> document plaintext
   PBKDF2-HMAC-SHA256 (`deriveKeyFromPassword`), using a random salt and
   a high iteration count (`PBKDF2_ITERATIONS`, see FASE 3 note below).
   Used only to wrap/unwrap MK. Never stored, never sent anywhere.
-- **Recovery Key (RK)**: 384 bits of randomness (deliberately more than
+- **Recovery Key (RK)**: 3072 bits of randomness (deliberately more than
   the 256 bits an AES-256 key needs --- HKDF condenses any amount of
   good input entropy down to the required output length; the extra
   length just makes the transcribed secret more visibly "random",

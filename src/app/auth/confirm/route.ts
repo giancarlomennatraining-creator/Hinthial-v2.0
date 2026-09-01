@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
     if (!error) {
-      return NextResponse.redirect(`${origin}/verifica-account`);
+      return NextResponse.redirect(`${origin}/verify-account`);
     }
   }
 
-  return NextResponse.redirect(`${origin}/verifica-account?errore=1`);
+  return NextResponse.redirect(`${origin}/verify-account?error=1`);
 }

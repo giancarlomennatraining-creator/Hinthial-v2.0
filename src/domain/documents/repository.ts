@@ -18,14 +18,10 @@ import {
   uploadEncryptedPayload,
 } from "@/lib/storage/documents-bucket";
 import { logAuditEvent } from "@/lib/audit/log-event";
-import type {
-  Category,
-  DocumentListItem,
-  DocumentMetadataInput,
-} from "@/domain/documents/types";
+import type { DocumentListItem, DocumentMetadataInput } from "@/domain/documents/types";
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, expires_at, encrypted_notes, encrypted_tags, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, created_at";
 
 type DocumentRow = {
   id: string;
@@ -35,6 +31,7 @@ type DocumentRow = {
   mime_type: string;
   size: number;
   category_id: string | null;
+  related_asset_id: string | null;
   expires_at: string | null;
   encrypted_notes: string | null;
   encrypted_tags: string | null;
@@ -87,6 +84,7 @@ async function toDocumentListItem(
     mimeType: row.mime_type,
     size: row.size,
     categoryId: row.category_id,
+    relatedAssetId: row.related_asset_id,
     createdAt: row.created_at,
     storagePath: row.storage_path,
     wrappedDocumentKey: row.wrapped_document_key,
@@ -94,18 +92,6 @@ async function toDocumentListItem(
     notes,
     tags,
   };
-}
-
-export async function listCategories(supabase: SupabaseClient<Database>): Promise<Category[]> {
-  const { data, error } = await supabase
-    .from("categories")
-    .select("id, name, icon")
-    .order("name");
-
-  if (error) {
-    throw new Error(`Impossibile caricare le categorie: ${error.message}`);
-  }
-  return data ?? [];
 }
 
 /**
@@ -125,6 +111,29 @@ export async function listDocuments(
 
   if (error) {
     throw new Error(`Impossibile caricare i documenti: ${error.message}`);
+  }
+
+  return Promise.all((data ?? []).map((row) => toDocumentListItem(masterKey, row)));
+}
+
+/**
+ * Fetches a specific set of documents by id (e.g. capsule attachments
+ * linking to existing vault documents, FASE 8), decrypting each client-
+ * side. Ids that no longer exist (or belong to someone else, filtered
+ * out by RLS) are silently omitted --- callers should treat a shorter
+ * result as "some referenced documents are gone", not an error.
+ */
+export async function getDocumentsByIds(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  ids: string[],
+): Promise<DocumentListItem[]> {
+  if (ids.length === 0) return [];
+
+  const { data, error } = await supabase.from("documents").select(DOCUMENT_COLUMNS).in("id", ids);
+
+  if (error) {
+    throw new Error(`Impossibile caricare i documenti collegati: ${error.message}`);
   }
 
   return Promise.all((data ?? []).map((row) => toDocumentListItem(masterKey, row)));
@@ -167,6 +176,7 @@ export async function uploadDocument(
     mime_type: file.type || "application/octet-stream",
     size: file.size,
     category_id: metadata.categoryId,
+    related_asset_id: metadata.relatedAssetId,
     expires_at: metadata.expiresAt,
     encrypted_notes: encryptedNotes,
     encrypted_tags: encryptedTags,
@@ -201,6 +211,7 @@ export async function updateDocumentMetadata(
     .from("documents")
     .update({
       category_id: metadata.categoryId,
+      related_asset_id: metadata.relatedAssetId,
       expires_at: metadata.expiresAt,
       encrypted_notes: encryptedNotes,
       encrypted_tags: encryptedTags,

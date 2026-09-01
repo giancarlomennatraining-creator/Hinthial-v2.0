@@ -83,6 +83,6 @@ describe("master key setup + unlock", () => {
 
   it("shows the recovery key formatted, ready for the user to transcribe", async () => {
     const setup = await setupWithFastPbkdf2("correct horse battery staple");
-    expect(setup.recoveryKey.formatted).toMatch(/^[0-9A-F]{4}(-[0-9A-F]{4}){23}$/);
+    expect(setup.recoveryKey.formatted).toMatch(/^[0-9A-F]{4}(-[0-9A-F]{4}){191}$/);
   });
 });

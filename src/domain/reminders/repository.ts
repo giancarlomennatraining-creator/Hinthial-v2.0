@@ -11,7 +11,7 @@ import {
 import type { ReminderInput, ReminderListItem } from "@/domain/reminders/types";
 
 const REMINDER_COLUMNS =
-  "id, encrypted_title, due_at, completed, related_document_id, created_at, documents(encrypted_filename)";
+  "id, encrypted_title, due_at, completed, related_document_id, related_asset_id, created_at, documents(encrypted_filename), assets(encrypted_name)";
 
 type ReminderRow = {
   id: string;
@@ -19,13 +19,15 @@ type ReminderRow = {
   due_at: string;
   completed: boolean;
   related_document_id: string | null;
+  related_asset_id: string | null;
   created_at: string;
   documents: { encrypted_filename: string } | { encrypted_filename: string }[] | null;
+  assets: { encrypted_name: string } | { encrypted_name: string }[] | null;
 };
 
-function relatedDocument(row: ReminderRow): { encrypted_filename: string } | null {
-  if (!row.documents) return null;
-  return Array.isArray(row.documents) ? (row.documents[0] ?? null) : row.documents;
+function firstOrSelf<T>(value: T | T[] | null): T | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
 async function toReminderListItem(
@@ -33,10 +35,16 @@ async function toReminderListItem(
   row: ReminderRow,
 ): Promise<ReminderListItem> {
   const titleBytes = await decryptBytes(masterKey, parseEnvelope(row.encrypted_title));
-  const doc = relatedDocument(row);
-  const relatedDocumentFilename = doc
-    ? bytesToUtf8(await decryptBytes(masterKey, parseEnvelope(doc.encrypted_filename)))
-    : null;
+  const doc = firstOrSelf(row.documents);
+  const asset = firstOrSelf(row.assets);
+  const [relatedDocumentFilename, relatedAssetName] = await Promise.all([
+    doc
+      ? decryptBytes(masterKey, parseEnvelope(doc.encrypted_filename)).then(bytesToUtf8)
+      : Promise.resolve(null),
+    asset
+      ? decryptBytes(masterKey, parseEnvelope(asset.encrypted_name)).then(bytesToUtf8)
+      : Promise.resolve(null),
+  ]);
 
   return {
     id: row.id,
@@ -45,6 +53,8 @@ async function toReminderListItem(
     completed: row.completed,
     relatedDocumentId: row.related_document_id,
     relatedDocumentFilename,
+    relatedAssetId: row.related_asset_id,
+    relatedAssetName,
     createdAt: row.created_at,
   };
 }
@@ -83,6 +93,7 @@ export async function createReminder(
     encrypted_title: serializeEnvelope(encryptedTitle),
     due_at: input.dueAt,
     related_document_id: input.relatedDocumentId,
+    related_asset_id: input.relatedAssetId,
   });
 
   if (error) {

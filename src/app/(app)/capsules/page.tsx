@@ -1,10 +1,13 @@
-import { PlaceholderSection } from "@/components/ui/PlaceholderSection";
+"use client";
+
+import { Suspense } from "react";
+import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
+import { CapsulesPanel } from "@/components/capsules/CapsulesPanel";
 
 export default function CapsulesPage() {
   return (
-    <PlaceholderSection
-      title="Capsule"
-      description="Qui potrai preparare contenuti cifrati da condividere con un destinatario in condizioni definite da te. Questa sezione sarà sviluppata in FASE 8."
-    />
+    <Suspense>
+      <RequireMasterKey>{(masterKey) => <CapsulesPanel masterKey={masterKey} />}</RequireMasterKey>
+    </Suspense>
   );
 }

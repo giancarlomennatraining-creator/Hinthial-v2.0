@@ -9,10 +9,10 @@ import { utf8ToBytes, bytesToUtf8 } from "@/lib/crypto/codec";
 import { InvalidFormatError, DecryptionError } from "@/lib/crypto/errors";
 
 describe("recovery key", () => {
-  it("generates a 384-bit key formatted as dash-grouped hex", () => {
+  it("generates a 3072-bit key formatted as 192 dash-grouped quartets of hex", () => {
     const { raw, formatted } = generateRecoveryKey();
-    expect(raw.length).toBe(48);
-    expect(formatted).toMatch(/^[0-9A-F]{4}(-[0-9A-F]{4}){23}$/);
+    expect(raw.length).toBe(384);
+    expect(formatted).toMatch(/^[0-9A-F]{4}(-[0-9A-F]{4}){191}$/);
   });
 
   it("generates a different key every time", () => {

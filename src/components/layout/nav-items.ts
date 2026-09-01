@@ -10,10 +10,11 @@ export interface NavItem {
  */
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Documenti", href: "/documenti" },
+  { label: "Documenti", href: "/documents" },
   { label: "Scadenze", href: "/reminders" },
   { label: "Asset", href: "/assets" },
   { label: "Contatti", href: "/contacts" },
   { label: "Capsule", href: "/capsules" },
+  { label: "Importa/Esporta", href: "/import-export" },
   { label: "AI", href: "/ai" },
 ];

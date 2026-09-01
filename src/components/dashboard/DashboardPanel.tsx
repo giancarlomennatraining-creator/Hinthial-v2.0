@@ -24,6 +24,19 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
           Questa è la tua dashboard: scadenze, documenti recenti e attività da
           completare.
         </p>
+        {status.kind !== "checking" ? (
+          <span
+            className={
+              status.kind === "not-set-up"
+                ? "mt-3 inline-block rounded-full bg-orange-100 px-2.5 py-1 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-400"
+                : "mt-3 inline-block rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-400"
+            }
+          >
+            {status.kind === "not-set-up"
+              ? "⚠️ Master password non ancora creata"
+              : "✅ Master password creata · recovery key salvata"}
+          </span>
+        ) : null}
       </div>
 
       {status.kind === "unlocked" ? (
@@ -38,7 +51,7 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
               : "Sblocca la cifratura per vedere le tue scadenze e i tuoi documenti recenti."}
           </p>
           <Link
-            href="/documenti"
+            href="/documents"
             className="mt-2 inline-block text-sm font-medium text-brand hover:underline"
           >
             Vai a Documenti

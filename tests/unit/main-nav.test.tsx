@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { MainNav } from "@/components/layout/MainNav";
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/documenti",
+  usePathname: () => "/documents",
 }));
 
 describe("MainNav", () => {

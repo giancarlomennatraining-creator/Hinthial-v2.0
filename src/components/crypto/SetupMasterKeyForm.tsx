@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { TextField } from "@/components/ui/TextField";
+import { saveBlobAsFile } from "@/lib/download";
 import type { MasterKeySetup } from "@/lib/crypto";
 
 type PendingSetup = { setup: MasterKeySetup; masterKey: CryptoKey };
@@ -13,6 +14,7 @@ export function SetupMasterKeyForm() {
   const [confirmedSaved, setConfirmedSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,6 +44,39 @@ export function SetupMasterKeyForm() {
     }
   }
 
+  async function handleCopy() {
+    if (!pending) return;
+    setError(null);
+    try {
+      await navigator.clipboard.writeText(pending.setup.recoveryKey.formatted);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError("Impossibile copiare negli appunti. Copiala manualmente.");
+    }
+  }
+
+  function handleDownload() {
+    if (!pending) return;
+    setError(null);
+
+    const text = [
+      "HINTHIAL --- Recovery key",
+      `Generata il ${new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}`,
+      "",
+      pending.setup.recoveryKey.formatted,
+      "",
+      "Conservala in un posto sicuro (offline, non nella posta elettronica).",
+      "Se dimentichi la master password, solo questa recovery key potrà farti",
+      "recuperare i tuoi documenti. HINTHIAL non la conserva da nessuna parte.",
+    ].join("\n");
+
+    saveBlobAsFile(
+      new Blob([text], { type: "text/plain;charset=utf-8" }),
+      "hinthial-recovery-key.txt",
+    );
+  }
+
   async function handleConfirm() {
     if (!pending) return;
     setError(null);
@@ -69,9 +104,27 @@ export function SetupMasterKeyForm() {
           </p>
         </div>
 
-        <code className="break-all rounded-md bg-zinc-100 p-4 text-center text-sm font-mono text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
-          {pending.setup.recoveryKey.formatted}
-        </code>
+        <div className="flex flex-col gap-2">
+          <code className="break-all rounded-md bg-zinc-100 p-4 text-center text-sm font-mono text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
+            {pending.setup.recoveryKey.formatted}
+          </code>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            >
+              ⬇️ Scarica come .txt
+            </button>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            >
+              {copied ? "✓ Copiata" : "📋 Copia negli appunti"}
+            </button>
+          </div>
+        </div>
 
         <label className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
           <input

@@ -1,9 +1,3 @@
-export interface Category {
-  id: string;
-  name: string;
-  icon: string;
-}
-
 /**
  * A document as used by the UI: `filename`/`notes`/`tags` are already
  * decrypted client-side (for display); `wrappedDocumentKey`/
@@ -16,6 +10,8 @@ export interface DocumentListItem {
   mimeType: string;
   size: number;
   categoryId: string | null;
+  /** FASE 6: the asset (if any) this document belongs to. */
+  relatedAssetId: string | null;
   createdAt: string;
   storagePath: string;
   wrappedDocumentKey: string;
@@ -29,6 +25,7 @@ export interface DocumentListItem {
 /** Fields collected at upload time, in addition to the file itself. */
 export interface DocumentMetadataInput {
   categoryId: string | null;
+  relatedAssetId: string | null;
   expiresAt: string | null;
   notes: string;
   tags: string[];

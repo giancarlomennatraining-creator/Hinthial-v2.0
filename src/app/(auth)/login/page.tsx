@@ -41,6 +41,13 @@ export default function LoginPage() {
           required
         />
 
+        <Link
+          href="/forgot-password"
+          className="-mt-2 self-end text-xs font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+        >
+          Password dimenticata?
+        </Link>
+
         {state.error ? (
           <p role="alert" className="text-sm text-red-600 dark:text-red-400">
             {state.error}

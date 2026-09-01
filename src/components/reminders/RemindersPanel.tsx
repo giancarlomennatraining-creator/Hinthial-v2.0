@@ -1,16 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
-import {
-  createReminder,
-  deleteReminder,
-  listReminders,
-  setReminderCompleted,
-} from "@/domain/reminders/repository";
-import { listDocuments } from "@/domain/documents/repository";
+import { deleteReminder, listReminders, setReminderCompleted } from "@/domain/reminders/repository";
 import type { ReminderListItem } from "@/domain/reminders/types";
-import type { DocumentListItem } from "@/domain/documents/types";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -32,23 +27,25 @@ function dueStatus(dueAt: string, completed: boolean): "overdue" | "soon" | "ok"
 
 export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [reminders, setReminders] = useState<ReminderListItem[]>([]);
-  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  // "?created=1" arriva da /reminders/new dopo un salvataggio riuscito ---
+  // v. CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
+  const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
+  useEffect(() => {
+    if (showCreatedMessage) router.replace("/reminders");
+  }, [showCreatedMessage, router]);
 
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [remindersResult, documentsResult] = await Promise.all([
-        listReminders(supabase, masterKey),
-        listDocuments(supabase, masterKey),
-      ]);
-      setReminders(remindersResult);
-      setDocuments(documentsResult);
+      setReminders(await listReminders(supabase, masterKey));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare le scadenze.");
     } finally {
@@ -57,49 +54,10 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   }, [supabase, masterKey]);
 
   useEffect(() => {
-    // See DocumentiPanel.tsx for why fetch-on-mount is legitimate here.
+    // See DocumentsPanel.tsx for why fetch-on-mount is legitimate here.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
-
-  async function handleCreate(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-
-    // Captured now: React nulls out event.currentTarget once the
-    // synchronous dispatch finishes, which has already happened by the
-    // time an `await` below resumes.
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const title = String(formData.get("title") ?? "").trim();
-    const dueAt = String(formData.get("dueAt") ?? "");
-    const relatedDocumentId = String(formData.get("relatedDocumentId") ?? "") || null;
-
-    if (!title || !dueAt) {
-      setError("Inserisci almeno un titolo e una data.");
-      return;
-    }
-
-    setCreating(true);
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Devi essere autenticato.");
-
-      await createReminder(supabase, masterKey, user.id, {
-        title,
-        dueAt: new Date(dueAt).toISOString(),
-        relatedDocumentId,
-      });
-      form.reset();
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile creare la scadenza.");
-    } finally {
-      setCreating(false);
-    }
-  }
 
   async function handleToggleCompleted(reminder: ReminderListItem) {
     setBusyId(reminder.id);
@@ -133,75 +91,26 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-          Scadenze
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Promemoria per le date importanti, cifrati come tutto il resto.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+            Scadenze
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Promemoria per le date importanti, cifrati come tutto il resto.
+          </p>
+        </div>
+        <Link
+          href="/reminders/new"
+          className="shrink-0 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+        >
+          + Crea scadenza
+        </Link>
       </div>
 
-      <form
-        onSubmit={handleCreate}
-        className="flex flex-wrap items-end gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
-      >
-        <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
-          <label htmlFor="title" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-            Titolo
-          </label>
-          <input
-            id="title"
-            name="title"
-            type="text"
-            required
-            placeholder="es. Rinnovo assicurazione auto"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="dueAt" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-            Data
-          </label>
-          <input
-            id="dueAt"
-            name="dueAt"
-            type="date"
-            required
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor="relatedDocumentId"
-            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-          >
-            Documento collegato
-          </label>
-          <select
-            id="relatedDocumentId"
-            name="relatedDocumentId"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-          >
-            <option value="">Nessuno</option>
-            {documents.map((doc) => (
-              <option key={doc.id} value={doc.id}>
-                {doc.filename}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <button
-          type="submit"
-          disabled={creating}
-          className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-        >
-          {creating ? "Creazione…" : "Aggiungi scadenza"}
-        </button>
-      </form>
+      {showCreatedMessage ? (
+        <p className="text-sm text-lime-700 dark:text-lime-400">✅ Scadenza creata.</p>
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -214,7 +123,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
       ) : reminders.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Nessuna scadenza ancora. Aggiungine una qui sopra.
+            Nessuna scadenza ancora. Aggiungine una col tasto qui sopra.
           </p>
         </div>
       ) : (
@@ -255,6 +164,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
                         {formatDate(reminder.dueAt)}
                       </span>
                       {reminder.relatedDocumentFilename ? ` · ${reminder.relatedDocumentFilename}` : ""}
+                      {reminder.relatedAssetName ? ` · 🔗 ${reminder.relatedAssetName}` : ""}
                     </p>
                   </span>
                 </label>

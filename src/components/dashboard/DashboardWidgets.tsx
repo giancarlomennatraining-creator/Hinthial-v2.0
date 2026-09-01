@@ -42,7 +42,7 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
   }, [supabase, masterKey]);
 
   useEffect(() => {
-    // See DocumentiPanel.tsx for why fetch-on-mount is legitimate here.
+    // See DocumentsPanel.tsx for why fetch-on-mount is legitimate here.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
@@ -75,7 +75,7 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
       <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Nessun contenuto ancora. Inizia da{" "}
-          <Link href="/documenti" className="font-medium text-brand hover:underline">
+          <Link href="/documents" className="font-medium text-brand hover:underline">
             Documenti
           </Link>{" "}
           per aggiungere il tuo primo documento.
@@ -131,7 +131,7 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
           </ul>
         )}
         <Link
-          href="/documenti"
+          href="/documents"
           className="mt-3 inline-block text-xs font-medium text-brand hover:underline"
         >
           Vai ai documenti

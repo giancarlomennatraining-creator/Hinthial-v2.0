@@ -17,7 +17,7 @@ function toHexGroups(bytes: Uint8Array): string {
   return (hex.match(/.{1,4}/g) ?? []).join("-");
 }
 
-/** Generates a new 384-bit recovery key. */
+/** Generates a new 3072-bit recovery key. */
 export function generateRecoveryKey(): RecoveryKey {
   const raw = randomBytes(RECOVERY_KEY_LENGTH_BYTES);
   return { raw, formatted: toHexGroups(raw) };

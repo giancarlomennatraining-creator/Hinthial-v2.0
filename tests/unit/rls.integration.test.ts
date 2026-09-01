@@ -34,12 +34,14 @@ describe.runIf(canRun)("RLS --- profiles & audit_events", () => {
   const userA = {
     email: `hinthial-rls-a-${suffix}@example.com`,
     password: "Rls-Test-Password-1",
-    displayName: "RLS Test A",
+    firstName: "RLS",
+    lastName: "Test A",
   };
   const userB = {
     email: `hinthial-rls-b-${suffix}@example.com`,
     password: "Rls-Test-Password-2",
-    displayName: "RLS Test B",
+    firstName: "RLS",
+    lastName: "Test B",
   };
 
   let userAId = "";
@@ -54,7 +56,7 @@ describe.runIf(canRun)("RLS --- profiles & audit_events", () => {
       email: userA.email,
       password: userA.password,
       email_confirm: true,
-      user_metadata: { display_name: userA.displayName },
+      user_metadata: { first_name: userA.firstName, last_name: userA.lastName },
     });
     if (createdA.error || !createdA.data.user) {
       throw new Error(
@@ -67,7 +69,7 @@ describe.runIf(canRun)("RLS --- profiles & audit_events", () => {
       email: userB.email,
       password: userB.password,
       email_confirm: true,
-      user_metadata: { display_name: userB.displayName },
+      user_metadata: { first_name: userB.firstName, last_name: userB.lastName },
     });
     if (createdB.error || !createdB.data.user) {
       throw new Error(
@@ -105,12 +107,16 @@ describe.runIf(canRun)("RLS --- profiles & audit_events", () => {
   it("auto-creates a profile row for a new user via the signup trigger", async () => {
     const { data, error } = await clientA
       .from("profiles")
-      .select("id, display_name")
+      .select("id, first_name, last_name")
       .eq("id", userAId)
       .single();
 
     expect(error).toBeNull();
-    expect(data).toMatchObject({ id: userAId, display_name: userA.displayName });
+    expect(data).toMatchObject({
+      id: userAId,
+      first_name: userA.firstName,
+      last_name: userA.lastName,
+    });
   });
 
   it("lets a user read their own profile but not someone else's", async () => {
@@ -127,7 +133,7 @@ describe.runIf(canRun)("RLS --- profiles & audit_events", () => {
   it("prevents a user from updating another user's profile", async () => {
     const { data, error } = await clientA
       .from("profiles")
-      .update({ display_name: "Hacked" })
+      .update({ first_name: "Hacked" })
       .eq("id", userBId)
       .select();
 
@@ -136,10 +142,10 @@ describe.runIf(canRun)("RLS --- profiles & audit_events", () => {
 
     const { data: stillOriginal } = await admin
       .from("profiles")
-      .select("display_name")
+      .select("first_name")
       .eq("id", userBId)
       .single();
-    expect(stillOriginal?.display_name).toBe(userB.displayName);
+    expect(stillOriginal?.first_name).toBe(userB.firstName);
   });
 
   it("lets a user insert their own audit event but not one owned by someone else", async () => {

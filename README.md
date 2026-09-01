@@ -14,8 +14,9 @@ Lo sviluppo segue la spec di prodotto/tecnica in
 
 **FASE 0 --- Bootstrap**, **FASE 1 --- Shell dell'app**,
 **FASE 2 --- Supabase Auth + database**, **FASE 3 --- Crypto foundation**,
-**FASE 4 --- Vault documentale** e **FASE 5 --- Metadata e scadenze**
-completate.
+**FASE 4 --- Vault documentale**, **FASE 5 --- Metadata e scadenze**,
+**FASE 6 --- Asset e relazioni**, **FASE 7 --- Contatto fiduciario** e
+**FASE 8 --- Capsule digitali v1** completate.
 
 La FASE 2 sostituisce l'autenticazione mockata della FASE 1 con
 **Supabase Auth reale**: registrazione, login, logout, gestione sessione
@@ -39,7 +40,7 @@ production-ready senza revisione di sicurezza professionale** resta
 vero (vedi il protocollo per i punti aperti).
 
 La FASE 4 collega finalmente tutto in **Documenti**
-(`/documenti`, `src/app/(app)/documenti/`): al primo accesso l'utente
+(`/documents`, `src/app/(app)/documents/`): al primo accesso l'utente
 crea una **master password** (diversa dalla password dell'account) che
 genera la Master Key e mostra una **recovery key** una sola volta
 (`src/components/crypto/`); da quel momento la Master Key resta solo in
@@ -59,7 +60,7 @@ robustezza della password in tempo reale, con la lista dei criteri
 soddisfatti man mano che si digita (`src/lib/auth/password-strength.ts`,
 non blocca l'invio oltre al minimo di 8 caratteri già richiesto --- è
 solo un aiuto visivo). Il link di conferma email ora atterra su una
-pagina dedicata (`/verifica-account`) con un pulsante verso il login,
+pagina dedicata (`/verify-account`) con un pulsante verso il login,
 invece che sull'endpoint di verifica ospitato da Supabase (richiede
 configurazione manuale nel Dashboard, vedi sezione Setup).
 
@@ -72,9 +73,45 @@ data, stato completato/non completato, collegabili opzionalmente a un
 documento. La **Dashboard** mostra ora 3 widget (prossime scadenze,
 documenti recenti, elementi da completare/scaduti) quando la
 cifratura è sbloccata; il saluto resta visibile comunque, con un
-prompt a sbloccare/configurare se serve. "Relazione con asset" (sezione
-5 della spec) è rimandata alla FASE 6, quando l'entità Asset esisterà:
-per ora un reminder può collegarsi solo a un documento.
+prompt a sbloccare/configurare se serve --- e segnala anche se la
+cifratura è già stata configurata (master password creata e recovery
+key salvata).
+
+La FASE 6 introduce l'entità **Asset** (`/assets`): un inventario
+semplice (nome cifrato, categoria opzionale) a cui collegare documenti
+e scadenze --- generalizzando il legame reminder→documento della FASE
+5, non sostituendolo. Ogni asset mostra i documenti e le scadenze
+collegati; eliminarlo li scollega (non li cancella). Le **categorie**
+(`categories`, seedate alla registrazione) sono ora un'entità gestibile
+dall'utente --- creazione, modifica, eliminazione da **Impostazioni**
+(`/settings`, raggiungibile dal menu utente) --- non più solo la
+tassonomia fissa iniziale.
+
+**Rifiniture successive**: recupero password via codice OTP via email
+(`/forgot-password`), con lo stesso indicatore di robustezza della
+registrazione al passo finale di reimpostazione. **Impostazioni**
+(`/settings`) è ora organizzata a schede: "Informazioni utente" (nome/
+cognome, salvati su `profiles`; email, gestita separatamente tramite
+`supabase.auth.updateUser()` --- richiede conferma, non cambia subito)
+e "Categorie" (invariata).
+
+La FASE 7 introduce il **Contatto fiduciario** (`/contacts`,
+`trusted_contacts`): nome ed email cifrati con la Master Key, ruolo
+libero (es. "Coniuge"), stato (`pending` → `active`/`revoked`) gestito
+manualmente. Per esplicita indicazione della spec, questa fase **non**
+implementa alcuno sblocco automatico dei dati --- è solo la struttura
+dati e la UI di gestione, propedeutiche a un'autorizzazione futura.
+
+La FASE 8 introduce le **Capsule** (`/capsules`, `capsules`): titolo,
+contenuto e allegati (a numero libero, ciascuno con una propria
+Document Key come i documenti in FASE 4) vivono insieme in un unico
+`encrypted_payload` cifrato con la Master Key --- coerente con
+l'entità Capsule di sezione 5, un solo campo cifrato invece di uno per
+campo. Destinatario opzionale collegato a un contatto fiduciario
+(FASE 7). Stato manuale **Bozza → Pronta → Condivisa**; niente
+editing dopo la creazione in v1 (solo cambi di stato ed eliminazione).
+"Condividi" resta solo un cambio di stato registrato: **niente Dead
+Man's Switch** in questa fase, per esplicita indicazione della spec.
 
 ## Stack
 
@@ -86,30 +123,45 @@ per ora un reminder può collegarsi solo a un documento.
 
 ## Struttura del repository
 
+Nomi di file/cartelle/URL in inglese (coerente col resto del codice);
+l'italiano resta solo per ciò che l'utente vede --- label di
+navigazione, testi, messaggi.
+
 ```text
 src/
   app/            # route Next.js (App Router)
-    (auth)/         # login, registrazione --- nessuna sessione richiesta
-    (app)/          # dashboard, documenti, reminders, assets, contacts,
+    (auth)/         # login, register, forgot-password(/verify,/new),
+                     # check-email, verify-account --- nessuna sessione richiesta
+    (app)/          # dashboard, documents, reminders, assets, contacts,
                      # capsules, ai, settings --- layout condiviso che
                      # richiede una sessione Supabase valida
-  components/     # componenti UI
-    ui/
-    layout/
+    auth/confirm/   # Route Handler per il link di conferma email
+  components/     # componenti UI, per feature (a specchio di domain/)
+    ui/             # TextField, PasswordStrengthMeter, PlaceholderSection, ...
+    layout/         # AppShell, MainNav, UserMenu, nav-items
     crypto/         # sessione Master Key: provider, form di setup/sblocco (FASE 4)
-    documenti/      # pannello lista/upload/apri/elimina/modifica (FASE 4-5)
+    documents/      # pannello lista/upload/apri/elimina/modifica (FASE 4-5)
     reminders/      # pannello scadenze: crea/completa/elimina (FASE 5)
-    dashboard/      # saluto + 3 widget, gated separatamente dai widget (FASE 5)
-  lib/            # infrastruttura
-    auth/           # Server Actions (signUp/signIn/signOut), current-user
+    assets/         # pannello asset: crea/modifica/elimina, relazioni (FASE 6)
+    contacts/       # pannello contatti fiduciari: crea/attiva/revoca/elimina (FASE 7)
+    capsules/       # pannello capsule: crea (con allegati), avanza stato, elimina (FASE 8)
+    settings/       # schede Informazioni utente + Categorie
+    dashboard/      # saluto + stato cifratura + 3 widget (FASE 5)
+  lib/            # infrastruttura generica, non legata a una singola feature
+    auth/           # Server Actions (signUp/signIn/signOut/reset password), current-user
     db/supabase/    # client Supabase (browser/server/middleware)
     crypto/         # modulo di cifratura isolato (FASE 3) + PROTOCOL.md
-    storage/        # bucket Storage per i payload cifrati (FASE 4)
+    storage/        # bucket Storage per i payload cifrati (documenti FASE 4, allegati capsule FASE 8)
     audit/          # log-event.ts --- eventi tecnici non sensibili
     ai/             # FASE 10+
-  domain/
-    documents/      # tipi + repository (FASE 4-5): categorie, upload/apri/elimina/modifica
-    reminders/      # tipi + repository (FASE 5): crea/completa/elimina
+  domain/         # tipi + repository per entità, un fetch/CRUD alla volta
+    documents/      # upload/apri/elimina/modifica, note/tag/scadenza cifrati
+    reminders/      # crea/completa/elimina
+    assets/         # crea/modifica/elimina (FASE 6)
+    categories/     # crea/modifica/elimina --- in chiaro, non richiede la Master Key
+    contacts/       # crea/attiva/revoca/elimina, nessuno sblocco dati (FASE 7)
+    capsules/       # crea (payload unico cifrato + allegati), avanza stato, elimina (FASE 8)
+    profile/        # nome/cognome (Impostazioni --- Informazioni utente)
   types/          # tipi condivisi (incl. supabase.ts, schema del DB)
   proxy.ts        # refresh della sessione Supabase su ogni richiesta
 
@@ -118,8 +170,14 @@ tests/
     crypto/         # test del modulo di cifratura (FASE 3)
     rls.integration.test.ts  # RLS su DB reale
   e2e/
-    documenti.spec.ts  # setup master key, upload, apertura, eliminazione (FASE 4)
-    scadenze.spec.ts   # reminder, metadati documento, widget dashboard (FASE 5)
+    documents.spec.ts    # setup master key, upload, apertura, eliminazione (FASE 4)
+    reminders.spec.ts    # reminder, metadati documento, widget dashboard (FASE 5)
+    assets.spec.ts        # asset, relazioni con documenti/scadenze (FASE 6)
+    categories.spec.ts    # CRUD categorie, avviso in caso di uso, selettore icone
+    contacts.spec.ts      # contatto fiduciario, stato pending/active/revoked (FASE 7)
+    capsules.spec.ts      # capsula con destinatario/allegato, stato bozza/pronta/condivisa (FASE 8)
+    password-reset.spec.ts  # recupero password via OTP
+    user-info.spec.ts     # schede Impostazioni, modifica nome/cognome/email
 
 supabase/
   migrations/     # migration SQL, applicate con `supabase db push`
@@ -162,7 +220,14 @@ cp .env.example .env.local
      (il link di default punta all'endpoint `/verify` ospitato da
      Supabase, che non imposta il cookie di sessione nel modo giusto per
      questo setup SSR).
-5. **Consigliato**: configura un provider SMTP personalizzato (es.
+5. **Recupero password** (`/forgot-password`, flusso a codice OTP,
+   non a link): in **Authentication → Emails → Templates → Reset
+   Password**, personalizza il template per mostrare il codice invece
+   del solo link, es. aggiungendo
+   `<p>Il tuo codice di verifica è: <strong>{{ .Token }}</strong></p>`.
+   `{{ .Token }}` è il codice a 6 cifre che l'utente inserisce nella
+   pagina di verifica; il template di default non lo mostra.
+6. **Consigliato**: configura un provider SMTP personalizzato (es.
    [Resend](https://resend.com), gratuito) in **Authentication → SMTP Settings**.
    Il mailer condiviso di Supabase è limitato a **2 email/ora**, un limite che si
    esaurisce quasi subito durante lo sviluppo/test; con SMTP personalizzato sale
@@ -186,6 +251,19 @@ npm run typecheck     # genera i tipi delle route Next.js + TypeScript in modali
 npm run test           # unit test (Vitest), incl. il test di integrazione RLS se .env.local è configurato
 npm run test:watch     # unit test in watch mode
 npm run test:e2e        # end-to-end test (Playwright; esegue build + start automaticamente)
+npm run dev:https       # come npm run dev, ma su HTTPS --- serve per aprire l'app da altri
+                        # dispositivi sulla stessa rete locale (es. per testare da smartphone):
+                        # Web Crypto (crypto.subtle, usato per la Master Key) richiede un
+                        # "secure context", che il browser concede solo a localhost oppure a
+                        # HTTPS --- un IP di LAN in HTTP semplice non basta. Richiede un
+                        # certificato locale generato una volta con mkcert (non incluso nel
+                        # repo, vedi certificates/ --- gitignored): `mkcert -install` installa
+                        # la CA locale sul PC, poi
+                        # `mkcert -key-file certificates/localhost-key.pem -cert-file certificates/localhost.pem localhost 127.0.0.1 ::1 <IP-LAN-del-PC>`.
+                        # Sul dispositivo che apre il sito da un altro device, il browser
+                        # segnalerà il certificato come non affidabile (normale, è
+                        # autofirmato): procedi comunque ("Avanzate" -> "Visita il sito") ---
+                        # la connessione resta comunque HTTPS, quindi crypto.subtle funziona.
 ```
 
 Il test e2e di registrazione (`la registrazione crea un account`) usa
@@ -228,14 +306,16 @@ Vedi [HINTHIAL_MVP.md](./HINTHIAL_MVP.md) sezione 3 per i dettagli.
 ## Cosa NON è ancora implementato
 
 Coerentemente con il piano a fasi, in questa release non sono presenti:
-asset, contatti fiduciari, capsule, export, AI. Le pagine di queste
-sezioni esistono solo come placeholder navigabili, protette da
-autenticazione reale ma senza logica di prodotto. Documenti resta
-minimale: niente rinomina/sostituzione file, niente gestione categorie
-oltre alle 10 di default. Un reminder può collegarsi solo a un
-documento --- la "relazione con asset" vera e propria arriva in FASE 6.
-Vedi sezione 12 della spec per l'elenco completo di ciò che non va
-costruito nella prima versione del prodotto.
+export, AI. Le pagine di queste sezioni esistono solo come placeholder
+navigabili, protette da autenticazione reale ma senza logica di
+prodotto. Il contatto fiduciario (FASE 7) e le capsule (FASE 8) sono
+solo struttura dati e gestione dello stato --- nessuno sblocco
+automatico dei dati né Dead Man's Switch, per esplicita indicazione
+della spec. Documenti resta minimale: niente rinomina/sostituzione del
+file caricato; le capsule non sono modificabili dopo la creazione
+(solo cambio di stato ed eliminazione). Vedi sezione 12 della spec per
+l'elenco completo di ciò che non va costruito nella prima versione del
+prodotto.
 
 ## Come contribuire (per Claude Code / agenti)
 

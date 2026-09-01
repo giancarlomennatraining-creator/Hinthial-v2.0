@@ -683,7 +683,56 @@ review.
 
 ------------------------------------------------------------------------
 
-# 11. UI / UX
+# 11. FASE 13 --- Dispositivi fidati e sblocco multi-dispositivo
+
+Solo dopo avere stabilizzato capsule e Dead Man's Switch (FASE 12).
+
+Oggi la Master Key esiste solo in memoria sul dispositivo che l'ha
+sbloccata con la master password o la recovery key --- ogni nuovo
+dispositivo deve reinserirla da capo. Questa fase introduce un secondo
+modo di sbloccarla: un dispositivo già fidato che ne autorizza uno
+nuovo, senza che il server veda mai la chiave in chiaro.
+
+Implementare progressivamente:
+
+1.  registrazione di un dispositivo fidato --- richiede comunque la
+    master password o la recovery key almeno una volta: non c'è modo
+    di aggirarlo, è la prima immissione del segreto;
+2.  blocco locale della chiave sul dispositivo fidato, protetto da
+    autenticazione biometrica della piattaforma (WebAuthn/passkey), mai
+    conservata in chiaro;
+3.  pairing tra dispositivi: il dispositivo nuovo genera una coppia di
+    chiavi effimera e la mostra come QR code; il dispositivo fidato la
+    scansiona, l'utente approva, e cifra la Master Key per quella
+    chiave effimera --- il server fa solo da tramite cieco;
+4.  elenco e revoca dei dispositivi fidati (Impostazioni).
+
+Decisione architetturale da sciogliere prima di iniziare: oggi la
+Master Key viene creata non-extractable (v. PROTOCOL.md) --- per essere
+trasmessa a un altro dispositivo deve poter essere esportata almeno
+temporaneamente, il che indebolisce quella garanzia. Va deciso
+consapevolmente come e quando concederlo.
+
+Non usare notifiche push native per l'approvazione: introducono
+frammentazione importante tra iOS e Android (su iOS funzionano solo per
+un sito installato come PWA). L'approvazione tramite QR code aperto
+manualmente nel browser copre tutti i sistemi in modo uniforme.
+
+Revocare un dispositivo dal server impedisce che approvi altri
+dispositivi in futuro, ma non cancella la chiave che aveva già in
+locale --- va previsto anche un modo per "dimenticare" un dispositivo
+dal dispositivo stesso.
+
+Ogni registrazione, approvazione e revoca deve essere auditabile.
+
+Questa funzionalità introduce per la prima volta un trasferimento di
+chiave device-to-device nel modello zero-knowledge --- richiede
+revisione di sicurezza dedicata prima di andare in produzione, allo
+stesso titolo del Dead Man's Switch.
+
+------------------------------------------------------------------------
+
+# 12. UI / UX
 
 L'app deve comunicare ordine, sicurezza e semplicità.
 
@@ -721,7 +770,7 @@ L'utente deve vedere valore immediatamente.
 
 ------------------------------------------------------------------------
 
-# 12. Cosa NON costruire nella prima versione
+# 13. Cosa NON costruire nella prima versione
 
 Non implementare:
 
@@ -743,7 +792,7 @@ L'obiettivo è costruire una base solida, non un prodotto completo.
 
 ------------------------------------------------------------------------
 
-# 13. Struttura repository suggerita
+# 14. Struttura repository suggerita
 
 ``` text
 src/
@@ -800,7 +849,7 @@ Separare sempre:
 
 ------------------------------------------------------------------------
 
-# 14. Regole per Claude Code
+# 15. Regole per Claude Code
 
 Claude Code deve lavorare **una fase alla volta**.
 
@@ -835,7 +884,7 @@ le alternative invece di prendere una decisione irreversibile.
 
 ------------------------------------------------------------------------
 
-# 15. Definition of Done
+# 16. Definition of Done
 
 Una fase è completata quando:
 
@@ -850,7 +899,7 @@ Una fase è completata quando:
 
 ------------------------------------------------------------------------
 
-# 16. Roadmap sintetica
+# 17. Roadmap sintetica
 
 ``` text
 0  Bootstrap
@@ -867,8 +916,9 @@ Una fase è completata quando:
 11 AI real + retrieval
 12 Proactive AI
 13 Dead Man's Switch
-14 Security/legal hardening
-15 Production release
+14 Dispositivi fidati e sblocco multi-dispositivo
+15 Security/legal hardening
+16 Production release
 ```
 
 La priorità è:
@@ -879,7 +929,7 @@ Non il contrario.
 
 ------------------------------------------------------------------------
 
-## 17. Stato iniziale del progetto
+## 18. Stato iniziale del progetto
 
 Partire dalla **FASE 0**.
 

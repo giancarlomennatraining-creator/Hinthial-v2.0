@@ -1,10 +1,15 @@
-import { PlaceholderSection } from "@/components/ui/PlaceholderSection";
+"use client";
+
+import { Suspense } from "react";
+import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
+import { TrustedContactsPanel } from "@/components/contacts/TrustedContactsPanel";
 
 export default function ContactsPage() {
   return (
-    <PlaceholderSection
-      title="Contatti"
-      description="Qui potrai configurare le persone di fiducia che potranno essere autorizzate in futuro. Questa sezione sarà sviluppata in FASE 7."
-    />
+    <Suspense>
+      <RequireMasterKey>
+        {(masterKey) => <TrustedContactsPanel masterKey={masterKey} />}
+      </RequireMasterKey>
+    </Suspense>
   );
 }
