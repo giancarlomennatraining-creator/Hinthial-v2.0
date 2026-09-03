@@ -8,7 +8,6 @@ import {
   deleteTrustedContact,
   listTrustedContacts,
   setTrustedContactStatus,
-  updateTrustedContact,
 } from "@/domain/contacts/repository";
 import { listCapsules } from "@/domain/capsules/repository";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -88,10 +87,6 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
-  const [editRole, setEditRole] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<TrustedContactStatus | "all">("all");
   const [page, setPage] = useState(1);
@@ -100,12 +95,14 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const { modeFor } = useListViewPreferences();
   const viewMode = modeFor("contacts");
 
-  // "?created=1" arriva da /contacts/new dopo un salvataggio riuscito ---
-  // v. CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
+  // "?created=1"/"?updated=1" arrivano da /contacts/new e da
+  // /contacts/[id]/edit dopo un salvataggio riuscito --- v.
+  // CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
+  const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
   useEffect(() => {
-    if (showCreatedMessage) router.replace("/contacts");
-  }, [showCreatedMessage, router]);
+    if (showCreatedMessage || showUpdatedMessage) router.replace("/contacts");
+  }, [showCreatedMessage, showUpdatedMessage, router]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -128,36 +125,6 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
-
-  function startEditing(contact: TrustedContactListItem) {
-    setEditingId(contact.id);
-    setEditName(contact.name);
-    setEditEmail(contact.email);
-    setEditRole(contact.role);
-  }
-
-  async function handleSaveEdit(contact: TrustedContactListItem) {
-    const name = editName.trim();
-    const email = editEmail.trim();
-    const role = editRole.trim();
-
-    if (!name || !email || !role) {
-      setError("Compila nome, email e ruolo.");
-      return;
-    }
-
-    setBusyId(contact.id);
-    setError(null);
-    try {
-      await updateTrustedContact(supabase, masterKey, contact.id, { name, email, role });
-      setEditingId(null);
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare il contatto fiduciario.");
-    } finally {
-      setBusyId(null);
-    }
-  }
 
   async function handleSetStatus(contact: TrustedContactListItem, status: TrustedContactStatus) {
     setBusyId(contact.id);
@@ -254,6 +221,9 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
       {showCreatedMessage ? (
         <p className="text-sm text-lime-700 dark:text-lime-400">✅ Contatto aggiunto.</p>
       ) : null}
+      {showUpdatedMessage ? (
+        <p className="text-sm text-lime-700 dark:text-lime-400">✅ Contatto aggiornato.</p>
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -313,83 +283,6 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
                   <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
                     {pagedContacts.map((contact) => {
                       const busy = busyId === contact.id;
-                      const isEditing = editingId === contact.id;
-
-                      if (isEditing) {
-                        return (
-                          <tr key={contact.id}>
-                            <td colSpan={6} className="p-4">
-                              <div className="flex flex-col gap-3">
-                                <div className="flex flex-wrap gap-3">
-                                  <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
-                                    <label
-                                      htmlFor={`edit-${contact.id}-name`}
-                                      className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                                    >
-                                      Nome
-                                    </label>
-                                    <input
-                                      id={`edit-${contact.id}-name`}
-                                      type="text"
-                                      value={editName}
-                                      onChange={(e) => setEditName(e.target.value)}
-                                      className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                                    />
-                                  </div>
-                                  <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
-                                    <label
-                                      htmlFor={`edit-${contact.id}-email`}
-                                      className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                                    >
-                                      Email
-                                    </label>
-                                    <input
-                                      id={`edit-${contact.id}-email`}
-                                      type="email"
-                                      value={editEmail}
-                                      onChange={(e) => setEditEmail(e.target.value)}
-                                      className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                                    />
-                                  </div>
-                                  <div className="flex flex-col gap-1">
-                                    <label
-                                      htmlFor={`edit-${contact.id}-role`}
-                                      className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                                    >
-                                      Ruolo
-                                    </label>
-                                    <input
-                                      id={`edit-${contact.id}-role`}
-                                      type="text"
-                                      value={editRole}
-                                      onChange={(e) => setEditRole(e.target.value)}
-                                      className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                                    />
-                                  </div>
-                                </div>
-                                <div className="flex gap-3">
-                                  <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() => handleSaveEdit(contact)}
-                                    className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                                  >
-                                    {busy ? "Salvataggio…" : "Salva"}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() => setEditingId(null)}
-                                    className="text-sm font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
-                                  >
-                                    Annulla
-                                  </button>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      }
 
                       return (
                         <tr key={contact.id}>
@@ -424,7 +317,7 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
                                   Revoca
                                 </RowMenuItem>
                               ) : null}
-                              <RowMenuItem disabled={busy} onClick={() => startEditing(contact)}>
+                              <RowMenuItem disabled={busy} onClick={() => router.push(`/contacts/${contact.id}/edit`)}>
                                 Modifica
                               </RowMenuItem>
                               <RowMenuItem disabled={busy} danger onClick={() => handleDelete(contact)}>
@@ -444,79 +337,6 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
             <ul className="flex flex-col divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
               {filteredContacts.map((contact) => {
                 const busy = busyId === contact.id;
-                const isEditing = editingId === contact.id;
-
-                if (isEditing) {
-                  return (
-                    <li key={contact.id} className="flex flex-col gap-3 p-4">
-                      <div className="flex flex-wrap gap-3">
-                        <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
-                          <label
-                            htmlFor={`edit-${contact.id}-name`}
-                            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                          >
-                            Nome
-                          </label>
-                          <input
-                            id={`edit-${contact.id}-name`}
-                            type="text"
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                          />
-                        </div>
-                        <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
-                          <label
-                            htmlFor={`edit-${contact.id}-email`}
-                            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                          >
-                            Email
-                          </label>
-                          <input
-                            id={`edit-${contact.id}-email`}
-                            type="email"
-                            value={editEmail}
-                            onChange={(e) => setEditEmail(e.target.value)}
-                            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label
-                            htmlFor={`edit-${contact.id}-role`}
-                            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                          >
-                            Ruolo
-                          </label>
-                          <input
-                            id={`edit-${contact.id}-role`}
-                            type="text"
-                            value={editRole}
-                            onChange={(e) => setEditRole(e.target.value)}
-                            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => handleSaveEdit(contact)}
-                          className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                        >
-                          {busy ? "Salvataggio…" : "Salva"}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => setEditingId(null)}
-                          className="text-sm font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
-                        >
-                          Annulla
-                        </button>
-                      </div>
-                    </li>
-                  );
-                }
 
                 return (
                   <li key={contact.id} className="flex items-center justify-between gap-4 p-4">
@@ -548,7 +368,7 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           Revoca
                         </RowMenuItem>
                       ) : null}
-                      <RowMenuItem disabled={busy} onClick={() => startEditing(contact)}>
+                      <RowMenuItem disabled={busy} onClick={() => router.push(`/contacts/${contact.id}/edit`)}>
                         Modifica
                       </RowMenuItem>
                       <RowMenuItem disabled={busy} danger onClick={() => handleDelete(contact)}>

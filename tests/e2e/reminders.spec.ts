@@ -93,17 +93,21 @@ test("aggiunge scadenza, tag e note a un documento e li vede in dashboard", asyn
   await expect(page.getByText("fattura")).toBeVisible();
   await expect(page.getByText("2026", { exact: true })).toBeVisible();
 
-  // Modifica: la scadenza si aggiunge qui, insieme al cambio dei tag.
+  // Modifica: pagina dedicata (come la creazione) --- la scadenza si
+  // aggiunge qui, insieme al cambio dei tag.
   const docRow = page.locator("li", { hasText: "documento-con-metadati.txt" });
   await openRowMenu(docRow);
   await page.getByRole("menuitem", { name: "Modifica" }).click();
+  await expect(page).toHaveURL(/\/archive\/[^/]+\/edit$/);
   const future = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const expiresField = page.locator('[id^="edit-"][id$="-expires"]');
-  await expiresField.fill(future);
-  const tagsField = page.locator('[id^="edit-"][id$="-tags"]');
-  await tagsField.fill("aggiornato");
-  await page.getByRole("button", { name: "Salva" }).click();
-  await expect(page.getByText("aggiornato")).toBeVisible({ timeout: 10_000 });
+  await page.getByLabel("Scadenza").fill(future);
+  await page.getByLabel("Tag (separati da virgola)").fill("aggiornato");
+  await page.getByRole("button", { name: "Salva modifiche" }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
+  await expect(page.getByText("✅ Contenuto aggiornato.")).toBeVisible();
+  // exact: true --- il messaggio di conferma appena sopra contiene
+  // "aggiornato" come sottostringa, altrimenti ambiguo con questo tag.
+  await expect(page.getByText("aggiornato", { exact: true })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText(/scade \d/)).toBeVisible();
 
   // La dashboard mostra il documento tra i recenti, e segnala la cifratura configurata.

@@ -102,10 +102,24 @@ test("crea un asset e vi collega un documento e una scadenza", async ({ page }) 
   await expect(page.getByText("📄 contratto-affitto.txt")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText(/⏰ Pagamento IMU/)).toBeVisible();
 
-  // Eliminare l'asset scollega, non elimina, documento e scadenza.
+  // Modifica: pagina dedicata (come la creazione).
   const assetRow = page.locator("li", { hasText: "Casa di Via Roma" });
-  page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(assetRow);
+  await page.getByRole("menuitem", { name: "Modifica" }).click();
+  await expect(page).toHaveURL(/\/assets\/[^/]+\/edit$/);
+  await expect(page.getByRole("heading", { name: "Modifica asset" })).toBeVisible();
+  await page.getByLabel("Nome").fill("Casa di Via Roma (rinominata)");
+  await page.getByLabel("Categoria").selectOption({ label: "🚗 Veicoli" });
+  await page.getByRole("button", { name: "Salva modifiche" }).click();
+  await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
+  await expect(page.getByText("✅ Asset aggiornato.")).toBeVisible();
+  const renamedAssetRow = page.locator("li", { hasText: "Casa di Via Roma (rinominata)" });
+  await expect(renamedAssetRow).toBeVisible({ timeout: 10_000 });
+  await expect(renamedAssetRow.getByText("🚗 Veicoli")).toBeVisible();
+
+  // Eliminare l'asset scollega, non elimina, documento e scadenza.
+  page.once("dialog", (dialog) => dialog.accept());
+  await openRowMenu(renamedAssetRow);
   await page.getByRole("menuitem", { name: "Elimina" }).click();
   await expect(page.getByText("Nessun asset ancora")).toBeVisible();
 

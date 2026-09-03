@@ -10,18 +10,13 @@ import {
   downloadCapsuleAttachment,
   listCapsules,
   setCapsuleStatus,
-  updateCapsule,
   updateCapsuleAttachmentTranscript,
 } from "@/domain/capsules/repository";
-import { listTrustedContacts } from "@/domain/contacts/repository";
-import { downloadDocument, listDocuments } from "@/domain/documents/repository";
-import { listCategories } from "@/domain/categories/repository";
+import { downloadDocument } from "@/domain/documents/repository";
 import { sortAlphabetically } from "@/lib/utils";
 import { saveBytesAsFile } from "@/lib/download";
 import { contentKindFor, CONTENT_KIND_ICON, isTranscribable } from "@/lib/content-kind";
 import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
-import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachmentPicker";
-import { ContactPicker } from "@/components/capsules/ContactPicker";
 import { CapsuleCountdown } from "@/components/capsules/CapsuleCountdown";
 import { CapsulePreview } from "@/components/capsules/CapsulePreview";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -34,9 +29,7 @@ import { useListViewPreferences } from "@/components/layout/ListViewPreferencesP
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import type { CapsuleAttachment, CapsuleListItem, CapsuleStatus } from "@/domain/capsules/types";
-import type { TrustedContactListItem } from "@/domain/contacts/types";
 import type { DocumentListItem } from "@/domain/documents/types";
-import type { Category } from "@/domain/categories/types";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -85,19 +78,10 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const searchParams = useSearchParams();
 
   const [capsules, setCapsules] = useState<CapsuleListItem[]>([]);
-  const [contacts, setContacts] = useState<TrustedContactListItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [busyAttachment, setBusyAttachment] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editContent, setEditContent] = useState("");
-  const [editOpenAt, setEditOpenAt] = useState("");
-  const [editRelatedContacts, setEditRelatedContacts] = useState<TrustedContactListItem[]>([]);
-  const [editLinkedDocuments, setEditLinkedDocuments] = useState<DocumentListItem[]>([]);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<CapsuleStatus | "all">("all");
   const [page, setPage] = useState(1);
@@ -114,29 +98,23 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const { modeFor } = useListViewPreferences();
   const viewMode = modeFor("capsules");
 
-  // "?created=1" arriva dalla pagina di creazione dedicata (/capsules/new)
-  // dopo un salvataggio riuscito --- solo un flag, mai il titolo o altro
-  // contenuto della capsula (finirebbe in chiaro nell'URL/cronologia).
-  // Letto una sola volta all'avvio (stato pigro): il messaggio non deve
-  // sparire quando subito dopo ripuliamo l'URL con router.replace.
+  // "?created=1"/"?updated=1" arrivano dalla pagina di creazione dedicata
+  // (/capsules/new) e da quella di modifica (/capsules/[id]/edit) dopo un
+  // salvataggio riuscito --- solo un flag, mai il titolo o altro contenuto
+  // della capsula (finirebbe in chiaro nell'URL/cronologia). Letti una
+  // sola volta all'avvio (stato pigro): il messaggio non deve sparire
+  // quando subito dopo ripuliamo l'URL con router.replace.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
+  const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
   useEffect(() => {
-    if (showCreatedMessage) router.replace("/capsules");
-  }, [showCreatedMessage, router]);
+    if (showCreatedMessage || showUpdatedMessage) router.replace("/capsules");
+  }, [showCreatedMessage, showUpdatedMessage, router]);
 
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [capsulesResult, contactsResult, categoriesResult, documentsResult] = await Promise.all([
-        listCapsules(supabase, masterKey),
-        listTrustedContacts(supabase, masterKey),
-        listCategories(supabase),
-        listDocuments(supabase, masterKey),
-      ]);
+      const capsulesResult = await listCapsules(supabase, masterKey);
       setCapsules(capsulesResult);
-      setContacts(contactsResult);
-      setCategories(categoriesResult);
-      setDocuments(documentsResult);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare le capsule.");
     } finally {
@@ -149,40 +127,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
-
-  function startEditing(capsule: CapsuleListItem) {
-    setEditingId(capsule.id);
-    setEditTitle(capsule.title);
-    setEditContent(capsule.content);
-    setEditOpenAt(capsule.openAt ?? "");
-    setEditRelatedContacts(capsule.relatedContacts);
-    setEditLinkedDocuments(capsule.linkedDocuments);
-  }
-
-  async function handleSaveEdit(capsule: CapsuleListItem) {
-    if (!editTitle.trim()) {
-      setError("Il titolo della capsula non può essere vuoto.");
-      return;
-    }
-
-    setBusyId(capsule.id);
-    setError(null);
-    try {
-      await updateCapsule(supabase, masterKey, capsule.id, capsule.attachments, {
-        title: editTitle.trim(),
-        content: editContent.trim(),
-        relatedContactIds: editRelatedContacts.map((c) => c.id),
-        linkedDocumentIds: editLinkedDocuments.map((d) => d.id),
-        openAt: editOpenAt || null,
-      });
-      setEditingId(null);
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare la capsula.");
-    } finally {
-      setBusyId(null);
-    }
-  }
 
   async function handleClose(capsule: CapsuleListItem) {
     const copyNote =
@@ -342,9 +286,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  // Solo contatti fiduciari ATTIVI possono essere scelti come destinatario.
-  const activeContacts = contacts.filter((c) => c.status === "active");
-
   function sortValueFor(capsule: CapsuleListItem, column: SortColumn): string {
     switch (column) {
       case "title":
@@ -412,6 +353,9 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       {showCreatedMessage ? (
         <p className="text-sm text-lime-700 dark:text-lime-400">✅ Capsula creata.</p>
+      ) : null}
+      {showUpdatedMessage ? (
+        <p className="text-sm text-lime-700 dark:text-lime-400">✅ Capsula aggiornata.</p>
       ) : null}
 
       {error ? (
@@ -482,101 +426,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                   <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
                     {pagedCapsules.map((capsule) => {
                       const busy = busyId === capsule.id;
-                      const isEditing = editingId === capsule.id;
                       const contentCount = capsule.attachments.length + capsule.linkedDocuments.length;
-
-                      if (isEditing) {
-                        return (
-                          <tr key={capsule.id}>
-                            <td colSpan={6} className="p-4">
-                              <div className="flex flex-col gap-3">
-                                <div className="flex flex-wrap gap-3">
-                                  <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
-                                    <label
-                                      htmlFor={`edit-${capsule.id}-title`}
-                                      className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                                    >
-                                      Titolo
-                                    </label>
-                                    <input
-                                      id={`edit-${capsule.id}-title`}
-                                      type="text"
-                                      value={editTitle}
-                                      onChange={(e) => setEditTitle(e.target.value)}
-                                      className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                                    />
-                                  </div>
-                                  <div className="flex flex-col gap-1">
-                                    <label
-                                      htmlFor={`edit-${capsule.id}-openAt`}
-                                      className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                                    >
-                                      Data di apertura (facoltativa)
-                                    </label>
-                                    <input
-                                      id={`edit-${capsule.id}-openAt`}
-                                      type="date"
-                                      value={editOpenAt}
-                                      onChange={(e) => setEditOpenAt(e.target.value)}
-                                      className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                                    />
-                                  </div>
-                                </div>
-
-                                <ContactPicker
-                                  idPrefix={`edit-${capsule.id}`}
-                                  contacts={activeContacts}
-                                  selected={editRelatedContacts}
-                                  onChange={setEditRelatedContacts}
-                                />
-
-                                <div className="flex flex-col gap-1">
-                                  <label
-                                    htmlFor={`edit-${capsule.id}-content`}
-                                    className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                                  >
-                                    Contenuto
-                                  </label>
-                                  <textarea
-                                    id={`edit-${capsule.id}-content`}
-                                    rows={3}
-                                    value={editContent}
-                                    onChange={(e) => setEditContent(e.target.value)}
-                                    className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                                  />
-                                </div>
-
-                                <DocumentAttachmentPicker
-                                  idPrefix={`edit-${capsule.id}`}
-                                  categories={categories}
-                                  documents={documents}
-                                  selected={editLinkedDocuments}
-                                  onChange={setEditLinkedDocuments}
-                                />
-
-                                <div className="flex gap-3">
-                                  <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() => handleSaveEdit(capsule)}
-                                    className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                                  >
-                                    {busy ? "Salvataggio…" : "Salva"}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() => setEditingId(null)}
-                                    className="text-sm font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
-                                  >
-                                    Annulla
-                                  </button>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      }
 
                       return (
                         <tr key={capsule.id}>
@@ -607,7 +457,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                                 👁️ Anteprima
                               </RowMenuItem>
                               {capsule.status === "draft" ? (
-                                <RowMenuItem disabled={busy} onClick={() => startEditing(capsule)}>
+                                <RowMenuItem disabled={busy} onClick={() => router.push(`/capsules/${capsule.id}/edit`)}>
                                   Modifica
                                 </RowMenuItem>
                               ) : null}
@@ -641,97 +491,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
             <ul className="flex flex-col divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
               {filteredCapsules.map((capsule) => {
                 const busy = busyId === capsule.id;
-                const isEditing = editingId === capsule.id;
-
-                if (isEditing) {
-                  return (
-                    <li key={capsule.id} className="flex flex-col gap-3 p-4">
-                      <div className="flex flex-wrap gap-3">
-                        <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
-                          <label
-                            htmlFor={`edit-${capsule.id}-title`}
-                            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                          >
-                            Titolo
-                          </label>
-                          <input
-                            id={`edit-${capsule.id}-title`}
-                            type="text"
-                            value={editTitle}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1">
-                          <label
-                            htmlFor={`edit-${capsule.id}-openAt`}
-                            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                          >
-                            Data di apertura (facoltativa)
-                          </label>
-                          <input
-                            id={`edit-${capsule.id}-openAt`}
-                            type="date"
-                            value={editOpenAt}
-                            onChange={(e) => setEditOpenAt(e.target.value)}
-                            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                          />
-                        </div>
-                      </div>
-
-                      <ContactPicker
-                        idPrefix={`edit-${capsule.id}`}
-                        contacts={activeContacts}
-                        selected={editRelatedContacts}
-                        onChange={setEditRelatedContacts}
-                      />
-
-                      <div className="flex flex-col gap-1">
-                        <label
-                          htmlFor={`edit-${capsule.id}-content`}
-                          className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                        >
-                          Contenuto
-                        </label>
-                        <textarea
-                          id={`edit-${capsule.id}-content`}
-                          rows={3}
-                          value={editContent}
-                          onChange={(e) => setEditContent(e.target.value)}
-                          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                        />
-                      </div>
-
-                      <DocumentAttachmentPicker
-                        idPrefix={`edit-${capsule.id}`}
-                        categories={categories}
-                        documents={documents}
-                        selected={editLinkedDocuments}
-                        onChange={setEditLinkedDocuments}
-                      />
-
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => handleSaveEdit(capsule)}
-                          className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                        >
-                          {busy ? "Salvataggio…" : "Salva"}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => setEditingId(null)}
-                          className="text-sm font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
-                        >
-                          Annulla
-                        </button>
-                      </div>
-                    </li>
-                  );
-                }
 
                 return (
                   <li key={capsule.id} className="flex flex-col gap-3 p-4">
@@ -767,7 +526,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                           👁️ Anteprima
                         </RowMenuItem>
                         {capsule.status === "draft" ? (
-                          <RowMenuItem disabled={busy} onClick={() => startEditing(capsule)}>
+                          <RowMenuItem disabled={busy} onClick={() => router.push(`/capsules/${capsule.id}/edit`)}>
                             Modifica
                           </RowMenuItem>
                         ) : null}

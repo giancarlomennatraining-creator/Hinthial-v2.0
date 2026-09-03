@@ -9,7 +9,6 @@ import {
   deleteDocument,
   downloadDocument,
   listDocuments,
-  updateDocumentMetadata,
   updateDocumentTranscript,
   updateTextNoteContent,
 } from "@/domain/documents/repository";
@@ -31,12 +30,6 @@ import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
 import { useListViewPreferences } from "@/components/layout/ListViewPreferencesProvider";
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
-import {
-  DocumentMetadataFields,
-  EMPTY_METADATA_FIELDS,
-  parseTagsInput,
-  type DocumentMetadataFieldsValue,
-} from "@/components/documents/DocumentMetadataFields";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -50,16 +43,6 @@ function formatDate(iso: string): string {
     month: "short",
     year: "numeric",
   });
-}
-
-function docToFields(doc: DocumentListItem): DocumentMetadataFieldsValue {
-  return {
-    categoryId: doc.categoryId ?? "",
-    relatedAssetId: doc.relatedAssetId ?? "",
-    expiresAt: doc.expiresAt ? doc.expiresAt.slice(0, 10) : "",
-    notes: doc.notes,
-    tagsInput: doc.tags.join(", "),
-  };
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -92,10 +75,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editFields, setEditFields] = useState<DocumentMetadataFieldsValue>(
-    EMPTY_METADATA_FIELDS,
-  );
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -122,12 +101,14 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [transcriptAutoBusy, setTranscriptAutoBusy] = useState(false);
   const [transcriptSaving, setTranscriptSaving] = useState(false);
 
-  // "?created=1" arriva da /archive/new dopo un salvataggio riuscito
-  // --- v. CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
+  // "?created=1"/"?updated=1" arrivano da /archive/new e da
+  // /archive/[id]/edit dopo un salvataggio riuscito --- v.
+  // CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
+  const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
   useEffect(() => {
-    if (showCreatedMessage) router.replace("/archive");
-  }, [showCreatedMessage, router]);
+    if (showCreatedMessage || showUpdatedMessage) router.replace("/archive");
+  }, [showCreatedMessage, showUpdatedMessage, router]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -316,31 +297,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  function startEditing(doc: DocumentListItem) {
-    setEditingId(doc.id);
-    setEditFields(docToFields(doc));
-  }
-
-  async function handleSaveEdit(doc: DocumentListItem) {
-    setBusyDocId(doc.id);
-    setError(null);
-    try {
-      await updateDocumentMetadata(supabase, masterKey, doc.id, {
-        categoryId: editFields.categoryId || null,
-        relatedAssetId: editFields.relatedAssetId || null,
-        expiresAt: editFields.expiresAt || null,
-        notes: editFields.notes,
-        tags: parseTagsInput(editFields.tagsInput),
-      });
-      setEditingId(null);
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare il contenuto.");
-    } finally {
-      setBusyDocId(null);
-    }
-  }
-
   function categoryFor(doc: DocumentListItem): Category | undefined {
     return categories.find((c) => c.id === doc.categoryId);
   }
@@ -417,6 +373,9 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       {showCreatedMessage ? (
         <p className="text-sm text-lime-700 dark:text-lime-400">✅ Contenuto aggiunto.</p>
+      ) : null}
+      {showUpdatedMessage ? (
+        <p className="text-sm text-lime-700 dark:text-lime-400">✅ Contenuto aggiornato.</p>
       ) : null}
 
       {error ? (
@@ -502,12 +461,11 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                       const asset = assetFor(doc);
                       const busy = busyDocId === doc.id;
                       const status = expiryStatus(doc.expiresAt);
-                      const isEditing = editingId === doc.id;
                       const kind = contentKindFor(doc.mimeType);
                       const isPlaying = playingId === doc.id;
                       const isNoteOpen = openNoteId === doc.id;
                       const isTranscribing = transcribingId === doc.id;
-                      const isExpanded = isEditing || isPlaying || isNoteOpen || isTranscribing;
+                      const isExpanded = isPlaying || isNoteOpen || isTranscribing;
 
                       return (
                         <Fragment key={doc.id}>
@@ -546,7 +504,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                             </td>
                             <td className="p-3">
                               <RowActionsMenu label={`Azioni per ${doc.filename}`}>
-                                <RowMenuItem disabled={busy} onClick={() => startEditing(doc)}>
+                                <RowMenuItem disabled={busy} onClick={() => router.push(`/archive/${doc.id}/edit`)}>
                                   Modifica
                                 </RowMenuItem>
                                 {kind === "note" ? (
@@ -581,35 +539,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           {isExpanded ? (
                             <tr>
                               <td colSpan={7} className="p-4">
-                                {isEditing ? (
-                                  <div className="flex flex-col gap-3">
-                                    <DocumentMetadataFields
-                                      idPrefix={`edit-${doc.id}`}
-                                      categories={categories}
-                                      assets={assets}
-                                      value={editFields}
-                                      onChange={setEditFields}
-                                    />
-                                    <div className="flex gap-3">
-                                      <button
-                                        type="button"
-                                        disabled={busy}
-                                        onClick={() => handleSaveEdit(doc)}
-                                        className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                                      >
-                                        {busy ? "Salvataggio…" : "Salva"}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        disabled={busy}
-                                        onClick={() => setEditingId(null)}
-                                        className="text-sm font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
-                                      >
-                                        Annulla
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : isPlaying ? (
+                                {isPlaying ? (
                                   <div className="rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
                                     {playerLoading || !playerUrl ? (
                                       <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -726,46 +656,10 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 const asset = assetFor(doc);
                 const busy = busyDocId === doc.id;
                 const status = expiryStatus(doc.expiresAt);
-                const isEditing = editingId === doc.id;
                 const kind = contentKindFor(doc.mimeType);
                 const isPlaying = playingId === doc.id;
                 const isNoteOpen = openNoteId === doc.id;
                 const isTranscribing = transcribingId === doc.id;
-
-                if (isEditing) {
-                  return (
-                    <li key={doc.id} className="flex flex-col gap-3 p-4">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                        {CONTENT_KIND_ICON[kind]} {doc.filename}
-                      </p>
-                      <DocumentMetadataFields
-                        idPrefix={`edit-${doc.id}`}
-                        categories={categories}
-                        assets={assets}
-                        value={editFields}
-                        onChange={setEditFields}
-                      />
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => handleSaveEdit(doc)}
-                          className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                        >
-                          {busy ? "Salvataggio…" : "Salva"}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => setEditingId(null)}
-                          className="text-sm font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
-                        >
-                          Annulla
-                        </button>
-                      </div>
-                    </li>
-                  );
-                }
 
                 return (
                   <li key={doc.id} className="flex flex-col gap-3 p-4">
@@ -809,7 +703,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         ) : null}
                       </div>
                       <RowActionsMenu label={`Azioni per ${doc.filename}`}>
-                        <RowMenuItem disabled={busy} onClick={() => startEditing(doc)}>
+                        <RowMenuItem disabled={busy} onClick={() => router.push(`/archive/${doc.id}/edit`)}>
                           Modifica
                         </RowMenuItem>
                         {kind === "note" ? (

@@ -3,6 +3,7 @@
 import { sortAlphabetically } from "@/lib/utils";
 import type { Category } from "@/domain/categories/types";
 import type { AssetListItem } from "@/domain/assets/types";
+import type { DocumentListItem } from "@/domain/documents/types";
 
 export interface DocumentMetadataFieldsValue {
   categoryId: string;
@@ -21,6 +22,17 @@ export const EMPTY_METADATA_FIELDS: DocumentMetadataFieldsValue = {
   notes: "",
   tagsInput: "",
 };
+
+/** Converte un DocumentListItem già decifrato nei valori di partenza del form --- usato sia dall'edit inline (DocumentsPanel) sia dalla pagina di modifica dedicata (EditArchiveItemForm). */
+export function documentToFields(doc: DocumentListItem): DocumentMetadataFieldsValue {
+  return {
+    categoryId: doc.categoryId ?? "",
+    relatedAssetId: doc.relatedAssetId ?? "",
+    expiresAt: doc.expiresAt ? doc.expiresAt.slice(0, 10) : "",
+    notes: doc.notes,
+    tagsInput: doc.tags.join(", "),
+  };
+}
 
 export function parseTagsInput(input: string): string[] {
   return input

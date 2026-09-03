@@ -129,20 +129,22 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   const downloadedContent = await fs.readFile(downloadPath!, "utf-8");
   expect(downloadedContent).toBe(fileContent);
 
-  // Finché è in bozza, la capsula è modificabile --- anche i destinatari:
-  // se ne rimuove uno, restando comunque con più di zero destinatari.
-  // Si imposta anche una data di apertura facoltativa.
+  // Finché è in bozza, la capsula è modificabile --- pagina dedicata (come
+  // la creazione) --- anche i destinatari: se ne rimuove uno, restando
+  // comunque con più di zero destinatari. Si imposta anche una data di
+  // apertura facoltativa.
   await openRowMenu(row);
   await page.getByRole("menuitem", { name: "Modifica" }).click();
-  const editTitleField = page.locator('[id^="edit-"][id$="-title"]');
-  const editContentField = page.locator('[id^="edit-"][id$="-content"]');
-  const editOpenAtField = page.locator('[id^="edit-"][id$="-openAt"]');
-  await editTitleField.fill("Per Maria (aggiornato)");
-  await editContentField.fill("Un pensiero aggiornato per te.");
-  await editOpenAtField.fill("2027-03-15");
+  await expect(page).toHaveURL(/\/capsules\/[^/]+\/edit$/);
+  await expect(page.getByRole("heading", { name: "Modifica capsula" })).toBeVisible();
+  await page.getByLabel("Titolo").fill("Per Maria (aggiornato)");
+  await page.getByLabel("Contenuto").fill("Un pensiero aggiornato per te.");
+  await page.getByLabel("Data di apertura (facoltativa)").fill("2027-03-15");
   await page.getByRole("button", { name: "Rimuovi Luca Bianchi" }).click();
-  await page.getByRole("button", { name: "Salva" }).click();
+  await page.getByRole("button", { name: "Salva modifiche" }).click();
 
+  await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
+  await expect(page.getByText("✅ Capsula aggiornata.")).toBeVisible();
   const updatedRow = page.locator("li", { hasText: "Per Maria (aggiornato)" });
   await expect(updatedRow).toBeVisible({ timeout: 10_000 });
   await expect(updatedRow.getByText("Un pensiero aggiornato per te.")).toBeVisible();
@@ -269,11 +271,11 @@ test("collega un documento già presente in Archivio a una capsula, selezionando
   // In modifica si può rimuovere il collegamento (il documento in Archivio resta intatto).
   await openRowMenu(row);
   await page.getByRole("menuitem", { name: "Modifica" }).click();
+  await expect(page).toHaveURL(/\/capsules\/[^/]+\/edit$/);
   await page.getByRole("button", { name: "Rimuovi contratto.txt" }).click();
-  await page.getByRole("button", { name: "Salva" }).click();
-  // Attende il rientro effettivo in sola lettura (non solo che il testo
-  // sparisca temporaneamente durante il salvataggio) prima di verificare.
-  await expect(row.getByRole("button", { name: /^Azioni per/ })).toBeVisible({ timeout: 10_000 });
+  await page.getByRole("button", { name: "Salva modifiche" }).click();
+  await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
+  await expect(page.getByText("✅ Capsula aggiornata.")).toBeVisible();
   await expect(row.getByText("📄 contratto.txt · ")).not.toBeVisible();
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();

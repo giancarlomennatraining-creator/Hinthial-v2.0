@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
-import { deleteAsset, listAssets, updateAsset } from "@/domain/assets/repository";
+import { deleteAsset, listAssets } from "@/domain/assets/repository";
 import { listDocuments } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { listReminders } from "@/domain/reminders/repository";
@@ -46,9 +46,6 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editCategoryId, setEditCategoryId] = useState("");
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -57,12 +54,14 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const { modeFor } = useListViewPreferences();
   const viewMode = modeFor("assets");
 
-  // "?created=1" arriva da /assets/new dopo un salvataggio riuscito ---
-  // v. CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
+  // "?created=1"/"?updated=1" arrivano da /assets/new e da
+  // /assets/[id]/edit dopo un salvataggio riuscito --- v.
+  // CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
+  const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
   useEffect(() => {
-    if (showCreatedMessage) router.replace("/assets");
-  }, [showCreatedMessage, router]);
+    if (showCreatedMessage || showUpdatedMessage) router.replace("/assets");
+  }, [showCreatedMessage, showUpdatedMessage, router]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -90,34 +89,6 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
-
-  function startEditing(asset: AssetListItem) {
-    setEditingId(asset.id);
-    setEditName(asset.name);
-    setEditCategoryId(asset.categoryId ?? "");
-  }
-
-  async function handleSaveEdit(asset: AssetListItem) {
-    if (!editName.trim()) {
-      setError("Il nome dell'asset non può essere vuoto.");
-      return;
-    }
-
-    setBusyId(asset.id);
-    setError(null);
-    try {
-      await updateAsset(supabase, masterKey, asset.id, {
-        name: editName.trim(),
-        categoryId: editCategoryId || null,
-      });
-      setEditingId(null);
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare l'asset.");
-    } finally {
-      setBusyId(null);
-    }
-  }
 
   async function handleDelete(asset: AssetListItem) {
     if (
@@ -204,6 +175,9 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
       {showCreatedMessage ? (
         <p className="text-sm text-lime-700 dark:text-lime-400">✅ Asset creato.</p>
       ) : null}
+      {showUpdatedMessage ? (
+        <p className="text-sm text-lime-700 dark:text-lime-400">✅ Asset aggiornato.</p>
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -281,76 +255,8 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                     {pagedAssets.map((asset) => {
                       const category = categoryFor(asset);
                       const busy = busyId === asset.id;
-                      const isEditing = editingId === asset.id;
                       const linkedDocuments = documents.filter((d) => d.relatedAssetId === asset.id);
                       const linkedReminders = reminders.filter((r) => r.relatedAssetId === asset.id);
-
-                      if (isEditing) {
-                        return (
-                          <tr key={asset.id}>
-                            <td colSpan={6} className="p-4">
-                              <div className="flex flex-col gap-3">
-                                <div className="flex flex-wrap gap-3">
-                                  <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
-                                    <label
-                                      htmlFor={`edit-${asset.id}-name`}
-                                      className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                                    >
-                                      Nome
-                                    </label>
-                                    <input
-                                      id={`edit-${asset.id}-name`}
-                                      type="text"
-                                      value={editName}
-                                      onChange={(e) => setEditName(e.target.value)}
-                                      className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                                    />
-                                  </div>
-                                  <div className="flex flex-col gap-1">
-                                    <label
-                                      htmlFor={`edit-${asset.id}-category`}
-                                      className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                                    >
-                                      Categoria
-                                    </label>
-                                    <select
-                                      id={`edit-${asset.id}-category`}
-                                      value={editCategoryId}
-                                      onChange={(e) => setEditCategoryId(e.target.value)}
-                                      className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                                    >
-                                      <option value="">Nessuna categoria</option>
-                                      {categories.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                          {c.icon} {c.name}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                </div>
-                                <div className="flex gap-3">
-                                  <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() => handleSaveEdit(asset)}
-                                    className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                                  >
-                                    {busy ? "Salvataggio…" : "Salva"}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() => setEditingId(null)}
-                                    className="text-sm font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
-                                  >
-                                    Annulla
-                                  </button>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      }
 
                       return (
                         <tr key={asset.id}>
@@ -371,7 +277,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           </td>
                           <td className="p-3">
                             <RowActionsMenu label={`Azioni per ${asset.name}`}>
-                              <RowMenuItem disabled={busy} onClick={() => startEditing(asset)}>
+                              <RowMenuItem disabled={busy} onClick={() => router.push(`/assets/${asset.id}/edit`)}>
                                 Modifica
                               </RowMenuItem>
                               <RowMenuItem disabled={busy} danger onClick={() => handleDelete(asset)}>
@@ -392,72 +298,8 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
               {filteredAssets.map((asset) => {
                 const category = categoryFor(asset);
                 const busy = busyId === asset.id;
-                const isEditing = editingId === asset.id;
                 const linkedDocuments = documents.filter((d) => d.relatedAssetId === asset.id);
                 const linkedReminders = reminders.filter((r) => r.relatedAssetId === asset.id);
-
-                if (isEditing) {
-                  return (
-                    <li key={asset.id} className="flex flex-col gap-3 p-4">
-                      <div className="flex flex-wrap gap-3">
-                        <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
-                          <label
-                            htmlFor={`edit-${asset.id}-name`}
-                            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                          >
-                            Nome
-                          </label>
-                          <input
-                            id={`edit-${asset.id}-name`}
-                            type="text"
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label
-                            htmlFor={`edit-${asset.id}-category`}
-                            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                          >
-                            Categoria
-                          </label>
-                          <select
-                            id={`edit-${asset.id}-category`}
-                            value={editCategoryId}
-                            onChange={(e) => setEditCategoryId(e.target.value)}
-                            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                          >
-                            <option value="">Nessuna categoria</option>
-                            {categories.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.icon} {c.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => handleSaveEdit(asset)}
-                          className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                        >
-                          {busy ? "Salvataggio…" : "Salva"}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => setEditingId(null)}
-                          className="text-sm font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
-                        >
-                          Annulla
-                        </button>
-                      </div>
-                    </li>
-                  );
-                }
 
                 return (
                   <li key={asset.id} className="flex flex-col gap-3 p-4">
@@ -472,7 +314,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         </p>
                       </div>
                       <RowActionsMenu label={`Azioni per ${asset.name}`}>
-                        <RowMenuItem disabled={busy} onClick={() => startEditing(asset)}>
+                        <RowMenuItem disabled={busy} onClick={() => router.push(`/assets/${asset.id}/edit`)}>
                           Modifica
                         </RowMenuItem>
                         <RowMenuItem disabled={busy} danger onClick={() => handleDelete(asset)}>

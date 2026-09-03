@@ -61,13 +61,18 @@ test("aggiunge un contatto fiduciario, ne segue lo stato e lo elimina", async ({
   await openRowMenu(row);
   await expect(page.getByRole("menuitem", { name: "Revoca" })).not.toBeVisible();
 
-  // Modifica: si può correggere anche un contatto già revocato.
+  // Modifica: pagina dedicata (come la creazione) --- si può correggere
+  // anche un contatto già revocato.
   await page.getByRole("menuitem", { name: "Modifica" }).click();
-  await page.locator('[id^="edit-"][id$="-name"]').fill("Maria Bianchi");
-  await page.locator('[id^="edit-"][id$="-email"]').fill("maria.bianchi@esempio.it");
-  await page.locator('[id^="edit-"][id$="-role"]').fill("Sorella");
-  await page.getByRole("button", { name: "Salva" }).click();
+  await expect(page).toHaveURL(/\/contacts\/[^/]+\/edit$/);
+  await expect(page.getByRole("heading", { name: "Modifica contatto fiduciario" })).toBeVisible();
+  await page.getByLabel("Nome").fill("Maria Bianchi");
+  await page.getByLabel("Email").fill("maria.bianchi@esempio.it");
+  await page.getByLabel("Ruolo").fill("Sorella");
+  await page.getByRole("button", { name: "Salva modifiche" }).click();
 
+  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
+  await expect(page.getByText("✅ Contatto aggiornato.")).toBeVisible();
   const updatedRow = page.locator("li", { hasText: "Maria Bianchi" });
   await expect(updatedRow).toBeVisible({ timeout: 10_000 });
   await expect(updatedRow.getByText("maria.bianchi@esempio.it · Sorella")).toBeVisible();

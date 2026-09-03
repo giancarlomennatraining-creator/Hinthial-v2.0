@@ -50,11 +50,15 @@ test("un nome file con parole chiave riconoscibili riceve una categoria suggerit
   await expect(row).toBeVisible({ timeout: 15_000 });
   await expect(row.getByText("🛡️ Assicurazioni")).toBeVisible();
 
-  // Resta comunque solo un suggerimento: correggibile come una scelta normale.
+  // Resta comunque solo un suggerimento: correggibile come una scelta
+  // normale, dalla pagina di modifica dedicata (come la creazione).
   await openRowMenu(row);
   await page.getByRole("menuitem", { name: "Modifica" }).click();
-  const categorySelect = page.locator('[id^="edit-"][id$="-category"]');
-  await categorySelect.selectOption({ label: "🏠 Casa" });
-  await page.getByRole("button", { name: "Salva" }).click();
+  await expect(page).toHaveURL(/\/archive\/[^/]+\/edit$/);
+  await expect(page.getByRole("heading", { name: "Modifica contenuto" })).toBeVisible();
+  await page.getByLabel("Categoria").selectOption({ label: "🏠 Casa" });
+  await page.getByRole("button", { name: "Salva modifiche" }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
+  await expect(page.getByText("✅ Contenuto aggiornato.")).toBeVisible();
   await expect(row.getByText("🏠 Casa")).toBeVisible({ timeout: 10_000 });
 });
