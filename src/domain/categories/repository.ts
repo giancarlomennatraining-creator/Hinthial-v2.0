@@ -107,3 +107,35 @@ export async function deleteCategory(
     throw new Error(`Impossibile eliminare la categoria: ${error.message}`);
   }
 }
+
+/** Stessa lista di seed_default_categories() (v. supabase/migrations, FASE 2) --- qui per ripristinarla anche a un utente già esistente (v. domain/danger-zone, "Cancella tutto"), non solo a uno nuovo. */
+export const DEFAULT_CATEGORIES: CategoryInput[] = [
+  { name: "Personale", icon: "👤" },
+  { name: "Casa", icon: "🏠" },
+  { name: "Veicoli", icon: "🚗" },
+  { name: "Assicurazioni", icon: "🛡️" },
+  { name: "Contratti", icon: "📄" },
+  { name: "Fiscale", icon: "💰" },
+  { name: "Salute", icon: "❤️" },
+  { name: "Finanze", icon: "📊" },
+  { name: "Account", icon: "🔑" },
+  { name: "Altro", icon: "📦" },
+];
+
+export async function resetCategoriesToDefault(
+  supabase: SupabaseClient<Database>,
+  ownerId: string,
+): Promise<void> {
+  const { error } = await supabase.from("categories").insert(
+    DEFAULT_CATEGORIES.map((category) => ({
+      id: crypto.randomUUID(),
+      owner_id: ownerId,
+      name: category.name,
+      icon: category.icon,
+    })),
+  );
+
+  if (error) {
+    throw new Error(`Impossibile ripristinare le categorie predefinite: ${error.message}`);
+  }
+}

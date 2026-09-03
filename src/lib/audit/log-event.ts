@@ -10,7 +10,8 @@ export type AuditEventType =
   | "logout"
   | "document_created"
   | "document_deleted"
-  | "trusted_contact_added";
+  | "trusted_contact_added"
+  | "vault_wiped";
 
 /**
  * Records a technical, non-sensitive audit event. Never pass content,

@@ -53,3 +53,17 @@ export async function removeEncryptedPayload(
     throw new Error(`Impossibile eliminare il file cifrato: ${error.message}`);
   }
 }
+
+/** Same as removeEncryptedPayload, batched --- v. domain/danger-zone, "Cancella tutto". */
+export async function removeEncryptedPayloads(
+  supabase: SupabaseClient<Database>,
+  paths: string[],
+): Promise<void> {
+  if (paths.length === 0) return;
+
+  const { error } = await supabase.storage.from(ENCRYPTED_DOCUMENTS_BUCKET).remove(paths);
+
+  if (error) {
+    throw new Error(`Impossibile eliminare i file cifrati: ${error.message}`);
+  }
+}

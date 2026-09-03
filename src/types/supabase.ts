@@ -25,7 +25,8 @@ type AuditEventTypeColumn =
   | "logout"
   | "document_created"
   | "document_deleted"
-  | "trusted_contact_added";
+  | "trusted_contact_added"
+  | "vault_wiped";
 
 type TrustedContactStatusColumn = "pending" | "active" | "revoked";
 
@@ -40,6 +41,8 @@ export type Database = {
           id: string;
           first_name: string;
           last_name: string;
+          avatar_path: string | null;
+          list_view_preferences: Json;
           created_at: string;
           updated_at: string;
         };
@@ -47,6 +50,8 @@ export type Database = {
           id: string;
           first_name: string;
           last_name: string;
+          avatar_path?: string | null;
+          list_view_preferences?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -54,6 +59,8 @@ export type Database = {
           id?: string;
           first_name?: string;
           last_name?: string;
+          avatar_path?: string | null;
+          list_view_preferences?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -217,6 +224,7 @@ export type Database = {
           expires_at: string | null;
           encrypted_notes: string | null;
           encrypted_tags: string | null;
+          encrypted_transcript: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -234,6 +242,7 @@ export type Database = {
           expires_at?: string | null;
           encrypted_notes?: string | null;
           encrypted_tags?: string | null;
+          encrypted_transcript?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -251,6 +260,7 @@ export type Database = {
           expires_at?: string | null;
           encrypted_notes?: string | null;
           encrypted_tags?: string | null;
+          encrypted_transcript?: string | null;
           created_at?: string;
           updated_at?: string;
         };
