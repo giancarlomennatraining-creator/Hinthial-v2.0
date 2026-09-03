@@ -21,5 +21,15 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  return <AppShell displayName={user.displayName}>{children}</AppShell>;
+  return (
+    <AppShell
+      userId={user.id}
+      firstName={user.firstName}
+      lastName={user.lastName}
+      displayName={user.displayName}
+      avatarUrl={user.avatarUrl}
+    >
+      {children}
+    </AppShell>
+  );
 }

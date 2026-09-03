@@ -3,9 +3,30 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/lib/auth/actions";
+import { Avatar } from "@/components/ui/Avatar";
+import { cn } from "@/lib/utils";
 
-/** The user's display name, opening a small menu with "Impostazioni" and "Esci". */
-export function UserMenu({ displayName }: { displayName: string }) {
+/**
+ * The user's avatar + display name, opening a small menu with
+ * "Impostazioni" e "Esci". `collapsed` --- v. Sidebar: nasconde solo il
+ * nome (resta letto dagli screen reader) e la freccetta, l'avatar resta
+ * sempre visibile.
+ */
+export function UserMenu({
+  userId,
+  firstName,
+  lastName,
+  displayName,
+  avatarUrl,
+  collapsed = false,
+}: {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  avatarUrl: string | null;
+  collapsed?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -25,10 +46,23 @@ export function UserMenu({ displayName }: { displayName: string }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-xs text-zinc-500 hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-900"
+        title={collapsed ? displayName : undefined}
+        className={cn(
+          // Padding scritto per intero in ciascun ramo, mai come base +
+          // override parziale (v. Sidebar.tsx per il perché: cn() qui non
+          // è tailwind-merge, non fonde classi in conflitto --- con
+          // "px-3" e "px-2" insieme nella stringa, chi vince dipende
+          // dall'ordine con cui Tailwind genera il CSS, non da quello nel
+          // className: era questo a far traboccare/tagliare l'avatar).
+          "flex w-full items-center gap-2 rounded-md py-2 text-left text-xs text-zinc-500 hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-900",
+          collapsed ? "justify-center px-2" : "justify-between px-3",
+        )}
       >
-        <span className="truncate">{displayName}</span>
-        <span aria-hidden="true">{open ? "▴" : "▾"}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <Avatar firstName={firstName} lastName={lastName} avatarUrl={avatarUrl} seed={userId} size="sm" />
+          <span className={collapsed ? "sr-only" : "truncate"}>{displayName}</span>
+        </span>
+        {collapsed ? null : <span aria-hidden="true">{open ? "▴" : "▾"}</span>}
       </button>
 
       {open ? (

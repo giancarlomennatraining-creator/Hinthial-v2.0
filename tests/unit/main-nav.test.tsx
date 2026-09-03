@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { MainNav } from "@/components/layout/MainNav";
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/documents",
+  usePathname: () => "/archive",
 }));
 
 describe("MainNav", () => {
@@ -12,11 +12,12 @@ describe("MainNav", () => {
 
     for (const label of [
       "Dashboard",
-      "Documenti",
+      "Archivio",
       "Scadenze",
       "Asset",
       "Contatti",
       "Capsule",
+      "Cronologia",
       "AI",
     ]) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
@@ -26,10 +27,17 @@ describe("MainNav", () => {
     expect(screen.queryByRole("link", { name: "Impostazioni" })).not.toBeInTheDocument();
   });
 
+  it("shows a decorative icon next to each label, excluded from the accessible name", () => {
+    render(<MainNav />);
+
+    const archivioLink = screen.getByRole("link", { name: "Archivio" });
+    expect(archivioLink).toHaveTextContent("🗄️");
+  });
+
   it("marks the link matching the current path as the current page", () => {
     render(<MainNav />);
 
-    expect(screen.getByRole("link", { name: "Documenti" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Archivio" })).toHaveAttribute(
       "aria-current",
       "page",
     );

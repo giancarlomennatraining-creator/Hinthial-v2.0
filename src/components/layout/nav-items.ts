@@ -1,6 +1,8 @@
 export interface NavItem {
   label: string;
   href: string;
+  /** Decorativa (aria-hidden in MainNav) --- l'etichetta testuale resta il vero nome accessibile della voce. */
+  icon: string;
 }
 
 /**
@@ -9,12 +11,12 @@ export interface NavItem {
  * nome utente (src/components/layout/UserMenu.tsx), insieme a "Esci".
  */
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Documenti", href: "/documents" },
-  { label: "Scadenze", href: "/reminders" },
-  { label: "Asset", href: "/assets" },
-  { label: "Contatti", href: "/contacts" },
-  { label: "Capsule", href: "/capsules" },
-  { label: "Importa/Esporta", href: "/import-export" },
-  { label: "AI", href: "/ai" },
+  { label: "Dashboard", href: "/dashboard", icon: "📊" },
+  { label: "Archivio", href: "/archive", icon: "🗄️" },
+  { label: "Scadenze", href: "/reminders", icon: "⏰" },
+  { label: "Asset", href: "/assets", icon: "🏠" },
+  { label: "Contatti", href: "/contacts", icon: "🤝" },
+  { label: "Capsule", href: "/capsules", icon: "📦" },
+  { label: "Cronologia", href: "/timeline", icon: "📜" },
+  { label: "AI", href: "/ai", icon: "🤖" },
 ];
