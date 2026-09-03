@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/*
+ * Tema chiaro/scuro/sistema (v. lib/theme.ts): il tema effettivo viene
+ * sempre risolto in una classe .dark su <html> (mai lasciato al solo
+ * prefers-color-scheme), impostata prima del primo paint da uno script
+ * inline in app/layout.tsx --- così "sistema" segue davvero l'OS mentre
+ * "chiaro"/"scuro" restano una scelta esplicita che lo sovrascrive.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -17,11 +26,9 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 body {
