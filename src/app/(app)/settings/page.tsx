@@ -13,9 +13,12 @@ export default async function SettingsPage() {
       </div>
 
       <SettingsTabs
+        userId={user?.id ?? ""}
         firstName={user?.firstName ?? ""}
         lastName={user?.lastName ?? ""}
         email={user?.email ?? ""}
+        avatarPath={user?.avatarPath ?? null}
+        avatarUrl={user?.avatarUrl ?? null}
       />
     </div>
   );

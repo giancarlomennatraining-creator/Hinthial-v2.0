@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -19,7 +19,7 @@ test("esporta tutti i dati in un unico archivio .zip", async ({ page }) => {
 
   // Un documento vero, per verificare che l'export includa anche i file
   // originali, non solo i metadati.
-  await page.getByRole("link", { name: "Documenti", exact: true }).click();
+  await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
@@ -28,19 +28,27 @@ test("esporta tutti i dati in un unico archivio .zip", async ({ page }) => {
   ).toBeVisible({ timeout: 45_000 });
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
-  await expect(page.getByRole("heading", { name: "Documenti" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
+  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   await page.setInputFiles('input[type="file"]', {
     name: "appunti.txt",
     mimeType: "text/plain",
     buffer: Buffer.from("qualcosa da esportare", "utf-8"),
   });
+  await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("appunti.txt")).toBeVisible({ timeout: 15_000 });
 
-  // Importa/Esporta -> Esporta.
-  await page.getByRole("link", { name: "Importa/Esporta" }).click();
-  await expect(page).toHaveURL(/\/import-export$/);
-  await page.getByRole("tab", { name: "Esporta" }).click();
+  // Impostazioni -> Importa/Esporta -> Esporta.
+  await page.getByRole("button", { name: fullName(user) }).click();
+  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await expect(page).toHaveURL(/\/settings$/);
+  await page.getByRole("tab", { name: "Importa/Esporta" }).click();
+  // exact: true --- la scheda di Impostazioni appena cliccata sopra
+  // contiene "Esporta" come sottostringa, altrimenti ambigua con questa.
+  await page.getByRole("tab", { name: "Esporta", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Esporta i tuoi dati" })).toBeVisible();
 
   const [download] = await Promise.all([

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -17,8 +17,10 @@ test("importa contatti fiduciari da CSV: template, anteprima con riga da corregg
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "Importa/Esporta" }).click();
-  await expect(page).toHaveURL(/\/import-export$/);
+  await page.getByRole("button", { name: fullName(user) }).click();
+  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await expect(page).toHaveURL(/\/settings$/);
+  await page.getByRole("tab", { name: "Importa/Esporta" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
@@ -28,8 +30,10 @@ test("importa contatti fiduciari da CSV: template, anteprima con riga da corregg
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
 
-  const importTab = page.getByRole("tab", { name: "Importa" });
-  const exportTab = page.getByRole("tab", { name: "Esporta" });
+  // exact: true --- la scheda di Impostazioni "Importa/Esporta" contiene
+  // entrambe le parole come sottostringa, altrimenti ambigue con queste.
+  const importTab = page.getByRole("tab", { name: "Importa", exact: true });
+  const exportTab = page.getByRole("tab", { name: "Esporta", exact: true });
   await expect(importTab).toHaveAttribute("aria-selected", "true");
 
   // PASSO 1: scelta del tipo.
@@ -83,8 +87,10 @@ test("importa contatti fiduciari da CSV: template, anteprima con riga da corregg
   await expect(page.locator("li", { hasText: "Maria Rossi" })).toBeVisible();
   await expect(page.getByText("Luca Bianchi")).not.toBeVisible();
 
-  // La scheda Esporta (traslocata da Impostazioni) resta raggiungibile dalla stessa pagina.
-  await page.getByRole("link", { name: "Importa/Esporta" }).click();
+  // La scheda Esporta resta raggiungibile dalla stessa scheda di Impostazioni.
+  await page.getByRole("button", { name: fullName(user) }).click();
+  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await page.getByRole("tab", { name: "Importa/Esporta" }).click();
   await exportTab.click();
   await expect(page.getByRole("heading", { name: "Esporta i tuoi dati" })).toBeVisible();
 });
@@ -101,7 +107,10 @@ test("importa asset da CSV: corregge una categoria non trovata creandola al volo
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "Importa/Esporta" }).click();
+  await page.getByRole("button", { name: fullName(user) }).click();
+  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await expect(page).toHaveURL(/\/settings$/);
+  await page.getByRole("tab", { name: "Importa/Esporta" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
