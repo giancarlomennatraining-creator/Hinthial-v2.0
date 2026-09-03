@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openRowMenu } from "./row-actions";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -28,7 +29,7 @@ async function loginAndSetUpEncryption(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "Documenti", exact: true }).click();
+  await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
@@ -40,7 +41,7 @@ async function loginAndSetUpEncryption(page: import("@playwright/test").Page) {
   ).toBeVisible({ timeout: 45_000 });
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
-  await expect(page.getByRole("heading", { name: "Documenti" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   return user;
 }
@@ -61,10 +62,11 @@ test("crea un asset e vi collega un documento e una scadenza", async ({ page }) 
   await expect(page.getByText("Nessuno.")).toBeVisible();
   await expect(page.getByText("Nessuna.")).toBeVisible();
 
-  // Carica un documento e collegalo all'asset. Il menu asset è filtrato
+  // Carica un contenuto e collegalo all'asset. Il menu asset è filtrato
   // dalla categoria: va scelta prima, altrimenti resta vuoto/disabilitato.
-  await page.getByRole("link", { name: "Documenti" }).click();
-  await page.getByRole("button", { name: "+ Categoria, scadenza, tag, note" }).click();
+  await page.getByRole("link", { name: "Archivio" }).click();
+  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Senza categoria selezionata, il menu asset è vuoto/disabilitato.
   await expect(page.locator("#upload-asset")).toBeDisabled();
   await expect(page.locator("#upload-asset")).not.toContainText("Casa di Via Roma");
@@ -76,6 +78,8 @@ test("crea un asset e vi collega un documento e una scadenza", async ({ page }) 
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
+  await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("🔗 Casa di Via Roma")).toBeVisible();
 
@@ -99,11 +103,13 @@ test("crea un asset e vi collega un documento e una scadenza", async ({ page }) 
   await expect(page.getByText(/⏰ Pagamento IMU/)).toBeVisible();
 
   // Eliminare l'asset scollega, non elimina, documento e scadenza.
+  const assetRow = page.locator("li", { hasText: "Casa di Via Roma" });
   page.once("dialog", (dialog) => dialog.accept());
-  await page.getByRole("button", { name: "Elimina" }).click();
+  await openRowMenu(assetRow);
+  await page.getByRole("menuitem", { name: "Elimina" }).click();
   await expect(page.getByText("Nessun asset ancora")).toBeVisible();
 
-  await page.getByRole("link", { name: "Documenti" }).click();
+  await page.getByRole("link", { name: "Archivio" }).click();
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible();
   await page.getByRole("link", { name: "Scadenze" }).click();
   await expect(page.getByText("Pagamento IMU")).toBeVisible();
@@ -124,10 +130,11 @@ test("la categoria filtra gli asset nei documenti, l'asset filtra i documenti ne
   await createAsset(page, "Fiat Panda", "🚗 Veicoli");
   await expect(page.getByText("Fiat Panda")).toBeVisible({ timeout: 10_000 });
 
-  // Documenti: selezionare la categoria "Casa" filtra il menu asset alla
+  // Archivio: selezionare la categoria "Casa" filtra il menu asset alla
   // sola "Appartamento" (non mostra "Fiat Panda").
-  await page.getByRole("link", { name: "Documenti" }).click();
-  await page.getByRole("button", { name: "+ Categoria, scadenza, tag, note" }).click();
+  await page.getByRole("link", { name: "Archivio" }).click();
+  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   await page.locator("#upload-category").selectOption({ label: "🏠 Casa" });
   await expect(page.locator("#upload-asset")).toContainText("Appartamento");
   await expect(page.locator("#upload-asset")).not.toContainText("Fiat Panda");
@@ -137,9 +144,12 @@ test("la categoria filtra gli asset nei documenti, l'asset filtra i documenti ne
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
+  await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible({ timeout: 15_000 });
 
-  await page.getByRole("button", { name: "+ Categoria, scadenza, tag, note" }).click();
+  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   await page.locator("#upload-category").selectOption({ label: "🚗 Veicoli" });
   await expect(page.locator("#upload-asset")).toContainText("Fiat Panda");
   await expect(page.locator("#upload-asset")).not.toContainText("Appartamento");
@@ -149,6 +159,8 @@ test("la categoria filtra gli asset nei documenti, l'asset filtra i documenti ne
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
+  await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("libretto-auto.txt")).toBeVisible({ timeout: 15_000 });
 
   // Scadenze: senza asset selezionato, il menu documento è

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openRowMenu } from "./row-actions";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -46,19 +47,22 @@ test("aggiunge un contatto fiduciario, ne segue lo stato e lo elimina", async ({
   await expect(row.getByText("maria.rossi@esempio.it · Coniuge")).toBeVisible();
 
   // "Segna come attivo": In attesa -> Attivo.
-  await row.getByRole("button", { name: "Segna come attivo" }).click();
+  await openRowMenu(row);
+  await page.getByRole("menuitem", { name: "Segna come attivo" }).click();
   await expect(row.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
-  await expect(row.getByRole("button", { name: "Segna come attivo" })).not.toBeVisible();
+  await openRowMenu(row);
+  await expect(page.getByRole("menuitem", { name: "Segna come attivo" })).not.toBeVisible();
 
   // "Revoca": Attivo -> Revocato. Non implementiamo ancora nessuno
   // sblocco automatico dei dati (FASE 7): revocare è solo un cambio di
   // stato registrato, non tocca alcun permesso reale.
-  await row.getByRole("button", { name: "Revoca" }).click();
+  await page.getByRole("menuitem", { name: "Revoca" }).click();
   await expect(row.getByText("Revocato")).toBeVisible({ timeout: 10_000 });
-  await expect(row.getByRole("button", { name: "Revoca" })).not.toBeVisible();
+  await openRowMenu(row);
+  await expect(page.getByRole("menuitem", { name: "Revoca" })).not.toBeVisible();
 
   // Modifica: si può correggere anche un contatto già revocato.
-  await row.getByRole("button", { name: "Modifica" }).click();
+  await page.getByRole("menuitem", { name: "Modifica" }).click();
   await page.locator('[id^="edit-"][id$="-name"]').fill("Maria Bianchi");
   await page.locator('[id^="edit-"][id$="-email"]').fill("maria.bianchi@esempio.it");
   await page.locator('[id^="edit-"][id$="-role"]').fill("Sorella");
@@ -72,7 +76,8 @@ test("aggiunge un contatto fiduciario, ne segue lo stato e lo elimina", async ({
 
   // Eliminazione.
   page.once("dialog", (dialog) => dialog.accept());
-  await updatedRow.getByRole("button", { name: "Elimina" }).click();
+  await openRowMenu(updatedRow);
+  await page.getByRole("menuitem", { name: "Elimina" }).click();
   await expect(page.getByText("Nessun contatto fiduciario ancora")).toBeVisible({
     timeout: 10_000,
   });
