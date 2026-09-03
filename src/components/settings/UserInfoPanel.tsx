@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import { updateProfile } from "@/domain/profile/repository";
 import { TextField } from "@/components/ui/TextField";
+import { AvatarUploadForm } from "@/components/settings/AvatarUploadForm";
 
 function translateEmailChangeError(message: string): string {
   const normalized = message.toLowerCase();
@@ -31,13 +32,19 @@ function translateEmailChangeError(message: string): string {
  * operation --- requires confirmation, doesn't take effect immediately).
  */
 export function UserInfoPanel({
+  userId,
   firstName: initialFirstName,
   lastName: initialLastName,
   email: currentEmail,
+  avatarPath,
+  avatarUrl,
 }: {
+  userId: string;
   firstName: string;
   lastName: string;
   email: string;
+  avatarPath: string | null;
+  avatarUrl: string | null;
 }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
@@ -114,7 +121,15 @@ export function UserInfoPanel({
 
   return (
     <div className="flex max-w-md flex-col gap-8">
-      <section className="flex flex-col gap-4">
+      <AvatarUploadForm
+        userId={userId}
+        firstName={firstName}
+        lastName={lastName}
+        avatarPath={avatarPath}
+        avatarUrl={avatarUrl}
+      />
+
+      <section className="flex flex-col gap-4 border-t border-zinc-200 pt-8 dark:border-zinc-800">
         <div>
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Nome e cognome
