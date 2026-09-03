@@ -84,15 +84,16 @@ test("un utente autenticato può navigare la shell e fare logout", async ({
   // Cifratura non ancora configurata: la dashboard lo segnala.
   await expect(page.getByText("⚠️ Master password non ancora creata")).toBeVisible();
 
-  // La navigazione principale porta alle altre sezioni della shell.
-  // (Non "Documenti"/"Scadenze"/"Asset"/"Contatti"/"Capsule": per un
-  // utente senza cifratura configurata mostrano il setup della master
-  // key --- coperto da tests/e2e/documents.spec.ts,
+  // La navigazione principale porta alle altre sezioni della shell. Per
+  // un utente senza cifratura configurata, ognuna mostra il setup della
+  // master key (compresa AI, da FASE 10 in poi) --- il flusso di setup
+  // vero e proprio è coperto da tests/e2e/archive.spec.ts,
   // tests/e2e/reminders.spec.ts, tests/e2e/assets.spec.ts,
-  // tests/e2e/contacts.spec.ts e tests/e2e/capsules.spec.ts.)
+  // tests/e2e/contacts.spec.ts e tests/e2e/capsules.spec.ts; qui basta
+  // verificare che la navigazione porti alla schermata giusta.
   await page.getByRole("link", { name: "AI", exact: true }).click();
   await expect(page).toHaveURL(/\/ai$/);
-  await expect(page.getByRole("heading", { name: "Assistente AI" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Configura la cifratura" })).toBeVisible();
 
   // Il logout (nel menu utente, aperto cliccando il nome) invalida la
   // sessione e riporta alla landing.

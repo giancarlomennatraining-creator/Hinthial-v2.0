@@ -1,10 +1,8 @@
-import { PlaceholderSection } from "@/components/ui/PlaceholderSection";
+"use client";
+
+import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
+import { AIPanel } from "@/components/ai/AIPanel";
 
 export default function AiPage() {
-  return (
-    <PlaceholderSection
-      title="Assistente AI"
-      description="Qui potrai fare domande sulle tue informazioni autorizzate. Nella prima versione risponderà un motore mockato, sostituibile in futuro da un provider AI reale. Questa sezione sarà sviluppata in FASE 10."
-    />
-  );
+  return <RequireMasterKey>{(masterKey) => <AIPanel masterKey={masterKey} />}</RequireMasterKey>;
 }
