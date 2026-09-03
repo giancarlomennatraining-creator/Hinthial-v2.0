@@ -20,3 +20,10 @@ export function sortAlphabetically<T>(items: T[], getLabel: (item: T) => string)
     getLabel(a).localeCompare(getLabel(b), "it", { sensitivity: "base" }),
   );
 }
+
+/** Filesystem-hostile characters replaced (one at a time, no regex backslash-escaping needed) so the name is safe as a downloaded file on any OS. */
+export function sanitizeFilename(name: string): string {
+  const forbidden = ["/", String.fromCharCode(92), ":", "*", "?", '"', "<", ">", "|"];
+  const cleaned = forbidden.reduce((acc, ch) => acc.split(ch).join("_"), name).trim();
+  return cleaned || "file";
+}

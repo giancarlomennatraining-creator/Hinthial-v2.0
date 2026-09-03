@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 import { utf8ToBytes } from "@/lib/crypto";
+import { sanitizeFilename } from "@/lib/utils";
 import { listCategories } from "@/domain/categories/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { downloadDocument, listDocuments } from "@/domain/documents/repository";
@@ -8,13 +9,6 @@ import { listReminders } from "@/domain/reminders/repository";
 import { listTrustedContacts } from "@/domain/contacts/repository";
 import { downloadCapsuleAttachment, listCapsules } from "@/domain/capsules/repository";
 import type { ExportFile, ExportManifest, ExportResult } from "@/domain/export/types";
-
-/** Filesystem-hostile characters replaced (one at a time, no regex backslash-escaping needed) so the name is safe inside a .zip entry on any OS. */
-function sanitizeFilename(name: string): string {
-  const forbidden = ["/", String.fromCharCode(92), ":", "*", "?", '"', "<", ">", "|"];
-  const cleaned = forbidden.reduce((acc, ch) => acc.split(ch).join("_"), name).trim();
-  return cleaned || "file";
-}
 
 /**
  * Builds a full export of the current user's data: a `manifest.json`
