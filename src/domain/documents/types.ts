@@ -20,6 +20,8 @@ export interface DocumentListItem {
   /** empty string when never set. */
   notes: string;
   tags: string[];
+  /** Audio/video only, empty string when never set --- v. domain/transcription. */
+  transcript: string;
 }
 
 /** Fields collected at upload time, in addition to the file itself. */
@@ -29,4 +31,16 @@ export interface DocumentMetadataInput {
   expiresAt: string | null;
   notes: string;
   tags: string[];
+}
+
+/**
+ * A text note's own content (title + body) --- distinct from
+ * `DocumentMetadataInput.notes`, which is a free-text annotation field
+ * every archive item has regardless of kind. A note's title/body *is*
+ * the content, encrypted exactly like a file's name/bytes would be (v.
+ * domain/documents/repository.ts, createTextNote).
+ */
+export interface TextNoteInput {
+  title: string;
+  body: string;
 }

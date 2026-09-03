@@ -3,14 +3,14 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 // Le categorie sono in chiaro (non richiedono la Master Key): a
-// differenza di Documenti/Scadenze/Asset, /settings è accessibile subito
+// differenza di Archivio/Scadenze/Asset, /settings è accessibile subito
 // dopo il login, senza passare da RequireMasterKey.
 
 test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione", async ({
   page,
 }) => {
   // Real PBKDF2 (600,000 iterations, x2) in-browser during il setup
-  // cifratura di Documenti può superare il timeout di default.
+  // cifratura di Archivio può superare il timeout di default.
   test.slow();
 
   const user = uniqueTestUser();
@@ -40,7 +40,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   await expect(page.getByText("🎯 Hobby")).toBeVisible({ timeout: 10_000 });
 
   // La nuova categoria è disponibile anche dove si scelgono le categorie.
-  await page.getByRole("link", { name: "Documenti" }).click();
+  await page.getByRole("link", { name: "Archivio" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
@@ -49,7 +49,8 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   ).toBeVisible({ timeout: 45_000 });
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
-  await page.getByRole("button", { name: "+ Categoria, scadenza, tag, note" }).click();
+  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   await expect(page.locator("#upload-category")).toContainText("🎯 Hobby");
 
   // Modifica: rinomina la categoria personalizzata.
@@ -64,22 +65,25 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   await expect(page.getByText("🎯 Hobby e sport")).toBeVisible({ timeout: 10_000 });
 
   // Carica un documento con quella categoria, per testare l'avviso di eliminazione.
-  await page.getByRole("link", { name: "Documenti" }).click();
-  await page.getByRole("button", { name: "+ Categoria, scadenza, tag, note" }).click();
+  await page.getByRole("link", { name: "Archivio" }).click();
+  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   await page.locator("#upload-category").selectOption({ label: "🎯 Hobby e sport" });
   await page.setInputFiles('input[type="file"]', {
     name: "tesserino-palestra.txt",
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
+  await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("tesserino-palestra.txt")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("🎯 Hobby e sport · ")).toBeVisible();
 
   // Eliminazione: il popup avverte che è in uso, ma non cancella nulla.
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
-  // Attende che la navigazione sia completa: la riga del documento su
-  // Documenti contiene anch'essa il testo della categoria come badge,
+  // Attende che la navigazione sia completa: la riga del documento in
+  // Archivio contiene anch'essa il testo della categoria come badge,
   // quindi il locator sotto potrebbe altrimenti trovare quella invece.
   await expect(page).toHaveURL(/\/settings$/);
   await page.getByRole("tab", { name: "Categorie" }).click();
@@ -99,7 +103,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   expect(dialogMessage).toContain("NON verranno cancellati");
 
   // Il documento resta, solo senza più quella categoria.
-  await page.getByRole("link", { name: "Documenti" }).click();
+  await page.getByRole("link", { name: "Archivio" }).click();
   await expect(page.getByText("tesserino-palestra.txt")).toBeVisible();
   await expect(page.getByText("🎯 Hobby e sport · ")).not.toBeVisible();
 });

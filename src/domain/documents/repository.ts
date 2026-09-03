@@ -18,10 +18,15 @@ import {
   uploadEncryptedPayload,
 } from "@/lib/storage/documents-bucket";
 import { logAuditEvent } from "@/lib/audit/log-event";
-import type { DocumentListItem, DocumentMetadataInput } from "@/domain/documents/types";
+import { NOTE_MIME_TYPE } from "@/lib/content-kind";
+import type {
+  DocumentListItem,
+  DocumentMetadataInput,
+  TextNoteInput,
+} from "@/domain/documents/types";
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, created_at";
 
 type DocumentRow = {
   id: string;
@@ -35,6 +40,7 @@ type DocumentRow = {
   expires_at: string | null;
   encrypted_notes: string | null;
   encrypted_tags: string | null;
+  encrypted_transcript: string | null;
   created_at: string;
 };
 
@@ -72,10 +78,11 @@ async function toDocumentListItem(
   masterKey: CryptoKey,
   row: DocumentRow,
 ): Promise<DocumentListItem> {
-  const [filenameBytes, notes, tags] = await Promise.all([
+  const [filenameBytes, notes, tags, transcript] = await Promise.all([
     decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
     decryptOptionalText(masterKey, row.encrypted_notes),
     decryptTags(masterKey, row.encrypted_tags),
+    decryptOptionalText(masterKey, row.encrypted_transcript),
   ]);
 
   return {
@@ -91,6 +98,7 @@ async function toDocumentListItem(
     expiresAt: row.expires_at,
     notes,
     tags,
+    transcript,
   };
 }
 
@@ -192,6 +200,104 @@ export async function uploadDocument(
 }
 
 /**
+ * Creates a text note: same table, same encryption as any other
+ * archive item --- the note's body is encrypted as if it were a file's
+ * bytes, its title as if it were a filename. Distinguished from a
+ * regular uploaded file only by mime_type (NOTE_MIME_TYPE), which is
+ * what lets the UI show it as an editable note instead of a download
+ * (v. lib/content-kind.ts).
+ */
+export async function createTextNote(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  ownerId: string,
+  note: TextNoteInput,
+  metadata: DocumentMetadataInput,
+): Promise<void> {
+  const plaintext = utf8ToBytes(note.body);
+  const [{ wrappedDocumentKey, payload }, encryptedFilename, encryptedNotes, encryptedTags] =
+    await Promise.all([
+      encryptDocument(masterKey, plaintext),
+      encryptBytes(masterKey, utf8ToBytes(note.title)),
+      encryptOptionalText(masterKey, metadata.notes),
+      encryptTags(masterKey, metadata.tags),
+    ]);
+
+  const documentId = crypto.randomUUID();
+  const storagePath = documentStoragePath(ownerId, documentId);
+
+  await uploadEncryptedPayload(supabase, storagePath, serializeEnvelope(payload));
+
+  const { error } = await supabase.from("documents").insert({
+    id: documentId,
+    owner_id: ownerId,
+    encrypted_filename: serializeEnvelope(encryptedFilename),
+    wrapped_document_key: serializeEnvelope(wrappedDocumentKey),
+    storage_path: storagePath,
+    mime_type: NOTE_MIME_TYPE,
+    size: plaintext.byteLength,
+    category_id: metadata.categoryId,
+    related_asset_id: metadata.relatedAssetId,
+    expires_at: metadata.expiresAt,
+    encrypted_notes: encryptedNotes,
+    encrypted_tags: encryptedTags,
+  });
+
+  if (error) {
+    await removeEncryptedPayload(supabase, storagePath).catch(() => {});
+    throw new Error(`Impossibile salvare la nota: ${error.message}`);
+  }
+
+  await logAuditEvent(supabase, ownerId, "document_created");
+}
+
+/**
+ * Updates a text note's own title/body --- the one kind of archive item
+ * whose content is meant to be edited in place, rather than replaced by
+ * re-uploading. Re-encrypts with a fresh Document Key (same as any
+ * fresh encryptDocument call) and uploads to a *new* storage path
+ * rather than overwriting the old one --- same reason avatars get a
+ * fresh path on every re-upload (v. lib/storage/avatars-bucket.ts):
+ * Storage reads can otherwise be served briefly stale, which here would
+ * mean ciphertext encrypted under the *old* key paired with the row's
+ * *new* wrapped key --- decryption fails outright rather than just
+ * showing old content, so it isn't a corner case worth risking.
+ */
+export async function updateTextNoteContent(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  ownerId: string,
+  doc: Pick<DocumentListItem, "id" | "storagePath">,
+  note: TextNoteInput,
+): Promise<void> {
+  const plaintext = utf8ToBytes(note.body);
+  const [{ wrappedDocumentKey, payload }, encryptedFilename] = await Promise.all([
+    encryptDocument(masterKey, plaintext),
+    encryptBytes(masterKey, utf8ToBytes(note.title)),
+  ]);
+
+  const newStoragePath = `${ownerId}/${doc.id}-${Date.now()}.json`;
+  await uploadEncryptedPayload(supabase, newStoragePath, serializeEnvelope(payload));
+
+  const { error } = await supabase
+    .from("documents")
+    .update({
+      encrypted_filename: serializeEnvelope(encryptedFilename),
+      wrapped_document_key: serializeEnvelope(wrappedDocumentKey),
+      storage_path: newStoragePath,
+      size: plaintext.byteLength,
+    })
+    .eq("id", doc.id);
+
+  if (error) {
+    await removeEncryptedPayload(supabase, newStoragePath).catch(() => {});
+    throw new Error(`Impossibile aggiornare la nota: ${error.message}`);
+  }
+
+  await removeEncryptedPayload(supabase, doc.storagePath).catch(() => {});
+}
+
+/**
  * Updates a document's metadata (category, expiry, notes, tags) ---
  * never the file content or its name. Re-encrypts notes/tags with the
  * Master Key, same as at upload time.
@@ -220,6 +326,31 @@ export async function updateDocumentMetadata(
 
   if (error) {
     throw new Error(`Impossibile aggiornare il documento: ${error.message}`);
+  }
+}
+
+/**
+ * Updates an audio/video item's transcript --- a separate action from
+ * updateDocumentMetadata (it's shown only for that content kind, not
+ * part of the generic metadata form). Written by hand today (v.
+ * domain/transcription): swapping in a real engine later only changes
+ * what fills the textarea, not this function.
+ */
+export async function updateDocumentTranscript(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  documentId: string,
+  transcript: string,
+): Promise<void> {
+  const encryptedTranscript = await encryptOptionalText(masterKey, transcript);
+
+  const { error } = await supabase
+    .from("documents")
+    .update({ encrypted_transcript: encryptedTranscript })
+    .eq("id", documentId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare la trascrizione: ${error.message}`);
   }
 }
 

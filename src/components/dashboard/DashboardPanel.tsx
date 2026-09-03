@@ -47,14 +47,14 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
         <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             {status.kind === "not-set-up"
-              ? "Configura la cifratura per iniziare a vedere scadenze e documenti qui."
-              : "Sblocca la cifratura per vedere le tue scadenze e i tuoi documenti recenti."}
+              ? "Configura la cifratura per iniziare a vedere scadenze e archivio qui."
+              : "Sblocca la cifratura per vedere le tue scadenze e il tuo archivio recente."}
           </p>
           <Link
-            href="/documents"
+            href="/archive"
             className="mt-2 inline-block text-sm font-medium text-brand hover:underline"
           >
-            Vai a Documenti
+            Vai all&apos;archivio
           </Link>
         </div>
       )}

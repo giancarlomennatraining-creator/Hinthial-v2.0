@@ -732,7 +732,57 @@ stesso titolo del Dead Man's Switch.
 
 ------------------------------------------------------------------------
 
-# 12. UI / UX
+# 12. FASE 14 --- Archivio multi-tipo e capsule autosufficienti
+
+Rinomina "Documenti" in "Archivio" e ne estende il modello a più tipi di
+contenuto (documento, immagine, audio, video, nota testuale) con
+attributi invariati (categoria, asset collegato, scadenza, tag, note) a
+prescindere dal tipo. Allinea la schermata allo stesso pattern già usato
+da scadenze/asset/contatti/capsule (pagina di creazione dedicata, filtro
+in alto, tasto "+ Aggiungi contenuto"). Ridisegna la creazione di una
+capsula come wizard a due passi e cambia cosa significa "chiudere" una
+capsula: da riferimento bloccato a copia autosufficiente.
+
+Implementare progressivamente:
+
+1.  rinomina "Documenti" -> "Archivio" nella UI (nomi di file/cartelle/
+    route restano in inglese, per la convenzione del progetto);
+2.  nota testuale come nuovo tipo di contenuto: stessa tabella/
+    cifratura dei documenti, il testo digitato è il contenuto cifrato
+    al posto di un file caricato --- nessun nuovo schema;
+3.  pagina di creazione dedicata (`/archive/new` o simile) con scelta
+    del tipo: carica un file, registra audio/video, scrivi una nota;
+4.  pannello lista semplificato: lista + ricerca/filtro in alto (già
+    pronti) + "+ Aggiungi contenuto" al posto del pannello inline
+    espandibile attuale;
+5.  player inline per audio/video/immagini nella lista, con "Scarica"
+    sempre disponibile a fianco;
+6.  generalizzare `DocumentAttachmentPicker` da "solo documenti" a
+    "qualunque tipo dall'Archivio";
+7.  creazione capsula come wizard a due passi: passo 1 (titolo, data
+    di apertura, destinatari), passo 2 (contenuto dall'Archivio via il
+    picker generalizzato, più registrazione/caricamento diretto di
+    audio/video che restano privati della capsula --- mai copiati in
+    Archivio, pensati come messaggio personale per quel destinatario);
+8.  chiudere una capsula (bozza -> chiusa) diventa una copia vera: ogni
+    contenuto d'Archivio referenziato viene decifrato e ricifrato con
+    una chiave propria della capsula, salvato nel suo storage --- da
+    quel momento la capsula non dipende più dall'originale;
+9.  di conseguenza, il blocco "documento non cancellabile perché dentro
+    una capsula chiusa" non serve più e va rimosso: l'originale torna
+    libero non appena la copia è fatta;
+10. gestire il fallimento a metà chiusura con lo stesso pattern di
+    rollback già usato in `createCapsule` per gli allegati.
+
+Conseguenza accettata consapevolmente: chiudere una capsula con più
+contenuti richiede più tempo (decifra e ricifra ognuno, non è più solo
+un cambio di stato), e per un po' esistono due copie cifrate della
+stessa cosa --- l'originale in Archivio e la copia nella capsula ---
+finché una delle due non viene eliminata.
+
+------------------------------------------------------------------------
+
+# 13. UI / UX
 
 L'app deve comunicare ordine, sicurezza e semplicità.
 
@@ -770,7 +820,7 @@ L'utente deve vedere valore immediatamente.
 
 ------------------------------------------------------------------------
 
-# 13. Cosa NON costruire nella prima versione
+# 14. Cosa NON costruire nella prima versione
 
 Non implementare:
 
@@ -792,7 +842,7 @@ L'obiettivo è costruire una base solida, non un prodotto completo.
 
 ------------------------------------------------------------------------
 
-# 14. Struttura repository suggerita
+# 15. Struttura repository suggerita
 
 ``` text
 src/
@@ -849,7 +899,7 @@ Separare sempre:
 
 ------------------------------------------------------------------------
 
-# 15. Regole per Claude Code
+# 16. Regole per Claude Code
 
 Claude Code deve lavorare **una fase alla volta**.
 
@@ -884,7 +934,7 @@ le alternative invece di prendere una decisione irreversibile.
 
 ------------------------------------------------------------------------
 
-# 16. Definition of Done
+# 17. Definition of Done
 
 Una fase è completata quando:
 
@@ -899,7 +949,7 @@ Una fase è completata quando:
 
 ------------------------------------------------------------------------
 
-# 17. Roadmap sintetica
+# 18. Roadmap sintetica
 
 ``` text
 0  Bootstrap
@@ -916,9 +966,10 @@ Una fase è completata quando:
 11 AI real + retrieval
 12 Proactive AI
 13 Dead Man's Switch
-14 Dispositivi fidati e sblocco multi-dispositivo
-15 Security/legal hardening
-16 Production release
+14 Archivio multi-tipo e capsule autosufficienti
+15 Dispositivi fidati e sblocco multi-dispositivo
+16 Security/legal hardening
+17 Production release
 ```
 
 La priorità è:
@@ -929,7 +980,7 @@ Non il contrario.
 
 ------------------------------------------------------------------------
 
-## 18. Stato iniziale del progetto
+## 19. Stato iniziale del progetto
 
 Partire dalla **FASE 0**.
 

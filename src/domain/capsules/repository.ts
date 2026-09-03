@@ -17,7 +17,7 @@ import {
   removeEncryptedCapsulePayloads,
   uploadEncryptedCapsulePayload,
 } from "@/lib/storage/capsules-bucket";
-import { getDocumentsByIds } from "@/domain/documents/repository";
+import { downloadDocument, getDocumentsByIds } from "@/domain/documents/repository";
 import { getTrustedContactsByIds } from "@/domain/contacts/repository";
 import type {
   CapsuleAccessCondition,
@@ -153,7 +153,7 @@ async function uploadAttachment(
 /**
  * Encrypts title/content/attachments/openAt and creates a capsule in
  * "draft" status. Editable (see updateCapsule) only while still a draft
- * --- closing it (draft -> ready, see setCapsuleStatus) is irreversible.
+ * --- closing it (draft -> ready, see closeCapsule) is irreversible.
  */
 export async function createCapsule(
   supabase: SupabaseClient<Database>,
@@ -236,13 +236,91 @@ export async function updateCapsule(
 }
 
 /**
- * Moves a capsule forward in its lifecycle (draft -> ready -> shared).
- * draft -> ready ("chiudi la capsula") is the one irreversible step:
- * once closed, the capsule stops being editable and any linked Documenti
- * entries can no longer be deleted from there (see deleteDocument).
- * "shared" beyond that is still just a recorded status change --- no
- * actual delivery or access grant to any recipient happens yet
- * (v. HINTHIAL_MVP.md: niente Dead Man's Switch in questa fase).
+ * Closes a capsule (draft -> ready) --- the one irreversible step, and
+ * from FASE 14 more than a status flip: every Archivio item still
+ * linked (capsule.linkedDocuments) is decrypted and re-encrypted with
+ * its own fresh Document Key, exactly like a directly-uploaded
+ * attachment (see uploadAttachment above). From this point on the
+ * capsule owns a private copy of everything inside it --- it no longer
+ * depends on those Archivio originals staying untouched, so nothing
+ * needs to lock them against deletion/editing anymore.
+ *
+ * If copying any item fails partway through, the newly-uploaded copies
+ * are removed and the capsule is left exactly as it was (still a
+ * draft, still referencing the originals) --- an all-or-nothing step,
+ * same spirit as createCapsule's own cleanup-on-failure.
+ */
+export async function closeCapsule(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  ownerId: string,
+  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "attachments" | "linkedDocuments" | "relatedContacts" | "openAt">,
+): Promise<void> {
+  const newAttachments: CapsuleAttachment[] = [];
+  try {
+    for (const doc of capsule.linkedDocuments) {
+      const { bytes } = await downloadDocument(supabase, masterKey, doc);
+      const attachmentId = crypto.randomUUID();
+      const { wrappedDocumentKey, payload }: EncryptedDocument = await encryptDocument(
+        masterKey,
+        new Uint8Array(bytes),
+      );
+
+      const path = capsuleAttachmentStoragePath(ownerId, capsule.id, attachmentId);
+      await uploadEncryptedCapsulePayload(supabase, path, serializeEnvelope(payload));
+
+      newAttachments.push({
+        id: attachmentId,
+        filename: doc.filename,
+        mimeType: doc.mimeType,
+        size: doc.size,
+        wrappedDocumentKey: serializeEnvelope(wrappedDocumentKey),
+      });
+    }
+  } catch (err) {
+    await removeEncryptedCapsulePayloads(
+      supabase,
+      newAttachments.map((a) => capsuleAttachmentStoragePath(ownerId, capsule.id, a.id)),
+    ).catch(() => {});
+    throw err instanceof Error
+      ? new Error(`Impossibile chiudere la capsula: ${err.message}`)
+      : new Error("Impossibile chiudere la capsula.");
+  }
+
+  const payload: CapsulePayload = {
+    title: capsule.title,
+    content: capsule.content,
+    attachments: [...capsule.attachments, ...newAttachments],
+    // Tutto ciò che era un riferimento è ora una copia propria: la capsula chiusa non ne ha più bisogno.
+    linkedDocumentIds: [],
+    relatedContactIds: capsule.relatedContacts.map((c) => c.id),
+    openAt: capsule.openAt,
+  };
+  const encryptedPayload = await encryptBytes(masterKey, utf8ToBytes(JSON.stringify(payload)));
+
+  const { error } = await supabase
+    .from("capsules")
+    .update({
+      encrypted_payload: serializeEnvelope(encryptedPayload),
+      status: "ready" satisfies CapsuleStatus,
+    })
+    .eq("id", capsule.id);
+
+  if (error) {
+    await removeEncryptedCapsulePayloads(
+      supabase,
+      newAttachments.map((a) => capsuleAttachmentStoragePath(ownerId, capsule.id, a.id)),
+    ).catch(() => {});
+    throw new Error(`Impossibile chiudere la capsula: ${error.message}`);
+  }
+}
+
+/**
+ * Moves a capsule forward in its lifecycle beyond closing (ready ->
+ * shared) --- still just a recorded status change, no actual delivery
+ * or access grant to any recipient happens yet (v. HINTHIAL_MVP.md:
+ * niente Dead Man's Switch in questa fase). draft -> ready goes through
+ * closeCapsule instead, which does real work beyond the status itself.
  */
 export async function setCapsuleStatus(
   supabase: SupabaseClient<Database>,
@@ -253,6 +331,49 @@ export async function setCapsuleStatus(
 
   if (error) {
     throw new Error(`Impossibile aggiornare lo stato della capsula: ${error.message}`);
+  }
+}
+
+/**
+ * Updates one attachment's transcript (audio/video only, written by
+ * hand today --- v. domain/transcription). Re-encrypts the whole
+ * payload like updateCapsule, but touches only this one attachment's
+ * field --- allowed regardless of status: it doesn't change what the
+ * capsule actually contains, only a searchable annotation alongside it,
+ * so it doesn't compromise "closing is irreversible".
+ */
+export async function updateCapsuleAttachmentTranscript(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  capsule: Pick<
+    CapsuleListItem,
+    "id" | "title" | "content" | "attachments" | "linkedDocuments" | "relatedContacts" | "openAt"
+  >,
+  attachmentId: string,
+  transcript: string,
+): Promise<void> {
+  const trimmed = transcript.trim();
+  const attachments = capsule.attachments.map((a) =>
+    a.id === attachmentId ? { ...a, transcript: trimmed || undefined } : a,
+  );
+
+  const payload: CapsulePayload = {
+    title: capsule.title,
+    content: capsule.content,
+    attachments,
+    linkedDocumentIds: capsule.linkedDocuments.map((d) => d.id),
+    relatedContactIds: capsule.relatedContacts.map((c) => c.id),
+    openAt: capsule.openAt,
+  };
+  const encryptedPayload = await encryptBytes(masterKey, utf8ToBytes(JSON.stringify(payload)));
+
+  const { error } = await supabase
+    .from("capsules")
+    .update({ encrypted_payload: serializeEnvelope(encryptedPayload) })
+    .eq("id", capsule.id);
+
+  if (error) {
+    throw new Error(`Impossibile salvare la trascrizione: ${error.message}`);
   }
 }
 

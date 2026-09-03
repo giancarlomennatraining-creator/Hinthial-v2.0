@@ -177,7 +177,7 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
               htmlFor="relatedDocumentId"
               className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
             >
-              Documento collegato
+              Contenuto collegato
             </label>
             <select
               id="relatedDocumentId"
@@ -186,8 +186,8 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
               className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             >
               <option value="">{selectedAssetId ? "Nessuno" : "Scegli prima un asset"}</option>
-              {/* Selezionare un asset filtra ai soli documenti già collegati
-                  a quell'asset (v. Documenti) --- senza asset, nessun documento
+              {/* Selezionare un asset filtra ai soli contenuti già collegati
+                  a quell'asset (v. Archivio) --- senza asset, nessun contenuto
                   è proponibile: la scelta dell'asset viene prima. */}
               {sortedFilteredDocuments.map((doc) => (
                 <option key={doc.id} value={doc.id}>

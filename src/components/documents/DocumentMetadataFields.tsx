@@ -35,12 +35,21 @@ export function DocumentMetadataFields({
   assets,
   value,
   onChange,
+  showExpiry = true,
 }: {
   idPrefix: string;
   categories: Category[];
   assets: AssetListItem[];
   value: DocumentMetadataFieldsValue;
   onChange: (next: DocumentMetadataFieldsValue) => void;
+  /**
+   * In creazione raramente si conosce già la scadenza esatta (e per
+   * audio/video/note spesso non ha proprio senso chiederla) --- il
+   * campo va aggiunto dopo, via "Modifica", una volta che si sa
+   * davvero (a mano, o in futuro suggerito dall'AI reale che legge il
+   * contenuto). Di default true per non rompere l'uso in modifica.
+   */
+  showExpiry?: boolean;
 }) {
   // La categoria filtra gli asset proposti (es. "Casa" -> solo gli asset
   // di categoria "Casa") --- senza categoria selezionata, nessun asset è
@@ -110,21 +119,23 @@ export function DocumentMetadataFields({
           </select>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor={`${idPrefix}-expires`}
-            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-          >
-            Scadenza
-          </label>
-          <input
-            id={`${idPrefix}-expires`}
-            type="date"
-            value={value.expiresAt}
-            onChange={(e) => onChange({ ...value, expiresAt: e.target.value })}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-          />
-        </div>
+        {showExpiry ? (
+          <div className="flex flex-col gap-1">
+            <label
+              htmlFor={`${idPrefix}-expires`}
+              className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
+            >
+              Scadenza
+            </label>
+            <input
+              id={`${idPrefix}-expires`}
+              type="date"
+              value={value.expiresAt}
+              onChange={(e) => onChange({ ...value, expiresAt: e.target.value })}
+              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            />
+          </div>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-1">

@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import { sortAlphabetically } from "@/lib/utils";
+import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import type { Category } from "@/domain/categories/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 
 /**
- * Lets the user attach one or more already-uploaded Documenti entries
- * to a capsule --- filter by category, then pick a file, "+ Allega" to
+ * Lets the user attach one or more already-existing Archivio entries to
+ * a capsule --- filter by category, then pick an item, "+ Allega" to
  * add it to the running list. No copy/re-encryption happens: this just
  * accumulates the ids the caller will pass along (see
  * CapsuleInput.linkedDocumentIds / CapsuleEditInput.linkedDocumentIds).
+ * Works for any content kind (documento/immagine/audio/video/nota) ---
+ * they're all rows of the same table (v. lib/content-kind.ts).
  */
 export function DocumentAttachmentPicker({
   idPrefix,
@@ -56,7 +59,7 @@ export function DocumentAttachmentPicker({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-        Allega un documento già presente in Documenti
+        Allega un contenuto già presente in Archivio
       </p>
       <div className="flex flex-wrap items-end gap-2">
         <div className="flex flex-col gap-1">
@@ -86,7 +89,7 @@ export function DocumentAttachmentPicker({
             htmlFor={`${idPrefix}-document`}
             className="text-xs text-zinc-500 dark:text-zinc-500"
           >
-            Documento
+            Elemento d&apos;archivio
           </label>
           <select
             id={`${idPrefix}-document`}
@@ -96,11 +99,11 @@ export function DocumentAttachmentPicker({
             className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
           >
             <option value="">
-              {categoryId ? "Scegli un documento" : "Scegli prima una categoria"}
+              {categoryId ? "Scegli un elemento" : "Scegli prima una categoria"}
             </option>
             {pickableDocuments.map((doc) => (
               <option key={doc.id} value={doc.id}>
-                {doc.filename}
+                {CONTENT_KIND_ICON[contentKindFor(doc.mimeType)]} {doc.filename}
               </option>
             ))}
           </select>
@@ -123,7 +126,9 @@ export function DocumentAttachmentPicker({
               key={doc.id}
               className="flex items-center gap-1 rounded-full bg-zinc-100 py-0.5 pl-2.5 pr-1 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
             >
-              <span>📄 {doc.filename}</span>
+              <span>
+                {CONTENT_KIND_ICON[contentKindFor(doc.mimeType)]} {doc.filename}
+              </span>
               <button
                 type="button"
                 onClick={() => handleRemove(doc.id)}
