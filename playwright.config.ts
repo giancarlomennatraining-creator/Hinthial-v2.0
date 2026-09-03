@@ -27,7 +27,17 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // Synthetic camera/mic (a moving color pattern + a tone) with
+        // permission auto-granted --- lets e2e tests exercise
+        // AudioVideoRecorder (v. capsules) without a real device. Inert
+        // for every other test: only takes effect when a page actually
+        // calls getUserMedia.
+        launchOptions: {
+          args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
+        },
+      },
     },
   ],
   webServer: {
