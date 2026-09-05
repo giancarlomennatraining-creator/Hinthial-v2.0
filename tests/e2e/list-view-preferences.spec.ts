@@ -60,7 +60,7 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Aspetto" }).click();
   await expect(page.getByRole("heading", { name: "Visualizzazione delle liste" })).toBeVisible();
-  const contactsRow = page.getByRole("listitem").filter({ hasText: "Contatti fiduciari" });
+  const contactsRow = page.getByRole("listitem").filter({ hasText: "Contatti" });
   await contactsRow.getByRole("radio", { name: "Vista a tabella" }).click();
   await expect(contactsRow.getByRole("radio", { name: "Vista a tabella" })).toHaveAttribute(
     "aria-checked",
@@ -100,7 +100,7 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Aspetto" }).click();
   await expect(
-    page.getByRole("listitem").filter({ hasText: "Contatti fiduciari" }).getByRole("radio", {
+    page.getByRole("listitem").filter({ hasText: "Contatti" }).getByRole("radio", {
       name: "Vista a elenco",
     }),
   ).toHaveAttribute("aria-checked", "true", { timeout: 10_000 });

@@ -37,7 +37,9 @@ test("la dashboard mostra i contatori per sezione, resta a due colonne anche a v
   await expect(page.getByRole("link", { name: "Contatti: 0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Capsule: 0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Categorie: 10" })).toBeVisible();
-  await expect(page.getByText("Primi passi con Hinthial")).toBeVisible();
+  // "Onboarding" compare due volte in pagina (la card e l'indicatore
+  // nella barra laterale): si verifica la card dal rapporto "2/8".
+  await expect(page.getByText("2/8")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Prossime scadenze" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Aggiunti di recente" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Elementi da completare" })).toBeVisible();

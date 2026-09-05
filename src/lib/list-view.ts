@@ -26,7 +26,7 @@ export const LIST_SECTION_LABEL: Record<ListSection, string> = {
   archive: "Archivio",
   reminders: "Scadenze",
   assets: "Asset",
-  contacts: "Contatti fiduciari",
+  contacts: "Contatti",
   capsules: "Capsule",
   timeline: "Cronologia",
 };

@@ -1,5 +1,4 @@
 import type { DocumentListItem } from "@/domain/documents/types";
-import type { ReminderListItem } from "@/domain/reminders/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { TrustedContactListItem } from "@/domain/contacts/types";
 import type { CapsuleListItem } from "@/domain/capsules/types";
@@ -7,31 +6,28 @@ import type { OnboardingStep } from "@/components/dashboard/OnboardingChecklist"
 
 export interface OnboardingSourceData {
   documents: DocumentListItem[];
-  reminders: ReminderListItem[];
   assets: AssetListItem[];
   contacts: TrustedContactListItem[];
   capsules: CapsuleListItem[];
 }
 
 /**
- * "Prima esperienza" della spec, estratta qui perché serve sia alla
- * dashboard (v. DashboardWidgets, la card "Primi passi con Hinthial")
- * sia all'indicatore persistente nel menu laterale (v.
- * components/layout/OnboardingStatus) --- una sola definizione, mai due
- * liste che possono andare fuori sincrono.
+ * "Onboarding", estratta qui perché serve sia alla dashboard (v.
+ * DashboardWidgets) sia all'indicatore persistente nel menu laterale
+ * (v. components/layout/OnboardingStatus) --- una sola definizione, mai
+ * due liste che possono andare fuori sincrono.
  *
  * Account e cifratura sono per definizione già fatti se questo viene
  * chiamato con un AIContext già costruito (richiede la Master Key
- * sbloccata). Solo "documento", "categoria" e "amico" sono obbligatori
- * (v. onboardingCompletionPercent sotto): asset/capsula/collegamento
- * capsula-contatto/scadenza restano opzionali --- servono a far scoprire
- * le altre sezioni dell'app, ma nessuno è tenuto a usarle per
- * considerare l'onboarding concluso. "Amico" è obbligatorio perché è un
- * prerequisito reale: senza almeno un amico non si può attivare il Dead
- * Man's Switch semplificato per le capsule (v. domain/contacts, isFriend).
+ * sbloccata). Nessun passo è opzionale: contano tutti nel conteggio
+ * (v. isOnboardingComplete/onboardingCompletionPercent sotto). "Amico"
+ * è un prerequisito reale: senza almeno un amico non si può attivare il
+ * Dead Man's Switch semplificato per le capsule (v. domain/contacts,
+ * isFriend). "Imposta una scadenza" non è più un passo: è un'attività
+ * passiva rispetto al contribuire un contenuto vero e proprio.
  */
 export function computeOnboardingSteps(data: OnboardingSourceData): OnboardingStep[] {
-  const { documents, reminders, assets, contacts, capsules } = data;
+  const { documents, assets, contacts, capsules } = data;
 
   return [
     { key: "account", label: "Crea un account", done: true, href: "/dashboard" },
@@ -59,39 +55,28 @@ export function computeOnboardingSteps(data: OnboardingSourceData): OnboardingSt
       label: "Aggiungi il primo asset",
       done: assets.length > 0,
       href: "/assets",
-      optional: true,
     },
     {
       key: "capsule",
       label: "Crea la tua prima capsula",
       done: capsules.length > 0,
       href: "/capsules",
-      optional: true,
     },
     {
       key: "capsule-contact",
       label: "Collega una capsula a un contatto",
       done: capsules.some((c) => c.relatedContacts.length > 0),
       href: "/capsules",
-      optional: true,
-    },
-    {
-      key: "reminder",
-      label: "Imposta una scadenza",
-      done: reminders.length > 0,
-      href: "/reminders",
-      optional: true,
     },
   ];
 }
 
 export function isOnboardingComplete(steps: OnboardingStep[]): boolean {
-  return steps.filter((s) => !s.optional).every((s) => s.done);
+  return steps.every((s) => s.done);
 }
 
-/** Percentuale sui soli passi obbligatori --- stesso denominatore del "X/Y" già mostrato in OnboardingChecklist. */
+/** Percentuale su tutti i passi --- stesso denominatore del "X/Y" già mostrato in OnboardingChecklist. */
 export function onboardingCompletionPercent(steps: OnboardingStep[]): number {
-  const mandatory = steps.filter((s) => !s.optional);
-  if (mandatory.length === 0) return 100;
-  return Math.round((mandatory.filter((s) => s.done).length / mandatory.length) * 100);
+  if (steps.length === 0) return 100;
+  return Math.round((steps.filter((s) => s.done).length / steps.length) * 100);
 }

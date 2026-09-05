@@ -12,7 +12,7 @@ import { computeOnboardingSteps, onboardingCompletionPercent } from "@/domain/on
 const MIN_SPACE_BELOW = 320;
 
 /**
- * Indicatore persistente di avanzamento "Primi passi con Hinthial",
+ * Indicatore persistente di avanzamento "Onboarding",
  * sempre visibile nella barra laterale (non solo in dashboard) --- una
  * grafica a torta col solo colore del brand per la quota completata,
  * che al click apre la stessa checklist già vista in dashboard (v.
@@ -47,7 +47,6 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
       setSteps(
         computeOnboardingSteps({
           documents: context.documents,
-          reminders: context.reminders,
           assets: context.assets,
           contacts: context.contacts,
           capsules: context.capsules,
@@ -109,8 +108,8 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
         type="button"
         onClick={toggle}
         aria-expanded={open}
-        aria-label={`Primi passi con Hinthial: ${percent}% completato`}
-        title={`Primi passi con Hinthial: ${percent}% completato`}
+        aria-label={`Onboarding: ${percent}% completato`}
+        title={`Onboarding: ${percent}% completato`}
         className="flex items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-900"
       >
         <span
@@ -122,7 +121,7 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
         />
         {collapsed ? null : (
           <span className="min-w-0 text-xs text-zinc-600 dark:text-zinc-400">
-            <span className="block font-medium text-zinc-900 dark:text-zinc-100">Primi passi</span>
+            <span className="block font-medium text-zinc-900 dark:text-zinc-100">Onboarding</span>
             <span className="block">{percent}% completato</span>
           </span>
         )}
@@ -133,7 +132,7 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
             <div
               ref={panelRef}
               role="dialog"
-              aria-label="Primi passi con Hinthial"
+              aria-label="Onboarding"
               style={{ position: "fixed", top: position.top, bottom: position.bottom, left: position.left }}
               className="z-50 w-80 max-w-[calc(100vw-2rem)] rounded-md border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
             >

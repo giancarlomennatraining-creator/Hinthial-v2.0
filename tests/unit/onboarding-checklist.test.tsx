@@ -7,19 +7,21 @@ const steps: OnboardingStep[] = [
   { key: "security", label: "Configura la cifratura", done: true, href: "/archive" },
   { key: "document", label: "Aggiungi il primo documento", done: false, href: "/archive" },
   { key: "category", label: "Assegna una categoria", done: false, href: "/archive" },
-  { key: "reminder", label: "Imposta una scadenza", done: false, href: "/reminders", optional: true },
 ];
 
 describe("OnboardingChecklist", () => {
-  it("counts only mandatory steps in the progress indicator", () => {
+  it("shows the heading 'Onboarding' and counts every step in the progress indicator", () => {
     render(<OnboardingChecklist steps={steps} />);
-    // 2 mandatory steps done ("account", "security") out of 4 mandatory total --- the optional 5th is excluded from both numbers.
+    expect(screen.getByText("Onboarding")).toBeInTheDocument();
+    // 2 done ("account", "security") out of 4 total --- nothing is optional anymore.
     expect(screen.getByText("2/4")).toBeInTheDocument();
   });
 
-  it("renders a done step as struck-through text, not a link", () => {
+  it("renders a done step as plain text (not struck through, not a link)", () => {
     render(<OnboardingChecklist steps={steps} />);
-    expect(screen.getByText("Crea un account")).toBeInTheDocument();
+    const doneText = screen.getByText("Crea un account");
+    expect(doneText).toBeInTheDocument();
+    expect(doneText).not.toHaveClass("line-through");
     expect(screen.queryByRole("link", { name: "Crea un account" })).not.toBeInTheDocument();
   });
 
@@ -29,8 +31,8 @@ describe("OnboardingChecklist", () => {
     expect(link).toHaveAttribute("href", "/archive");
   });
 
-  it("marks the optional step as such", () => {
+  it("never marks any step as optional", () => {
     render(<OnboardingChecklist steps={steps} />);
-    expect(screen.getByText("(opzionale)")).toBeInTheDocument();
+    expect(screen.queryByText("(opzionale)")).not.toBeInTheDocument();
   });
 });

@@ -1,8 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-test("la home page pubblica mostra la barra in alto (logo + accedi/registrati) e il corpo con carosello", async ({
+test("la home page pubblica mostra la barra in alto, il corpo con carosello automatico e le sezioni brochure", async ({
   page,
 }) => {
+  // Installato prima di navigare: intercetta i timer della pagina, per
+  // testare l'avanzamento automatico del carosello senza attese reali.
+  await page.clock.install();
   await page.goto("/");
 
   // Barra in alto: logo a sinistra, Accedi/Registrati a destra (nessun utente autenticato).
@@ -29,4 +32,23 @@ test("la home page pubblica mostra la barra in alto (logo + accedi/registrati) e
   await expect(
     carousel.getByRole("heading", { name: "Un assistente che resta sul tuo dispositivo" }),
   ).toBeVisible();
+
+  // Avanzamento automatico: ogni navigazione manuale fa ripartire
+  // l'attesa di 6 secondi da capo --- superata di poco (un solo tick,
+  // non più d'uno), si passa alla slide successiva. Il mouse resta però
+  // fermo sopra il carosello dopo l'ultimo click: come un utente reale,
+  // va allontanato per uscire dalla pausa "al passaggio del mouse".
+  await page.mouse.move(0, 0);
+  await page.clock.fastForward(6500);
+  await expect(
+    carousel.getByRole("heading", { name: "I tuoi dati, solo tuoi" }),
+  ).toBeVisible();
+
+  // Sezioni in stile brochure, dopo il carosello.
+  await expect(page.getByRole("heading", { name: "Perché Hinthial" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Zero-knowledge davvero" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Come funziona" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Crea il tuo account" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Pronto a mettere ordine?" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Inizia subito" })).toBeVisible();
 });

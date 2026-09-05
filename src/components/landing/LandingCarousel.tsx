@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface Slide {
@@ -43,15 +43,44 @@ const SLIDES: Slide[] = [
   },
 ];
 
+const AUTOPLAY_INTERVAL_MS = 6000;
+
 /**
- * Carosello di presentazione nella home page pubblica --- navigazione
- * manuale (frecce + pallini), niente avanzamento automatico: più
- * prevedibile per chi naviga con tastiera/screen reader, e senza timer
- * da gestire nei test e2e.
+ * Carosello di presentazione nella home page pubblica --- avanza da
+ * solo ogni 6 secondi, in pausa al passaggio del mouse (per poter
+ * leggere con calma) e disattivato del tutto per chi preferisce
+ * meno animazioni (`prefers-reduced-motion`). Le frecce e i pallini
+ * restano sempre disponibili per la navigazione manuale, che riparte
+ * l'attesa dei 6 secondi da capo.
  */
 export function LandingCarousel() {
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const slide = SLIDES[index];
+
+  useEffect(() => {
+    // Legge una preferenza di sistema che non esiste ancora durante il
+    // render lato server --- stesso pattern di lib/sidebar.ts.
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setReducedMotion(query.matches);
+    function handleChange(event: MediaQueryListEvent) {
+      setReducedMotion(event.matches);
+    }
+    query.addEventListener("change", handleChange);
+    return () => query.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (paused || reducedMotion) return;
+    const timer = window.setInterval(() => {
+      setIndex((prev) => (prev + 1) % SLIDES.length);
+    }, AUTOPLAY_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+    // Ricreato ad ogni cambio di slide (anche manuale): l'attesa
+    // riparte da capo invece di avanzare subito dopo un click.
+  }, [index, paused, reducedMotion]);
 
   function goTo(next: number) {
     setIndex((next + SLIDES.length) % SLIDES.length);
@@ -62,6 +91,8 @@ export function LandingCarousel() {
       role="region"
       aria-roledescription="carosello"
       aria-label="Cosa puoi fare con Hinthial"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
       className="flex w-full max-w-2xl flex-col items-center gap-6"
     >
       <div className="flex w-full items-center gap-3 sm:gap-6">

@@ -23,7 +23,7 @@ function formatDate(iso: string): string {
 /**
  * Il corpo della dashboard, a due colonne (la prima più larga): a
  * sinistra i contatori per sezione, prossime scadenze, aggiunti di
- * recente ed elementi da completare; a destra la guida "Primi passi"
+ * recente ed elementi da completare; a destra la guida "Onboarding"
  * (finché non completata) e "Da tenere d'occhio" (v. WatchlistWidget).
  * Tutto derivato da un unico AIContext (v. domain/ai/context.ts) --- lo
  * stesso snapshot già decifrato che usano Assistente AI e ricerca
@@ -80,7 +80,7 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
   // components/layout/OnboardingStatus): account e cifratura sono per
   // definizione già fatti se questo componente sta renderizzando (è
   // gated da MasterKey "unlocked", v. DashboardPanel).
-  const onboardingSteps = computeOnboardingSteps({ documents, reminders, assets, contacts, capsules });
+  const onboardingSteps = computeOnboardingSteps({ documents, assets, contacts, capsules });
   const onboardingComplete = isOnboardingComplete(onboardingSteps);
 
   if (error) {

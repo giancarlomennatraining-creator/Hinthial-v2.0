@@ -4,7 +4,7 @@ import { openRowMenu } from "./row-actions";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("l'indicatore \"Primi passi\" nella barra laterale mostra la percentuale e apre la checklist al click", async ({
+test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e apre la checklist al click", async ({
   page,
 }) => {
   test.slow();
@@ -19,7 +19,7 @@ test("l'indicatore \"Primi passi\" nella barra laterale mostra la percentuale e 
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   // Prima dello sblocco della cifratura, l'indicatore non c'è ancora.
-  const statusButton = page.getByRole("button", { name: /Primi passi con Hinthial/ });
+  const statusButton = page.getByRole("button", { name: /Onboarding/ });
   await expect(statusButton).not.toBeVisible();
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
@@ -33,27 +33,24 @@ test("l'indicatore \"Primi passi\" nella barra laterale mostra la percentuale e 
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  // Account e cifratura fatti, nient'altro ancora: 2 su 5 obbligatori -> 40%.
+  // Account e cifratura fatti, nient'altro ancora: 2 su 8 -> 25%.
   await expect(statusButton).toBeVisible({ timeout: 10_000 });
-  await expect(statusButton).toHaveAttribute(
-    "aria-label",
-    "Primi passi con Hinthial: 40% completato",
-  );
+  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 25% completato");
 
   await statusButton.click();
-  const panel = page.getByRole("dialog", { name: "Primi passi con Hinthial" });
+  const panel = page.getByRole("dialog", { name: "Onboarding" });
   await expect(panel).toBeVisible();
-  await expect(panel.getByText("Primi passi con Hinthial")).toBeVisible();
-  await expect(panel.getByText("2/5")).toBeVisible();
+  await expect(panel.getByText("Onboarding")).toBeVisible();
+  await expect(panel.getByText("2/8")).toBeVisible();
   await expect(panel.getByRole("link", { name: "Aggiungi il primo contenuto all'archivio" })).toBeVisible();
   await expect(panel.getByRole("link", { name: "Aggiungi un amico" })).toBeVisible();
+  await expect(panel.getByText("(opzionale)")).toHaveCount(0);
 
-  // Un click fuori dal pannello lo chiude.
   // Un click nell'area principale (fuori dal bottone e dal pannello) lo chiude.
   await page.getByRole("heading", { name: "Archivio" }).click();
   await expect(panel).not.toBeVisible();
 
-  // Un documento con categoria completa due passi obbligatori in un colpo solo.
+  // Un documento con categoria completa due passi in un colpo solo.
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   await page.locator("#upload-category").selectOption({ label: "🛡️ Assicurazioni" });
@@ -66,18 +63,15 @@ test("l'indicatore \"Primi passi\" nella barra laterale mostra la percentuale e 
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("polizza.txt")).toBeVisible({ timeout: 15_000 });
 
-  // Riaprendolo si aggiorna: 4 su 5 -> 80%.
+  // Riaprendolo si aggiorna: 4 su 8 -> 50%.
   await statusButton.click();
-  await expect(statusButton).toHaveAttribute(
-    "aria-label",
-    "Primi passi con Hinthial: 80% completato",
-    { timeout: 10_000 },
-  );
-  await expect(panel.getByText("4/5")).toBeVisible();
-  // Un click nell'area principale (fuori dal bottone e dal pannello) lo chiude.
+  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 50% completato", {
+    timeout: 10_000,
+  });
+  await expect(panel.getByText("4/8")).toBeVisible();
   await page.getByRole("heading", { name: "Archivio" }).click();
 
-  // Un amico completa l'ultimo obbligatorio: 100%.
+  // Un amico completa un altro passo: 5 su 8 -> 63%.
   await page.getByRole("link", { name: "Contatti", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
   await page.getByLabel("Nome").fill("Maria Rossi");
@@ -91,10 +85,8 @@ test("l'indicatore \"Primi passi\" nella barra laterale mostra la percentuale e 
   await page.getByRole("menuitem", { name: "Segna come amico" }).click();
 
   await statusButton.click();
-  await expect(statusButton).toHaveAttribute(
-    "aria-label",
-    "Primi passi con Hinthial: 100% completato",
-    { timeout: 10_000 },
-  );
-  await expect(panel.getByText("5/5")).toBeVisible();
+  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 63% completato", {
+    timeout: 10_000,
+  });
+  await expect(panel.getByText("5/8")).toBeVisible();
 });
