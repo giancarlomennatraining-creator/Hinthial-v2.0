@@ -354,6 +354,7 @@ export type Database = {
           encrypted_email: string;
           role: string;
           status: TrustedContactStatusColumn;
+          is_friend: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -364,6 +365,7 @@ export type Database = {
           encrypted_email: string;
           role: string;
           status?: TrustedContactStatusColumn;
+          is_friend?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -374,6 +376,7 @@ export type Database = {
           encrypted_email?: string;
           role?: string;
           status?: TrustedContactStatusColumn;
+          is_friend?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -394,6 +397,8 @@ export type Database = {
           encrypted_payload: string;
           status: CapsuleStatusColumn;
           access_condition: CapsuleAccessConditionColumn;
+          /** In chiaro apposta --- v. migrazione 20260905000000. Null per le capsule create prima di questa colonna, finché non vengono riviste (v. domain/capsules/repository.ts, listCapsules). */
+          open_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -403,6 +408,7 @@ export type Database = {
           encrypted_payload: string;
           status?: CapsuleStatusColumn;
           access_condition?: CapsuleAccessConditionColumn;
+          open_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -412,6 +418,7 @@ export type Database = {
           encrypted_payload?: string;
           status?: CapsuleStatusColumn;
           access_condition?: CapsuleAccessConditionColumn;
+          open_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

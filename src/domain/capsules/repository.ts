@@ -28,13 +28,15 @@ import type {
   CapsuleStatus,
 } from "@/domain/capsules/types";
 
-const CAPSULE_COLUMNS = "id, encrypted_payload, status, access_condition, created_at";
+const CAPSULE_COLUMNS = "id, encrypted_payload, status, access_condition, open_at, created_at";
 
 type CapsuleRow = {
   id: string;
   encrypted_payload: string;
   status: CapsuleStatus;
   access_condition: CapsuleAccessCondition;
+  /** In chiaro apposta --- v. migrazione 20260905000000 e CapsuleListItem.openAt. */
+  open_at: string | null;
   created_at: string;
 };
 
@@ -49,6 +51,19 @@ interface CapsulePayload {
   relatedContactIds: string[];
   /** ISO YYYY-MM-DD, or null --- see CapsuleListItem.openAt. */
   openAt: string | null;
+}
+
+/** Best-effort, mai atteso dal chiamante --- v. listCapsules. */
+async function backfillOpenAtColumn(
+  supabase: SupabaseClient<Database>,
+  capsuleId: string,
+  openAt: string,
+): Promise<void> {
+  try {
+    await supabase.from("capsules").update({ open_at: openAt }).eq("id", capsuleId);
+  } catch {
+    // Riprova al prossimo listCapsules() --- nessun dato perso, solo non ancora sanato.
+  }
 }
 
 async function decryptPayload(masterKey: CryptoKey, row: CapsuleRow): Promise<CapsulePayload> {
@@ -96,8 +111,12 @@ export async function listCapsules(
   const linkedDocumentsById = new Map(linkedDocuments.map((doc) => [doc.id, doc]));
   const relatedContactsById = new Map(relatedContacts.map((contact) => [contact.id, contact]));
 
-  return rows.map((row, i) => {
+  const items = rows.map((row, i) => {
     const payload = payloads[i];
+    // La colonna in chiaro è la fonte autorevole (v. migrazione
+    // 20260905000000); il payload cifrato resta un fallback per le
+    // capsule create prima che esistesse --- v. sanamento sotto.
+    const openAt = row.open_at ?? payload.openAt;
 
     return {
       id: row.id,
@@ -113,10 +132,25 @@ export async function listCapsules(
         .filter((contact): contact is NonNullable<typeof contact> => contact !== undefined),
       status: row.status,
       accessCondition: row.access_condition,
-      openAt: payload.openAt,
+      openAt,
       createdAt: row.created_at,
     };
   });
+
+  // Sanamento: una capsula creata prima della migrazione ha open_at
+  // NULL a livello di colonna anche se il payload cifrato ha già una
+  // data --- la si riporta in chiaro qui, alla prima occasione in cui
+  // il proprietario la rivede (unico momento in cui è già decifrata).
+  // Best-effort: un fallimento qui non deve impedire di mostrare la lista.
+  for (const [i, row] of rows.entries()) {
+    if (row.open_at === null && payloads[i].openAt !== null) {
+      // Non attesa di proposito: un fallimento qui riprova semplicemente
+      // al prossimo caricamento, non deve rallentare né bloccare la lista.
+      void backfillOpenAtColumn(supabase, row.id, payloads[i].openAt as string);
+    }
+  }
+
+  return items;
 }
 
 /**
@@ -191,6 +225,7 @@ export async function createCapsule(
     id: capsuleId,
     owner_id: ownerId,
     encrypted_payload: serializeEnvelope(encryptedPayload),
+    open_at: input.openAt,
   });
 
   if (error) {
@@ -203,22 +238,45 @@ export async function createCapsule(
 }
 
 /**
- * Updates title/content/recipient while a capsule is still a draft ---
- * re-encrypts the whole payload (same shape as createCapsule), keeping
- * the existing attachments untouched: their ciphertext already lives in
- * Storage and isn't re-uploaded here.
+ * Updates title/content/recipients/attachments while a capsule is still
+ * a draft --- re-encrypts the whole payload (same shape as
+ * createCapsule). `keptAttachments` are existing attachments left
+ * untouched (their ciphertext already lives in Storage, not
+ * re-uploaded); `input.newFiles` are freshly recorded/uploaded
+ * audio/video, encrypted and uploaded here exactly like createCapsule;
+ * `removedAttachments` are existing ones the caller dropped --- their
+ * Storage blobs are deleted, but only *after* the new payload is
+ * confirmed saved (deleting first and then failing to save would leave
+ * the still-current payload pointing at now-missing attachments).
  */
 export async function updateCapsule(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
+  ownerId: string,
   capsuleId: string,
-  existingAttachments: CapsuleAttachment[],
+  keptAttachments: CapsuleAttachment[],
+  removedAttachments: CapsuleAttachment[],
   input: CapsuleEditInput,
 ): Promise<void> {
+  const uploadedAttachments: CapsuleAttachment[] = [];
+  try {
+    for (const file of input.newFiles) {
+      uploadedAttachments.push(await uploadAttachment(supabase, masterKey, ownerId, capsuleId, file));
+    }
+  } catch (err) {
+    await removeEncryptedCapsulePayloads(
+      supabase,
+      uploadedAttachments.map((a) => capsuleAttachmentStoragePath(ownerId, capsuleId, a.id)),
+    ).catch(() => {});
+    throw err instanceof Error
+      ? new Error(`Impossibile aggiornare la capsula: ${err.message}`)
+      : new Error("Impossibile aggiornare la capsula.");
+  }
+
   const payload: CapsulePayload = {
     title: input.title,
     content: input.content,
-    attachments: existingAttachments,
+    attachments: [...keptAttachments, ...uploadedAttachments],
     linkedDocumentIds: input.linkedDocumentIds,
     relatedContactIds: input.relatedContactIds,
     openAt: input.openAt,
@@ -227,11 +285,25 @@ export async function updateCapsule(
 
   const { error } = await supabase
     .from("capsules")
-    .update({ encrypted_payload: serializeEnvelope(encryptedPayload) })
+    .update({ encrypted_payload: serializeEnvelope(encryptedPayload), open_at: input.openAt })
     .eq("id", capsuleId);
 
   if (error) {
+    await removeEncryptedCapsulePayloads(
+      supabase,
+      uploadedAttachments.map((a) => capsuleAttachmentStoragePath(ownerId, capsuleId, a.id)),
+    ).catch(() => {});
     throw new Error(`Impossibile aggiornare la capsula: ${error.message}`);
+  }
+
+  if (removedAttachments.length > 0) {
+    // Best-effort: il payload nuovo (senza questi allegati) è già
+    // salvato, quindi un fallimento qui lascia solo blob orfani in
+    // Storage --- non un problema di correttezza, nessun riferimento li punta più.
+    await removeEncryptedCapsulePayloads(
+      supabase,
+      removedAttachments.map((a) => capsuleAttachmentStoragePath(ownerId, capsuleId, a.id)),
+    ).catch(() => {});
   }
 }
 

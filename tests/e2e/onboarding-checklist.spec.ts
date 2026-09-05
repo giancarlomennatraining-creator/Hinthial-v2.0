@@ -29,15 +29,15 @@ test("la checklist dei primi passi mostra il progresso e sparisce a passi obblig
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  // Account e cifratura già fatti (2/4), nessun documento ancora.
+  // Account e cifratura già fatti (2/5), nessun documento né amico ancora.
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByText("Primi passi con Hinthial")).toBeVisible();
-  await expect(page.getByText("2/4")).toBeVisible();
+  await expect(page.getByText("2/5")).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Aggiungi il primo contenuto all'archivio" }),
   ).toBeVisible();
 
-  // Un documento con una categoria assegnata completa i due passi rimasti in un colpo solo.
+  // Un documento con una categoria assegnata completa due passi in un colpo solo.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
@@ -51,12 +51,30 @@ test("la checklist dei primi passi mostra il progresso e sparisce a passi obblig
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("polizza.txt")).toBeVisible({ timeout: 15_000 });
 
+  // Resta "amico" da completare: la checklist non sparisce ancora.
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("heading", { name: "Aggiunti di recente" })).toBeVisible();
+  await expect(page.getByText("Primi passi con Hinthial")).toBeVisible();
+  await expect(page.getByText("4/5")).toBeVisible();
+
+  // Un contatto marcato come amico completa l'ultimo passo obbligatorio.
+  await page.getByRole("link", { name: "Contatti", exact: true }).click();
+  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
+  await page.getByLabel("Nome").fill("Maria Rossi");
+  await page.getByLabel("Email").fill("maria.rossi@esempio.it");
+  await page.getByLabel("Ruolo").fill("Coniuge");
+  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
+  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
+  const contactRow = page.locator("li", { hasText: "Maria Rossi" });
+  await expect(contactRow).toBeVisible({ timeout: 10_000 });
+  await openRowMenu(contactRow);
+  await page.getByRole("menuitem", { name: "Segna come amico" }).click();
+
+  await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByText("Primi passi con Hinthial")).not.toBeVisible();
 });
 
-test("i passi opzionali (asset, contatto, capsula, collegamento) si spuntano man mano, ma non contano nel 2/4 obbligatorio", async ({
+test("i passi opzionali (asset, capsula, collegamento) si spuntano man mano, ma non contano nel 2/5 obbligatorio", async ({
   page,
 }) => {
   test.slow();
@@ -83,9 +101,8 @@ test("i passi opzionali (asset, contatto, capsula, collegamento) si spuntano man
 
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByText("Primi passi con Hinthial")).toBeVisible();
-  await expect(page.getByText("2/4")).toBeVisible();
+  await expect(page.getByText("2/5")).toBeVisible();
   await expect(page.getByRole("link", { name: "Aggiungi il primo asset" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Aggiungi un contatto fiduciario" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Crea la tua prima capsula" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Collega una capsula a un contatto" })).toBeVisible();
 
@@ -99,9 +116,10 @@ test("i passi opzionali (asset, contatto, capsula, collegamento) si spuntano man
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("link", { name: "Aggiungi il primo asset" })).not.toBeVisible();
   await expect(page.getByText("Aggiungi il primo asset")).toBeVisible();
-  await expect(page.getByText("2/4")).toBeVisible();
+  await expect(page.getByText("2/5")).toBeVisible();
 
-  // Un contatto (attivo, così può poi ricevere una capsula): si spunta il suo passo.
+  // Un contatto attivo, così può poi ricevere una capsula --- non ancora
+  // amico, quindi non tocca il conteggio degli obbligatori (v. altro test).
   await page.getByRole("link", { name: "Contatti", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
   await page.getByLabel("Nome").fill("Maria Rossi");
@@ -116,9 +134,7 @@ test("i passi opzionali (asset, contatto, capsula, collegamento) si spuntano man
   await expect(contactRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole("link", { name: "Dashboard" }).click();
-  await expect(page.getByRole("link", { name: "Aggiungi un contatto fiduciario" })).not.toBeVisible();
-  await expect(page.getByText("Aggiungi un contatto fiduciario")).toBeVisible();
-  await expect(page.getByText("2/4")).toBeVisible();
+  await expect(page.getByText("2/5")).toBeVisible();
 
   // Una capsula con quel contatto come destinatario: si spuntano insieme
   // "capsula" e "collegamento capsula-contatto".
@@ -126,6 +142,7 @@ test("i passi opzionali (asset, contatto, capsula, collegamento) si spuntano man
   await page.getByRole("link", { name: "+ Crea capsula" }).click();
   await expect(page.getByRole("heading", { name: "Nuova capsula" })).toBeVisible();
   await page.getByLabel("Titolo").fill("Per Maria");
+  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
   await page.locator("#create-contact").selectOption({ label: "Maria Rossi" });
   await page.getByRole("button", { name: "+ Aggiungi" }).click();
   await expect(page.getByText("👤 Maria Rossi")).toBeVisible();
@@ -144,8 +161,8 @@ test("i passi opzionali (asset, contatto, capsula, collegamento) si spuntano man
   await expect(page.getByRole("link", { name: "Collega una capsula a un contatto" })).not.toBeVisible();
   await expect(page.getByText("Collega una capsula a un contatto")).toBeVisible();
 
-  // Tutti e quattro i passi opzionali sono fatti, ma il conteggio e la
-  // presenza della checklist restano legati solo ai due obbligatori.
-  await expect(page.getByText("2/4")).toBeVisible();
+  // Tutti e tre i passi opzionali sono fatti, ma il conteggio e la
+  // presenza della checklist restano legati solo agli obbligatori.
+  await expect(page.getByText("2/5")).toBeVisible();
   await expect(page.getByText("Primi passi con Hinthial")).toBeVisible();
 });

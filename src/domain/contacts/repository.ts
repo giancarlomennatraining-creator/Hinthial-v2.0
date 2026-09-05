@@ -16,7 +16,7 @@ import type {
 } from "@/domain/contacts/types";
 
 const TRUSTED_CONTACT_COLUMNS =
-  "id, encrypted_name, encrypted_email, role, status, created_at";
+  "id, encrypted_name, encrypted_email, role, status, is_friend, created_at";
 
 type TrustedContactRow = {
   id: string;
@@ -24,6 +24,7 @@ type TrustedContactRow = {
   encrypted_email: string;
   role: string;
   status: TrustedContactStatus;
+  is_friend: boolean;
   created_at: string;
 };
 
@@ -42,6 +43,7 @@ async function toTrustedContactListItem(
     email: bytesToUtf8(emailBytes),
     role: row.role,
     status: row.status,
+    isFriend: row.is_friend,
     createdAt: row.created_at,
   };
 }
@@ -160,6 +162,26 @@ export async function setTrustedContactStatus(
 
   if (error) {
     throw new Error(`Impossibile aggiornare lo stato del contatto: ${error.message}`);
+  }
+}
+
+/**
+ * Marca/smarca un contatto come "amico" (Dead Man's Switch semplificato
+ * per le capsule, v. domain/capsules) --- solo un flag, come lo stato:
+ * nessuna conferma richiesta al contatto, nessun accesso concesso.
+ */
+export async function setTrustedContactFriend(
+  supabase: SupabaseClient<Database>,
+  contactId: string,
+  isFriend: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("trusted_contacts")
+    .update({ is_friend: isFriend })
+    .eq("id", contactId);
+
+  if (error) {
+    throw new Error(`Impossibile aggiornare il contatto: ${error.message}`);
   }
 }
 

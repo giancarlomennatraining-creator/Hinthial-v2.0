@@ -185,6 +185,7 @@ test("la ricerca e il filtro per stato funzionano in Scadenze, Contatti fiduciar
   await page.getByRole("link", { name: "+ Crea capsula" }).click();
   await expect(page.getByRole("heading", { name: "Nuova capsula" })).toBeVisible();
   await page.getByLabel("Titolo").fill("Per Maria");
+  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
   await page.getByRole("button", { name: "Avanti" }).click();
   await page.getByRole("button", { name: "Avanti" }).click();
   await page.getByRole("button", { name: "Crea capsula" }).click();
@@ -193,6 +194,7 @@ test("la ricerca e il filtro per stato funzionano in Scadenze, Contatti fiduciar
   await page.getByRole("link", { name: "+ Crea capsula" }).click();
   await expect(page.getByRole("heading", { name: "Nuova capsula" })).toBeVisible();
   await page.getByLabel("Titolo").fill("Ricordi di famiglia");
+  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
   await page.getByRole("button", { name: "Avanti" }).click();
   await page.getByRole("button", { name: "Avanti" }).click();
   await page.getByRole("button", { name: "Crea capsula" }).click();

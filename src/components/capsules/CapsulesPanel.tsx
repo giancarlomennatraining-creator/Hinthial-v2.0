@@ -62,7 +62,9 @@ type SortColumn = "title" | "status" | "recipients" | "openAt" | "contents";
 
 /**
  * FASE 8 --- Capsule digitali v1: titolo, contenuto, allegati, data di
- * apertura facoltativa (tutto cifrato) e uno o più destinatari; stato
+ * apertura obbligatoria (in chiaro, unica eccezione allo zero-knowledge
+ * in questa tabella --- v. domain/capsules/repository.ts, Dead Man's
+ * Switch semplificato per le capsule) e uno o più destinatari; stato
  * manuale bozza -> chiusa -> condivisa. Chiudere è l'unico passaggio
  * irreversibile: da FASE 14, chiudere copia ogni contenuto d'Archivio
  * ancora collegato dentro la capsula stessa (v. domain/capsules/

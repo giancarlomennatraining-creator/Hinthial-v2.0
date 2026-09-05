@@ -89,6 +89,12 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
       setError("Inserisci almeno un titolo.");
       return;
     }
+    if (!openAt) {
+      // Obbligatoria (Dead Man's Switch semplificato per le capsule):
+      // raggiunta questa data, il destinatario può vederne il contenuto.
+      setError("Scegli una data di apertura.");
+      return;
+    }
     setError(null);
     setStep(2);
   }
@@ -108,8 +114,8 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
     event.preventDefault();
     setError(null);
 
-    if (!title.trim()) {
-      setError("Inserisci almeno un titolo.");
+    if (!title.trim() || !openAt) {
+      setError(!title.trim() ? "Inserisci almeno un titolo." : "Scegli una data di apertura.");
       setStep(1);
       return;
     }
@@ -127,7 +133,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
         relatedContactIds: pendingRelatedContacts.map((c) => c.id),
         files: recordedFiles,
         linkedDocumentIds: pendingLinkedDocuments.map((d) => d.id),
-        openAt: openAt || null,
+        openAt,
       });
       router.push("/capsules?created=1");
     } catch (err) {
@@ -186,11 +192,12 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
 
                 <div className="flex flex-col gap-1">
                   <label htmlFor="openAt" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                    Data di apertura (facoltativa)
+                    Data di apertura
                   </label>
                   <input
                     id="openAt"
                     type="date"
+                    required
                     value={openAt}
                     onChange={(e) => setOpenAt(e.target.value)}
                     className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"

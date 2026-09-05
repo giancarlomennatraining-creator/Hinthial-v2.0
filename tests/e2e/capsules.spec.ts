@@ -83,6 +83,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
 
   const fileContent = `messaggio segreto --- ${Date.now()}`;
   await page.getByLabel("Titolo").fill("Per Maria");
+  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
   // Una capsula può essere destinata a più contatti: se ne aggiungono due.
   await page.locator("#create-contact").selectOption({ label: "Luca Bianchi" });
   await page.getByRole("button", { name: "+ Aggiungi" }).click();
@@ -131,16 +132,31 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
 
   // Finché è in bozza, la capsula è modificabile --- pagina dedicata (come
   // la creazione) --- anche i destinatari: se ne rimuove uno, restando
-  // comunque con più di zero destinatari. Si imposta anche una data di
-  // apertura facoltativa.
+  // comunque con più di zero destinatari. Si cambia anche la data di
+  // apertura, e si sostituisce l'allegato audio/video con uno nuovo.
   await openRowMenu(row);
   await page.getByRole("menuitem", { name: "Modifica" }).click();
   await expect(page).toHaveURL(/\/capsules\/[^/]+\/edit$/);
   await expect(page.getByRole("heading", { name: "Modifica capsula" })).toBeVisible();
   await page.getByLabel("Titolo").fill("Per Maria (aggiornato)");
   await page.getByLabel("Contenuto").fill("Un pensiero aggiornato per te.");
-  await page.getByLabel("Data di apertura (facoltativa)").fill("2027-03-15");
+  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-03-15");
   await page.getByRole("button", { name: "Rimuovi Luca Bianchi" }).click();
+
+  // Allegati: si rimuove quello esistente e se ne carica uno nuovo,
+  // esattamente come in creazione.
+  const removeExistingAttachmentButton = page.getByRole("button", { name: "Rimuovi messaggio.mp3" });
+  await expect(removeExistingAttachmentButton).toBeVisible();
+  await removeExistingAttachmentButton.click();
+  await expect(removeExistingAttachmentButton).not.toBeVisible();
+  const newFileContent = `messaggio aggiornato --- ${Date.now()}`;
+  await page.setInputFiles("#mediaFiles", {
+    name: "messaggio-nuovo.mp3",
+    mimeType: "audio/mpeg",
+    buffer: Buffer.from(newFileContent, "utf-8"),
+  });
+  await expect(page.getByText("🎤 messaggio-nuovo.mp3")).toBeVisible();
+
   await page.getByRole("button", { name: "Salva modifiche" }).click();
 
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
@@ -154,8 +170,18 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   // Countdown visivo verso l'apertura (v. CapsuleCountdown) --- una data
   // così lontana nel futuro resta sempre "tra N giorni".
   await expect(updatedRow.getByText(/Si aprirà tra \d+ giorni/)).toBeVisible();
-  // L'allegato non viene toccato dalla modifica.
-  await expect(updatedRow.getByText("messaggio.mp3")).toBeVisible();
+  // Il vecchio allegato è sparito, il nuovo è al suo posto.
+  await expect(updatedRow.getByText("messaggio.mp3", { exact: true })).not.toBeVisible();
+  await expect(updatedRow.getByText("messaggio-nuovo.mp3")).toBeVisible();
+
+  const [newDownload] = await Promise.all([
+    page.waitForEvent("download"),
+    updatedRow.getByRole("button", { name: "Apri" }).click(),
+  ]);
+  expect(newDownload.suggestedFilename()).toBe("messaggio-nuovo.mp3");
+  const newDownloadPath = await newDownload.path();
+  expect(newDownloadPath).not.toBeNull();
+  expect(await fs.readFile(newDownloadPath!, "utf-8")).toBe(newFileContent);
 
   // Stato: Bozza -> Chiusa -> Condivisa. Chiudere è irreversibile, quindi
   // conferma esplicita.
@@ -239,6 +265,7 @@ test("collega un documento già presente in Archivio a una capsula, selezionando
   await goToNewCapsule(page);
 
   await page.getByLabel("Titolo").fill("Documenti per dopo");
+  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 2 di 3")).toBeVisible();
   await page.locator("#create-category").selectOption({ label: "📄 Contratti" });
@@ -324,6 +351,7 @@ test("chiudere una capsula copia il contenuto collegato al suo interno; l'origin
   await expect(page.getByRole("heading", { name: "Capsule" })).toBeVisible();
   await goToNewCapsule(page);
   await page.getByLabel("Titolo").fill("Capsula da chiudere");
+  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 2 di 3")).toBeVisible();
   await page.locator("#create-category").selectOption({ label: "📄 Contratti" });

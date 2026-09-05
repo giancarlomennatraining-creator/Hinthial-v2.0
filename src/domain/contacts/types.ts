@@ -12,6 +12,13 @@ export interface TrustedContactListItem {
   /** Free text (es. "Coniuge", "Avvocato", "Fratello") --- non cifrato, etichetta gestionale. */
   role: string;
   status: TrustedContactStatus;
+  /**
+   * "Amico" --- riceve un avviso informale se il proprietario risulta
+   * inattivo a lungo (Dead Man's Switch semplificato per le capsule, v.
+   * domain/capsules). Nessuna conferma richiesta da parte sua, nessun
+   * accesso concesso: solo un flag, come `status`.
+   */
+  isFriend: boolean;
   createdAt: string;
 }
 

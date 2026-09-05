@@ -8,12 +8,20 @@ import { listCapsules, updateCapsule } from "@/domain/capsules/repository";
 import { listTrustedContacts } from "@/domain/contacts/repository";
 import { listDocuments } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
+import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { ContactPicker } from "@/components/capsules/ContactPicker";
 import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachmentPicker";
-import type { CapsuleListItem } from "@/domain/capsules/types";
+import { AudioVideoRecorder } from "@/components/media/AudioVideoRecorder";
+import type { CapsuleAttachment, CapsuleListItem } from "@/domain/capsules/types";
 import type { TrustedContactListItem } from "@/domain/contacts/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 /**
  * Pagina dedicata alla modifica di una capsula --- prima era un form
@@ -21,10 +29,12 @@ import type { Category } from "@/domain/categories/types";
  * creazione. Solo le capsule ancora in Bozza sono modificabili (v.
  * updateCapsule): chiudere una capsula la rende autosufficiente, non
  * più legata agli originali --- una volta chiusa non ha più senso
- * "modificarla" qui. Gli allegati diretti (audio/video registrati o
- * caricati) restano quelli già presenti: solo titolo, data di apertura,
- * destinatari, contenuto testuale e contenuti collegati dall'Archivio
- * sono modificabili, esattamente come nell'edit inline che sostituisce.
+ * "modificarla" qui. Titolo, data di apertura, destinatari, contenuto
+ * testuale, contenuti collegati dall'Archivio E allegati audio/video
+ * diretti (registrati o caricati) sono tutti modificabili --- questi
+ * ultimi con lo stesso registratore/upload della creazione (v.
+ * CreateCapsuleForm, passo 3): si può rimuovere un allegato esistente
+ * e/o aggiungerne di nuovi nello stesso salvataggio.
  */
 export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey; capsuleId: string }) {
   const supabase = useRef(createClient()).current;
@@ -43,6 +53,13 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
   const [openAt, setOpenAt] = useState("");
   const [relatedContacts, setRelatedContacts] = useState<TrustedContactListItem[]>([]);
   const [linkedDocuments, setLinkedDocuments] = useState<DocumentListItem[]>([]);
+  // Allegati diretti (audio/video) --- keptAttachments parte dagli
+  // esistenti, "Rimuovi" li sposta in removedAttachments (cancellati da
+  // Storage solo dopo il salvataggio riuscito, v. updateCapsule).
+  // newFiles sono quelli aggiunti ora, registrati o caricati.
+  const [keptAttachments, setKeptAttachments] = useState<CapsuleAttachment[]>([]);
+  const [removedAttachments, setRemovedAttachments] = useState<CapsuleAttachment[]>([]);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -64,6 +81,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
         setOpenAt(found.openAt ?? "");
         setRelatedContacts(found.relatedContacts);
         setLinkedDocuments(found.linkedDocuments);
+        setKeptAttachments(found.attachments);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare la capsula.");
@@ -78,22 +96,50 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
     refresh();
   }, [refresh]);
 
+  function removeExistingAttachment(attachment: CapsuleAttachment) {
+    setKeptAttachments((prev) => prev.filter((a) => a.id !== attachment.id));
+    setRemovedAttachments((prev) => [...prev, attachment]);
+  }
+
+  function handleMediaFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    // "accept" guida la scelta, ma non la impone davvero --- si scartano
+    // in silenzio i file che non sono audio/video (stesso pattern di
+    // CreateCapsuleForm).
+    const picked = Array.from(event.target.files ?? []).filter(
+      (file) => file.type.startsWith("audio/") || file.type.startsWith("video/"),
+    );
+    if (picked.length > 0) setNewFiles((prev) => [...prev, ...picked]);
+    event.target.value = "";
+  }
+
   async function handleSave() {
     if (!capsule) return;
     if (!title.trim()) {
       setError("Il titolo della capsula non può essere vuoto.");
       return;
     }
+    if (!openAt) {
+      // Obbligatoria (Dead Man's Switch semplificato per le capsule) ---
+      // anche una capsula creata prima che lo diventasse va sanata qui.
+      setError("Scegli una data di apertura.");
+      return;
+    }
 
     setSaving(true);
     setError(null);
     try {
-      await updateCapsule(supabase, masterKey, capsuleId, capsule.attachments, {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Devi essere autenticato.");
+
+      await updateCapsule(supabase, masterKey, user.id, capsuleId, keptAttachments, removedAttachments, {
         title: title.trim(),
         content: content.trim(),
         relatedContactIds: relatedContacts.map((c) => c.id),
         linkedDocumentIds: linkedDocuments.map((d) => d.id),
-        openAt: openAt || null,
+        newFiles,
+        openAt,
       });
       router.push("/capsules?updated=1");
     } catch (err) {
@@ -143,11 +189,12 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="openAt" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                Data di apertura (facoltativa)
+                Data di apertura
               </label>
               <input
                 id="openAt"
                 type="date"
+                required
                 value={openAt}
                 onChange={(e) => setOpenAt(e.target.value)}
                 className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
@@ -182,6 +229,75 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
             selected={linkedDocuments}
             onChange={setLinkedDocuments}
           />
+
+          {/* Allegati diretti audio/video --- esistenti (rimovibili) + nuovi (registrati o caricati ora). */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Allegati audio/video</p>
+
+            {keptAttachments.length > 0 ? (
+              <ul className="flex flex-wrap gap-2">
+                {keptAttachments.map((attachment) => (
+                  <li
+                    key={attachment.id}
+                    className="flex items-center gap-2 rounded-full bg-zinc-100 py-1 pl-3 pr-1 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                  >
+                    {CONTENT_KIND_ICON[contentKindFor(attachment.mimeType)]} {attachment.filename} ·{" "}
+                    {formatSize(attachment.size)}
+                    <button
+                      type="button"
+                      onClick={() => removeExistingAttachment(attachment)}
+                      aria-label={`Rimuovi ${attachment.filename}`}
+                      className="rounded-full px-1.5 py-0.5 text-zinc-500 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    >
+                      ✕
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-zinc-400 dark:text-zinc-600">Nessuno.</p>
+            )}
+
+            <AudioVideoRecorder
+              onRecorded={(file) => setNewFiles((prev) => [...prev, file])}
+              confirmLabel="Aggiungi alla capsula"
+            />
+
+            <div className="flex flex-col gap-1">
+              <label htmlFor="mediaFiles" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                ...o carica un audio/video già pronto (opzionale)
+              </label>
+              <input
+                id="mediaFiles"
+                type="file"
+                accept="audio/*,video/*"
+                multiple
+                onChange={handleMediaFileChange}
+                className="text-sm text-zinc-700 dark:text-zinc-300"
+              />
+            </div>
+
+            {newFiles.length > 0 ? (
+              <ul className="flex flex-wrap gap-2">
+                {newFiles.map((file, i) => (
+                  <li
+                    key={`${file.name}-${i}`}
+                    className="flex items-center gap-2 rounded-full bg-zinc-100 py-1 pl-3 pr-1 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                  >
+                    {file.type.startsWith("video/") ? "🎥" : "🎤"} {file.name}
+                    <button
+                      type="button"
+                      onClick={() => setNewFiles((prev) => prev.filter((_, j) => j !== i))}
+                      aria-label={`Rimuovi ${file.name}`}
+                      className="rounded-full px-1.5 py-0.5 text-zinc-500 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    >
+                      ✕
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
 
           {error ? (
             <p role="alert" className="text-sm text-red-600 dark:text-red-400">

@@ -62,10 +62,15 @@ export interface CapsuleListItem {
   status: CapsuleStatus;
   accessCondition: CapsuleAccessCondition;
   /**
-   * Data (facoltativa) in cui la capsula è pensata per essere aperta ---
-   * solo un metadato per ora, come una vera capsula del tempo: nessuna
-   * apertura automatica avviene a quella data (v. CapsuleStatus).
-   * ISO YYYY-MM-DD, null se non impostata.
+   * Data in cui la capsula è pensata per essere aperta --- obbligatoria
+   * per ogni capsula nuova o modificata (Dead Man's Switch semplificato
+   * per le capsule, v. domain/capsules/repository.ts): raggiunta quella
+   * data, il destinatario può vederne il contenuto, a prescindere
+   * dall'inattività del proprietario. In chiaro lato server (v. colonna
+   * `open_at`, migrazione 20260905000000) --- necessario perché il
+   * server possa saperlo senza decifrare nulla. ISO YYYY-MM-DD, o null
+   * solo per le capsule create prima che diventasse obbligatoria, non
+   * ancora sanate (v. listCapsules).
    */
   openAt: string | null;
   createdAt: string;
@@ -78,14 +83,21 @@ export interface CapsuleInput {
   relatedContactIds: string[];
   files: File[];
   linkedDocumentIds: string[];
-  openAt: string | null;
+  openAt: string;
 }
 
-/** Editable while status is "draft" only --- uploaded attachments aren't (see updateCapsule). */
+/**
+ * Editable while status is "draft" only. `newFiles` are freshly
+ * recorded/uploaded audio/video to attach (same idea as
+ * CapsuleInput.files) --- which existing attachments to keep vs. remove
+ * is passed separately to updateCapsule, not part of this input (see
+ * repository.ts).
+ */
 export interface CapsuleEditInput {
   title: string;
   content: string;
   relatedContactIds: string[];
   linkedDocumentIds: string[];
-  openAt: string | null;
+  newFiles: File[];
+  openAt: string;
 }

@@ -98,6 +98,7 @@ test("trascrizione di un allegato audio in una capsula: si scrive a mano e resta
   await page.getByRole("link", { name: "+ Crea capsula" }).click();
   await expect(page.getByRole("heading", { name: "Nuova capsula" })).toBeVisible();
   await page.getByLabel("Titolo").fill("Per Maria");
+  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
   await page.getByRole("button", { name: "Avanti" }).click();
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 3 di 3")).toBeVisible();

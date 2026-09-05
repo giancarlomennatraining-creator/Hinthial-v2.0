@@ -186,7 +186,7 @@ describe("mockAIProvider.retrieve", () => {
             },
           ],
           relatedContacts: [
-            { id: "contact-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", createdAt: "2026-01-01" },
+            { id: "contact-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", isFriend: false, createdAt: "2026-01-01" },
           ],
           status: "draft",
           accessCondition: "manual",
@@ -215,8 +215,8 @@ describe("mockAIProvider.retrieve", () => {
   it('falls back to every item of a kind when nothing specific matches, e.g. "quanti contatti ho?"', () => {
     const context = buildContext({
       contacts: [
-        { id: "contact-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", createdAt: "2026-01-01" },
-        { id: "contact-2", name: "Luca Bianchi", email: "luca@esempio.it", role: "Fratello", status: "active", createdAt: "2026-01-01" },
+        { id: "contact-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", isFriend: false, createdAt: "2026-01-01" },
+        { id: "contact-2", name: "Luca Bianchi", email: "luca@esempio.it", role: "Fratello", status: "active", isFriend: false, createdAt: "2026-01-01" },
       ],
     });
 

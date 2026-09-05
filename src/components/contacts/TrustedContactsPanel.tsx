@@ -7,6 +7,7 @@ import { createClient } from "@/lib/db/supabase/client";
 import {
   deleteTrustedContact,
   listTrustedContacts,
+  setTrustedContactFriend,
   setTrustedContactStatus,
 } from "@/domain/contacts/repository";
 import { listCapsules } from "@/domain/capsules/repository";
@@ -134,6 +135,20 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
       setContacts((prev) => prev.map((c) => (c.id === contact.id ? { ...c, status } : c)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile aggiornare lo stato del contatto.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleToggleFriend(contact: TrustedContactListItem) {
+    const isFriend = !contact.isFriend;
+    setBusyId(contact.id);
+    setError(null);
+    try {
+      await setTrustedContactFriend(supabase, contact.id, isFriend);
+      setContacts((prev) => prev.map((c) => (c.id === contact.id ? { ...c, isFriend } : c)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile aggiornare il contatto.");
     } finally {
       setBusyId(null);
     }
@@ -301,6 +316,11 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
                             >
                               {STATUS_LABEL[contact.status]}
                             </span>
+                            {contact.isFriend ? (
+                              <span className="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-400">
+                                🤝 Amico
+                              </span>
+                            ) : null}
                           </td>
                           <td className="p-3 text-zinc-600 dark:text-zinc-400">
                             {capsulesFor(contact).length}
@@ -317,6 +337,9 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
                                   Revoca
                                 </RowMenuItem>
                               ) : null}
+                              <RowMenuItem disabled={busy} onClick={() => handleToggleFriend(contact)}>
+                                {contact.isFriend ? "Rimuovi dagli amici" : "Segna come amico"}
+                              </RowMenuItem>
                               <RowMenuItem disabled={busy} onClick={() => router.push(`/contacts/${contact.id}/edit`)}>
                                 Modifica
                               </RowMenuItem>
@@ -351,6 +374,11 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         >
                           {STATUS_LABEL[contact.status]}
                         </span>
+                        {contact.isFriend ? (
+                          <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-400">
+                            🤝 Amico
+                          </span>
+                        ) : null}
                         <CapsulesBadge capsules={capsulesFor(contact)} />
                       </div>
                       <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
@@ -368,6 +396,9 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           Revoca
                         </RowMenuItem>
                       ) : null}
+                      <RowMenuItem disabled={busy} onClick={() => handleToggleFriend(contact)}>
+                        {contact.isFriend ? "Rimuovi dagli amici" : "Segna come amico"}
+                      </RowMenuItem>
                       <RowMenuItem disabled={busy} onClick={() => router.push(`/contacts/${contact.id}/edit`)}>
                         Modifica
                       </RowMenuItem>

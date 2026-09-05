@@ -58,8 +58,8 @@ describe("VaultHealthWidget", () => {
   it("flags an active trusted contact not referenced by any capsule, but not a revoked one", () => {
     const context = buildContext({
       contacts: [
-        { id: "contact-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", createdAt: "2026-01-01" },
-        { id: "contact-2", name: "Ex Avvocato", email: "ex@esempio.it", role: "Avvocato", status: "revoked", createdAt: "2026-01-01" },
+        { id: "contact-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", isFriend: false, createdAt: "2026-01-01" },
+        { id: "contact-2", name: "Ex Avvocato", email: "ex@esempio.it", role: "Avvocato", status: "revoked", isFriend: false, createdAt: "2026-01-01" },
       ],
     });
     render(<VaultHealthWidget context={context} />);
