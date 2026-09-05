@@ -30,6 +30,8 @@ type AuditEventTypeColumn =
 
 type TrustedContactStatusColumn = "pending" | "active" | "revoked";
 
+type NavOrientationColumn = "sidebar-left" | "sidebar-right" | "topbar";
+
 type CapsuleStatusColumn = "draft" | "ready" | "shared";
 type CapsuleAccessConditionColumn = "manual";
 
@@ -43,6 +45,7 @@ export type Database = {
           last_name: string;
           avatar_path: string | null;
           list_view_preferences: Json;
+          nav_orientation: NavOrientationColumn;
           created_at: string;
           updated_at: string;
         };
@@ -52,6 +55,7 @@ export type Database = {
           last_name: string;
           avatar_path?: string | null;
           list_view_preferences?: Json;
+          nav_orientation?: NavOrientationColumn;
           created_at?: string;
           updated_at?: string;
         };
@@ -61,6 +65,7 @@ export type Database = {
           last_name?: string;
           avatar_path?: string | null;
           list_view_preferences?: Json;
+          nav_orientation?: NavOrientationColumn;
           created_at?: string;
           updated_at?: string;
         };

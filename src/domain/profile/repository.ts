@@ -7,6 +7,7 @@ import {
   uploadAvatarBlob,
 } from "@/lib/storage/avatars-bucket";
 import { parseListViewPreferences, type ListViewPreferences } from "@/lib/list-view";
+import { type NavOrientation } from "@/lib/nav-orientation";
 import type { ProfileInput } from "@/domain/profile/types";
 
 /**
@@ -115,5 +116,25 @@ export async function updateListViewPreferences(
 
   if (error) {
     throw new Error(`Impossibile salvare la preferenza di visualizzazione: ${error.message}`);
+  }
+}
+
+/**
+ * Persists the chosen navigation menu layout (v. lib/nav-orientation.ts)
+ * --- read server-side on the next full navigation (see getCurrentUser),
+ * so it's known before the first paint of the authenticated shell.
+ */
+export async function updateNavOrientation(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  orientation: NavOrientation,
+): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ nav_orientation: orientation })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare la disposizione del menu: ${error.message}`);
   }
 }

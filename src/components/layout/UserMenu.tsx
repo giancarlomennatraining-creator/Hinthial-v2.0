@@ -10,7 +10,11 @@ import { cn } from "@/lib/utils";
  * The user's avatar + display name, opening a small menu with
  * "Impostazioni" e "Esci". `collapsed` --- v. Sidebar: nasconde solo il
  * nome (resta letto dagli screen reader) e la freccetta, l'avatar resta
- * sempre visibile.
+ * sempre visibile. `menuPosition` --- v. TopNav: nella barra laterale il
+ * pulsante è in fondo allo schermo, quindi il menu si apre verso l'alto
+ * (default "up"); nella barra orizzontale è in cima, quindi va aperto
+ * verso il basso ("down"), allineato al bordo destro per non uscire
+ * dallo schermo essendo di solito l'elemento più a destra.
  */
 export function UserMenu({
   userId,
@@ -19,6 +23,7 @@ export function UserMenu({
   displayName,
   avatarUrl,
   collapsed = false,
+  menuPosition = "up",
 }: {
   userId: string;
   firstName: string;
@@ -26,6 +31,7 @@ export function UserMenu({
   displayName: string;
   avatarUrl: string | null;
   collapsed?: boolean;
+  menuPosition?: "up" | "down";
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,7 +72,12 @@ export function UserMenu({
       </button>
 
       {open ? (
-        <div className="absolute bottom-full left-0 mb-1 w-full min-w-40 overflow-hidden rounded-md border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+        <div
+          className={cn(
+            menuPosition === "down" ? "absolute right-0 top-full mt-1" : "absolute bottom-full left-0 mb-1",
+            "w-full min-w-40 overflow-hidden rounded-md border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950",
+          )}
+        >
           <Link
             href="/settings"
             onClick={() => setOpen(false)}

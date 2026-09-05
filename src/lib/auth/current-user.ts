@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createClient } from "@/lib/db/supabase/server";
 import { avatarPublicUrl } from "@/lib/storage/avatars-bucket";
+import { parseNavOrientation, type NavOrientation } from "@/lib/nav-orientation";
 
 export interface CurrentUser {
   id: string;
@@ -13,6 +14,8 @@ export interface CurrentUser {
   avatarPath: string | null;
   /** Public URL for `avatarPath`, or null if none set. */
   avatarUrl: string | null;
+  /** Disposizione del menu di navigazione (v. lib/nav-orientation.ts) --- letta qui, non lato client, per evitare un lampo del layout sbagliato al primo render della shell autenticata. */
+  navOrientation: NavOrientation;
 }
 
 /**
@@ -31,7 +34,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("first_name, last_name, avatar_path")
+    .select("first_name, last_name, avatar_path, nav_orientation")
     .eq("id", user.id)
     .single();
 
@@ -47,5 +50,6 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     displayName: [firstName, lastName].filter(Boolean).join(" "),
     avatarPath,
     avatarUrl: avatarPath ? avatarPublicUrl(supabase, avatarPath) : null,
+    navOrientation: parseNavOrientation(profile?.nav_orientation),
   };
 });

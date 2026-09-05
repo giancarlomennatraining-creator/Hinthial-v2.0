@@ -11,6 +11,9 @@ import { computeOnboardingSteps, onboardingCompletionPercent } from "@/domain/on
 /** Stesso margine di RowActionsMenu, per lo stesso motivo. */
 const MIN_SPACE_BELOW = 320;
 
+/** Larghezza del pannello (v. classe w-80 più sotto) --- serve per decidere da che lato aprirlo. */
+const PANEL_WIDTH = 320;
+
 /**
  * Indicatore persistente di avanzamento "Onboarding",
  * sempre visibile nella barra laterale (non solo in dashboard) --- una
@@ -32,9 +35,9 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
 
   const [steps, setSteps] = useState<OnboardingStep[] | null>(null);
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState<{ top?: number; bottom?: number; left: number } | null>(
-    null,
-  );
+  const [position, setPosition] = useState<
+    { top?: number; bottom?: number; left?: number; right?: number } | null
+  >(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -86,11 +89,21 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
     if (!open && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      setPosition(
-        spaceBelow < MIN_SPACE_BELOW
-          ? { bottom: window.innerHeight - rect.top + 4, left: rect.left }
-          : { top: rect.bottom + 4, left: rect.left },
-      );
+      // Ancorato a destra invece che a sinistra quando non c'è spazio ad
+      // aprirsi verso destra (es. barra laterale a destra, v.
+      // NavOrientationProvider) --- altrimenti il pannello uscirebbe
+      // dallo schermo.
+      const spaceRight = window.innerWidth - rect.left;
+      const horizontal =
+        spaceRight < PANEL_WIDTH + 16
+          ? { right: window.innerWidth - rect.right }
+          : { left: rect.left };
+      setPosition({
+        ...(spaceBelow < MIN_SPACE_BELOW
+          ? { bottom: window.innerHeight - rect.top + 4 }
+          : { top: rect.bottom + 4 }),
+        ...horizontal,
+      });
       // Refresh su ogni apertura --- v. doc comment sopra.
       refresh();
     }
@@ -133,7 +146,13 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
               ref={panelRef}
               role="dialog"
               aria-label="Onboarding"
-              style={{ position: "fixed", top: position.top, bottom: position.bottom, left: position.left }}
+              style={{
+                position: "fixed",
+                top: position.top,
+                bottom: position.bottom,
+                left: position.left,
+                right: position.right,
+              }}
               className="z-50 w-80 max-w-[calc(100vw-2rem)] rounded-md border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
             >
               <OnboardingChecklist steps={steps} />

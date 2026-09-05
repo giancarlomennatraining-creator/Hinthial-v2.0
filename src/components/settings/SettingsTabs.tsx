@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { UserInfoPanel } from "@/components/settings/UserInfoPanel";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
+import { NavOrientationSettings } from "@/components/settings/NavOrientationSettings";
 import { ListViewSettings } from "@/components/settings/ListViewSettings";
 import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
@@ -81,6 +82,19 @@ export function SettingsTabs({
               </p>
             </div>
             <ThemeToggle />
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                Disposizione del menu
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Barra laterale a sinistra o a destra, oppure barra orizzontale in alto --- la
+                scelta resta la stessa su tutti i tuoi dispositivi.
+              </p>
+            </div>
+            <NavOrientationSettings />
           </div>
 
           <div className="flex flex-col gap-4">

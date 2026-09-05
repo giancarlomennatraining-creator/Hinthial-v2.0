@@ -14,6 +14,11 @@ import { cn } from "@/lib/utils";
  * il tema). Compressa: solo icone nel menu e nell'avatar (nome ed
  * etichette restano comunque letti dagli screen reader, v. sr-only in
  * MainNav/UserMenu), logo al posto del lockup logo+scritta.
+ *
+ * `side` --- v. AppShell/NavOrientationProvider: quale lato dello schermo,
+ * per scegliere su quale bordo disegnare il confine con il contenuto
+ * (l'ordine visivo vero e proprio, a sinistra o a destra, lo decide
+ * AppShell riordinando gli elementi flex, non questo componente).
  */
 export function Sidebar({
   userId,
@@ -21,12 +26,14 @@ export function Sidebar({
   lastName,
   displayName,
   avatarUrl,
+  side = "left",
 }: {
   userId: string;
   firstName: string;
   lastName: string;
   displayName: string;
   avatarUrl: string | null;
+  side?: "left" | "right";
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -46,7 +53,12 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex flex-col gap-6 border-b border-zinc-200 md:shrink-0 md:border-b-0 md:border-r dark:border-zinc-800",
+        "flex flex-col gap-6 border-b border-zinc-200 md:shrink-0 md:border-b-0 dark:border-zinc-800",
+        // Bordo di confine col contenuto e ordine visivo sul lato
+        // corretto --- v. doc comment sopra. L'ordine resta quello del
+        // markup su mobile (flex-col): solo da md in su, dove il
+        // contenitore diventa flex-row, la barra passa a destra.
+        side === "right" ? "md:order-2 md:border-l" : "md:border-r",
         // cn() qui non fonde classi in conflitto (v. lib/utils.ts, non è
         // tailwind-merge): il padding va scritto per intero in ciascun
         // ramo, mai come base + override parziale, altrimenti entrambi i
