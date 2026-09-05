@@ -7,6 +7,7 @@ import { buildAIContext } from "@/domain/ai/context";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { OnboardingChecklist, type OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
 import { computeOnboardingSteps, onboardingCompletionPercent } from "@/domain/onboarding/steps";
+import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 
 /** Stesso margine di RowActionsMenu, per lo stesso motivo. */
 const MIN_SPACE_BELOW = 320;
@@ -28,6 +29,11 @@ const PANEL_WIDTH = 320;
  * (come DashboardWidgets, non pigro come GlobalSearch: qui il punto è
  * proprio vedere la percentuale senza dover cliccare), e ricaricato ad
  * ogni apertura del pannello per riflettere cambiamenti fatti altrove.
+ *
+ * Nascondibile dal pannello stesso ("Nascondi") --- una preferenza solo
+ * di questo dispositivo (v. lib/onboarding-widget.ts), non un
+ * completamento vero e proprio: l'avanzamento resta comunque
+ * consultabile (e il gadget riattivabile) da Impostazioni > Onboarding.
  */
 export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean }) {
   const supabase = useRef(createClient()).current;
@@ -41,7 +47,13 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  const { hidden, setHidden } = useOnboardingWidgetVisibility();
   const masterKey = status.kind === "unlocked" ? status.masterKey : null;
+
+  function hide() {
+    setHidden(true);
+    setOpen(false);
+  }
 
   const refresh = useCallback(async () => {
     if (!masterKey) return;
@@ -110,7 +122,7 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
     setOpen((v) => !v);
   }
 
-  if (!masterKey || !steps) return null;
+  if (!masterKey || !steps || hidden) return null;
 
   const percent = onboardingCompletionPercent(steps);
 
@@ -160,6 +172,18 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
               className="z-50 w-80 max-w-[calc(100vw-2rem)] rounded-md border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
             >
               <OnboardingChecklist steps={steps} />
+              <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={hide}
+                  className="text-xs font-medium text-zinc-500 hover:text-zinc-700 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
+                >
+                  Nascondi
+                </button>
+                <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                  Non comparirà più qui: l&apos;avanzamento resta consultabile in Impostazioni.
+                </p>
+              </div>
             </div>,
             document.body,
           )

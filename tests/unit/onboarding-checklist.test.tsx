@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import { OnboardingChecklist, type OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
 
 const steps: OnboardingStep[] = [
-  { key: "account", label: "Crea un account", done: true, href: "/dashboard" },
-  { key: "security", label: "Configura la cifratura", done: true, href: "/archive" },
-  { key: "document", label: "Aggiungi il primo documento", done: false, href: "/archive" },
-  { key: "category", label: "Assegna una categoria", done: false, href: "/archive" },
+  { key: "account", label: "Crea un account", description: "d1", done: true, href: "/dashboard" },
+  { key: "security", label: "Configura la cifratura", description: "d2", done: true, href: "/archive" },
+  { key: "document", label: "Aggiungi il primo documento", description: "d3", done: false, href: "/archive" },
+  { key: "category", label: "Assegna una categoria", description: "d4", done: false, href: "/archive" },
 ];
 
 describe("OnboardingChecklist", () => {

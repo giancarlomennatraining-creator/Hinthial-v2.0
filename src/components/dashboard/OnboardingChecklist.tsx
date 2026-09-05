@@ -3,6 +3,8 @@ import Link from "next/link";
 export interface OnboardingStep {
   key: string;
   label: string;
+  /** Breve descrizione dell'attività --- usata in Impostazioni > Onboarding (v. OnboardingSettingsPanel), non qui. */
+  description: string;
   done: boolean;
   href: string;
 }

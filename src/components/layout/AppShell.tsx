@@ -5,6 +5,7 @@ import { TopNav } from "@/components/layout/TopNav";
 import { MasterKeyProvider } from "@/components/crypto/MasterKeyProvider";
 import { ListViewPreferencesProvider } from "@/components/layout/ListViewPreferencesProvider";
 import { NavOrientationProvider, useNavOrientation } from "@/components/layout/NavOrientationProvider";
+import { OnboardingWidgetVisibilityProvider } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 import { AIChatProvider } from "@/components/ai/AIChatProvider";
 import { cn } from "@/lib/utils";
 import type { NavOrientation } from "@/lib/nav-orientation";
@@ -37,15 +38,17 @@ export function AppShell({
     <MasterKeyProvider>
       <NavOrientationProvider userId={userId} initialOrientation={initialNavOrientation}>
         <ListViewPreferencesProvider userId={userId}>
-          <AppChrome
-            userId={userId}
-            firstName={firstName}
-            lastName={lastName}
-            displayName={displayName}
-            avatarUrl={avatarUrl}
-          >
-            {children}
-          </AppChrome>
+          <OnboardingWidgetVisibilityProvider>
+            <AppChrome
+              userId={userId}
+              firstName={firstName}
+              lastName={lastName}
+              displayName={displayName}
+              avatarUrl={avatarUrl}
+            >
+              {children}
+            </AppChrome>
+          </OnboardingWidgetVisibilityProvider>
         </ListViewPreferencesProvider>
       </NavOrientationProvider>
     </MasterKeyProvider>

@@ -30,41 +30,60 @@ export function computeOnboardingSteps(data: OnboardingSourceData): OnboardingSt
   const { documents, assets, contacts, capsules } = data;
 
   return [
-    { key: "account", label: "Crea un account", done: true, href: "/dashboard" },
-    { key: "security", label: "Configura la cifratura", done: true, href: "/archive" },
+    {
+      key: "account",
+      label: "Crea un account",
+      description: "Hai creato il tuo account Hinthial.",
+      done: true,
+      href: "/dashboard",
+    },
+    {
+      key: "security",
+      label: "Configura la cifratura",
+      description: "Hai impostato la master password e la cifratura del tuo vault.",
+      done: true,
+      href: "/archive",
+    },
     {
       key: "document",
       label: "Aggiungi il primo contenuto all'archivio",
+      description: "Carica un documento, una foto, un audio, un video o scrivi una nota.",
       done: documents.length > 0,
       href: "/archive",
     },
     {
       key: "category",
       label: "Assegna una categoria a un contenuto",
+      description: "Organizza un contenuto già in archivio assegnandogli una categoria.",
       done: documents.some((d) => d.categoryId !== null),
       href: "/archive",
     },
     {
       key: "friend",
       label: "Aggiungi un amico",
+      description:
+        "Segna almeno un contatto fiduciario come amico: senza almeno un amico non si può attivare il Dead Man's Switch delle capsule.",
       done: contacts.some((c) => c.isFriend),
       href: "/contacts",
     },
     {
       key: "asset",
       label: "Aggiungi il primo asset",
+      description: "Censisci una casa, un veicolo, un'assicurazione o un contratto.",
       done: assets.length > 0,
       href: "/assets",
     },
     {
       key: "capsule",
       label: "Crea la tua prima capsula",
+      description: "Prepara un messaggio o un contenuto cifrato da lasciare a chi vuoi tu.",
       done: capsules.length > 0,
       href: "/capsules",
     },
     {
       key: "capsule-contact",
       label: "Collega una capsula a un contatto",
+      description: "Scegli chi riceverà una delle tue capsule, tra i tuoi contatti fiduciari.",
       done: capsules.some((c) => c.relatedContacts.length > 0),
       href: "/capsules",
     },

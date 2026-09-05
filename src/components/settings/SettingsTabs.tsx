@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { UserInfoPanel } from "@/components/settings/UserInfoPanel";
+import { OnboardingSettingsPanel } from "@/components/settings/OnboardingSettingsPanel";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { NavOrientationSettings } from "@/components/settings/NavOrientationSettings";
@@ -11,10 +12,11 @@ import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { ImportExportTabs } from "@/components/import-export/ImportExportTabs";
 
-type Tab = "user-info" | "categories" | "appearance" | "import-export" | "danger-zone";
+type Tab = "user-info" | "onboarding" | "categories" | "appearance" | "import-export" | "danger-zone";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "user-info", label: "Informazioni utente" },
+  { id: "onboarding", label: "Onboarding" },
   { id: "categories", label: "Categorie" },
   { id: "appearance", label: "Aspetto" },
   { id: "import-export", label: "Importa/Esporta" },
@@ -69,6 +71,13 @@ export function SettingsTabs({
           avatarPath={avatarPath}
           avatarUrl={avatarUrl}
         />
+      ) : tab === "onboarding" ? (
+        // Serve i dati decifrati (documenti/asset/contatti/capsule) per
+        // calcolare l'avanzamento --- unica scheda oltre a Importa/Esporta
+        // e Zona pericolosa a richiedere la master key sbloccata.
+        <RequireMasterKey>
+          {(masterKey) => <OnboardingSettingsPanel masterKey={masterKey} />}
+        </RequireMasterKey>
       ) : tab === "categories" ? (
         <CategoriesPanel />
       ) : tab === "appearance" ? (
@@ -117,9 +126,8 @@ export function SettingsTabs({
         <ImportExportTabs firstName={firstName} lastName={lastName} email={email} />
       ) : (
         // "Cancella tutto" ha bisogno della master key sbloccata (per
-        // scoprire i path da rimuovere in Storage) --- unica scheda qui
-        // dentro a richiederla oltre a Importa/Esporta; le altre non
-        // toccano nulla di cifrato.
+        // scoprire i path da rimuovere in Storage) --- come Onboarding e
+        // Importa/Esporta; le altre schede non toccano nulla di cifrato.
         <RequireMasterKey>
           {(masterKey) => <DangerZonePanel userId={userId} masterKey={masterKey} />}
         </RequireMasterKey>

@@ -89,4 +89,18 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
     timeout: 10_000,
   });
   await expect(panel.getByText("5/8")).toBeVisible();
+
+  // "Nascondi" fa sparire il gadget subito, e la scelta resta anche dopo
+  // un refresh --- solo su questo dispositivo (localStorage), come il
+  // tema o la compressione della barra laterale.
+  await panel.getByRole("button", { name: "Nascondi" }).click();
+  await expect(statusButton).not.toBeVisible();
+  await expect(panel).not.toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible();
+  await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
+  await page.getByRole("button", { name: "Sblocca" }).click();
+  await expect(page.getByRole("heading", { name: "Contatti fiduciari" })).toBeVisible();
+  await expect(statusButton).not.toBeVisible();
 });
