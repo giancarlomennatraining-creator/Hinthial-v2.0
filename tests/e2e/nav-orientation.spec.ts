@@ -34,11 +34,13 @@ test("la disposizione del menu si imposta da Impostazioni > Aspetto, cambia subi
   );
 
   // Orizzontale: la barra laterale sparisce, compare una barra in alto
-  // con la stessa navigazione (voci ridotte a sole icone). Il click
-  // aggiorna subito lo stato (ottimistico), ma il salvataggio vero è un
-  // giro di rete verso Supabase --- si attende la risposta prima di
-  // navigare altrove, altrimenti la richiesta rischia di essere
-  // interrotta a metà dalla navigazione stessa.
+  // con logo completo (logo+nome, non la sola icona), voci con
+  // etichetta visibile (non ridotte a sole icone come la laterale
+  // compressa) e il campo di ricerca per esteso, non compresso. Il
+  // click aggiorna subito lo stato (ottimistico), ma il salvataggio
+  // vero è un giro di rete verso Supabase --- si attende la risposta
+  // prima di navigare altrove, altrimenti la richiesta rischia di
+  // essere interrotta a metà dalla navigazione stessa.
   await Promise.all([
     page.waitForResponse(
       (res) => res.url().includes("/profiles") && res.request().method() === "PATCH",
@@ -50,9 +52,16 @@ test("la disposizione del menu si imposta da Impostazioni > Aspetto, cambia subi
     "true",
   );
   await expect(page.locator("aside")).toHaveCount(0);
-  await expect(page.locator("header")).toBeVisible();
-  await expect(page.locator("header").getByRole("link", { name: "HINTHIAL" })).toBeVisible();
-  await expect(page.locator("header").getByRole("link", { name: "Dashboard" })).toBeVisible();
+  const topNav = page.locator("header");
+  await expect(topNav).toBeVisible();
+  await expect(topNav.getByRole("link", { name: "HINTHIAL" }).locator("img")).toHaveAttribute(
+    "src",
+    /logo-lockup\.svg/,
+  );
+  const dashboardLink = topNav.getByRole("link", { name: "Dashboard" });
+  await expect(dashboardLink).toBeVisible();
+  await expect(dashboardLink.locator("span").last()).not.toHaveClass(/sr-only/);
+  await expect(topNav.getByText("🔍 Cerca…")).toBeVisible();
 
   // Resta impostata navigando altrove...
   await page.goto("/dashboard");

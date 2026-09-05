@@ -7,10 +7,10 @@ import { NAV_ITEMS } from "@/components/layout/nav-items";
 
 /**
  * `collapsed` --- v. Sidebar: nasconde le etichette (restano lette dagli
- * screen reader) e centra le sole icone. `horizontal` --- v. TopNav: la
- * barra orizzontale non si comprime come la laterale, ma con 8 voci
- * mostra comunque solo le icone (etichetta in tooltip/screen reader),
- * altrimenti trabocca su schermi non larghissimi.
+ * screen reader) e centra le sole icone. `horizontal` --- v. TopNav: solo
+ * cambia la direzione (righe che vanno a capo invece di una colonna),
+ * le etichette restano visibili accanto all'icona come nella barra
+ * laterale espansa.
  */
 export function MainNav({
   collapsed = false,
@@ -20,7 +20,7 @@ export function MainNav({
   horizontal?: boolean;
 }) {
   const pathname = usePathname();
-  const iconOnly = collapsed || horizontal;
+  const iconOnly = collapsed;
 
   return (
     <nav
