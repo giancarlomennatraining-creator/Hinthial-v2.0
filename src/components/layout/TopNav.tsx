@@ -31,7 +31,7 @@ export function TopNav({
     <header className="flex flex-wrap items-center gap-4 border-b border-zinc-200 p-4 dark:border-zinc-800">
       <Link href="/dashboard" className="shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
-        <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-8 w-auto" />
+        <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-8 w-auto sm:h-10" />
       </Link>
 
       <MainNav horizontal />
