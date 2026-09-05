@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MainNav } from "@/components/layout/MainNav";
 import { UserMenu } from "@/components/layout/UserMenu";
+import { OnboardingStatus } from "@/components/layout/OnboardingStatus";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { getStoredSidebarCollapsed, storeSidebarCollapsed } from "@/lib/sidebar";
 import { cn } from "@/lib/utils";
@@ -79,7 +80,8 @@ export function Sidebar({
       <GlobalSearch collapsed={collapsed} />
       <MainNav collapsed={collapsed} />
 
-      <div className="mt-auto">
+      <div className="mt-auto flex flex-col gap-2">
+        <OnboardingStatus collapsed={collapsed} />
         <UserMenu
           userId={userId}
           firstName={firstName}

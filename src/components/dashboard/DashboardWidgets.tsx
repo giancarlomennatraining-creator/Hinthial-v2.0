@@ -5,7 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/db/supabase/client";
 import { buildAIContext } from "@/domain/ai/context";
 import { mockAIProvider } from "@/domain/ai/mock-provider";
-import { OnboardingChecklist, type OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
+import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
+import { computeOnboardingSteps, isOnboardingComplete } from "@/domain/onboarding/steps";
 import { DashboardCounters } from "@/components/dashboard/DashboardCounters";
 import { WatchlistWidget } from "@/components/dashboard/WatchlistWidget";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
@@ -74,63 +75,13 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
     .slice(0, 5);
   const recentDocuments = documents.slice(0, 5);
 
-  // "Prima esperienza" della spec: account e cifratura sono per
+  // "Prima esperienza" della spec (v. domain/onboarding/steps.ts, condivisa
+  // con l'indicatore persistente nel menu laterale --- v.
+  // components/layout/OnboardingStatus): account e cifratura sono per
   // definizione già fatti se questo componente sta renderizzando (è
-  // gated da MasterKey "unlocked", v. DashboardPanel). Le prime 2 voci
-  // servono solo a dare il senso di un percorso già iniziato.
-  //
-  // Solo "documento" e "categoria" sono obbligatori (v. onboardingComplete
-  // sotto): asset/contatto/capsula/collegamento capsula-contatto restano
-  // opzionali come "scadenza" --- servono a far scoprire le altre sezioni
-  // dell'app, ma nessuno è tenuto a usarle per considerare l'onboarding
-  // concluso.
-  const onboardingSteps: OnboardingStep[] = [
-    { key: "account", label: "Crea un account", done: true, href: "/dashboard" },
-    { key: "security", label: "Configura la cifratura", done: true, href: "/archive" },
-    { key: "document", label: "Aggiungi il primo contenuto all'archivio", done: documents.length > 0, href: "/archive" },
-    {
-      key: "category",
-      label: "Assegna una categoria a un contenuto",
-      done: documents.some((d) => d.categoryId !== null),
-      href: "/archive",
-    },
-    {
-      key: "asset",
-      label: "Aggiungi il primo asset",
-      done: assets.length > 0,
-      href: "/assets",
-      optional: true,
-    },
-    {
-      key: "contact",
-      label: "Aggiungi un contatto fiduciario",
-      done: contacts.length > 0,
-      href: "/contacts",
-      optional: true,
-    },
-    {
-      key: "capsule",
-      label: "Crea la tua prima capsula",
-      done: capsules.length > 0,
-      href: "/capsules",
-      optional: true,
-    },
-    {
-      key: "capsule-contact",
-      label: "Collega una capsula a un contatto",
-      done: capsules.some((c) => c.relatedContacts.length > 0),
-      href: "/capsules",
-      optional: true,
-    },
-    {
-      key: "reminder",
-      label: "Imposta una scadenza",
-      done: reminders.length > 0,
-      href: "/reminders",
-      optional: true,
-    },
-  ];
-  const onboardingComplete = onboardingSteps.filter((s) => !s.optional).every((s) => s.done);
+  // gated da MasterKey "unlocked", v. DashboardPanel).
+  const onboardingSteps = computeOnboardingSteps({ documents, reminders, assets, contacts, capsules });
+  const onboardingComplete = isOnboardingComplete(onboardingSteps);
 
   if (error) {
     return (

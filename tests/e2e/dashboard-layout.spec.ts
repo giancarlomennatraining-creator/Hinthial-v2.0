@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openRowMenu } from "./row-actions";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -74,4 +75,25 @@ test("la dashboard mostra i contatori per sezione, resta a due colonne anche a v
   await expect(page.getByText("Questo asset non ha ancora documenti collegati: Barca.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Barca" })).toHaveCount(1);
   await expect(page.getByText(/asset non hanno ancora contenuti collegati/)).not.toBeVisible();
+
+  // Un contatto attivo e amico: il sotto-contatore in "Contatti" lo riflette.
+  await page.getByRole("link", { name: "Contatti", exact: true }).click();
+  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
+  await page.getByLabel("Nome").fill("Maria Rossi");
+  await page.getByLabel("Email").fill("maria.rossi@esempio.it");
+  await page.getByLabel("Ruolo").fill("Coniuge");
+  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
+  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
+  const contactRow = page.locator("li", { hasText: "Maria Rossi" });
+  await expect(contactRow).toBeVisible({ timeout: 10_000 });
+  await openRowMenu(contactRow);
+  await page.getByRole("menuitem", { name: "Segna come attivo" }).click();
+  await expect(contactRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
+  await openRowMenu(contactRow);
+  await page.getByRole("menuitem", { name: "Segna come amico" }).click();
+
+  await page.getByRole("link", { name: "Dashboard" }).click();
+  await expect(page.getByRole("link", { name: "Contatti: 1 (1 attivi e 1 amici)" })).toBeVisible({
+    timeout: 10_000,
+  });
 });

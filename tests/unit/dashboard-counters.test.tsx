@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { DashboardCounters } from "@/components/dashboard/DashboardCounters";
 import type { AIContext } from "@/domain/ai/types";
+import type { TrustedContactListItem } from "@/domain/contacts/types";
 
 function buildContext(overrides: Partial<AIContext> = {}): AIContext {
   return {
@@ -11,6 +12,19 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
     reminders: [],
     contacts: [],
     capsules: [],
+    ...overrides,
+  };
+}
+
+function buildContact(overrides: Partial<TrustedContactListItem> = {}): TrustedContactListItem {
+  return {
+    id: "contact-1",
+    name: "Maria Rossi",
+    email: "maria@esempio.it",
+    role: "Coniuge",
+    status: "active",
+    isFriend: false,
+    createdAt: "2026-01-01",
     ...overrides,
   };
 }
@@ -51,5 +65,35 @@ describe("DashboardCounters", () => {
     render(<DashboardCounters context={context} />);
     expect(screen.getByRole("link", { name: "Archivio: 1" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Categorie: 1" })).toBeInTheDocument();
+  });
+
+  it("shows no sub-counter for Contatti when there are no contacts at all", () => {
+    render(<DashboardCounters context={buildContext()} />);
+    expect(screen.queryByText(/attivi e amici/)).not.toBeInTheDocument();
+  });
+
+  it("splits the Contatti sub-counter into two separate tallies --- Attivi and Amici, not their intersection", () => {
+    const context = buildContext({
+      contacts: [
+        buildContact({ id: "c1", status: "active", isFriend: true }),
+        // Amico ma non ancora Attivo --- conta per "amici", non per "attivi".
+        buildContact({ id: "c2", status: "pending", isFriend: true }),
+        // Attivo ma non Amico --- conta per "attivi", non per "amici".
+        buildContact({ id: "c3", status: "active", isFriend: false }),
+      ],
+    });
+
+    render(<DashboardCounters context={context} />);
+    expect(screen.getByRole("link", { name: "Contatti: 3 (2 attivi e 2 amici)" })).toBeInTheDocument();
+    expect(screen.getByText("2 attivi e 2 amici")).toBeInTheDocument();
+  });
+
+  it("shows the sub-counter at 0 e 0 when there are contacts but none qualify yet", () => {
+    const context = buildContext({
+      contacts: [buildContact({ status: "pending", isFriend: false })],
+    });
+
+    render(<DashboardCounters context={context} />);
+    expect(screen.getByText("0 attivi e 0 amici")).toBeInTheDocument();
   });
 });
