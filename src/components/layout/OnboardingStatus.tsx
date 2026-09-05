@@ -129,7 +129,11 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
           aria-hidden="true"
           className="h-8 w-8 shrink-0 rounded-full ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700"
           style={{
-            background: `conic-gradient(var(--color-brand) ${percent}%, rgba(161, 161, 170, 0.35) ${percent}%)`,
+            // A onboarding completato (100%) il colore diventa verde,
+            // come le altre conferme di stato positivo nell'app (es. il
+            // badge "Master password creata" in dashboard) --- sotto al
+            // 100% resta il colore del brand.
+            background: `conic-gradient(${percent === 100 ? "#22c55e" : "var(--color-brand)"} ${percent}%, rgba(161, 161, 170, 0.35) ${percent}%)`,
           }}
         />
         {collapsed ? null : (

@@ -118,4 +118,19 @@ test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (ness
   // e resta comunque visibile --- v. onboarding-status.spec.ts).
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByText(/\d+\/8/)).not.toBeVisible();
+
+  // L'indicatore nella barra laterale si ricarica solo all'apertura del
+  // pannello (v. OnboardingStatus), non ad ogni navigazione come la
+  // card: un click lo forza ad aggiornarsi al nuovo 100%.
+  const statusButton = page.getByRole("button", { name: /Onboarding/ });
+  await statusButton.click();
+  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 100% completato", {
+    timeout: 10_000,
+  });
+
+  // A 100% l'anello dell'indicatore diventa verde (era il colore del
+  // brand) --- è un conic-gradient (background-image), non un colore
+  // pieno, quindi si verifica lì il valore rgb del verde usato.
+  const ring = statusButton.locator("span").first();
+  await expect(ring).toHaveCSS("background-image", /34, 197, 94/);
 });
