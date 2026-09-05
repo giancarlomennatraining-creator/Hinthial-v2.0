@@ -949,7 +949,7 @@ Una fase è completata quando:
 
 ------------------------------------------------------------------------
 
-# 18. Roadmap sintetica
+# 17. Roadmap sintetica
 
 ``` text
 0  Bootstrap
@@ -963,13 +963,12 @@ Una fase è completata quando:
 8  Capsules v1
 9  Export + recovery
 10 AI architecture + mock
-11 AI real + retrieval
-12 Proactive AI
-13 Dead Man's Switch
+11 AI real + retrieval + proactive AI
+12 Dead Man's Switch
+13 Dispositivi fidati e sblocco multi-dispositivo
 14 Archivio multi-tipo e capsule autosufficienti
-15 Dispositivi fidati e sblocco multi-dispositivo
-16 Security/legal hardening
-17 Production release
+15 Security/legal hardening
+16 Production release
 ```
 
 La priorità è:
@@ -980,7 +979,7 @@ Non il contrario.
 
 ------------------------------------------------------------------------
 
-## 19. Stato iniziale del progetto
+## 18. Stato iniziale del progetto
 
 Partire dalla **FASE 0**.
 
