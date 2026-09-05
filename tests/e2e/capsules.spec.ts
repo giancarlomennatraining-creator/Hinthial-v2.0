@@ -138,13 +138,22 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await page.getByRole("menuitem", { name: "Modifica" }).click();
   await expect(page).toHaveURL(/\/capsules\/[^/]+\/edit$/);
   await expect(page.getByRole("heading", { name: "Modifica capsula" })).toBeVisible();
+
+  // Passo 1 --- gli stessi tre passi della creazione (v. CreateCapsuleForm).
+  await expect(page.getByText("Passo 1 di 3")).toBeVisible();
   await page.getByLabel("Titolo").fill("Per Maria (aggiornato)");
-  await page.getByLabel("Contenuto").fill("Un pensiero aggiornato per te.");
   await page.getByLabel("Data di apertura", { exact: true }).fill("2027-03-15");
   await page.getByRole("button", { name: "Rimuovi Luca Bianchi" }).click();
+  await page.getByRole("button", { name: "Avanti" }).click();
 
-  // Allegati: si rimuove quello esistente e se ne carica uno nuovo,
-  // esattamente come in creazione.
+  // Passo 2 --- nessun contenuto dall'archivio da collegare in questo test.
+  await expect(page.getByText("Passo 2 di 3")).toBeVisible();
+  await page.getByRole("button", { name: "Avanti" }).click();
+
+  // Passo 3 --- contenuto testuale e allegati: si rimuove quello esistente
+  // e se ne carica uno nuovo, esattamente come in creazione.
+  await expect(page.getByText("Passo 3 di 3")).toBeVisible();
+  await page.getByLabel("Contenuto").fill("Un pensiero aggiornato per te.");
   const removeExistingAttachmentButton = page.getByRole("button", { name: "Rimuovi messaggio.mp3" });
   await expect(removeExistingAttachmentButton).toBeVisible();
   await removeExistingAttachmentButton.click();
@@ -295,11 +304,18 @@ test("collega un documento già presente in Archivio a una capsula, selezionando
   const downloadedContent = await fs.readFile(downloadPath!, "utf-8");
   expect(downloadedContent).toBe(documentContent);
 
-  // In modifica si può rimuovere il collegamento (il documento in Archivio resta intatto).
+  // In modifica si può rimuovere il collegamento (il documento in Archivio
+  // resta intatto) --- stessi tre passi della creazione: il collegamento
+  // vive nel passo 2 ("contenuti dall'archivio"), il salvataggio nel passo 3.
   await openRowMenu(row);
   await page.getByRole("menuitem", { name: "Modifica" }).click();
   await expect(page).toHaveURL(/\/capsules\/[^/]+\/edit$/);
+  await expect(page.getByText("Passo 1 di 3")).toBeVisible();
+  await page.getByRole("button", { name: "Avanti" }).click();
+  await expect(page.getByText("Passo 2 di 3")).toBeVisible();
   await page.getByRole("button", { name: "Rimuovi contratto.txt" }).click();
+  await page.getByRole("button", { name: "Avanti" }).click();
+  await expect(page.getByText("Passo 3 di 3")).toBeVisible();
   await page.getByRole("button", { name: "Salva modifiche" }).click();
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
   await expect(page.getByText("✅ Capsula aggiornata.")).toBeVisible();
