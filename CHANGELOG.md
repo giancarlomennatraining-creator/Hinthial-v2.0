@@ -12,6 +12,30 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-06
 
+### Autenticazione a due fattori (TOTP)
+
+**Cosa fa:** nuova scheda "Sicurezza" in Impostazioni per attivare l'autenticazione a due fattori con un'app come Google Authenticator o 1Password. Una volta attiva, dopo email e password il login chiede anche un codice a 6 cifre prima di entrare. Si possono registrare più dispositivi (consigliato farlo, per non restare esclusi dall'account perdendo l'unico con l'app authenticator), ognuno rimovibile singolarmente.
+
+**Note tecniche:** interamente basata sull'MFA nativo di Supabase Auth (TOTP) --- nessuna crypto custom. Riguarda solo il layer di identità/login: non tocca mai la master key né la cifratura del vault, che restano protette solo dalla master password, del tutto separate (v. HINTHIAL_MVP.md, sezione 4). `signIn()` reindirizza a `/login/mfa` invece che alla dashboard quando la sessione è solo `aal1` e può salire ad `aal2`; lo stesso controllo vive anche in `(app)/layout.tsx`, per un URL diretto raggiunto senza passare dal login. Un codice non dichiara per quale dispositivo è stato generato: viene provato su ogni fattore registrato finché uno lo accetta. Richiede TOTP abilitato sul progetto Supabase (`supabase/config.toml`, `[auth.mfa.totp]`).
+
+### Impostazioni > Privacy: "Cosa sa Hinthial di te"
+
+**Cosa fa:** nuova scheda che mette a confronto, con dati reali e attuali dell'account (non un testo generico), cosa il server vede in chiaro --- email, conteggi per sezione, categorie, disposizione del menu --- con cosa non vedrà mai: nomi dei file, contenuti, contatti fiduciari, capsule, master password. Pensata per chi vuole verificare di persona la promessa zero-knowledge, non solo leggerla dichiarata.
+
+**Note tecniche:** ogni query legge solo colonne mai cifrate (conteggi, `status`/`is_friend` di trusted_contacts, `status` delle capsule, la tassonomia delle categorie), quindi non serve la master key sbloccata.
+
+### Impostazioni > Attività: registro degli eventi dell'account
+
+**Cosa fa:** nuova scheda che mostra il registro tecnico già scritto ad ogni login/logout, contenuto aggiunto o eliminato, contatto fiduciario aggiunto, vault svuotato --- raggruppato per giorno (Oggi/Ieri/data) e filtrabile per categoria. Mai nomi di file o di contatti, solo il tipo di evento: restano privati anche qui.
+
+**Note tecniche:** log puramente tecnico e in chiaro (v. `lib/audit/log-event.ts`), non serve la master key.
+
+### Kit di recovery stampabile con QR
+
+**Cosa fa:** alla creazione della master password, una terza opzione ("Stampa kit di recovery") accanto a copia/download .txt: un foglio pensato per essere stampato e conservato fisicamente, con la recovery key in grande e un QR code --- comodo per reinserirla su un dispositivo nuovo senza ricopiare a mano una chiave a 384 bit.
+
+**Note tecniche:** il QR è generato interamente lato client (libreria `qrcode`); la chiave non lascia mai il browser, nessuna chiamata di rete. Il foglio stampabile vive fuori vista nel DOM e diventa visibile solo nella finestra di stampa (pattern CSS "stampa solo questo elemento", v. `lib/print.ts`).
+
 ### Modifica di una capsula: stessi tre passi della creazione
 
 **Cosa fa:** la pagina di modifica di una capsula è ora organizzata negli stessi tre passi della creazione (chi e quando -> contenuti dall'archivio -> audio, video e testo), invece di un unico form con tutti i campi insieme --- stessa intestazione "Passo X di 3" e gli stessi pulsanti Avanti/Indietro.
