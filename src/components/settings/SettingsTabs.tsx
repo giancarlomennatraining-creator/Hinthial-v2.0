@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { UserInfoPanel } from "@/components/settings/UserInfoPanel";
 import { OnboardingSettingsPanel } from "@/components/settings/OnboardingSettingsPanel";
+import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { NavOrientationSettings } from "@/components/settings/NavOrientationSettings";
@@ -12,13 +13,21 @@ import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { ImportExportTabs } from "@/components/import-export/ImportExportTabs";
 
-type Tab = "user-info" | "onboarding" | "categories" | "appearance" | "import-export" | "danger-zone";
+type Tab =
+  | "user-info"
+  | "onboarding"
+  | "categories"
+  | "appearance"
+  | "activity"
+  | "import-export"
+  | "danger-zone";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "user-info", label: "Informazioni utente" },
   { id: "onboarding", label: "Onboarding" },
   { id: "categories", label: "Categorie" },
   { id: "appearance", label: "Aspetto" },
+  { id: "activity", label: "Attività" },
   { id: "import-export", label: "Importa/Esporta" },
   { id: "danger-zone", label: "Zona pericolosa" },
 ];
@@ -119,6 +128,10 @@ export function SettingsTabs({
             <ListViewSettings />
           </div>
         </div>
+      ) : tab === "activity" ? (
+        // Registro tecnico in chiaro (v. lib/audit/log-event.ts): non
+        // richiede la master key, come Aspetto.
+        <AuditLogPanel />
       ) : tab === "import-export" ? (
         // ImportExportTabs gestisce da sé le proprie sotto-schede
         // (Importa/Esporta) e il proprio RequireMasterKey --- prima
