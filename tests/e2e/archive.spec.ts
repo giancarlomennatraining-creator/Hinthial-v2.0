@@ -35,7 +35,10 @@ test("configura la cifratura, carica, apre e cancella un documento", async ({
   await expect(
     page.getByRole("heading", { name: "Salva la tua recovery key" }),
   ).toBeVisible({ timeout: 45_000 });
-  const recoveryKey = await page.locator("code").innerText();
+  // .first(): la stessa chiave compare una seconda volta nel kit
+  // stampabile fuori vista (v. recovery-kit.spec.ts), invisibile a
+  // schermo ma comunque nel DOM.
+  const recoveryKey = await page.locator("code").first().innerText();
   expect(recoveryKey).toMatch(/^[0-9A-F]{4}(-[0-9A-F]{4}){191}$/);
 
   // Il tasto "Copia negli appunti" copia esattamente la recovery key mostrata.

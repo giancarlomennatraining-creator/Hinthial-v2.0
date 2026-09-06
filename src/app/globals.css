@@ -36,3 +36,27 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/*
+ * Stampa solo il kit di recovery (v. SetupMasterKeyForm), non il resto
+ * della pagina/shell attorno --- pattern classico "stampa solo questo
+ * elemento": tutto diventa invisibile tranne il sottoalbero marcato,
+ * che viene poi riposizionato in cima per non lasciare una pagina
+ * vuota prima. Attivata solo per la durata della stampa (v.
+ * lib/print.ts), mai per il resto della UI.
+ */
+@media print {
+  body.printing-only-marked * {
+    visibility: hidden;
+  }
+  body.printing-only-marked .print-only,
+  body.printing-only-marked .print-only * {
+    visibility: visible;
+  }
+  body.printing-only-marked .print-only {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}

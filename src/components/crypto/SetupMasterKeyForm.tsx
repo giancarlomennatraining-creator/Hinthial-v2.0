@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import QRCode from "qrcode";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { TextField } from "@/components/ui/TextField";
 import { saveBlobAsFile } from "@/lib/download";
+import { printOnlyMarkedContent } from "@/lib/print";
 import type { MasterKeySetup } from "@/lib/crypto";
 
 type PendingSetup = { setup: MasterKeySetup; masterKey: CryptoKey };
@@ -15,6 +17,26 @@ export function SetupMasterKeyForm() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Generato non appena la recovery key è pronta (non c'è bisogno di
+  // aspettare un click: è quasi istantaneo) --- se fallisce, il kit
+  // stampabile resta comunque completo, solo senza QR: la chiave in
+  // chiaro nel testo basta da sola a recuperare l'accesso.
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pending) return;
+    let cancelled = false;
+    QRCode.toDataURL(pending.setup.recoveryKey.formatted, { margin: 1, width: 320 })
+      .then((url) => {
+        if (!cancelled) setQrDataUrl(url);
+      })
+      .catch(() => {
+        // Nessun blocco del flusso di setup per questo dettaglio secondario.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pending]);
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -108,7 +130,7 @@ export function SetupMasterKeyForm() {
           <code className="break-all rounded-md bg-zinc-100 p-4 text-center text-sm font-mono text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
             {pending.setup.recoveryKey.formatted}
           </code>
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <button
               type="button"
               onClick={handleDownload}
@@ -123,7 +145,50 @@ export function SetupMasterKeyForm() {
             >
               {copied ? "✓ Copiata" : "📋 Copia negli appunti"}
             </button>
+            <button
+              type="button"
+              onClick={printOnlyMarkedContent}
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            >
+              🖨️ Stampa kit di recovery
+            </button>
           </div>
+        </div>
+
+        {/*
+          Fuori vista sullo schermo, mostrato solo nella finestra di
+          stampa (v. lib/print.ts + la regola @media print in
+          globals.css): un unico foglio pensato per essere conservato
+          fisicamente, con la chiave anche come QR --- più comodo da
+          reinserire su un dispositivo nuovo che ricopiarla a mano.
+        */}
+        <div className="print-only hidden flex-col items-center gap-6 p-12 text-center print:flex">
+          {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
+          <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-12 w-auto" />
+          <h1 className="text-2xl font-semibold text-zinc-950">Kit di recovery</h1>
+          <p className="max-w-md text-sm text-zinc-700">
+            Se dimentichi la tua master password, questa è l&apos;unica chiave che potrà farti
+            recuperare l&apos;accesso ai tuoi documenti. HINTHIAL non la conserva da nessuna parte:
+            conservala tu, offline, in un posto sicuro (es. una cassaforte) --- non nella posta
+            elettronica.
+          </p>
+          <code className="break-all rounded-md border border-zinc-300 p-4 text-base font-mono text-zinc-950">
+            {pending.setup.recoveryKey.formatted}
+          </code>
+          {qrDataUrl ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element -- data URL generato al volo, non un asset statico */}
+              <img src={qrDataUrl} alt="QR della recovery key" className="h-40 w-40" />
+              <p className="text-xs text-zinc-500">
+                Inquadra questo codice con la fotocamera per recuperare la chiave senza doverla
+                ricopiare a mano su un dispositivo nuovo.
+              </p>
+            </>
+          ) : null}
+          <p className="text-xs text-zinc-400">
+            Generato il{" "}
+            {new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}
+          </p>
         </div>
 
         <label className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
