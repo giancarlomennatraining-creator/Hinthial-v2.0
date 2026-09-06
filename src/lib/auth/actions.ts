@@ -104,9 +104,57 @@ export async function signIn(
     return { error: translateAuthError(error.message) };
   }
 
+  // Chi ha l'autenticazione a due fattori attiva non è ancora "dentro"
+  // per davvero: la sessione è solo aal1 (password verificata), serve
+  // ancora il codice del secondo fattore prima di registrare il login
+  // e concedere l'accesso (v. (app)/layout.tsx per la stessa verifica
+  // sulle richieste dirette, e /login/mfa per dove si completa).
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+    redirect("/login/mfa");
+  }
+
   await logAuditEvent(supabase, data.user.id, "login");
 
   redirect("/dashboard");
+}
+
+export async function verifyMfaCode(
+  _prevState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const code = String(formData.get("code") ?? "").trim();
+
+  if (!code) {
+    return { error: "Inserisci il codice a 6 cifre." };
+  }
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Sessione scaduta. Accedi di nuovo." };
+  }
+
+  const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
+  if (factorsError || factorsData.totp.length === 0) {
+    return { error: "Nessun dispositivo di autenticazione registrato." };
+  }
+
+  // Un codice non dichiara per quale dispositivo è stato generato: si
+  // prova su ognuno dei fattori verificati finché uno accetta ---
+  // realisticamente uno o due, mai un elenco lungo.
+  for (const factor of factorsData.totp) {
+    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
+    if (!error) {
+      await logAuditEvent(supabase, user.id, "login");
+      redirect("/dashboard");
+    }
+  }
+
+  return { error: "Codice non valido. Riprova." };
 }
 
 export async function requestPasswordReset(

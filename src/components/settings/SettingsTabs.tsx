@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { UserInfoPanel } from "@/components/settings/UserInfoPanel";
 import { OnboardingSettingsPanel } from "@/components/settings/OnboardingSettingsPanel";
 import { PrivacyPanel } from "@/components/settings/PrivacyPanel";
+import { MfaSettingsPanel } from "@/components/settings/MfaSettingsPanel";
 import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
@@ -18,6 +19,7 @@ type Tab =
   | "user-info"
   | "onboarding"
   | "privacy"
+  | "security"
   | "categories"
   | "appearance"
   | "activity"
@@ -28,6 +30,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "user-info", label: "Informazioni utente" },
   { id: "onboarding", label: "Onboarding" },
   { id: "privacy", label: "Privacy" },
+  { id: "security", label: "Sicurezza" },
   { id: "categories", label: "Categorie" },
   { id: "appearance", label: "Aspetto" },
   { id: "activity", label: "Attività" },
@@ -94,6 +97,10 @@ export function SettingsTabs({
         // Solo conteggi e colonne mai cifrate (v. domain/privacy/repository.ts)
         // --- non richiede la master key, a differenza di Onboarding qui sopra.
         <PrivacyPanel userId={userId} firstName={firstName} lastName={lastName} email={email} />
+      ) : tab === "security" ? (
+        // Layer di identità (login), non di cifratura --- non richiede
+        // la master key (v. domain/mfa/repository.ts).
+        <MfaSettingsPanel />
       ) : tab === "categories" ? (
         <CategoriesPanel />
       ) : tab === "appearance" ? (
