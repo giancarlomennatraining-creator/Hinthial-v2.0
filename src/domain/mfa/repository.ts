@@ -24,12 +24,21 @@ export async function enrollTotpFactor(
     throw new Error(`Impossibile avviare l'attivazione: ${error.message}`);
   }
 
-  return { factorId: data.id, qrCodeSvg: data.totp.qr_code, secret: data.totp.secret };
+  return { factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret };
 }
 
-/** Converte l'SVG grezzo restituito da Supabase in un `src` utilizzabile da un tag `<img>`. */
-export function totpQrCodeToImageSrc(qrCodeSvg: string): string {
-  return `data:image/svg+xml;utf8,${encodeURIComponent(qrCodeSvg)}`;
+/**
+ * Il campo `qr_code` restituito da Supabase è già una data URI completa
+ * (`data:image/svg+xml;utf-8,<svg...>`), nonostante il commento nei
+ * tipi del SDK suggerisca di doverla costruire a mano prependendo
+ * quel prefisso --- verificato contro il progetto reale: farlo
+ * comunque produce una data URI il cui "contenuto" è essa stessa
+ * codificata come URL, non SVG valido (immagine rotta). Qui solo per
+ * gestire con grazia un'eventuale versione futura dell'SDK che
+ * tornasse a restituire l'SVG grezzo, come descritto nei tipi.
+ */
+export function totpQrCodeToImageSrc(qrCode: string): string {
+  return qrCode.startsWith("data:") ? qrCode : `data:image/svg+xml;utf8,${encodeURIComponent(qrCode)}`;
 }
 
 /**

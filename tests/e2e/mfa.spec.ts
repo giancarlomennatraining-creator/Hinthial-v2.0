@@ -30,11 +30,18 @@ test("attivare l'autenticazione a due fattori richiede il codice al login succes
   await page.getByRole("tab", { name: "Sicurezza" }).click();
   await expect(page.getByText("⚠️ Non attiva")).toBeVisible();
 
-  // Attivazione: nome del dispositivo, QR (non verificabile in un
-  // test, ma dev'esserci), codice a mano da inserire per confermare.
+  // Attivazione: nome del dispositivo, QR, codice a mano da inserire
+  // per confermare. toBeVisible() da solo non basta per il QR: un
+  // <img> con src rotto risulta comunque "visibile" nel DOM --- si
+  // verifica che l'immagine si sia davvero caricata (naturalWidth > 0).
   await page.getByLabel("Nome del dispositivo").fill("Telefono di test");
   await page.getByRole("button", { name: "Attiva l'autenticazione a due fattori" }).click();
-  await expect(page.getByAltText("QR per l'app authenticator")).toBeVisible({ timeout: 15_000 });
+  const qrImage = page.getByAltText("QR per l'app authenticator");
+  await expect(qrImage).toBeVisible({ timeout: 15_000 });
+  await expect(async () => {
+    const naturalWidth = await qrImage.evaluate((el: HTMLImageElement) => el.naturalWidth);
+    expect(naturalWidth).toBeGreaterThan(0);
+  }).toPass({ timeout: 10_000 });
   const secret = await page.locator("code").innerText();
   expect(secret.length).toBeGreaterThan(10);
 

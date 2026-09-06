@@ -148,7 +148,7 @@ export function MfaSettingsPanel() {
           </p>
           {/* eslint-disable-next-line @next/next/no-img-element -- data URI generato al volo, non un asset statico */}
           <img
-            src={totpQrCodeToImageSrc(enrollment.qrCodeSvg)}
+            src={totpQrCodeToImageSrc(enrollment.qrCode)}
             alt="QR per l'app authenticator"
             className="h-48 w-48 self-center"
           />
