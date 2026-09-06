@@ -28,6 +28,7 @@ import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
 import { useListViewPreferences } from "@/components/layout/ListViewPreferencesProvider";
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
+import { CAPSULE_STATUS_LABEL } from "@/domain/capsules/labels";
 import type { CapsuleAttachment, CapsuleListItem, CapsuleStatus } from "@/domain/capsules/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 
@@ -46,11 +47,7 @@ function formatSize(bytes: number): string {
 }
 
 
-const STATUS_LABEL: Record<CapsuleStatus, string> = {
-  draft: "Bozza",
-  ready: "Chiusa",
-  shared: "Condivisa",
-};
+const STATUS_LABEL = CAPSULE_STATUS_LABEL;
 
 const STATUS_BADGE_CLASS: Record<CapsuleStatus, string> = {
   draft: "bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400",

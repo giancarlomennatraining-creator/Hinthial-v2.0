@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { UserInfoPanel } from "@/components/settings/UserInfoPanel";
 import { OnboardingSettingsPanel } from "@/components/settings/OnboardingSettingsPanel";
+import { PrivacyPanel } from "@/components/settings/PrivacyPanel";
 import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
@@ -16,6 +17,7 @@ import { ImportExportTabs } from "@/components/import-export/ImportExportTabs";
 type Tab =
   | "user-info"
   | "onboarding"
+  | "privacy"
   | "categories"
   | "appearance"
   | "activity"
@@ -25,6 +27,7 @@ type Tab =
 const TABS: { id: Tab; label: string }[] = [
   { id: "user-info", label: "Informazioni utente" },
   { id: "onboarding", label: "Onboarding" },
+  { id: "privacy", label: "Privacy" },
   { id: "categories", label: "Categorie" },
   { id: "appearance", label: "Aspetto" },
   { id: "activity", label: "Attività" },
@@ -87,6 +90,10 @@ export function SettingsTabs({
         <RequireMasterKey>
           {(masterKey) => <OnboardingSettingsPanel masterKey={masterKey} />}
         </RequireMasterKey>
+      ) : tab === "privacy" ? (
+        // Solo conteggi e colonne mai cifrate (v. domain/privacy/repository.ts)
+        // --- non richiede la master key, a differenza di Onboarding qui sopra.
+        <PrivacyPanel userId={userId} firstName={firstName} lastName={lastName} email={email} />
       ) : tab === "categories" ? (
         <CategoriesPanel />
       ) : tab === "appearance" ? (
