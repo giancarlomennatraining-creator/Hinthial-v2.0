@@ -14,11 +14,14 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ### Prima esperienza: meno disorientamento al primo accesso
 
-**Cosa fa:** quattro correzioni mirate al percorso di chi usa Hinthial per la prima volta, prima ancora di aver configurato la cifratura:
+**Cosa fa:** cinque correzioni mirate al percorso di chi usa Hinthial per la prima volta, prima ancora di aver configurato la cifratura:
 - Il modulo "Configura la cifratura" spiega ora esplicitamente la differenza tra password dell'account e master password (un confronto a due righe), e anticipa cosa aspettarsi ("un minuto: password, chiave di recupero, poi sei dentro").
 - L'indicatore "Onboarding" nella barra di navigazione e la card in Dashboard mostrano già i primi due passi (account creato, cifratura da configurare) **prima** di aver sbloccato il vault, invece di restare del tutto assenti fino ad allora --- un punto di partenza esplicito appena si atterra in dashboard.
 - Il checklist "Onboarding" completo (8 passi) mostra ora una breve spiegazione sotto ogni passo non ancora fatto, non solo l'etichetta --- utile soprattutto per passi che introducono un concetto nuovo (es. "Aggiungi un amico", legato al Dead Man's Switch delle capsule).
 - L'ordine dei passi mette prima quelli concreti (contenuto, categoria, asset, capsula) e per ultimi quelli che presuppongono un concetto nuovo (amico/Dead Man's Switch, collegamento capsula-contatto).
+- Le voci della barra di navigazione che richiedono la cifratura (tutte tranne Dashboard) mostrano un piccolo pallino finché non è stata configurata --- prima ancora di cliccarci sopra, invece di scoprire lo stesso modulo di setup separatamente su ognuna.
+
+**Note tecniche:** il pallino è espresso via `aria-describedby` su uno `<span>` a parte, mai testo dentro l'etichetta del link: il nome accessibile resta invariato ("Archivio", non "Archivio (richiede...)"), altrimenti ogni ricerca per nome esatto (screen reader o test) smetterebbe di trovare il link finché la cifratura non è configurata.
 
 **Note tecniche:** nuova `computeBasicOnboardingSteps()` in `domain/onboarding/steps.ts` --- gli stessi due oggetti-passo (`account`/`security`) usati anche dalla checklist completa, mai due definizioni separate che potrebbero disallinearsi. Il loro stato non richiede la Master Key (letto da `useMasterKey().status`), a differenza degli altri 6 passi che restano dietro sblocco perché richiedono dati decifrati.
 
