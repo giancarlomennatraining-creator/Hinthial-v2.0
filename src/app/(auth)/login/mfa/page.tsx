@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/server";
 import { hasMfaVerifiedViaBackupCode } from "@/lib/auth/mfa-bypass";
 import { MfaChallengeForm } from "@/components/auth/MfaChallengeForm";
-import type { MfaFactor } from "@/domain/mfa/types";
 
 /**
  * Passo successivo al login per chi ha l'autenticazione a due fattori
@@ -26,12 +25,5 @@ export default async function LoginMfaPage() {
     redirect("/dashboard");
   }
 
-  const { data: factorsData } = await supabase.auth.mfa.listFactors();
-  const webauthnFactors: MfaFactor[] = (factorsData?.webauthn ?? []).map((factor) => ({
-    id: factor.id,
-    friendlyName: factor.friendly_name ?? "Passkey",
-    createdAt: factor.created_at,
-  }));
-
-  return <MfaChallengeForm webauthnFactors={webauthnFactors} />;
+  return <MfaChallengeForm />;
 }

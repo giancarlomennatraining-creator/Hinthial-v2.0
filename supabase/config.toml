@@ -310,10 +310,13 @@ otp_length = 6
 template = "Your code is {{ .Code }}"
 max_frequency = "5s"
 
-# Configure MFA via WebAuthn
-[auth.mfa.web_authn]
-enroll_enabled = true
-verify_enabled = true
+# Configure MFA via WebAuthn --- esplorato e poi abbandonato (v.
+# CHANGELOG.md): il dashboard Supabase di questo progetto non espone
+# un modo per attivarlo per l'MFA (solo per il login primario con
+# passkey, funzionalità diversa). Lasciato disattivo/commentato.
+# [auth.mfa.web_authn]
+# enroll_enabled = true
+# verify_enabled = true
 
 # Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,

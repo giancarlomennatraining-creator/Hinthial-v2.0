@@ -6,9 +6,7 @@ import {
   countBackupCodes,
   enrollTotpFactor,
   listVerifiedTotpFactors,
-  listVerifiedWebauthnFactors,
   regenerateBackupCodes,
-  registerWebauthnFactor,
   totpQrCodeToImageSrc,
   unenrollFactor,
   verifyTotpCode,
@@ -56,17 +54,21 @@ function FactorList({
 /**
  * Impostazioni -> Sicurezza: gestisce solo il layer di identità
  * (login), mai la master key/cifratura del vault --- i due restano
- * completamente separati (v. HINTHIAL_MVP.md sezione 4). Tre pezzi:
- * TOTP (Google Authenticator/1Password), passkey (impronta/Face ID/
- * Windows Hello/chiave fisica, via WebAuthn) e codici di backup
- * monouso per chi perde l'accesso a entrambi. Ogni tipo supporta più
- * di un dispositivo --- consigliato registrarne più di uno.
+ * completamente separati (v. HINTHIAL_MVP.md sezione 4). Due pezzi:
+ * TOTP (Google Authenticator/1Password) e codici di backup monouso per
+ * chi perde l'accesso al proprio dispositivo. Supporta più di un
+ * dispositivo TOTP --- consigliato registrarne più di uno.
+ *
+ * Una passkey (WebAuthn) come fattore alternativo è stata valutata ed
+ * esplorata (v. CHANGELOG.md), ma non implementata: il progetto
+ * Supabase usato oggi non espone un modo per attivarla per questo
+ * scopo, solo per il login primario (funzionalità diversa) --- da
+ * rivalutare quando la situazione lato Supabase sarà più chiara.
  */
 export function MfaSettingsPanel({ userId }: { userId: string }) {
   const supabase = useRef(createClient()).current;
 
   const [factors, setFactors] = useState<MfaFactor[] | null>(null);
-  const [webauthnFactors, setWebauthnFactors] = useState<MfaFactor[] | null>(null);
   const [backupCodesCount, setBackupCodesCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -75,21 +77,17 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
   const [enrollment, setEnrollment] = useState<TotpEnrollment | null>(null);
   const [code, setCode] = useState("");
 
-  const [passkeyName, setPasskeyName] = useState("Il mio telefono");
-
   const [revealedCodes, setRevealedCodes] = useState<string[] | null>(null);
   const [confirmedSavedCodes, setConfirmedSavedCodes] = useState(false);
 
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [totp, webauthn, codesCount] = await Promise.all([
+      const [totp, codesCount] = await Promise.all([
         listVerifiedTotpFactors(supabase),
-        listVerifiedWebauthnFactors(supabase),
         countBackupCodes(supabase, userId),
       ]);
       setFactors(totp);
-      setWebauthnFactors(webauthn);
       setBackupCodesCount(codesCount);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare lo stato dell'MFA.");
@@ -167,27 +165,6 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
     }
   }
 
-  async function handleAddPasskey() {
-    if (!passkeyName.trim()) {
-      setError("Dai un nome a questa passkey, per riconoscerla in futuro.");
-      return;
-    }
-    setError(null);
-    setBusy(true);
-    try {
-      // Nessun passo di conferma separato: il prompt del browser
-      // (impronta/Face ID/chiave fisica) che si apre qui verifica già
-      // tutto in un solo passaggio (v. registerWebauthnFactor).
-      await registerWebauthnFactor(supabase, passkeyName.trim());
-      setPasskeyName("Il mio telefono");
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile registrare la passkey.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function handleGenerateBackupCodes() {
     setError(null);
     setBusy(true);
@@ -211,8 +188,8 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
       "",
       ...revealedCodes,
       "",
-      "Ognuno è utilizzabile una sola volta, al posto del codice dell'app authenticator o",
-      "della passkey, se perdi l'accesso a entrambi. Conservali in un posto sicuro.",
+      "Ognuno è utilizzabile una sola volta, al posto del codice dell'app authenticator,",
+      "se perdi l'accesso al tuo dispositivo. Conservali in un posto sicuro.",
     ].join("\n");
     saveBlobAsFile(new Blob([text], { type: "text/plain;charset=utf-8" }), "hinthial-codici-backup.txt");
   }
@@ -230,11 +207,9 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
     );
   }
 
-  if (!factors || !webauthnFactors || backupCodesCount === null) {
+  if (!factors || backupCodesCount === null) {
     return <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>;
   }
-
-  const hasAnyFactor = factors.length > 0 || webauthnFactors.length > 0;
 
   return (
     <div className="flex max-w-lg flex-col gap-10">
@@ -359,59 +334,16 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
         )}
       </div>
 
-      {/* --- Passkey (WebAuthn) --- */}
-      <div className="flex flex-col gap-6 border-t border-zinc-200 pt-10 dark:border-zinc-800">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Passkey</h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Verifica con l&apos;impronta digitale, Face ID, Windows Hello o una chiave fisica di
-            sicurezza --- niente codici da leggere e ricopiare.
-          </p>
-        </div>
-
-        {webauthnFactors.length > 0 ? (
-          <FactorList factors={webauthnFactors} busy={busy} onRemove={handleRemoveFactor} />
-        ) : (
-          <p className="inline-block self-start rounded-full bg-orange-100 px-2.5 py-1 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-400">
-            ⚠️ Nessuna passkey registrata
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="passkeyName" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-              Nome della passkey
-            </label>
-            <input
-              id="passkeyName"
-              type="text"
-              value={passkeyName}
-              onChange={(e) => setPasskeyName(e.target.value)}
-              placeholder="es. Il mio telefono"
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-            />
-          </div>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={handleAddPasskey}
-            className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-          >
-            + Aggiungi una passkey
-          </button>
-        </div>
-      </div>
-
       {/* --- Codici di backup --- */}
-      {hasAnyFactor ? (
+      {factors.length > 0 ? (
         <div className="flex flex-col gap-4 border-t border-zinc-200 pt-10 dark:border-zinc-800">
           <div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Codici di backup
             </h2>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              Da usare al posto di un codice se perdi l&apos;accesso a tutti i tuoi dispositivi.
-              Ognuno funziona una sola volta.
+              Da usare al posto di un codice se perdi l&apos;accesso al tuo dispositivo. Ognuno
+              funziona una sola volta.
             </p>
           </div>
 
