@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
+import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
+import { computeBasicOnboardingSteps } from "@/domain/onboarding/steps";
 
 /**
  * The greeting always renders, regardless of encryption status ---
@@ -10,6 +12,11 @@ import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
  * gated, with a lightweight inline prompt rather than a full-page
  * takeover. A brand-new user (no encryption set up yet) or a returning
  * one after a refresh (locked) should still see "Ciao, ..." immediately.
+ *
+ * Prima dello sblocco, il prompt è lo stesso mini-checklist (2 passi)
+ * del gadget nella barra (v. OnboardingStatus/computeBasicOnboardingSteps)
+ * invece di un semplice link: dà un punto di partenza esplicito appena
+ * si atterra in dashboard, non solo il badge qui sotto.
  */
 export function DashboardPanel({ displayName }: { displayName: string }) {
   const { status } = useMasterKey();
@@ -44,18 +51,17 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
       ) : status.kind === "checking" ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
       ) : (
-        <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            {status.kind === "not-set-up"
-              ? "Configura la cifratura per iniziare a vedere scadenze e archivio qui."
-              : "Sblocca la cifratura per vedere le tue scadenze e il tuo archivio recente."}
-          </p>
-          <Link
-            href="/archive"
-            className="mt-2 inline-block text-sm font-medium text-brand hover:underline"
-          >
-            Vai all&apos;archivio
-          </Link>
+        <div className="max-w-sm">
+          <OnboardingChecklist steps={computeBasicOnboardingSteps(status.kind === "locked")} />
+          {status.kind === "locked" ? (
+            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Sblocca la cifratura per vedere le tue scadenze e il tuo archivio recente:{" "}
+              <Link href="/archive" className="font-medium text-brand hover:underline">
+                vai all&apos;archivio
+              </Link>
+              .
+            </p>
+          ) : null}
         </div>
       )}
     </div>

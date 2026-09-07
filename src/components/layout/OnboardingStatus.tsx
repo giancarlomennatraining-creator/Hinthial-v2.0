@@ -6,7 +6,11 @@ import { createClient } from "@/lib/db/supabase/client";
 import { buildAIContext } from "@/domain/ai/context";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { OnboardingChecklist, type OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
-import { computeOnboardingSteps, onboardingCompletionPercent } from "@/domain/onboarding/steps";
+import {
+  computeBasicOnboardingSteps,
+  computeOnboardingSteps,
+  onboardingCompletionPercent,
+} from "@/domain/onboarding/steps";
 import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 
 /** Stesso margine di RowActionsMenu, per lo stesso motivo. */
@@ -23,12 +27,16 @@ const PANEL_WIDTH = 320;
  * domain/onboarding/steps.ts, condivisa per non avere due liste che
  * possono disallinearsi).
  *
- * Visibile solo a cifratura sbloccata: senza Master Key non c'è nulla
- * da decifrare/calcolare, e mostrare uno stato "a caso" prima
- * confonderebbe più che aiutare. Caricato all'apertura della barra
- * (come DashboardWidgets, non pigro come GlobalSearch: qui il punto è
- * proprio vedere la percentuale senza dover cliccare), e ricaricato ad
- * ogni apertura del pannello per riflettere cambiamenti fatti altrove.
+ * Visibile anche prima dello sblocco --- mostra solo i primi due passi
+ * (account + cifratura, v. computeBasicOnboardingSteps), il cui stato è
+ * già noto da useMasterKey().status senza dover decifrare nulla: un
+ * utente nuovo vede così subito un punto di partenza, invece di
+ * scoprire il gadget solo dopo aver già configurato la cifratura da
+ * sé. La checklist completa (8 passi) prende il suo posto non appena la
+ * Master Key è sbloccata. Caricato all'apertura della barra (come
+ * DashboardWidgets, non pigro come GlobalSearch: qui il punto è proprio
+ * vedere la percentuale senza dover cliccare), e ricaricato ad ogni
+ * apertura del pannello per riflettere cambiamenti fatti altrove.
  *
  * Nascondibile dal pannello stesso ("Nascondi") --- una preferenza
  * sincronizzata sul server (v. OnboardingWidgetVisibilityProvider), non un
@@ -122,9 +130,17 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
     setOpen((v) => !v);
   }
 
-  if (!masterKey || !steps || hidden) return null;
+  // Prima dello sblocco, solo i primi due passi (v. doc comment sopra) ---
+  // "checking" (stato non ancora noto) resta senza indicatore, come prima.
+  const displaySteps = masterKey
+    ? steps
+    : status.kind === "checking"
+      ? null
+      : computeBasicOnboardingSteps(status.kind === "locked");
 
-  const percent = onboardingCompletionPercent(steps);
+  if (!displaySteps || hidden) return null;
+
+  const percent = onboardingCompletionPercent(displaySteps);
 
   return (
     <>
@@ -171,7 +187,7 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
               }}
               className="z-50 w-80 max-w-[calc(100vw-2rem)] rounded-md border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
             >
-              <OnboardingChecklist steps={steps} />
+              <OnboardingChecklist steps={displaySteps} />
               <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
                 <button
                   type="button"

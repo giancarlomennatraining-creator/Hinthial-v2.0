@@ -12,6 +12,30 @@ export interface OnboardingSourceData {
 }
 
 /**
+ * I primi due passi --- unica definizione condivisa anche da
+ * computeBasicOnboardingSteps qui sotto, usata prima ancora che la
+ * Master Key sia sbloccata (v. OnboardingStatus/DashboardPanel): mai due
+ * liste che possono andare fuori sincrono su etichetta/descrizione/href.
+ */
+const ACCOUNT_STEP: OnboardingStep = {
+  key: "account",
+  label: "Crea un account",
+  description: "Hai creato il tuo account Hinthial.",
+  done: true,
+  href: "/dashboard",
+};
+
+function securityStep(done: boolean): OnboardingStep {
+  return {
+    key: "security",
+    label: "Configura la cifratura",
+    description: "Crea la master password e la cifratura del tuo vault.",
+    done,
+    href: "/archive",
+  };
+}
+
+/**
  * "Onboarding", estratta qui perché serve sia alla dashboard (v.
  * DashboardWidgets) sia all'indicatore persistente nel menu laterale
  * (v. components/layout/OnboardingStatus) --- una sola definizione, mai
@@ -19,31 +43,24 @@ export interface OnboardingSourceData {
  *
  * Account e cifratura sono per definizione già fatti se questo viene
  * chiamato con un AIContext già costruito (richiede la Master Key
- * sbloccata). Nessun passo è opzionale: contano tutti nel conteggio
- * (v. isOnboardingComplete/onboardingCompletionPercent sotto). "Amico"
- * è un prerequisito reale: senza almeno un amico non si può attivare il
- * Dead Man's Switch semplificato per le capsule (v. domain/contacts,
- * isFriend). "Imposta una scadenza" non è più un passo: è un'attività
- * passiva rispetto al contribuire un contenuto vero e proprio.
+ * sbloccata) --- v. computeBasicOnboardingSteps per i due passi da soli,
+ * mostrabili anche prima. Nessun passo è opzionale: contano tutti nel
+ * conteggio (v. isOnboardingComplete/onboardingCompletionPercent sotto).
+ * "Amico" è un prerequisito reale: senza almeno un amico non si può
+ * attivare il Dead Man's Switch semplificato per le capsule (v.
+ * domain/contacts, isFriend) --- messo dopo asset/capsula apposta,
+ * insieme al collegamento capsula-contatto che lo richiede: i passi che
+ * presuppongono un concetto nuovo vengono dopo quelli concreti e
+ * immediati, non mescolati. "Imposta una scadenza" non è più un passo:
+ * è un'attività passiva rispetto al contribuire un contenuto vero e
+ * proprio.
  */
 export function computeOnboardingSteps(data: OnboardingSourceData): OnboardingStep[] {
   const { documents, assets, contacts, capsules } = data;
 
   return [
-    {
-      key: "account",
-      label: "Crea un account",
-      description: "Hai creato il tuo account Hinthial.",
-      done: true,
-      href: "/dashboard",
-    },
-    {
-      key: "security",
-      label: "Configura la cifratura",
-      description: "Hai impostato la master password e la cifratura del tuo vault.",
-      done: true,
-      href: "/archive",
-    },
+    ACCOUNT_STEP,
+    securityStep(true),
     {
       key: "document",
       label: "Aggiungi il primo contenuto all'archivio",
@@ -57,14 +74,6 @@ export function computeOnboardingSteps(data: OnboardingSourceData): OnboardingSt
       description: "Organizza un contenuto già in archivio assegnandogli una categoria.",
       done: documents.some((d) => d.categoryId !== null),
       href: "/archive",
-    },
-    {
-      key: "friend",
-      label: "Aggiungi un amico",
-      description:
-        "Segna almeno un contatto fiduciario come amico: senza almeno un amico non si può attivare il Dead Man's Switch delle capsule.",
-      done: contacts.some((c) => c.isFriend),
-      href: "/contacts",
     },
     {
       key: "asset",
@@ -81,6 +90,14 @@ export function computeOnboardingSteps(data: OnboardingSourceData): OnboardingSt
       href: "/capsules",
     },
     {
+      key: "friend",
+      label: "Aggiungi un amico",
+      description:
+        "Segna almeno un contatto fiduciario come amico: senza almeno un amico non si può attivare il Dead Man's Switch delle capsule.",
+      done: contacts.some((c) => c.isFriend),
+      href: "/contacts",
+    },
+    {
       key: "capsule-contact",
       label: "Collega una capsula a un contatto",
       description: "Scegli chi riceverà una delle tue capsule, tra i tuoi contatti fiduciari.",
@@ -88,6 +105,18 @@ export function computeOnboardingSteps(data: OnboardingSourceData): OnboardingSt
       href: "/capsules",
     },
   ];
+}
+
+/**
+ * Solo i primi due passi (account + cifratura), mostrabili anche senza
+ * Master Key sbloccata --- a differenza degli altri, il loro stato non
+ * richiede di decifrare nulla: "fatto" o no è già noto da
+ * useMasterKey().status. Usata da OnboardingStatus/DashboardPanel finché
+ * la cifratura non è pronta, così l'indicatore non è semplicemente
+ * assente in quella fase (v. doc comment lì per il motivo).
+ */
+export function computeBasicOnboardingSteps(encryptionConfigured: boolean): OnboardingStep[] {
+  return [ACCOUNT_STEP, securityStep(encryptionConfigured)];
 }
 
 export function isOnboardingComplete(steps: OnboardingStep[]): boolean {

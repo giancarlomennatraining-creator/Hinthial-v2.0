@@ -18,9 +18,21 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  // Prima dello sblocco della cifratura, l'indicatore non c'è ancora.
+  // Prima dello sblocco della cifratura, l'indicatore mostra già i primi
+  // due passi (account fatto, cifratura no): 1 su 2 -> 50%. Un punto di
+  // partenza esplicito, invece di restare assente finché non si è già
+  // configurata la cifratura da sé.
   const statusButton = page.getByRole("button", { name: /Onboarding/ });
-  await expect(statusButton).not.toBeVisible();
+  const panel = page.getByRole("dialog", { name: "Onboarding" });
+  await expect(statusButton).toBeVisible({ timeout: 10_000 });
+  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 50% completato");
+  await statusButton.click();
+  await expect(panel).toBeVisible();
+  await expect(panel.getByText("1/2")).toBeVisible();
+  await expect(panel.getByRole("link", { name: "Configura la cifratura" })).toHaveAttribute(
+    "href",
+    "/archive",
+  );
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
@@ -38,7 +50,6 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 25% completato");
 
   await statusButton.click();
-  const panel = page.getByRole("dialog", { name: "Onboarding" });
   await expect(panel).toBeVisible();
   await expect(panel.getByText("Onboarding")).toBeVisible();
   await expect(panel.getByText("2/8")).toBeVisible();

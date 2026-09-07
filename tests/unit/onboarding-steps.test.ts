@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  computeBasicOnboardingSteps,
   computeOnboardingSteps,
   isOnboardingComplete,
   onboardingCompletionPercent,
@@ -17,16 +18,16 @@ function buildData(overrides: Partial<OnboardingSourceData> = {}): OnboardingSou
 }
 
 describe("computeOnboardingSteps", () => {
-  it("lists 8 steps, none of them optional", () => {
+  it("lists 8 steps, none of them optional --- concrete steps before the ones that introduce a new concept (friend/Dead Man's Switch)", () => {
     const steps = computeOnboardingSteps(buildData());
     expect(steps.map((s) => s.key)).toEqual([
       "account",
       "security",
       "document",
       "category",
-      "friend",
       "asset",
       "capsule",
+      "friend",
       "capsule-contact",
     ]);
     expect(steps.every((s) => !("optional" in s))).toBe(true);
@@ -141,5 +142,28 @@ describe("onboardingCompletionPercent", () => {
   it("rounds the ratio of done steps over every step (account + security done out of 8 -> 25%)", () => {
     const steps = computeOnboardingSteps(buildData());
     expect(onboardingCompletionPercent(steps)).toBe(25);
+  });
+});
+
+describe("computeBasicOnboardingSteps", () => {
+  it("lists just account + security, showable before the Master Key is unlocked", () => {
+    const steps = computeBasicOnboardingSteps(false);
+    expect(steps.map((s) => s.key)).toEqual(["account", "security"]);
+    expect(steps.find((s) => s.key === "account")?.done).toBe(true);
+    expect(steps.find((s) => s.key === "security")?.done).toBe(false);
+    expect(onboardingCompletionPercent(steps)).toBe(50);
+  });
+
+  it("marks 'security' done once encryption is configured (even if currently locked)", () => {
+    const steps = computeBasicOnboardingSteps(true);
+    expect(steps.find((s) => s.key === "security")?.done).toBe(true);
+    expect(onboardingCompletionPercent(steps)).toBe(100);
+  });
+
+  it("matches the label/description/href of the same two steps in the full checklist", () => {
+    const full = computeOnboardingSteps(buildData());
+    const basic = computeBasicOnboardingSteps(true);
+    expect(basic[0]).toEqual(full[0]);
+    expect(basic[1]).toEqual(full[1]);
   });
 });

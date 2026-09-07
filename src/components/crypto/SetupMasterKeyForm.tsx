@@ -232,6 +232,21 @@ export function SetupMasterKeyForm() {
         </p>
       </div>
 
+      <div className="flex flex-col gap-1 rounded-md bg-zinc-50 p-3 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
+        <p>
+          <strong className="text-zinc-800 dark:text-zinc-200">Password account</strong> → per
+          accedere al servizio.
+        </p>
+        <p>
+          <strong className="text-zinc-800 dark:text-zinc-200">Master password</strong> → decifra i
+          tuoi dati: è come la chiave di una cassaforte che tieni solo tu, nemmeno noi la vediamo.
+        </p>
+      </div>
+
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        Ci vuole un minuto: crei una password, salvi una chiave di recupero, poi sei dentro.
+      </p>
+
       <form onSubmit={handleCreate} className="flex flex-col gap-4">
         <TextField
           id="masterPassword"
