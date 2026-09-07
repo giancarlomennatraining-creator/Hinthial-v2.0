@@ -19,6 +19,7 @@ export default async function SettingsPage() {
         email={user?.email ?? ""}
         avatarPath={user?.avatarPath ?? null}
         avatarUrl={user?.avatarUrl ?? null}
+        birthDate={user?.birthDate ?? null}
       />
     </div>
   );

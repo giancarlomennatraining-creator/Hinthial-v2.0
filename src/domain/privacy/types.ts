@@ -21,4 +21,6 @@ export interface AccountVisibilitySummary {
   /** Nomi delle categorie usate --- la tassonomia è in chiaro, non un dato del vault. */
   categoryNames: string[];
   navOrientation: NavOrientation;
+  /** Se il gadget "Onboarding" nella barra è nascosto --- v. OnboardingWidgetVisibilityProvider. */
+  onboardingWidgetHidden: boolean;
 }

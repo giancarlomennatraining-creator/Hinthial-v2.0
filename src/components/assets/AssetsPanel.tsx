@@ -101,7 +101,12 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
     setBusyId(asset.id);
     setError(null);
     try {
-      await deleteAsset(supabase, asset.id);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Devi essere autenticato.");
+
+      await deleteAsset(supabase, user.id, asset.id);
       setAssets((prev) => prev.filter((a) => a.id !== asset.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile eliminare l'asset.");

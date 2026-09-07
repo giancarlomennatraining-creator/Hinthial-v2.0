@@ -2,6 +2,7 @@
 
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
+import { MobileNavBar } from "@/components/layout/MobileNavBar";
 import { MasterKeyProvider } from "@/components/crypto/MasterKeyProvider";
 import { ListViewPreferencesProvider } from "@/components/layout/ListViewPreferencesProvider";
 import { NavOrientationProvider, useNavOrientation } from "@/components/layout/NavOrientationProvider";
@@ -24,6 +25,7 @@ export function AppShell({
   displayName,
   avatarUrl,
   initialNavOrientation,
+  initialOnboardingWidgetHidden,
   children,
 }: {
   userId: string;
@@ -32,13 +34,14 @@ export function AppShell({
   displayName: string;
   avatarUrl: string | null;
   initialNavOrientation: NavOrientation;
+  initialOnboardingWidgetHidden: boolean;
   children: React.ReactNode;
 }) {
   return (
     <MasterKeyProvider>
       <NavOrientationProvider userId={userId} initialOrientation={initialNavOrientation}>
         <ListViewPreferencesProvider userId={userId}>
-          <OnboardingWidgetVisibilityProvider>
+          <OnboardingWidgetVisibilityProvider userId={userId} initialHidden={initialOnboardingWidgetHidden}>
             <AppChrome
               userId={userId}
               firstName={firstName}
@@ -81,6 +84,13 @@ function AppChrome({
   if (orientation === "topbar") {
     return (
       <div className="flex min-h-screen flex-1 flex-col">
+        <MobileNavBar
+          userId={userId}
+          firstName={firstName}
+          lastName={lastName}
+          displayName={displayName}
+          avatarUrl={avatarUrl}
+        />
         <TopNav
           userId={userId}
           firstName={firstName}
@@ -99,6 +109,13 @@ function AppChrome({
 
   return (
     <div className="flex min-h-screen flex-1 flex-col md:flex-row">
+      <MobileNavBar
+        userId={userId}
+        firstName={firstName}
+        lastName={lastName}
+        displayName={displayName}
+        avatarUrl={avatarUrl}
+      />
       <Sidebar
         side={side}
         userId={userId}

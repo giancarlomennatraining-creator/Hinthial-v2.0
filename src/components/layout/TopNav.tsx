@@ -28,7 +28,8 @@ export function TopNav({
   avatarUrl: string | null;
 }) {
   return (
-    <header className="flex flex-wrap items-center gap-4 border-b border-zinc-200 p-4 dark:border-zinc-800">
+    // Sotto md la sostituisce MobileNavBar (v. AppShell).
+    <header className="hidden flex-wrap items-center gap-4 border-b border-zinc-200 p-4 md:flex dark:border-zinc-800">
       <Link href="/dashboard" className="shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
         <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-8 w-auto sm:h-10" />

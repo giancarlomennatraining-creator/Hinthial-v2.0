@@ -3,7 +3,7 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("Impostazioni > Attività mostra il registro degli eventi, raggruppato per giorno e filtrabile per tipo", async ({
+test("Impostazioni > Attività si interroga con filtri (data e tipo) e apre il dettaglio di un evento", async ({
   page,
 }) => {
   test.slow();
@@ -18,23 +18,35 @@ test("Impostazioni > Attività mostra il registro degli eventi, raggruppato per 
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   // Il login stesso è già un evento --- consultabile subito, senza
-  // sbloccare la cifratura (è un registro tecnico in chiaro).
+  // sbloccare la cifratura (è un registro tecnico in chiaro). Niente
+  // caricamento automatico: serve premere "Trova".
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await page.getByRole("tab", { name: "Attività" }).click();
 
-  await expect(page.getByText("Oggi")).toBeVisible();
+  await expect(page.getByText("Imposta i filtri che ti interessano")).toBeVisible();
+  await page.getByRole("button", { name: "Trova" }).click();
   await expect(page.getByText("Accesso effettuato")).toBeVisible();
 
-  // Il filtro per categoria funziona in entrambe le direzioni.
-  await page.getByRole("radio", { name: "Accessi" }).click();
-  await expect(page.getByText("Accesso effettuato")).toBeVisible();
-  await page.getByRole("radio", { name: "Contenuti" }).click();
-  await expect(page.getByText("Nessuna attività di questo tipo.")).toBeVisible();
-  await page.getByRole("radio", { name: "Tutti" }).click();
-  await expect(page.getByText("Accesso effettuato")).toBeVisible();
+  // Il metodo di login è tra i dettagli, visibili aprendo la riga.
+  await page.getByText("Accesso effettuato").click();
+  const detail = page.getByRole("dialog", { name: "Dettaglio attività" });
+  await expect(detail).toBeVisible();
+  await expect(detail.getByText("Password")).toBeVisible();
+  await page.getByRole("button", { name: "Chiudi" }).click();
+  await expect(detail).not.toBeVisible();
 
-  // Configurare la cifratura, aggiungere un contenuto e un contatto
+  // Il filtro per categoria (scelta multipla) funziona in entrambe le direzioni.
+  await page.getByRole("checkbox", { name: "Contenuti" }).check();
+  await page.getByRole("button", { name: "Trova" }).click();
+  await expect(page.getByText("Nessuna attività trovata con questi filtri.")).toBeVisible();
+  await page.getByRole("checkbox", { name: "Contenuti" }).uncheck();
+  await page.getByRole("checkbox", { name: "Accessi" }).check();
+  await page.getByRole("button", { name: "Trova" }).click();
+  await expect(page.getByText("Accesso effettuato")).toBeVisible();
+  await page.getByRole("checkbox", { name: "Accessi" }).uncheck();
+
+  // Configurare la cifratura e aggiungere un contenuto/asset/contatto
   // registrano a loro volta un evento --- verificabile tornando qui.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
@@ -67,10 +79,12 @@ test("Impostazioni > Attività mostra il registro degli eventi, raggruppato per 
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await page.getByRole("tab", { name: "Attività" }).click();
+  await page.getByRole("button", { name: "Trova" }).click();
   await expect(page.getByText("Contenuto aggiunto all'archivio")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText("Contatto fiduciario aggiunto")).toBeVisible();
 
-  await page.getByRole("radio", { name: "Contatti" }).click();
+  await page.getByRole("checkbox", { name: "Contatti" }).check();
+  await page.getByRole("button", { name: "Trova" }).click();
   await expect(page.getByText("Contatto fiduciario aggiunto")).toBeVisible();
   await expect(page.getByText("Contenuto aggiunto all'archivio")).not.toBeVisible();
 });

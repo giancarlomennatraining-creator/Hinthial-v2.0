@@ -33,11 +33,13 @@ export function PrivacyPanel({
   firstName,
   lastName,
   email,
+  birthDate,
 }: {
   userId: string;
   firstName: string;
   lastName: string;
   email: string;
+  birthDate: string | null;
 }) {
   const supabase = useRef(createClient()).current;
   const [summary, setSummary] = useState<AccountVisibilitySummary | null>(null);
@@ -73,6 +75,7 @@ export function PrivacyPanel({
   const visibleNow = [
     `La tua email: ${email}`,
     `Nome e cognome: ${firstName} ${lastName}`,
+    birthDate ? `Data di nascita: ${formatDate(birthDate)}` : "Data di nascita: non impostata",
     `Account creato il ${formatDate(summary.accountCreatedAt)}`,
     `${summary.documentCount} contenuti in archivio`,
     `${summary.assetCount} asset`,
@@ -82,6 +85,10 @@ export function PrivacyPanel({
       ? `Le tue categorie: ${summary.categoryNames.join(", ")}`
       : "Nessuna categoria configurata",
     `Disposizione del menu: ${NAV_ORIENTATION_LABEL[summary.navOrientation]}`,
+    summary.onboardingWidgetHidden
+      ? "Indicatore di onboarding nella barra: nascosto"
+      : "Indicatore di onboarding nella barra: visibile",
+    "Indirizzo IP e dispositivo/browser di ogni accesso, ed eventuali tentativi di accesso falliti (registrati in Impostazioni > Attività)",
   ];
 
   return (

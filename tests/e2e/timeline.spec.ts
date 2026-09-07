@@ -58,6 +58,22 @@ test("la cronologia elenca asset e documenti creati, raggruppati per mese", asyn
   await expect(assetLink).toBeVisible();
   await expect(documentLink).toBeVisible();
 
+  // Il filtro per sezione mostra solo gli elementi di quel tipo.
+  await page.getByRole("combobox", { name: "Filtra per sezione" }).selectOption({ label: "Asset" });
+  await expect(assetLink).toBeVisible();
+  await expect(documentLink).not.toBeVisible();
+  await page.getByRole("combobox", { name: "Filtra per sezione" }).selectOption({ label: "Tutte le sezioni" });
+
+  // Una data inizio nel futuro non trova nulla (entrambi creati ora) ---
+  // costruita da componenti locali, non toISOString() (UTC): vicino alla
+  // mezzanotte i due possono differire di un giorno.
+  const future = new Date();
+  future.setDate(future.getDate() + 1);
+  const futureStr = `${future.getFullYear()}-${String(future.getMonth() + 1).padStart(2, "0")}-${String(future.getDate()).padStart(2, "0")}`;
+  await page.locator("#timelineStartDate").fill(futureStr);
+  await expect(page.getByText("Nessun elemento trovato con questi filtri.")).toBeVisible();
+  await page.locator("#timelineStartDate").fill("");
+
   await assetLink.click();
   await expect(page).toHaveURL(/\/assets$/);
 });

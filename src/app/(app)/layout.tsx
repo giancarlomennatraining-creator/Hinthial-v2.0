@@ -45,6 +45,7 @@ export default async function AppLayout({
       displayName={user.displayName}
       avatarUrl={user.avatarUrl}
       initialNavOrientation={user.navOrientation}
+      initialOnboardingWidgetHidden={user.onboardingWidgetHidden}
     >
       {children}
     </AppShell>

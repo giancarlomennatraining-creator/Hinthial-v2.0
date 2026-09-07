@@ -12,6 +12,7 @@ import {
   verifyTotpCode,
 } from "@/domain/mfa/repository";
 import { saveBlobAsFile } from "@/lib/download";
+import { logAuditEvent } from "@/lib/audit/log-event";
 import type { MfaFactor, TotpEnrollment } from "@/domain/mfa/types";
 
 function formatDate(iso: string): string {
@@ -141,6 +142,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
     setBusy(true);
     try {
       await verifyTotpCode(supabase, enrollment.factorId, code.trim());
+      await logAuditEvent(supabase, userId, "mfa_enrolled");
       setEnrollment(null);
       setCode("");
       setDeviceName("Il mio telefono");
@@ -157,6 +159,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
     setBusy(true);
     try {
       await unenrollFactor(supabase, factor.id);
+      await logAuditEvent(supabase, userId, "mfa_removed");
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile rimuovere il dispositivo.");
@@ -171,6 +174,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
     try {
       setConfirmedSavedCodes(false);
       const codes = await regenerateBackupCodes(supabase, userId);
+      await logAuditEvent(supabase, userId, "backup_codes_generated");
       setRevealedCodes(codes);
       setBackupCodesCount(codes.length);
     } catch (err) {

@@ -10,6 +10,48 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-08
+
+### Data di nascita nel profilo
+
+**Cosa fa:** in Impostazioni > Informazioni utente e nella schermata di registrazione, un nuovo campo facoltativo "Data di nascita", accanto a nome e cognome.
+
+**Note tecniche:** `profiles.birth_date` (date, nullable), in chiaro come nome/cognome --- un dato anagrafico, non del vault. Passata a `signUp()` come `options.data.birth_date`, letta da `handle_new_user()` allo stesso modo di nome/cognome.
+
+### Impostazioni: schede riorganizzate e in verticale
+
+**Cosa fa:** le schede di Impostazioni (Informazioni utente, Sicurezza, Privacy, Categorie, Importa/Esporta, Onboarding, Attività, Aspetto, Zona pericolosa) sono ora una barra verticale a sinistra su schermi larghi (resta una barra orizzontale scorrevole su mobile), in un nuovo ordine.
+
+### Correzione: il gadget "Onboarding" nascosto poteva ricomparire
+
+**Cosa fa:** "Nascondi" nel pannello del gadget Onboarding nella barra di navigazione ora vale per davvero, anche a un login successivo (o su un altro dispositivo) --- non solo per il browser in cui è stato cliccato. Resta comunque riattivabile da Impostazioni > Onboarding.
+
+**Note tecniche:** la preferenza (`profiles.onboarding_widget_hidden`) è passata da solo-`localStorage` a sincronizzata sul server, con lo stesso pattern già usato per `nav_orientation` (letta lato server in `getCurrentUser()`, aggiornamento ottimistico lato client con rollback se il salvataggio fallisce). `lib/onboarding-widget.ts` (il vecchio helper `localStorage`) è stato rimosso.
+
+### Impostazioni > Privacy: lista aggiornata
+
+**Cosa fa:** la lista di "Quello che vediamo" ora riflette anche la data di nascita (se impostata), la visibilità del gadget di onboarding, e segnala che IP/dispositivo/browser di ogni accesso ed eventuali tentativi falliti sono registrati in Impostazioni > Attività.
+
+### Impostazioni > Attività: registro interrogabile, con molti più eventi
+
+**Cosa fa:** invece di caricare sempre tutto il registro, ora si interroga: data inizio, data fine e categoria (scelta multipla), poi "Trova" mostra i risultati in una tabella; un click su una riga apre un pannello laterale con i dettagli (metodo di login, indirizzo IP, dispositivo/browser, quando presenti). Nuovi eventi registrati: tentativi di login falliti, verifiche MFA fallite, attivazione/rimozione dell'autenticazione a due fattori, generazione di codici di backup, distinzione tra login con password/TOTP/codice di backup, IP e dispositivo/browser di ogni login riuscito, e creazione/eliminazione di asset, capsule e categorie (oltre a documenti/contatti, già presenti).
+
+**Note tecniche:** `audit_events` ha una nuova colonna `metadata jsonb` (mai contenuti o identificatori, solo dettagli tecnici) invece di continuare a esplodere l'enum `event_type` per ogni sfumatura. Un tentativo di login con password errata non ha ancora una sessione autenticata (`auth.uid()` è null, le RLS richiederebbero `auth.uid() = owner_id`): registrato tramite una funzione Postgres dedicata (`log_failed_login_attempt`, `SECURITY DEFINER`) che non rivela mai se l'email corrisponde a un account esistente, per non permettere l'enumerazione degli account. IP/user agent letti da `next/headers` lato server action (`lib/http/request-context.ts`). Il raggruppamento per giorno (`domain/audit/group.ts`) è stato rimosso: la vista è ora tabellare, non più a elenco raggruppato.
+
+**Bug noto, scoperto ma non risolto (pre-esistente, non introdotto da queste modifiche):** in `/login`, dopo un primo tentativo con credenziali sbagliate, un secondo submit del form (anche con la password corretta) non naviga alla dashboard --- riproducibile anche disabilitando del tutto la nuova registrazione dei tentativi falliti, quindi non è la causa. Verosimilmente un'interazione tra `useActionState`/Server Actions e i cookie di sessione scritti dal primo tentativo. Da investigare a parte: nel frattempo un refresh della pagina prima di riprovare aggira il problema.
+
+### Menu di navigazione responsive
+
+**Cosa fa:** su schermi piccoli, la barra laterale (o quella orizzontale) è sostituita da un tasto menu (☰) che apre la stessa navigazione in sovraimpressione, invece di restare sempre visibile occupando spazio.
+
+**Note tecniche:** nuovo `MobileNavBar`, montato sempre da `AppShell` accanto a `Sidebar`/`TopNav` (nascosti sotto la soglia `md` via CSS, non smontati: così la barra laterale non perde il proprio stato di compressione attraversando la soglia).
+
+### Cronologia: filtri per data e sezione
+
+**Cosa fa:** in Cronologia, un nuovo filtro iniziale per data inizio, data fine e sezione (Archivio/Asset/Scadenza/Contatto/Capsula), applicato subito senza bisogno di un tasto "Cerca" --- i dati sono già tutti decifrati in memoria.
+
+---
+
 ## 2026-09-07
 
 ### MFA: codici di backup

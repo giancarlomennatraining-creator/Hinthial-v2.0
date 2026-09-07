@@ -19,6 +19,7 @@ import {
 } from "@/lib/storage/capsules-bucket";
 import { downloadDocument, getDocumentsByIds } from "@/domain/documents/repository";
 import { getTrustedContactsByIds } from "@/domain/contacts/repository";
+import { logAuditEvent } from "@/lib/audit/log-event";
 import type {
   CapsuleAccessCondition,
   CapsuleAttachment,
@@ -235,6 +236,8 @@ export async function createCapsule(
     ).catch(() => {});
     throw new Error(`Impossibile creare la capsula: ${error.message}`);
   }
+
+  await logAuditEvent(supabase, ownerId, "capsule_created");
 }
 
 /**
@@ -483,4 +486,6 @@ export async function deleteCapsule(
   if (error) {
     throw new Error(`Impossibile eliminare la capsula: ${error.message}`);
   }
+
+  await logAuditEvent(supabase, ownerId, "capsule_deleted");
 }

@@ -26,7 +26,7 @@ test("Impostazioni è organizzata a schede: Informazioni utente e Categorie", as
   const categoriesTab = page.getByRole("tab", { name: "Categorie" });
   await expect(userInfoTab).toHaveAttribute("aria-selected", "true");
   await expect(categoriesTab).toHaveAttribute("aria-selected", "false");
-  await expect(page.getByRole("heading", { name: "Nome e cognome" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Dati personali" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Email" })).toBeVisible();
   await expect(page.getByText(user.email)).toBeVisible();
 
@@ -38,7 +38,7 @@ test("Impostazioni è organizzata a schede: Informazioni utente e Categorie", as
 
   await userInfoTab.click();
   await expect(userInfoTab).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("heading", { name: "Nome e cognome" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Dati personali" })).toBeVisible();
 });
 
 test("modifica nome e cognome: salva e aggiorna il nome mostrato in sidebar", async ({

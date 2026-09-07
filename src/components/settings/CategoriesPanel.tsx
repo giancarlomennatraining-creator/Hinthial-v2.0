@@ -144,7 +144,12 @@ export function CategoriesPanel() {
     }
 
     try {
-      await deleteCategory(supabase, category.id);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Devi essere autenticato.");
+
+      await deleteCategory(supabase, user.id, category.id);
       setCategories((prev) => prev.filter((c) => c.id !== category.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile eliminare la categoria.");

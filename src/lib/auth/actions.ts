@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/server";
-import { logAuditEvent } from "@/lib/audit/log-event";
+import { logAuditEvent, logFailedLoginAttempt } from "@/lib/audit/log-event";
+import { getRequestContext } from "@/lib/http/request-context";
 import { verifyAndConsumeBackupCode } from "@/domain/mfa/repository";
 import { clearMfaVerifiedViaBackupCode, markMfaVerifiedViaBackupCode } from "@/lib/auth/mfa-bypass";
 import type { AuthActionState } from "@/lib/auth/action-state";
@@ -41,6 +42,7 @@ export async function signUp(
   const firstName = String(formData.get("firstName") ?? "").trim();
   const lastName = String(formData.get("lastName") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
+  const birthDate = String(formData.get("birthDate") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
@@ -59,7 +61,7 @@ export async function signUp(
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { first_name: firstName, last_name: lastName } },
+    options: { data: { first_name: firstName, last_name: lastName, birth_date: birthDate || null } },
   });
 
   if (error) {
@@ -79,7 +81,8 @@ export async function signUp(
 
   // Email confirmation disabled --- signUp already returned an active
   // session: treat it as an implicit first login.
-  await logAuditEvent(supabase, data.user.id, "login");
+  const signUpContext = await getRequestContext();
+  await logAuditEvent(supabase, data.user.id, "login", { method: "password", ...signUpContext });
 
   redirect("/dashboard");
 }
@@ -103,6 +106,10 @@ export async function signIn(
   });
 
   if (error) {
+    // Nessuna sessione ancora (auth.uid() è null): non si può inserire
+    // direttamente in audit_events (RLS richiede auth.uid() = owner_id),
+    // quindi passa da una funzione dedicata --- v. logFailedLoginAttempt.
+    await logFailedLoginAttempt(supabase, email);
     return { error: translateAuthError(error.message) };
   }
 
@@ -122,7 +129,8 @@ export async function signIn(
     redirect("/login/mfa");
   }
 
-  await logAuditEvent(supabase, data.user.id, "login");
+  const signInContext = await getRequestContext();
+  await logAuditEvent(supabase, data.user.id, "login", { method: "password", ...signInContext });
 
   redirect("/dashboard");
 }
@@ -146,20 +154,20 @@ export async function verifyMfaCode(
     return { error: "Sessione scaduta. Accedi di nuovo." };
   }
 
-  // Un codice di backup ha un formato ben distinto da un codice TOTP a 6
-  // cifre (v. domain/mfa/backup-codes.ts): un controllo veloce prima di
-  // provare gli altri fattori, non un'alternativa esplicita da scegliere.
+  const mfaContext = await getRequestContext();
+
   // Un codice di backup ha un formato ben distinto da un codice TOTP a 6
   // cifre (v. domain/mfa/backup-codes.ts): un controllo veloce prima di
   // provare gli altri fattori, non un'alternativa esplicita da scegliere.
   if (await verifyAndConsumeBackupCode(supabase, user.id, code)) {
     await markMfaVerifiedViaBackupCode();
-    await logAuditEvent(supabase, user.id, "login");
+    await logAuditEvent(supabase, user.id, "login", { method: "backup_code", ...mfaContext });
     redirect("/dashboard");
   }
 
   const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
   if (factorsError || factorsData.totp.length === 0) {
+    await logAuditEvent(supabase, user.id, "mfa_challenge_failed");
     return { error: "Codice non valido. Riprova." };
   }
 
@@ -169,11 +177,12 @@ export async function verifyMfaCode(
   for (const factor of factorsData.totp) {
     const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
     if (!error) {
-      await logAuditEvent(supabase, user.id, "login");
+      await logAuditEvent(supabase, user.id, "login", { method: "totp", ...mfaContext });
       redirect("/dashboard");
     }
   }
 
+  await logAuditEvent(supabase, user.id, "mfa_challenge_failed");
   return { error: "Codice non valido. Riprova." };
 }
 

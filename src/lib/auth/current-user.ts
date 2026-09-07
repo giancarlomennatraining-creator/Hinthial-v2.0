@@ -14,8 +14,12 @@ export interface CurrentUser {
   avatarPath: string | null;
   /** Public URL for `avatarPath`, or null if none set. */
   avatarUrl: string | null;
+  /** ISO (yyyy-mm-dd), o null se non impostata --- dato anagrafico facoltativo, in chiaro. */
+  birthDate: string | null;
   /** Disposizione del menu di navigazione (v. lib/nav-orientation.ts) --- letta qui, non lato client, per evitare un lampo del layout sbagliato al primo render della shell autenticata. */
   navOrientation: NavOrientation;
+  /** Se il gadget "Onboarding" nella barra è nascosto (v. OnboardingWidgetVisibilityProvider) --- come navOrientation, letto qui per evitare un lampo del gadget al primo render. */
+  onboardingWidgetHidden: boolean;
 }
 
 /**
@@ -34,7 +38,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("first_name, last_name, avatar_path, nav_orientation")
+    .select("first_name, last_name, avatar_path, birth_date, nav_orientation, onboarding_widget_hidden")
     .eq("id", user.id)
     .single();
 
@@ -50,6 +54,8 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     displayName: [firstName, lastName].filter(Boolean).join(" "),
     avatarPath,
     avatarUrl: avatarPath ? avatarPublicUrl(supabase, avatarPath) : null,
+    birthDate: profile?.birth_date ?? null,
     navOrientation: parseNavOrientation(profile?.nav_orientation),
+    onboardingWidgetHidden: profile?.onboarding_widget_hidden ?? false,
   };
 });

@@ -28,13 +28,13 @@ type Tab =
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "user-info", label: "Informazioni utente" },
-  { id: "onboarding", label: "Onboarding" },
-  { id: "privacy", label: "Privacy" },
   { id: "security", label: "Sicurezza" },
+  { id: "privacy", label: "Privacy" },
   { id: "categories", label: "Categorie" },
-  { id: "appearance", label: "Aspetto" },
-  { id: "activity", label: "Attività" },
   { id: "import-export", label: "Importa/Esporta" },
+  { id: "onboarding", label: "Onboarding" },
+  { id: "activity", label: "Attività" },
+  { id: "appearance", label: "Aspetto" },
   { id: "danger-zone", label: "Zona pericolosa" },
 ];
 
@@ -45,6 +45,7 @@ export function SettingsTabs({
   email,
   avatarPath,
   avatarUrl,
+  birthDate,
 }: {
   userId: string;
   firstName: string;
@@ -52,12 +53,17 @@ export function SettingsTabs({
   email: string;
   avatarPath: string | null;
   avatarUrl: string | null;
+  birthDate: string | null;
 }) {
   const [tab, setTab] = useState<Tab>("user-info");
 
   return (
-    <div className="flex flex-col gap-6">
-      <div role="tablist" className="flex gap-4 border-b border-zinc-200 dark:border-zinc-800">
+    <div className="flex flex-col gap-6 md:flex-row md:gap-10">
+      <div
+        role="tablist"
+        aria-orientation="vertical"
+        className="flex shrink-0 flex-row gap-1 overflow-x-auto border-b border-zinc-200 pb-2 md:w-48 md:flex-col md:border-b-0 md:border-r md:pb-0 md:pr-4 dark:border-zinc-800"
+      >
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -66,10 +72,10 @@ export function SettingsTabs({
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "-mb-px border-b-2 px-1 pb-3 text-sm font-medium transition-colors",
+              "shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm font-medium transition-colors",
               tab === t.id
-                ? "border-brand text-brand"
-                : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
+                ? "bg-brand text-white"
+                : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
             )}
           >
             {t.label}
@@ -77,6 +83,7 @@ export function SettingsTabs({
         ))}
       </div>
 
+      <div className="min-w-0 flex-1">
       {tab === "user-info" ? (
         <UserInfoPanel
           userId={userId}
@@ -85,6 +92,7 @@ export function SettingsTabs({
           email={email}
           avatarPath={avatarPath}
           avatarUrl={avatarUrl}
+          birthDate={birthDate}
         />
       ) : tab === "onboarding" ? (
         // Serve i dati decifrati (documenti/asset/contatti/capsule) per
@@ -96,7 +104,13 @@ export function SettingsTabs({
       ) : tab === "privacy" ? (
         // Solo conteggi e colonne mai cifrate (v. domain/privacy/repository.ts)
         // --- non richiede la master key, a differenza di Onboarding qui sopra.
-        <PrivacyPanel userId={userId} firstName={firstName} lastName={lastName} email={email} />
+        <PrivacyPanel
+          userId={userId}
+          firstName={firstName}
+          lastName={lastName}
+          email={email}
+          birthDate={birthDate}
+        />
       ) : tab === "security" ? (
         // Layer di identità (login), non di cifratura --- non richiede
         // la master key (v. domain/mfa/repository.ts).
@@ -159,6 +173,7 @@ export function SettingsTabs({
           {(masterKey) => <DangerZonePanel userId={userId} masterKey={masterKey} />}
         </RequireMasterKey>
       )}
+      </div>
     </div>
   );
 }

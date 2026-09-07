@@ -22,7 +22,11 @@ export async function fetchAccountVisibilitySummary(
 ): Promise<AccountVisibilitySummary> {
   const [profileResult, documentsCount, assetsCount, contactsResult, capsulesResult, categories] =
     await Promise.all([
-      supabase.from("profiles").select("created_at, nav_orientation").eq("id", userId).single(),
+      supabase
+        .from("profiles")
+        .select("created_at, nav_orientation, onboarding_widget_hidden")
+        .eq("id", userId)
+        .single(),
       supabase.from("documents").select("id", { count: "exact", head: true }),
       supabase.from("assets").select("id", { count: "exact", head: true }),
       supabase.from("trusted_contacts").select("status, is_friend"),
@@ -65,5 +69,6 @@ export async function fetchAccountVisibilitySummary(
     capsuleStatusCounts,
     categoryNames: categories.map((c) => c.name),
     navOrientation: parseNavOrientation(profileResult.data.nav_orientation),
+    onboardingWidgetHidden: profileResult.data.onboarding_widget_hidden,
   };
 }

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Json } from "@/types/supabase";
 
 /**
  * Event types recordable so far. Extended by later phases (each adding
@@ -8,10 +9,33 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export type AuditEventType =
   | "login"
   | "logout"
+  | "login_failed"
+  | "mfa_challenge_failed"
+  | "mfa_enrolled"
+  | "mfa_removed"
+  | "backup_codes_generated"
   | "document_created"
   | "document_deleted"
+  | "asset_created"
+  | "asset_deleted"
+  | "capsule_created"
+  | "capsule_deleted"
+  | "category_created"
+  | "category_deleted"
   | "trusted_contact_added"
   | "vault_wiped";
+
+/**
+ * Metadati tecnici facoltativi per un evento --- mai contenuti, nomi
+ * file/contatto o altro dato del vault, solo dettagli sul "come" (es. il
+ * metodo di login, IP e user agent, il motivo di un fallimento).
+ */
+export interface AuditEventMetadata {
+  /** Come è avvenuto il login: "password" (poi eventualmente completato da MFA), "totp", "backup_code". */
+  method?: "password" | "totp" | "backup_code";
+  ip?: string | null;
+  userAgent?: string | null;
+}
 
 /**
  * Records a technical, non-sensitive audit event. Never pass content,
@@ -21,15 +45,40 @@ export type AuditEventType =
  * are logged server-side and swallowed rather than surfaced to the user.
  */
 export async function logAuditEvent(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   ownerId: string,
   eventType: AuditEventType,
+  metadata?: AuditEventMetadata,
 ): Promise<void> {
-  const { error } = await supabase
-    .from("audit_events")
-    .insert({ owner_id: ownerId, event_type: eventType });
+  const { error } = await supabase.from("audit_events").insert({
+    owner_id: ownerId,
+    event_type: eventType,
+    // AuditEventMetadata is a plain flat record of strings/nulls: a
+    // structurally valid Json, just not nominally --- the interface (for
+    // named, documented fields) doesn't satisfy Json's index signature.
+    metadata: (metadata ?? null) as Json | null,
+  });
 
   if (error) {
     console.error(`[audit] failed to record "${eventType}":`, error.message);
+  }
+}
+
+/**
+ * Registra un tentativo di login con password errata --- a differenza di
+ * logAuditEvent, chi chiama non ha ancora una sessione autenticata (RLS
+ * richiederebbe auth.uid() = owner_id, che qui non esiste), quindi passa
+ * da una funzione Postgres SECURITY DEFINER (v. la migrazione
+ * audit_events_expansion) invece di un insert diretto. Non rivela mai se
+ * l'email corrisponde a un account esistente: stessa chiamata, stesso
+ * esito silenzioso, in entrambi i casi --- niente enumerazione account.
+ */
+export async function logFailedLoginAttempt(
+  supabase: SupabaseClient<Database>,
+  email: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("log_failed_login_attempt", { target_email: email });
+  if (error) {
+    console.error("[audit] failed to record \"login_failed\":", error.message);
   }
 }

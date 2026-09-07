@@ -23,8 +23,19 @@ export type Json =
 type AuditEventTypeColumn =
   | "login"
   | "logout"
+  | "login_failed"
+  | "mfa_challenge_failed"
+  | "mfa_enrolled"
+  | "mfa_removed"
+  | "backup_codes_generated"
   | "document_created"
   | "document_deleted"
+  | "asset_created"
+  | "asset_deleted"
+  | "capsule_created"
+  | "capsule_deleted"
+  | "category_created"
+  | "category_deleted"
   | "trusted_contact_added"
   | "vault_wiped";
 
@@ -44,8 +55,10 @@ export type Database = {
           first_name: string;
           last_name: string;
           avatar_path: string | null;
+          birth_date: string | null;
           list_view_preferences: Json;
           nav_orientation: NavOrientationColumn;
+          onboarding_widget_hidden: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -54,8 +67,10 @@ export type Database = {
           first_name: string;
           last_name: string;
           avatar_path?: string | null;
+          birth_date?: string | null;
           list_view_preferences?: Json;
           nav_orientation?: NavOrientationColumn;
+          onboarding_widget_hidden?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -64,8 +79,10 @@ export type Database = {
           first_name?: string;
           last_name?: string;
           avatar_path?: string | null;
+          birth_date?: string | null;
           list_view_preferences?: Json;
           nav_orientation?: NavOrientationColumn;
+          onboarding_widget_hidden?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -84,18 +101,21 @@ export type Database = {
           id: string;
           owner_id: string;
           event_type: AuditEventTypeColumn;
+          metadata: Json | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           owner_id: string;
           event_type: AuditEventTypeColumn;
+          metadata?: Json | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           owner_id?: string;
           event_type?: AuditEventTypeColumn;
+          metadata?: Json | null;
           created_at?: string;
         };
         Relationships: [
@@ -468,7 +488,12 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      log_failed_login_attempt: {
+        Args: { target_email: string };
+        Returns: undefined;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

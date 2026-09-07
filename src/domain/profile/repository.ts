@@ -22,7 +22,7 @@ export async function updateProfile(
 ): Promise<void> {
   const { error } = await supabase
     .from("profiles")
-    .update({ first_name: input.firstName, last_name: input.lastName })
+    .update({ first_name: input.firstName, last_name: input.lastName, birth_date: input.birthDate })
     .eq("id", userId);
 
   if (error) {
@@ -136,5 +136,26 @@ export async function updateNavOrientation(
 
   if (error) {
     throw new Error(`Impossibile salvare la disposizione del menu: ${error.message}`);
+  }
+}
+
+/**
+ * Persists whether the "Onboarding" nav-bar gadget is hidden (v.
+ * OnboardingWidgetVisibilityProvider) --- sincronizzato sul server, come
+ * nav_orientation, così "Nascondi" vale per davvero anche a un login
+ * successivo (anche su un altro dispositivo), non solo su questo browser.
+ */
+export async function updateOnboardingWidgetHidden(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  hidden: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ onboarding_widget_hidden: hidden })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare la preferenza del gadget di onboarding: ${error.message}`);
   }
 }

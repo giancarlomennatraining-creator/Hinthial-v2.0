@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { getStoredOnboardingWidgetHidden, storeOnboardingWidgetHidden } from "@/lib/onboarding-widget";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createClient } from "@/lib/db/supabase/client";
+import { updateOnboardingWidgetHidden } from "@/domain/profile/repository";
 
 interface OnboardingWidgetVisibilityContextValue {
   hidden: boolean;
@@ -13,31 +14,39 @@ const OnboardingWidgetVisibilityContext = createContext<OnboardingWidgetVisibili
 );
 
 /**
- * Se il gadget "Onboarding" nella barra di navigazione è nascosto (v.
- * lib/onboarding-widget.ts, solo su questo dispositivo) --- condiviso
- * tra OnboardingStatus (che lo mostra/nasconde e offre il pulsante
- * "Nascondi" nel proprio pannello) e OnboardingSettingsPanel (che offre
- * lo stesso interruttore in Impostazioni > Onboarding). Serve un
- * contesto invece che i due componenti leggano ciascuno la propria
- * copia di localStorage: la barra laterale resta montata attraversando
- * le navigazioni interne dell'app, quindi senza uno stato condiviso non
- * si accorgerebbe di un cambiamento fatto da Impostazioni nella stessa
- * scheda del browser.
+ * Se il gadget "Onboarding" nella barra di navigazione è nascosto ---
+ * sincronizzato sul server (profiles.onboarding_widget_hidden), come la
+ * disposizione del menu (v. NavOrientationProvider): così "Nascondi" vale
+ * per davvero anche a un login successivo, non solo su questo browser.
+ * Il valore iniziale arriva già letto lato server (v.
+ * AppShell/getCurrentUser), per evitare un lampo del gadget al primo
+ * render. Condiviso tra OnboardingStatus (che lo mostra/nasconde e offre
+ * il pulsante "Nascondi" nel proprio pannello) e OnboardingSettingsPanel
+ * (che offre lo stesso interruttore in Impostazioni > Onboarding).
  */
-export function OnboardingWidgetVisibilityProvider({ children }: { children: React.ReactNode }) {
-  const [hidden, setHiddenState] = useState(false);
+export function OnboardingWidgetVisibilityProvider({
+  userId,
+  initialHidden,
+  children,
+}: {
+  userId: string;
+  initialHidden: boolean;
+  children: React.ReactNode;
+}) {
+  const [hidden, setHiddenState] = useState(initialHidden);
 
-  useEffect(() => {
-    // Legge una preferenza già decisa altrove (localStorage), non deriva
-    // stato da props/state React --- v. Sidebar.tsx per lo stesso pattern.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHiddenState(getStoredOnboardingWidgetHidden());
-  }, []);
+  const setHidden = useCallback(
+    (next: boolean) => {
+      const previous = hidden;
+      setHiddenState(next); // optimistic: il gadget sparisce/ricompare subito
 
-  const setHidden = useCallback((next: boolean) => {
-    setHiddenState(next);
-    storeOnboardingWidgetHidden(next);
-  }, []);
+      const supabase = createClient();
+      updateOnboardingWidgetHidden(supabase, userId, next).catch(() => {
+        setHiddenState(previous); // il server non ha salvato: si torna indietro
+      });
+    },
+    [hidden, userId],
+  );
 
   const value = useMemo<OnboardingWidgetVisibilityContextValue>(
     () => ({ hidden, setHidden }),

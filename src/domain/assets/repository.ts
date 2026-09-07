@@ -8,6 +8,7 @@ import {
   utf8ToBytes,
   bytesToUtf8,
 } from "@/lib/crypto";
+import { logAuditEvent } from "@/lib/audit/log-event";
 import type { AssetInput, AssetListItem } from "@/domain/assets/types";
 
 const ASSET_COLUMNS = "id, encrypted_name, category_id, created_at";
@@ -71,6 +72,8 @@ export async function createAsset(
     throw new Error(`Impossibile creare l'asset: ${error.message}`);
   }
 
+  await logAuditEvent(supabase, ownerId, "asset_created");
+
   return id;
 }
 
@@ -97,6 +100,7 @@ export async function updateAsset(
 
 export async function deleteAsset(
   supabase: SupabaseClient<Database>,
+  ownerId: string,
   assetId: string,
 ): Promise<void> {
   const { error } = await supabase.from("assets").delete().eq("id", assetId);
@@ -104,4 +108,6 @@ export async function deleteAsset(
   if (error) {
     throw new Error(`Impossibile eliminare l'asset: ${error.message}`);
   }
+
+  await logAuditEvent(supabase, ownerId, "asset_deleted");
 }

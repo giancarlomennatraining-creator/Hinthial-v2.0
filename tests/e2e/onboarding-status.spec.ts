@@ -99,8 +99,8 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await expect(panel.getByText("5/8")).toBeVisible();
 
   // "Nascondi" fa sparire il gadget subito, e la scelta resta anche dopo
-  // un refresh --- solo su questo dispositivo (localStorage), come il
-  // tema o la compressione della barra laterale.
+  // un refresh --- sincronizzata sul server (come nav_orientation), quindi
+  // vale anche a un login successivo, non solo per questa sessione.
   await panel.getByRole("button", { name: "Nascondi" }).click();
   await expect(statusButton).not.toBeVisible();
   await expect(panel).not.toBeVisible();

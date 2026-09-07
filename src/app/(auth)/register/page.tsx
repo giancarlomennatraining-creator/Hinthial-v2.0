@@ -56,6 +56,13 @@ export default function RegisterPage() {
           autoComplete="email"
           required
         />
+        <TextField
+          id="birthDate"
+          name="birthDate"
+          label="Data di nascita (facoltativa)"
+          type="date"
+          autoComplete="bday"
+        />
         <div className="flex flex-col gap-2">
           <TextField
             id="password"

@@ -30,8 +30,8 @@ const PANEL_WIDTH = 320;
  * proprio vedere la percentuale senza dover cliccare), e ricaricato ad
  * ogni apertura del pannello per riflettere cambiamenti fatti altrove.
  *
- * Nascondibile dal pannello stesso ("Nascondi") --- una preferenza solo
- * di questo dispositivo (v. lib/onboarding-widget.ts), non un
+ * Nascondibile dal pannello stesso ("Nascondi") --- una preferenza
+ * sincronizzata sul server (v. OnboardingWidgetVisibilityProvider), non un
  * completamento vero e proprio: l'avanzamento resta comunque
  * consultabile (e il gadget riattivabile) da Impostazioni > Onboarding.
  */

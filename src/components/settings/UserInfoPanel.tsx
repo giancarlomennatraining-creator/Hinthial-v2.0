@@ -38,6 +38,7 @@ export function UserInfoPanel({
   email: currentEmail,
   avatarPath,
   avatarUrl,
+  birthDate: initialBirthDate,
 }: {
   userId: string;
   firstName: string;
@@ -45,12 +46,14 @@ export function UserInfoPanel({
   email: string;
   avatarPath: string | null;
   avatarUrl: string | null;
+  birthDate: string | null;
 }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
 
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
+  const [birthDate, setBirthDate] = useState(initialBirthDate ?? "");
   const [nameSaving, setNameSaving] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [nameSaved, setNameSaved] = useState(false);
@@ -74,7 +77,11 @@ export function UserInfoPanel({
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
 
-      await updateProfile(supabase, user.id, { firstName: trimmedFirst, lastName: trimmedLast });
+      await updateProfile(supabase, user.id, {
+        firstName: trimmedFirst,
+        lastName: trimmedLast,
+        birthDate: birthDate || null,
+      });
       setNameSaved(true);
       // Il nome mostrato in sidebar/saluto viene da un Server Component
       // (getCurrentUser, letto in (app)/layout.tsx): va rinfrescato.
@@ -132,10 +139,10 @@ export function UserInfoPanel({
       <section className="flex flex-col gap-4 border-t border-zinc-200 pt-8 dark:border-zinc-800">
         <div>
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Nome e cognome
+            Dati personali
           </h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Il nome mostrato nell&apos;app.
+            Nome e cognome sono mostrati nell&apos;app; la data di nascita è facoltativa.
           </p>
         </div>
 
@@ -157,6 +164,14 @@ export function UserInfoPanel({
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             required
+          />
+          <TextField
+            id="birthDate"
+            name="birthDate"
+            label="Data di nascita"
+            type="date"
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
           />
 
           {nameError ? (

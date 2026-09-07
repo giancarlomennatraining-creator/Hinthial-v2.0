@@ -23,6 +23,8 @@ const KIND_LABEL: Record<TimelineEntryKind, string> = {
   capsule: "Capsula",
 };
 
+const TIMELINE_KINDS = Object.keys(KIND_LABEL) as TimelineEntryKind[];
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
     day: "numeric",
@@ -57,6 +59,9 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "label", direction: "asc" });
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [kindFilter, setKindFilter] = useState<TimelineEntryKind | "">("");
 
   const { modeFor } = useListViewPreferences();
   const viewMode = modeFor("timeline");
@@ -82,7 +87,21 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
     setSort((prev) => toggleSort(prev, column));
   }
 
-  const entries = context ? buildTimeline(context) : [];
+  const allEntries = context ? buildTimeline(context) : [];
+
+  // Data inizio/fine confrontate come giorni di calendario (locali), non
+  // istanti --- "fino al 3 settembre" deve includere l'intero 3
+  // settembre, non fermarsi alla sua mezzanotte.
+  const startBoundary = startDate ? new Date(`${startDate}T00:00:00`).getTime() : null;
+  const endBoundary = endDate ? new Date(`${endDate}T23:59:59.999`).getTime() : null;
+
+  const entries = allEntries
+    .filter((entry) => !kindFilter || entry.kind === kindFilter)
+    .filter((entry) => {
+      const time = new Date(entry.date).getTime();
+      return (startBoundary === null || time >= startBoundary) && (endBoundary === null || time <= endBoundary);
+    });
+
   const groups = groupTimelineByMonth(entries);
 
   // Solo la vista a tabella si ordina --- i gruppi per mese restano cronologici.
@@ -109,7 +128,7 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
             Uno sguardo d&apos;insieme su come è cresciuta la tua vita digitale nel tempo.
           </p>
         </div>
-        {groups.length > 0 ? <ListViewToggle section="timeline" /> : null}
+        {allEntries.length > 0 ? <ListViewToggle section="timeline" /> : null}
       </div>
 
       {error ? (
@@ -120,7 +139,7 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
 
       {loading ? (
         <ListSkeleton />
-      ) : groups.length === 0 ? (
+      ) : allEntries.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             Non c&apos;è ancora nulla da mostrare qui. Inizia da{" "}
@@ -130,67 +149,117 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
             per aggiungere il tuo primo elemento.
           </p>
         </div>
-      ) : viewMode === "table" ? (
-        <div className="flex flex-col gap-3">
-          <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                  <SortableColumnHeader label="Elemento" sortKey="label" sort={sort} onSort={handleSort} />
-                  <SortableColumnHeader label="Sezione" sortKey="kind" sort={sort} onSort={handleSort} />
-                  <SortableColumnHeader label="Data" sortKey="date" sort={sort} onSort={handleSort} />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {pagedEntries.map((entry) => (
-                  <tr key={`${entry.kind}:${entry.id}`}>
-                    <td className="max-w-[20rem] p-3">
-                      <Link
-                        href={entry.href}
-                        className="flex min-w-0 items-center gap-2 text-zinc-800 hover:underline dark:text-zinc-200"
-                      >
-                        <span aria-hidden="true">{entry.icon}</span>
-                        <span className="truncate">{entry.label}</span>
-                      </Link>
-                    </td>
-                    <td className="p-3 text-zinc-600 dark:text-zinc-400">{KIND_LABEL[entry.kind]}</td>
-                    <td className="p-3 text-zinc-600 dark:text-zinc-400">{formatDate(entry.date)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
-        </div>
       ) : (
-        <div className="flex flex-col gap-6">
-          {groups.map((group) => (
-            <div key={group.label}>
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                {group.label}
-              </h2>
-              <ul className="mt-2 flex flex-col divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
-                {group.entries.map((entry) => (
-                  <li
-                    key={`${entry.kind}:${entry.id}`}
-                    className="flex items-center justify-between gap-4 p-3"
-                  >
-                    <Link
-                      href={entry.href}
-                      className="flex min-w-0 items-center gap-2 text-sm text-zinc-800 hover:underline dark:text-zinc-200"
-                    >
-                      <span aria-hidden="true">{entry.icon}</span>
-                      <span className="truncate">{entry.label}</span>
-                    </Link>
-                    <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
-                      {formatDate(entry.date)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+        <>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="timelineStartDate" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                Data inizio
+              </label>
+              <input
+                id="timelineStartDate"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              />
             </div>
-          ))}
-        </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="timelineEndDate" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                Data fine
+              </label>
+              <input
+                id="timelineEndDate"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              />
+            </div>
+            <select
+              value={kindFilter}
+              onChange={(e) => setKindFilter(e.target.value as TimelineEntryKind | "")}
+              aria-label="Filtra per sezione"
+              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            >
+              <option value="">Tutte le sezioni</option>
+              {TIMELINE_KINDS.map((kind) => (
+                <option key={kind} value={kind}>
+                  {KIND_LABEL[kind]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {groups.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Nessun elemento trovato con questi filtri.
+              </p>
+            </div>
+          ) : viewMode === "table" ? (
+            <div className="flex flex-col gap-3">
+              <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                      <SortableColumnHeader label="Elemento" sortKey="label" sort={sort} onSort={handleSort} />
+                      <SortableColumnHeader label="Sezione" sortKey="kind" sort={sort} onSort={handleSort} />
+                      <SortableColumnHeader label="Data" sortKey="date" sort={sort} onSort={handleSort} />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                    {pagedEntries.map((entry) => (
+                      <tr key={`${entry.kind}:${entry.id}`}>
+                        <td className="max-w-[20rem] p-3">
+                          <Link
+                            href={entry.href}
+                            className="flex min-w-0 items-center gap-2 text-zinc-800 hover:underline dark:text-zinc-200"
+                          >
+                            <span aria-hidden="true">{entry.icon}</span>
+                            <span className="truncate">{entry.label}</span>
+                          </Link>
+                        </td>
+                        <td className="p-3 text-zinc-600 dark:text-zinc-400">{KIND_LABEL[entry.kind]}</td>
+                        <td className="p-3 text-zinc-600 dark:text-zinc-400">{formatDate(entry.date)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6">
+              {groups.map((group) => (
+                <div key={group.label}>
+                  <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    {group.label}
+                  </h2>
+                  <ul className="mt-2 flex flex-col divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+                    {group.entries.map((entry) => (
+                      <li
+                        key={`${entry.kind}:${entry.id}`}
+                        className="flex items-center justify-between gap-4 p-3"
+                      >
+                        <Link
+                          href={entry.href}
+                          className="flex min-w-0 items-center gap-2 text-sm text-zinc-800 hover:underline dark:text-zinc-200"
+                        >
+                          <span aria-hidden="true">{entry.icon}</span>
+                          <span className="truncate">{entry.label}</span>
+                        </Link>
+                        <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+                          {formatDate(entry.date)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
+import { logAuditEvent } from "@/lib/audit/log-event";
 import type { Category, CategoryInput } from "@/domain/categories/types";
 
 /**
@@ -35,6 +36,8 @@ export async function createCategory(
   if (error) {
     throw new Error(`Impossibile creare la categoria: ${error.message}`);
   }
+
+  await logAuditEvent(supabase, ownerId, "category_created");
 
   return id;
 }
@@ -99,6 +102,7 @@ export async function countCategoryUsage(
  */
 export async function deleteCategory(
   supabase: SupabaseClient<Database>,
+  ownerId: string,
   categoryId: string,
 ): Promise<void> {
   const { error } = await supabase.from("categories").delete().eq("id", categoryId);
@@ -106,6 +110,8 @@ export async function deleteCategory(
   if (error) {
     throw new Error(`Impossibile eliminare la categoria: ${error.message}`);
   }
+
+  await logAuditEvent(supabase, ownerId, "category_deleted");
 }
 
 /** Stessa lista di seed_default_categories() (v. supabase/migrations, FASE 2) --- qui per ripristinarla anche a un utente già esistente (v. domain/danger-zone, "Cancella tutto"), non solo a uno nuovo. */
