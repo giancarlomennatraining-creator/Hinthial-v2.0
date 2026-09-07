@@ -10,7 +10,13 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
-## 2026-09-06
+## 2026-09-07
+
+### MFA: passkey e codici di backup
+
+**Cosa fa:** in Impostazioni > Sicurezza, oltre all'app authenticator (TOTP) è ora possibile registrare una **passkey** --- verifica con impronta digitale, Face ID, Windows Hello o una chiave fisica, senza codici da leggere e ricopiare; al login compare come pulsante a sé, accanto al campo del codice. È anche possibile generare **10 codici di backup monouso**, da usare se si perde l'accesso a tutti i propri dispositivi: uno vale al posto del codice, e viene consumato subito dopo l'uso. Entrambe le funzionalità richiedono almeno un altro fattore già attivo prima di comparire.
+
+**Note tecniche:** la passkey usa l'MFA WebAuthn nativo di Supabase (`factorType: "webauthn"`) orchestrato a mano in tre passi (enroll -> challenge -> verify, intervallati dalla cerimonia del browser) perché l'SDK non espone ancora un metodo di comodo a scorciatoia completa per questo --- **richiede che "MFA via WebAuthn" sia abilitato nelle impostazioni Authentication del progetto Supabase** (disattivato di default; verificato con un tentativo reale contro il progetto, che risponde con un errore esplicito finché resta spento). I codici di backup sono interamente nostri (Supabase non li supporta): salvati come hash SHA-256 (Web Crypto API) in una nuova tabella `mfa_backup_codes`, mai in chiaro se non per l'istante in cui vengono mostrati. Un dettaglio non ovvio emerso testando: verificare un codice di backup non è una vera verifica MFA per Supabase, quindi non alza da sé il livello di sicurezza (AAL) della sessione --- un cookie dedicato (`lib/auth/mfa-bypass.ts`) segna esplicitamente "secondo fattore verificato con un codice di backup" per i controlli d'accesso, cancellato ad ogni nuovo login perché non deve valere oltre la sessione in cui è stato ottenuto.
 
 ### Autenticazione a due fattori (TOTP)
 

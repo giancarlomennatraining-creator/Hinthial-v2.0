@@ -351,6 +351,35 @@ export type Database = {
           },
         ];
       };
+      mfa_backup_codes: {
+        Row: {
+          id: string;
+          owner_id: string;
+          code_hash: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          code_hash: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          code_hash?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mfa_backup_codes_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       trusted_contacts: {
         Row: {
           id: string;

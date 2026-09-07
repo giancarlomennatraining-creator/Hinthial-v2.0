@@ -82,7 +82,15 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   const contactRow = page.locator("li", { hasText: "Maria Rossi" });
   await expect(contactRow).toBeVisible({ timeout: 10_000 });
   await openRowMenu(contactRow);
-  await page.getByRole("menuitem", { name: "Segna come amico" }).click();
+  // Si attende la risposta di rete prima di procedere: il click aggiorna
+  // la riga otticamente, ma il salvataggio vero è ancora in volo --- lo
+  // stesso motivo per cui nav-orientation.spec.ts fa lo stesso.
+  await Promise.all([
+    page.waitForResponse(
+      (res) => res.url().includes("/trusted_contacts") && res.request().method() === "PATCH",
+    ),
+    page.getByRole("menuitem", { name: "Segna come amico" }).click(),
+  ]);
 
   await statusButton.click();
   await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 63% completato", {

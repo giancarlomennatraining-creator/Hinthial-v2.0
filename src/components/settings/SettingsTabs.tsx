@@ -100,7 +100,7 @@ export function SettingsTabs({
       ) : tab === "security" ? (
         // Layer di identità (login), non di cifratura --- non richiede
         // la master key (v. domain/mfa/repository.ts).
-        <MfaSettingsPanel />
+        <MfaSettingsPanel userId={userId} />
       ) : tab === "categories" ? (
         <CategoriesPanel />
       ) : tab === "appearance" ? (

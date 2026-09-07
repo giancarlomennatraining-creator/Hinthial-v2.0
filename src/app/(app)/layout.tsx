@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/db/supabase/server";
+import { hasMfaVerifiedViaBackupCode } from "@/lib/auth/mfa-bypass";
 import { AppShell } from "@/components/layout/AppShell";
 
 /**
@@ -14,6 +15,10 @@ import { AppShell } from "@/components/layout/AppShell";
  * domain/mfa) hasn't been verified yet --- catches a direct/bookmarked
  * URL reached without going through the /login/mfa step that signIn()
  * (lib/auth/actions.ts) already redirects to right after the password.
+ * Un codice di backup non è un vero fattore Supabase, quindi non alza
+ * da sé l'AAL della sessione (v. lib/auth/mfa-bypass.ts): il suo
+ * cookie conta come equivalente ad aal2 qui, oppure questo gate
+ * rimanderebbe sempre indietro anche dopo un codice di backup corretto.
  */
 export default async function AppLayout({
   children,
@@ -28,7 +33,7 @@ export default async function AppLayout({
 
   const supabase = await createClient();
   const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+  if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2" && !(await hasMfaVerifiedViaBackupCode())) {
     redirect("/login/mfa");
   }
 

@@ -68,13 +68,13 @@ test("attivare l'autenticazione a due fattori richiede il codice al login succes
   await expect(page.getByRole("heading", { name: "Verifica in due passaggi" })).toBeVisible();
 
   // Un codice sbagliato non fa passare.
-  await page.getByLabel("Codice a 6 cifre").fill("000000");
+  await page.getByLabel("Codice a 6 cifre o di backup").fill("000000");
   await page.getByRole("button", { name: "Verifica" }).click();
   await expect(page.getByText("Codice non valido. Riprova.")).toBeVisible();
   await expect(page).toHaveURL(/\/login\/mfa$/);
 
   // Il codice corretto (rigenerato: qualche secondo è passato) completa il login.
-  await page.getByLabel("Codice a 6 cifre").fill(codeFor(secret));
+  await page.getByLabel("Codice a 6 cifre o di backup").fill(codeFor(secret));
   await page.getByRole("button", { name: "Verifica" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 

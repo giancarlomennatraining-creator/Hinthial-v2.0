@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/server";
 import { logAuditEvent } from "@/lib/audit/log-event";
+import { verifyAndConsumeBackupCode } from "@/domain/mfa/repository";
+import { clearMfaVerifiedViaBackupCode, markMfaVerifiedViaBackupCode } from "@/lib/auth/mfa-bypass";
 import type { AuthActionState } from "@/lib/auth/action-state";
 
 function translateAuthError(message: string): string {
@@ -104,6 +106,12 @@ export async function signIn(
     return { error: translateAuthError(error.message) };
   }
 
+  // Un cookie di una sessione precedente (v. lib/auth/mfa-bypass.ts) non
+  // deve valere per questa, appena creata e ancora aal1: altrimenti un
+  // solo codice di backup usato una volta disattiverebbe l'MFA per
+  // sempre su questo browser, non solo per quella sessione.
+  await clearMfaVerifiedViaBackupCode();
+
   // Chi ha l'autenticazione a due fattori attiva non è ancora "dentro"
   // per davvero: la sessione è solo aal1 (password verificata), serve
   // ancora il codice del secondo fattore prima di registrare il login
@@ -138,9 +146,21 @@ export async function verifyMfaCode(
     return { error: "Sessione scaduta. Accedi di nuovo." };
   }
 
+  // Un codice di backup ha un formato ben distinto da un codice TOTP a 6
+  // cifre (v. domain/mfa/backup-codes.ts): un controllo veloce prima di
+  // provare gli altri fattori, non un'alternativa esplicita da scegliere.
+  // Un codice di backup ha un formato ben distinto da un codice TOTP a 6
+  // cifre (v. domain/mfa/backup-codes.ts): un controllo veloce prima di
+  // provare gli altri fattori, non un'alternativa esplicita da scegliere.
+  if (await verifyAndConsumeBackupCode(supabase, user.id, code)) {
+    await markMfaVerifiedViaBackupCode();
+    await logAuditEvent(supabase, user.id, "login");
+    redirect("/dashboard");
+  }
+
   const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
   if (factorsError || factorsData.totp.length === 0) {
-    return { error: "Nessun dispositivo di autenticazione registrato." };
+    return { error: "Codice non valido. Riprova." };
   }
 
   // Un codice non dichiara per quale dispositivo è stato generato: si
@@ -258,6 +278,9 @@ export async function signOut(): Promise<void> {
   }
 
   await supabase.auth.signOut();
+  // Ridondante con la stessa pulizia in signIn() --- ma corretto anche
+  // qui, per lo stesso motivo (v. lib/auth/mfa-bypass.ts).
+  await clearMfaVerifiedViaBackupCode();
 
   redirect("/");
 }
