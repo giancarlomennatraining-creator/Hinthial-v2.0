@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 import { openRowMenu } from "./row-actions";
 

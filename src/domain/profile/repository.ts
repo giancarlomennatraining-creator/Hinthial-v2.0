@@ -159,3 +159,24 @@ export async function updateOnboardingWidgetHidden(
     throw new Error(`Impossibile salvare la preferenza del gadget di onboarding: ${error.message}`);
   }
 }
+
+/**
+ * Segna come chiuso il popup "Crea la tua master key" (v.
+ * MasterKeyIntroModal) --- una tantum: qualunque interazione che lo
+ * chiude (tasto "Più tardi", ✕, o il tasto che porta alla creazione)
+ * chiama questa funzione, così non ricompare più né in questa sessione
+ * né in una futura (sincronizzato sul server, come onboarding_widget_hidden).
+ */
+export async function markMasterKeyIntroSeen(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ master_key_intro_seen: true })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare la preferenza: ${error.message}`);
+  }
+}

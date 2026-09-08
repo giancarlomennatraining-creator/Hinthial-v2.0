@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import * as fs from "node:fs/promises";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 import { openRowMenu } from "./row-actions";

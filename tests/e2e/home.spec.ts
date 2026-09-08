@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("la home page pubblica mostra la barra in alto, il corpo con carosello automatico e le sezioni brochure", async ({
   page,

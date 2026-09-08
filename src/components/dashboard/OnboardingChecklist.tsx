@@ -30,16 +30,25 @@ export interface OnboardingStep {
  * volta completato un passo non serve più rispiegarlo, e i passi che
  * introducono un concetto nuovo (es. "Aggiungi un amico", legato al Dead
  * Man's Switch) restano altrimenti solo un'etichetta senza contesto.
+ *
+ * Nessun riquadro attorno alla lista: chi la mostra (il pannello laterale
+ * del gadget, la card in Dashboard) fornisce già il proprio contenitore.
  */
 export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
   const doneCount = steps.filter((s) => s.done).length;
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Onboarding</p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          {doneCount}/{steps.length}
+    <div className="flex flex-col gap-3">
+      <div>
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Onboarding</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            {doneCount}/{steps.length}
+          </p>
+        </div>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          I passi per iniziare a usare Hinthial al meglio --- il tuo avanzamento resta qui finché
+          non li avrai completati tutti.
         </p>
       </div>
 

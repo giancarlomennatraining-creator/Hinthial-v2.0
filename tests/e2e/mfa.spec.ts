@@ -1,5 +1,5 @@
 import { TOTP } from "otpauth";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.

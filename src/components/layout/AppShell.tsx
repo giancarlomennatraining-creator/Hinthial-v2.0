@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { MobileNavBar } from "@/components/layout/MobileNavBar";
 import { MasterKeyProvider } from "@/components/crypto/MasterKeyProvider";
+import { MasterKeyIntroModal } from "@/components/crypto/MasterKeyIntroModal";
 import { ListViewPreferencesProvider } from "@/components/layout/ListViewPreferencesProvider";
 import { NavOrientationProvider, useNavOrientation } from "@/components/layout/NavOrientationProvider";
 import { OnboardingWidgetVisibilityProvider } from "@/components/layout/OnboardingWidgetVisibilityProvider";
@@ -26,6 +27,7 @@ export function AppShell({
   avatarUrl,
   initialNavOrientation,
   initialOnboardingWidgetHidden,
+  initialMasterKeyIntroSeen,
   children,
 }: {
   userId: string;
@@ -35,10 +37,12 @@ export function AppShell({
   avatarUrl: string | null;
   initialNavOrientation: NavOrientation;
   initialOnboardingWidgetHidden: boolean;
+  initialMasterKeyIntroSeen: boolean;
   children: React.ReactNode;
 }) {
   return (
     <MasterKeyProvider>
+      <MasterKeyIntroModal userId={userId} initialSeen={initialMasterKeyIntroSeen} />
       <NavOrientationProvider userId={userId} initialOrientation={initialNavOrientation}>
         <ListViewPreferencesProvider userId={userId}>
           <OnboardingWidgetVisibilityProvider userId={userId} initialHidden={initialOnboardingWidgetHidden}>

@@ -59,6 +59,7 @@ export type Database = {
           list_view_preferences: Json;
           nav_orientation: NavOrientationColumn;
           onboarding_widget_hidden: boolean;
+          master_key_intro_seen: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -71,6 +72,7 @@ export type Database = {
           list_view_preferences?: Json;
           nav_orientation?: NavOrientationColumn;
           onboarding_widget_hidden?: boolean;
+          master_key_intro_seen?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -83,6 +85,7 @@ export type Database = {
           list_view_preferences?: Json;
           nav_orientation?: NavOrientationColumn;
           onboarding_widget_hidden?: boolean;
+          master_key_intro_seen?: boolean;
           created_at?: string;
           updated_at?: string;
         };

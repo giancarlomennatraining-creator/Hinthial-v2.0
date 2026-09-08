@@ -12,6 +12,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-08
 
+### Popup "Crea la tua master key" al primo accesso
+
+**Cosa fa:** subito dopo il login, chi non ha ancora configurato la cifratura vede un popup che spiega la differenza tra password dell'account e master password, con un tasto "Crea la tua master key" che porta dritto al modulo di creazione. Compare una sola volta: qualunque modo di chiuderlo (✕, "Più tardi", sfondo, o il tasto stesso) lo segna come visto per sempre, e comunque smette di avere senso non appena la cifratura è configurata. Resta comunque, come sempre, anche una voce a sé nel checklist di onboarding.
+
+**Note tecniche:** `profiles.master_key_intro_seen` (sincronizzato sul server, come `onboarding_widget_hidden`). Il confronto a due righe tra le due password è stato estratto in `PasswordComparisonNote`, condiviso con il modulo di creazione stesso (`SetupMasterKeyForm`) per non avere due copie dello stesso testo. Nei test e2e, un `page.addLocatorHandler()` (`tests/e2e/fixtures.ts`) lo chiude automaticamente per ogni test che non lo riguarda esplicitamente --- altrimenti, essendo un overlay a tutto schermo, avrebbe bloccato il primo click di quasi tutta la suite.
+
+### Onboarding: meno "scatola", più spiegazione
+
+**Cosa fa:** il checklist "Onboarding" (nel pannello laterale del gadget e in Dashboard) non ha più il riquadro attorno alla lista, e sotto il titolo spiega in una riga di cosa si tratta.
+
 ### Onboarding: pannello laterale invece del riquadro flottante
 
 **Cosa fa:** il click sul gadget "Onboarding" nella barra di navigazione apre ora un pannello laterale a tutto schermo (lo stesso pattern del dettaglio attività in Impostazioni > Attività), invece di un piccolo riquadro ancorato al pulsante --- da quando ogni passo mostra anche una breve descrizione, il contenuto era diventato troppo alto per il vecchio riquadro flottante.
