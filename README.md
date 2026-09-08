@@ -203,7 +203,12 @@ cp .env.example .env.local
 
 1. Crea un progetto su [supabase.com/dashboard](https://supabase.com/dashboard) (piano Free va bene).
 2. Compila `.env.local` con `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   e `SUPABASE_SERVICE_ROLE_KEY` (Project Settings → API).
+   e `SUPABASE_SERVICE_ROLE_KEY` (Project Settings → API). Compila anche
+   `RESEND_API_KEY` ed `EMAIL_FROM` (un indirizzo sul dominio verificato nel
+   tuo account [Resend](https://resend.com)) --- usati per le email che
+   Hinthial invia da sé (invito contatto, conferma cancellazione/reset
+   account); senza queste due variabili quelle email non partono, ma il
+   resto dell'app funziona comunque.
 3. Applica le migration al database:
    ```bash
    npx supabase db push --db-url "<connection string da Project Settings → Database>"
@@ -298,8 +303,13 @@ dati reali.
 - La Master Key esiste solo cifrata sul server (`encryption_setup`,
   wrappata da password e da recovery key); in chiaro vive solo in
   memoria lato client, per la durata della sessione.
-- La `SUPABASE_SERVICE_ROLE_KEY` non è mai usata dall'app: esiste solo
-  nei test, per creare/eliminare utenti di prova via API admin.
+- La `SUPABASE_SERVICE_ROLE_KEY` è usata dai test (creare/eliminare utenti
+  di prova via API admin) e da un solo punto dell'app stessa: la
+  cancellazione definitiva dell'account (`src/lib/account/actions.ts`,
+  Impostazioni > Zona pericolosa), l'unica operazione che richiede di
+  cancellare l'utente Auth stesso --- non disponibile al client
+  anonimo/autenticato, quindi eseguita in una Server Action, mai nel
+  browser.
 
 Vedi [HINTHIAL_MVP.md](./HINTHIAL_MVP.md) sezione 3 per i dettagli.
 

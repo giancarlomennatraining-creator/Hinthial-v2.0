@@ -37,6 +37,12 @@ test("aggiunge un contatto fiduciario, ne segue lo stato e lo elimina", async ({
   await page.getByLabel("Nome").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria.rossi@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
+  // Presente ma volutamente lasciata deselezionata --- spuntarla invierebbe
+  // un'email vera (Resend è configurato con una chiave reale anche nei
+  // test), da non fare qui solo per verificare che il form la mostri.
+  await expect(
+    page.getByRole("checkbox", { name: "Invita questo contatto su Hinthial" }),
+  ).not.toBeChecked();
   await page.getByRole("button", { name: "Aggiungi contatto" }).click();
 
   await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });

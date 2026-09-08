@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
 import { createTrustedContact } from "@/domain/contacts/repository";
+import { inviteContactToHinthial } from "@/lib/contacts/actions";
 
 /**
  * Pagina dedicata alla creazione di un contatto fiduciario (estratta da
@@ -19,6 +20,7 @@ export function CreateContactForm({ masterKey }: { masterKey: CryptoKey }) {
 
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [invite, setInvite] = useState(false);
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,7 +45,19 @@ export function CreateContactForm({ masterKey }: { masterKey: CryptoKey }) {
       if (!user) throw new Error("Devi essere autenticato.");
 
       await createTrustedContact(supabase, masterKey, user.id, { name, email, role });
-      router.push("/contacts?created=1");
+
+      // Un invito non riuscito non deve impedire di aver salvato il
+      // contatto: si segnala con un parametro a parte, non un errore.
+      let inviteFailed = false;
+      if (invite) {
+        try {
+          await inviteContactToHinthial(email);
+        } catch {
+          inviteFailed = true;
+        }
+      }
+
+      router.push(`/contacts?created=1${inviteFailed ? "&inviteFailed=1" : ""}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile aggiungere il contatto fiduciario.");
       setCreating(false);
@@ -114,6 +128,15 @@ export function CreateContactForm({ masterKey }: { masterKey: CryptoKey }) {
             className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
           />
         </div>
+
+        <label className="flex w-full items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+          <input
+            type="checkbox"
+            checked={invite}
+            onChange={(e) => setInvite(e.target.checked)}
+          />
+          Invita questo contatto su Hinthial
+        </label>
 
         {error ? (
           <p role="alert" className="w-full text-sm text-red-600 dark:text-red-400">

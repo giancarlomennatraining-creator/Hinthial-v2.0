@@ -101,6 +101,11 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
   // CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
   const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
+  // "&inviteFailed=1" si aggiunge agli stessi redirect quando la
+  // checkbox "Invita ... su Hinthial" era spuntata ma l'invio dell'email
+  // non è riuscito --- il contatto è comunque salvato, non è un errore
+  // che blocca il salvataggio, solo un avviso a parte.
+  const [showInviteFailedMessage] = useState(() => searchParams.get("inviteFailed") === "1");
   useEffect(() => {
     if (showCreatedMessage || showUpdatedMessage) router.replace("/contacts");
   }, [showCreatedMessage, showUpdatedMessage, router]);
@@ -238,6 +243,12 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
       ) : null}
       {showUpdatedMessage ? (
         <p className="text-sm text-lime-700 dark:text-lime-400">✅ Contatto aggiornato.</p>
+      ) : null}
+      {showInviteFailedMessage ? (
+        <p className="text-sm text-orange-700 dark:text-orange-400">
+          ⚠️ Non è stato possibile inviare l&apos;invito via email. Il contatto è stato comunque
+          salvato.
+        </p>
       ) : null}
 
       {error ? (

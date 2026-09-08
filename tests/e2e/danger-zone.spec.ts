@@ -94,25 +94,28 @@ test("\"Cancella tutto\" svuota Archivio, Asset, Contatti e Capsule, ripristina 
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
   await expect(page.getByText("Per Maria")).toBeVisible({ timeout: 10_000 });
 
-  // "Cancella tutto".
+  // "Reimposta l'account" (prima "Cancella tutto").
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await page.getByRole("tab", { name: "Zona pericolosa" }).click();
-  await expect(page.getByRole("heading", { name: "Zona pericolosa" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Reimposta l'account" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Cancella il tuo account" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Cancella tutto" }).click();
-  const dialog = page.getByRole("dialog", { name: "Conferma cancellazione totale" });
+  await page.getByRole("button", { name: "Reimposta account" }).click();
+  const dialog = page.getByRole("dialog", { name: "Conferma reimpostazione account" });
   await expect(dialog).toBeVisible();
 
-  const confirmButton = dialog.getByRole("button", { name: "Elimina definitivamente" });
+  const confirmButton = dialog.getByRole("button", { name: "Reimposta definitivamente" });
   await expect(confirmButton).toBeDisabled();
-  await dialog.getByLabel(/Scrivi ELIMINA TUTTO/).fill("qualcosa di sbagliato");
+  await dialog.getByLabel("Master password").fill("una-master-password-solida");
   await expect(confirmButton).toBeDisabled();
-  await dialog.getByLabel(/Scrivi ELIMINA TUTTO/).fill("ELIMINA TUTTO");
+  await dialog.getByLabel(/Scrivi REIMPOSTA TUTTO/).fill("qualcosa di sbagliato");
+  await expect(confirmButton).toBeDisabled();
+  await dialog.getByLabel(/Scrivi REIMPOSTA TUTTO/).fill("REIMPOSTA TUTTO");
   await expect(confirmButton).toBeEnabled();
   await confirmButton.click();
 
-  await expect(page.getByText("✅ Tutti i dati sono stati eliminati.")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("✅ Il vault è stato svuotato.")).toBeVisible({ timeout: 15_000 });
 
   // Archivio, Asset, Contatti e Capsule sono vuoti.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
@@ -139,4 +142,58 @@ test("\"Cancella tutto\" svuota Archivio, Asset, Contatti e Capsule, ripristina 
   await page.getByRole("link", { name: "Scadenze" }).click();
   await expect(page.getByText("Pagamento IMU")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText("🔗 Appartamento")).not.toBeVisible();
+});
+
+test("\"Cancella il tuo account\" richiede la master password corretta, poi cancella per sempre l'account (non si può più accedere)", async ({
+  page,
+}) => {
+  test.slow();
+
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password").fill(user.password);
+  await page.getByRole("button", { name: "Accedi" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+
+  await page.getByRole("link", { name: "Archivio", exact: true }).click();
+  await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
+  await page.getByLabel("Conferma master password").fill("una-master-password-solida");
+  await page.getByRole("button", { name: "Crea" }).click();
+  await expect(
+    page.getByLabel("Ho salvato la recovery key in un posto sicuro."),
+  ).toBeVisible({ timeout: 45_000 });
+  await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
+  await page.getByRole("button", { name: "Continua" }).click();
+  await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
+
+  await page.getByRole("button", { name: fullName(user) }).click();
+  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await page.getByRole("tab", { name: "Zona pericolosa" }).click();
+
+  await page.getByRole("button", { name: "Cancella account" }).click();
+  const dialog = page.getByRole("dialog", { name: "Conferma cancellazione account" });
+  await expect(dialog).toBeVisible();
+
+  const confirmButton = dialog.getByRole("button", { name: "Cancella definitivamente" });
+  await dialog.getByLabel("Master password").fill("password sbagliata");
+  await dialog.getByLabel(/Scrivi CANCELLA ACCOUNT/).fill("CANCELLA ACCOUNT");
+  await expect(confirmButton).toBeEnabled();
+  await confirmButton.click();
+  await expect(dialog.getByText("Master password non corretta.")).toBeVisible();
+  await expect(dialog).toBeVisible();
+
+  await dialog.getByLabel("Master password").fill("una-master-password-solida");
+  await confirmButton.click();
+
+  await expect(page).toHaveURL("/", { timeout: 15_000 });
+
+  // L'account non esiste più: lo stesso login fallisce ora.
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password").fill(user.password);
+  await page.getByRole("button", { name: "Accedi" }).click();
+  await expect(page.getByText("Email o password non corretti.")).toBeVisible();
 });

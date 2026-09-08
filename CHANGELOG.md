@@ -12,6 +12,15 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-08
 
+### Email inviate da Hinthial: invito contatto, cancellazione/reset account
+
+**Cosa fa:** tre funzionalità che inviano email vere, la prima volta che Hinthial lo fa da sé (finora solo Supabase Auth inviava email, per conferma registrazione e reset password):
+- **Invita un contatto**: nel form di creazione/modifica di un contatto fiduciario, una checkbox "Invita questo contatto su Hinthial" --- se spuntata, all'salvataggio parte un'email all'indirizzo del contatto con un link a Hinthial e uno diretto alla registrazione. Un invio non riuscito non impedisce di salvare il contatto, solo un avviso a parte.
+- **Cancella il tuo account** (nuova sezione in Impostazioni > Zona pericolosa): cancella per sempre l'account e ogni dato collegato --- non solo il vault come "Reimposta l'account" qui sotto, ma l'account stesso: non è più possibile accedere con quelle credenziali. Richiede di reinserire la master password, oltre a una frase di conferma testuale. Un'email di conferma arriva all'indirizzo dell'account.
+- **Reimposta l'account** (prima "Cancella tutto", rinominata): stesso svuotamento di sempre (Archivio, Asset, Contatti fiduciari, Capsule, categorie ripristinate ai valori predefiniti), ma ora richiede anche la master password prima di procedere, e invia un'email di conferma a operazione completata.
+
+**Note tecniche:** email inviate via l'API REST di Resend (`src/lib/email/send-email.ts`, una chiamata fetch diretta, nessuna dipendenza in più), da Server Actions (`src/lib/contacts/actions.ts`, `src/lib/account/actions.ts`) --- mai dal browser: `RESEND_API_KEY` non deve mai lasciarlo. La cancellazione account usa `auth.admin.deleteUser` (richiede la service role key, prima usata solo dai test): ogni riga collegata all'account ha già `ON DELETE CASCADE` da `auth.users` nelle migrazioni esistenti, quindi sparisce da sé --- solo gli oggetti di Storage (non dati di Postgres) vengono ripuliti a mano, enumerati per prefisso (`src/lib/storage/wipe-owner-storage.ts`). La master password, in entrambe le sezioni di Zona pericolosa, viene verificata riprovando a sbloccare (`useMasterKey().unlockWithPassword`) --- l'unico modo per verificarla davvero, dato lo zero-knowledge: il server non la vede mai.
+
 ### Popup "Crea la tua master key" al primo accesso
 
 **Cosa fa:** subito dopo il login, chi non ha ancora configurato la cifratura vede un popup che spiega la differenza tra password dell'account e master password, con un tasto "Crea la tua master key" che porta dritto al modulo di creazione. Compare una sola volta: qualunque modo di chiuderlo (✕, "Più tardi", sfondo, o il tasto stesso) lo segna come visto per sempre, e comunque smette di avere senso non appena la cifratura è configurata. Resta comunque, come sempre, anche una voce a sé nel checklist di onboarding.
