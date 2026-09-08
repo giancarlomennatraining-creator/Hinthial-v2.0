@@ -33,6 +33,8 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
     "href",
     "/archive",
   );
+  await page.getByRole("button", { name: "Chiudi" }).click();
+  await expect(panel).not.toBeVisible();
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
@@ -51,14 +53,15 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
 
   await statusButton.click();
   await expect(panel).toBeVisible();
-  await expect(panel.getByText("Onboarding")).toBeVisible();
   await expect(panel.getByText("2/8")).toBeVisible();
   await expect(panel.getByRole("link", { name: "Aggiungi il primo contenuto all'archivio" })).toBeVisible();
   await expect(panel.getByRole("link", { name: "Aggiungi un amico" })).toBeVisible();
   await expect(panel.getByText("(opzionale)")).toHaveCount(0);
 
-  // Un click nell'area principale (fuori dal bottone e dal pannello) lo chiude.
-  await page.getByRole("heading", { name: "Archivio" }).click();
+  // Il pulsante "Chiudi" (o un click sullo sfondo) lo richiude --- un
+  // pannello laterale a tutto schermo, come il dettaglio attività in
+  // Impostazioni > Attività (v. AuditLogPanel).
+  await page.getByRole("button", { name: "Chiudi" }).click();
   await expect(panel).not.toBeVisible();
 
   // Un documento con categoria completa due passi in un colpo solo.
@@ -80,7 +83,7 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
     timeout: 10_000,
   });
   await expect(panel.getByText("4/8")).toBeVisible();
-  await page.getByRole("heading", { name: "Archivio" }).click();
+  await page.getByRole("button", { name: "Chiudi" }).click();
 
   // Un amico completa un altro passo: 5 su 8 -> 63%.
   await page.getByRole("link", { name: "Contatti", exact: true }).click();

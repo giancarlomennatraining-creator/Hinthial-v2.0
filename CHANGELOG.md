@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-08
 
+### Onboarding: pannello laterale invece del riquadro flottante
+
+**Cosa fa:** il click sul gadget "Onboarding" nella barra di navigazione apre ora un pannello laterale a tutto schermo (lo stesso pattern del dettaglio attività in Impostazioni > Attività), invece di un piccolo riquadro ancorato al pulsante --- da quando ogni passo mostra anche una breve descrizione, il contenuto era diventato troppo alto per il vecchio riquadro flottante.
+
+**Note tecniche:** rimosso tutto il calcolo di posizione/spazio disponibile (coordinate del pulsante, margine minimo, lato di apertura) --- un pannello ancorato al bordo destro dello schermo non ne ha più bisogno.
+
 ### Prima esperienza: meno disorientamento al primo accesso
 
 **Cosa fa:** cinque correzioni mirate al percorso di chi usa Hinthial per la prima volta, prima ancora di aver configurato la cifratura:

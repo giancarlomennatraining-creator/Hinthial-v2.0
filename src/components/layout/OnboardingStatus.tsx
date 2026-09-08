@@ -13,12 +13,6 @@ import {
 } from "@/domain/onboarding/steps";
 import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 
-/** Stesso margine di RowActionsMenu, per lo stesso motivo. */
-const MIN_SPACE_BELOW = 320;
-
-/** Larghezza del pannello (v. classe w-80 più sotto) --- serve per decidere da che lato aprirlo. */
-const PANEL_WIDTH = 320;
-
 /**
  * Indicatore persistente di avanzamento "Onboarding",
  * sempre visibile nella barra laterale (non solo in dashboard) --- una
@@ -38,6 +32,13 @@ const PANEL_WIDTH = 320;
  * vedere la percentuale senza dover cliccare), e ricaricato ad ogni
  * apertura del pannello per riflettere cambiamenti fatti altrove.
  *
+ * Il click apre un pannello laterale a tutto schermo (stesso pattern del
+ * dettaglio attività in Impostazioni > Attività, v. AuditLogPanel) invece
+ * di un piccolo riquadro ancorato al pulsante: da quando ogni passo non
+ * fatto mostra anche una breve descrizione (v. OnboardingChecklist), il
+ * contenuto è diventato troppo alto per un riquadro flottante --- niente
+ * più calcolo di posizione/spazio disponibile.
+ *
  * Nascondibile dal pannello stesso ("Nascondi") --- una preferenza
  * sincronizzata sul server (v. OnboardingWidgetVisibilityProvider), non un
  * completamento vero e proprio: l'avanzamento resta comunque
@@ -49,11 +50,6 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
 
   const [steps, setSteps] = useState<OnboardingStep[] | null>(null);
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState<
-    { top?: number; bottom?: number; left?: number; right?: number } | null
-  >(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
 
   const { hidden, setHidden } = useOnboardingWidgetVisibility();
   const masterKey = status.kind === "unlocked" ? status.masterKey : null;
@@ -85,48 +81,8 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
     refresh();
   }, [refresh]);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as Node;
-      if (buttonRef.current?.contains(target)) return;
-      if (panelRef.current?.contains(target)) return;
-      setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleScroll() {
-      setOpen(false);
-    }
-    window.addEventListener("scroll", handleScroll, true);
-    return () => window.removeEventListener("scroll", handleScroll, true);
-  }, [open]);
-
   function toggle() {
-    if (!open && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      // Ancorato a destra invece che a sinistra quando non c'è spazio ad
-      // aprirsi verso destra (es. barra laterale a destra, v.
-      // NavOrientationProvider) --- altrimenti il pannello uscirebbe
-      // dallo schermo.
-      const spaceRight = window.innerWidth - rect.left;
-      const horizontal =
-        spaceRight < PANEL_WIDTH + 16
-          ? { right: window.innerWidth - rect.right }
-          : { left: rect.left };
-      setPosition({
-        ...(spaceBelow < MIN_SPACE_BELOW
-          ? { bottom: window.innerHeight - rect.top + 4 }
-          : { top: rect.bottom + 4 }),
-        ...horizontal,
-      });
-      // Refresh su ogni apertura --- v. doc comment sopra.
-      refresh();
-    }
+    if (!open) refresh(); // v. doc comment sopra
     setOpen((v) => !v);
   }
 
@@ -145,7 +101,6 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
   return (
     <>
       <button
-        ref={buttonRef}
         type="button"
         onClick={toggle}
         aria-expanded={open}
@@ -172,33 +127,46 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
         )}
       </button>
 
-      {open && position
+      {open
         ? createPortal(
-            <div
-              ref={panelRef}
-              role="dialog"
-              aria-label="Onboarding"
-              style={{
-                position: "fixed",
-                top: position.top,
-                bottom: position.bottom,
-                left: position.left,
-                right: position.right,
-              }}
-              className="z-50 w-80 max-w-[calc(100vw-2rem)] rounded-md border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
-            >
-              <OnboardingChecklist steps={displaySteps} />
-              <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
-                <button
-                  type="button"
-                  onClick={hide}
-                  className="text-xs font-medium text-zinc-500 hover:text-zinc-700 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
-                >
-                  Nascondi
-                </button>
-                <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-                  Non comparirà più qui: l&apos;avanzamento resta consultabile in Impostazioni.
-                </p>
+            <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setOpen(false)}>
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Onboarding"
+                onClick={(e) => e.stopPropagation()}
+                className="absolute inset-y-0 right-0 flex w-full max-w-sm flex-col gap-4 overflow-y-auto border-l border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
+              >
+                {/*
+                  Niente titolo qui: OnboardingChecklist ha già la sua
+                  intestazione "Onboarding X/Y" --- ripeterlo sopra
+                  sarebbe ridondante. Solo il tasto per chiudere.
+                */}
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    aria-label="Chiudi"
+                    className="shrink-0 rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <OnboardingChecklist steps={displaySteps} />
+
+                <div className="border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={hide}
+                    className="text-xs font-medium text-zinc-500 hover:text-zinc-700 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
+                  >
+                    Nascondi
+                  </button>
+                  <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                    Non comparirà più qui: l&apos;avanzamento resta consultabile in Impostazioni.
+                  </p>
+                </div>
               </div>
             </div>,
             document.body,
