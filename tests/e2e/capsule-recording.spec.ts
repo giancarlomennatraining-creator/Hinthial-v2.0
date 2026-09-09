@@ -52,7 +52,7 @@ test("registra un messaggio audio e lo allega a una capsula", async ({ page }) =
 
   await page.getByRole("button", { name: "Crea capsula" }).click();
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Capsula creata.")).toBeVisible();
+  await expect(page.getByText("Capsula creata.")).toBeVisible();
 
   // L'allegato registrato compare nella capsula con l'icona 🎤, apribile come qualsiasi altro allegato.
   await expect(page.getByText(/🎤 messaggio-audio-.*\.webm/)).toBeVisible();

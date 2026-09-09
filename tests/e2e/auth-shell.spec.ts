@@ -82,7 +82,7 @@ test("un utente autenticato può navigare la shell e fare logout", async ({
   ).toBeVisible();
 
   // Cifratura non ancora configurata: la dashboard lo segnala.
-  await expect(page.getByText("⚠️ Master password non ancora creata")).toBeVisible();
+  await expect(page.getByText("Master password non ancora creata")).toBeVisible();
 
   // La navigazione principale porta alle altre sezioni della shell. Per
   // un utente senza cifratura configurata, ognuna mostra il setup della
@@ -100,7 +100,9 @@ test("un utente autenticato può navigare la shell e fare logout", async ({
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("button", { name: "Esci" }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("link", { name: "Accedi" })).toBeVisible();
+  // Scoped al banner: la hero della landing ripete "Accedi" in un
+  // secondo link (v. home.spec.ts).
+  await expect(page.getByRole("banner").getByRole("link", { name: "Accedi" })).toBeVisible();
 });
 
 test("login con un account esistente porta alla dashboard", async ({

@@ -51,7 +51,7 @@ test("crea, completa ed elimina scadenze", async ({ page }) => {
   await page.getByRole("button", { name: "Aggiungi scadenza" }).click();
 
   await expect(page).toHaveURL(/\/reminders$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Scadenza creata.")).toBeVisible();
+  await expect(page.getByText("Scadenza creata.")).toBeVisible();
   await expect(page.getByText("Rinnovo assicurazione auto")).toBeVisible({ timeout: 10_000 });
 
   // Completa (checkbox) --- il titolo diventa barrato.
@@ -104,7 +104,7 @@ test("aggiunge scadenza, tag e note a un documento e li vede in dashboard", asyn
   await page.getByLabel("Tag (separati da virgola)").fill("aggiornato");
   await page.getByRole("button", { name: "Salva modifiche" }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Contenuto aggiornato.")).toBeVisible();
+  await expect(page.getByText("Contenuto aggiornato.")).toBeVisible();
   // exact: true --- il messaggio di conferma appena sopra contiene
   // "aggiornato" come sottostringa, altrimenti ambiguo con questo tag.
   await expect(page.getByText("aggiornato", { exact: true })).toBeVisible({ timeout: 10_000 });
@@ -113,7 +113,7 @@ test("aggiunge scadenza, tag e note a un documento e li vede in dashboard", asyn
   // La dashboard mostra il documento tra i recenti, e segnala la cifratura configurata.
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("heading", { name: `Ciao, ${fullName(user)}` })).toBeVisible();
-  await expect(page.getByText("✅ Master password creata · recovery key salvata")).toBeVisible();
+  await expect(page.getByText("Master password creata · recovery key salvata")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Aggiunti di recente" })).toBeVisible();
   await expect(page.getByText("documento-con-metadati.txt")).toBeVisible();
 });

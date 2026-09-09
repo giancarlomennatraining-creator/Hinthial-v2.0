@@ -28,7 +28,7 @@ test("attivare l'autenticazione a due fattori richiede il codice al login succes
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await page.getByRole("tab", { name: "Sicurezza" }).click();
-  await expect(page.getByText("⚠️ Non attiva")).toBeVisible();
+  await expect(page.getByText("Non attiva")).toBeVisible();
 
   // Attivazione: nome del dispositivo, QR, codice a mano da inserire
   // per confermare. toBeVisible() da solo non basta per il QR: un
@@ -49,7 +49,7 @@ test("attivare l'autenticazione a due fattori richiede il codice al login succes
   await page.getByRole("button", { name: "Conferma" }).click();
 
   await expect(page.getByText("Telefono di test")).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText("⚠️ Non attiva")).not.toBeVisible();
+  await expect(page.getByText("Non attiva")).not.toBeVisible();
   await expect(
     page.getByText("Ti consigliamo di registrare più di un dispositivo"),
   ).toBeVisible();
@@ -89,7 +89,7 @@ test("attivare l'autenticazione a due fattori richiede il codice al login succes
   await page.getByRole("tab", { name: "Sicurezza" }).click();
   await expect(page.getByText("Telefono di test")).toBeVisible();
   await page.getByRole("button", { name: "Rimuovi" }).click();
-  await expect(page.getByText("⚠️ Non attiva")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("Non attiva")).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("button", { name: "Esci" }).click();

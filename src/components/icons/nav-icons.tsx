@@ -196,6 +196,15 @@ export function SlidersIcon(props: IconProps) {
   );
 }
 
+/** Freccia nel bottone principale della homepage ("Crea account"). */
+export function ArrowRightIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <path d="M9 5l6 7-6 7" />
+    </svg>
+  );
+}
+
 /** Badge di stato "fatto"/"ok" (sostituisce ✅). */
 export function CheckCircleIcon(props: IconProps) {
   return (

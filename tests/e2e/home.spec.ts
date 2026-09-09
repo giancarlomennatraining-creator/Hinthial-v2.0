@@ -8,10 +8,14 @@ test("la home page pubblica mostra la barra in alto, il corpo con carosello auto
   await page.clock.install();
   await page.goto("/");
 
-  // Barra in alto: logo a sinistra, Accedi/Registrati a destra (nessun utente autenticato).
+  // Barra in alto: logo a sinistra, Accedi/Registrati a destra (nessun
+  // utente autenticato) --- scoped al banner: la hero qui sotto ripete
+  // "Accedi" in un secondo link (v. "Hai già un account?"), come nel
+  // mockup di riferimento.
+  const header = page.getByRole("banner");
   await expect(page.getByRole("link", { name: "HINTHIAL" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Accedi" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Registrati" })).toBeVisible();
+  await expect(header.getByRole("link", { name: "Accedi" })).toBeVisible();
+  await expect(header.getByRole("link", { name: "Registrati" })).toBeVisible();
 
   // Corpo: titolo, sottotitolo, CTA, e il carosello di presentazione.
   await expect(

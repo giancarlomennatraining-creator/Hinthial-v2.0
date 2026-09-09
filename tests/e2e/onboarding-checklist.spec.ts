@@ -111,7 +111,7 @@ test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (ness
   await page.getByLabel("Contenuto").fill("Un pensiero per te.");
   await page.getByRole("button", { name: "Crea capsula" }).click();
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Capsula creata.")).toBeVisible();
+  await expect(page.getByText("Capsula creata.")).toBeVisible();
 
   // La card sparisce: nessun rapporto "N/8" resta in pagina (l'indicatore
   // nella barra laterale mostra invece una percentuale, non un rapporto,

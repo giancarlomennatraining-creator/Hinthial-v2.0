@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertTriangleIcon, CheckCircleIcon } from "@/components/icons/nav-icons";
 
 export default async function VerifyAccountPage({
   searchParams,
@@ -10,6 +11,9 @@ export default async function VerifyAccountPage({
   if (error) {
     return (
       <div className="flex flex-col items-center gap-4 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+          <AlertTriangleIcon width={24} height={24} className="text-red-600 dark:text-red-400" />
+        </div>
         <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
           Verifica non riuscita
         </h1>
@@ -29,6 +33,9 @@ export default async function VerifyAccountPage({
 
   return (
     <div className="flex flex-col items-center gap-4 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
+        <CheckCircleIcon width={24} height={24} className="text-emerald-600 dark:text-emerald-400" />
+      </div>
       <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
         Account verificato
       </h1>

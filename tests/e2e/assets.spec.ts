@@ -16,7 +16,7 @@ async function createAsset(page: Page, name: string, categoryLabel?: string) {
   if (categoryLabel) await page.locator("#categoryId").selectOption({ label: categoryLabel });
   await page.getByRole("button", { name: "Aggiungi asset" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Asset creato.")).toBeVisible();
+  await expect(page.getByText("Asset creato.")).toBeVisible();
 }
 
 async function loginAndSetUpEncryption(page: import("@playwright/test").Page) {
@@ -93,7 +93,7 @@ test("crea un asset e vi collega un documento e una scadenza", async ({ page }) 
   await page.getByLabel("Asset collegato").selectOption({ label: "Casa di Via Roma" });
   await page.getByRole("button", { name: "Aggiungi scadenza" }).click();
   await expect(page).toHaveURL(/\/reminders$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Scadenza creata.")).toBeVisible();
+  await expect(page.getByText("Scadenza creata.")).toBeVisible();
   await expect(page.getByText("Pagamento IMU")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText("🔗 Casa di Via Roma")).toBeVisible();
 
@@ -112,7 +112,7 @@ test("crea un asset e vi collega un documento e una scadenza", async ({ page }) 
   await page.getByLabel("Categoria").selectOption({ label: "🚗 Veicoli" });
   await page.getByRole("button", { name: "Salva modifiche" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Asset aggiornato.")).toBeVisible();
+  await expect(page.getByText("Asset aggiornato.")).toBeVisible();
   const renamedAssetRow = page.locator("li", { hasText: "Casa di Via Roma (rinominata)" });
   await expect(renamedAssetRow).toBeVisible({ timeout: 10_000 });
   await expect(renamedAssetRow.getByText("🚗 Veicoli")).toBeVisible();

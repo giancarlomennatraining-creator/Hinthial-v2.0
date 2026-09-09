@@ -12,6 +12,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-09
 
+### Identità visiva "Fresh Clarity" su homepage e schermate di autenticazione
+
+**Cosa fa:** la homepage pubblica e le schermate di login, registrazione, verifica account (riuscita o no) e password dimenticata adottano lo stesso stile delle direzioni viste nel mockup (v. "FreshHero"): sfondo grigio-azzurro con una "bolla" mint decorativa dietro l'hero, badge "Zero-knowledge davvero" con icona lucchetto sopra il titolo, bottone principale con freccia e ombra colorata, card più arrotondate con ombra leggera. Le pagine di login/registrazione/verifica ora vivono dentro una vera card bianca (prima galleggiavano nude sullo sfondo); "Account verificato"/"Verifica non riuscita" hanno un'icona di stato (spunta verde/triangolo di attenzione), come altrove nell'app.
+
+**Note tecniche:** la "bolla" è un `background` (radial-gradient) su un `<div aria-hidden>` assoluto dentro un contenitore `relative overflow-hidden` --- non un'immagine posizionata, quindi non può alterare le dimensioni della pagina né aggiungere barre di scorrimento (stessa lezione imparata nel canvas di design). Un solo `<main>` per pagina (la tentazione era di farne due, uno per l'hero con la bolla e uno per il resto --- non valido: due landmark "main" confondono la struttura della pagina per chi usa uno screen reader). `(auth)/layout.tsx` (condiviso da login/registrazione/verifica/password dimenticata/controlla email) avvolge il contenuto in una card, invece di ogni pagina per conto proprio.
+
+Verificando con l'intera suite e2e (non solo gli unit test) sono emersi due problemi, entrambi corretti:
+- **21 asserzioni e2e** in 11 file cercavano ancora il vecchio testo con l'emoji (`"✅ Asset creato."`, `"⚠️ Non attiva"`, ecc.) rimossa in una modifica precedente di oggi (icone di sistema) --- non erano coperte dagli unit test, solo dalle e2e, che non erano ancora state rilanciate da quella modifica.
+- La nuova frase "Hai già un account? Accedi" nell'hero della homepage duplica il link "Accedi" già presente in alto (come nel mockup) --- corretto **2 test** (`home.spec.ts`, `auth-shell.spec.ts`) che cercavano quel link per nome su tutta la pagina, ora scoped al banner in alto.
+
+**Bug scoperto, non di questa modifica**: `capsules.spec.ts` --- dopo aver modificato il titolo di una capsula già creata, l'elenco non mostra il titolo aggiornato (il messaggio "Capsula aggiornata." compare correttamente, ma la riga con il nuovo titolo non si trova). Riproducibile due volte su due, non collegato a nessuna modifica di oggi (verificato sul diff) --- segnalato all'utente, non ancora investigato a fondo.
+
 ### Icone in Impostazioni, icone di sistema color-logo, dati personali affiancati
 
 **Cosa fa:** tre ritocchi mirati --- (1) ogni scheda della pagina Impostazioni ha ora un'icona a linea accanto all'etichetta, nello stesso stile della barra di navigazione; (2) tutte le icone "di sistema" (nav, contatori in dashboard, schede di Impostazioni) sono dello stesso blu del logo Hinthial, invece di un grigio neutro o del solo stato attivo --- eccetto "Zona pericolosa", che resta nel proprio rosso di avviso perché segnala un rischio, non solo una sezione; (3) in Impostazioni > Informazioni utente > Dati personali, Nome/Cognome/Data di nascita sono ora affiancati su schermi larghi (uno sotto l'altro solo su mobile), invece di essere sempre in colonna --- l'unica delle tre sezioni del pannello a poter sfruttare la piena larghezza della pagina (le altre due, Avatar ed Email, restano un solo campo ciascuna).

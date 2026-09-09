@@ -109,7 +109,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
 
   // Torna all'elenco con un messaggio di conferma sull'esito.
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Capsula creata.")).toBeVisible();
+  await expect(page.getByText("Capsula creata.")).toBeVisible();
 
   const row = page.locator("li", { hasText: "Per Maria" });
   await expect(row).toBeVisible({ timeout: 15_000 });
@@ -169,7 +169,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await page.getByRole("button", { name: "Salva modifiche" }).click();
 
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Capsula aggiornata.")).toBeVisible();
+  await expect(page.getByText("Capsula aggiornata.")).toBeVisible();
   const updatedRow = page.locator("li", { hasText: "Per Maria (aggiornato)" });
   await expect(updatedRow).toBeVisible({ timeout: 10_000 });
   await expect(updatedRow.getByText("Un pensiero aggiornato per te.")).toBeVisible();
@@ -287,7 +287,7 @@ test("collega un documento già presente in Archivio a una capsula, selezionando
   await page.getByRole("button", { name: "Crea capsula" }).click();
 
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Capsula creata.")).toBeVisible();
+  await expect(page.getByText("Capsula creata.")).toBeVisible();
 
   const row = page.locator("li", { hasText: "Documenti per dopo" });
   await expect(row).toBeVisible({ timeout: 15_000 });
@@ -318,7 +318,7 @@ test("collega un documento già presente in Archivio a una capsula, selezionando
   await expect(page.getByText("Passo 3 di 3")).toBeVisible();
   await page.getByRole("button", { name: "Salva modifiche" }).click();
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Capsula aggiornata.")).toBeVisible();
+  await expect(page.getByText("Capsula aggiornata.")).toBeVisible();
   await expect(row.getByText("📄 contratto.txt · ")).not.toBeVisible();
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();

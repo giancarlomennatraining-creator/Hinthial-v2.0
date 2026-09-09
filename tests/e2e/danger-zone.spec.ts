@@ -115,7 +115,7 @@ test("\"Cancella tutto\" svuota Archivio, Asset, Contatti e Capsule, ripristina 
   await expect(confirmButton).toBeEnabled();
   await confirmButton.click();
 
-  await expect(page.getByText("✅ Il vault è stato svuotato.")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("Il vault è stato svuotato.")).toBeVisible({ timeout: 15_000 });
 
   // Archivio, Asset, Contatti e Capsule sono vuoti.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();

@@ -46,7 +46,7 @@ test("aggiunge un contatto fiduciario, ne segue lo stato e lo elimina", async ({
   await page.getByRole("button", { name: "Aggiungi contatto" }).click();
 
   await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Contatto aggiunto.")).toBeVisible();
+  await expect(page.getByText("Contatto aggiunto.")).toBeVisible();
   const row = page.locator("li", { hasText: "Maria Rossi" });
   await expect(row).toBeVisible({ timeout: 10_000 });
   await expect(row.getByText("In attesa")).toBeVisible();
@@ -78,7 +78,7 @@ test("aggiunge un contatto fiduciario, ne segue lo stato e lo elimina", async ({
   await page.getByRole("button", { name: "Salva modifiche" }).click();
 
   await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
-  await expect(page.getByText("✅ Contatto aggiornato.")).toBeVisible();
+  await expect(page.getByText("Contatto aggiornato.")).toBeVisible();
   const updatedRow = page.locator("li", { hasText: "Maria Bianchi" });
   await expect(updatedRow).toBeVisible({ timeout: 10_000 });
   await expect(updatedRow.getByText("maria.bianchi@esempio.it · Sorella")).toBeVisible();

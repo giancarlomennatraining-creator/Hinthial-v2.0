@@ -47,7 +47,7 @@ test("Impostazioni > Onboarding mostra la percentuale, un messaggio e le attivit
   await expect(documentRow.getByRole("button", { name: "Da fare" })).toBeVisible();
 
   const accountRow = page.getByRole("listitem").filter({ hasText: "Crea un account" });
-  await expect(accountRow.getByText("✅ Fatto")).toBeVisible();
+  await expect(accountRow.getByText("Fatto")).toBeVisible();
 
   // Un click su "Da fare" porta alla sezione dove completare il passo.
   await documentRow.getByRole("button", { name: "Da fare" }).click();
