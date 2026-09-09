@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Baloo_2, Geist_Mono, Manrope, Work_Sans } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -19,6 +19,19 @@ const THEME_INIT_SCRIPT = `
     if (isDark) document.documentElement.classList.add("dark");
   } catch (e) {}
 })();
+`;
+
+/**
+ * Registra il service worker minimo (v. public/sw.js) --- non serve
+ * prima del primo paint come lo script sopra, solo dopo che la pagina è
+ * interattiva. `navigator.serviceWorker` non esiste su ogni browser
+ * (es. contesti senza HTTPS): il controllo è nello script stesso, non
+ * qui, perché questo gira lato client puro.
+ */
+const SW_REGISTER_SCRIPT = `
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(function () {});
+}
 `;
 
 /*
@@ -64,6 +77,11 @@ export const metadata: Metadata = {
     "Metti ordine nella tua vita digitale, proteggi ciò che conta e rendi le informazioni importanti accessibili alle persone giuste quando serve.",
 };
 
+/** Colore della barra di stato/degli strumenti del browser quando Hinthial è installata (v. manifest.ts, stesso blu). */
+export const viewport: Viewport = {
+  themeColor: "#2b4fc4",
+};
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -76,6 +94,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {THEME_INIT_SCRIPT}
         </Script>
         {children}
+        <Script id="sw-register" strategy="afterInteractive">
+          {SW_REGISTER_SCRIPT}
+        </Script>
       </body>
     </html>
   );

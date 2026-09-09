@@ -38,7 +38,19 @@ export function EditArchiveItemForm({ masterKey, documentId }: { masterKey: Cryp
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Contatore di richieste, non un semplice booleano "cancelled": in
+  // sviluppo React (StrictMode) invoca due volte l'effetto qui sotto al
+  // mount --- senza questa guardia, se la PRIMA fetch (superata) risolve
+  // dopo la seconda, il suo risultato sovrascriverebbe silenziosamente
+  // i campi (categoria/asset/scadenza/tag/note) anche quando l'utente li
+  // ha già modificati nel frattempo (v. stesso bug corretto in
+  // EditCapsuleForm.tsx). Stesso principio del flag `cancelled` in
+  // MasterKeyProvider, adattato a un useCallback invece di una IIFE
+  // dentro l'effetto.
+  const latestRequestRef = useRef(0);
+
   const refresh = useCallback(async () => {
+    const requestId = ++latestRequestRef.current;
     setError(null);
     try {
       const [documents, assetsResult, categoriesResult] = await Promise.all([
@@ -46,15 +58,17 @@ export function EditArchiveItemForm({ masterKey, documentId }: { masterKey: Cryp
         listAssets(supabase, masterKey),
         listCategories(supabase),
       ]);
+      if (requestId !== latestRequestRef.current) return;
       const found = documents.find((d) => d.id === documentId) ?? null;
       setDoc(found);
       setFields(found ? documentToFields(found) : null);
       setAssets(assetsResult);
       setCategories(categoriesResult);
     } catch (err) {
+      if (requestId !== latestRequestRef.current) return;
       setError(err instanceof Error ? err.message : "Impossibile caricare il contenuto.");
     } finally {
-      setLoading(false);
+      if (requestId === latestRequestRef.current) setLoading(false);
     }
   }, [supabase, masterKey, documentId]);
 

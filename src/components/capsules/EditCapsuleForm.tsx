@@ -72,7 +72,20 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
   const [removedAttachments, setRemovedAttachments] = useState<CapsuleAttachment[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
 
+  // Contatore di richieste, non un semplice booleano "cancelled": in
+  // sviluppo React (StrictMode) invoca due volte l'effetto qui sotto al
+  // mount --- senza questa guardia, se la PRIMA fetch (superata) risolve
+  // dopo la seconda, il suo risultato sovrascriverebbe silenziosamente
+  // titolo/data/ecc. anche quando l'utente li ha già modificati nel
+  // frattempo (il form compare solo a `loading` false, cioè dopo la
+  // prima risoluzione --- la seconda fetch "fantasma" è l'unico modo in
+  // cui questo può succedere). Stesso principio del flag `cancelled` in
+  // MasterKeyProvider, adattato a un useCallback invece di una IIFE
+  // dentro l'effetto.
+  const latestRequestRef = useRef(0);
+
   const refresh = useCallback(async () => {
+    const requestId = ++latestRequestRef.current;
     setError(null);
     try {
       const [capsules, contacts, categoriesResult, documentsResult] = await Promise.all([
@@ -81,6 +94,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
         listCategories(supabase),
         listDocuments(supabase, masterKey),
       ]);
+      if (requestId !== latestRequestRef.current) return;
       const found = capsules.find((c) => c.id === capsuleId) ?? null;
       setCapsule(found);
       setActiveContacts(contacts.filter((c) => c.status === "active"));
@@ -95,9 +109,10 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
         setKeptAttachments(found.attachments);
       }
     } catch (err) {
+      if (requestId !== latestRequestRef.current) return;
       setError(err instanceof Error ? err.message : "Impossibile caricare la capsula.");
     } finally {
-      setLoading(false);
+      if (requestId === latestRequestRef.current) setLoading(false);
     }
   }, [supabase, masterKey, capsuleId]);
 
