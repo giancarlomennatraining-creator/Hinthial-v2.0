@@ -61,15 +61,18 @@ export function MainNav({
                   : undefined
               }
               className={cn(
-                "flex items-center gap-2 rounded-md py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-2 rounded-xl py-2 text-sm font-medium transition-colors",
                 iconOnly ? "justify-center px-2" : "px-3",
                 isActive
-                  ? "bg-brand text-white"
+                  ? "bg-brand/10 text-brand"
                   : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-50",
               )}
             >
               <span className="relative" aria-hidden="true">
-                {item.icon}
+                {/* Sempre blu (colore del logo), a prescindere dallo stato
+                    attivo/hover --- solo l'etichetta di testo segue lo
+                    stato (v. className del Link qui sopra). */}
+                <item.icon width={19} height={19} className="text-brand" />
                 {showSetupHint ? (
                   <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-orange-500" />
                 ) : null}

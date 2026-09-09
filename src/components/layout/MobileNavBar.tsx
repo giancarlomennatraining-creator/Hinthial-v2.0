@@ -58,7 +58,7 @@ export function MobileNavBar({
         pagina --- un secondo <header> qui (anche se nascosto via CSS sopra
         md) lo duplicherebbe, rendendo ambiguo cosa sia "il" banner.
       */}
-      <div className="flex items-center justify-between border-b border-zinc-200 p-3 md:hidden dark:border-zinc-800">
+      <div className="flex items-center justify-between border-b border-zinc-200 bg-white p-3 md:hidden dark:border-zinc-800 dark:bg-zinc-950">
         <Link href="/dashboard" className="shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
           <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-8 w-auto" />

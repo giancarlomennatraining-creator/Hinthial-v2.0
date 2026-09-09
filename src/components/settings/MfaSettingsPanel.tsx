@@ -14,6 +14,7 @@ import {
 import { saveBlobAsFile } from "@/lib/download";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import type { MfaFactor, TotpEnrollment } from "@/domain/mfa/types";
+import { AlertTriangleIcon } from "@/components/icons/nav-icons";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
@@ -29,7 +30,7 @@ function FactorList({
   onRemove: (factor: MfaFactor) => void;
 }) {
   return (
-    <ul className="flex flex-col divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+    <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
       {factors.map((factor) => (
         <li key={factor.id} className="flex items-center justify-between gap-4 p-3 text-sm">
           <div className="flex flex-col gap-0.5">
@@ -231,7 +232,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
         </div>
 
         {enrollment ? (
-          <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+          <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
               Inquadra questo codice con l&apos;app authenticator, poi conferma con il codice a 6
               cifre che ti mostra.
@@ -274,7 +275,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
                 type="button"
                 disabled={busy}
                 onClick={handleConfirmEnroll}
-                className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
               >
                 {busy ? "Verifica…" : "Conferma"}
               </button>
@@ -293,8 +294,9 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
             {factors.length > 0 ? (
               <FactorList factors={factors} busy={busy} onRemove={handleRemoveFactor} />
             ) : (
-              <p className="inline-block self-start rounded-full bg-orange-100 px-2.5 py-1 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-400">
-                ⚠️ Non attiva
+              <p className="inline-flex items-center gap-1 self-start rounded-full bg-orange-100 px-2.5 py-1 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-400">
+                <AlertTriangleIcon width={13} height={13} className="shrink-0" />
+                Non attiva
               </p>
             )}
 
@@ -323,7 +325,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
                 type="button"
                 disabled={busy}
                 onClick={handleStartEnroll}
-                className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
               >
                 {factors.length > 0 ? "+ Aggiungi un altro dispositivo" : "Attiva l'autenticazione a due fattori"}
               </button>
@@ -352,7 +354,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
           </div>
 
           {revealedCodes ? (
-            <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+            <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
               <p className="text-sm text-zinc-700 dark:text-zinc-300">
                 Salvane una copia adesso: non verranno mostrati di nuovo.
               </p>
@@ -388,7 +390,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
                 type="button"
                 disabled={!confirmedSavedCodes}
                 onClick={handleDismissRevealedCodes}
-                className="self-start rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
               >
                 Fatto
               </button>

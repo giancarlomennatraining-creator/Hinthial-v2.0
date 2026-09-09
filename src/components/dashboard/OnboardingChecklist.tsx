@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckCircleIcon, CircleIcon } from "@/components/icons/nav-icons";
 
 export interface OnboardingStep {
   key: string;
@@ -56,7 +57,11 @@ export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
         {steps.map((step) => (
           <li key={step.key} className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2 text-sm">
-              <span aria-hidden="true">{step.done ? "✅" : "⬜"}</span>
+              {step.done ? (
+                <CheckCircleIcon width={16} height={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <CircleIcon width={16} height={16} className="shrink-0 text-zinc-300 dark:text-zinc-600" />
+              )}
               {step.done ? (
                 <span className="text-zinc-700 dark:text-zinc-300">{step.label}</span>
               ) : (

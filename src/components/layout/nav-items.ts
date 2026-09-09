@@ -1,8 +1,20 @@
+import type { ComponentType, SVGProps } from "react";
+import {
+  AIIcon,
+  ArchiveIcon,
+  AssetIcon,
+  CapsuleIcon,
+  ContactIcon,
+  DashboardIcon,
+  ReminderIcon,
+  TimelineIcon,
+} from "@/components/icons/nav-icons";
+
 export interface NavItem {
   label: string;
   href: string;
   /** Decorativa (aria-hidden in MainNav) --- l'etichetta testuale resta il vero nome accessibile della voce. */
-  icon: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   /** Se true, la pagina è dietro RequireMasterKey (v. i rispettivi page.tsx) --- usato da MainNav per il pallino "richiede setup" quando la cifratura non è ancora configurata. */
   requiresEncryption: boolean;
 }
@@ -13,12 +25,12 @@ export interface NavItem {
  * nome utente (src/components/layout/UserMenu.tsx), insieme a "Esci".
  */
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: "📊", requiresEncryption: false },
-  { label: "Archivio", href: "/archive", icon: "🗄️", requiresEncryption: true },
-  { label: "Scadenze", href: "/reminders", icon: "⏰", requiresEncryption: true },
-  { label: "Asset", href: "/assets", icon: "🏠", requiresEncryption: true },
-  { label: "Contatti", href: "/contacts", icon: "🤝", requiresEncryption: true },
-  { label: "Capsule", href: "/capsules", icon: "📦", requiresEncryption: true },
-  { label: "Cronologia", href: "/timeline", icon: "📜", requiresEncryption: true },
-  { label: "AI", href: "/ai", icon: "🤖", requiresEncryption: true },
+  { label: "Dashboard", href: "/dashboard", icon: DashboardIcon, requiresEncryption: false },
+  { label: "Archivio", href: "/archive", icon: ArchiveIcon, requiresEncryption: true },
+  { label: "Scadenze", href: "/reminders", icon: ReminderIcon, requiresEncryption: true },
+  { label: "Asset", href: "/assets", icon: AssetIcon, requiresEncryption: true },
+  { label: "Contatti", href: "/contacts", icon: ContactIcon, requiresEncryption: true },
+  { label: "Capsule", href: "/capsules", icon: CapsuleIcon, requiresEncryption: true },
+  { label: "Cronologia", href: "/timeline", icon: TimelineIcon, requiresEncryption: true },
+  { label: "AI", href: "/ai", icon: AIIcon, requiresEncryption: true },
 ];

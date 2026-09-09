@@ -56,7 +56,7 @@ export function Sidebar({
         // Sotto md la sostituisce MobileNavBar (v. AppShell) --- questa
         // resta montata, solo nascosta, per non perdere lo stato di
         // compressione attraversando la soglia md.
-        "hidden flex-col gap-6 border-b border-zinc-200 md:flex md:shrink-0 md:border-b-0 dark:border-zinc-800",
+        "hidden flex-col gap-6 border-b border-zinc-200 bg-white md:flex md:shrink-0 md:border-b-0 dark:border-zinc-800 dark:bg-zinc-950",
         // Bordo di confine col contenuto e ordine visivo sul lato
         // corretto --- v. doc comment sopra. L'ordine resta quello del
         // markup su mobile (flex-col): solo da md in su, dove il

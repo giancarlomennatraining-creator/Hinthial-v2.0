@@ -127,14 +127,22 @@ export function UserInfoPanel({
   }
 
   return (
-    <div className="flex max-w-md flex-col gap-8">
-      <AvatarUploadForm
-        userId={userId}
-        firstName={firstName}
-        lastName={lastName}
-        avatarPath={avatarPath}
-        avatarUrl={avatarUrl}
-      />
+    // @container: i tre campi qui sotto si affiancano in base allo spazio
+    // VERO disponibile per questo pannello, non alla larghezza della
+    // finestra --- altrimenti a schermi medi, dove la barra laterale e
+    // l'elenco delle schede (v. SettingsTabs) occupano già buona parte
+    // della larghezza, si affiancherebbero comunque lasciando pochissimo
+    // spazio per scrivere in ognuno.
+    <div className="@container flex flex-col gap-8">
+      <div className="max-w-md">
+        <AvatarUploadForm
+          userId={userId}
+          firstName={firstName}
+          lastName={lastName}
+          avatarPath={avatarPath}
+          avatarUrl={avatarUrl}
+        />
+      </div>
 
       <section className="flex flex-col gap-4 border-t border-zinc-200 pt-8 dark:border-zinc-800">
         <div>
@@ -147,32 +155,40 @@ export function UserInfoPanel({
         </div>
 
         <form onSubmit={handleSaveName} className="flex flex-col gap-4">
-          <TextField
-            id="firstName"
-            name="firstName"
-            label="Nome"
-            type="text"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            required
-          />
-          <TextField
-            id="lastName"
-            name="lastName"
-            label="Cognome"
-            type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            required
-          />
-          <TextField
-            id="birthDate"
-            name="birthDate"
-            label="Data di nascita"
-            type="date"
-            value={birthDate}
-            onChange={(e) => setBirthDate(e.target.value)}
-          />
+          {/* Tre campi affiancati quando il pannello ha spazio a
+              sufficienza (v. @container sopra), uno sotto l'altro quando
+              si restringe --- a differenza delle altre sezioni qui sotto
+              (un solo campo ciascuna), questa è l'unica a poter sfruttare
+              la larghezza piena del pannello (non più limitato a
+              max-w-md, v. sopra/sotto). */}
+          <div className="grid gap-4 @xl:grid-cols-3">
+            <TextField
+              id="firstName"
+              name="firstName"
+              label="Nome"
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+            />
+            <TextField
+              id="lastName"
+              name="lastName"
+              label="Cognome"
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+            />
+            <TextField
+              id="birthDate"
+              name="birthDate"
+              label="Data di nascita"
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+            />
+          </div>
 
           {nameError ? (
             <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -186,7 +202,7 @@ export function UserInfoPanel({
           <button
             type="submit"
             disabled={nameSaving}
-            className="self-start rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+            className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
           >
             {nameSaving ? "Salvataggio…" : "Salva"}
           </button>
@@ -202,7 +218,7 @@ export function UserInfoPanel({
           </p>
         </div>
 
-        <form onSubmit={handleChangeEmail} className="flex flex-col gap-4">
+        <form onSubmit={handleChangeEmail} className="flex max-w-md flex-col gap-4">
           <TextField
             id="newEmail"
             name="newEmail"
@@ -230,7 +246,7 @@ export function UserInfoPanel({
           <button
             type="submit"
             disabled={emailSaving}
-            className="self-start rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+            className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
           >
             {emailSaving ? "Invio…" : "Cambia email"}
           </button>

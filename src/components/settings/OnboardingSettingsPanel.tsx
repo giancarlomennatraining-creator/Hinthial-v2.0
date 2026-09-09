@@ -7,6 +7,7 @@ import { buildAIContext } from "@/domain/ai/context";
 import { computeOnboardingSteps, onboardingCompletionPercent } from "@/domain/onboarding/steps";
 import type { OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
 import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWidgetVisibilityProvider";
+import { CheckCircleIcon } from "@/components/icons/nav-icons";
 
 /** Messaggio accanto alla percentuale --- dal più alto al più basso, il primo che si applica vince. */
 const ENCOURAGEMENT: { min: number; message: string }[] = [
@@ -76,7 +77,7 @@ export function OnboardingSettingsPanel({ masterKey }: { masterKey: CryptoKey })
 
   return (
     <div className="flex max-w-2xl flex-col gap-8">
-      <div className="flex flex-col items-center gap-4 rounded-lg border border-zinc-200 p-6 text-center sm:flex-row sm:items-center sm:text-left dark:border-zinc-800">
+      <div className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-6 text-center sm:flex-row sm:items-center sm:text-left dark:border-zinc-800 dark:bg-zinc-950">
         <span
           aria-hidden="true"
           className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700"
@@ -105,7 +106,7 @@ export function OnboardingSettingsPanel({ masterKey }: { masterKey: CryptoKey })
           </button>
         </div>
 
-        <ul className="flex flex-col divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+        <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
           {steps.map((step) => (
             <li key={step.key} className="flex items-center justify-between gap-4 p-3">
               <div className="flex min-w-0 flex-col gap-0.5">
@@ -113,8 +114,9 @@ export function OnboardingSettingsPanel({ masterKey }: { masterKey: CryptoKey })
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">{step.description}</span>
               </div>
               {step.done ? (
-                <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-400">
-                  ✅ Fatto
+                <span className="flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-400">
+                  <CheckCircleIcon width={13} height={13} className="shrink-0" />
+                  Fatto
                 </span>
               ) : (
                 <button

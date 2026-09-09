@@ -23,6 +23,7 @@ import type { AssetListItem } from "@/domain/assets/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
+import { SuccessMessage } from "@/components/ui/SuccessMessage";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -171,17 +172,17 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
         <Link
           href="/assets/new"
-          className="shrink-0 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
         >
           + Crea asset
         </Link>
       </div>
 
       {showCreatedMessage ? (
-        <p className="text-sm text-lime-700 dark:text-lime-400">✅ Asset creato.</p>
+        <SuccessMessage>Asset creato.</SuccessMessage>
       ) : null}
       {showUpdatedMessage ? (
-        <p className="text-sm text-lime-700 dark:text-lime-400">✅ Asset aggiornato.</p>
+        <SuccessMessage>Asset aggiornato.</SuccessMessage>
       ) : null}
 
       {error ? (
@@ -224,7 +225,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">
-              <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+              <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
@@ -299,7 +300,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
               <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
             </div>
           ) : (
-            <ul className="flex flex-col divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+            <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
               {filteredAssets.map((asset) => {
                 const category = categoryFor(asset);
                 const busy = busyId === asset.id;

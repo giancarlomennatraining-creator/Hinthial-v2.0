@@ -43,7 +43,7 @@ export function VaultHealthWidget({ context }: { context: AIContext }) {
   }));
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+    <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Salute del vault</p>
 
       <div className="flex flex-col gap-3">

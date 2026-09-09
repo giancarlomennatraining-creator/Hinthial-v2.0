@@ -98,11 +98,11 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       {loading ? (
         <div role="status" aria-label="Caricamento…" className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+          <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <Skeleton className="h-3 w-32" />
             <Skeleton className="h-3 w-full max-w-md" />
           </div>
-          <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+          <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <Skeleton className="h-3 w-2/3" />
             <Skeleton className="h-9 w-full" />
           </div>
@@ -111,7 +111,7 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
         <>
           <SuggestionsList suggestions={suggestions} />
 
-          <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+          <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
             {messages.length === 0 ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 Prova a chiedere, ad esempio, &quot;quali assicurazioni ho?&quot;
@@ -167,7 +167,7 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
               <button
                 type="submit"
                 disabled={asking || !question.trim()}
-                className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
               >
                 Chiedi
               </button>

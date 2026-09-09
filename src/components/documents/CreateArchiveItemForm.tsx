@@ -176,7 +176,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       ) : (
         <form
           onSubmit={handleCreate}
-          className="flex flex-col gap-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+          className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
         >
           <div role="radiogroup" aria-label="Tipo di contenuto" className="flex flex-wrap gap-2">
             {(Object.keys(MODE_LABEL) as CreationMode[]).map((option) => (
@@ -277,7 +277,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
             <button
               type="submit"
               disabled={creating || !canSubmit}
-              className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+              className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
             >
               {creating ? "Salvataggio…" : "Aggiungi all'archivio"}
             </button>

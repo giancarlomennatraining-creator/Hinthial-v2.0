@@ -42,8 +42,13 @@ describe("MainNav", () => {
   it("shows a decorative icon next to each label, excluded from the accessible name", () => {
     render(<MainNav />);
 
+    // v. components/icons/nav-icons.tsx --- un SVG a tratto, non
+    // un'emoji: aria-hidden, quindi non nel nome accessibile del link
+    // (già verificato dal fatto che getByRole lo trova per "Archivio").
     const archivioLink = screen.getByRole("link", { name: "Archivio" });
-    expect(archivioLink).toHaveTextContent("🗄️");
+    const icon = archivioLink.querySelector("svg");
+    expect(icon).toBeInTheDocument();
+    expect(icon).toHaveAttribute("aria-hidden", "true");
   });
 
   it("marks the link matching the current path as the current page", () => {

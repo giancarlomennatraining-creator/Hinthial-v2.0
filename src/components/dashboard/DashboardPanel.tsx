@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AlertTriangleIcon, CheckCircleIcon } from "@/components/icons/nav-icons";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
@@ -35,13 +36,18 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
           <span
             className={
               status.kind === "not-set-up"
-                ? "mt-3 inline-block rounded-full bg-orange-100 px-2.5 py-1 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-400"
-                : "mt-3 inline-block rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-400"
+                ? "mt-3 inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-2.5 py-1 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-400"
+                : "mt-3 inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-400"
             }
           >
+            {status.kind === "not-set-up" ? (
+              <AlertTriangleIcon width={14} height={14} className="shrink-0" />
+            ) : (
+              <CheckCircleIcon width={14} height={14} className="shrink-0" />
+            )}
             {status.kind === "not-set-up"
-              ? "⚠️ Master password non ancora creata"
-              : "✅ Master password creata · recovery key salvata"}
+              ? "Master password non ancora creata"
+              : "Master password creata · recovery key salvata"}
           </span>
         ) : null}
       </div>

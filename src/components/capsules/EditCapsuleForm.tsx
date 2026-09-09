@@ -206,7 +206,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
           Solo le capsule ancora in bozza sono modificabili --- questa è già stata chiusa.
         </p>
       ) : (
-        <div className="flex flex-col gap-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
           {step === 1 ? (
             <>
               <div className="flex flex-wrap gap-3">
@@ -255,7 +255,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                 <button
                   type="button"
                   onClick={handleNextFromStep1}
-                  className="self-start rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+                  className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
                 >
                   Avanti
                 </button>
@@ -294,7 +294,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="self-start rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+                  className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
                 >
                   Avanti
                 </button>
@@ -408,7 +408,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                   type="button"
                   disabled={saving}
                   onClick={handleSave}
-                  className="self-start rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                  className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
                 >
                   {saving ? "Salvataggio…" : "Salva modifiche"}
                 </button>

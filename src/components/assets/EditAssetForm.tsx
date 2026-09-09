@@ -93,7 +93,7 @@ export function EditAssetForm({ masterKey, assetId }: { masterKey: CryptoKey; as
       ) : (
         <form
           onSubmit={handleSave}
-          className="flex flex-wrap items-end gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+          className="flex flex-wrap items-end gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
         >
           <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
             <label htmlFor="name" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -140,7 +140,7 @@ export function EditAssetForm({ masterKey, assetId }: { masterKey: CryptoKey; as
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+            className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
           >
             {saving ? "Salvataggio…" : "Salva modifiche"}
           </button>

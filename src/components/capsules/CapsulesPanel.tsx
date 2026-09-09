@@ -31,6 +31,7 @@ import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { CAPSULE_STATUS_LABEL } from "@/domain/capsules/labels";
 import type { CapsuleAttachment, CapsuleListItem, CapsuleStatus } from "@/domain/capsules/types";
 import type { DocumentListItem } from "@/domain/documents/types";
+import { SuccessMessage } from "@/components/ui/SuccessMessage";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -344,17 +345,17 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
         <Link
           href="/capsules/new"
-          className="shrink-0 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
         >
           + Crea capsula
         </Link>
       </div>
 
       {showCreatedMessage ? (
-        <p className="text-sm text-lime-700 dark:text-lime-400">✅ Capsula creata.</p>
+        <SuccessMessage>Capsula creata.</SuccessMessage>
       ) : null}
       {showUpdatedMessage ? (
-        <p className="text-sm text-lime-700 dark:text-lime-400">✅ Capsula aggiornata.</p>
+        <SuccessMessage>Capsula aggiornata.</SuccessMessage>
       ) : null}
 
       {error ? (
@@ -395,7 +396,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">
-              <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+              <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
@@ -487,7 +488,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
               <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
             </div>
           ) : (
-            <ul className="flex flex-col divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+            <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
               {filteredCapsules.map((capsule) => {
                 const busy = busyId === capsule.id;
 
@@ -618,7 +619,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                                       type="button"
                                       disabled={transcriptSaving}
                                       onClick={() => saveAttachmentTranscript(capsule, attachment)}
-                                      className="self-start rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                                      className="self-start rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
                                     >
                                       {transcriptSaving ? "Salvataggio…" : "Salva trascrizione"}
                                     </button>

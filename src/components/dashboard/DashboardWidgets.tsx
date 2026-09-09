@@ -103,7 +103,7 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
         <DashboardCounters context={context} />
 
         <div className="grid gap-6 sm:grid-cols-3">
-          <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+          <section className="rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               Prossime scadenze
             </h2>
@@ -127,7 +127,7 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
             </Link>
           </section>
 
-          <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+          <section className="rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               Aggiunti di recente
             </h2>
@@ -155,7 +155,7 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
             </Link>
           </section>
 
-          <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+          <section className="rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               Elementi da completare
             </h2>

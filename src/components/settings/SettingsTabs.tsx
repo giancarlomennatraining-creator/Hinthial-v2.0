@@ -14,6 +14,18 @@ import { ListViewSettings } from "@/components/settings/ListViewSettings";
 import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { ImportExportTabs } from "@/components/import-export/ImportExportTabs";
+import type { ComponentType, SVGProps } from "react";
+import {
+  ActivityIcon,
+  AlertTriangleIcon,
+  CategoryIcon,
+  ChecklistIcon,
+  EyeIcon,
+  ImportExportIcon,
+  SecurityIcon,
+  SlidersIcon,
+  UserIcon,
+} from "@/components/icons/nav-icons";
 
 type Tab =
   | "user-info"
@@ -26,16 +38,20 @@ type Tab =
   | "import-export"
   | "danger-zone";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "user-info", label: "Informazioni utente" },
-  { id: "security", label: "Sicurezza" },
-  { id: "privacy", label: "Privacy" },
-  { id: "categories", label: "Categorie" },
-  { id: "import-export", label: "Importa/Esporta" },
-  { id: "onboarding", label: "Onboarding" },
-  { id: "activity", label: "Attività" },
-  { id: "appearance", label: "Aspetto" },
-  { id: "danger-zone", label: "Zona pericolosa" },
+const TABS: { id: Tab; label: string; icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
+  { id: "user-info", label: "Informazioni utente", icon: UserIcon },
+  { id: "security", label: "Sicurezza", icon: SecurityIcon },
+  { id: "privacy", label: "Privacy", icon: EyeIcon },
+  { id: "categories", label: "Categorie", icon: CategoryIcon },
+  { id: "import-export", label: "Importa/Esporta", icon: ImportExportIcon },
+  { id: "onboarding", label: "Onboarding", icon: ChecklistIcon },
+  { id: "activity", label: "Attività", icon: ActivityIcon },
+  { id: "appearance", label: "Aspetto", icon: SlidersIcon },
+  // Sola eccezione: resta nel proprio rosso/arancio di avviso invece del
+  // blu del logo (v. sotto) --- è l'unica voce che segnala un rischio,
+  // non solo una sezione, e perderebbe il senso diventando blu come le
+  // altre.
+  { id: "danger-zone", label: "Zona pericolosa", icon: AlertTriangleIcon },
 ];
 
 export function SettingsTabs({
@@ -72,12 +88,23 @@ export function SettingsTabs({
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm font-medium transition-colors",
+              "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
               tab === t.id
-                ? "bg-brand text-white"
+                ? t.id === "danger-zone"
+                  ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                  : "bg-brand/10 text-brand"
                 : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
             )}
           >
+            {/* Icona sempre blu (colore del logo), a prescindere dallo
+                stato attivo/inattivo della scheda --- eccetto "Zona
+                pericolosa" (v. sopra), che resta nel proprio colore di
+                avviso. */}
+            <t.icon
+              width={18}
+              height={18}
+              className={t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand"}
+            />
             {t.label}
           </button>
         ))}

@@ -152,7 +152,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
             aria-modal="true"
             aria-label="Ricerca globale"
             onClick={(e) => e.stopPropagation()}
-            className="flex w-full max-w-lg flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
+            className="flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
           >
             <input
               ref={inputRef}

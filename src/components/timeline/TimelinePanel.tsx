@@ -199,7 +199,7 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
             </div>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">
-              <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+              <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
@@ -236,7 +236,7 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
                   <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                     {group.label}
                   </h2>
-                  <ul className="mt-2 flex flex-col divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+                  <ul className="mt-2 flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
                     {group.entries.map((entry) => (
                       <li
                         key={`${entry.kind}:${entry.id}`}

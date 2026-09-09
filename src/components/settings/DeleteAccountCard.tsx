@@ -95,7 +95,7 @@ export function DeleteAccountCard() {
             aria-modal="true"
             aria-label="Conferma cancellazione account"
             onClick={(e) => e.stopPropagation()}
-            className="flex w-full max-w-sm flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
+            className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
           >
             <div>
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">Sei sicuro?</h3>

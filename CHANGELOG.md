@@ -10,6 +10,40 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-09
+
+### Icone in Impostazioni, icone di sistema color-logo, dati personali affiancati
+
+**Cosa fa:** tre ritocchi mirati --- (1) ogni scheda della pagina Impostazioni ha ora un'icona a linea accanto all'etichetta, nello stesso stile della barra di navigazione; (2) tutte le icone "di sistema" (nav, contatori in dashboard, schede di Impostazioni) sono dello stesso blu del logo Hinthial, invece di un grigio neutro o del solo stato attivo --- eccetto "Zona pericolosa", che resta nel proprio rosso di avviso perché segnala un rischio, non solo una sezione; (3) in Impostazioni > Informazioni utente > Dati personali, Nome/Cognome/Data di nascita sono ora affiancati su schermi larghi (uno sotto l'altro solo su mobile), invece di essere sempre in colonna --- l'unica delle tre sezioni del pannello a poter sfruttare la piena larghezza della pagina (le altre due, Avatar ed Email, restano un solo campo ciascuna).
+
+**Note tecniche:** 7 nuove icone in `icons/nav-icons.tsx` (utente, lucchetto, occhio, importa/esporta, checklist, attività, cursori). Il colore non è più ereditato dallo stato del testo circostante (`currentColor` dal genitore) ma passato esplicitamente come `className="text-brand"` su ogni icona --- altrimenti lo sfondo azzurrino della voce attiva (`bg-brand/10`) avrebbe reso l'icona invisibile se fosse rimasta forzata a un altro colore fisso. Scheda Impostazioni riportata alla stessa pillola della nav (`bg-brand/10 text-brand` da attiva, prima `bg-brand text-white`), per coerenza. `UserInfoPanel`: rimosso `max-w-md` dal contenitore esterno (limitava tutte e tre le sezioni), ridato singolarmente ad Avatar ed Email; i tre campi di "Dati personali" affiancati via **container query** (`@container`/`@xl:grid-cols-3`, non `sm:`/`md:`) --- reagiscono alla larghezza vera disponibile per il pannello, non a quella della finestra: a schermi medi, dove barra laterale ed elenco schede (v. SettingsTabs) occupano già buona parte dello spazio, un breakpoint legato alla sola finestra li avrebbe affiancati comunque, lasciando pochissimo spazio per scrivere in ognuno (bug segnalato dall'utente subito dopo, corretto nella stessa giornata).
+
+### Identità visiva: colore e tipografia "Fresh Clarity"
+
+**Cosa fa:** l'accento blu usato in bottoni, link e stati attivi in tutta l'app è più vivo (era un blu campionato dal logo, ora un blu più acceso), e i titoli passano da un font generico a Manrope (il resto del testo a Work Sans) --- la direzione visiva scelta dopo aver mostrato ad Andrea alcune proposte di stile, per un'identità meno "anonima".
+
+**Note tecniche:** il colore è cambiato in un solo punto (`--brand`/`--brand-hover` in `globals.css`) --- quasi tutta l'app usa già queste variabili invece di classi Tailwind fisse (`bg-brand`, non `bg-blue-600`), quindi si è propagato senza toccare i singoli componenti. Font caricati via `next/font/google` in `layout.tsx` (Manrope, Work Sans), applicati globalmente in `globals.css`: Work Sans su `body` (prima Arial/Helvetica fisso), Manrope su tutti i tag `h1`-`h6` (prima nessuna regola, ereditavano il font del body). Geist Mono resta solo per il testo a spaziatura fissa (codici di recupero/MFA). Il logo (`logo-lockup.svg`) era già quello ufficiale con scritta in tutta l'app, nessuna modifica lì.
+
+### Identità visiva: icone di sistema "Fresh Clarity"
+
+**Cosa fa:** quarta parte del restyle --- le icone della barra di navigazione, dei contatori in dashboard e dei badge di stato (fatto/da fare, ok/attenzione, in tutta l'app) non sono più emoji ma icone a linea disegnate, nello stesso stile del mockup. Le emoji restano invece dove sono una scelta dell'utente (icona di una categoria) o un ornamento nel testo di un bottone (es. "🎥 Registra video", "📅 Esporta calendario") --- non toccate, sono fuori da questa fase.
+
+**Note tecniche:** nuovo `components/icons/nav-icons.tsx`, un set di icone SVG (24x24, `stroke="currentColor"`, così ereditano il colore del testo del chiamante invece di uno fisso incollato dentro --- utile soprattutto in nav, dove lo stato attivo/hover cambia colore). `NavItem.icon` e l'analogo campo in `DashboardCounters` sono passati da `string` (emoji) a un componente React. Nuovo `components/ui/SuccessMessage.tsx`: il messaggio "✅ X creato/aggiornato." dopo un salvataggio, identico in 5 pannelli (Asset, Capsule, Contatti, Archivio, Scadenze --- 9 occorrenze), estratto in un solo componente invece di ripetere l'icona in ognuno. I pochi badge di stato "a mano" (Impostazioni > Onboarding/MFA, il messaggio di reimpostazione account) hanno preso l'icona direttamente, senza passare dal componente condiviso. Aggiornato un test (`main-nav.test.tsx`) che verificava la vecchia emoji per nome: ora verifica che l'icona sia un SVG `aria-hidden`, non nel nome accessibile del link.
+
+### Identità visiva: bottoni e nav attiva "Fresh Clarity"
+
+**Cosa fa:** terza parte del restyle --- i bottoni principali (blu, testo bianco) hanno angoli più smussati come nel mockup; la voce attiva nella barra di navigazione non è più un riquadro blu piatto con testo bianco, ma una pillola azzurro chiarissimo con testo blu, coerente con l'estetica più leggera del resto.
+
+**Note tecniche:** stesso approccio delle card --- individuato il pattern letterale ricorrente `rounded-md bg-brand ... hover:bg-brand-hover` (54 occorrenze in 34 file, ogni bottone primario dell'app) e portato a `rounded-xl`; escluse deliberatamente le due righe che condividono la stessa forma ma sono altro (una voce selezionata in un elenco a comparsa in `GlobalSearch`, un segmento di un toggle a due stati in `CreateArchiveItemForm` --- quest'ultimo lasciato intatto perché i suoi due stati devono restare identici come raggio). Nav attiva (`MainNav.tsx`): `bg-brand text-white` diventato `bg-brand/10 text-brand` --- il modificatore `/10` di Tailwind (10% di opacità del colore `brand` già definito come token) invece di un secondo colore fisso da mantenere in sync, funziona automaticamente sia su sidebar bianca che su sfondo scuro.
+
+### Identità visiva: angoli, ombre e sfondo "Fresh Clarity"
+
+**Cosa fa:** seconda parte del restyle --- le card e i contenitori con bordo in tutta l'app (dashboard, liste, form, pannelli di Impostazioni) hanno angoli più arrotondati e un'ombra leggera che li stacca dallo sfondo, che è ora un grigio-azzurro molto chiaro invece di bianco puro; barra laterale, barra in alto e barra mobile restano bianche, per contrasto. Solo aspetto: nessun cambiamento a come la barra di navigazione o le pagine si adattano allo schermo.
+
+**Note tecniche:** individuato il pattern ricorrente `rounded-lg border border-zinc-200 ... dark:border-zinc-800` (52 occorrenze in 35 file --- praticamente ogni "card"/lista/riquadro dell'app usava già le stesse classi) e sostituito con uno script mirato: raggio portato a `rounded-2xl`, aggiunti `bg-white`/`shadow-[0_8px_20px_rgba(16,24,40,0.04)]` (e l'equivalente `dark:bg-zinc-950`) solo dove non c'era già uno sfondo esplicito diverso --- le modali (`MasterKeyIntroModal`, `GlobalSearch`, ecc.) e i riquadri con sfondo intenzionalmente diverso (es. il box "Quello che non vedremo mai" in Privacy, `bg-zinc-50`) hanno preso solo il nuovo raggio, non un secondo sfondo/ombra sopra quello che avevano già. `--background` (chiaro) passato da `#ffffff` a `#f7fafb`; `Sidebar`/`TopNav`/`MobileNavBar`, che prima non dichiaravano uno sfondo proprio (mostravano semplicemente quello della pagina), ora dichiarano `bg-white` esplicito per restare bianche mentre il resto della pagina diventa grigio-azzurro. Il tema scuro non è cambiato (la direzione "Fresh Clarity" non ne prevede uno).
+
+---
+
 ## 2026-09-08
 
 ### Email inviate da Hinthial: invito contatto, cancellazione/reset account

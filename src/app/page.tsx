@@ -73,7 +73,7 @@ export default async function Home() {
         {user ? (
           <Link
             href="/dashboard"
-            className="shrink-0 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+            className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
           >
             Vai alla dashboard
           </Link>
@@ -87,7 +87,7 @@ export default async function Home() {
             </Link>
             <Link
               href="/register"
-              className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+              className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
             >
               Registrati
             </Link>
@@ -112,7 +112,7 @@ export default async function Home() {
           {user ? null : (
             <Link
               href="/register"
-              className="rounded-md bg-brand px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-hover"
+              className="rounded-xl bg-brand px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-hover"
             >
               Crea account
             </Link>
@@ -189,7 +189,7 @@ export default async function Home() {
             </p>
             <Link
               href="/register"
-              className="rounded-md bg-brand px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-hover"
+              className="rounded-xl bg-brand px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-hover"
             >
               Inizia subito
             </Link>

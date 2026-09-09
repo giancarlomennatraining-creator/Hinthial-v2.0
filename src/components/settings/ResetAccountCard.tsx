@@ -5,6 +5,7 @@ import { createClient } from "@/lib/db/supabase/client";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { wipeVault } from "@/domain/danger-zone/repository";
 import { sendAccountResetConfirmationEmail } from "@/lib/account/actions";
+import { CheckCircleIcon } from "@/components/icons/nav-icons";
 
 const CONFIRM_PHRASE = "REIMPOSTA TUTTO";
 
@@ -84,8 +85,9 @@ export function ResetAccountCard({ userId, masterKey }: { userId: string; master
       </div>
 
       {done ? (
-        <p className="text-sm font-medium text-red-700 dark:text-red-400">
-          ✅ Il vault è stato svuotato. Le categorie predefinite sono di nuovo disponibili.
+        <p className="flex items-start gap-1.5 text-sm font-medium text-red-700 dark:text-red-400">
+          <CheckCircleIcon width={16} height={16} className="mt-0.5 shrink-0" />
+          Il vault è stato svuotato. Le categorie predefinite sono di nuovo disponibili.
         </p>
       ) : (
         <button
@@ -107,7 +109,7 @@ export function ResetAccountCard({ userId, masterKey }: { userId: string; master
             aria-modal="true"
             aria-label="Conferma reimpostazione account"
             onClick={(e) => e.stopPropagation()}
-            className="flex w-full max-w-sm flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
+            className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
           >
             <div>
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">Sei sicuro?</h3>

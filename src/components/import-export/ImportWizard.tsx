@@ -240,7 +240,7 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
             <button
               type="button"
               onClick={handleDownloadTemplate}
-              className="w-fit rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+              className="w-fit rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
             >
               ⬇️ Scarica template .csv
             </button>
@@ -329,7 +329,7 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
               type="button"
               onClick={handleImport}
               disabled={busy || readyCount === 0}
-              className="w-fit rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+              className="w-fit rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
             >
               {busy ? "Importazione…" : `Importa ${readyCount} ${readyCount === 1 ? "riga" : "righe"}`}
             </button>
@@ -548,7 +548,7 @@ function ImportResultView({
       <div className="flex flex-wrap gap-3">
         <Link
           href={destination.href}
-          className="w-fit rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          className="w-fit rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
         >
           {destination.label}
         </Link>
