@@ -116,6 +116,7 @@ describe("mockAIProvider.search", () => {
           id: "capsule-audio",
           title: "Per Maria",
           content: "un pensiero",
+          contentStyle: "simple",
           attachments: [
             {
               id: "att-1",
@@ -167,6 +168,7 @@ describe("mockAIProvider.retrieve", () => {
           id: "capsule-1",
           title: "Per Maria",
           content: "un pensiero",
+          contentStyle: "simple",
           attachments: [],
           linkedDocuments: [
             {

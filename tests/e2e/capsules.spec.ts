@@ -89,16 +89,20 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await page.getByRole("button", { name: "+ Aggiungi" }).click();
   await page.locator("#create-contact").selectOption({ label: "Maria Rossi" });
   await page.getByRole("button", { name: "+ Aggiungi" }).click();
-  await expect(page.getByText("👤 Maria Rossi")).toBeVisible();
-  await expect(page.getByText("👤 Luca Bianchi")).toBeVisible();
+  await expect(page.getByText("Maria Rossi")).toBeVisible();
+  await expect(page.getByText("Luca Bianchi")).toBeVisible();
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 2 di 3")).toBeVisible();
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 3 di 3")).toBeVisible();
 
-  await page.getByLabel("Contenuto").fill("Un pensiero per te.");
+  await page.getByLabel("Il tuo messaggio").fill("Un pensiero per te.");
   // Un allegato diretto (non preso dall'Archivio) è ammesso solo se
-  // audio/video (v. CreateCapsuleForm) --- niente più upload libero.
+  // audio/video (v. CreateCapsuleForm) --- niente più upload libero. Gli
+  // strumenti per aggiungerlo sono un'aggiunta secondaria e discreta (v.
+  // "capsule come lettere"): nascosti finché non si clicca "Aggiungi un
+  // allegato".
+  await page.getByRole("button", { name: "Aggiungi un allegato" }).click();
   await page.setInputFiles("#mediaFiles", {
     name: "messaggio.mp3",
     mimeType: "audio/mpeg",
@@ -153,11 +157,15 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   // Passo 3 --- contenuto testuale e allegati: si rimuove quello esistente
   // e se ne carica uno nuovo, esattamente come in creazione.
   await expect(page.getByText("Passo 3 di 3")).toBeVisible();
-  await page.getByLabel("Contenuto").fill("Un pensiero aggiornato per te.");
+  await page.getByLabel("Il tuo messaggio").fill("Un pensiero aggiornato per te.");
   const removeExistingAttachmentButton = page.getByRole("button", { name: "Rimuovi messaggio.mp3" });
   await expect(removeExistingAttachmentButton).toBeVisible();
   await removeExistingAttachmentButton.click();
   await expect(removeExistingAttachmentButton).not.toBeVisible();
+  // Gli strumenti per aggiungerne uno nuovo sono un'aggiunta secondaria
+  // e discreta (v. "capsule come lettere"): nascosti finché non si
+  // clicca "Aggiungi un allegato".
+  await page.getByRole("button", { name: "Aggiungi un allegato" }).click();
   const newFileContent = `messaggio aggiornato --- ${Date.now()}`;
   await page.setInputFiles("#mediaFiles", {
     name: "messaggio-nuovo.mp3",

@@ -40,6 +40,10 @@ test("registra un messaggio audio e lo allega a una capsula", async ({ page }) =
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 3 di 3")).toBeVisible();
 
+  // Gli strumenti di registrazione sono un'aggiunta secondaria e
+  // discreta (v. "capsule come lettere"): nascosti finché non si clicca
+  // "Aggiungi un allegato".
+  await page.getByRole("button", { name: "Aggiungi un allegato" }).click();
   await page.getByRole("button", { name: "🎤 Registra audio" }).click();
   await expect(page.getByText(/Registrazione · 0:0/)).toBeVisible({ timeout: 10_000 });
   await page.waitForTimeout(1500);

@@ -31,6 +31,8 @@
   --font-sans: var(--font-work-sans);
   --font-heading: var(--font-manrope);
   --font-mono: var(--font-geist-mono);
+  /* Stile "a mano" opzionale per il testo di una capsula --- v. layout.tsx. */
+  --font-caveat: var(--font-caveat);
 }
 
 .dark {

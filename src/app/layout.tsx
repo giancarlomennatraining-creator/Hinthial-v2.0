@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Baloo_2, Geist_Mono, Manrope, Work_Sans } from "next/font/google";
+import { Baloo_2, Caveat, Geist_Mono, Manrope, Work_Sans } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
@@ -66,6 +66,19 @@ const workSans = Work_Sans({
   weight: ["400", "500", "600"],
 });
 
+/**
+ * Caveat --- lo stile "a mano" opzionale per il testo di una capsula
+ * (v. CreateCapsuleForm/EditCapsuleForm/CapsulePreview): chi scrive può
+ * scegliere questo font al posto di Work Sans per il proprio messaggio,
+ * mai imposto. Solo il peso 600: è l'unico usato (niente normale/400,
+ * che il browser sostituirebbe comunque col peso più vicino caricato).
+ */
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  weight: ["600"],
+});
+
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -87,7 +100,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="it"
       suppressHydrationWarning
-      className={`${manrope.variable} ${workSans.variable} ${geistMono.variable} ${baloo2.variable} h-full antialiased`}
+      className={`${manrope.variable} ${workSans.variable} ${geistMono.variable} ${baloo2.variable} ${caveat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Script id="theme-init" strategy="beforeInteractive">

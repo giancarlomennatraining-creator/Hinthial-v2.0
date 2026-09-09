@@ -12,6 +12,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-09
 
+### Anteprima capsula più larga
+
+**Cosa fa:** il popup "Così la vedrà chi la riceve" è ora più largo su schermi ampi --- su mobile resta invariato (si adatta già alla larghezza dello schermo).
+
+**Note tecniche:** `max-w-lg` (512px) → `max-w-3xl` (768px) → `max-w-4xl` (896px, su richiesta) in `CapsulePreview.tsx` --- solo il limite massimo, il `w-full` e il padding del contenitore esterno che già gestiscono il responsive non sono cambiati.
+
+### Le capsule scritte come una lettera, non un form
+
+**Cosa fa:** scrivere e modificare una capsula ha ora il tono di una lettera, non di un modulo da compilare --- dal mockup condiviso con l'utente ("capsule come lettere"). I destinatari sono mostrati come si indirizzerebbe una busta (iniziali colorate + nome, sotto l'etichetta "A"), la data di apertura è una frase ("Si aprirà il ...") invece di un campo anonimo, e il messaggio si scrive in una vera superficie di carta calda --- non più una piccola textarea grigia identica a ogni altro campo --- con un interruttore "Scrittura semplice / A mano" che passa il testo a un font manoscritto (Caveat): una scelta di chi scrive, salvata con la capsula, così chi la riceve la vede esattamente come l'ha lasciata. Gli allegati audio/video sono ora un'aggiunta discreta dietro "+ Aggiungi un allegato", non un passo alla pari con lo scrivere. L'anteprima ("Così la vedrà chi la riceve") mostra il messaggio nella stessa carta calda, nello stesso font scelto.
+
+**Note tecniche:** nuovo campo `contentStyle` ("simple" | "handwritten") in `CapsulePayload`/`CapsuleListItem`/`CapsuleInput`/`CapsuleEditInput` (`domain/capsules/types.ts`, `repository.ts`) --- come ogni altro campo del payload, cifrato insieme al resto, mai una colonna in chiaro; le capsule create prima che esistesse tornano "simple" di default. Nuovi componenti condivisi tra creazione e modifica: `CapsuleOpenAtField` (un `<input type="date">` reale, solo senza il riquadro attorno --- stesso nome accessibile "Data di apertura" di sempre) e `CapsuleLetterEditor` (la superficie di scrittura + l'interruttore di stile). `ContactPicker` mostra ora i destinatari già scelti con iniziali su un cerchio colorato invece dell'emoji 👤. Font Caveat caricato via `next/font/google` (solo peso 600, l'unico usato). Il campo "Contenuto" è stato rinominato "Il tuo messaggio" (nome accessibile incluso --- aggiornate le e2e che lo referenziavano per nome); gli allegati, ora dietro un rivelatore, hanno richiesto lo stesso aggiornamento in 4 test e2e che ci interagivano direttamente.
+
 ### Hinthial installabile come app (PWA)
 
 **Cosa fa:** Hinthial può ora essere installata sul dispositivo (icona sulla home/nel launcher, si apre senza la barra degli indirizzi del browser) --- su Android/Chrome/Edge il browser propone da sé l'installazione; su iOS/Safari va aggiunta a mano (Condividi -> "Aggiungi alla schermata Home", Safari non offre un prompt automatico). L'icona è ricavata dal logo Hinthial (anche la favicon nella tab del browser, che fino a oggi mostrava ancora il triangolo segnaposto di default di Next.js, mai sostituito).

@@ -17,6 +17,9 @@ export type CapsuleStatus = "draft" | "ready" | "shared";
 /** Solo "manuale" per l'MVP --- pensato per essere ampliato quando arriverà il Dead Man's Switch (FASE 13). */
 export type CapsuleAccessCondition = "manual";
 
+/** Come viene mostrato il testo del messaggio --- una scelta di chi scrive, mai imposta (v. CreateCapsuleForm/EditCapsuleForm/CapsulePreview). */
+export type CapsuleContentStyle = "simple" | "handwritten";
+
 /**
  * A file that belongs to this capsule alone --- own Document Key, own
  * blob in Storage, no dependency on anything else. Either uploaded/
@@ -41,6 +44,8 @@ export interface CapsuleListItem {
   /** Decrypted client-side for display. */
   title: string;
   content: string;
+  /** "simple" per le capsule create prima che questa scelta esistesse. */
+  contentStyle: CapsuleContentStyle;
   attachments: CapsuleAttachment[];
   /**
    * Existing Archivio entries referenced by id, only while the capsule
@@ -80,6 +85,7 @@ export interface CapsuleListItem {
 export interface CapsuleInput {
   title: string;
   content: string;
+  contentStyle: CapsuleContentStyle;
   relatedContactIds: string[];
   files: File[];
   linkedDocumentIds: string[];
@@ -96,6 +102,7 @@ export interface CapsuleInput {
 export interface CapsuleEditInput {
   title: string;
   content: string;
+  contentStyle: CapsuleContentStyle;
   relatedContactIds: string[];
   linkedDocumentIds: string[];
   newFiles: File[];

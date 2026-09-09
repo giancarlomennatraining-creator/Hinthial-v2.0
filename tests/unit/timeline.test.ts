@@ -56,6 +56,7 @@ describe("buildTimeline", () => {
           id: "capsule-1",
           title: "Per Maria",
           content: "",
+          contentStyle: "simple",
           attachments: [],
           linkedDocuments: [],
           relatedContacts: [],

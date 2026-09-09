@@ -102,6 +102,10 @@ test("trascrizione di un allegato audio in una capsula: si scrive a mano e resta
   await page.getByRole("button", { name: "Avanti" }).click();
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 3 di 3")).toBeVisible();
+  // Gli strumenti per aggiungere un allegato sono un'aggiunta secondaria
+  // e discreta (v. "capsule come lettere"): nascosti finché non si
+  // clicca "Aggiungi un allegato".
+  await page.getByRole("button", { name: "Aggiungi un allegato" }).click();
   await page.setInputFiles("#mediaFiles", {
     name: "messaggio.mp3",
     mimeType: "audio/mpeg",

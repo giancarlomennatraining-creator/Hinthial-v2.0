@@ -113,6 +113,7 @@ describe("isOnboardingComplete", () => {
             id: "cap1",
             title: "Per Maria",
             content: "",
+            contentStyle: "simple",
             attachments: [],
             linkedDocuments: [],
             relatedContacts: [

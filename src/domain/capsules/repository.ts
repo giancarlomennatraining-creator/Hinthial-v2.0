@@ -23,6 +23,7 @@ import { logAuditEvent } from "@/lib/audit/log-event";
 import type {
   CapsuleAccessCondition,
   CapsuleAttachment,
+  CapsuleContentStyle,
   CapsuleEditInput,
   CapsuleInput,
   CapsuleListItem,
@@ -45,6 +46,8 @@ type CapsuleRow = {
 interface CapsulePayload {
   title: string;
   content: string;
+  /** Assente nelle capsule create prima che questa scelta esistesse --- v. decryptPayload. */
+  contentStyle: CapsuleContentStyle;
   attachments: CapsuleAttachment[];
   /** Ids of existing Documenti vault entries linked as attachments --- resolved via getDocumentsByIds. */
   linkedDocumentIds: string[];
@@ -73,6 +76,7 @@ async function decryptPayload(masterKey: CryptoKey, row: CapsuleRow): Promise<Ca
   return {
     title: payload.title ?? "",
     content: payload.content ?? "",
+    contentStyle: payload.contentStyle ?? "simple",
     attachments: payload.attachments ?? [],
     linkedDocumentIds: payload.linkedDocumentIds ?? [],
     relatedContactIds: payload.relatedContactIds ?? [],
@@ -123,6 +127,7 @@ export async function listCapsules(
       id: row.id,
       title: payload.title,
       content: payload.content,
+      contentStyle: payload.contentStyle,
       attachments: payload.attachments,
       // Ids whose document/contact was since deleted resolve to nothing here --- filtered out on purpose.
       linkedDocuments: payload.linkedDocumentIds
@@ -215,6 +220,7 @@ export async function createCapsule(
   const payload: CapsulePayload = {
     title: input.title,
     content: input.content,
+    contentStyle: input.contentStyle,
     attachments,
     linkedDocumentIds: input.linkedDocumentIds,
     relatedContactIds: input.relatedContactIds,
@@ -279,6 +285,7 @@ export async function updateCapsule(
   const payload: CapsulePayload = {
     title: input.title,
     content: input.content,
+    contentStyle: input.contentStyle,
     attachments: [...keptAttachments, ...uploadedAttachments],
     linkedDocumentIds: input.linkedDocumentIds,
     relatedContactIds: input.relatedContactIds,
@@ -329,7 +336,7 @@ export async function closeCapsule(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
   ownerId: string,
-  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "attachments" | "linkedDocuments" | "relatedContacts" | "openAt">,
+  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "attachments" | "linkedDocuments" | "relatedContacts" | "openAt">,
 ): Promise<void> {
   const newAttachments: CapsuleAttachment[] = [];
   try {
@@ -365,6 +372,7 @@ export async function closeCapsule(
   const payload: CapsulePayload = {
     title: capsule.title,
     content: capsule.content,
+    contentStyle: capsule.contentStyle,
     attachments: [...capsule.attachments, ...newAttachments],
     // Tutto ciò che era un riferimento è ora una copia propria: la capsula chiusa non ne ha più bisogno.
     linkedDocumentIds: [],
@@ -422,7 +430,7 @@ export async function updateCapsuleAttachmentTranscript(
   masterKey: CryptoKey,
   capsule: Pick<
     CapsuleListItem,
-    "id" | "title" | "content" | "attachments" | "linkedDocuments" | "relatedContacts" | "openAt"
+    "id" | "title" | "content" | "contentStyle" | "attachments" | "linkedDocuments" | "relatedContacts" | "openAt"
   >,
   attachmentId: string,
   transcript: string,
@@ -435,6 +443,7 @@ export async function updateCapsuleAttachmentTranscript(
   const payload: CapsulePayload = {
     title: capsule.title,
     content: capsule.content,
+    contentStyle: capsule.contentStyle,
     attachments,
     linkedDocumentIds: capsule.linkedDocuments.map((d) => d.id),
     relatedContactIds: capsule.relatedContacts.map((c) => c.id),

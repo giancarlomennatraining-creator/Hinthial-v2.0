@@ -10,10 +10,13 @@ import { listDocuments } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachmentPicker";
 import { ContactPicker } from "@/components/capsules/ContactPicker";
+import { CapsuleOpenAtField } from "@/components/capsules/CapsuleOpenAtField";
+import { CapsuleLetterEditor } from "@/components/capsules/CapsuleLetterEditor";
 import { AudioVideoRecorder } from "@/components/media/AudioVideoRecorder";
 import type { TrustedContactListItem } from "@/domain/contacts/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
+import type { CapsuleContentStyle } from "@/domain/capsules/types";
 
 type Step = 1 | 2 | 3;
 
@@ -57,6 +60,8 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   );
 
   const [content, setContent] = useState("");
+  const [contentStyle, setContentStyle] = useState<CapsuleContentStyle>("simple");
+  const [showAttachmentTools, setShowAttachmentTools] = useState(false);
   const [pendingLinkedDocuments, setPendingLinkedDocuments] = useState<DocumentListItem[]>([]);
   const [recordedFiles, setRecordedFiles] = useState<File[]>([]);
 
@@ -130,6 +135,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
       await createCapsule(supabase, masterKey, user.id, {
         title: title.trim(),
         content: content.trim(),
+        contentStyle,
         relatedContactIds: pendingRelatedContacts.map((c) => c.id),
         files: recordedFiles,
         linkedDocumentIds: pendingLinkedDocuments.map((d) => d.id),
@@ -174,35 +180,19 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
         >
           {step === 1 ? (
             <>
-              <div className="flex flex-wrap gap-3">
-                <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
-                  <label htmlFor="title" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                    Titolo
-                  </label>
-                  <input
-                    id="title"
-                    type="text"
-                    required
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="es. Per Maria"
-                    className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="openAt" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                    Data di apertura
-                  </label>
-                  <input
-                    id="openAt"
-                    type="date"
-                    required
-                    value={openAt}
-                    onChange={(e) => setOpenAt(e.target.value)}
-                    className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                  />
-                </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="title" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  Titolo
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="es. Per Maria"
+                  className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                />
               </div>
 
               <ContactPicker
@@ -211,6 +201,8 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
                 selected={pendingRelatedContacts}
                 onChange={setPendingRelatedContacts}
               />
+
+              <CapsuleOpenAtField id="openAt" value={openAt} onChange={setOpenAt} />
 
               {error ? (
                 <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -275,58 +267,70 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
             </>
           ) : (
             <>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="content" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                  Contenuto
-                </label>
-                <textarea
-                  id="content"
-                  rows={3}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Cosa vuoi lasciare scritto..."
-                  className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                />
-              </div>
-
-              <AudioVideoRecorder
-                onRecorded={(file) => setRecordedFiles((prev) => [...prev, file])}
-                confirmLabel="Aggiungi alla capsula"
+              <CapsuleLetterEditor
+                id="content"
+                content={content}
+                onContentChange={setContent}
+                contentStyle={contentStyle}
+                onContentStyleChange={setContentStyle}
+                placeholder="Cosa vuoi lasciare scritto..."
               />
 
-              <div className="flex flex-col gap-1">
-                <label htmlFor="mediaFiles" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                  ...o carica un audio/video già pronto (opzionale)
-                </label>
-                <input
-                  id="mediaFiles"
-                  type="file"
-                  accept="audio/*,video/*"
-                  multiple
-                  onChange={handleMediaFileChange}
-                  className="text-sm text-zinc-700 dark:text-zinc-300"
-                />
+              {/* Allegati audio/video --- un'aggiunta secondaria e discreta,
+                  non un passo alla pari con scrivere il messaggio (v.
+                  richiesta utente, "capsule come lettere"). */}
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAttachmentTools((v) => !v)}
+                  className="flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 5v14" />
+                    <path d="M5 12h14" />
+                  </svg>
+                  Aggiungi un allegato
+                </button>
+
+                {recordedFiles.map((file, i) => (
+                  <span
+                    key={`${file.name}-${i}`}
+                    className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white py-1 pl-3 pr-1 text-xs text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+                  >
+                    {file.type.startsWith("video/") ? "🎥" : "🎤"} {file.name}
+                    <button
+                      type="button"
+                      onClick={() => setRecordedFiles((prev) => prev.filter((_, j) => j !== i))}
+                      aria-label={`Rimuovi ${file.name}`}
+                      className="rounded-full px-1.5 py-0.5 text-zinc-500 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
               </div>
 
-              {recordedFiles.length > 0 ? (
-                <ul className="flex flex-wrap gap-2">
-                  {recordedFiles.map((file, i) => (
-                    <li
-                      key={`${file.name}-${i}`}
-                      className="flex items-center gap-2 rounded-full bg-zinc-100 py-1 pl-3 pr-1 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
-                    >
-                      {file.type.startsWith("video/") ? "🎥" : "🎤"} {file.name}
-                      <button
-                        type="button"
-                        onClick={() => setRecordedFiles((prev) => prev.filter((_, j) => j !== i))}
-                        aria-label={`Rimuovi ${file.name}`}
-                        className="rounded-full px-1.5 py-0.5 text-zinc-500 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                      >
-                        ✕
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+              {showAttachmentTools ? (
+                <div className="flex flex-col gap-2 rounded-xl border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
+                  <AudioVideoRecorder
+                    onRecorded={(file) => setRecordedFiles((prev) => [...prev, file])}
+                    confirmLabel="Aggiungi alla capsula"
+                  />
+
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="mediaFiles" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                      ...o carica un audio/video già pronto (opzionale)
+                    </label>
+                    <input
+                      id="mediaFiles"
+                      type="file"
+                      accept="audio/*,video/*"
+                      multiple
+                      onChange={handleMediaFileChange}
+                      className="text-sm text-zinc-700 dark:text-zinc-300"
+                    />
+                  </div>
+                </div>
               ) : null}
 
               {error ? (

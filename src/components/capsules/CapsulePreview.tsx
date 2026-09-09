@@ -9,6 +9,10 @@ import { contentKindFor, CONTENT_KIND_ICON, hasInlinePlayer } from "@/lib/conten
 import type { CapsuleAttachment, CapsuleListItem } from "@/domain/capsules/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+}
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -152,7 +156,7 @@ export function CapsulePreview({
         aria-modal="true"
         aria-label="Anteprima capsula"
         onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-lg flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
+        className="flex w-full max-w-4xl flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
@@ -179,11 +183,30 @@ export function CapsulePreview({
           </p>
         ) : null}
 
-        {capsule.content ? (
-          <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">{capsule.content}</p>
-        ) : (
-          <p className="text-sm text-zinc-400 dark:text-zinc-600">Nessun testo scritto.</p>
-        )}
+        {/* La "carta" della lettera --- stesso fondo caldo dello scrivere
+            (v. CapsuleLetterEditor), stesso font se chi scrive ha scelto
+            "A mano" (v. CapsuleContentStyle): così la vedrà davvero chi
+            la riceve. */}
+        <div className="rounded-2xl border border-[#EDE1C4] bg-[#FBF6EA] px-6 py-5">
+          {capsule.openAt ? (
+            <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#6B5730]">
+              Si aprirà il {formatDate(capsule.openAt)}
+            </p>
+          ) : null}
+          {capsule.content ? (
+            <p
+              className={
+                capsule.contentStyle === "handwritten"
+                  ? "whitespace-pre-wrap font-caveat text-[22px] leading-relaxed text-[#3B331F]"
+                  : "whitespace-pre-wrap text-sm leading-relaxed text-[#3B331F]"
+              }
+            >
+              {capsule.content}
+            </p>
+          ) : (
+            <p className="text-sm text-[#8F7A4A]">Nessun testo scritto.</p>
+          )}
+        </div>
 
         {items.length > 0 ? (
           <ul className="flex flex-col gap-2">

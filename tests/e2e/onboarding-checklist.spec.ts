@@ -103,12 +103,12 @@ test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (ness
   await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
   await page.locator("#create-contact").selectOption({ label: "Maria Rossi" });
   await page.getByRole("button", { name: "+ Aggiungi" }).click();
-  await expect(page.getByText("👤 Maria Rossi")).toBeVisible();
+  await expect(page.getByText("Maria Rossi")).toBeVisible();
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 2 di 3")).toBeVisible();
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 3 di 3")).toBeVisible();
-  await page.getByLabel("Contenuto").fill("Un pensiero per te.");
+  await page.getByLabel("Il tuo messaggio").fill("Un pensiero per te.");
   await page.getByRole("button", { name: "Crea capsula" }).click();
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
   await expect(page.getByText("Capsula creata.")).toBeVisible();
