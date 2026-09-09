@@ -117,7 +117,7 @@ export function SetupMasterKeyForm() {
     return (
       <div className="flex max-w-lg flex-col gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">
+          <h1 className="text-xl font-semibold text-brand">
             Salva la tua recovery key
           </h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
@@ -223,7 +223,7 @@ export function SetupMasterKeyForm() {
   return (
     <div className="flex max-w-sm flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">
+        <h1 className="text-xl font-semibold text-brand">
           Configura la cifratura
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">

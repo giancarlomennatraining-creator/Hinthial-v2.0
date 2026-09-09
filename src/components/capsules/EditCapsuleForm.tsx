@@ -177,7 +177,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
   }
 
   return (
-    <div className="flex max-w-2xl flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <div>
         <Link
           href="/capsules"
@@ -185,7 +185,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
         >
           ← Torna alle capsule
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
           Modifica capsula
         </h1>
         {!loading && capsule && capsule.status === "draft" ? (

@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { TextField } from "@/components/ui/TextField";
+import { UnlockedIcon } from "@/components/icons/nav-icons";
 
 export function UnlockMasterKeyForm() {
   const { unlockWithPassword, unlockWithRecoveryKey } = useMasterKey();
@@ -38,7 +39,7 @@ export function UnlockMasterKeyForm() {
   return (
     <div className="flex max-w-sm flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">Sblocca</h1>
+        <h1 className="text-xl font-semibold text-brand">Sblocca</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           {useRecoveryKey
             ? "Inserisci la tua recovery key."
@@ -77,8 +78,9 @@ export function UnlockMasterKeyForm() {
         <button
           type="submit"
           disabled={busy}
-          className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+          className="flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
         >
+          <UnlockedIcon width={16} height={16} />
           {busy ? "Sblocco…" : "Sblocca"}
         </button>
       </form>

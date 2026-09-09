@@ -117,12 +117,12 @@ export function CategoryIcon(props: IconProps) {
   );
 }
 
-/** Scheda "Informazioni utente" in Impostazioni. */
+/** Scheda "Informazioni utente" in Impostazioni --- testa e spalle allargate per riempire il riquadro come le altre icone della pagina (v. richiesta utente: prima appariva più piccola delle altre). */
 export function UserIcon(props: IconProps) {
   return (
     <svg {...baseProps(props)}>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" />
+      <circle cx="12" cy="7" r="5" />
+      <path d="M3 21c0-5 4-9 9-9s9 4 9 9" />
     </svg>
   );
 }
@@ -133,6 +133,16 @@ export function SecurityIcon(props: IconProps) {
     <svg {...baseProps(props)}>
       <rect x="5" y="10" width="14" height="10" rx="2" />
       <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+
+/** Bottone "Sblocca" (v. UnlockMasterKeyForm) --- lo stesso lucchetto di SecurityIcon, ma aperto: il gancio si stacca dal corpo invece di richiuderlo. */
+export function UnlockedIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <rect x="5" y="10" width="14" height="10" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 7.4-2.3" />
     </svg>
   );
 }

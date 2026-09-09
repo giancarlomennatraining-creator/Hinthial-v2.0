@@ -12,6 +12,30 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-09
 
+### Titolo di ogni pagina: stesso carattere del logo, colore brand
+
+**Cosa fa:** il titolo principale di ogni pagina (es. "Capsule", "Archivio", "Ciao, ..."), prima nero e in un font generico, usa ora lo stesso carattere della scritta "Hinthial" nel logo (Baloo 2, identificato a occhio nella conversazione precedente) ed è del blu del brand, invece di nero --- un'estensione visiva del logo stesso. I titoli più piccoli (dentro le card, le sezioni) restano su Manrope, invariati.
+
+**Note tecniche:** Baloo 2 caricato via `next/font/google` in `layout.tsx`, applicato solo a `h1` in `globals.css` (staccato dalla regola `h2`-`h6`, che resta Manrope). Il colore non può essere impostato da quella stessa regola CSS: ogni `<h1>` ha già una classe Tailwind di colore sul proprio elemento (`text-zinc-950 dark:text-zinc-50`), e una classe vince sempre su un semplice selettore d'elemento come `h1 { color: ... }` --- corretto quindi cambiando quella classe in `text-brand`, direttamente su ognuno dei 29 file che hanno un `<h1>` (stesso identico frammento di classe, letterale, ovunque). Esclusa la hero della homepage (ha già un accento blu solo su una parola, via uno `<span>` --- l'intero titolo diventerebbe blu, perdendo quel contrasto) e il titolo del kit di recovery stampabile in `SetupMasterKeyForm` (colori fissi per la stampa, non seguiva già la regola dark/chiaro). Non escluse le due intestazioni di errore/successo in "Verifica account" (`AlertTriangleIcon`/`CheckCircleIcon` restano nel proprio rosso/verde, solo il titolo sopra diventa blu) --- segnalato all'utente come possibile eccezione da rivedere.
+
+### Pagine di inserimento/modifica a piena larghezza
+
+**Cosa fa:** le pagine di inserimento e modifica di Archivio, Asset, Contatti fiduciari, Scadenze e Capsule usano ora tutta la larghezza disponibile della pagina, invece di restare compresse in una colonna centrale --- il comportamento responsive (a schermi stretti i campi vanno a capo esattamente come prima) resta inalterato.
+
+**Note tecniche:** rimosso `max-w-2xl` dal contenitore esterno in tutti e 9 i file (stesso identico `<div className="flex max-w-2xl flex-col gap-6">` ripetuto ovunque). I campi dentro non hanno richiesto altre modifiche per sfruttare lo spazio: sono già organizzati con `flex-wrap`/`flex-1` (i campi "Nome"/"Titolo" si allargano, gli altri restano alla loro larghezza naturale, e a schermi stretti vanno semplicemente a capo, come sempre) --- rimuovere solo il limite massimo era sufficiente. Aggiunto anche `w-full` ai campi Tag/Note in `DocumentMetadataFields` (condiviso da creazione e modifica in Archivio), per coerenza esplicita anche fuori da un contesto flex che già li allargava implicitamente.
+
+### Icona "Informazioni utente" allineata alle altre in Impostazioni
+
+**Cosa fa:** l'icona della scheda "Informazioni utente" in Impostazioni non appare più più piccola delle altre.
+
+**Note tecniche:** `UserIcon` (`icons/nav-icons.tsx`) --- stessa dimensione di riquadro (`width`/`height` già uguali per tutte le icone di Impostazioni), ma la sua geometria (testa+spalle sottili) riempiva meno del riquadro rispetto a icone più "piene" come `SecurityIcon`. Testa e spalle allargate per occupare lo stesso spessore visivo.
+
+### Icona lucchetto aperto sul bottone "Sblocca"
+
+**Cosa fa:** il bottone "Sblocca" (master password o recovery key) ha ora un'icona a forma di lucchetto aperto.
+
+**Note tecniche:** nuova `UnlockedIcon` in `icons/nav-icons.tsx` --- stesso lucchetto di `SecurityIcon` (usata in Impostazioni > Sicurezza e nel badge zero-knowledge della homepage), ma con il gancio staccato dal corpo invece di richiuderlo.
+
 ### Identità visiva "Fresh Clarity" su homepage e schermate di autenticazione
 
 **Cosa fa:** la homepage pubblica e le schermate di login, registrazione, verifica account (riuscita o no) e password dimenticata adottano lo stesso stile delle direzioni viste nel mockup (v. "FreshHero"): sfondo grigio-azzurro con una "bolla" mint decorativa dietro l'hero, badge "Zero-knowledge davvero" con icona lucchetto sopra il titolo, bottone principale con freccia e ombra colorata, card più arrotondate con ombra leggera. Le pagine di login/registrazione/verifica ora vivono dentro una vera card bianca (prima galleggiavano nude sullo sfondo); "Account verificato"/"Verifica non riuscita" hanno un'icona di stato (spunta verde/triangolo di attenzione), come altrove nell'app.

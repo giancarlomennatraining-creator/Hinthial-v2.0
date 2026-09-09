@@ -71,7 +71,7 @@ export function EditAssetForm({ masterKey, assetId }: { masterKey: CryptoKey; as
   }
 
   return (
-    <div className="flex max-w-2xl flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <div>
         <Link
           href="/assets"
@@ -79,7 +79,7 @@ export function EditAssetForm({ masterKey, assetId }: { masterKey: CryptoKey; as
         >
           ← Torna agli asset
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
           Modifica asset
         </h1>
       </div>

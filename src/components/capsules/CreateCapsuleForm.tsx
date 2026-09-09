@@ -146,7 +146,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const activeContacts = contacts.filter((c) => c.status === "active");
 
   return (
-    <div className="flex max-w-2xl flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <div>
         <Link
           href="/capsules"
@@ -154,7 +154,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
         >
           ← Torna alle capsule
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
           Nuova capsula
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">

@@ -9,7 +9,7 @@ export default async function CheckEmailPage({
 
   return (
     <div className="flex flex-col items-center gap-4 text-center">
-      <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+      <h1 className="text-xl font-semibold tracking-tight text-brand">
         Controlla la tua email
       </h1>
       <p className="max-w-sm text-sm text-zinc-500 dark:text-zinc-400">

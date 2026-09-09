@@ -356,7 +356,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+          <h1 className="text-2xl font-semibold tracking-tight text-brand">
             Archivio
           </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">

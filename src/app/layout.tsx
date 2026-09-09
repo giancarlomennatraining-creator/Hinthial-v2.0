@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Manrope, Work_Sans } from "next/font/google";
+import { Baloo_2, Geist_Mono, Manrope, Work_Sans } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
@@ -33,6 +33,20 @@ const manrope = Manrope({
   weight: ["500", "700", "800"],
 });
 
+/*
+ * Baloo 2 --- lo stesso carattere (identificato a occhio, l'SVG del logo
+ * è un'immagine raster, non testo vero) usato per la scritta "Hinthial"
+ * nel logo (v. public/brand/logo-lockup.svg): riservato al solo titolo
+ * di pagina (<h1>, es. "Capsule", "Ciao, ...") per farlo risaltare come
+ * un'estensione del logo --- Manrope resta per i titoli più piccoli
+ * (card, sezioni).
+ */
+const baloo2 = Baloo_2({
+  variable: "--font-baloo",
+  subsets: ["latin"],
+  weight: ["700", "800"],
+});
+
 const workSans = Work_Sans({
   variable: "--font-work-sans",
   subsets: ["latin"],
@@ -55,7 +69,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="it"
       suppressHydrationWarning
-      className={`${manrope.variable} ${workSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${manrope.variable} ${workSans.variable} ${geistMono.variable} ${baloo2.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Script id="theme-init" strategy="beforeInteractive">

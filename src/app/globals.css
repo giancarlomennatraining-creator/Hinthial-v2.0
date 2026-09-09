@@ -44,9 +44,20 @@ body {
   font-family: var(--font-work-sans), Arial, Helvetica, sans-serif;
 }
 
-/* Titoli --- Manrope (grassetto), come nella direzione "Fresh Clarity",
-   applicato globalmente senza dover toccare ogni componente. */
-h1,
+/* Titolo di pagina (es. "Capsule", "Ciao, ...") --- Baloo 2, lo stesso
+   carattere della scritta "Hinthial" nel logo (v. layout.tsx), per
+   farlo risaltare come un'estensione del logo. Il colore (blu brand)
+   resta sulle singole classi Tailwind di ogni <h1> --- una regola qui
+   non lo imporrebbe: una classe (specificità maggiore di un semplice
+   selettore d'elemento) vince sempre su questa. */
+h1 {
+  font-family: var(--font-baloo), var(--font-manrope), var(--font-work-sans), Arial, Helvetica, sans-serif;
+  font-weight: 700;
+}
+
+/* Titoli più piccoli (card, sezioni) --- Manrope, come nella direzione
+   "Fresh Clarity", applicato globalmente senza dover toccare ogni
+   componente. */
 h2,
 h3,
 h4,
