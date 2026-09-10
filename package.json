@@ -18,6 +18,7 @@
     "reset-dev-data": "node scripts/reset-dev-data.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.125.0",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
     "client-zip": "^2.5.0",

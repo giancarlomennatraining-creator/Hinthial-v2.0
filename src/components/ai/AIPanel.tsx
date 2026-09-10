@@ -4,25 +4,32 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/db/supabase/client";
 import { buildAIContext } from "@/domain/ai/context";
 import { mockAIProvider } from "@/domain/ai/mock-provider";
+import { answerWithClaude } from "@/domain/ai/claude-provider";
+import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { SourceList, SuggestionsList } from "@/components/ai/SuggestionsList";
 import { useAIChat } from "@/components/ai/AIChatProvider";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type { AIContext, AISuggestion } from "@/domain/ai/types";
 
 /**
- * FASE 10 --- HINTHIAL AI v0: interfaccia AIProvider, retrieval locale,
- * provider mock (v. domain/ai/). Tutto qui gira sul dispositivo:
- * l'AIContext viene costruito decifrando i dati con la Master Key già
- * sbloccata, e mockAIProvider non fa nessuna chiamata di rete --- nessun
- * dato lascia il browser. Un vero provider esterno, con consenso
- * esplicito dell'utente, arriverà in FASE 11 (v. HINTHIAL_MVP.md,
- * sezione "HINTHIAL AI --- vincolo privacy").
+ * FASE 10/11 --- interfaccia AIProvider, retrieval locale, provider mock
+ * (v. domain/ai/mock-provider.ts) e --- con il consenso esplicito
+ * dell'utente qui sotto (v. AIProcessingConsentProvider) --- un vero
+ * provider esterno (v. domain/ai/claude-provider.ts, "Explicit AI
+ * processing", HINTHIAL_MVP.md sezione "HINTHIAL AI --- vincolo
+ * privacy"). Senza consenso, tutto gira sul dispositivo: l'AIContext
+ * viene costruito decifrando i dati con la Master Key già sbloccata, e
+ * mockAIProvider non fa nessuna chiamata di rete --- nessun dato lascia
+ * il browser. Con il consenso, solo la domanda e i pochi elementi
+ * pertinenti trovati localmente (mai l'intero vault) vengono inviati a
+ * Claude tramite la nostra route server-side.
  */
 export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const messagesRef = useRef<HTMLDivElement>(null);
 
   const { messages, addMessages, clear } = useAIChat();
+  const { consent, setConsent } = useAIProcessingConsent();
 
   const [context, setContext] = useState<AIContext | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,6 +37,8 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [asking, setAsking] = useState(false);
   const [question, setQuestion] = useState("");
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
+  const [consentBusy, setConsentBusy] = useState(false);
+  const [consentError, setConsentError] = useState(false);
 
   // Segue la conversazione verso il basso man mano che si allunga,
   // invece di lasciare l'utente sull'inizio di uno scroll interno.
@@ -57,7 +66,7 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
     refresh();
   }, [refresh]);
 
-  function handleAsk(event: React.FormEvent<HTMLFormElement>) {
+  async function handleAsk(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!context) return;
 
@@ -66,14 +75,36 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
 
     setAsking(true);
     try {
-      const result = mockAIProvider.answer(trimmed, context);
+      const result = consent
+        ? await answerWithClaude(trimmed, context)
+        : mockAIProvider.answer(trimmed, context);
       addMessages([
         { role: "user", text: trimmed },
         { role: "assistant", text: result.text, sources: result.sources },
       ]);
       setQuestion("");
+    } catch (err) {
+      addMessages([
+        { role: "user", text: trimmed },
+        {
+          role: "assistant",
+          text: err instanceof Error ? err.message : "Impossibile contattare l'assistente AI.",
+        },
+      ]);
     } finally {
       setAsking(false);
+    }
+  }
+
+  async function handleConsentChange(next: boolean) {
+    setConsentError(false);
+    setConsentBusy(true);
+    try {
+      await setConsent(next);
+    } catch {
+      setConsentError(true);
+    } finally {
+      setConsentBusy(false);
     }
   }
 
@@ -84,10 +115,43 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
           Assistente AI
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Fai domande sui tuoi dati. Nella prima versione risponde un motore locale, senza
-          intelligenza artificiale vera: le tue domande vengono elaborate qui, sul tuo
-          dispositivo --- nessun dato esce dal browser.
+          {consent
+            ? "Fai domande sui tuoi dati. Le risposte vengono generate da Claude (Anthropic): solo la tua domanda e i pochi elementi pertinenti trovati qui sul dispositivo vengono inviati --- mai l'intero archivio."
+            : "Fai domande sui tuoi dati. Risponde un motore locale, senza intelligenza artificiale vera: le tue domande vengono elaborate qui, sul tuo dispositivo --- nessun dato esce dal browser."}
         </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-zinc-900 dark:text-zinc-100">
+            {consent ? "Risposte reali attive" : "Risposte reali disattivate"}
+          </p>
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+            {consent
+              ? "Attivando questa opzione, ogni domanda e i suoi elementi pertinenti (non l'intero archivio) vengono inviati a Claude (Anthropic) per generare la risposta."
+              : "Attiva per ricevere risposte scritte da Claude (Anthropic) invece che dal solo motore locale --- solo la domanda e i pochi elementi pertinenti trovati qui vengono inviati, mai l'intero archivio."}
+          </p>
+          {consentError ? (
+            <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+              Preferenza non salvata.
+            </p>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={consent}
+          aria-label="Risposte reali dell'assistente AI"
+          disabled={consentBusy}
+          onClick={() => handleConsentChange(!consent)}
+          className={
+            consent
+              ? "shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+              : "shrink-0 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          }
+        >
+          {consent ? "Disattiva" : "Attiva risposte reali"}
+        </button>
       </div>
 
       {error ? (

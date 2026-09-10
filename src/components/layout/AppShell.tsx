@@ -11,6 +11,7 @@ import { NavOrientationProvider, useNavOrientation } from "@/components/layout/N
 import { BottomNavItemsProvider } from "@/components/layout/BottomNavItemsProvider";
 import { OnboardingWidgetVisibilityProvider } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 import { AIChatProvider } from "@/components/ai/AIChatProvider";
+import { AIProcessingConsentProvider } from "@/components/ai/AIProcessingConsentProvider";
 import { cn } from "@/lib/utils";
 import type { NavOrientation } from "@/lib/nav-orientation";
 import type { BottomNavItems } from "@/lib/bottom-nav";
@@ -32,6 +33,7 @@ export function AppShell({
   initialBottomNavItems,
   initialOnboardingWidgetHidden,
   initialMasterKeyIntroSeen,
+  initialAIProcessingConsent,
   children,
 }: {
   userId: string;
@@ -43,6 +45,7 @@ export function AppShell({
   initialBottomNavItems: BottomNavItems;
   initialOnboardingWidgetHidden: boolean;
   initialMasterKeyIntroSeen: boolean;
+  initialAIProcessingConsent: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -52,15 +55,17 @@ export function AppShell({
         <BottomNavItemsProvider userId={userId} initialItems={initialBottomNavItems}>
           <ListViewPreferencesProvider userId={userId}>
             <OnboardingWidgetVisibilityProvider userId={userId} initialHidden={initialOnboardingWidgetHidden}>
-              <AppChrome
-                userId={userId}
-                firstName={firstName}
-                lastName={lastName}
-                displayName={displayName}
-                avatarUrl={avatarUrl}
-              >
-                {children}
-              </AppChrome>
+              <AIProcessingConsentProvider userId={userId} initialConsent={initialAIProcessingConsent}>
+                <AppChrome
+                  userId={userId}
+                  firstName={firstName}
+                  lastName={lastName}
+                  displayName={displayName}
+                  avatarUrl={avatarUrl}
+                >
+                  {children}
+                </AppChrome>
+              </AIProcessingConsentProvider>
             </OnboardingWidgetVisibilityProvider>
           </ListViewPreferencesProvider>
         </BottomNavItemsProvider>

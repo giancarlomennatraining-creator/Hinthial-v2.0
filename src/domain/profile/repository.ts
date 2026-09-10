@@ -183,6 +183,27 @@ export async function updateOnboardingWidgetHidden(
 }
 
 /**
+ * Persiste il consenso esplicito dell'utente all'elaborazione AI reale
+ * (v. HINTHIAL_MVP.md sezione 8, "Explicit AI processing") --- sincronizzato
+ * sul server come nav_orientation/onboarding_widget_hidden, così vale su
+ * tutti i dispositivi dell'utente, non solo su questo browser.
+ */
+export async function updateAIProcessingConsent(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  consent: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ ai_processing_consent: consent })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare il consenso: ${error.message}`);
+  }
+}
+
+/**
  * Segna come chiuso il popup "Crea la tua master key" (v.
  * MasterKeyIntroModal) --- una tantum: qualunque interazione che lo
  * chiude (tasto "Più tardi", ✕, o il tasto che porta alla creazione)

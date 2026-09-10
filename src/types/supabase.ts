@@ -61,6 +61,7 @@ export type Database = {
           bottom_nav_items: Json;
           onboarding_widget_hidden: boolean;
           master_key_intro_seen: boolean;
+          ai_processing_consent: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -75,6 +76,7 @@ export type Database = {
           bottom_nav_items?: Json;
           onboarding_widget_hidden?: boolean;
           master_key_intro_seen?: boolean;
+          ai_processing_consent?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -89,6 +91,7 @@ export type Database = {
           bottom_nav_items?: Json;
           onboarding_widget_hidden?: boolean;
           master_key_intro_seen?: boolean;
+          ai_processing_consent?: boolean;
           created_at?: string;
           updated_at?: string;
         };
