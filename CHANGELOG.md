@@ -10,6 +10,44 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-10
+
+### Bug corretto: la dissolvenza tra le schede di Impostazioni non cambiava mai contenuto
+
+**Cosa fa:** cliccando una scheda diversa in Impostazioni, il contenuto non passava più alla scheda scelta (restava fermo su "Informazioni utente", la prima) --- corretto lo stesso giorno in cui la dissolvenza era stata introdotta.
+
+**Note tecniche:** `useCrossfade` faceva sia lo scambio del contenuto mostrato sia la programmazione del fade-in nello stesso effetto React. Lo scambio (`setDisplayed`) aggiornava una dipendenza di quell'effetto, facendolo ripartire da capo --- la sua "pulizia" (cleanup) cancellava il frame d'animazione appena programmato un istante prima per il fade-in, che quindi non scattava mai: il contenuto restava tecnicamente aggiornato ma invisibile (opacità 0) per sempre dopo il primo cambio scheda. Diviso in due effetti indipendenti --- uno si occupa solo di aspettare e scambiare il contenuto, l'altro (con la propria dipendenza e la propria pulizia separate) solo di dissolverlo dentro una volta scambiato. Verificato con 16 e2e che passano per le schede di Impostazioni (prima il bug non li faceva fallire perché nessuno aspettava l'animazione per verificare il contenuto --- solo l'uso reale, con l'attesa visiva della dissolvenza, lo rendeva evidente).
+
+### Vista a elenco delle capsule: senza il testo del messaggio
+
+**Cosa fa:** l'elenco delle capsule non mostra più il testo del messaggio --- si legge già aprendo "Modifica" o l'anteprima ("Così la vedrà chi la riceve"), ripeterlo anche nell'elenco era ridondante. Il resto della riga (titolo, stato, destinatari, allegati) resta invariato.
+
+**Note tecniche:** rimossa la sola riga di rendering in `CapsulesPanel.tsx` --- il dato (`capsule.content`) resta comunque usato per la ricerca testuale. Due e2e che verificavano il testo direttamente nella riga ora lo verificano aprendo l'anteprima.
+
+### Dashboard: niente più scorrimento orizzontale su smartphone
+
+**Cosa fa:** su schermi stretti, contatori e card della dashboard restano sempre entro i bordi dello schermo, senza il piccolo movimento orizzontale antiestetico segnalato --- margini e simmetria della pagina restano quelli di sempre.
+
+**Note tecniche:** due interventi complementari. (1) `min-w-0` sui contenitori flex/grid della dashboard (`DashboardCounters`, `DashboardWidgets`) --- senza, un elemento a larghezza intrinseca (es. un nome file lungo senza spazi in "Aggiunti di recente") può far sì che l'elemento, e con esso la colonna/griglia che lo contiene, non si restringa mai sotto quella larghezza, sporgendo oltre lo schermo: `minmax(0, 1fr)` sulle tracce della griglia (già presente via le utility `grid-cols-N` di Tailwind) non basta da solo, serve anche sull'elemento dentro la traccia. (2) `overflow-x: hidden` su `html`/`body` come rete di sicurezza, per eventuali arrotondamenti di un pixel che un layout comunque corretto può produrre --- non sostituisce il punto (1), lo completa.
+
+### Dashboard: "Da tenere d'occhio" in una riga a sé
+
+**Cosa fa:** il riquadro "Da tenere d'occhio" non sta più nella colonna stretta insieme a "Onboarding" --- ha ora una riga propria a piena larghezza, lasciando alla colonna larga (contatori, scadenze, aggiunti di recente) e a quella stretta (Onboarding) più spazio ciascuna.
+
+**Note tecniche:** `DashboardWidgets.tsx` --- la griglia a due colonne (`lg:grid-cols-[2fr_1fr]`) ora contiene solo Onboarding nella colonna stretta; `WatchlistWidget` è una riga a sé subito sotto, fuori dalla griglia.
+
+### Animazioni di entrata/uscita per barra laterale, menu mobile, pannelli e popup
+
+**Cosa fa:** diversi passaggi dell'interfaccia che prima scattavano di colpo ora sono fluidi: comprimere/espandere la barra laterale, aprire/chiudere il menu mobile (scorre da sinistra), aprire/chiudere un pannello laterale a tutto schermo (Onboarding, dettaglio Attività --- scorrono da destra, con lo sfondo scurito che compare/scompare insieme), passare da una scheda all'altra in Impostazioni (dissolvenza), aprire/chiudere il popup di ricerca globale e l'anteprima di una capsula (dissolvenza).
+
+**Note tecniche:** due piccoli hook condivisi, nessuna libreria di animazione aggiunta. `useMountedTransition(open, durationMs)` (`lib/use-mounted-transition.ts`) tiene un elemento montato per tutta la durata della transizione di uscita invece di smontarlo di scatto insieme allo stato che lo controlla (altrimenti React lo toglierebbe dal DOM prima che l'animazione possa anche solo iniziare) --- usato da `MobileNavBar`, dal nuovo `components/ui/SidePanel.tsx` (estratto da `OnboardingStatus`/`AuditLogPanel`, che condividevano già lo stesso identico markup per il pannello laterale, ora anche la stessa animazione), da `GlobalSearch` e da `CapsulePreview`. `useCrossfade(value, durationMs)` (`lib/use-crossfade.ts`) gestisce invece una dissolvenza tra due contenuti diversi (non un mount/unmount) --- usato da `SettingsTabs` per il cambio di scheda.
+
+Due dettagli tecnici non ovvi:
+- Il "mount" deve avvenire nello **stesso render** in cui `open` diventa vero, non un render dopo tramite un effetto --- altrimenti un effetto del chiamante che dipende anch'esso da `open` (es. dare il focus al campo di ricerca appena aperto, in `GlobalSearch`) troverebbe l'elemento non ancora nel DOM. Risolto con lo stesso pattern che React stesso documenta per "adattare lo stato quando cambia una prop" (confronto durante il render, non un `useRef` --- la configurazione ESLint di questo progetto vieta di leggere `ref.current` durante il render).
+- `CapsulePreview` e il dettaglio di `AuditLogPanel` sono ora sempre montati (mai più condizionati a "c'è qualcosa da mostrare?"): il contenuto passato può tornare `null` prima che l'animazione di uscita sia finita, quindi ognuno tiene un "ultimo valore non nullo mostrato" a parte, così il contenuto resta visibile (e corretto) per tutta la dissolvenza invece di sparire a metà.
+
+---
+
 ## 2026-09-09
 
 ### Anteprima capsula più larga

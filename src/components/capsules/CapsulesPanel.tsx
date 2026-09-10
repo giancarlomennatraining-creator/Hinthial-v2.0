@@ -546,12 +546,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                       </RowActionsMenu>
                     </div>
 
-                    {capsule.content ? (
-                      <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">
-                        {capsule.content}
-                      </p>
-                    ) : null}
-
                     {capsule.attachments.length > 0 || capsule.linkedDocuments.length > 0 ? (
                       <ul className="flex flex-col gap-1">
                         {capsule.attachments.map((attachment) => {
@@ -657,13 +651,15 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         </>
       )}
 
-      {previewCapsule ? (
-        <CapsulePreview
-          masterKey={masterKey}
-          capsule={previewCapsule}
-          onClose={() => setPreviewCapsule(null)}
-        />
-      ) : null}
+      {/* Sempre montato (non condizionato a previewCapsule) --- gestisce da
+          sé mount/unmount per animare la dissolvenza in uscita (v.
+          richiesta utente), altrimenti sparirebbe di scatto insieme a
+          previewCapsule prima di poter animare nulla. */}
+      <CapsulePreview
+        masterKey={masterKey}
+        capsule={previewCapsule}
+        onClose={() => setPreviewCapsule(null)}
+      />
     </div>
   );
 }

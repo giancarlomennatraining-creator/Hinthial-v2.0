@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useCrossfade } from "@/lib/use-crossfade";
 import { UserInfoPanel } from "@/components/settings/UserInfoPanel";
 import { OnboardingSettingsPanel } from "@/components/settings/OnboardingSettingsPanel";
 import { PrivacyPanel } from "@/components/settings/PrivacyPanel";
@@ -72,6 +73,12 @@ export function SettingsTabs({
   birthDate: string | null;
 }) {
   const [tab, setTab] = useState<Tab>("user-info");
+  // Il contenuto mostrato dissolve verso la scheda scelta invece di
+  // sostituirsi di scatto (v. richiesta utente) --- il tasto della
+  // scheda risponde comunque subito al click (usa `tab`, non
+  // `displayedTab`): solo il contenuto sotto ha il ritardo della
+  // dissolvenza.
+  const { displayed: displayedTab, visible: tabContentVisible } = useCrossfade(tab, 150);
 
   return (
     <div className="flex flex-col gap-6 md:flex-row md:gap-10">
@@ -110,8 +117,13 @@ export function SettingsTabs({
         ))}
       </div>
 
-      <div className="min-w-0 flex-1">
-      {tab === "user-info" ? (
+      <div
+        className={cn(
+          "min-w-0 flex-1 transition-opacity duration-150",
+          tabContentVisible ? "opacity-100" : "opacity-0",
+        )}
+      >
+      {displayedTab === "user-info" ? (
         <UserInfoPanel
           userId={userId}
           firstName={firstName}
@@ -121,14 +133,14 @@ export function SettingsTabs({
           avatarUrl={avatarUrl}
           birthDate={birthDate}
         />
-      ) : tab === "onboarding" ? (
+      ) : displayedTab === "onboarding" ? (
         // Serve i dati decifrati (documenti/asset/contatti/capsule) per
         // calcolare l'avanzamento --- unica scheda oltre a Importa/Esporta
         // e Zona pericolosa a richiedere la master key sbloccata.
         <RequireMasterKey>
           {(masterKey) => <OnboardingSettingsPanel masterKey={masterKey} />}
         </RequireMasterKey>
-      ) : tab === "privacy" ? (
+      ) : displayedTab === "privacy" ? (
         // Solo conteggi e colonne mai cifrate (v. domain/privacy/repository.ts)
         // --- non richiede la master key, a differenza di Onboarding qui sopra.
         <PrivacyPanel
@@ -138,13 +150,13 @@ export function SettingsTabs({
           email={email}
           birthDate={birthDate}
         />
-      ) : tab === "security" ? (
+      ) : displayedTab === "security" ? (
         // Layer di identità (login), non di cifratura --- non richiede
         // la master key (v. domain/mfa/repository.ts).
         <MfaSettingsPanel userId={userId} />
-      ) : tab === "categories" ? (
+      ) : displayedTab === "categories" ? (
         <CategoriesPanel />
-      ) : tab === "appearance" ? (
+      ) : displayedTab === "appearance" ? (
         <div className="flex max-w-md flex-col gap-8">
           <div className="flex flex-col gap-4">
             <div>
@@ -183,11 +195,11 @@ export function SettingsTabs({
             <ListViewSettings />
           </div>
         </div>
-      ) : tab === "activity" ? (
+      ) : displayedTab === "activity" ? (
         // Registro tecnico in chiaro (v. lib/audit/log-event.ts): non
         // richiede la master key, come Aspetto.
         <AuditLogPanel />
-      ) : tab === "import-export" ? (
+      ) : displayedTab === "import-export" ? (
         // ImportExportTabs gestisce da sé le proprie sotto-schede
         // (Importa/Esporta) e il proprio RequireMasterKey --- prima
         // viveva in una pagina a sé (/import-export), ora è qui.

@@ -120,8 +120,15 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await expect(row.getByText("Bozza")).toBeVisible();
   // I destinatari vengono elencati in ordine alfabetico (Luca prima di Maria).
   await expect(row.getByText("Per Luca Bianchi, Maria Rossi · ")).toBeVisible();
-  await expect(row.getByText("Un pensiero per te.")).toBeVisible();
   await expect(row.getByText("messaggio.mp3")).toBeVisible();
+  // Il testo del messaggio non si vede più nella vista a elenco (si legge
+  // già in Modifica o nell'anteprima) --- verificato aprendo l'anteprima.
+  await openRowMenu(row);
+  await page.getByRole("menuitem", { name: "👁️ Anteprima" }).click();
+  const createPreview = page.getByRole("dialog", { name: "Anteprima capsula" });
+  await expect(createPreview.getByText("Un pensiero per te.")).toBeVisible();
+  await createPreview.getByRole("button", { name: "Chiudi anteprima" }).click();
+  await expect(createPreview).not.toBeVisible();
 
   // Apertura dell'allegato: decritta e scarica il contenuto originale.
   const [download] = await Promise.all([
@@ -180,7 +187,14 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await expect(page.getByText("Capsula aggiornata.")).toBeVisible();
   const updatedRow = page.locator("li", { hasText: "Per Maria (aggiornato)" });
   await expect(updatedRow).toBeVisible({ timeout: 10_000 });
-  await expect(updatedRow.getByText("Un pensiero aggiornato per te.")).toBeVisible();
+  // Il testo del messaggio non si vede più nella vista a elenco ---
+  // verificato aprendo l'anteprima (v. sopra).
+  await openRowMenu(updatedRow);
+  await page.getByRole("menuitem", { name: "👁️ Anteprima" }).click();
+  const updatedPreview = page.getByRole("dialog", { name: "Anteprima capsula" });
+  await expect(updatedPreview.getByText("Un pensiero aggiornato per te.")).toBeVisible();
+  await updatedPreview.getByRole("button", { name: "Chiudi anteprima" }).click();
+  await expect(updatedPreview).not.toBeVisible();
   await expect(updatedRow.getByText("Bozza")).toBeVisible();
   await expect(updatedRow.getByText("Per Maria Rossi · ")).toBeVisible();
   await expect(updatedRow.getByText("apertura prevista 15 mar 2027")).toBeVisible();

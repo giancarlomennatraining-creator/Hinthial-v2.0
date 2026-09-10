@@ -7,6 +7,8 @@ import { MainNav } from "@/components/layout/MainNav";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { OnboardingStatus } from "@/components/layout/OnboardingStatus";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
+import { useMountedTransition } from "@/lib/use-mounted-transition";
+import { cn } from "@/lib/utils";
 
 /**
  * Su schermi piccoli (sotto md) sostituisce sia la barra laterale (v.
@@ -33,6 +35,7 @@ export function MobileNavBar({
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { mounted, entered } = useMountedTransition(open, 300);
 
   // Una navigazione riuscita chiude il menu --- altrimenti resterebbe
   // aperto sopra la nuova pagina.
@@ -76,14 +79,23 @@ export function MobileNavBar({
         </button>
       </div>
 
-      {open ? (
+      {mounted ? (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
+          <div
+            className={cn(
+              "absolute inset-0 bg-black/40 transition-opacity duration-300",
+              entered ? "opacity-100" : "opacity-0",
+            )}
+            onClick={() => setOpen(false)}
+          />
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Menu di navigazione"
-            className="relative flex h-full w-72 max-w-[85vw] flex-col gap-6 overflow-y-auto bg-white p-4 shadow-xl dark:bg-zinc-950"
+            className={cn(
+              "relative flex h-full w-72 max-w-[85vw] flex-col gap-6 overflow-y-auto bg-white p-4 shadow-xl transition-transform duration-300 ease-out dark:bg-zinc-950",
+              entered ? "translate-x-0" : "-translate-x-full",
+            )}
           >
             <div className="flex items-center justify-between">
               {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}

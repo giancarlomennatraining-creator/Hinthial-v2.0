@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { createClient } from "@/lib/db/supabase/client";
+import { SidePanel } from "@/components/ui/SidePanel";
 import { buildAIContext } from "@/domain/ai/context";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { OnboardingChecklist, type OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
@@ -127,51 +127,38 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
         )}
       </button>
 
-      {open
-        ? createPortal(
-            <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setOpen(false)}>
-              <div
-                role="dialog"
-                aria-modal="true"
-                aria-label="Onboarding"
-                onClick={(e) => e.stopPropagation()}
-                className="absolute inset-y-0 right-0 flex w-full max-w-sm flex-col gap-4 overflow-y-auto border-l border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
-              >
-                {/*
-                  Niente titolo qui: OnboardingChecklist ha già la sua
-                  intestazione "Onboarding X/Y" --- ripeterlo sopra
-                  sarebbe ridondante. Solo il tasto per chiudere.
-                */}
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setOpen(false)}
-                    aria-label="Chiudi"
-                    className="shrink-0 rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300"
-                  >
-                    ✕
-                  </button>
-                </div>
+      <SidePanel open={open} onClose={() => setOpen(false)} label="Onboarding">
+        {/*
+          Niente titolo qui: OnboardingChecklist ha già la sua
+          intestazione "Onboarding X/Y" --- ripeterlo sopra sarebbe
+          ridondante. Solo il tasto per chiudere.
+        */}
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Chiudi"
+            className="shrink-0 rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300"
+          >
+            ✕
+          </button>
+        </div>
 
-                <OnboardingChecklist steps={displaySteps} />
+        <OnboardingChecklist steps={displaySteps} />
 
-                <div className="border-t border-zinc-200 pt-3 dark:border-zinc-800">
-                  <button
-                    type="button"
-                    onClick={hide}
-                    className="text-xs font-medium text-zinc-500 hover:text-zinc-700 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
-                  >
-                    Nascondi
-                  </button>
-                  <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-                    Non comparirà più qui: l&apos;avanzamento resta consultabile in Impostazioni.
-                  </p>
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
+        <div className="border-t border-zinc-200 pt-3 dark:border-zinc-800">
+          <button
+            type="button"
+            onClick={hide}
+            className="text-xs font-medium text-zinc-500 hover:text-zinc-700 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
+          >
+            Nascondi
+          </button>
+          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+            Non comparirà più qui: l&apos;avanzamento resta consultabile in Impostazioni.
+          </p>
+        </div>
+      </SidePanel>
     </>
   );
 }

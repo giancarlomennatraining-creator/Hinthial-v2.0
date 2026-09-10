@@ -40,10 +40,22 @@
   --foreground: #ededed;
 }
 
+/*
+ * Rete di sicurezza contro un piccolo scorrimento orizzontale indesiderato
+ * su schermi stretti (v. richiesta utente) --- non sostituisce un layout
+ * genuinamente adattivo (v. DashboardCounters/DashboardWidgets, min-w-0
+ * dove serve), ma copre eventuali arrotondamenti/margini di un pixel che
+ * un layout responsive comunque corretto può produrre.
+ */
+html {
+  overflow-x: hidden;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-work-sans), Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
 }
 
 /* Titolo di pagina (es. "Capsule", "Ciao, ...") --- Baloo 2, lo stesso

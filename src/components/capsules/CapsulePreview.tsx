@@ -6,6 +6,8 @@ import { downloadCapsuleAttachment } from "@/domain/capsules/repository";
 import { downloadDocument } from "@/domain/documents/repository";
 import { saveBytesAsFile } from "@/lib/download";
 import { contentKindFor, CONTENT_KIND_ICON, hasInlinePlayer } from "@/lib/content-kind";
+import { useMountedTransition } from "@/lib/use-mounted-transition";
+import { cn } from "@/lib/utils";
 import type { CapsuleAttachment, CapsuleListItem } from "@/domain/capsules/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 
@@ -39,10 +41,21 @@ export function CapsulePreview({
   onClose,
 }: {
   masterKey: CryptoKey;
-  capsule: CapsuleListItem;
+  /** null --- niente da mostrare (v. richiesta utente, dissolvenza in-out): il componente resta comunque montato, per animare l'uscita invece di sparire di scatto. */
+  capsule: CapsuleListItem | null;
   onClose: () => void;
 }) {
   const supabase = useRef(createClient()).current;
+  const open = capsule !== null;
+  const { mounted, entered } = useMountedTransition(open, 150);
+
+  // L'ultima capsula non nulla ricevuta --- il contenuto mostrato resta
+  // quello anche durante la dissolvenza in uscita, quando `capsule` è
+  // già tornato a null ma il pannello è ancora visibile (v. mounted sopra).
+  const [displayCapsule, setDisplayCapsule] = useState(capsule);
+  if (capsule !== null && capsule !== displayCapsule) {
+    setDisplayCapsule(capsule);
+  }
 
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -53,12 +66,13 @@ export function CapsulePreview({
   const [playerLoading, setPlayerLoading] = useState(false);
 
   useEffect(() => {
+    if (!open) return;
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [open, onClose]);
 
   // Libera sempre l'object URL, sia allo smontaggio sia cambiando elemento.
   useEffect(() => {
@@ -67,15 +81,22 @@ export function CapsulePreview({
     };
   }, [playerUrl]);
 
+  // Dopo tutti gli hook (v. regole degli hook) --- da qui in poi
+  // shownCapsule è tipizzato non nullo (TypeScript non lo dedurrebbe da
+  // solo dentro le funzioni più sotto, definite nello stesso render ma
+  // chiuse sul valore di displayCapsule).
+  if (!mounted || !displayCapsule) return null;
+  const shownCapsule: CapsuleListItem = displayCapsule;
+
   const items: PreviewItem[] = [
-    ...capsule.attachments.map((a) => ({
+    ...shownCapsule.attachments.map((a) => ({
       source: "attachment" as const,
       id: a.id,
       filename: a.filename,
       mimeType: a.mimeType,
       size: a.size,
     })),
-    ...capsule.linkedDocuments.map((d) => ({
+    ...shownCapsule.linkedDocuments.map((d) => ({
       source: "linked" as const,
       id: d.id,
       filename: d.filename,
@@ -85,11 +106,11 @@ export function CapsulePreview({
   ];
 
   function attachmentFor(id: string): CapsuleAttachment | undefined {
-    return capsule.attachments.find((a) => a.id === id);
+    return shownCapsule.attachments.find((a) => a.id === id);
   }
 
   function linkedDocumentFor(id: string): DocumentListItem | undefined {
-    return capsule.linkedDocuments.find((d) => d.id === id);
+    return shownCapsule.linkedDocuments.find((d) => d.id === id);
   }
 
   async function downloadBytes(item: PreviewItem): Promise<{ mimeType: string; bytes: Uint8Array }> {
@@ -100,7 +121,7 @@ export function CapsulePreview({
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
-      return downloadCapsuleAttachment(supabase, masterKey, user.id, capsule.id, attachment);
+      return downloadCapsuleAttachment(supabase, masterKey, user.id, shownCapsule.id, attachment);
     }
 
     const doc = linkedDocumentFor(item.id);
@@ -148,7 +169,10 @@ export function CapsulePreview({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-[8vh]"
+      className={cn(
+        "fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-[8vh] transition-opacity duration-150",
+        entered ? "opacity-100" : "opacity-0",
+      )}
       onClick={onClose}
     >
       <div
@@ -164,7 +188,7 @@ export function CapsulePreview({
               Così la vedrà chi la riceve
             </p>
             <h2 className="mt-0.5 truncate text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-              {capsule.title}
+              {shownCapsule.title}
             </h2>
           </div>
           <button
@@ -188,20 +212,20 @@ export function CapsulePreview({
             "A mano" (v. CapsuleContentStyle): così la vedrà davvero chi
             la riceve. */}
         <div className="rounded-2xl border border-[#EDE1C4] bg-[#FBF6EA] px-6 py-5">
-          {capsule.openAt ? (
+          {shownCapsule.openAt ? (
             <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#6B5730]">
-              Si aprirà il {formatDate(capsule.openAt)}
+              Si aprirà il {formatDate(shownCapsule.openAt)}
             </p>
           ) : null}
-          {capsule.content ? (
+          {shownCapsule.content ? (
             <p
               className={
-                capsule.contentStyle === "handwritten"
+                shownCapsule.contentStyle === "handwritten"
                   ? "whitespace-pre-wrap font-caveat text-[22px] leading-relaxed text-[#3B331F]"
                   : "whitespace-pre-wrap text-sm leading-relaxed text-[#3B331F]"
               }
             >
-              {capsule.content}
+              {shownCapsule.content}
             </p>
           ) : (
             <p className="text-sm text-[#8F7A4A]">Nessun testo scritto.</p>

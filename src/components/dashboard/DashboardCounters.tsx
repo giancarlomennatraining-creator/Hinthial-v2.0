@@ -41,7 +41,7 @@ export function DashboardCounters({ context }: { context: AIContext }) {
             key={counter.key}
             href={counter.href}
             aria-label={subLabel ? `${counter.label}: ${count} (${subLabel})` : `${counter.label}: ${count}`}
-            className="flex flex-col items-center gap-1 rounded-2xl border border-zinc-200 p-4 text-center hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+            className="flex min-w-0 flex-col items-center gap-1 rounded-2xl border border-zinc-200 p-4 text-center hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
           >
             <counter.icon width={28} height={28} className="text-brand" />
             <span aria-hidden="true" className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">

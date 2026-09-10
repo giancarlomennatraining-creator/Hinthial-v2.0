@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
+import { useMountedTransition } from "@/lib/use-mounted-transition";
+import { cn } from "@/lib/utils";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { buildAIContext } from "@/domain/ai/context";
 import { mockAIProvider } from "@/domain/ai/mock-provider";
@@ -25,6 +27,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [open, setOpen] = useState(false);
+  const { mounted, entered } = useMountedTransition(open, 150);
   const [query, setQuery] = useState("");
   const [context, setContext] = useState<AIContext | null>(null);
   const [loading, setLoading] = useState(false);
@@ -142,9 +145,12 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
         )}
       </button>
 
-      {open ? (
+      {mounted ? (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[15vh]"
+          className={cn(
+            "fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[15vh] transition-opacity duration-150",
+            entered ? "opacity-100" : "opacity-0",
+          )}
           onClick={close}
         >
           <div

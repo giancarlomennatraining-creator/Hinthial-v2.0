@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/db/supabase/client";
+import { SidePanel } from "@/components/ui/SidePanel";
 import { listAuditEvents } from "@/domain/audit/repository";
 import {
   AUDIT_EVENT_CATEGORIES,
@@ -61,7 +62,18 @@ export function AuditLogPanel() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  // `selected` non torna mai a null da sola (v. sotto) --- solo `panelOpen`
+  // decide se il pannello è aperto, così il contenuto resta quello
+  // dell'ultimo evento scelto per tutta la durata dell'animazione di
+  // uscita (v. richiesta utente), invece di sparire di scatto insieme
+  // allo stato che chiude il pannello.
   const [selected, setSelected] = useState<AuditEventListItem | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  function openDetail(event: AuditEventListItem) {
+    setSelected(event);
+    setPanelOpen(true);
+  }
 
   function typesForSelectedCategories(): AuditEventType[] {
     if (selectedCategories.size === 0) return [];
@@ -190,11 +202,11 @@ export function AuditLogPanel() {
                   key={event.id}
                   tabIndex={0}
                   role="button"
-                  onClick={() => setSelected(event)}
+                  onClick={() => openDetail(event)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      setSelected(event);
+                      openDetail(event);
                     }
                   }}
                   className="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900"
@@ -211,15 +223,9 @@ export function AuditLogPanel() {
         </div>
       ) : null}
 
-      {selected ? (
-        <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setSelected(null)}>
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Dettaglio attività"
-            onClick={(e) => e.stopPropagation()}
-            className="absolute inset-y-0 right-0 flex w-full max-w-sm flex-col gap-4 overflow-y-auto border-l border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
-          >
+      <SidePanel open={panelOpen} onClose={() => setPanelOpen(false)} label="Dettaglio attività">
+        {selected ? (
+          <>
             <div className="flex items-start justify-between gap-4">
               <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
                 <span aria-hidden="true">{AUDIT_EVENT_TYPE_ICON[selected.type]}</span>{" "}
@@ -227,7 +233,7 @@ export function AuditLogPanel() {
               </h3>
               <button
                 type="button"
-                onClick={() => setSelected(null)}
+                onClick={() => setPanelOpen(false)}
                 aria-label="Chiudi"
                 className="shrink-0 rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300"
               >
@@ -270,9 +276,9 @@ export function AuditLogPanel() {
                 </p>
               ) : null}
             </dl>
-          </div>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </SidePanel>
     </div>
   );
 }
