@@ -44,7 +44,7 @@ describe("DocumentMetadataFields", () => {
       />,
     );
     expect(screen.getByLabelText("Categoria")).toBeInTheDocument();
-    expect(screen.getByLabelText("Asset collegato")).toBeInTheDocument();
+    expect(screen.getByLabelText("Bene collegato")).toBeInTheDocument();
     expect(screen.getByLabelText("Tag (separati da virgola)")).toBeInTheDocument();
     expect(screen.getByLabelText("Note")).toBeInTheDocument();
   });

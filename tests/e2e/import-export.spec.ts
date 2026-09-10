@@ -95,7 +95,7 @@ test("importa contatti fiduciari da CSV: template, anteprima con riga da corregg
   await expect(page.getByRole("heading", { name: "Esporta i tuoi dati" })).toBeVisible();
 });
 
-test("importa asset da CSV: corregge una categoria non trovata creandola al volo", async ({ page }) => {
+test("importa beni da CSV: corregge una categoria non trovata creandola al volo", async ({ page }) => {
   test.slow();
 
   const user = uniqueTestUser();
@@ -120,14 +120,14 @@ test("importa asset da CSV: corregge una categoria non trovata creandola al volo
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
 
-  await page.getByRole("button", { name: "Asset", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Template: Asset" })).toBeVisible();
+  await page.getByRole("button", { name: "Beni", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Template: Beni" })).toBeVisible();
   await page.getByRole("button", { name: "Avanti" }).click();
 
   // "Immobili" non esiste ancora fra le categorie di un account nuovo.
   const csv = ["Nome,Categoria", "Casa al mare,Immobili"].join("\n");
   await page.setInputFiles('input[type="file"]', {
-    name: "asset.csv",
+    name: "beni.csv",
     mimeType: "text/csv",
     buffer: Buffer.from(csv, "utf-8"),
   });
@@ -146,7 +146,7 @@ test("importa asset da CSV: corregge una categoria non trovata creandola al volo
   });
   await expect(page.getByText("1 elemento importato.")).toBeVisible();
 
-  await page.getByRole("link", { name: "Vai ad Asset" }).click();
+  await page.getByRole("link", { name: "Vai a Beni" }).click();
   await expect(page).toHaveURL(/\/assets$/);
   const assetRow = page.locator("li", { hasText: "Casa al mare" });
   await expect(assetRow).toBeVisible();

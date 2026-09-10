@@ -26,7 +26,7 @@ describe("VaultHealthWidget", () => {
       assets: [{ id: "asset-barca", name: "Barca", categoryId: null, createdAt: "2026-01-01" }],
     });
     render(<VaultHealthWidget context={context} />);
-    expect(screen.getByText("1 di 1 asset non hanno ancora contenuti collegati.")).toBeInTheDocument();
+    expect(screen.getByText("1 di 1 beni non hanno ancora contenuti collegati.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Barca" })).toHaveAttribute("href", "/assets");
   });
 
@@ -52,7 +52,7 @@ describe("VaultHealthWidget", () => {
       ],
     });
     render(<VaultHealthWidget context={context} />);
-    expect(screen.getByText("Tutti i 1 asset hanno almeno un contenuto collegato.")).toBeInTheDocument();
+    expect(screen.getByText("Tutti i 1 beni hanno almeno un contenuto collegato.")).toBeInTheDocument();
   });
 
   it("flags an active trusted contact not referenced by any capsule, but not a revoked one", () => {

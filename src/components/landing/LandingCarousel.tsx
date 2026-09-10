@@ -25,7 +25,7 @@ const SLIDES: Slide[] = [
   },
   {
     icon: "🏠",
-    title: "Asset e scadenze sotto controllo",
+    title: "Beni e scadenze sotto controllo",
     description:
       "Censisci casa, veicoli, assicurazioni e contratti, collega i documenti che li riguardano e non perdere mai più una scadenza importante.",
   },

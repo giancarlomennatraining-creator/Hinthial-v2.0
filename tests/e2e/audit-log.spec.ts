@@ -46,7 +46,7 @@ test("Impostazioni > Attività si interroga con filtri (data e tipo) e apre il d
   await expect(page.getByText("Accesso effettuato")).toBeVisible();
   await page.getByRole("checkbox", { name: "Accessi" }).uncheck();
 
-  // Configurare la cifratura e aggiungere un contenuto/asset/contatto
+  // Configurare la cifratura e aggiungere un contenuto/bene/contatto
   // registrano a loro volta un evento --- verificabile tornando qui.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");

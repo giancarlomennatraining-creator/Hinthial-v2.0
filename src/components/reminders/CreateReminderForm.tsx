@@ -13,7 +13,7 @@ import type { AssetListItem } from "@/domain/assets/types";
 
 /**
  * Pagina dedicata alla creazione di una scadenza (estratta da
- * RemindersPanel). Stesso pattern usato per capsule/asset: alla
+ * RemindersPanel). Stesso pattern usato per capsule/beni: alla
  * creazione riuscita torna a /reminders con un messaggio di conferma
  * passato come flag nell'URL (`?created=1`), mai il titolo --- finirebbe
  * in chiaro nella cronologia del browser.
@@ -28,7 +28,7 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   // Controllato (a differenza degli altri campi, letti da FormData al
-  // submit) perché la selezione dell'asset filtra le opzioni del
+  // submit) perché la selezione del bene filtra le opzioni del
   // documento collegato qui sotto.
   const [selectedAssetId, setSelectedAssetId] = useState("");
 
@@ -154,7 +154,7 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
               htmlFor="relatedAssetId"
               className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
             >
-              Asset collegato
+              Bene collegato
             </label>
             <select
               id="relatedAssetId"
@@ -185,10 +185,10 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
               disabled={!selectedAssetId}
               className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             >
-              <option value="">{selectedAssetId ? "Nessuno" : "Scegli prima un asset"}</option>
-              {/* Selezionare un asset filtra ai soli contenuti già collegati
-                  a quell'asset (v. Archivio) --- senza asset, nessun contenuto
-                  è proponibile: la scelta dell'asset viene prima. */}
+              <option value="">{selectedAssetId ? "Nessuno" : "Scegli prima un bene"}</option>
+              {/* Selezionare un bene filtra ai soli contenuti già collegati
+                  a quel bene (v. Archivio) --- senza bene, nessun contenuto
+                  è proponibile: la scelta del bene viene prima. */}
               {sortedFilteredDocuments.map((doc) => (
                 <option key={doc.id} value={doc.id}>
                   {doc.filename}

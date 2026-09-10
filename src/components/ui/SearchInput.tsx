@@ -1,4 +1,4 @@
-/** Text filter for a list panel (Documenti, Asset, Scadenze, Contatti, Capsule) --- filters what's already loaded and decrypted, no query. */
+/** Text filter for a list panel (Documenti, Beni, Scadenze, Contatti, Capsule) --- filters what's already loaded and decrypted, no query. */
 export function SearchInput({
   value,
   onChange,

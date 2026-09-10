@@ -9,11 +9,11 @@ import { listCategories } from "@/domain/categories/repository";
 import type { Category } from "@/domain/categories/types";
 
 /**
- * Pagina dedicata alla creazione di un asset (estratta da AssetsPanel,
- * che ora mostra solo l'elenco più un tasto "+ Crea asset"). Stesso
+ * Pagina dedicata alla creazione di un bene (estratta da AssetsPanel,
+ * che ora mostra solo l'elenco più un tasto "+ Crea bene"). Stesso
  * pattern usato per le capsule: alla creazione riuscita torna a /assets
  * con un messaggio di conferma passato come flag nell'URL (`?created=1`),
- * mai il nome dell'asset --- finirebbe in chiaro nella cronologia del
+ * mai il nome del bene --- finirebbe in chiaro nella cronologia del
  * browser, in contrasto con lo zero-knowledge.
  */
 export function CreateAssetForm({ masterKey }: { masterKey: CryptoKey }) {
@@ -52,7 +52,7 @@ export function CreateAssetForm({ masterKey }: { masterKey: CryptoKey }) {
     const categoryId = String(formData.get("categoryId") ?? "") || null;
 
     if (!name) {
-      setError("Inserisci un nome per l'asset.");
+      setError("Inserisci un nome per il bene.");
       return;
     }
 
@@ -66,7 +66,7 @@ export function CreateAssetForm({ masterKey }: { masterKey: CryptoKey }) {
       await createAsset(supabase, masterKey, user.id, { name, categoryId });
       router.push("/assets?created=1");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile creare l'asset.");
+      setError(err instanceof Error ? err.message : "Impossibile creare il bene.");
       setCreating(false);
     }
   }
@@ -78,10 +78,10 @@ export function CreateAssetForm({ masterKey }: { masterKey: CryptoKey }) {
           href="/assets"
           className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
         >
-          ← Torna agli asset
+          ← Torna ai beni
         </Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
-          Nuovo asset
+          Nuovo bene
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Censisci beni e contratti (casa, veicoli, assicurazioni, ...).
@@ -141,7 +141,7 @@ export function CreateAssetForm({ masterKey }: { masterKey: CryptoKey }) {
             disabled={creating}
             className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
           >
-            {creating ? "Creazione…" : "Aggiungi asset"}
+            {creating ? "Creazione…" : "Aggiungi bene"}
           </button>
           <Link
             href="/assets"

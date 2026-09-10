@@ -12,14 +12,14 @@ import { logAuditEvent } from "@/lib/audit/log-event";
 
 /**
  * "Cancella tutto" (Impostazioni > Zona pericolosa) --- irreversibile:
- * svuota Archivio, Asset, Contatti fiduciari e Capsule (con tutti i
+ * svuota Archivio, Beni, Contatti fiduciari e Capsule (con tutti i
  * relativi blob cifrati in Storage), poi ripristina le categorie
  * predefinite al posto di quelle personalizzate dell'utente.
  *
  * Le Scadenze non vengono toccate --- solo scollegate dai documenti/
- * asset appena cancellati (related_document_id/related_asset_id sono
+ * beni appena cancellati (related_document_id/related_asset_id sono
  * ON DELETE SET NULL, v. migrations), esattamente come già succede
- * eliminando un singolo asset/documento oggi. Il Master Key/la
+ * eliminando un singolo bene/documento oggi. Il Master Key/la
  * configurazione di cifratura non vengono toccati: l'utente resta
  * autenticato e può continuare a usare Hinthial da capo.
  *
@@ -59,7 +59,7 @@ export async function wipeVault(
 
   const { error: assetsError } = await supabase.from("assets").delete().eq("owner_id", ownerId);
   if (assetsError) {
-    throw new Error(`Impossibile eliminare gli asset: ${assetsError.message}`);
+    throw new Error(`Impossibile eliminare i beni: ${assetsError.message}`);
   }
 
   const { error: contactsError } = await supabase

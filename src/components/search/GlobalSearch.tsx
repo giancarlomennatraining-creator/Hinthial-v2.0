@@ -166,7 +166,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleInputKeyDown}
-              placeholder="Cerca nell'archivio, asset, scadenze, contatti, capsule…"
+              placeholder="Cerca nell'archivio, beni, scadenze, contatti, capsule…"
               className="w-full border-b border-zinc-200 bg-transparent px-4 py-3 text-sm text-zinc-950 outline-none dark:border-zinc-800 dark:text-zinc-50"
             />
 

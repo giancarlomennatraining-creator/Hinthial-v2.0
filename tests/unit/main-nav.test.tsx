@@ -26,7 +26,7 @@ describe("MainNav", () => {
       "Dashboard",
       "Archivio",
       "Scadenze",
-      "Asset",
+      "Beni",
       "Contatti",
       "Capsule",
       "Cronologia",

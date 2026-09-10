@@ -3,7 +3,7 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("la cronologia elenca asset e documenti creati, raggruppati per mese", async ({ page }) => {
+test("la cronologia elenca beni e documenti creati, raggruppati per mese", async ({ page }) => {
   test.slow();
 
   const user = uniqueTestUser();
@@ -31,10 +31,10 @@ test("la cronologia elenca asset e documenti creati, raggruppati per mese", asyn
   await expect(page.getByRole("heading", { name: "Cronologia" })).toBeVisible();
   await expect(page.getByText("Non c'è ancora nulla da mostrare qui.")).toBeVisible();
 
-  await page.getByRole("link", { name: "Asset" }).click();
-  await page.getByRole("link", { name: "+ Crea asset" }).click();
+  await page.getByRole("link", { name: "Beni" }).click();
+  await page.getByRole("link", { name: "+ Crea bene" }).click();
   await page.getByLabel("Nome").fill("Appartamento");
-  await page.getByRole("button", { name: "Aggiungi asset" }).click();
+  await page.getByRole("button", { name: "Aggiungi bene" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
@@ -59,7 +59,7 @@ test("la cronologia elenca asset e documenti creati, raggruppati per mese", asyn
   await expect(documentLink).toBeVisible();
 
   // Il filtro per sezione mostra solo gli elementi di quel tipo.
-  await page.getByRole("combobox", { name: "Filtra per sezione" }).selectOption({ label: "Asset" });
+  await page.getByRole("combobox", { name: "Filtra per sezione" }).selectOption({ label: "Bene" });
   await expect(assetLink).toBeVisible();
   await expect(documentLink).not.toBeVisible();
   await page.getByRole("combobox", { name: "Filtra per sezione" }).selectOption({ label: "Tutte le sezioni" });

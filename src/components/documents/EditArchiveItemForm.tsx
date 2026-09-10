@@ -22,7 +22,7 @@ import type { Category } from "@/domain/categories/types";
  * Pagina dedicata alla modifica dei metadati di un contenuto d'Archivio
  * --- prima era un form inline nella riga di DocumentsPanel, ora una
  * pagina a sé come la creazione. Solo i metadati sono modificabili qui
- * (categoria, asset, scadenza, tag, note): il file/contenuto originale
+ * (categoria, bene, scadenza, tag, note): il file/contenuto originale
  * no, esattamente come già era per l'edit inline --- nome e tipo restano
  * mostrati sola lettura per dare contesto.
  */
@@ -42,7 +42,7 @@ export function EditArchiveItemForm({ masterKey, documentId }: { masterKey: Cryp
   // sviluppo React (StrictMode) invoca due volte l'effetto qui sotto al
   // mount --- senza questa guardia, se la PRIMA fetch (superata) risolve
   // dopo la seconda, il suo risultato sovrascriverebbe silenziosamente
-  // i campi (categoria/asset/scadenza/tag/note) anche quando l'utente li
+  // i campi (categoria/bene/scadenza/tag/note) anche quando l'utente li
   // ha già modificati nel frattempo (v. stesso bug corretto in
   // EditCapsuleForm.tsx). Stesso principio del flag `cancelled` in
   // MasterKeyProvider, adattato a un useCallback invece di una IIFE

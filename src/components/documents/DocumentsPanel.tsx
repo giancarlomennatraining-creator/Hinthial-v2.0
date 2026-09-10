@@ -61,7 +61,7 @@ type SortColumn = "name" | "category" | "asset" | "size" | "createdAt" | "expire
 /**
  * FASE 14 --- "Archivio": documenti, immagini, audio, video e note
  * testuali, tutti nella stessa lista con gli stessi attributi
- * (categoria, asset, scadenza, tag, note). Immagini/audio/video hanno
+ * (categoria, bene, scadenza, tag, note). Immagini/audio/video hanno
  * un player inline (v. lib/content-kind.ts); una nota si apre e si
  * modifica qui stesso, senza scaricare nulla.
  */
@@ -434,7 +434,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         sort={sort}
                         onSort={handleSort}
                       />
-                      <SortableColumnHeader label="Asset" sortKey="asset" sort={sort} onSort={handleSort} />
+                      <SortableColumnHeader label="Bene" sortKey="asset" sort={sort} onSort={handleSort} />
                       <SortableColumnHeader
                         label="Dimensione"
                         sortKey="size"

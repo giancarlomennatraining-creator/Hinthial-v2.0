@@ -33,8 +33,8 @@ const MODE_LABEL: Record<CreationMode, string> = {
  * contenuto") --- un unico form per i tre modi di aggiungere qualcosa:
  * caricare un file già pronto, registrarne uno sul momento, o scrivere
  * una nota testuale (v. domain/documents/repository.ts, createTextNote).
- * Categoria/asset/scadenza/tag/note restano gli stessi a prescindere dal
- * tipo. Stesso pattern usato per capsule/asset/scadenze/contatti: alla
+ * Categoria/bene/scadenza/tag/note restano gli stessi a prescindere dal
+ * tipo. Stesso pattern usato per capsule/beni/scadenze/contatti: alla
  * creazione riuscita torna a /archive con un messaggio di conferma
  * passato come flag nell'URL (`?created=1`).
  */

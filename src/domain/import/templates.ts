@@ -32,14 +32,14 @@ export const IMPORT_KIND_SPECS: Record<ImportKind, ImportKindSpec> = {
   },
   assets: {
     kind: "assets",
-    label: "Asset",
-    filenamePrefix: "asset",
+    label: "Beni",
+    filenamePrefix: "beni",
     columns: [
       {
         key: "name",
         label: "Nome",
         required: true,
-        description: "Nome dell'asset.",
+        description: "Nome del bene.",
         example: "Appartamento Milano",
       },
       {
@@ -73,10 +73,10 @@ export const IMPORT_KIND_SPECS: Record<ImportKind, ImportKindSpec> = {
       },
       {
         key: "asset",
-        label: "Asset collegato",
+        label: "Bene collegato",
         required: false,
         description:
-          "Nome di un asset già esistente in HINTHIAL, se questa scadenza è legata a uno (lascia vuoto altrimenti). Se scrivi un asset che non esiste ancora, potrai crearlo al momento durante l'anteprima. Le scadenze legate a un documento non si importano qui: nasceranno automaticamente quando HINTHIAL AI saprà leggere i documenti caricati.",
+          "Nome di un bene già esistente in HINTHIAL, se questa scadenza è legata a uno (lascia vuoto altrimenti). Se scrivi un bene che non esiste ancora, potrai crearlo al momento durante l'anteprima. Le scadenze legate a un documento non si importano qui: nasceranno automaticamente quando HINTHIAL AI saprà leggere i documenti caricati.",
         example: "Auto Panda",
       },
     ],

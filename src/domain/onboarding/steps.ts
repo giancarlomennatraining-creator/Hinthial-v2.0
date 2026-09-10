@@ -48,7 +48,7 @@ function securityStep(done: boolean): OnboardingStep {
  * conteggio (v. isOnboardingComplete/onboardingCompletionPercent sotto).
  * "Amico" è un prerequisito reale: senza almeno un amico non si può
  * attivare il Dead Man's Switch semplificato per le capsule (v.
- * domain/contacts, isFriend) --- messo dopo asset/capsula apposta,
+ * domain/contacts, isFriend) --- messo dopo bene/capsula apposta,
  * insieme al collegamento capsula-contatto che lo richiede: i passi che
  * presuppongono un concetto nuovo vengono dopo quelli concreti e
  * immediati, non mescolati. "Imposta una scadenza" non è più un passo:
@@ -77,7 +77,7 @@ export function computeOnboardingSteps(data: OnboardingSourceData): OnboardingSt
     },
     {
       key: "asset",
-      label: "Aggiungi il primo asset",
+      label: "Aggiungi il primo bene",
       description: "Censisci una casa, un veicolo, un'assicurazione o un contratto.",
       done: assets.length > 0,
       href: "/assets",

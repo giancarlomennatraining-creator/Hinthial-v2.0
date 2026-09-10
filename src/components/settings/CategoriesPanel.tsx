@@ -130,13 +130,13 @@ export function CategoriesPanel() {
       usedBy.push(usage.documents === 1 ? "1 documento" : `${usage.documents} documenti`);
     }
     if (usage.assets > 0) {
-      usedBy.push(`${usage.assets} asset`);
+      usedBy.push(usage.assets === 1 ? "1 bene" : `${usage.assets} beni`);
     }
 
     const message =
       usedBy.length > 0
         ? `Attenzione: la categoria "${category.icon} ${category.name}" è collegata a ${usedBy.join(" e ")}. Eliminandola NON verranno cancellati: resteranno semplicemente senza categoria. Procedere comunque?`
-        : `Eliminare la categoria "${category.icon} ${category.name}"? Nessun documento o asset è attualmente collegato.`;
+        : `Eliminare la categoria "${category.icon} ${category.name}"? Nessun documento o bene è attualmente collegato.`;
 
     if (!window.confirm(message)) {
       setBusyId(null);

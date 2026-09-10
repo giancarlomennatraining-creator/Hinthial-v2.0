@@ -48,10 +48,10 @@ export interface AISuggestion {
 export interface AIProvider {
   /** Corrispondenza diretta per parole chiave, nessuna relazione seguita. */
   search(query: string, context: AIContext): AISource[];
-  /** Parte da search() e allarga seguendo le relazioni (asset -> documenti/scadenze collegati, capsula -> destinatari, categoria -> tutto ciò che contiene, ...); se non trova nulla di specifico ma la domanda nomina un intero tipo di entità ("quanti contatti ho?"), restituisce tutti gli elementi di quel tipo. */
+  /** Parte da search() e allarga seguendo le relazioni (bene -> documenti/scadenze collegati, capsula -> destinatari, categoria -> tutto ciò che contiene, ...); se non trova nulla di specifico ma la domanda nomina un intero tipo di entità ("quanti contatti ho?"), restituisce tutti gli elementi di quel tipo. */
   retrieve(query: string, context: AIContext): AISource[];
   /** Usa retrieve() e produce una risposta testuale, citando le fonti usate. */
   answer(query: string, context: AIContext): AIAnswer;
-  /** Suggerimenti non richiesti, dedotti dallo stato attuale (scadenze scadute, asset senza documenti, ...). */
+  /** Suggerimenti non richiesti, dedotti dallo stato attuale (scadenze scadute, beni senza documenti, ...). */
   suggest(context: AIContext): AISuggestion[];
 }

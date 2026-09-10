@@ -28,24 +28,24 @@ async function loginAndSetUpEncryption(page: import("@playwright/test").Page) {
   return user;
 }
 
-test("la ricerca e il filtro per categoria funzionano in Asset e Archivio", async ({ page }) => {
+test("la ricerca e il filtro per categoria funzionano in Beni e Archivio", async ({ page }) => {
   test.slow();
 
   await loginAndSetUpEncryption(page);
 
-  await page.getByRole("link", { name: "Asset" }).click();
-  await page.getByRole("link", { name: "+ Crea asset" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo asset" })).toBeVisible();
+  await page.getByRole("link", { name: "Beni" }).click();
+  await page.getByRole("link", { name: "+ Crea bene" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo bene" })).toBeVisible();
   await page.getByLabel("Nome").fill("Appartamento");
   await page.locator("#categoryId").selectOption({ label: "🏠 Casa" });
-  await page.getByRole("button", { name: "Aggiungi asset" }).click();
+  await page.getByRole("button", { name: "Aggiungi bene" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "+ Crea asset" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo asset" })).toBeVisible();
+  await page.getByRole("link", { name: "+ Crea bene" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo bene" })).toBeVisible();
   await page.getByLabel("Nome").fill("Fiat Panda");
   await page.locator("#categoryId").selectOption({ label: "🚗 Veicoli" });
-  await page.getByRole("button", { name: "Aggiungi asset" }).click();
+  await page.getByRole("button", { name: "Aggiungi bene" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
   await expect(page.getByText("Appartamento")).toBeVisible();
   await expect(page.getByText("Fiat Panda")).toBeVisible();
@@ -64,7 +64,7 @@ test("la ricerca e il filtro per categoria funzionano in Asset e Archivio", asyn
   // Nessun risultato: messaggio esplicito, non una lista vuota muta.
   await page.getByLabel("Filtra per categoria").selectOption({ label: "Tutte le categorie" });
   await page.getByPlaceholder("Cerca per nome…").fill("xyzxyz");
-  await expect(page.getByText("Nessun asset corrisponde alla ricerca.")).toBeVisible();
+  await expect(page.getByText("Nessun bene corrisponde alla ricerca.")).toBeVisible();
 
   // Archivio: stesso pattern (ricerca per nome + filtro categoria).
   await page.getByRole("link", { name: "Archivio", exact: true }).click();

@@ -9,7 +9,7 @@ import { inviteContactToHinthial } from "@/lib/contacts/actions";
 
 /**
  * Pagina dedicata alla creazione di un contatto fiduciario (estratta da
- * TrustedContactsPanel). Stesso pattern usato per capsule/asset/scadenze:
+ * TrustedContactsPanel). Stesso pattern usato per capsule/beni/scadenze:
  * alla creazione riuscita torna a /contacts con un messaggio di conferma
  * passato come flag nell'URL (`?created=1`), mai il nome --- finirebbe
  * in chiaro nella cronologia del browser.

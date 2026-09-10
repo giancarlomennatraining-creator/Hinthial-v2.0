@@ -3,7 +3,7 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("\"Cancella tutto\" svuota Archivio, Asset, Contatti e Capsule, ripristina le categorie predefinite, e non tocca le Scadenze", async ({
+test("\"Cancella tutto\" svuota Archivio, Beni, Contatti e Capsule, ripristina le categorie predefinite, e non tocca le Scadenze", async ({
   page,
 }) => {
   test.slow();
@@ -50,23 +50,23 @@ test("\"Cancella tutto\" svuota Archivio, Asset, Contatti e Capsule, ripristina 
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("polizza.txt")).toBeVisible({ timeout: 15_000 });
 
-  // Un asset.
-  await page.getByRole("link", { name: "Asset" }).click();
-  await page.getByRole("link", { name: "+ Crea asset" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo asset" })).toBeVisible();
+  // Un bene.
+  await page.getByRole("link", { name: "Beni" }).click();
+  await page.getByRole("link", { name: "+ Crea bene" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo bene" })).toBeVisible();
   await page.getByLabel("Nome").fill("Appartamento");
-  await page.getByRole("button", { name: "Aggiungi asset" }).click();
+  await page.getByRole("button", { name: "Aggiungi bene" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
   await expect(page.getByText("Appartamento")).toBeVisible({ timeout: 10_000 });
 
-  // Una scadenza --- non deve sparire, solo scollegarsi dall'asset.
+  // Una scadenza --- non deve sparire, solo scollegarsi dal bene.
   await page.getByRole("link", { name: "Scadenze" }).click();
   await page.getByRole("link", { name: "+ Crea scadenza" }).click();
   await expect(page.getByRole("heading", { name: "Nuova scadenza" })).toBeVisible();
   const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   await page.getByLabel("Titolo").fill("Pagamento IMU");
   await page.getByLabel("Data").fill(future);
-  await page.getByLabel("Asset collegato").selectOption({ label: "Appartamento" });
+  await page.getByLabel("Bene collegato").selectOption({ label: "Appartamento" });
   await page.getByRole("button", { name: "Aggiungi scadenza" }).click();
   await expect(page).toHaveURL(/\/reminders$/, { timeout: 15_000 });
   await expect(page.getByText("Pagamento IMU")).toBeVisible({ timeout: 10_000 });
@@ -117,12 +117,12 @@ test("\"Cancella tutto\" svuota Archivio, Asset, Contatti e Capsule, ripristina 
 
   await expect(page.getByText("Il vault è stato svuotato.")).toBeVisible({ timeout: 15_000 });
 
-  // Archivio, Asset, Contatti e Capsule sono vuoti.
+  // Archivio, Beni, Contatti e Capsule sono vuoti.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await expect(page.getByText("Ancora nulla in archivio.")).toBeVisible({ timeout: 10_000 });
 
-  await page.getByRole("link", { name: "Asset" }).click();
-  await expect(page.getByText("Nessun asset ancora")).toBeVisible({ timeout: 10_000 });
+  await page.getByRole("link", { name: "Beni" }).click();
+  await expect(page.getByText("Nessun bene ancora")).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole("link", { name: "Contatti" }).click();
   await expect(page.getByText("Nessun contatto fiduciario ancora")).toBeVisible({ timeout: 10_000 });
@@ -138,7 +138,7 @@ test("\"Cancella tutto\" svuota Archivio, Asset, Contatti e Capsule, ripristina 
   await expect(page.getByText("📦 Altro")).toBeVisible();
   await expect(page.getByText("🎯 Hobby")).not.toBeVisible();
 
-  // La scadenza resta --- solo scollegata dall'asset ormai cancellato.
+  // La scadenza resta --- solo scollegata dal bene ormai cancellato.
   await page.getByRole("link", { name: "Scadenze" }).click();
   await expect(page.getByText("Pagamento IMU")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText("🔗 Appartamento")).not.toBeVisible();

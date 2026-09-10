@@ -41,7 +41,7 @@ export async function fetchAccountVisibilitySummary(
     throw new Error(`Impossibile contare i contenuti dell'archivio: ${documentsCount.error.message}`);
   }
   if (assetsCount.error) {
-    throw new Error(`Impossibile contare gli asset: ${assetsCount.error.message}`);
+    throw new Error(`Impossibile contare i beni: ${assetsCount.error.message}`);
   }
   if (contactsResult.error) {
     throw new Error(`Impossibile caricare i contatti fiduciari: ${contactsResult.error.message}`);

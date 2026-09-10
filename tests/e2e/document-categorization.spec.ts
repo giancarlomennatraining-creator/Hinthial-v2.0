@@ -31,7 +31,7 @@ test("un nome file con parole chiave riconoscibili riceve una categoria suggerit
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
-  // Attende che categorie/asset siano caricati (v. CreateArchiveItemForm,
+  // Attende che categorie/beni siano caricati (v. CreateArchiveItemForm,
   // refresh()) prima di caricare un file --- il suggerimento della
   // categoria ha bisogno che l'elenco categorie sia già arrivato.
   const fileInput = page.locator("#file");

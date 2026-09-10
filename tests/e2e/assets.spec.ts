@@ -10,13 +10,13 @@ import { openRowMenu } from "./row-actions";
  * sottomette, poi verifica il ritorno a /assets col messaggio di conferma.
  */
 async function createAsset(page: Page, name: string, categoryLabel?: string) {
-  await page.getByRole("link", { name: "+ Crea asset" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo asset" })).toBeVisible();
+  await page.getByRole("link", { name: "+ Crea bene" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo bene" })).toBeVisible();
   await page.getByLabel("Nome").fill(name);
   if (categoryLabel) await page.locator("#categoryId").selectOption({ label: categoryLabel });
-  await page.getByRole("button", { name: "Aggiungi asset" }).click();
+  await page.getByRole("button", { name: "Aggiungi bene" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
-  await expect(page.getByText("Asset creato.")).toBeVisible();
+  await expect(page.getByText("Bene creato.")).toBeVisible();
 }
 
 async function loginAndSetUpEncryption(page: import("@playwright/test").Page) {
@@ -46,28 +46,28 @@ async function loginAndSetUpEncryption(page: import("@playwright/test").Page) {
   return user;
 }
 
-test("crea un asset e vi collega un documento e una scadenza", async ({ page }) => {
+test("crea un bene e vi collega un documento e una scadenza", async ({ page }) => {
   // Real PBKDF2 (600,000 iterations, x2) in-browser during setup can push
   // this past the default 30s test timeout under load.
   test.slow();
 
   await loginAndSetUpEncryption(page);
 
-  await page.getByRole("link", { name: "Asset" }).click();
-  await expect(page.getByRole("heading", { name: "Asset" })).toBeVisible();
-  await expect(page.getByText("Nessun asset ancora")).toBeVisible();
+  await page.getByRole("link", { name: "Beni" }).click();
+  await expect(page.getByRole("heading", { name: "Beni" })).toBeVisible();
+  await expect(page.getByText("Nessun bene ancora")).toBeVisible();
 
   await createAsset(page, "Casa di Via Roma", "🏠 Casa");
   await expect(page.getByText("Casa di Via Roma")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText("Nessuno.")).toBeVisible();
   await expect(page.getByText("Nessuna.")).toBeVisible();
 
-  // Carica un contenuto e collegalo all'asset. Il menu asset è filtrato
+  // Carica un contenuto e collegalo al bene. Il menu del bene è filtrato
   // dalla categoria: va scelta prima, altrimenti resta vuoto/disabilitato.
   await page.getByRole("link", { name: "Archivio" }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
-  // Senza categoria selezionata, il menu asset è vuoto/disabilitato.
+  // Senza categoria selezionata, il menu del bene è vuoto/disabilitato.
   await expect(page.locator("#upload-asset")).toBeDisabled();
   await expect(page.locator("#upload-asset")).not.toContainText("Casa di Via Roma");
 
@@ -83,22 +83,22 @@ test("crea un asset e vi collega un documento e una scadenza", async ({ page }) 
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("🔗 Casa di Via Roma")).toBeVisible();
 
-  // Crea una scadenza e collegala all'asset.
+  // Crea una scadenza e collegala allo stesso bene.
   await page.getByRole("link", { name: "Scadenze" }).click();
   await page.getByRole("link", { name: "+ Crea scadenza" }).click();
   await expect(page.getByRole("heading", { name: "Nuova scadenza" })).toBeVisible();
   const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   await page.getByLabel("Titolo").fill("Pagamento IMU");
   await page.getByLabel("Data").fill(future);
-  await page.getByLabel("Asset collegato").selectOption({ label: "Casa di Via Roma" });
+  await page.getByLabel("Bene collegato").selectOption({ label: "Casa di Via Roma" });
   await page.getByRole("button", { name: "Aggiungi scadenza" }).click();
   await expect(page).toHaveURL(/\/reminders$/, { timeout: 15_000 });
   await expect(page.getByText("Scadenza creata.")).toBeVisible();
   await expect(page.getByText("Pagamento IMU")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText("🔗 Casa di Via Roma")).toBeVisible();
 
-  // L'asset mostra entrambe le relazioni.
-  await page.getByRole("link", { name: "Asset" }).click();
+  // Il bene mostra entrambe le relazioni.
+  await page.getByRole("link", { name: "Beni" }).click();
   await expect(page.getByText("📄 contratto-affitto.txt")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText(/⏰ Pagamento IMU/)).toBeVisible();
 
@@ -107,21 +107,21 @@ test("crea un asset e vi collega un documento e una scadenza", async ({ page }) 
   await openRowMenu(assetRow);
   await page.getByRole("menuitem", { name: "Modifica" }).click();
   await expect(page).toHaveURL(/\/assets\/[^/]+\/edit$/);
-  await expect(page.getByRole("heading", { name: "Modifica asset" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Modifica bene" })).toBeVisible();
   await page.getByLabel("Nome").fill("Casa di Via Roma (rinominata)");
   await page.getByLabel("Categoria").selectOption({ label: "🚗 Veicoli" });
   await page.getByRole("button", { name: "Salva modifiche" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
-  await expect(page.getByText("Asset aggiornato.")).toBeVisible();
+  await expect(page.getByText("Bene aggiornato.")).toBeVisible();
   const renamedAssetRow = page.locator("li", { hasText: "Casa di Via Roma (rinominata)" });
   await expect(renamedAssetRow).toBeVisible({ timeout: 10_000 });
   await expect(renamedAssetRow.getByText("🚗 Veicoli")).toBeVisible();
 
-  // Eliminare l'asset scollega, non elimina, documento e scadenza.
+  // Eliminare il bene scollega, non elimina, documento e scadenza.
   page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(renamedAssetRow);
   await page.getByRole("menuitem", { name: "Elimina" }).click();
-  await expect(page.getByText("Nessun asset ancora")).toBeVisible();
+  await expect(page.getByText("Nessun bene ancora")).toBeVisible();
 
   await page.getByRole("link", { name: "Archivio" }).click();
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible();
@@ -129,22 +129,22 @@ test("crea un asset e vi collega un documento e una scadenza", async ({ page }) 
   await expect(page.getByText("Pagamento IMU")).toBeVisible();
 });
 
-test("la categoria filtra gli asset nei documenti, l'asset filtra i documenti nelle scadenze", async ({
+test("la categoria filtra i beni nei documenti, il bene filtra i documenti nelle scadenze", async ({
   page,
 }) => {
   test.slow();
 
   await loginAndSetUpEncryption(page);
 
-  // Due asset di categorie diverse.
-  await page.getByRole("link", { name: "Asset" }).click();
+  // Due beni di categorie diverse.
+  await page.getByRole("link", { name: "Beni" }).click();
   await createAsset(page, "Appartamento", "🏠 Casa");
   await expect(page.getByText("Appartamento")).toBeVisible({ timeout: 10_000 });
 
   await createAsset(page, "Fiat Panda", "🚗 Veicoli");
   await expect(page.getByText("Fiat Panda")).toBeVisible({ timeout: 10_000 });
 
-  // Archivio: selezionare la categoria "Casa" filtra il menu asset alla
+  // Archivio: selezionare la categoria "Casa" filtra il menu del bene alla
   // sola "Appartamento" (non mostra "Fiat Panda").
   await page.getByRole("link", { name: "Archivio" }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
@@ -177,20 +177,20 @@ test("la categoria filtra gli asset nei documenti, l'asset filtra i documenti ne
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("libretto-auto.txt")).toBeVisible({ timeout: 15_000 });
 
-  // Scadenze: senza asset selezionato, il menu documento è
-  // vuoto/disabilitato --- selezionare l'asset "Appartamento" lo
-  // popola con il solo documento già legato a quell'asset.
+  // Scadenze: senza bene selezionato, il menu documento è
+  // vuoto/disabilitato --- selezionare il bene "Appartamento" lo
+  // popola con il solo documento già legato a quel bene.
   await page.getByRole("link", { name: "Scadenze" }).click();
   await page.getByRole("link", { name: "+ Crea scadenza" }).click();
   await expect(page.getByRole("heading", { name: "Nuova scadenza" })).toBeVisible();
   await expect(page.locator("#relatedDocumentId")).toBeDisabled();
 
-  await page.getByLabel("Asset collegato").selectOption({ label: "Appartamento" });
+  await page.getByLabel("Bene collegato").selectOption({ label: "Appartamento" });
   await expect(page.locator("#relatedDocumentId")).toContainText("contratto-affitto.txt");
   await expect(page.locator("#relatedDocumentId")).not.toContainText("libretto-auto.txt");
 
-  // Cambiando asset, il filtro si aggiorna di conseguenza.
-  await page.getByLabel("Asset collegato").selectOption({ label: "Fiat Panda" });
+  // Cambiando bene, il filtro si aggiorna di conseguenza.
+  await page.getByLabel("Bene collegato").selectOption({ label: "Fiat Panda" });
   await expect(page.locator("#relatedDocumentId")).toContainText("libretto-auto.txt");
   await expect(page.locator("#relatedDocumentId")).not.toContainText("contratto-affitto.txt");
 });

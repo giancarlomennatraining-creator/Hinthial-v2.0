@@ -22,6 +22,6 @@ describe("generateTemplateCsv", () => {
 
 describe("templateFilename", () => {
   it("names the file after the kind's prefix", () => {
-    expect(templateFilename("assets")).toBe("hinthial-template-asset.csv");
+    expect(templateFilename("assets")).toBe("hinthial-template-beni.csv");
   });
 });

@@ -17,7 +17,7 @@ import type { TimelineEntry } from "@/lib/timeline";
 
 const KIND_LABEL: Record<TimelineEntryKind, string> = {
   document: "Archivio",
-  asset: "Asset",
+  asset: "Bene",
   reminder: "Scadenza",
   contact: "Contatto",
   capsule: "Capsula",
@@ -47,7 +47,7 @@ function sortValueFor(entry: TimelineEntry, column: SortColumn): string {
 }
 
 /**
- * "Cronologia": ogni documento, asset, scadenza, contatto fiduciario e
+ * "Cronologia": ogni documento, bene, scadenza, contatto fiduciario e
  * capsula aggiunto, in ordine cronologico e raggruppato per mese --- uno
  * sguardo d'insieme su come è cresciuto il vault nel tempo (v. lib/timeline.ts).
  */

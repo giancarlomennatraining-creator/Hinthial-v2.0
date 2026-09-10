@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-10
 
+### "Asset" rinominato in "Beni"
+
+**Cosa fa:** la sezione che prima si chiamava "Asset" (immobili, veicoli, account, contratti, assicurazioni, ...) si chiama ora "Beni" in tutta l'app --- menu di navigazione, contatori della dashboard, moduli di creazione/modifica, messaggi di conferma ed errore, assistente AI, ricerca globale, cronologia, importazione/esportazione CSV, e la conferma di "Cancella tutto". Era l'unica voce di navigazione rimasta in inglese, e "asset" suonava più contabile/tecnico di quanto serva per qualcosa che copre anche casa, auto e polizze.
+
+**Note tecniche:** rinomina di sola interfaccia --- come già per "Documenti" -> "Archivio" (v. FASE 14), nomi di file/cartelle/route/colonne DB restano in inglese (`/assets`, `AssetIcon`, `AssetListItem`, `relatedAssetId`, `assets.*` in Supabase, ...), dato che "asset" ne è già la traduzione inglese corretta --- non serviva introdurne una diversa per le URL. L'assistente AI mock riconosce ora "bene"/"beni" come parole scatenanti per "elencameli tutti" (`LIST_ALL_TRIGGERS` in `mock-provider.ts`), non più "asset". Il template CSV di importazione (`domain/import/templates.ts`) usa ora `beni` come prefisso del nome del file scaricato, in linea con gli altri template (`contatti-fiduciari`, `scadenze`), che erano già in italiano. Aggiornati tutti gli e2e e unit test che asserivano sul testo "Asset"/"asset".
+
 ### Impostazioni su smartphone: elenco -> dettaglio invece della fila di schede
 
 **Cosa fa:** su smartphone, Impostazioni mostra ora un elenco di voci (Informazioni utente, Sicurezza, Privacy, ...); toccandone una si vede solo il suo contenuto, con un tasto "← Torna alle impostazioni" per uscirne --- invece della fila di schede orizzontale scorrevole di prima. Da desktop non cambia nulla: le schede restano sempre visibili tutte insieme, con il contenuto a fianco.

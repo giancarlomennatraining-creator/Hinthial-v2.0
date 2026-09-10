@@ -12,12 +12,12 @@ export interface OnboardingStep {
 
 /**
  * "Prima esperienza" (v. HINTHIAL_MVP.md, sezione UI/UX): crea account ->
- * configura sicurezza -> primo documento -> categoria -> asset -> capsula
+ * configura sicurezza -> primo documento -> categoria -> bene -> capsula
  * -> amico -> collegamento capsula-contatto. I due passi che presuppongono
  * un concetto nuovo (amico/Dead Man's Switch, il collegamento che lo usa)
  * vengono dopo quelli concreti apposta, non mescolati (v.
  * domain/onboarding/steps.ts). Nessun passo è più opzionale (erano
- * rimasti "asset"/"capsula"/"collegamento" facoltativi in una versione
+ * rimasti "bene"/"capsula"/"collegamento" facoltativi in una versione
  * precedente, insieme a "imposta una scadenza" --- rimosso perché
  * passivo rispetto al contribuire un contenuto): tutti contano nel
  * conteggio e nessuno è considerato "extra". Calcolata dal vivo dai dati

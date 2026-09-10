@@ -7,7 +7,7 @@ import type { AISource } from "@/domain/ai/types";
  * the same way.
  */
 export const AI_SOURCE_KIND_LABELS: Record<AISource["kind"], string> = {
-  asset: "Asset",
+  asset: "Beni",
   document: "Archivio",
   reminder: "Scadenze",
   contact: "Contatti",

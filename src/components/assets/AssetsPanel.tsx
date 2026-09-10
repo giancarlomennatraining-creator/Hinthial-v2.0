@@ -79,7 +79,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
       setDocuments(documentsResult);
       setReminders(remindersResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare gli asset.");
+      setError(err instanceof Error ? err.message : "Impossibile caricare i beni.");
     } finally {
       setLoading(false);
     }
@@ -94,7 +94,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
   async function handleDelete(asset: AssetListItem) {
     if (
       !window.confirm(
-        `Eliminare l'asset "${asset.name}"? I documenti e le scadenze collegati non verranno eliminati, solo scollegati.`,
+        `Eliminare il bene "${asset.name}"? I documenti e le scadenze collegati non verranno eliminati, solo scollegati.`,
       )
     )
       return;
@@ -110,7 +110,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
       await deleteAsset(supabase, user.id, asset.id);
       setAssets((prev) => prev.filter((a) => a.id !== asset.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare l'asset.");
+      setError(err instanceof Error ? err.message : "Impossibile eliminare il bene.");
     } finally {
       setBusyId(null);
     }
@@ -163,7 +163,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-brand">
-            Asset
+            Beni
           </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Censisci beni e contratti (casa, veicoli, assicurazioni, ...) e collega documenti e
@@ -174,15 +174,15 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
           href="/assets/new"
           className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
         >
-          + Crea asset
+          + Crea bene
         </Link>
       </div>
 
       {showCreatedMessage ? (
-        <SuccessMessage>Asset creato.</SuccessMessage>
+        <SuccessMessage>Bene creato.</SuccessMessage>
       ) : null}
       {showUpdatedMessage ? (
-        <SuccessMessage>Asset aggiornato.</SuccessMessage>
+        <SuccessMessage>Bene aggiornato.</SuccessMessage>
       ) : null}
 
       {error ? (
@@ -196,7 +196,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
       ) : assets.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Nessun asset ancora. Aggiungine uno col tasto qui sopra.
+            Nessun bene ancora. Aggiungine uno col tasto qui sopra.
           </p>
         </div>
       ) : (
@@ -221,7 +221,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
           {filteredAssets.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Nessun asset corrisponde alla ricerca.
+              Nessun bene corrisponde alla ricerca.
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">

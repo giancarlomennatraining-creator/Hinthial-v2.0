@@ -4,7 +4,7 @@ import type { AIContext, AISource, AISuggestion } from "@/domain/ai/types";
 /**
  * "Da tenere d'occhio" --- fonde in un'unica sezione i suggerimenti
  * proattivi (v. domain/ai/mock-provider.ts, suggest(): scadenze scadute/
- * in arrivo) e la salute del vault (asset/contatti/documenti non ancora
+ * in arrivo) e la salute del vault (beni/contatti/documenti non ancora
  * collegati a nient'altro): sono la stessa cosa vista da due angoli ---
  * "agisci per tempo" e "completa i collegamenti" --- e nella dashboard
  * finivano per apparire come due card quasi identiche una sopra
@@ -12,11 +12,11 @@ import type { AIContext, AISource, AISuggestion } from "@/domain/ai/types";
  * (v. SuggestionsList/VaultHealthWidget) --- qui è solo la dashboard a
  * presentarli insieme.
  *
- * suggest() include già un asset senza documenti collegati come
+ * suggest() include già un bene senza documenti collegati come
  * suggerimento a sé (stessa identica lista di assetsWithoutDocuments qui
- * sotto): la riga "salute del vault" per gli asset compare quindi solo
+ * sotto): la riga "salute del vault" per i beni compare quindi solo
  * nel caso positivo ("tutti collegati") --- nel caso negativo mostrarla
- * duplicherebbe lo stesso asset due volte nella stessa card. Contatti/
+ * duplicherebbe lo stesso bene due volte nella stessa card. Contatti/
  * documenti non hanno un equivalente in suggest(), quindi restano
  * sempre mostrati in entrambi i casi.
  */
@@ -65,7 +65,7 @@ export function WatchlistWidget({
 
         {assets.length > 0 && assetsWithoutDocuments.length === 0 ? (
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
-            Tutti i {assets.length} asset hanno almeno un contenuto collegato.
+            Tutti i {assets.length} beni hanno almeno un contenuto collegato.
           </p>
         ) : null}
 

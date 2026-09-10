@@ -108,7 +108,7 @@ export function SettingsTabs({
       );
     }
     if (activeTab === "onboarding") {
-      // Serve i dati decifrati (documenti/asset/contatti/capsule) per
+      // Serve i dati decifrati (documenti/beni/contatti/capsule) per
       // calcolare l'avanzamento --- unica scheda oltre a Importa/Esporta
       // e Zona pericolosa a richiedere la master key sbloccata.
       return (

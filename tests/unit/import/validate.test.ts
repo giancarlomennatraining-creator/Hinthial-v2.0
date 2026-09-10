@@ -83,7 +83,7 @@ describe("parseAssetRows", () => {
 });
 
 describe("parseReminderRows", () => {
-  const header = ["Titolo", "Data scadenza", "Asset collegato"];
+  const header = ["Titolo", "Data scadenza", "Bene collegato"];
   const assets = [{ id: "asset-1", name: "Auto Panda" }];
 
   it("parses an Italian-formatted date to ISO", () => {

@@ -25,8 +25,8 @@ export interface ImportKindSpec {
  * matched case-insensitively on the exact name. "unresolved" is the one
  * state that blocks import: the step-4 preview lets the user turn it
  * into either "matched" (pick the right existing one) or "create" (make
- * a new one on the spot), the same interaction for both Asset->Categoria
- * and Scadenza->Asset.
+ * a new one on the spot), the same interaction for both Beni->Categoria
+ * and Scadenza->Beni.
  */
 export type ReferenceResolution =
   | { kind: "empty" }

@@ -7,12 +7,12 @@ const CREATE_VALUE = "__create__";
 
 /**
  * One cell of the step-4 preview table for a name -> id reference
- * (Asset -> Categoria, Scadenza -> Asset): shows the resolved name when
+ * (Bene -> Categoria, Scadenza -> Bene): shows the resolved name when
  * it matched, a dash when the CSV cell was empty (an optional field),
  * or --- when it didn't match anything existing --- an inline select to
  * either pick the right existing one or create a new one on the spot.
  * Same interaction for both kinds of reference, only the label passed
- * in changes ("categoria"/"asset").
+ * in changes ("categoria"/"bene").
  */
 export function ReferenceCell({
   resolution,

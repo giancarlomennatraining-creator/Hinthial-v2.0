@@ -34,7 +34,7 @@ describe("DashboardCounters", () => {
     render(<DashboardCounters context={buildContext()} />);
 
     expect(screen.getByRole("link", { name: "Archivio: 0" })).toHaveAttribute("href", "/archive");
-    expect(screen.getByRole("link", { name: "Asset: 0" })).toHaveAttribute("href", "/assets");
+    expect(screen.getByRole("link", { name: "Beni: 0" })).toHaveAttribute("href", "/assets");
     expect(screen.getByRole("link", { name: "Contatti: 0" })).toHaveAttribute("href", "/contacts");
     expect(screen.getByRole("link", { name: "Capsule: 0" })).toHaveAttribute("href", "/capsules");
     expect(screen.getByRole("link", { name: "Categorie: 0" })).toHaveAttribute("href", "/settings");

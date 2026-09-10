@@ -63,8 +63,8 @@ export function DocumentMetadataFields({
    */
   showExpiry?: boolean;
 }) {
-  // La categoria filtra gli asset proposti (es. "Casa" -> solo gli asset
-  // di categoria "Casa") --- senza categoria selezionata, nessun asset è
+  // La categoria filtra i beni proposti (es. "Casa" -> solo i beni
+  // di categoria "Casa") --- senza categoria selezionata, nessun bene è
   // proponibile: la scelta della categoria viene prima.
   const filteredAssets = value.categoryId
     ? sortAlphabetically(
@@ -74,7 +74,7 @@ export function DocumentMetadataFields({
     : [];
 
   function handleCategoryChange(categoryId: string) {
-    // Se l'asset già selezionato non appartiene alla nuova categoria,
+    // Se il bene già selezionato non appartiene alla nuova categoria,
     // deseleziona: l'elenco che sta per essere mostrato non lo conterrebbe.
     const nextAssets = categoryId ? assets.filter((asset) => asset.categoryId === categoryId) : [];
     const relatedAssetId = nextAssets.some((asset) => asset.id === value.relatedAssetId)
@@ -113,7 +113,7 @@ export function DocumentMetadataFields({
             htmlFor={`${idPrefix}-asset`}
             className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
           >
-            Asset collegato
+            Bene collegato
           </label>
           <select
             id={`${idPrefix}-asset`}

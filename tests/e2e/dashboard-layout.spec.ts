@@ -33,7 +33,7 @@ test("la dashboard mostra i contatori per sezione, resta a due colonne anche a v
   // colonne resta comunque intero --- niente più collasso alla sola checklist.
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("link", { name: "Archivio: 0" })).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByRole("link", { name: "Asset: 0" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Beni: 0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Contatti: 0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Capsule: 0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Categorie: 10" })).toBeVisible();
@@ -44,12 +44,12 @@ test("la dashboard mostra i contatori per sezione, resta a due colonne anche a v
   await expect(page.getByRole("heading", { name: "Aggiunti di recente" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Elementi da completare" })).toBeVisible();
 
-  // Un asset non collegato a nulla e un contenuto in archivio.
-  await page.getByRole("link", { name: "Asset", exact: true }).click();
-  await page.getByRole("link", { name: "+ Crea asset" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo asset" })).toBeVisible();
+  // Un bene non collegato a nulla e un contenuto in archivio.
+  await page.getByRole("link", { name: "Beni", exact: true }).click();
+  await page.getByRole("link", { name: "+ Crea bene" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo bene" })).toBeVisible();
   await page.getByLabel("Nome").fill("Barca");
-  await page.getByRole("button", { name: "Aggiungi asset" }).click();
+  await page.getByRole("button", { name: "Aggiungi bene" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
   await expect(page.getByText("Barca")).toBeVisible({ timeout: 10_000 });
 
@@ -65,18 +65,18 @@ test("la dashboard mostra i contatori per sezione, resta a due colonne anche a v
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("polizza.txt")).toBeVisible({ timeout: 15_000 });
 
-  // I contatori si aggiornano, e "Da tenere d'occhio" segnala l'asset scollegato --- un'unica sezione.
+  // I contatori si aggiornano, e "Da tenere d'occhio" segnala il bene scollegato --- un'unica sezione.
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("link", { name: "Archivio: 1" })).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByRole("link", { name: "Asset: 1" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Beni: 1" })).toBeVisible();
 
-  // mockAIProvider.suggest() segnala già da solo un asset senza documenti
+  // mockAIProvider.suggest() segnala già da solo un bene senza documenti
   // collegati: "Da tenere d'occhio" non lo ripete anche come riga di
-  // salute del vault a parte (stesso asset due volte nella stessa card).
+  // salute del vault a parte (stesso bene due volte nella stessa card).
   await expect(page.getByText("Da tenere d'occhio")).toBeVisible();
-  await expect(page.getByText("Questo asset non ha ancora documenti collegati: Barca.")).toBeVisible();
+  await expect(page.getByText("Questo bene non ha ancora documenti collegati: Barca.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Barca" })).toHaveCount(1);
-  await expect(page.getByText(/asset non hanno ancora contenuti collegati/)).not.toBeVisible();
+  await expect(page.getByText(/beni non hanno ancora contenuti collegati/)).not.toBeVisible();
 
   // Un contatto attivo e amico: il sotto-contatore in "Contatti" lo riflette.
   await page.getByRole("link", { name: "Contatti", exact: true }).click();

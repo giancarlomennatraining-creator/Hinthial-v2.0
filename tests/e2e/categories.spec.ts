@@ -3,7 +3,7 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 // Le categorie sono in chiaro (non richiedono la Master Key): a
-// differenza di Archivio/Scadenze/Asset, /settings è accessibile subito
+// differenza di Archivio/Scadenze/Beni, /settings è accessibile subito
 // dopo il login, senza passare da RequireMasterKey.
 
 test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione", async ({

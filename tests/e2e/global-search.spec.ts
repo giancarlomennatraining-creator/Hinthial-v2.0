@@ -3,7 +3,7 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("la ricerca globale trova un asset per nome e ci porta alla sua pagina", async ({ page }) => {
+test("la ricerca globale trova un bene per nome e ci porta alla sua pagina", async ({ page }) => {
   test.slow();
 
   const user = uniqueTestUser();
@@ -26,10 +26,10 @@ test("la ricerca globale trova un asset per nome e ci porta alla sua pagina", as
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Asset" }).click();
-  await page.getByRole("link", { name: "+ Crea asset" }).click();
+  await page.getByRole("link", { name: "Beni" }).click();
+  await page.getByRole("link", { name: "+ Crea bene" }).click();
   await page.getByLabel("Nome").fill("Auto Panda");
-  await page.getByRole("button", { name: "Aggiungi asset" }).click();
+  await page.getByRole("button", { name: "Aggiungi bene" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
 
   // Prima dell'apertura, il dialog non esiste.
@@ -39,11 +39,11 @@ test("la ricerca globale trova un asset per nome e ci porta alla sua pagina", as
   const dialog = page.getByRole("dialog", { name: "Ricerca globale" });
   await expect(dialog).toBeVisible();
 
-  const input = page.getByPlaceholder("Cerca nell'archivio, asset, scadenze, contatti, capsule…");
+  const input = page.getByPlaceholder("Cerca nell'archivio, beni, scadenze, contatti, capsule…");
   await expect(input).toBeFocused();
   await input.fill("panda");
 
-  await expect(dialog.getByText("Asset", { exact: true })).toBeVisible();
+  await expect(dialog.getByText("Beni", { exact: true })).toBeVisible();
   await dialog.getByRole("button", { name: "Auto Panda" }).click();
 
   await expect(page).toHaveURL(/\/assets$/);
@@ -57,6 +57,6 @@ test("la ricerca globale trova un asset per nome e ci porta alla sua pagina", as
 
   // Nessuna corrispondenza: messaggio esplicito, non una lista vuota muta.
   await page.getByRole("button", { name: /Cerca/ }).click();
-  await page.getByPlaceholder("Cerca nell'archivio, asset, scadenze, contatti, capsule…").fill("xyzxyz");
+  await page.getByPlaceholder("Cerca nell'archivio, beni, scadenze, contatti, capsule…").fill("xyzxyz");
   await expect(page.getByText('Nessun risultato per "xyzxyz".')).toBeVisible();
 });

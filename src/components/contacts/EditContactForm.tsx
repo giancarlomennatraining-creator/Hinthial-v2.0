@@ -13,7 +13,7 @@ import type { TrustedContactListItem } from "@/domain/contacts/types";
  * un form inline nella riga di TrustedContactsPanel, ora una pagina a sé
  * come la creazione (stesso pattern di conferma via `?updated=1`
  * nell'URL, mai il nome in chiaro). Nessun elenco per id già pronto lato
- * repository (come per asset/capsule): si carica l'intero elenco già
+ * repository (come per beni/capsule): si carica l'intero elenco già
  * decifrato e si cerca l'id, esattamente come faceva il pannello prima.
  */
 export function EditContactForm({ masterKey, contactId }: { masterKey: CryptoKey; contactId: string }) {

@@ -3,7 +3,7 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("l'assistente AI risponde su asset/documenti collegati per categoria e segnala le scadenze scadute", async ({
+test("l'assistente AI risponde su beni/documenti collegati per categoria e segnala le scadenze scadute", async ({
   page,
 }) => {
   test.slow();
@@ -28,16 +28,16 @@ test("l'assistente AI risponde su asset/documenti collegati per categoria e segn
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  // Un asset in categoria Assicurazioni.
-  await page.getByRole("link", { name: "Asset" }).click();
-  await page.getByRole("link", { name: "+ Crea asset" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo asset" })).toBeVisible();
+  // Un bene in categoria Assicurazioni.
+  await page.getByRole("link", { name: "Beni" }).click();
+  await page.getByRole("link", { name: "+ Crea bene" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo bene" })).toBeVisible();
   await page.getByLabel("Nome").fill("Auto Panda");
   await page.locator("#categoryId").selectOption({ label: "🛡️ Assicurazioni" });
-  await page.getByRole("button", { name: "Aggiungi asset" }).click();
+  await page.getByRole("button", { name: "Aggiungi bene" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
 
-  // Un documento nella stessa categoria, collegato all'asset.
+  // Un documento nella stessa categoria, collegato al bene.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
@@ -52,14 +52,14 @@ test("l'assistente AI risponde su asset/documenti collegati per categoria e segn
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("polizza-auto.txt")).toBeVisible({ timeout: 15_000 });
 
-  // Una scadenza già scaduta, collegata allo stesso asset.
+  // Una scadenza già scaduta, collegata allo stesso bene.
   await page.getByRole("link", { name: "Scadenze" }).click();
   await page.getByRole("link", { name: "+ Crea scadenza" }).click();
   await expect(page.getByRole("heading", { name: "Nuova scadenza" })).toBeVisible();
   const past = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   await page.getByLabel("Titolo").fill("Rinnovo assicurazione auto");
   await page.getByLabel("Data").fill(past);
-  await page.getByLabel("Asset collegato").selectOption({ label: "Auto Panda" });
+  await page.getByLabel("Bene collegato").selectOption({ label: "Auto Panda" });
   await page.getByRole("button", { name: "Aggiungi scadenza" }).click();
   await expect(page).toHaveURL(/\/reminders$/, { timeout: 15_000 });
 
@@ -72,7 +72,7 @@ test("l'assistente AI risponde su asset/documenti collegati per categoria e segn
   await expect(page.getByText("Rinnovo assicurazione auto").first()).toBeVisible();
 
   // Domanda diretta: "assicurazioni" è il nome della categoria, non
-  // compare nel nome dell'asset né in quello del documento --- la
+  // compare nel nome del bene né in quello del documento --- la
   // risposta deve comunque trovarli seguendo la relazione categoria.
   await page.getByLabel("Fai una domanda").fill("Quali assicurazioni ho?");
   await page.getByRole("button", { name: "Chiedi" }).click();
@@ -81,8 +81,8 @@ test("l'assistente AI risponde su asset/documenti collegati per categoria e segn
   await expect(page.getByText("Rinnovo assicurazione auto").first()).toBeVisible();
 
   // Domanda generica senza corrispondenze specifiche: ripiega
-  // sull'elenco completo del tipo nominato ("quanti asset ho?").
-  await page.getByLabel("Fai una domanda").fill("Quanti asset ho?");
+  // sull'elenco completo del tipo nominato ("quanti beni ho?").
+  await page.getByLabel("Fai una domanda").fill("Quanti beni ho?");
   await page.getByRole("button", { name: "Chiedi" }).click();
   await expect(page.getByText("Auto Panda").last()).toBeVisible();
 
@@ -96,7 +96,7 @@ test("l'assistente AI risponde su asset/documenti collegati per categoria e segn
   // solo a un refresh vero, non lasciando e tornando sulla pagina.
   await page.getByRole("link", { name: "AI", exact: true }).click();
   await expect(page.getByText("Quali assicurazioni ho?").first()).toBeVisible();
-  await expect(page.getByText("Quanti asset ho?").first()).toBeVisible();
+  await expect(page.getByText("Quanti beni ho?").first()).toBeVisible();
 
   // "Nuova conversazione" la svuota di proposito.
   await page.getByRole("button", { name: "Nuova conversazione" }).click();

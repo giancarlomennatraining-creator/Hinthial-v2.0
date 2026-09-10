@@ -78,7 +78,7 @@ export function PrivacyPanel({
     birthDate ? `Data di nascita: ${formatDate(birthDate)}` : "Data di nascita: non impostata",
     `Account creato il ${formatDate(summary.accountCreatedAt)}`,
     `${summary.documentCount} contenuti in archivio`,
-    `${summary.assetCount} asset`,
+    `${summary.assetCount} ${summary.assetCount === 1 ? "bene" : "beni"}`,
     `${summary.contactCount} contatti fiduciari (${summary.activeContactCount} attivi, ${summary.friendContactCount} amici)`,
     `${summary.capsuleCount} capsule (${summary.capsuleStatusCounts.draft} in bozza, ${summary.capsuleStatusCounts.ready} chiuse, ${summary.capsuleStatusCounts.shared} condivise)`,
     summary.categoryNames.length > 0

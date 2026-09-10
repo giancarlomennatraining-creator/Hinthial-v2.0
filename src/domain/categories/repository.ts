@@ -86,7 +86,7 @@ export async function countCategoryUsage(
     throw new Error(`Impossibile verificare i documenti collegati: ${documentsResult.error.message}`);
   }
   if (assetsResult.error) {
-    throw new Error(`Impossibile verificare gli asset collegati: ${assetsResult.error.message}`);
+    throw new Error(`Impossibile verificare i beni collegati: ${assetsResult.error.message}`);
   }
 
   return {

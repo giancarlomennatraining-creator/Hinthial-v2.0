@@ -26,20 +26,20 @@ test("la barra fissa in basso mostra le voci di default, si personalizza da Impo
   await expect(bottomBar.getByRole("link", { name: "Archivio" })).toBeVisible();
   await expect(bottomBar.getByRole("link", { name: "Scadenze" })).toBeVisible();
   await expect(bottomBar.getByRole("link", { name: "Capsule" })).toBeVisible();
-  await expect(bottomBar.getByRole("link", { name: "Asset" })).toHaveCount(0);
+  await expect(bottomBar.getByRole("link", { name: "Beni" })).toHaveCount(0);
 
   // Quelle voci non sono ripetute nel menu con le 3 lineette --- il
-  // resto (es. "Asset") sì.
+  // resto (es. "Beni") sì.
   const menuButton = page.getByRole("button", { name: "Apri il menu" });
   await menuButton.click();
   const drawer = page.getByRole("dialog", { name: "Menu di navigazione" });
   await expect(drawer).toBeVisible();
   await expect(drawer.getByRole("link", { name: "Archivio" })).toHaveCount(0);
-  await expect(drawer.getByRole("link", { name: "Asset" })).toBeVisible();
+  await expect(drawer.getByRole("link", { name: "Beni" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(drawer).not.toBeVisible();
 
-  // In Impostazioni > Aspetto si toglie "Archivio" e si aggiunge "Asset".
+  // In Impostazioni > Aspetto si toglie "Archivio" e si aggiunge "Beni".
   // Viewport da smartphone: Impostazioni è a elenco -> dettaglio (v.
   // mobile-settings-nav.spec.ts), non a schede come da desktop.
   await page.goto("/settings");
@@ -54,25 +54,25 @@ test("la barra fissa in basso mostra le voci di default, si personalizza da Impo
   ]);
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
-    page.getByRole("checkbox", { name: "Asset" }).check(),
+    page.getByRole("checkbox", { name: "Beni" }).check(),
   ]);
 
   // Si applica subito alla barra, senza refresh...
   await expect(bottomBar.getByRole("link", { name: "Archivio" })).toHaveCount(0);
-  await expect(bottomBar.getByRole("link", { name: "Asset" })).toBeVisible();
+  await expect(bottomBar.getByRole("link", { name: "Beni" })).toBeVisible();
 
   // ...e resta impostata dopo un refresh vero (sincronizzata sul server,
   // letta prima ancora del primo render della shell, come nav_orientation).
   await page.goto("/dashboard");
   await page.reload();
   await expect(bottomBar.getByRole("link", { name: "Archivio" })).toHaveCount(0);
-  await expect(bottomBar.getByRole("link", { name: "Asset" })).toBeVisible();
+  await expect(bottomBar.getByRole("link", { name: "Beni" })).toBeVisible();
 
   // Il menu con le 3 lineette ora mostra di nuovo "Archivio" (non più
-  // duplicato in basso) e non più "Asset" (ora in basso).
+  // duplicato in basso) e non più "Beni" (ora in basso).
   await menuButton.click();
   await expect(drawer.getByRole("link", { name: "Archivio" })).toBeVisible();
-  await expect(drawer.getByRole("link", { name: "Asset" })).toHaveCount(0);
+  await expect(drawer.getByRole("link", { name: "Beni" })).toHaveCount(0);
 });
 
 test("oltre 4 voci scelte, le altre caselle si disabilitano", async ({ page }) => {

@@ -63,15 +63,15 @@ test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (ness
   await expect(doneDocumentStep).toBeVisible();
   await expect(doneDocumentStep).not.toHaveClass(/line-through/);
 
-  // Un asset: 5/8.
-  await page.getByRole("link", { name: "Asset", exact: true }).click();
-  await page.getByRole("link", { name: "+ Crea asset" }).click();
+  // Un bene: 5/8.
+  await page.getByRole("link", { name: "Beni", exact: true }).click();
+  await page.getByRole("link", { name: "+ Crea bene" }).click();
   await page.getByLabel("Nome").fill("Barca");
-  await page.getByRole("button", { name: "Aggiungi asset" }).click();
+  await page.getByRole("button", { name: "Aggiungi bene" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
 
   await page.getByRole("link", { name: "Dashboard" }).click();
-  await expect(page.getByRole("link", { name: "Aggiungi il primo asset" })).not.toBeVisible();
+  await expect(page.getByRole("link", { name: "Aggiungi il primo bene" })).not.toBeVisible();
   await expect(page.getByText("5/8")).toBeVisible();
 
   // Un contatto, attivo (per poter poi ricevere una capsula) e amico

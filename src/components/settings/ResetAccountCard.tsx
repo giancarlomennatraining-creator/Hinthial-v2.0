@@ -76,7 +76,7 @@ export function ResetAccountCard({ userId, masterKey }: { userId: string; master
           Reimposta l&apos;account
         </h2>
         <p className="mt-1 text-sm text-red-800/90 dark:text-red-400/90">
-          Svuota completamente il tuo vault (Archivio, Asset, Contatti fiduciari e Capsule) e
+          Svuota completamente il tuo vault (Archivio, Beni, Contatti fiduciari e Capsule) e
           ripristina le categorie predefinite, mantenendo l&apos;account attivo --- utile per
           ricominciare da capo senza cancellarti. Le Scadenze non vengono eliminate --- restano,
           solo scollegate da ciò che viene cancellato. Richiede la tua master password.
@@ -114,7 +114,7 @@ export function ResetAccountCard({ userId, masterKey }: { userId: string; master
             <div>
               <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">Sei sicuro?</h3>
               <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                Archivio, Asset, Contatti fiduciari e Capsule verranno eliminati per sempre. Non
+                Archivio, Beni, Contatti fiduciari e Capsule verranno eliminati per sempre. Non
                 si può annullare.
               </p>
             </div>

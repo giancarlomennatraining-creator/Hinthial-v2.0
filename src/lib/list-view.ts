@@ -25,7 +25,7 @@ export const LIST_SECTIONS: ListSection[] = [
 export const LIST_SECTION_LABEL: Record<ListSection, string> = {
   archive: "Archivio",
   reminders: "Scadenze",
-  assets: "Asset",
+  assets: "Beni",
   contacts: "Contatti",
   capsules: "Capsule",
   timeline: "Cronologia",

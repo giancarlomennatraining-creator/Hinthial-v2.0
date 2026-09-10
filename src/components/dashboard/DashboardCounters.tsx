@@ -11,7 +11,7 @@ const COUNTERS: {
   href: string;
 }[] = [
   { key: "documents", label: "Archivio", icon: ArchiveIcon, href: "/archive" },
-  { key: "assets", label: "Asset", icon: AssetIcon, href: "/assets" },
+  { key: "assets", label: "Beni", icon: AssetIcon, href: "/assets" },
   { key: "contacts", label: "Contatti", icon: ContactIcon, href: "/contacts" },
   { key: "capsules", label: "Capsule", icon: CapsuleIcon, href: "/capsules" },
   { key: "categories", label: "Categorie", icon: CategoryIcon, href: "/settings" },

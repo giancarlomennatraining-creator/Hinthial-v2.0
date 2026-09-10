@@ -28,7 +28,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: DashboardIcon, requiresEncryption: false },
   { label: "Archivio", href: "/archive", icon: ArchiveIcon, requiresEncryption: true },
   { label: "Scadenze", href: "/reminders", icon: ReminderIcon, requiresEncryption: true },
-  { label: "Asset", href: "/assets", icon: AssetIcon, requiresEncryption: true },
+  { label: "Beni", href: "/assets", icon: AssetIcon, requiresEncryption: true },
   { label: "Contatti", href: "/contacts", icon: ContactIcon, requiresEncryption: true },
   { label: "Capsule", href: "/capsules", icon: CapsuleIcon, requiresEncryption: true },
   { label: "Cronologia", href: "/timeline", icon: TimelineIcon, requiresEncryption: true },

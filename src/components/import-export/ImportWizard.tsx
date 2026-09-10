@@ -30,14 +30,14 @@ const KIND_ORDER: ImportKind[] = ["contacts", "assets", "reminders"];
 
 const DESTINATION_LINK: Record<ImportKind, { href: string; label: string }> = {
   contacts: { href: "/contacts", label: "Vai a Contatti" },
-  assets: { href: "/assets", label: "Vai ad Asset" },
+  assets: { href: "/assets", label: "Vai a Beni" },
   reminders: { href: "/reminders", label: "Vai a Scadenze" },
 };
 
 /**
  * FASE successiva alla FASE 9 --- Importazione: wizard a 5 passi, tutto
  * su questa stessa pagina (nessuna navigazione tra route). Contatti
- * fiduciari e Asset non hanno dipendenze; le Scadenze qui importate sono
+ * fiduciari e Beni non hanno dipendenze; le Scadenze qui importate sono
  * solo quelle libere, non legate a un documento --- quelle nasceranno in
  * futuro come effetto collaterale di HINTHIAL AI che legge i documenti
  * caricati (v. discussione FASE AI). La cifratura avviene qui, nel
@@ -469,7 +469,7 @@ function RemindersPreviewTable({
           <th className="px-3 py-2 font-medium">Riga</th>
           <th className="px-3 py-2 font-medium">Titolo</th>
           <th className="px-3 py-2 font-medium">Data scadenza</th>
-          <th className="px-3 py-2 font-medium">Asset collegato</th>
+          <th className="px-3 py-2 font-medium">Bene collegato</th>
           <th className="px-3 py-2 font-medium">Stato</th>
         </tr>
       </thead>
@@ -494,7 +494,7 @@ function RemindersPreviewTable({
               <ReferenceCell
                 resolution={row.asset}
                 existing={assets}
-                entityLabel="asset"
+                entityLabel="bene"
                 onChange={(next) => onResolve(row.rowNumber, next)}
               />
             </td>

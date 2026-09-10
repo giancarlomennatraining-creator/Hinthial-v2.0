@@ -3,7 +3,7 @@ import type { AIContext, AISource } from "@/domain/ai/types";
 
 /**
  * "Cruscotto di igiene del vault": qualche numero non giudicante su
- * quanto le relazioni che Hinthial modella (asset<->documenti,
+ * quanto le relazioni che Hinthial modella (beni<->documenti,
  * contatto<->capsula) sono effettivamente collegate --- calcolato dal
  * vivo dall'AIContext già decifrato per l'Assistente AI/la dashboard,
  * nessuna nuova query.
@@ -50,8 +50,8 @@ export function VaultHealthWidget({ context }: { context: AIContext }) {
         {assets.length > 0 ? (
           <div className="text-sm text-zinc-700 dark:text-zinc-300">
             {assetsWithoutDocuments.length === 0
-              ? `Tutti i ${assets.length} asset hanno almeno un contenuto collegato.`
-              : `${assetsWithoutDocuments.length} di ${assets.length} asset non hanno ancora contenuti collegati.`}
+              ? `Tutti i ${assets.length} beni hanno almeno un contenuto collegato.`
+              : `${assetsWithoutDocuments.length} di ${assets.length} beni non hanno ancora contenuti collegati.`}
             <SourceList sources={assetSources} />
           </div>
         ) : null}

@@ -10,7 +10,7 @@ import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
 
 /**
- * Pagina dedicata alla modifica di un asset --- prima era un form inline
+ * Pagina dedicata alla modifica di un bene --- prima era un form inline
  * nella riga di AssetsPanel, ora una pagina a sé come la creazione
  * (stesso pattern di conferma via `?updated=1`).
  */
@@ -34,7 +34,7 @@ export function EditAssetForm({ masterKey, assetId }: { masterKey: CryptoKey; as
       setAsset(assets.find((a) => a.id === assetId) ?? null);
       setCategories(categoriesResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare l'asset.");
+      setError(err instanceof Error ? err.message : "Impossibile caricare il bene.");
     } finally {
       setLoading(false);
     }
@@ -56,7 +56,7 @@ export function EditAssetForm({ masterKey, assetId }: { masterKey: CryptoKey; as
     const categoryId = String(formData.get("categoryId") ?? "") || null;
 
     if (!name) {
-      setError("Il nome dell'asset non può essere vuoto.");
+      setError("Il nome del bene non può essere vuoto.");
       return;
     }
 
@@ -65,7 +65,7 @@ export function EditAssetForm({ masterKey, assetId }: { masterKey: CryptoKey; as
       await updateAsset(supabase, masterKey, assetId, { name, categoryId });
       router.push("/assets?updated=1");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare l'asset.");
+      setError(err instanceof Error ? err.message : "Impossibile aggiornare il bene.");
       setSaving(false);
     }
   }
@@ -77,10 +77,10 @@ export function EditAssetForm({ masterKey, assetId }: { masterKey: CryptoKey; as
           href="/assets"
           className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
         >
-          ← Torna agli asset
+          ← Torna ai beni
         </Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
-          Modifica asset
+          Modifica bene
         </h1>
       </div>
 
@@ -88,7 +88,7 @@ export function EditAssetForm({ masterKey, assetId }: { masterKey: CryptoKey; as
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
       ) : !asset ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          Asset non trovato.
+          Bene non trovato.
         </p>
       ) : (
         <form

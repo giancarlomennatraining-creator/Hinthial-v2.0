@@ -45,7 +45,7 @@ export async function listAssets(
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error(`Impossibile caricare gli asset: ${error.message}`);
+    throw new Error(`Impossibile caricare i beni: ${error.message}`);
   }
 
   return Promise.all((data ?? []).map((row) => toAssetListItem(masterKey, row)));
@@ -69,7 +69,7 @@ export async function createAsset(
   });
 
   if (error) {
-    throw new Error(`Impossibile creare l'asset: ${error.message}`);
+    throw new Error(`Impossibile creare il bene: ${error.message}`);
   }
 
   await logAuditEvent(supabase, ownerId, "asset_created");
@@ -94,7 +94,7 @@ export async function updateAsset(
     .eq("id", assetId);
 
   if (error) {
-    throw new Error(`Impossibile aggiornare l'asset: ${error.message}`);
+    throw new Error(`Impossibile aggiornare il bene: ${error.message}`);
   }
 }
 
@@ -106,7 +106,7 @@ export async function deleteAsset(
   const { error } = await supabase.from("assets").delete().eq("id", assetId);
 
   if (error) {
-    throw new Error(`Impossibile eliminare l'asset: ${error.message}`);
+    throw new Error(`Impossibile eliminare il bene: ${error.message}`);
   }
 
   await logAuditEvent(supabase, ownerId, "asset_deleted");

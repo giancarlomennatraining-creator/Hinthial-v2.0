@@ -10,7 +10,7 @@ import { AI_SOURCE_KIND_LABELS } from "@/domain/ai/labels";
 /**
  * FASE 10 --- provider mock: nessun modello linguistico, solo
  * corrispondenze dichiaratamente semplici per parole chiave e
- * attraversamento delle relazioni già presenti nei dati (asset <->
+ * attraversamento delle relazioni già presenti nei dati (beni <->
  * documenti/scadenze, categoria -> tutto ciò che contiene, capsula ->
  * destinatari/documenti). Dimostra la forma dell'interfaccia AIProvider
  * in vista di un provider reale (FASE 11) --- non finge di capire il
@@ -98,7 +98,8 @@ function matchedCategoryIds(query: string, context: AIContext): Set<string> {
 
 /** Parole che nominano un intero tipo di entità (singolare e plurale) --- "quanti CONTATTI ho?", "quali DOCUMENTI ho?". */
 const LIST_ALL_TRIGGERS: Record<string, AISource["kind"]> = {
-  asset: "asset",
+  bene: "asset",
+  beni: "asset",
   documento: "document",
   documenti: "document",
   scadenza: "reminder",
@@ -139,9 +140,9 @@ function retrieve(query: string, context: AIContext): AISource[] {
   const sources = [...direct];
 
   // Una categoria citata nella domanda porta con sé tutto ciò che le
-  // appartiene, anche se il nome del singolo asset/documento non
+  // appartiene, anche se il nome del singolo bene/documento non
   // contiene la parola --- è il caso "Quali assicurazioni ho?" del
-  // piano: "assicurazioni" è il nome della categoria, non degli asset.
+  // piano: "assicurazioni" è il nome della categoria, non dei beni.
   if (categoryIds.size > 0) {
     for (const asset of context.assets) {
       if (asset.categoryId && categoryIds.has(asset.categoryId)) {
@@ -155,7 +156,7 @@ function retrieve(query: string, context: AIContext): AISource[] {
     }
   }
 
-  // Ogni asset trovato porta con sé i documenti e le scadenze collegati.
+  // Ogni bene trovato porta con sé i documenti e le scadenze collegati.
   const matchedAssetIds = new Set(sources.filter((s) => s.kind === "asset").map((s) => s.id));
   for (const assetId of matchedAssetIds) {
     for (const doc of context.documents) {
@@ -170,7 +171,7 @@ function retrieve(query: string, context: AIContext): AISource[] {
     }
   }
 
-  // Ogni documento trovato porta con sé l'asset a cui è collegato.
+  // Ogni documento trovato porta con sé il bene a cui è collegato.
   const matchedDocumentIds = new Set(sources.filter((s) => s.kind === "document").map((s) => s.id));
   for (const documentId of matchedDocumentIds) {
     const doc = context.documents.find((d) => d.id === documentId);
@@ -261,7 +262,7 @@ function suggest(context: AIContext): AISuggestion[] {
   );
   if (assetsWithoutDocuments.length > 0) {
     suggestions.push({
-      text: `${assetsWithoutDocuments.length === 1 ? "Questo asset non ha" : "Questi asset non hanno"} ancora documenti collegati: ${assetsWithoutDocuments.map((a) => a.name).join(", ")}.`,
+      text: `${assetsWithoutDocuments.length === 1 ? "Questo bene non ha" : "Questi beni non hanno"} ancora documenti collegati: ${assetsWithoutDocuments.map((a) => a.name).join(", ")}.`,
       sources: assetsWithoutDocuments.map((a) => ({ kind: "asset", id: a.id, label: a.name, href: "/assets" })),
     });
   }
