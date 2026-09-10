@@ -237,7 +237,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
             >
               📅 Esporta calendario (.ics)
             </button>
-            <ListViewToggle section="reminders" />
+            <ListViewToggle section="reminders" hideOnMobile />
           </div>
 
           {filteredReminders.length === 0 ? (

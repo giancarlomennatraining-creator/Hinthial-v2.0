@@ -40,8 +40,10 @@ test("la barra fissa in basso mostra le voci di default, si personalizza da Impo
   await expect(drawer).not.toBeVisible();
 
   // In Impostazioni > Aspetto si toglie "Archivio" e si aggiunge "Asset".
+  // Viewport da smartphone: Impostazioni è a elenco -> dettaglio (v.
+  // mobile-settings-nav.spec.ts), non a schede come da desktop.
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("button", { name: "Aspetto" }).click();
   await expect(
     page.getByRole("heading", { name: "Barra di navigazione in basso (smartphone)" }),
   ).toBeVisible();
@@ -83,8 +85,10 @@ test("oltre 4 voci scelte, le altre caselle si disabilitano", async ({ page }) =
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
+  // Viewport da smartphone: Impostazioni è a elenco -> dettaglio (v.
+  // mobile-settings-nav.spec.ts), non a schede come da desktop.
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("button", { name: "Aspetto" }).click();
 
   // Le 4 di default sono già selezionate --- una quinta è disabilitata.
   const fifthCheckbox = page.getByRole("checkbox", { name: "Contatti" });

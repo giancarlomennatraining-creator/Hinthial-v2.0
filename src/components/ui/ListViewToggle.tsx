@@ -16,7 +16,14 @@ const OPTIONS: { value: ListViewMode; label: string; icon: string }[] = [
  * ListViewPreferencesProvider), quindi resta sempre sincronizzato con
  * essa senza bisogno di ricaricare la pagina.
  */
-export function ListViewToggle({ section }: { section: ListSection }) {
+export function ListViewToggle({
+  section,
+  hideOnMobile = false,
+}: {
+  section: ListSection;
+  /** Sotto md `modeFor` forza comunque l'elenco (v. ListViewPreferencesProvider): mostrare qui l'interruttore sarebbe un controllo che sembra non rispondere al tocco. Usato dalle pagine di sezione, non da ListViewSettings (Impostazioni > Aspetto): lì la preferenza va sempre impostabile, anche da uno schermo piccolo, perché vale anche per quando si guarda da uno schermo più largo. */
+  hideOnMobile?: boolean;
+}) {
   const { modeFor, setMode, loading } = useListViewPreferences();
   const [error, setError] = useState(false);
   const mode = modeFor(section);
@@ -31,7 +38,7 @@ export function ListViewToggle({ section }: { section: ListSection }) {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className={cn("items-center gap-2", hideOnMobile ? "hidden md:flex" : "flex")}>
       <div
         role="radiogroup"
         aria-label="Modalità di visualizzazione"

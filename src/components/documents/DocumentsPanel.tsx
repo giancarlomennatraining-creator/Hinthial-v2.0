@@ -414,7 +414,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 </option>
               ))}
             </select>
-            <ListViewToggle section="archive" />
+            <ListViewToggle section="archive" hideOnMobile />
           </div>
 
           {filteredDocuments.length === 0 ? (

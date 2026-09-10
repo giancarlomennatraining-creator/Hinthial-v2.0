@@ -387,7 +387,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
               <option value="ready">Chiusa</option>
               <option value="shared">Condivisa</option>
             </select>
-            <ListViewToggle section="capsules" />
+            <ListViewToggle section="capsules" hideOnMobile />
           </div>
 
           {filteredCapsules.length === 0 ? (

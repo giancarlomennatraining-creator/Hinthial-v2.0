@@ -81,50 +81,21 @@ export function SettingsTabs({
   // dissolvenza.
   const { displayed: displayedTab, visible: tabContentVisible } = useCrossfade(tab, 150);
 
-  return (
-    <div className="flex flex-col gap-6 md:flex-row md:gap-10">
-      <div
-        role="tablist"
-        aria-orientation="vertical"
-        className="flex shrink-0 flex-row gap-1 overflow-x-auto border-b border-zinc-200 pb-2 md:w-48 md:flex-col md:border-b-0 md:border-r md:pb-0 md:pr-4 dark:border-zinc-800"
-      >
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
-            onClick={() => setTab(t.id)}
-            className={cn(
-              "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
-              tab === t.id
-                ? t.id === "danger-zone"
-                  ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                  : "bg-brand/10 text-brand"
-                : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
-            )}
-          >
-            {/* Icona sempre blu (colore del logo), a prescindere dallo
-                stato attivo/inattivo della scheda --- eccetto "Zona
-                pericolosa" (v. sopra), che resta nel proprio colore di
-                avviso. */}
-            <t.icon
-              width={18}
-              height={18}
-              className={t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand"}
-            />
-            {t.label}
-          </button>
-        ))}
-      </div>
+  // Navigazione mobile: elenco delle voci -> dettaglio di una sola,
+  // invece della fila di schede orizzontali (v. richiesta utente: "può
+  // vivere parallelamente a quello che accade nella versione desktop?")
+  // --- sì, i due layout sono indipendenti: qui sotto md, la fila di
+  // schede sopra invariata da md in su (due blocchi separati con
+  // `md:hidden`/`hidden md:flex`, non un solo layout responsive). `null`
+  // = mostra l'elenco.
+  const [mobileSection, setMobileSection] = useState<Tab | null>(null);
+  const mobileView: Tab | "list" = mobileSection ?? "list";
+  const { displayed: displayedMobileView, visible: mobileViewVisible } = useCrossfade(mobileView, 150);
 
-      <div
-        className={cn(
-          "min-w-0 flex-1 transition-opacity duration-150",
-          tabContentVisible ? "opacity-100" : "opacity-0",
-        )}
-      >
-      {displayedTab === "user-info" ? (
+  /** Il contenuto di una scheda --- condiviso tra il layout desktop (schede + contenuto sempre insieme) e il dettaglio mobile (una voce alla volta), così le due navigazioni indipendenti non duplicano la logica di quale pannello mostrare. */
+  function renderPanel(activeTab: Tab) {
+    if (activeTab === "user-info") {
+      return (
         <UserInfoPanel
           userId={userId}
           firstName={firstName}
@@ -134,16 +105,20 @@ export function SettingsTabs({
           avatarUrl={avatarUrl}
           birthDate={birthDate}
         />
-      ) : displayedTab === "onboarding" ? (
-        // Serve i dati decifrati (documenti/asset/contatti/capsule) per
-        // calcolare l'avanzamento --- unica scheda oltre a Importa/Esporta
-        // e Zona pericolosa a richiedere la master key sbloccata.
-        <RequireMasterKey>
-          {(masterKey) => <OnboardingSettingsPanel masterKey={masterKey} />}
-        </RequireMasterKey>
-      ) : displayedTab === "privacy" ? (
-        // Solo conteggi e colonne mai cifrate (v. domain/privacy/repository.ts)
-        // --- non richiede la master key, a differenza di Onboarding qui sopra.
+      );
+    }
+    if (activeTab === "onboarding") {
+      // Serve i dati decifrati (documenti/asset/contatti/capsule) per
+      // calcolare l'avanzamento --- unica scheda oltre a Importa/Esporta
+      // e Zona pericolosa a richiedere la master key sbloccata.
+      return (
+        <RequireMasterKey>{(masterKey) => <OnboardingSettingsPanel masterKey={masterKey} />}</RequireMasterKey>
+      );
+    }
+    if (activeTab === "privacy") {
+      // Solo conteggi e colonne mai cifrate (v. domain/privacy/repository.ts)
+      // --- non richiede la master key, a differenza di Onboarding qui sopra.
+      return (
         <PrivacyPanel
           userId={userId}
           firstName={firstName}
@@ -151,13 +126,18 @@ export function SettingsTabs({
           email={email}
           birthDate={birthDate}
         />
-      ) : displayedTab === "security" ? (
-        // Layer di identità (login), non di cifratura --- non richiede
-        // la master key (v. domain/mfa/repository.ts).
-        <MfaSettingsPanel userId={userId} />
-      ) : displayedTab === "categories" ? (
-        <CategoriesPanel />
-      ) : displayedTab === "appearance" ? (
+      );
+    }
+    if (activeTab === "security") {
+      // Layer di identità (login), non di cifratura --- non richiede
+      // la master key (v. domain/mfa/repository.ts).
+      return <MfaSettingsPanel userId={userId} />;
+    }
+    if (activeTab === "categories") {
+      return <CategoriesPanel />;
+    }
+    if (activeTab === "appearance") {
+      return (
         <div className="flex max-w-md flex-col gap-8">
           <div className="flex flex-col gap-4">
             <div>
@@ -204,29 +184,140 @@ export function SettingsTabs({
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                 Elenco o tabella impaginata, per ogni sezione --- la scelta resta la stessa su
                 tutti i tuoi dispositivi, e puoi cambiarla anche direttamente da ogni sezione.
+                Su schermi stretti si mostra comunque sempre l&apos;elenco, dove la tabella non
+                avrebbe spazio per restare leggibile.
               </p>
             </div>
             <ListViewSettings />
           </div>
         </div>
-      ) : displayedTab === "activity" ? (
-        // Registro tecnico in chiaro (v. lib/audit/log-event.ts): non
-        // richiede la master key, come Aspetto.
-        <AuditLogPanel />
-      ) : displayedTab === "import-export" ? (
-        // ImportExportTabs gestisce da sé le proprie sotto-schede
-        // (Importa/Esporta) e il proprio RequireMasterKey --- prima
-        // viveva in una pagina a sé (/import-export), ora è qui.
-        <ImportExportTabs firstName={firstName} lastName={lastName} email={email} />
-      ) : (
-        // "Cancella tutto" ha bisogno della master key sbloccata (per
-        // scoprire i path da rimuovere in Storage) --- come Onboarding e
-        // Importa/Esporta; le altre schede non toccano nulla di cifrato.
-        <RequireMasterKey>
-          {(masterKey) => <DangerZonePanel userId={userId} masterKey={masterKey} />}
-        </RequireMasterKey>
-      )}
+      );
+    }
+    if (activeTab === "activity") {
+      // Registro tecnico in chiaro (v. lib/audit/log-event.ts): non
+      // richiede la master key, come Aspetto.
+      return <AuditLogPanel />;
+    }
+    if (activeTab === "import-export") {
+      // ImportExportTabs gestisce da sé le proprie sotto-schede
+      // (Importa/Esporta) e il proprio RequireMasterKey --- prima
+      // viveva in una pagina a sé (/import-export), ora è qui.
+      return <ImportExportTabs firstName={firstName} lastName={lastName} email={email} />;
+    }
+    // "Cancella tutto" ha bisogno della master key sbloccata (per
+    // scoprire i path da rimuovere in Storage) --- come Onboarding e
+    // Importa/Esporta; le altre schede non toccano nulla di cifrato.
+    return (
+      <RequireMasterKey>{(masterKey) => <DangerZonePanel userId={userId} masterKey={masterKey} />}</RequireMasterKey>
+    );
+  }
+
+  return (
+    <>
+      {/* Mobile: elenco delle voci -> dettaglio di una sola, con un
+          tasto per tornare indietro --- v. commento su mobileSection
+          sopra. */}
+      <div className="md:hidden">
+        <div
+          className={cn(
+            "transition-opacity duration-150",
+            mobileViewVisible ? "opacity-100" : "opacity-0",
+          )}
+        >
+          {displayedMobileView === "list" ? (
+            <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+              {TABS.map((t) => (
+                <li key={t.id}>
+                  <button
+                    type="button"
+                    onClick={() => setMobileSection(t.id)}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  >
+                    <t.icon
+                      width={18}
+                      height={18}
+                      className={t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand"}
+                    />
+                    <span
+                      className={cn(
+                        "flex-1",
+                        t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : undefined,
+                      )}
+                    >
+                      {t.label}
+                    </span>
+                    <span aria-hidden="true" className="text-zinc-400 dark:text-zinc-600">
+                      ›
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <button
+                type="button"
+                onClick={() => setMobileSection(null)}
+                className="flex items-center gap-1.5 self-start text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+              >
+                <span aria-hidden="true">←</span> Torna alle impostazioni
+              </button>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                {TABS.find((t) => t.id === displayedMobileView)?.label}
+              </h2>
+              {renderPanel(displayedMobileView)}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Desktop: schede laterali + contenuto, sempre visibili insieme
+          --- comportamento invariato rispetto a prima di questa funzione. */}
+      <div className="hidden md:flex md:gap-10">
+        <div
+          role="tablist"
+          aria-orientation="vertical"
+          className="flex shrink-0 flex-col gap-1 md:w-48 md:border-r md:border-zinc-200 md:pr-4 dark:md:border-zinc-800"
+        >
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.id}
+              onClick={() => setTab(t.id)}
+              className={cn(
+                "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
+                tab === t.id
+                  ? t.id === "danger-zone"
+                    ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                    : "bg-brand/10 text-brand"
+                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
+              )}
+            >
+              {/* Icona sempre blu (colore del logo), a prescindere dallo
+                  stato attivo/inattivo della scheda --- eccetto "Zona
+                  pericolosa" (v. sopra), che resta nel proprio colore di
+                  avviso. */}
+              <t.icon
+                width={18}
+                height={18}
+                className={t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand"}
+              />
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div
+          className={cn(
+            "min-w-0 flex-1 transition-opacity duration-150",
+            tabContentVisible ? "opacity-100" : "opacity-0",
+          )}
+        >
+          {renderPanel(displayedTab)}
+        </div>
+      </div>
+    </>
   );
 }

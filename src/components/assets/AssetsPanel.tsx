@@ -216,7 +216,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 </option>
               ))}
             </select>
-            <ListViewToggle section="assets" />
+            <ListViewToggle section="assets" hideOnMobile />
           </div>
 
           {filteredAssets.length === 0 ? (

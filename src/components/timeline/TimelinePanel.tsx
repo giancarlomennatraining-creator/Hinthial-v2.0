@@ -128,7 +128,7 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
             Uno sguardo d&apos;insieme su come è cresciuta la tua vita digitale nel tempo.
           </p>
         </div>
-        {allEntries.length > 0 ? <ListViewToggle section="timeline" /> : null}
+        {allEntries.length > 0 ? <ListViewToggle section="timeline" hideOnMobile /> : null}
       </div>
 
       {error ? (

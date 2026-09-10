@@ -50,6 +50,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
 
   const [mode, setMode] = useState<CreationMode>("upload");
   const [metadata, setMetadata] = useState<DocumentMetadataFieldsValue>(EMPTY_METADATA_FIELDS);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [pickedFile, setPickedFile] = useState<File | null>(null);
   const [recordedFile, setRecordedFile] = useState<File | null>(null);
   const [noteTitle, setNoteTitle] = useState("");
@@ -94,6 +95,30 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       const suggestion = heuristicCategorizer.suggestCategory(file.name, categories);
       if (suggestion) setMetadata((prev) => ({ ...prev, categoryId: suggestion }));
     }
+  }
+
+  // "📷 Scatta foto" apre la stessa (unica) casella di scelta file, ma
+  // con `capture` impostato un istante prima --- sui dispositivi che lo
+  // supportano (smartphone) questo apre direttamente la fotocamera
+  // invece della libreria file; sugli altri l'attributo è ignorato e si
+  // apre la normale finestra di scelta, senza effetti negativi. Un solo
+  // <input type="file"> nel DOM (non uno in più accanto) --- così gli
+  // e2e che lo trovano con il selettore generico non ne trovano due.
+  function handleCameraClick() {
+    const input = fileInputRef.current;
+    if (!input) return;
+    input.setAttribute("accept", "image/*");
+    input.setAttribute("capture", "environment");
+    input.click();
+  }
+
+  // Ripristina la casella al comportamento normale una volta chiusa la
+  // finestra di scelta (con o senza foto scattata) --- altrimenti un
+  // click successivo sulla casella stessa (non sul tasto qui sopra)
+  // continuerebbe ad aprire la sola fotocamera.
+  function handleFileInputBlur(event: React.FocusEvent<HTMLInputElement>) {
+    event.target.removeAttribute("accept");
+    event.target.removeAttribute("capture");
   }
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
@@ -202,12 +227,26 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
               <label htmlFor="file" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 File
               </label>
-              <input
-                id="file"
-                type="file"
-                onChange={handleFileChange}
-                className="text-sm text-zinc-700 dark:text-zinc-300"
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  id="file"
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileChange}
+                  onBlur={handleFileInputBlur}
+                  className="text-sm text-zinc-700 dark:text-zinc-300"
+                />
+                {/* Solo su smartphone --- su desktop l'attributo capture
+                    non ha effetto, e il tasto sarebbe solo un secondo
+                    modo ridondante di aprire lo stesso file picker. */}
+                <button
+                  type="button"
+                  onClick={handleCameraClick}
+                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 md:hidden dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                >
+                  📷 Scatta foto
+                </button>
+              </div>
             </div>
           ) : mode === "record" ? (
             <AudioVideoRecorder

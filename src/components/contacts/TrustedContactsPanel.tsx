@@ -283,7 +283,7 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
               <option value="active">Attivi</option>
               <option value="revoked">Revocati</option>
             </select>
-            <ListViewToggle section="contacts" />
+            <ListViewToggle section="contacts" hideOnMobile />
           </div>
 
           {filteredContacts.length === 0 ? (

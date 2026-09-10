@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/db/supabase/client";
 import { fetchListViewPreferences, updateListViewPreferences } from "@/domain/profile/repository";
+import { useMediaQuery } from "@/lib/use-media-query";
 import {
   DEFAULT_LIST_VIEW_MODE,
   type ListSection,
@@ -35,6 +36,11 @@ export function ListViewPreferencesProvider({
 }) {
   const [preferences, setPreferences] = useState<ListViewPreferences>({});
   const [loading, setLoading] = useState(true);
+  // Sotto md la tabella impaginata non ha spazio per restare leggibile
+  // (v. richiesta utente) --- si mostra sempre l'elenco lì, a prescindere
+  // dalla preferenza salvata (che resta comunque intatta e si applica di
+  // nuovo su uno schermo più largo).
+  const isNarrowScreen = useMediaQuery("(max-width: 767px)");
 
   useEffect(() => {
     let cancelled = false;
@@ -55,8 +61,9 @@ export function ListViewPreferencesProvider({
   }, [userId]);
 
   const modeFor = useCallback(
-    (section: ListSection) => preferences[section] ?? DEFAULT_LIST_VIEW_MODE,
-    [preferences],
+    (section: ListSection) =>
+      isNarrowScreen ? "list" : preferences[section] ?? DEFAULT_LIST_VIEW_MODE,
+    [preferences, isNarrowScreen],
   );
 
   const setMode = useCallback(

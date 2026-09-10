@@ -12,6 +12,24 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-10
 
+### Impostazioni su smartphone: elenco -> dettaglio invece della fila di schede
+
+**Cosa fa:** su smartphone, Impostazioni mostra ora un elenco di voci (Informazioni utente, Sicurezza, Privacy, ...); toccandone una si vede solo il suo contenuto, con un tasto "← Torna alle impostazioni" per uscirne --- invece della fila di schede orizzontale scorrevole di prima. Da desktop non cambia nulla: le schede restano sempre visibili tutte insieme, con il contenuto a fianco.
+
+**Note tecniche:** due blocchi indipendenti in `SettingsTabs.tsx` (`md:hidden` per il cassetto mobile, `hidden md:flex` per le schede desktop), non un solo layout responsive --- condividono la stessa funzione `renderPanel(activeTab)` per non duplicare la logica di quale pannello mostrare. Transizione con dissolvenza (`useCrossfade`, già usata per il cambio scheda da desktop) tra elenco e dettaglio. Nuovo e2e `mobile-settings-nav.spec.ts`.
+
+### Tasto "Scatta foto" per aggiungere contenuto all'Archivio da smartphone
+
+**Cosa fa:** nel modulo "Carica un file" di un nuovo contenuto d'Archivio, su smartphone compare un tasto "📷 Scatta foto" accanto alla scelta file --- apre direttamente la fotocamera del telefono invece della libreria file. Su desktop non compare (non avrebbe un vantaggio pratico lì).
+
+**Note tecniche:** nessun secondo `<input type="file">` nel DOM (rompendo il selettore generico usato da molti e2e) --- lo stesso input riceve gli attributi `accept="image/*"`/`capture="environment"` un istante prima del click programmatico, poi li perde al `blur` (chiusura della finestra di scelta, con o senza foto), tornando al comportamento normale per un click successivo diretto sull'input.
+
+### Vista a elenco forzata su smartphone, dove la tabella non ha spazio
+
+**Cosa fa:** su schermi stretti, ogni sezione con liste (Archivio, Scadenze, Asset, Contatti, Capsule, Cronologia) mostra sempre la vista a elenco, anche se la preferenza salvata è "tabella" --- che lì non avrebbe spazio per restare leggibile. La preferenza resta comunque intatta e si applica di nuovo su uno schermo più largo; l'interruttore rapido di ogni sezione si nasconde su smartphone (mostrerebbe una scelta senza effetto visibile), quello in Impostazioni > Aspetto resta invece sempre disponibile.
+
+**Note tecniche:** nuovo `useMediaQuery` (stesso meccanismo di `ThemeToggle` per "prefers-color-scheme", generalizzato); `ListViewPreferencesProvider.modeFor` forza `"list"` sotto i 768px, a monte delle 6 sezioni, senza toccarne il codice. `ListViewToggle` accetta un prop `hideOnMobile` (usato dalle pagine di sezione, non da `ListViewSettings`, che resta sempre visibile).
+
 ### Barra di navigazione fissa in basso su smartphone
 
 **Cosa fa:** nell'esperienza smartphone compare ora una barra fissa in basso con le voci di navigazione scelte dall'utente (fino a 4) --- si scelgono in Impostazioni > Aspetto, con una casella per voce; quelle non scelte restano raggiungibili come prima dal menu con le 3 lineette, che ora mostra solo il resto (niente più doppioni tra le due). Di default: Dashboard, Archivio, Scadenze, Capsule.
