@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-10
 
+### Barra di navigazione fissa in basso su smartphone
+
+**Cosa fa:** nell'esperienza smartphone compare ora una barra fissa in basso con le voci di navigazione scelte dall'utente (fino a 4) --- si scelgono in Impostazioni > Aspetto, con una casella per voce; quelle non scelte restano raggiungibili come prima dal menu con le 3 lineette, che ora mostra solo il resto (niente più doppioni tra le due). Di default: Dashboard, Archivio, Scadenze, Capsule.
+
+**Note tecniche:** nuova colonna `profiles.bottom_nav_items` (jsonb, un array di href) sincronizzata sul server come `nav_orientation` --- stesso pattern "valore iniziale letto lato server" (v. `BottomNavItemsProvider`, `getCurrentUser`), non il fetch lato client lazy di `list_view_preferences`, per evitare un lampo delle icone sbagliate in una chrome persistente della shell. `MainNav` accetta ora un prop opzionale `items` (di default l'elenco completo `NAV_ITEMS`) per poter mostrare un sottoinsieme nel cassetto mobile senza toccare Sidebar/TopNav. Nuovi file: `lib/bottom-nav.ts` (tipo, default, parser sicuro), `BottomNavItemsProvider.tsx`, `BottomNavBar.tsx`, `BottomNavItemsSettings.tsx`.
+
 ### Bug corretto: la dissolvenza tra le schede di Impostazioni non cambiava mai contenuto
 
 **Cosa fa:** cliccando una scheda diversa in Impostazioni, il contenuto non passava più alla scheda scelta (restava fermo su "Informazioni utente", la prima) --- corretto lo stesso giorno in cui la dissolvenza era stata introdotta.

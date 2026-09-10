@@ -7,6 +7,8 @@ import { MainNav } from "@/components/layout/MainNav";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { OnboardingStatus } from "@/components/layout/OnboardingStatus";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
+import { useBottomNavItems } from "@/components/layout/BottomNavItemsProvider";
+import { NAV_ITEMS } from "@/components/layout/nav-items";
 import { useMountedTransition } from "@/lib/use-mounted-transition";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +38,11 @@ export function MobileNavBar({
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { mounted, entered } = useMountedTransition(open, 300);
+  const { items: bottomNavItems } = useBottomNavItems();
+
+  // Le voci già raggiungibili dalla barra fissa in basso (v. BottomNavBar)
+  // non vanno ripetute qui --- solo il resto, come chiesto dall'utente.
+  const drawerItems = NAV_ITEMS.filter((item) => !bottomNavItems.includes(item.href));
 
   // Una navigazione riuscita chiude il menu --- altrimenti resterebbe
   // aperto sopra la nuova pagina.
@@ -111,7 +118,7 @@ export function MobileNavBar({
             </div>
 
             <GlobalSearch />
-            <MainNav />
+            <MainNav items={drawerItems} />
 
             <div className="mt-auto flex flex-col gap-2">
               <OnboardingStatus />

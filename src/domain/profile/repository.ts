@@ -8,6 +8,7 @@ import {
 } from "@/lib/storage/avatars-bucket";
 import { parseListViewPreferences, type ListViewPreferences } from "@/lib/list-view";
 import { type NavOrientation } from "@/lib/nav-orientation";
+import { type BottomNavItems } from "@/lib/bottom-nav";
 import type { ProfileInput } from "@/domain/profile/types";
 
 /**
@@ -136,6 +137,27 @@ export async function updateNavOrientation(
 
   if (error) {
     throw new Error(`Impossibile salvare la disposizione del menu: ${error.message}`);
+  }
+}
+
+/**
+ * Persists which nav items appear in the fixed bottom bar on mobile
+ * (v. lib/bottom-nav.ts) --- read server-side on the next full
+ * navigation (see getCurrentUser), like nav_orientation, to avoid a
+ * flash of the wrong icons in persistent shell chrome.
+ */
+export async function updateBottomNavItems(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  items: BottomNavItems,
+): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ bottom_nav_items: items })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare la barra di navigazione in basso: ${error.message}`);
   }
 }
 

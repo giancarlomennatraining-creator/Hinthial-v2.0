@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
-import { NAV_ITEMS } from "@/components/layout/nav-items";
+import { NAV_ITEMS, type NavItem } from "@/components/layout/nav-items";
 
 /**
  * `collapsed` --- v. Sidebar: nasconde le etichette (restano lette dagli
@@ -16,9 +16,12 @@ import { NAV_ITEMS } from "@/components/layout/nav-items";
 export function MainNav({
   collapsed = false,
   horizontal = false,
+  items = NAV_ITEMS,
 }: {
   collapsed?: boolean;
   horizontal?: boolean;
+  /** Sottoinsieme di NAV_ITEMS da mostrare --- usato dal cassetto mobile (v. MobileNavBar) per escludere le voci già nella barra fissa in basso. Sidebar/TopNav non lo passano: mostrano sempre l'elenco completo. */
+  items?: NavItem[];
 }) {
   const pathname = usePathname();
   const { status } = useMasterKey();
@@ -42,7 +45,7 @@ export function MainNav({
       aria-label="Navigazione principale"
       className={horizontal ? "flex flex-wrap items-center gap-1" : "flex flex-col gap-1"}
     >
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const isActive =
           pathname === item.href || pathname?.startsWith(`${item.href}/`);
         const showSetupHint = needsSetup && item.requiresEncryption;

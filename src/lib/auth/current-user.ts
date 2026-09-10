@@ -2,6 +2,8 @@ import { cache } from "react";
 import { createClient } from "@/lib/db/supabase/server";
 import { avatarPublicUrl } from "@/lib/storage/avatars-bucket";
 import { parseNavOrientation, type NavOrientation } from "@/lib/nav-orientation";
+import { parseBottomNavItems, type BottomNavItems } from "@/lib/bottom-nav";
+import { NAV_ITEMS } from "@/components/layout/nav-items";
 
 export interface CurrentUser {
   id: string;
@@ -18,6 +20,8 @@ export interface CurrentUser {
   birthDate: string | null;
   /** Disposizione del menu di navigazione (v. lib/nav-orientation.ts) --- letta qui, non lato client, per evitare un lampo del layout sbagliato al primo render della shell autenticata. */
   navOrientation: NavOrientation;
+  /** Voci di NAV_ITEMS mostrate nella barra fissa in basso su smartphone (v. lib/bottom-nav.ts) --- come navOrientation, letto qui per evitare un lampo delle icone sbagliate al primo render. */
+  bottomNavItems: BottomNavItems;
   /** Se il gadget "Onboarding" nella barra è nascosto (v. OnboardingWidgetVisibilityProvider) --- come navOrientation, letto qui per evitare un lampo del gadget al primo render. */
   onboardingWidgetHidden: boolean;
   /** Se il popup "Crea la tua master key" (una tantum, v. MasterKeyIntroModal) è già stato chiuso. */
@@ -41,7 +45,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "first_name, last_name, avatar_path, birth_date, nav_orientation, onboarding_widget_hidden, master_key_intro_seen",
+      "first_name, last_name, avatar_path, birth_date, nav_orientation, bottom_nav_items, onboarding_widget_hidden, master_key_intro_seen",
     )
     .eq("id", user.id)
     .single();
@@ -60,6 +64,10 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     avatarUrl: avatarPath ? avatarPublicUrl(supabase, avatarPath) : null,
     birthDate: profile?.birth_date ?? null,
     navOrientation: parseNavOrientation(profile?.nav_orientation),
+    bottomNavItems: parseBottomNavItems(
+      profile?.bottom_nav_items,
+      NAV_ITEMS.map((item) => item.href),
+    ),
     onboardingWidgetHidden: profile?.onboarding_widget_hidden ?? false,
     masterKeyIntroSeen: profile?.master_key_intro_seen ?? false,
   };

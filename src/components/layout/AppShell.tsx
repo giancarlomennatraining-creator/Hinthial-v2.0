@@ -3,14 +3,17 @@
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { MobileNavBar } from "@/components/layout/MobileNavBar";
+import { BottomNavBar } from "@/components/layout/BottomNavBar";
 import { MasterKeyProvider } from "@/components/crypto/MasterKeyProvider";
 import { MasterKeyIntroModal } from "@/components/crypto/MasterKeyIntroModal";
 import { ListViewPreferencesProvider } from "@/components/layout/ListViewPreferencesProvider";
 import { NavOrientationProvider, useNavOrientation } from "@/components/layout/NavOrientationProvider";
+import { BottomNavItemsProvider } from "@/components/layout/BottomNavItemsProvider";
 import { OnboardingWidgetVisibilityProvider } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 import { AIChatProvider } from "@/components/ai/AIChatProvider";
 import { cn } from "@/lib/utils";
 import type { NavOrientation } from "@/lib/nav-orientation";
+import type { BottomNavItems } from "@/lib/bottom-nav";
 
 /**
  * Shared chrome for the authenticated app (nav + user menu).
@@ -26,6 +29,7 @@ export function AppShell({
   displayName,
   avatarUrl,
   initialNavOrientation,
+  initialBottomNavItems,
   initialOnboardingWidgetHidden,
   initialMasterKeyIntroSeen,
   children,
@@ -36,6 +40,7 @@ export function AppShell({
   displayName: string;
   avatarUrl: string | null;
   initialNavOrientation: NavOrientation;
+  initialBottomNavItems: BottomNavItems;
   initialOnboardingWidgetHidden: boolean;
   initialMasterKeyIntroSeen: boolean;
   children: React.ReactNode;
@@ -44,19 +49,21 @@ export function AppShell({
     <MasterKeyProvider>
       <MasterKeyIntroModal userId={userId} initialSeen={initialMasterKeyIntroSeen} />
       <NavOrientationProvider userId={userId} initialOrientation={initialNavOrientation}>
-        <ListViewPreferencesProvider userId={userId}>
-          <OnboardingWidgetVisibilityProvider userId={userId} initialHidden={initialOnboardingWidgetHidden}>
-            <AppChrome
-              userId={userId}
-              firstName={firstName}
-              lastName={lastName}
-              displayName={displayName}
-              avatarUrl={avatarUrl}
-            >
-              {children}
-            </AppChrome>
-          </OnboardingWidgetVisibilityProvider>
-        </ListViewPreferencesProvider>
+        <BottomNavItemsProvider userId={userId} initialItems={initialBottomNavItems}>
+          <ListViewPreferencesProvider userId={userId}>
+            <OnboardingWidgetVisibilityProvider userId={userId} initialHidden={initialOnboardingWidgetHidden}>
+              <AppChrome
+                userId={userId}
+                firstName={firstName}
+                lastName={lastName}
+                displayName={displayName}
+                avatarUrl={avatarUrl}
+              >
+                {children}
+              </AppChrome>
+            </OnboardingWidgetVisibilityProvider>
+          </ListViewPreferencesProvider>
+        </BottomNavItemsProvider>
       </NavOrientationProvider>
     </MasterKeyProvider>
   );
@@ -102,9 +109,10 @@ function AppChrome({
           displayName={displayName}
           avatarUrl={avatarUrl}
         />
-        <main className="flex-1 p-6 md:p-10">
+        <main className="flex-1 px-6 pt-6 pb-24 md:px-10 md:pt-10 md:pb-10">
           <AIChatProvider>{children}</AIChatProvider>
         </main>
+        <BottomNavBar />
       </div>
     );
   }
@@ -128,9 +136,15 @@ function AppChrome({
         displayName={displayName}
         avatarUrl={avatarUrl}
       />
-      <main className={cn("flex-1 p-6 md:p-10", side === "right" ? "md:order-1" : undefined)}>
+      <main
+        className={cn(
+          "flex-1 px-6 pt-6 pb-24 md:px-10 md:pt-10 md:pb-10",
+          side === "right" ? "md:order-1" : undefined,
+        )}
+      >
         <AIChatProvider>{children}</AIChatProvider>
       </main>
+      <BottomNavBar />
     </div>
   );
 }

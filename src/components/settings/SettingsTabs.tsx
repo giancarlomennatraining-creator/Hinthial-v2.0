@@ -11,6 +11,7 @@ import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { NavOrientationSettings } from "@/components/settings/NavOrientationSettings";
+import { BottomNavItemsSettings } from "@/components/settings/BottomNavItemsSettings";
 import { ListViewSettings } from "@/components/settings/ListViewSettings";
 import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
@@ -180,6 +181,19 @@ export function SettingsTabs({
               </p>
             </div>
             <NavOrientationSettings />
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                Barra di navigazione in basso (smartphone)
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Scegli quali voci mostrare sempre in basso su smartphone --- le altre restano
+                comunque raggiungibili dal menu con le 3 lineette.
+              </p>
+            </div>
+            <BottomNavItemsSettings />
           </div>
 
           <div className="flex flex-col gap-4">
