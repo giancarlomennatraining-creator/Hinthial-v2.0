@@ -26,7 +26,10 @@ test("sotto md la barra laterale è sostituita da un tasto menu che apre la navi
   await menuButton.click();
   const menu = page.getByRole("dialog", { name: "Menu di navigazione" });
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole("link", { name: "Archivio" })).toBeVisible();
+  // "Asset" (non tra le voci di default della barra fissa in basso, v.
+  // bottom-nav.spec.ts) --- resta quindi nel menu, a differenza di
+  // "Archivio", ora mostrato in basso di default.
+  await expect(menu.getByRole("link", { name: "Asset" })).toBeVisible();
 
   // Esc lo richiude.
   await page.keyboard.press("Escape");
@@ -34,7 +37,7 @@ test("sotto md la barra laterale è sostituita da un tasto menu che apre la navi
 
   // Un click su una voce naviga e richiude il menu.
   await menuButton.click();
-  await menu.getByRole("link", { name: "Archivio" }).click();
-  await expect(page).toHaveURL(/\/archive$/);
+  await menu.getByRole("link", { name: "Asset" }).click();
+  await expect(page).toHaveURL(/\/assets$/);
   await expect(menu).not.toBeVisible();
 });
