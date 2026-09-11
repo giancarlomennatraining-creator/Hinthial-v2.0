@@ -37,7 +37,8 @@ type AuditEventTypeColumn =
   | "category_created"
   | "category_deleted"
   | "trusted_contact_added"
-  | "vault_wiped";
+  | "vault_wiped"
+  | "ai_chat_used";
 
 type TrustedContactStatusColumn = "pending" | "active" | "revoked";
 
@@ -61,7 +62,8 @@ export type Database = {
           bottom_nav_items: Json;
           onboarding_widget_hidden: boolean;
           master_key_intro_seen: boolean;
-          ai_processing_consent: boolean;
+          ai_master_enabled: boolean;
+          ai_chat_consent: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -76,7 +78,8 @@ export type Database = {
           bottom_nav_items?: Json;
           onboarding_widget_hidden?: boolean;
           master_key_intro_seen?: boolean;
-          ai_processing_consent?: boolean;
+          ai_master_enabled?: boolean;
+          ai_chat_consent?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -91,7 +94,8 @@ export type Database = {
           bottom_nav_items?: Json;
           onboarding_widget_hidden?: boolean;
           master_key_intro_seen?: boolean;
-          ai_processing_consent?: boolean;
+          ai_master_enabled?: boolean;
+          ai_chat_consent?: boolean;
           created_at?: string;
           updated_at?: string;
         };

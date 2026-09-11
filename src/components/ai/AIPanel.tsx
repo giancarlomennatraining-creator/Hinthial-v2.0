@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
 import { buildAIContext } from "@/domain/ai/context";
 import { mockAIProvider } from "@/domain/ai/mock-provider";
@@ -23,13 +24,21 @@ import type { AIContext, AISuggestion } from "@/domain/ai/types";
  * il browser. Con il consenso, solo la domanda e i pochi elementi
  * pertinenti trovati localmente (mai l'intero vault) vengono inviati a
  * Claude tramite la nostra route server-side.
+ *
+ * Il consenso vero e proprio ha due livelli (v. AIProcessingConsentProvider):
+ * il "cancello" generale (masterEnabled, gestito in Impostazioni >
+ * Privacy) e il consenso specifico a questa funzione (chatConsent, qui
+ * sotto). Servono entrambi --- se il cancello è spento, l'interruttore
+ * qui resta visibile ma disabilitato, con un rimando a dove accenderlo:
+ * mai nascosto, per restare sempre chiaro dove sta girando la domanda.
  */
 export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const messagesRef = useRef<HTMLDivElement>(null);
 
   const { messages, addMessages, clear } = useAIChat();
-  const { consent, setConsent } = useAIProcessingConsent();
+  const { masterEnabled, chatConsent, setChatConsent } = useAIProcessingConsent();
+  const active = masterEnabled && chatConsent;
 
   const [context, setContext] = useState<AIContext | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +84,7 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
 
     setAsking(true);
     try {
-      const result = consent
+      const result = active
         ? await answerWithClaude(trimmed, context)
         : mockAIProvider.answer(trimmed, context);
       addMessages([
@@ -100,7 +109,7 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
     setConsentError(false);
     setConsentBusy(true);
     try {
-      await setConsent(next);
+      await setChatConsent(next);
     } catch {
       setConsentError(true);
     } finally {
@@ -115,7 +124,7 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
           Assistente AI
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          {consent
+          {active
             ? "Fai domande sui tuoi dati. Le risposte vengono generate da Claude (Anthropic): solo la tua domanda e i pochi elementi pertinenti trovati qui sul dispositivo vengono inviati --- mai l'intero archivio."
             : "Fai domande sui tuoi dati. Risponde un motore locale, senza intelligenza artificiale vera: le tue domande vengono elaborate qui, sul tuo dispositivo --- nessun dato esce dal browser."}
         </p>
@@ -124,12 +133,23 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-zinc-950">
         <div className="min-w-0 flex-1">
           <p className="font-medium text-zinc-900 dark:text-zinc-100">
-            {consent ? "Risposte reali attive" : "Risposte reali disattivate"}
+            {active ? "Risposte reali attive" : "Risposte reali disattivate"}
           </p>
           <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-            {consent
-              ? "Attivando questa opzione, ogni domanda e i suoi elementi pertinenti (non l'intero archivio) vengono inviati a Claude (Anthropic) per generare la risposta."
-              : "Attiva per ricevere risposte scritte da Claude (Anthropic) invece che dal solo motore locale --- solo la domanda e i pochi elementi pertinenti trovati qui vengono inviati, mai l'intero archivio."}
+            {!masterEnabled ? (
+              <>
+                Il consenso generale all&apos;IA reale non è attivo --- attivalo nella scheda
+                Privacy di{" "}
+                <Link href="/settings" className="underline underline-offset-2 hover:no-underline">
+                  Impostazioni
+                </Link>{" "}
+                per poter accendere questa funzione.
+              </>
+            ) : active ? (
+              "Attivando questa opzione, ogni domanda e i suoi elementi pertinenti (non l'intero archivio) vengono inviati a Claude (Anthropic) per generare la risposta."
+            ) : (
+              "Attiva per ricevere risposte scritte da Claude (Anthropic) invece che dal solo motore locale --- solo la domanda e i pochi elementi pertinenti trovati qui vengono inviati, mai l'intero archivio."
+            )}
           </p>
           {consentError ? (
             <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
@@ -140,17 +160,17 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
         <button
           type="button"
           role="switch"
-          aria-checked={consent}
+          aria-checked={active}
           aria-label="Risposte reali dell'assistente AI"
-          disabled={consentBusy}
-          onClick={() => handleConsentChange(!consent)}
+          disabled={consentBusy || !masterEnabled}
+          onClick={() => handleConsentChange(!chatConsent)}
           className={
-            consent
+            active
               ? "shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
               : "shrink-0 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
           }
         >
-          {consent ? "Disattiva" : "Attiva risposte reali"}
+          {active ? "Disattiva" : "Attiva risposte reali"}
         </button>
       </div>
 

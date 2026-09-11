@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/db/supabase/client";
 import { fetchAccountVisibilitySummary } from "@/domain/privacy/repository";
 import { NAV_ORIENTATION_LABEL } from "@/lib/nav-orientation";
+import { AIConsentSettings } from "@/components/settings/AIConsentSettings";
 import type { AccountVisibilitySummary } from "@/domain/privacy/types";
 
 const NEVER_VISIBLE = [
@@ -126,6 +127,20 @@ export function PrivacyPanel({
             ))}
           </ul>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Intelligenza artificiale
+          </h3>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Per impostazione predefinita nessuna funzione di IA reale è attiva --- ogni domanda
+            e ogni contenuto restano elaborati solo sul tuo dispositivo. Attivandola qui,
+            attivi solo la possibilità di accendere le singole funzioni sotto, una per una.
+          </p>
+        </div>
+        <AIConsentSettings />
       </div>
     </div>
   );

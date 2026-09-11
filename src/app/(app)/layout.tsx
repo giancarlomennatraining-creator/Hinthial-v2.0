@@ -48,7 +48,8 @@ export default async function AppLayout({
       initialBottomNavItems={user.bottomNavItems}
       initialOnboardingWidgetHidden={user.onboardingWidgetHidden}
       initialMasterKeyIntroSeen={user.masterKeyIntroSeen}
-      initialAIProcessingConsent={user.aiProcessingConsent}
+      initialAIMasterEnabled={user.aiMasterEnabled}
+      initialAIChatConsent={user.aiChatConsent}
     >
       {children}
     </AppShell>

@@ -183,19 +183,43 @@ export async function updateOnboardingWidgetHidden(
 }
 
 /**
- * Persiste il consenso esplicito dell'utente all'elaborazione AI reale
- * (v. HINTHIAL_MVP.md sezione 8, "Explicit AI processing") --- sincronizzato
- * sul server come nav_orientation/onboarding_widget_hidden, così vale su
- * tutti i dispositivi dell'utente, non solo su questo browser.
+ * Persiste il "cancello" generale per l'IA reale (v. HINTHIAL_MVP.md
+ * sezione 8, "Explicit AI processing") --- sincronizzato sul server come
+ * nav_orientation, così vale su tutti i dispositivi dell'utente.
+ * Spegnerlo spegne anche ogni consenso specifico (oggi solo
+ * ai_chat_consent, in futuro altri) nella stessa richiesta: un
+ * interruttore generale spento non deve lasciarne acceso uno specifico
+ * "per dimenticanza". Riaccenderlo NON li riaccende da solo --- restano
+ * a scelta esplicita, funzione per funzione (v. AIProcessingConsentProvider).
  */
-export async function updateAIProcessingConsent(
+export async function updateAIMasterEnabled(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  enabled: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update(enabled ? { ai_master_enabled: true } : { ai_master_enabled: false, ai_chat_consent: false })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare il consenso generale: ${error.message}`);
+  }
+}
+
+/**
+ * Persiste il consenso specifico alla Chat reale --- ha effetto solo se
+ * ai_master_enabled è true (v. updateAIMasterEnabled sopra e la
+ * riverifica lato server in src/app/api/ai/chat/route.ts).
+ */
+export async function updateAIChatConsent(
   supabase: SupabaseClient<Database>,
   userId: string,
   consent: boolean,
 ): Promise<void> {
   const { error } = await supabase
     .from("profiles")
-    .update({ ai_processing_consent: consent })
+    .update({ ai_chat_consent: consent })
     .eq("id", userId);
 
   if (error) {

@@ -33,7 +33,8 @@ export function AppShell({
   initialBottomNavItems,
   initialOnboardingWidgetHidden,
   initialMasterKeyIntroSeen,
-  initialAIProcessingConsent,
+  initialAIMasterEnabled,
+  initialAIChatConsent,
   children,
 }: {
   userId: string;
@@ -45,7 +46,8 @@ export function AppShell({
   initialBottomNavItems: BottomNavItems;
   initialOnboardingWidgetHidden: boolean;
   initialMasterKeyIntroSeen: boolean;
-  initialAIProcessingConsent: boolean;
+  initialAIMasterEnabled: boolean;
+  initialAIChatConsent: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -55,7 +57,11 @@ export function AppShell({
         <BottomNavItemsProvider userId={userId} initialItems={initialBottomNavItems}>
           <ListViewPreferencesProvider userId={userId}>
             <OnboardingWidgetVisibilityProvider userId={userId} initialHidden={initialOnboardingWidgetHidden}>
-              <AIProcessingConsentProvider userId={userId} initialConsent={initialAIProcessingConsent}>
+              <AIProcessingConsentProvider
+                userId={userId}
+                initialMasterEnabled={initialAIMasterEnabled}
+                initialChatConsent={initialAIChatConsent}
+              >
                 <AppChrome
                   userId={userId}
                   firstName={firstName}

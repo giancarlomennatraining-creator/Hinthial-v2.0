@@ -10,6 +10,14 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-12
+
+### Consenso all'IA reale a due livelli: cancello generale + funzioni specifiche
+
+**Cosa fa:** in Impostazioni > Privacy compare una nuova sezione "Intelligenza artificiale" con un interruttore generale ("Consenti l'uso di IA esterna") --- spento di default. Da solo non attiva nulla: sblocca solo la possibilità di accendere, una per una, le funzioni specifiche elencate sotto (oggi solo "Chat", in futuro altre). Lo stesso interruttore della Chat resta anche nella pagina AI, sincronizzato con quello di Impostazioni --- se ci arrivi senza aver acceso il cancello generale, lo trovi visibile ma disattivato, con un rimando a dove accenderlo. Spegnere il cancello generale spegne anche tutte le funzioni specifiche insieme; riaccenderlo non le riaccende da solo, restano a scelta esplicita una per una. Ogni domanda che raggiunge davvero Claude lascia ora anche una traccia in Impostazioni > Attività.
+
+**Note tecniche:** `profiles.ai_processing_consent` rinominata in `ai_chat_consent` (specifica della Chat) + nuova colonna `ai_master_enabled` (il cancello) --- `updateAIMasterEnabled` spegne entrambe in un solo aggiornamento quando disattivato, mai il contrario. `AIProcessingConsentProvider` espone ora `masterEnabled`/`chatConsent` distinti. La route `/api/ai/chat` riverifica entrambi i valori sul database (non il solo stato client) prima di procedere, e registra un nuovo tipo di evento audit (`ai_chat_used`) dopo una risposta riuscita. Nuovo componente `AIConsentSettings.tsx`, stesso pattern a elenco di `ListViewSettings.tsx`. `ai-processing-consent.spec.ts` riscritto per il percorso a due livelli.
+
 ## 2026-09-10
 
 ### FASE 11 --- prima fetta di HINTHIAL AI reale ("Explicit AI processing")

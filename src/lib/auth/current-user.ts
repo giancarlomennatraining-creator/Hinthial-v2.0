@@ -26,8 +26,10 @@ export interface CurrentUser {
   onboardingWidgetHidden: boolean;
   /** Se il popup "Crea la tua master key" (una tantum, v. MasterKeyIntroModal) è già stato chiuso. */
   masterKeyIntroSeen: boolean;
-  /** Consenso esplicito all'elaborazione AI reale (v. HINTHIAL_MVP.md, "Explicit AI processing") --- come navOrientation, letto qui per evitare un lampo dello stato sbagliato al primo render della pagina AI. */
-  aiProcessingConsent: boolean;
+  /** "Cancello" generale per l'IA reale (v. HINTHIAL_MVP.md, "Explicit AI processing") --- deve essere true perché un qualunque consenso specifico abbia effetto. Come navOrientation, letto qui per evitare un lampo dello stato sbagliato al primo render. */
+  aiMasterEnabled: boolean;
+  /** Consenso specifico alla Chat reale --- ha effetto solo se aiMasterEnabled è true. */
+  aiChatConsent: boolean;
 }
 
 /**
@@ -47,7 +49,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "first_name, last_name, avatar_path, birth_date, nav_orientation, bottom_nav_items, onboarding_widget_hidden, master_key_intro_seen, ai_processing_consent",
+      "first_name, last_name, avatar_path, birth_date, nav_orientation, bottom_nav_items, onboarding_widget_hidden, master_key_intro_seen, ai_master_enabled, ai_chat_consent",
     )
     .eq("id", user.id)
     .single();
@@ -72,6 +74,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     ),
     onboardingWidgetHidden: profile?.onboarding_widget_hidden ?? false,
     masterKeyIntroSeen: profile?.master_key_intro_seen ?? false,
-    aiProcessingConsent: profile?.ai_processing_consent ?? false,
+    aiMasterEnabled: profile?.ai_master_enabled ?? false,
+    aiChatConsent: profile?.ai_chat_consent ?? false,
   };
 });

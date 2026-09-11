@@ -20,6 +20,7 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   category_deleted: "Categoria eliminata",
   trusted_contact_added: "Contatto fiduciario aggiunto",
   vault_wiped: "Vault svuotato",
+  ai_chat_used: "Domanda inviata all'assistente AI reale",
 };
 
 export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
@@ -40,6 +41,7 @@ export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
   category_deleted: "🗑️",
   trusted_contact_added: "🤝",
   vault_wiped: "⚠️",
+  ai_chat_used: "🤖",
 };
 
 export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategory> = {
@@ -60,6 +62,7 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
   category_deleted: "content",
   trusted_contact_added: "contacts",
   vault_wiped: "security",
+  ai_chat_used: "security",
 };
 
 export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {

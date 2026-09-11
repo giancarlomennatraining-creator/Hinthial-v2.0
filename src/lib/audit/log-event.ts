@@ -23,7 +23,8 @@ export type AuditEventType =
   | "category_created"
   | "category_deleted"
   | "trusted_contact_added"
-  | "vault_wiped";
+  | "vault_wiped"
+  | "ai_chat_used";
 
 /**
  * Metadati tecnici facoltativi per un evento --- mai contenuti, nomi

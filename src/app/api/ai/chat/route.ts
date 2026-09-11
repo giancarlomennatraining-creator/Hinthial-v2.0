@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/db/supabase/server";
+import { logAuditEvent } from "@/lib/audit/log-event";
 import type { MinimalItem } from "@/domain/ai/claude-provider";
 
 /**
@@ -13,7 +14,12 @@ import type { MinimalItem } from "@/domain/ai/claude-provider";
  *
  * Il consenso viene riverificato QUI sul valore salvato sul server, non
  * fidandosi del solo stato client (v. AIProcessingConsentProvider): è il
- * vero cancello di autorizzazione, l'altro è solo comodità della UI.
+ * vero cancello di autorizzazione, l'altro è solo comodità della UI. Due
+ * controlli distinti, entrambi obbligatori --- il "cancello" generale
+ * (ai_master_enabled) e il consenso specifico a questa funzione
+ * (ai_chat_consent): un domani, un'altra funzione (es. estrazione
+ * automatica) avrà il proprio consenso specifico, ma dipenderà dallo
+ * stesso cancello.
  */
 
 const SYSTEM_PROMPT = `Sei l'assistente di Hinthial, un'app personale di gestione della vita digitale.
@@ -57,10 +63,10 @@ export async function POST(request: NextRequest) {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("ai_processing_consent")
+    .select("ai_master_enabled, ai_chat_consent")
     .eq("id", user.id)
     .single();
-  if (profileError || !profile?.ai_processing_consent) {
+  if (profileError || !profile?.ai_master_enabled || !profile.ai_chat_consent) {
     return NextResponse.json(
       { error: "Consenso all'elaborazione AI non attivo." },
       { status: 403 },
@@ -105,6 +111,12 @@ export async function POST(request: NextRequest) {
     });
 
     const textBlock = response.content.find((block) => block.type === "text");
+
+    // Traccia che una domanda ha davvero raggiunto Claude --- non solo che
+    // il consenso lo permetteva (v. Impostazioni > Attività). Mai
+    // bloccante: v. logAuditEvent, che inghiotte da sé i propri errori.
+    await logAuditEvent(supabase, user.id, "ai_chat_used");
+
     return NextResponse.json({ text: textBlock?.text ?? "" });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Errore sconosciuto.";
