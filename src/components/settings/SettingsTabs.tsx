@@ -259,7 +259,10 @@ export function SettingsTabs({
                     <t.icon
                       width={20}
                       height={20}
-                      className={t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand"}
+                      className={cn(
+                        "shrink-0",
+                        t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand",
+                      )}
                     />
                     <span
                       className={cn(
@@ -300,7 +303,7 @@ export function SettingsTabs({
         <div
           role="tablist"
           aria-orientation="vertical"
-          className="flex shrink-0 flex-col gap-1 md:w-48 md:border-r md:border-zinc-200 md:pr-4 dark:md:border-zinc-800"
+          className="flex shrink-0 flex-col gap-1 md:w-60 md:border-r md:border-zinc-200 md:pr-4 dark:md:border-zinc-800"
         >
           {TABS.map((t) => (
             <button
@@ -325,7 +328,10 @@ export function SettingsTabs({
               <t.icon
                 width={20}
                 height={20}
-                className={t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand"}
+                className={cn(
+                  "shrink-0",
+                  t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand",
+                )}
               />
               {t.label}
             </button>

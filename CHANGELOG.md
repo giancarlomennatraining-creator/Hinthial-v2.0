@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-12
 
+### Bug corretto: icone di Impostazioni quasi invisibili sulle schede con nome lungo
+
+**Cosa fa:** le icone di "Informazioni utente" e "Intelligenza artificiale" nel menu di Impostazioni non erano più piccole delle altre per scelta grafica --- si schiacciavano quasi fino a sparire, perché le loro etichette (le più lunghe dell'elenco) non ci stavano nella colonna della barra laterale. Ora restano sempre alla loro dimensione piena, come tutte le altre.
+
+**Note tecniche:** le icone non avevano `flex-shrink: 0` --- in un contenitore flessibile stretto (`md:w-48`), col testo impostato a non andare a capo, l'unico elemento libero di restringersi per far stare tutto era l'icona, fino quasi a zero pixel di larghezza per l'etichetta più lunga. Aggiunto `shrink-0` alle icone (mai più responsabili di "assorbire" lo spazio mancante) e allargata la colonna della barra laterale da `md:w-48` a `md:w-60`, come margine di sicurezza per le etichette più lunghe. Diagnosticato misurando la vera `boundingBox()` delle icone renderizzate (7px e 0px di larghezza invece di 20px) prima di intervenire, non a occhio.
+
 ### "Intelligenza artificiale" è ora una scheda a sé in Impostazioni
 
 **Cosa fa:** il consenso all'IA reale (cancello generale + funzione Chat) non vive più dentro la scheda Privacy --- ha ora una sua scheda dedicata, "Intelligenza artificiale", allo stesso livello di Informazioni utente/Sicurezza/Privacy/Categorie. Anche il rimando dalla pagina AI (quando il cancello è spento) punta ora lì. In più, le icone delle schede di Impostazioni sono state ingrandite (18px --- la misura più piccola di tutta l'app --- a 20px, come altrove).
