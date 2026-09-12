@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-12
 
+### Intestazione allineata nelle pagine con tasto "aggiungi": titolo e descrizione ora usano tutta la larghezza
+
+**Cosa fa:** in Archivio, Beni, Contatti, Scadenze e Capsule, la descrizione sotto il titolo di pagina non va più a capo prematuramente lasciando spazio vuoto prima del tasto "+ Aggiungi/Crea" --- ora occupa tutta la larghezza disponibile, sia su desktop (dove titolo, descrizione e tasto stanno sulla stessa riga) sia su smartphone (dove il tasto scende sotto, restando allineato a sinistra come il titolo).
+
+**Note tecniche:** il contenitore di titolo+descrizione, dentro la riga flessibile che lo affianca al tasto, non aveva `flex-1` --- restava largo solo quanto il proprio contenuto (shrink-to-fit) invece di espandersi allo spazio residuo della riga, così la `<p>` andava a capo prima del dovuto. Aggiunto `min-w-0 flex-1` al contenitore in tutti e cinque i componenti (`DocumentsPanel.tsx`, `AssetsPanel.tsx`, `TrustedContactsPanel.tsx`, `RemindersPanel.tsx`, `CapsulesPanel.tsx`); il tasto affiancato aveva già `shrink-0`, quindi resta sempre alla sua dimensione piena. `TimelinePanel.tsx` (Cronologia) escluso perché non ha un tasto "aggiungi". Verificato a 1280px e 375px con screenshot Playwright ad-hoc prima di confermare.
+
 ### Capsule: descrizione più corta, spiegazione completa solo su richiesta
 
 **Cosa fa:** sotto il titolo di Capsule ora compare una sola riga breve, invece del paragrafo lungo di prima --- su smartphone occupava la maggior parte dello schermo. Il dettaglio completo (cosa succede chiudendo una capsula, che l'originale resta libero, che l'accesso reale ai destinatari arriverà in futuro) resta disponibile aprendo "Come funziona chiudere una capsula", non più imposto in cima alla pagina.
