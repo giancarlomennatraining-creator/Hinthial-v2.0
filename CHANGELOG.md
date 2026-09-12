@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-12
 
+### Bug corretto: il "+" in sovraimpressione bloccava il menu azioni dell'ultima riga di una lista
+
+**Cosa fa:** in Archivio, Beni, Contatti, Scadenze e Capsule, arrivati in fondo a una lista lunga su smartphone, il tasto "⋮" delle azioni delle ultime righe non finisce più coperto dal "+" tondo --- ora resta sempre pienamente raggiungibile.
+
+**Note tecniche:** il FAB occupa sempre lo stesso rettangolo fisso in basso a destra dello schermo (`position: fixed`); scrollando fino in fondo, l'ultima riga di una lista abbastanza lunga finiva proprio lì sotto, e il tocco veniva intercettato dal FAB (z-index più alto) invece che dal tasto "⋮" della riga (v. RowActionsMenu). Riservato, sotto `sm`, un padding-bottom sul contenitore di ognuno dei cinque componenti pari all'ingombro del FAB più un margine (`pb-[calc(9.5rem+env(safe-area-inset-bottom))] sm:pb-0`): l'ultima riga si ferma ora sempre sopra il FAB. Verificato creando 12 scadenze, scorrendo fino in fondo e cliccando davvero il tasto "⋮" dell'ultima --- prima del fix il click sarebbe stato intercettato dal FAB.
+
 ### Su smartphone, il tasto "aggiungi" diventa un "+" tondo in sovraimpressione
 
 **Cosa fa:** in Archivio, Beni, Contatti, Scadenze e Capsule, su smartphone il tasto per creare un nuovo contenuto non è più affiancato al titolo di pagina --- è ora un pulsante rotondo blu con un "+", fisso in basso a destra sopra la barra di navigazione rapida, sempre raggiungibile senza scorrere la pagina. Al tocco porta alla stessa schermata di creazione di sempre (es. "Aggiungi capsula" apre "Nuova capsula"). Su desktop e tablet nulla cambia: resta il tasto normale accanto al titolo.
