@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-12
 
+### Hinthial riconosce da solo quali amici hanno un account (FASE A della condivisione capsule)
+
+**Cosa fa:** in Amici, ogni amico la cui email corrisponde a un account Hinthial registrato mostra ora un badge "✓ Su Hinthial" --- anche se si è registrato *dopo* essere stato aggiunto o invitato. Ogni volta che apri la pagina, gli amici non ancora riconosciuti vengono ricontrollati in automatico, senza bisogno di fare nulla apposta. Non concede ancora alcun accesso: è solo il primo passo (di quattro) verso poter davvero condividere il contenuto di una capsula con chi la riceve.
+
+**Note tecniche:** nuova colonna `friends.linked_user_id`, risolta da una nuova funzione Postgres `lookup_friend_account(target_email)` (SECURITY DEFINER, stesso principio di `log_failed_login_attempt`) che verifica una singola email alla volta contro `auth.users`/`profiles` --- mai un elenco, mai un confronto bulk, perché l'email dell'amico resta cifrata con la Master Key di chi lo ha aggiunto e il server non può leggerla da sé. A differenza di `log_failed_login_attempt`, qui rivelare la corrispondenza è proprio lo scopo (non un effetto collaterale da evitare): per mitigare l'uso della funzione come oracolo per enumerare account registrati, un tetto di 200 verifiche al giorno per chi chiama (`friend_lookup_attempts`, mai esposta al client). Lato client, `FriendsPanel` ricontrolla ad ogni caricamento solo gli amici con `linkedUserId` ancora nullo, in sequenza e in background, senza bloccare la pagina né disturbare l'utente in caso di fallimento (si riprova al prossimo caricamento). Verificato end-to-end con due account reali: A aggiunge B come amico dopo che B si è già registrato --- il badge compare al caricamento e resta dopo un refresh vero.
+
 ### "Contatti fiduciari" diventa "Amici"; il flag "amico" diventa "Guardiano"
 
 **Cosa fa:** la sezione prima chiamata "Contatti"/"Contatti fiduciari" ora si chiama **Amici** ovunque nell'app --- voce di menu, titoli di pagina, url (`/friends` invece di `/contacts`), esportazione dati, ricerca globale, cronologia, registro Attività. Il flag interno che segnala chi riceve un avviso informale in caso di lunga inattività (in precedenza "amico") diventa **Guardiano**, per non sovrapporsi al nuovo nome della sezione --- semanticamente è anche più preciso: un guardiano è letteralmente qualcuno a cui affidi un ruolo di tutela.

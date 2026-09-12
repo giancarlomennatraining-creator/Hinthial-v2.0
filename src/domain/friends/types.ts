@@ -19,7 +19,22 @@ export interface FriendListItem {
    * accesso concesso: solo un flag, come `status`.
    */
   isGuardian: boolean;
+  /**
+   * Se questo amico ha un account Hinthial registrato con la stessa
+   * email, il suo id --- risolto via lookupFriendAccount() e salvato
+   * qui (v. FASE A del piano di condivisione capsule). Null finché non
+   * risolto o se non corrisponde a nessun account: non è un errore, è
+   * lo stato di partenza per ogni amico appena aggiunto.
+   */
+  linkedUserId: string | null;
   createdAt: string;
+}
+
+/** Esito di lookupFriendAccount() quando l'email corrisponde a un account registrato. */
+export interface LinkedAccountMatch {
+  userId: string;
+  /** Nome e cognome del profilo --- già in chiaro lato server, nessuna decrittazione qui. */
+  displayName: string;
 }
 
 export interface FriendInput {

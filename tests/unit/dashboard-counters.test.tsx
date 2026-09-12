@@ -24,6 +24,7 @@ function buildFriend(overrides: Partial<FriendListItem> = {}): FriendListItem {
     role: "Coniuge",
     status: "active",
     isGuardian: false,
+    linkedUserId: null,
     createdAt: "2026-01-01",
     ...overrides,
   };

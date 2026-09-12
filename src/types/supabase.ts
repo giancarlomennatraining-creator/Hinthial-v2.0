@@ -422,6 +422,7 @@ export type Database = {
           role: string;
           status: FriendStatusColumn;
           is_guardian: boolean;
+          linked_user_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -433,6 +434,7 @@ export type Database = {
           role: string;
           status?: FriendStatusColumn;
           is_guardian?: boolean;
+          linked_user_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -444,6 +446,7 @@ export type Database = {
           role?: string;
           status?: FriendStatusColumn;
           is_guardian?: boolean;
+          linked_user_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -505,6 +508,10 @@ export type Database = {
       log_failed_login_attempt: {
         Args: { target_email: string };
         Returns: undefined;
+      };
+      lookup_friend_account: {
+        Args: { target_email: string };
+        Returns: { matched_user_id: string; matched_display_name: string }[];
       };
     };
     Enums: Record<string, never>;

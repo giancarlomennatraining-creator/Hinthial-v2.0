@@ -7,7 +7,9 @@ import { createClient } from "@/lib/db/supabase/client";
 import {
   deleteFriend,
   listFriends,
+  lookupFriendAccount,
   setFriendGuardian,
+  setFriendLinkedUser,
   setFriendStatus,
 } from "@/domain/friends/repository";
 import { listCapsules } from "@/domain/capsules/repository";
@@ -117,6 +119,35 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
     if (showCreatedMessage || showUpdatedMessage) router.replace("/friends");
   }, [showCreatedMessage, showUpdatedMessage, router]);
 
+  /**
+   * FASE A del piano di condivisione capsule: per ogni amico non ancora
+   * collegato a un account (`linkedUserId` nullo), verifica se la sua
+   * email corrisponde a un account Hinthial registrato --- così se un
+   * amico si registra dopo essere stato aggiunto, ce ne si accorge al
+   * prossimo caricamento della pagina, senza dover fare nulla apposta.
+   * Best-effort e silenzioso: un fallimento (rete, tetto giornaliero di
+   * verifiche) non deve disturbare la pagina, si riprova al prossimo
+   * refresh. Sequenziale, non in parallelo, per restare gentile col
+   * tetto giornaliero lato server.
+   */
+  const checkLinkedAccounts = useCallback(
+    async (list: FriendListItem[]) => {
+      for (const friend of list.filter((f) => f.linkedUserId === null)) {
+        try {
+          const match = await lookupFriendAccount(supabase, friend.email);
+          if (!match) continue;
+          await setFriendLinkedUser(supabase, friend.id, match.userId);
+          setFriends((prev) =>
+            prev.map((f) => (f.id === friend.id ? { ...f, linkedUserId: match.userId } : f)),
+          );
+        } catch {
+          // Verifica best-effort --- v. commento sopra.
+        }
+      }
+    },
+    [supabase],
+  );
+
   const refresh = useCallback(async () => {
     setError(null);
     try {
@@ -126,12 +157,13 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       ]);
       setFriends(friendsResult);
       setCapsules(capsulesResult);
+      void checkLinkedAccounts(friendsResult);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare gli amici.");
     } finally {
       setLoading(false);
     }
-  }, [supabase, masterKey]);
+  }, [supabase, masterKey, checkLinkedAccounts]);
 
   useEffect(() => {
     // See DocumentsPanel.tsx for why fetch-on-mount is legitimate here.
@@ -320,6 +352,14 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         <tr key={friend.id}>
                           <td className="max-w-[12rem] truncate p-3 font-medium text-zinc-900 dark:text-zinc-100">
                             {friend.name}
+                            {friend.linkedUserId ? (
+                              <span
+                                title="Ha un account Hinthial"
+                                className="ml-1 rounded-full bg-lime-100 px-2 py-0.5 text-xs font-medium text-lime-700 dark:bg-lime-950 dark:text-lime-400"
+                              >
+                                ✓ Su Hinthial
+                              </span>
+                            ) : null}
                           </td>
                           <td className="max-w-[14rem] truncate p-3 text-zinc-600 dark:text-zinc-400">
                             {friend.email}
@@ -394,6 +434,14 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         {friend.isGuardian ? (
                           <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-400">
                             🛡️ Guardiano
+                          </span>
+                        ) : null}
+                        {friend.linkedUserId ? (
+                          <span
+                            title="Ha un account Hinthial"
+                            className="shrink-0 rounded-full bg-lime-100 px-2 py-0.5 text-xs font-medium text-lime-700 dark:bg-lime-950 dark:text-lime-400"
+                          >
+                            ✓ Su Hinthial
                           </span>
                         ) : null}
                         <CapsulesBadge capsules={capsulesFor(friend)} />

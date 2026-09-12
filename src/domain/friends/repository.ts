@@ -9,9 +9,10 @@ import {
   bytesToUtf8,
 } from "@/lib/crypto";
 import { logAuditEvent } from "@/lib/audit/log-event";
-import type { FriendInput, FriendListItem, FriendStatus } from "@/domain/friends/types";
+import type { FriendInput, FriendListItem, FriendStatus, LinkedAccountMatch } from "@/domain/friends/types";
 
-const FRIEND_COLUMNS = "id, encrypted_name, encrypted_email, role, status, is_guardian, created_at";
+const FRIEND_COLUMNS =
+  "id, encrypted_name, encrypted_email, role, status, is_guardian, linked_user_id, created_at";
 
 type FriendRow = {
   id: string;
@@ -20,6 +21,7 @@ type FriendRow = {
   role: string;
   status: FriendStatus;
   is_guardian: boolean;
+  linked_user_id: string | null;
   created_at: string;
 };
 
@@ -36,6 +38,7 @@ async function toFriendListItem(masterKey: CryptoKey, row: FriendRow): Promise<F
     role: row.role,
     status: row.status,
     isGuardian: row.is_guardian,
+    linkedUserId: row.linked_user_id,
     createdAt: row.created_at,
   };
 }
@@ -173,5 +176,44 @@ export async function deleteFriend(supabase: SupabaseClient<Database>, friendId:
 
   if (error) {
     throw new Error(`Impossibile eliminare l'amico: ${error.message}`);
+  }
+}
+
+/**
+ * FASE A del piano di condivisione capsule --- verifica se una singola
+ * email (già decifrata lato client per UN amico) corrisponde a un
+ * account Hinthial registrato. Passa dalla funzione Postgres
+ * `lookup_friend_account` (v. migrazione friend_account_lookup):
+ * l'unica che può confrontarla con `auth.users`, mai raggiungibile
+ * direttamente dal client. Nessun elenco, nessun confronto bulk --- una
+ * chiamata per amico, con un tetto giornaliero lato server contro
+ * l'enumerazione di account.
+ */
+export async function lookupFriendAccount(
+  supabase: SupabaseClient<Database>,
+  email: string,
+): Promise<LinkedAccountMatch | null> {
+  const { data, error } = await supabase.rpc("lookup_friend_account", { target_email: email });
+
+  if (error) {
+    throw new Error(`Impossibile verificare l'account: ${error.message}`);
+  }
+
+  const match = data?.[0];
+  if (!match) return null;
+
+  return { userId: match.matched_user_id, displayName: match.matched_display_name };
+}
+
+/** Salva la corrispondenza trovata da lookupFriendAccount() --- non concede alcun accesso, solo riconoscimento. */
+export async function setFriendLinkedUser(
+  supabase: SupabaseClient<Database>,
+  friendId: string,
+  linkedUserId: string,
+): Promise<void> {
+  const { error } = await supabase.from("friends").update({ linked_user_id: linkedUserId }).eq("id", friendId);
+
+  if (error) {
+    throw new Error(`Impossibile aggiornare l'amico: ${error.message}`);
   }
 }

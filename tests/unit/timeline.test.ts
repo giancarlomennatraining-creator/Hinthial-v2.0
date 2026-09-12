@@ -49,7 +49,7 @@ describe("buildTimeline", () => {
         },
       ],
       friends: [
-        { id: "friend-1", name: "Maria", email: "m@x.it", role: "Coniuge", status: "active", isGuardian: false, createdAt: "2026-04-01" },
+        { id: "friend-1", name: "Maria", email: "m@x.it", role: "Coniuge", status: "active", isGuardian: false, linkedUserId: null, createdAt: "2026-04-01" },
       ],
       capsules: [
         {
