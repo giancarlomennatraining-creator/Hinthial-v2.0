@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-12
 
+### Capsule: descrizione più corta, spiegazione completa solo su richiesta
+
+**Cosa fa:** sotto il titolo di Capsule ora compare una sola riga breve, invece del paragrafo lungo di prima --- su smartphone occupava la maggior parte dello schermo. Il dettaglio completo (cosa succede chiudendo una capsula, che l'originale resta libero, che l'accesso reale ai destinatari arriverà in futuro) resta disponibile aprendo "Come funziona chiudere una capsula", non più imposto in cima alla pagina.
+
+**Note tecniche:** nessuna perdita di sicurezza --- l'avviso sull'irreversibilità della chiusura era già ripetuto nella conferma al momento di chiudere una capsula per davvero (v. `handleClose`, `window.confirm`), quindi il paragrafo fisso era ridondante, non l'unica rete di sicurezza. Disclosure nativa (`<details>`/`<summary>`), nessun nuovo stato React.
+
 ### Bug corretto: icone di Impostazioni quasi invisibili sulle schede con nome lungo
 
 **Cosa fa:** le icone di "Informazioni utente" e "Intelligenza artificiale" nel menu di Impostazioni non erano più piccole delle altre per scelta grafica --- si schiacciavano quasi fino a sparire, perché le loro etichette (le più lunghe dell'elenco) non ci stavano nella colonna della barra laterale. Ora restano sempre alla loro dimensione piena, come tutte le altre.

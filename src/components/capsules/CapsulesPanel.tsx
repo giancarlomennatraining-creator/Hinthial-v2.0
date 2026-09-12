@@ -336,12 +336,23 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
             Capsule
           </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Contenuti cifrati da lasciare a uno o più destinatari, in condizioni definite da te.
-            Chiudere una capsula è irreversibile: non sarà più modificabile e ogni contenuto
-            d&apos;Archivio ancora collegato viene copiato al suo interno --- l&apos;originale resta
-            libero di essere modificato o cancellato. Non concede però ancora alcun accesso ai
-            destinatari --- l&apos;apertura vera e propria arriverà con una fase futura.
+            Contenuti cifrati da lasciare a chi vuoi tu, in condizioni definite da te.
           </p>
+          {/* Il dettaglio sull'irreversibilità resta comunque ripetuto al
+              momento di chiudere davvero una capsula (v. handleClose,
+              window.confirm) --- qui è solo per chi lo vuole leggere
+              prima, non un secondo avviso obbligato: niente <p> lungo
+              fisso in cima, specie su smartphone dove "mangiava" la
+              maggior parte dello schermo (v. richiesta utente). */}
+          <details className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            <summary className="cursor-pointer font-medium text-brand">Come funziona chiudere una capsula</summary>
+            <p className="mt-1">
+              Chiudere una capsula è irreversibile: non sarà più modificabile e ogni contenuto
+              d&apos;Archivio ancora collegato viene copiato al suo interno --- l&apos;originale resta
+              libero di essere modificato o cancellato. Non concede però ancora alcun accesso ai
+              destinatari --- l&apos;apertura vera e propria arriverà con una fase futura.
+            </p>
+          </details>
         </div>
         <Link
           href="/capsules/new"
