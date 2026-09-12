@@ -108,3 +108,22 @@ export interface CapsuleEditInput {
   newFiles: File[];
   openAt: string;
 }
+
+/**
+ * FASE B del piano di condivisione capsule --- una capsula che qualcun
+ * altro ha condiviso con l'utente corrente ("Condivise con me"). Solo
+ * metadati già in chiaro lato server: il titolo/contenuto restano
+ * cifrati con la Master Key del proprietario, illeggibili qui --- lo
+ * sblocco vero arriverà con la Fase C1 (scambio di chiavi).
+ */
+export interface SharedCapsuleListItem {
+  /** Id della capsula --- non del collegamento di condivisione. */
+  id: string;
+  /** Nome e cognome del proprietario --- già in chiaro lato server. */
+  ownerName: string;
+  /** ISO --- quando è stata condivisa. */
+  sharedAt: string;
+  status: CapsuleStatus;
+  /** V. CapsuleListItem.openAt --- null solo per le capsule create prima che diventasse obbligatoria. */
+  openAt: string | null;
+}

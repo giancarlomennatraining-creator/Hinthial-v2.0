@@ -9,7 +9,8 @@ import {
   deleteCapsule,
   downloadCapsuleAttachment,
   listCapsules,
-  setCapsuleStatus,
+  listCapsulesSharedWithMe,
+  shareCapsule,
   updateCapsuleAttachmentTranscript,
 } from "@/domain/capsules/repository";
 import { downloadDocument } from "@/domain/documents/repository";
@@ -30,7 +31,12 @@ import { useListViewPreferences } from "@/components/layout/ListViewPreferencesP
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { CAPSULE_STATUS_LABEL } from "@/domain/capsules/labels";
-import type { CapsuleAttachment, CapsuleListItem, CapsuleStatus } from "@/domain/capsules/types";
+import type {
+  CapsuleAttachment,
+  CapsuleListItem,
+  CapsuleStatus,
+  SharedCapsuleListItem,
+} from "@/domain/capsules/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import { SuccessMessage } from "@/components/ui/SuccessMessage";
 
@@ -89,6 +95,15 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "title", direction: "asc" });
   const [previewCapsule, setPreviewCapsule] = useState<CapsuleListItem | null>(null);
 
+  // FASE B del piano di condivisione capsule --- "Condivise con me" è
+  // una scheda a sé qui dentro, non una voce di menu a parte: stesso
+  // tipo di contenuto, solo guardato dal verso opposto (v. richiesta
+  // utente). Caricata insieme alle proprie capsule, non solo al primo
+  // click sulla scheda, così passare da una vista all'altra è istantaneo.
+  const [activeTab, setActiveTab] = useState<"mine" | "shared">("mine");
+  const [sharedCapsules, setSharedCapsules] = useState<SharedCapsuleListItem[]>([]);
+  const [sharedError, setSharedError] = useState<string | null>(null);
+
   // Trascrizione di un allegato audio/video (v. domain/transcription) --- uno alla volta.
   const [transcribingAttachmentId, setTranscribingAttachmentId] = useState<string | null>(null);
   const [transcriptDraft, setTranscriptDraft] = useState("");
@@ -120,6 +135,16 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       setError(err instanceof Error ? err.message : "Impossibile caricare le capsule.");
     } finally {
       setLoading(false);
+    }
+
+    // Best-effort e separato dal resto: nessuna decrittazione qui (solo
+    // metadati già in chiaro), quindi un fallimento non deve impedire di
+    // vedere le proprie capsule --- v. listCapsulesSharedWithMe.
+    setSharedError(null);
+    try {
+      setSharedCapsules(await listCapsulesSharedWithMe(supabase));
+    } catch (err) {
+      setSharedError(err instanceof Error ? err.message : "Impossibile caricare le capsule condivise con te.");
     }
   }, [supabase, masterKey]);
 
@@ -159,10 +184,15 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     setBusyId(capsule.id);
     setError(null);
     try {
-      await setCapsuleStatus(supabase, capsule.id, "shared");
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Devi essere autenticato.");
+
+      await shareCapsule(supabase, user.id, capsule);
       setCapsules((prev) => prev.map((c) => (c.id === capsule.id ? { ...c, status: "shared" } : c)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare lo stato della capsula.");
+      setError(err instanceof Error ? err.message : "Impossibile condividere la capsula.");
     } finally {
       setBusyId(null);
     }
@@ -372,13 +402,80 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         <SuccessMessage>Capsula aggiornata.</SuccessMessage>
       ) : null}
 
+      {/* "Condivise con me" (FASE B) è una scheda qui dentro, non una voce
+          di menu a parte --- stesso tipo di contenuto, solo guardato dal
+          verso opposto (v. richiesta utente). */}
+      <div className="flex w-fit gap-1 rounded-lg border border-zinc-200 p-1 dark:border-zinc-800">
+        <button
+          type="button"
+          onClick={() => setActiveTab("mine")}
+          aria-pressed={activeTab === "mine"}
+          className={
+            activeTab === "mine"
+              ? "rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white"
+              : "rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
+          }
+        >
+          Le mie
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("shared")}
+          aria-pressed={activeTab === "shared"}
+          className={
+            activeTab === "shared"
+              ? "rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white"
+              : "rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
+          }
+        >
+          Condivise con me{sharedCapsules.length > 0 ? ` (${sharedCapsules.length})` : ""}
+        </button>
+      </div>
+
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {error}
         </p>
       ) : null}
 
-      {loading ? (
+      {activeTab === "shared" ? (
+        sharedError ? (
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            {sharedError}
+          </p>
+        ) : sharedCapsules.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Nessuna capsula condivisa con te, per ora.
+            </p>
+          </div>
+        ) : (
+          <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+            {sharedCapsules.map((shared) => (
+              <li key={shared.id} className="flex flex-col gap-1 p-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    Da {shared.ownerName}
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[shared.status]}`}
+                  >
+                    {STATUS_LABEL[shared.status]}
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Condivisa il {formatDate(shared.sharedAt)}
+                  {shared.openAt ? ` · apertura prevista ${formatDate(shared.openAt)}` : ""}
+                </p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Il contenuto non è ancora consultabile qui --- arriverà con una fase futura, quando
+                  Hinthial saprà anche scambiare le chiavi necessarie a decifrarlo.
+                </p>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : loading ? (
         <ListSkeleton />
       ) : capsules.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">

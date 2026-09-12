@@ -28,6 +28,7 @@ import type {
   CapsuleInput,
   CapsuleListItem,
   CapsuleStatus,
+  SharedCapsuleListItem,
 } from "@/domain/capsules/types";
 
 const CAPSULE_COLUMNS = "id, encrypted_payload, status, access_condition, open_at, created_at";
@@ -400,10 +401,10 @@ export async function closeCapsule(
 
 /**
  * Moves a capsule forward in its lifecycle beyond closing (ready ->
- * shared) --- still just a recorded status change, no actual delivery
- * or access grant to any recipient happens yet (v. HINTHIAL_MVP.md:
- * niente Dead Man's Switch in questa fase). draft -> ready goes through
- * closeCapsule instead, which does real work beyond the status itself.
+ * shared/draft -> ready via closeCapsule instead, which does real work
+ * beyond the status itself). Just a recorded status change on its own
+ * --- v. shareCapsule per il vero significato di "Condividi", che la
+ * usa internamente.
  */
 export async function setCapsuleStatus(
   supabase: SupabaseClient<Database>,
@@ -415,6 +416,131 @@ export async function setCapsuleStatus(
   if (error) {
     throw new Error(`Impossibile aggiornare lo stato della capsula: ${error.message}`);
   }
+}
+
+/**
+ * FASE B del piano di condivisione capsule --- "Condividi" (ready ->
+ * shared) non è più solo un cambio di stato: per ogni destinatario già
+ * collegato a un account Hinthial (v. friends.linked_user_id), crea
+ * anche la riga che lo lega a questa capsula in "Condivise con me" (v.
+ * listCapsulesSharedWithMe). Un destinatario non ancora collegato non
+ * riceve nulla qui --- verrà agganciato retroattivamente quando si
+ * collegherà (v. syncCapsuleSharesForLinkedFriend), esattamente come
+ * l'amico dell'esempio che ha ispirato la Fase A. Nessun accesso al
+ * contenuto viene concesso in nessun caso: resta cifrato con la Master
+ * Key del proprietario.
+ */
+export async function shareCapsule(
+  supabase: SupabaseClient<Database>,
+  ownerId: string,
+  capsule: Pick<CapsuleListItem, "id" | "relatedFriends">,
+): Promise<void> {
+  const linkedRecipientIds = capsule.relatedFriends
+    .map((friend) => friend.linkedUserId)
+    .filter((id): id is string => id !== null);
+
+  if (linkedRecipientIds.length > 0) {
+    const { error } = await supabase.from("capsule_shares").upsert(
+      linkedRecipientIds.map((recipientUserId) => ({
+        capsule_id: capsule.id,
+        owner_id: ownerId,
+        recipient_user_id: recipientUserId,
+      })),
+      { onConflict: "capsule_id,recipient_user_id" },
+    );
+
+    if (error) {
+      throw new Error(`Impossibile condividere la capsula: ${error.message}`);
+    }
+  }
+
+  await setCapsuleStatus(supabase, capsule.id, "shared");
+}
+
+/**
+ * Retroattivo: quando un amico si collega a un account Hinthial (v.
+ * domain/friends, lookupFriendAccount) dopo che una o più capsule erano
+ * già state condivise con lui, questa funzione crea le righe di
+ * condivisione mancanti --- così "Condivise con me" le mostra comunque,
+ * invece di restare per sempre invisibili solo perché il collegamento è
+ * arrivato in ritardo. `sharedCapsules` va già filtrata a status
+ * "shared" dal chiamante (v. FriendsPanel, che le ha già in memoria).
+ */
+export async function syncCapsuleSharesForLinkedFriend(
+  supabase: SupabaseClient<Database>,
+  ownerId: string,
+  friendId: string,
+  linkedUserId: string,
+  sharedCapsules: Pick<CapsuleListItem, "id" | "relatedFriends">[],
+): Promise<void> {
+  const relevant = sharedCapsules.filter((c) => c.relatedFriends.some((f) => f.id === friendId));
+  if (relevant.length === 0) return;
+
+  const { error } = await supabase.from("capsule_shares").upsert(
+    relevant.map((c) => ({ capsule_id: c.id, owner_id: ownerId, recipient_user_id: linkedUserId })),
+    { onConflict: "capsule_id,recipient_user_id" },
+  );
+
+  if (error) {
+    throw new Error(`Impossibile collegare le capsule già condivise: ${error.message}`);
+  }
+}
+
+/**
+ * FASE B --- capsule condivise con l'utente corrente da altri
+ * proprietari ("Condivise con me"). Solo metadati già in chiaro lato
+ * server (mittente, data di condivisione, stato, data di apertura): il
+ * titolo/contenuto restano cifrati con la Master Key del proprietario,
+ * illeggibili qui --- v. SharedCapsuleListItem. Due query batch (mai
+ * una per capsula): righe orfane (capsula o proprietario cancellati
+ * medio tempore) sono filtrate in silenzio, non un errore.
+ */
+export async function listCapsulesSharedWithMe(
+  supabase: SupabaseClient<Database>,
+): Promise<SharedCapsuleListItem[]> {
+  const { data: shares, error: sharesError } = await supabase
+    .from("capsule_shares")
+    .select("capsule_id, owner_id, shared_at")
+    .order("shared_at", { ascending: false });
+
+  if (sharesError) {
+    throw new Error(`Impossibile caricare le capsule condivise: ${sharesError.message}`);
+  }
+  if (!shares || shares.length === 0) return [];
+
+  const capsuleIds = [...new Set(shares.map((s) => s.capsule_id))];
+  const ownerIds = [...new Set(shares.map((s) => s.owner_id))];
+
+  const [capsulesResult, profilesResult] = await Promise.all([
+    supabase.from("capsules").select("id, status, open_at").in("id", capsuleIds),
+    supabase.from("profiles").select("id, first_name, last_name").in("id", ownerIds),
+  ]);
+
+  if (capsulesResult.error) {
+    throw new Error(`Impossibile caricare le capsule condivise: ${capsulesResult.error.message}`);
+  }
+  if (profilesResult.error) {
+    throw new Error(`Impossibile caricare i mittenti: ${profilesResult.error.message}`);
+  }
+
+  const capsulesById = new Map((capsulesResult.data ?? []).map((c) => [c.id, c]));
+  const profilesById = new Map((profilesResult.data ?? []).map((p) => [p.id, p]));
+
+  return shares
+    .map((share): SharedCapsuleListItem | null => {
+      const capsule = capsulesById.get(share.capsule_id);
+      const profile = profilesById.get(share.owner_id);
+      if (!capsule || !profile) return null;
+
+      return {
+        id: share.capsule_id,
+        ownerName: `${profile.first_name} ${profile.last_name}`.trim(),
+        sharedAt: share.shared_at,
+        status: capsule.status,
+        openAt: capsule.open_at,
+      };
+    })
+    .filter((item): item is SharedCapsuleListItem => item !== null);
 }
 
 /**

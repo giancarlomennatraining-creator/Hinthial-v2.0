@@ -12,7 +12,7 @@ import {
   setFriendLinkedUser,
   setFriendStatus,
 } from "@/domain/friends/repository";
-import { listCapsules } from "@/domain/capsules/repository";
+import { listCapsules, syncCapsuleSharesForLinkedFriend } from "@/domain/capsules/repository";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
@@ -129,9 +129,18 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
    * verifiche) non deve disturbare la pagina, si riprova al prossimo
    * refresh. Sequenziale, non in parallelo, per restare gentile col
    * tetto giornaliero lato server.
+   *
+   * Trovato un collegamento, sincronizza anche retroattivamente (FASE B)
+   * le capsule già condivise con questo amico prima che avesse un
+   * account --- altrimenti resterebbero per sempre invisibili in
+   * "Condivise con me" solo perché il collegamento è arrivato in
+   * ritardo (esattamente il caso che ha motivato la Fase A). `capsules`
+   * è già in memoria da refresh(), nessuna nuova decrittazione.
    */
   const checkLinkedAccounts = useCallback(
-    async (list: FriendListItem[]) => {
+    async (list: FriendListItem[], ownedCapsules: CapsuleListItem[]) => {
+      const sharedCapsules = ownedCapsules.filter((c) => c.status === "shared");
+
       for (const friend of list.filter((f) => f.linkedUserId === null)) {
         try {
           const match = await lookupFriendAccount(supabase, friend.email);
@@ -140,6 +149,13 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
           setFriends((prev) =>
             prev.map((f) => (f.id === friend.id ? { ...f, linkedUserId: match.userId } : f)),
           );
+
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (user) {
+            await syncCapsuleSharesForLinkedFriend(supabase, user.id, friend.id, match.userId, sharedCapsules);
+          }
         } catch {
           // Verifica best-effort --- v. commento sopra.
         }
@@ -157,7 +173,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       ]);
       setFriends(friendsResult);
       setCapsules(capsulesResult);
-      void checkLinkedAccounts(friendsResult);
+      void checkLinkedAccounts(friendsResult, capsulesResult);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare gli amici.");
     } finally {

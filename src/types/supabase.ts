@@ -502,6 +502,52 @@ export type Database = {
           },
         ];
       };
+      capsule_shares: {
+        Row: {
+          id: string;
+          capsule_id: string;
+          owner_id: string;
+          recipient_user_id: string;
+          shared_at: string;
+        };
+        Insert: {
+          id?: string;
+          capsule_id: string;
+          owner_id: string;
+          recipient_user_id: string;
+          shared_at?: string;
+        };
+        Update: {
+          id?: string;
+          capsule_id?: string;
+          owner_id?: string;
+          recipient_user_id?: string;
+          shared_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "capsule_shares_capsule_id_fkey";
+            columns: ["capsule_id"];
+            isOneToOne: false;
+            referencedRelation: "capsules";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "capsule_shares_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "capsule_shares_recipient_user_id_fkey";
+            columns: ["recipient_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
