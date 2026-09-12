@@ -14,10 +14,20 @@ import Link from "next/link";
  * schermo, il tasto "⋮" delle sue azioni finirebbe proprio lì sotto,
  * intercettato dal FAB invece che dalla riga (v. RowActionsMenu). Per
  * questo ognuno dei cinque componenti sopra riserva, sotto `sm`, un
- * padding-bottom pari all'ingombro del FAB (bottom-offset + altezza)
- * più un margine --- `pb-[calc(9.5rem+env(safe-area-inset-bottom))]
- * sm:pb-0` sul contenitore esterno --- così l'ultima riga si ferma
- * sempre sopra il FAB, mai sotto.
+ * padding-bottom aggiuntivo sul proprio contenitore esterno ---
+ * `pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0` --- così
+ * l'ultima riga si ferma sempre sopra il FAB, mai sotto.
+ *
+ * "Aggiuntivo" perché `<main>` (v. AppShell) riserva già `pb-24` (6rem)
+ * sotto `md` per non far finire i contenuti sotto la barra di
+ * navigazione fissa (v. BottomNavBar): il FAB, alto 3.5rem (`h-14`) e
+ * scostato da `bottom-[calc(5rem+...)]`, arriva a 8.5rem dal fondo
+ * reale dello schermo --- 2.5rem oltre ai 6rem già riservati da
+ * `<main>`. Il padding qui copre solo quella differenza, più un
+ * margine di mezzo rem: contarli entrambi da zero (come nella prima
+ * versione di questo fix, 9.5rem pieni) sommava le due riserve invece
+ * di sottrarle, lasciando in fondo alla lista un vuoto ben più grande
+ * del necessario.
  */
 export function MobileAddFab({ href, label }: { href: string; label: string }) {
   return (

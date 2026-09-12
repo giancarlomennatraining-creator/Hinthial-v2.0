@@ -160,7 +160,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
   );
 
   return (
-    <div className="flex flex-col gap-6 pb-[calc(9.5rem+env(safe-area-inset-bottom))] sm:pb-0">
+    <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="min-w-0 w-full sm:flex-1">
           <h1 className="text-2xl font-semibold tracking-tight text-brand">

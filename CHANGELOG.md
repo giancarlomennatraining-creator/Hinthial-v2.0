@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-12
 
+### Ridotto al minimo lo spazio riservato in fondo lista per il "+" in sovraimpressione
+
+**Cosa fa:** in Archivio, Beni, Contatti, Scadenze e Capsule, lo spazio vuoto lasciato in fondo alla lista su smartphone per non far coprire l'ultima riga dal "+" (v. voce precedente) ora è molto più piccolo --- resta giusto un margine, non più una fascia vuota vistosa.
+
+**Note tecniche:** il fix precedente calcolava il padding-bottom da zero rispetto al fondo reale dello schermo (`9.5rem`, cioè l'intero ingombro del FAB più margine), ignorando che `<main>` (v. AppShell) riserva già `pb-24` (6rem) sotto `md` per non far finire i contenuti sotto la barra di navigazione fissa --- le due riserve si sommavano invece di sottrarsi, lasciando un vuoto ben più grande del necessario (misurato ~134px). Corretto calcolando solo la differenza: il FAB arriva a 8.5rem dal fondo reale (altezza + bottom-offset), 2.5rem oltre ai 6rem già riservati da `<main>` --- il padding qui copre solo quella differenza più mezzo rem di margine (`pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0`). Riverificato con lo stesso scenario di prima (12 scadenze, scroll fino in fondo, click reale sul tasto "⋮" dell'ultima riga): margine sceso da ~134px a ~30px, ancora senza sovrapposizione.
+
 ### Bug corretto: il "+" in sovraimpressione bloccava il menu azioni dell'ultima riga di una lista
 
 **Cosa fa:** in Archivio, Beni, Contatti, Scadenze e Capsule, arrivati in fondo a una lista lunga su smartphone, il tasto "⋮" delle azioni delle ultime righe non finisce più coperto dal "+" tondo --- ora resta sempre pienamente raggiungibile.
