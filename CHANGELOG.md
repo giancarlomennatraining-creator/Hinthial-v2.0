@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-12
 
+### Su smartphone, il tasto "aggiungi" scende sotto il titolo per lasciare tutta la larghezza alla descrizione
+
+**Cosa fa:** in Archivio, Beni, Contatti, Scadenze e Capsule, su smartphone il tasto "+ Aggiungi/Crea" ora compare in una riga propria sotto titolo e descrizione, invece di stare affiancato sulla stessa riga del titolo --- la descrizione guadagna così tutta la larghezza dello schermo invece di doversi stringere nello spazio lasciato libero dal tasto, andando a capo su meno righe e liberando spazio in verticale per i contenuti veri e propri sotto. Su desktop e tablet nulla cambia: titolo, descrizione e tasto restano affiancati come prima.
+
+**Note tecniche:** la fix precedente (`min-w-0 flex-1` sul contenitore titolo+descrizione) risolveva lo spreco di spazio orizzontale ma non lo "sfratto": quel contenitore condivideva comunque la riga col tasto per tutta la sua altezza, quindi la larghezza disponibile restava comunque ridotta della larghezza del tasto --- più evidente quanto più lungo il testo del tasto ("+ Crea capsula" più largo di "+ Crea bene"). Cambiato il contenitore esterno da `flex items-start justify-between gap-4` a `flex flex-col items-start gap-4 sm:flex-row sm:justify-between` in tutti e cinque i componenti, col contenitore titolo+descrizione `w-full sm:flex-1`: sotto la soglia `sm` (640px) il tasto scende su una riga propria a piena larghezza; da `sm` in su il layout torna quello di sempre. Verificato con screenshot Playwright a 375px e 1280px.
+
 ### Intestazione allineata nelle pagine con tasto "aggiungi": titolo e descrizione ora usano tutta la larghezza
 
 **Cosa fa:** in Archivio, Beni, Contatti, Scadenze e Capsule, la descrizione sotto il titolo di pagina non va più a capo prematuramente lasciando spazio vuoto prima del tasto "+ Aggiungi/Crea" --- ora occupa tutta la larghezza disponibile, sia su desktop (dove titolo, descrizione e tasto stanno sulla stessa riga) sia su smartphone (dove il tasto scende sotto, restando allineato a sinistra come il titolo).
