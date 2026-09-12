@@ -8,17 +8,23 @@ import { NAV_ITEMS } from "@/components/layout/nav-items";
 
 /**
  * Barra fissa in basso su smartphone, con le sole voci che l'utente ha
- * scelto in Impostazioni > Aspetto (v. BottomNavItemsProvider,
- * BottomNavItemsSettings) --- le altre restano raggiungibili dal menu
- * con le 3 lineette (v. MobileNavBar, che le esclude da lì per non
- * duplicarle). Se l'utente non ha scelto nulla, la barra semplicemente
- * non appare: tutto resta nel menu, come prima di questa funzione.
+ * scelto in Impostazioni > Aspetto, nell'ordine scelto lì (v.
+ * BottomNavItemsProvider, BottomNavItemsSettings) --- le altre restano
+ * raggiungibili dal menu con le 3 lineette (v. MobileNavBar, che le
+ * esclude da lì per non duplicarle). Se l'utente non ha scelto nulla,
+ * la barra semplicemente non appare: tutto resta nel menu, come prima
+ * di questa funzione.
  */
 export function BottomNavBar() {
   const pathname = usePathname();
   const { items } = useBottomNavItems();
 
-  const shownItems = NAV_ITEMS.filter((item) => items.includes(item.href));
+  // L'ordine è quello di `items` (scelto in Impostazioni), non quello
+  // fisso di NAV_ITEMS --- altrimenti riordinare in Impostazioni non
+  // avrebbe alcun effetto visibile qui.
+  const shownItems = items
+    .map((href) => NAV_ITEMS.find((item) => item.href === href))
+    .filter((item): item is (typeof NAV_ITEMS)[number] => item !== undefined);
   if (shownItems.length === 0) return null;
 
   return (

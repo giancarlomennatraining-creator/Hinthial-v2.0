@@ -10,6 +10,7 @@ import { listCategories } from "@/domain/categories/repository";
 import { listReminders } from "@/domain/reminders/repository";
 import { sortAlphabetically } from "@/lib/utils";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
+import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
@@ -172,11 +173,13 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
         <Link
           href="/assets/new"
-          className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
         >
           + Crea bene
         </Link>
       </div>
+
+      <MobileAddFab href="/assets/new" label="Aggiungi bene" />
 
       {showCreatedMessage ? (
         <SuccessMessage>Bene creato.</SuccessMessage>

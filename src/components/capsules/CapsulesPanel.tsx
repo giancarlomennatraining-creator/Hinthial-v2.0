@@ -19,6 +19,7 @@ import { contentKindFor, CONTENT_KIND_ICON, isTranscribable } from "@/lib/conten
 import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
 import { CapsuleCountdown } from "@/components/capsules/CapsuleCountdown";
 import { CapsulePreview } from "@/components/capsules/CapsulePreview";
+import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
@@ -356,11 +357,13 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
         <Link
           href="/capsules/new"
-          className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
         >
           + Crea capsula
         </Link>
       </div>
+
+      <MobileAddFab href="/capsules/new" label="Aggiungi capsula" />
 
       {showCreatedMessage ? (
         <SuccessMessage>Capsula creata.</SuccessMessage>

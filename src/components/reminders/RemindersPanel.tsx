@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import { deleteReminder, listReminders, setReminderCompleted } from "@/domain/reminders/repository";
+import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
@@ -190,11 +191,13 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
         <Link
           href="/reminders/new"
-          className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
         >
           + Crea scadenza
         </Link>
       </div>
+
+      <MobileAddFab href="/reminders/new" label="Aggiungi scadenza" />
 
       {showCreatedMessage ? (
         <SuccessMessage>Scadenza creata.</SuccessMessage>

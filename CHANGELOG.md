@@ -12,6 +12,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-12
 
+### Su smartphone, il tasto "aggiungi" diventa un "+" tondo in sovraimpressione
+
+**Cosa fa:** in Archivio, Beni, Contatti, Scadenze e Capsule, su smartphone il tasto per creare un nuovo contenuto non è più affiancato al titolo di pagina --- è ora un pulsante rotondo blu con un "+", fisso in basso a destra sopra la barra di navigazione rapida, sempre raggiungibile senza scorrere la pagina. Al tocco porta alla stessa schermata di creazione di sempre (es. "Aggiungi capsula" apre "Nuova capsula"). Su desktop e tablet nulla cambia: resta il tasto normale accanto al titolo.
+
+**Note tecniche:** nuovo componente condiviso `MobileAddFab.tsx` (link con `aria-label` descrittivo, `position: fixed`, `sm:hidden`); il tasto originale in ciascuno dei cinque componenti diventa `hidden sm:block`, così sotto `sm` scompare del tutto e il FAB lo sostituisce, invece di scendere su una riga propria come nella modifica precedente.
+
+### Barra di navigazione in basso: 5 voci invece di 4, e ora riordinabili da Impostazioni
+
+**Cosa fa:** in Impostazioni > Aspetto > "Barra di navigazione in basso (smartphone)" si possono ora scegliere fino a 5 voci (prima 4) per la barra fissa in basso su smartphone, e soprattutto se ne può scegliere l'ordine: l'elenco "Nella barra" si trascina con mouse o dito per riordinarlo, oppure si spostano le voci su/giù con le frecce ▲▼ (più comode da tastiera o senza trascinamento); "Altre voci" resta l'elenco da cui aggiungerne di nuove in fondo.
+
+**Note tecniche:** `MAX_BOTTOM_NAV_ITEMS` da 4 a 5 (`lib/bottom-nav.ts`). Corretto anche un bug per cui `BottomNavBar.tsx` ignorava del tutto l'ordine scelto: renderizzava sempre le voci nell'ordine fisso di `NAV_ITEMS`, filtrate su quelle scelte, invece che nell'ordine memorizzato in `profiles.bottom_nav_items` --- riordinare non aveva mai avuto alcun effetto visibile finché non risolto qui. `BottomNavItemsSettings.tsx` riscritto: due elenchi separati (selezionate, ordinate secondo l'array `items`, con maniglia di trascinamento nativa HTML5 Drag and Drop + frecce ▲▼ + tasto ✕ per togliere; non selezionate, con checkbox per aggiungere) invece dell'unico elenco di sole checkbox di prima.
+
 ### Su smartphone, il tasto "aggiungi" scende sotto il titolo per lasciare tutta la larghezza alla descrizione
 
 **Cosa fa:** in Archivio, Beni, Contatti, Scadenze e Capsule, su smartphone il tasto "+ Aggiungi/Crea" ora compare in una riga propria sotto titolo e descrizione, invece di stare affiancato sulla stessa riga del titolo --- la descrizione guadagna così tutta la larghezza dello schermo invece di doversi stringere nello spazio lasciato libero dal tasto, andando a capo su meno righe e liberando spazio in verticale per i contenuti veri e propri sotto. Su desktop e tablet nulla cambia: titolo, descrizione e tasto restano affiancati come prima.

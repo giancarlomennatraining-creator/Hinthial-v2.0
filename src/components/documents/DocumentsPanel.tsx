@@ -21,6 +21,7 @@ import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
 import { saveBytesAsFile } from "@/lib/download";
 import { sortAlphabetically } from "@/lib/utils";
+import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
@@ -366,11 +367,13 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
         <Link
           href="/archive/new"
-          className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
         >
           + Aggiungi contenuto
         </Link>
       </div>
+
+      <MobileAddFab href="/archive/new" label="Aggiungi contenuto" />
 
       {showCreatedMessage ? (
         <SuccessMessage>Contenuto aggiunto.</SuccessMessage>

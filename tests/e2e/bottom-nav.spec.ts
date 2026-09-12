@@ -39,8 +39,9 @@ test("la barra fissa in basso mostra le voci di default, si personalizza da Impo
   await page.keyboard.press("Escape");
   await expect(drawer).not.toBeVisible();
 
-  // In Impostazioni > Aspetto si toglie "Archivio" e si aggiunge "Beni".
-  // Viewport da smartphone: Impostazioni è a elenco -> dettaglio (v.
+  // In Impostazioni > Aspetto si toglie "Archivio" (dall'elenco "Nella
+  // barra") e si aggiunge "Beni" (dall'elenco "Altre voci"). Viewport
+  // da smartphone: Impostazioni è a elenco -> dettaglio (v.
   // mobile-settings-nav.spec.ts), non a schede come da desktop.
   await page.goto("/settings");
   await page.getByRole("button", { name: "Aspetto" }).click();
@@ -50,11 +51,16 @@ test("la barra fissa in basso mostra le voci di default, si personalizza da Impo
 
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
-    page.getByRole("checkbox", { name: "Archivio" }).uncheck(),
+    page.getByRole("button", { name: "Togli Archivio dalla barra" }).click(),
   ]);
+  // .click(), non .check(): appena spuntata, "Beni" lascia del tutto
+  // l'elenco "Altre voci" (con la sua checkbox) per entrare in "Nella
+  // barra" (dove diventa una riga con tasto ✕, non più una checkbox)
+  // --- .check() invece atterrebbe la conferma sulla stessa checkbox,
+  // ormai sparita.
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
-    page.getByRole("checkbox", { name: "Beni" }).check(),
+    page.getByRole("checkbox", { name: "Beni" }).click(),
   ]);
 
   // Si applica subito alla barra, senza refresh...
@@ -75,7 +81,7 @@ test("la barra fissa in basso mostra le voci di default, si personalizza da Impo
   await expect(drawer.getByRole("link", { name: "Beni" })).toHaveCount(0);
 });
 
-test("oltre 4 voci scelte, le altre caselle si disabilitano", async ({ page }) => {
+test("oltre 5 voci scelte, le altre caselle si disabilitano", async ({ page }) => {
   const user = uniqueTestUser();
   await createConfirmedTestUser(user);
 
@@ -90,7 +96,41 @@ test("oltre 4 voci scelte, le altre caselle si disabilitano", async ({ page }) =
   await page.goto("/settings");
   await page.getByRole("button", { name: "Aspetto" }).click();
 
-  // Le 4 di default sono già selezionate --- una quinta è disabilitata.
-  const fifthCheckbox = page.getByRole("checkbox", { name: "Contatti" });
-  await expect(fifthCheckbox).toBeDisabled();
+  // Le 4 di default sono già selezionate --- se ne aggiunge una quinta
+  // (il massimo, v. MAX_BOTTOM_NAV_ITEMS) e una sesta resta disabilitata.
+  await Promise.all([
+    page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
+    page.getByRole("checkbox", { name: "Beni" }).click(),
+  ]);
+  const sixthCheckbox = page.getByRole("checkbox", { name: "Contatti" });
+  await expect(sixthCheckbox).toBeDisabled();
+});
+
+test("le frecce riordinano le voci nella barra, e l'ordine resta dopo un refresh", async ({ page }) => {
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password").fill(user.password);
+  await page.getByRole("button", { name: "Accedi" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "Aspetto" }).click();
+
+  // Ordine di partenza: Dashboard, Archivio, Scadenze, Capsule. Si
+  // sposta "Archivio" in cima con la freccia ▲.
+  await Promise.all([
+    page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
+    page.getByRole("button", { name: "Sposta Archivio in alto nella barra" }).click(),
+  ]);
+
+  const bottomBar = page.getByRole("navigation", { name: "Navigazione rapida" });
+  const links = bottomBar.getByRole("link");
+  await expect(links.first()).toHaveText("Archivio");
+
+  await page.reload();
+  await page.getByRole("button", { name: "Aspetto" }).click();
+  await expect(links.first()).toHaveText("Archivio");
 });

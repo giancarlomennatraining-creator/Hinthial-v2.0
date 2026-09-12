@@ -11,6 +11,7 @@ import {
   setTrustedContactStatus,
 } from "@/domain/contacts/repository";
 import { listCapsules } from "@/domain/capsules/repository";
+import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
@@ -234,11 +235,13 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
         <Link
           href="/contacts/new"
-          className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
         >
           + Aggiungi contatto
         </Link>
       </div>
+
+      <MobileAddFab href="/contacts/new" label="Aggiungi contatto" />
 
       {showCreatedMessage ? (
         <SuccessMessage>Contatto aggiunto.</SuccessMessage>

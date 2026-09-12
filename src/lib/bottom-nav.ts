@@ -16,7 +16,7 @@ export const DEFAULT_BOTTOM_NAV_ITEMS: BottomNavItems = [
 ];
 
 /** Oltre questo numero la barra in basso diventerebbe troppo stretta per restare leggibile su schermi piccoli. */
-export const MAX_BOTTOM_NAV_ITEMS = 4;
+export const MAX_BOTTOM_NAV_ITEMS = 5;
 
 /**
  * Legge il valore grezzo (jsonb) dalla riga di profiles: un array di
