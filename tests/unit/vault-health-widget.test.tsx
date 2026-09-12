@@ -9,14 +9,14 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
     assets: [],
     documents: [],
     reminders: [],
-    contacts: [],
+    friends: [],
     capsules: [],
     ...overrides,
   };
 }
 
 describe("VaultHealthWidget", () => {
-  it("renders nothing when the vault has no assets, contacts or documents yet", () => {
+  it("renders nothing when the vault has no assets, friends or documents yet", () => {
     const { container } = render(<VaultHealthWidget context={buildContext()} />);
     expect(container).toBeEmptyDOMElement();
   });
@@ -55,18 +55,18 @@ describe("VaultHealthWidget", () => {
     expect(screen.getByText("Tutti i 1 beni hanno almeno un contenuto collegato.")).toBeInTheDocument();
   });
 
-  it("flags an active trusted contact not referenced by any capsule, but not a revoked one", () => {
+  it("flags an active friend not referenced by any capsule, but not a revoked one", () => {
     const context = buildContext({
-      contacts: [
-        { id: "contact-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", isFriend: false, createdAt: "2026-01-01" },
-        { id: "contact-2", name: "Ex Avvocato", email: "ex@esempio.it", role: "Avvocato", status: "revoked", isFriend: false, createdAt: "2026-01-01" },
+      friends: [
+        { id: "friend-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", isGuardian: false, createdAt: "2026-01-01" },
+        { id: "friend-2", name: "Ex Avvocato", email: "ex@esempio.it", role: "Avvocato", status: "revoked", isGuardian: false, createdAt: "2026-01-01" },
       ],
     });
     render(<VaultHealthWidget context={context} />);
     expect(
-      screen.getByText("1 di 1 contatti fiduciari non sono ancora collegati a nessuna capsula."),
+      screen.getByText("1 di 1 amici non sono ancora collegati a nessuna capsula."),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Maria Rossi" })).toHaveAttribute("href", "/contacts");
+    expect(screen.getByRole("link", { name: "Maria Rossi" })).toHaveAttribute("href", "/friends");
     expect(screen.queryByText(/Ex Avvocato/)).not.toBeInTheDocument();
   });
 

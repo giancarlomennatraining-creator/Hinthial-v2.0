@@ -32,8 +32,8 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  // Un contatto fiduciario da usare come destinatario.
-  await page.getByRole("link", { name: "Contatti" }).click();
+  // Un amico da usare come destinatario.
+  await page.getByRole("link", { name: "Amici" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
@@ -42,36 +42,36 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   ).toBeVisible({ timeout: 45_000 });
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
-  await expect(page.getByRole("heading", { name: "Contatti fiduciari" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
 
-  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo contatto fiduciario" })).toBeVisible();
+  await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
   await page.getByLabel("Nome").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria.rossi@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
-  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
-  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
-  const contactRow = page.locator("li", { hasText: "Maria Rossi" });
-  await expect(contactRow).toBeVisible({ timeout: 10_000 });
+  await page.getByRole("button", { name: "Aggiungi amico" }).click();
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
+  const friendRow = page.locator("li", { hasText: "Maria Rossi" });
+  await expect(friendRow).toBeVisible({ timeout: 10_000 });
 
-  // Un secondo contatto, per verificare che una capsula possa avere più destinatari.
-  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo contatto fiduciario" })).toBeVisible();
+  // Un secondo amico, per verificare che una capsula possa avere più destinatari.
+  await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
   await page.getByLabel("Nome").fill("Luca Bianchi");
   await page.getByLabel("Email").fill("luca.bianchi@esempio.it");
   await page.getByLabel("Ruolo").fill("Fratello");
-  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
-  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
-  const secondContactRow = page.locator("li", { hasText: "Luca Bianchi" });
-  await expect(secondContactRow).toBeVisible({ timeout: 10_000 });
+  await page.getByRole("button", { name: "Aggiungi amico" }).click();
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
+  const secondFriendRow = page.locator("li", { hasText: "Luca Bianchi" });
+  await expect(secondFriendRow).toBeVisible({ timeout: 10_000 });
 
-  // Solo i contatti ATTIVI sono selezionabili come destinatari di una capsula.
-  await openRowMenu(contactRow);
+  // Solo gli amici ATTIVI sono selezionabili come destinatari di una capsula.
+  await openRowMenu(friendRow);
   await page.getByRole("menuitem", { name: "Segna come attivo" }).click();
-  await expect(contactRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
-  await openRowMenu(secondContactRow);
+  await expect(friendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
+  await openRowMenu(secondFriendRow);
   await page.getByRole("menuitem", { name: "Segna come attivo" }).click();
-  await expect(secondContactRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
+  await expect(secondFriendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
 
   // Creazione della capsula, nella sua pagina dedicata --- un wizard a tre
   // passi (FASE 14): passo 1 chi/quando, passo 2 contenuti dall'archivio,
@@ -84,10 +84,10 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   const fileContent = `messaggio segreto --- ${Date.now()}`;
   await page.getByLabel("Titolo").fill("Per Maria");
   await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
-  // Una capsula può essere destinata a più contatti: se ne aggiungono due.
-  await page.locator("#create-contact").selectOption({ label: "Luca Bianchi" });
+  // Una capsula può essere destinata a più amici: se ne aggiungono due.
+  await page.locator("#create-friend").selectOption({ label: "Luca Bianchi" });
   await page.getByRole("button", { name: "+ Aggiungi" }).click();
-  await page.locator("#create-contact").selectOption({ label: "Maria Rossi" });
+  await page.locator("#create-friend").selectOption({ label: "Maria Rossi" });
   await page.getByRole("button", { name: "+ Aggiungi" }).click();
   await expect(page.getByText("Maria Rossi")).toBeVisible();
   await expect(page.getByText("Luca Bianchi")).toBeVisible();
@@ -230,16 +230,16 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await openRowMenu(updatedRow);
   await expect(page.getByRole("menuitem", { name: "Condividi" })).not.toBeVisible();
 
-  // In Contatti fiduciari, il destinatario mostra quante capsule lo
-  // riguardano --- e al passaggio del mouse il nome e le date.
-  await page.getByRole("link", { name: "Contatti" }).click();
-  await expect(page.getByRole("heading", { name: "Contatti fiduciari" })).toBeVisible();
-  const mariaCapsulesBadge = contactRow.getByText("📦 1 capsula");
+  // In Amici, il destinatario mostra quante capsule lo riguardano ---
+  // e al passaggio del mouse il nome e le date.
+  await page.getByRole("link", { name: "Amici" }).click();
+  await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
+  const mariaCapsulesBadge = friendRow.getByText("📦 1 capsula");
   await expect(mariaCapsulesBadge).toBeVisible();
   await mariaCapsulesBadge.hover();
-  await expect(contactRow.getByText("Per Maria (aggiornato)")).toBeVisible();
-  await expect(contactRow.getByText("apertura prevista 15 mar 2027")).toBeVisible();
-  await expect(secondContactRow.getByText("📦", { exact: false })).not.toBeVisible();
+  await expect(friendRow.getByText("Per Maria (aggiornato)")).toBeVisible();
+  await expect(friendRow.getByText("apertura prevista 15 mar 2027")).toBeVisible();
+  await expect(secondFriendRow.getByText("📦", { exact: false })).not.toBeVisible();
 
   await page.getByRole("link", { name: "Capsule" }).click();
   await expect(page.getByRole("heading", { name: "Capsule" })).toBeVisible();

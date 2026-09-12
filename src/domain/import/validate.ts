@@ -1,7 +1,7 @@
 import { IMPORT_KIND_SPECS } from "@/domain/import/templates";
 import type {
   AssetRow,
-  ContactRow,
+  FriendRow,
   ImportKind,
   ImportKindSpec,
   ReferenceResolution,
@@ -45,23 +45,23 @@ function resolveReference(rawName: string, existing: Referenceable[]): Reference
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function parseContactRows(csvRows: string[][]): ContactRow[] {
+export function parseFriendRows(csvRows: string[][]): FriendRow[] {
   if (csvRows.length < 2) return [];
   const [header, ...dataRows] = csvRows;
-  const index = buildColumnIndex(header, IMPORT_KIND_SPECS.contacts);
+  const index = buildColumnIndex(header, IMPORT_KIND_SPECS.friends);
 
   return dataRows.map((raw, i) => {
     const name = cell(raw, index, "name");
     const email = cell(raw, index, "email");
     const role = cell(raw, index, "role");
 
-    const fieldErrors: ContactRow["fieldErrors"] = {};
+    const fieldErrors: FriendRow["fieldErrors"] = {};
     if (!name) fieldErrors.name = "Obbligatorio.";
     if (!email) fieldErrors.email = "Obbligatorio.";
     else if (!EMAIL_RE.test(email)) fieldErrors.email = "Email non valida.";
     if (!role) fieldErrors.role = "Obbligatorio.";
 
-    return { kind: "contacts", rowNumber: i + 2, name, email, role, fieldErrors };
+    return { kind: "friends", rowNumber: i + 2, name, email, role, fieldErrors };
   });
 }
 

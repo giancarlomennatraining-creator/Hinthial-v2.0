@@ -12,7 +12,7 @@ import { logAuditEvent } from "@/lib/audit/log-event";
 
 /**
  * "Cancella tutto" (Impostazioni > Zona pericolosa) --- irreversibile:
- * svuota Archivio, Beni, Contatti fiduciari e Capsule (con tutti i
+ * svuota Archivio, Beni, Amici e Capsule (con tutti i
  * relativi blob cifrati in Storage), poi ripristina le categorie
  * predefinite al posto di quelle personalizzate dell'utente.
  *
@@ -62,12 +62,9 @@ export async function wipeVault(
     throw new Error(`Impossibile eliminare i beni: ${assetsError.message}`);
   }
 
-  const { error: contactsError } = await supabase
-    .from("trusted_contacts")
-    .delete()
-    .eq("owner_id", ownerId);
-  if (contactsError) {
-    throw new Error(`Impossibile eliminare i contatti fiduciari: ${contactsError.message}`);
+  const { error: friendsError } = await supabase.from("friends").delete().eq("owner_id", ownerId);
+  if (friendsError) {
+    throw new Error(`Impossibile eliminare gli amici: ${friendsError.message}`);
   }
 
   const { error: capsulesError } = await supabase.from("capsules").delete().eq("owner_id", ownerId);

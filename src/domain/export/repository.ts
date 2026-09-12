@@ -6,7 +6,7 @@ import { listCategories } from "@/domain/categories/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { downloadDocument, listDocuments } from "@/domain/documents/repository";
 import { listReminders } from "@/domain/reminders/repository";
-import { listTrustedContacts } from "@/domain/contacts/repository";
+import { listFriends } from "@/domain/friends/repository";
 import { downloadCapsuleAttachment, listCapsules } from "@/domain/capsules/repository";
 import type { ExportFile, ExportManifest, ExportResult } from "@/domain/export/types";
 
@@ -31,12 +31,12 @@ export async function buildExport(
   ownerId: string,
   profile: { firstName: string; lastName: string; email: string },
 ): Promise<ExportResult> {
-  const [categories, assets, documents, reminders, trustedContacts, capsules] = await Promise.all([
+  const [categories, assets, documents, reminders, friends, capsules] = await Promise.all([
     listCategories(supabase),
     listAssets(supabase, masterKey),
     listDocuments(supabase, masterKey),
     listReminders(supabase, masterKey),
-    listTrustedContacts(supabase, masterKey),
+    listFriends(supabase, masterKey),
     listCapsules(supabase, masterKey),
   ]);
 
@@ -105,7 +105,7 @@ export async function buildExport(
         status: capsule.status,
         accessCondition: capsule.accessCondition,
         openAt: capsule.openAt,
-        relatedContactIds: capsule.relatedContacts.map((c) => c.id),
+        relatedFriendIds: capsule.relatedFriends.map((c) => c.id),
         linkedDocumentIds: capsule.linkedDocuments.map((d) => d.id),
         createdAt: capsule.createdAt,
         attachments: attachmentEntries,
@@ -115,7 +115,7 @@ export async function buildExport(
 
   const manifest: ExportManifest = {
     generatedAt: new Date().toISOString(),
-    hinthialExportVersion: 1,
+    hinthialExportVersion: 2,
     profile,
     categories,
     assets: assets.map((asset) => ({
@@ -134,13 +134,13 @@ export async function buildExport(
       relatedAssetId: reminder.relatedAssetId,
       createdAt: reminder.createdAt,
     })),
-    trustedContacts: trustedContacts.map((contact) => ({
-      id: contact.id,
-      name: contact.name,
-      email: contact.email,
-      role: contact.role,
-      status: contact.status,
-      createdAt: contact.createdAt,
+    friends: friends.map((friend) => ({
+      id: friend.id,
+      name: friend.name,
+      email: friend.email,
+      role: friend.role,
+      status: friend.status,
+      createdAt: friend.createdAt,
     })),
     capsules: capsuleEntries,
   };

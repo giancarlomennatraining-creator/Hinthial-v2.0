@@ -4,7 +4,7 @@ import type { AIContext, AISource, AISuggestion } from "@/domain/ai/types";
 /**
  * "Da tenere d'occhio" --- fonde in un'unica sezione i suggerimenti
  * proattivi (v. domain/ai/mock-provider.ts, suggest(): scadenze scadute/
- * in arrivo) e la salute del vault (beni/contatti/documenti non ancora
+ * in arrivo) e la salute del vault (beni/amici/documenti non ancora
  * collegati a nient'altro): sono la stessa cosa vista da due angoli ---
  * "agisci per tempo" e "completa i collegamenti" --- e nella dashboard
  * finivano per apparire come due card quasi identiche una sopra
@@ -16,7 +16,7 @@ import type { AIContext, AISource, AISuggestion } from "@/domain/ai/types";
  * suggerimento a sé (stessa identica lista di assetsWithoutDocuments qui
  * sotto): la riga "salute del vault" per i beni compare quindi solo
  * nel caso positivo ("tutti collegati") --- nel caso negativo mostrarla
- * duplicherebbe lo stesso bene due volte nella stessa card. Contatti/
+ * duplicherebbe lo stesso bene due volte nella stessa card. Amici/
  * documenti non hanno un equivalente in suggest(), quindi restano
  * sempre mostrati in entrambi i casi.
  */
@@ -27,27 +27,26 @@ export function WatchlistWidget({
   context: AIContext;
   suggestions: AISuggestion[];
 }) {
-  const { assets, documents, contacts, capsules } = context;
+  const { assets, documents, friends, capsules } = context;
 
   const assetsWithoutDocuments = assets.filter(
     (asset) => !documents.some((doc) => doc.relatedAssetId === asset.id),
   );
-  // Un contatto revocato non è più qualcuno a cui collegare capsule.
-  const activeContacts = contacts.filter((c) => c.status !== "revoked");
-  const contactsWithoutCapsules = activeContacts.filter(
-    (contact) =>
-      !capsules.some((capsule) => capsule.relatedContacts.some((rc) => rc.id === contact.id)),
+  // Un amico revocato non è più qualcuno a cui collegare capsule.
+  const activeFriends = friends.filter((c) => c.status !== "revoked");
+  const friendsWithoutCapsules = activeFriends.filter(
+    (friend) => !capsules.some((capsule) => capsule.relatedFriends.some((rc) => rc.id === friend.id)),
   );
   const documentsWithExpiry = documents.filter((d) => d.expiresAt !== null).length;
 
-  const contactSources: AISource[] = contactsWithoutCapsules.map((c) => ({
-    kind: "contact",
+  const friendSources: AISource[] = friendsWithoutCapsules.map((c) => ({
+    kind: "friend",
     id: c.id,
     label: c.name,
-    href: "/contacts",
+    href: "/friends",
   }));
 
-  const hasVaultHealthContent = assets.length > 0 || activeContacts.length > 0 || documents.length > 0;
+  const hasVaultHealthContent = assets.length > 0 || activeFriends.length > 0 || documents.length > 0;
 
   if (suggestions.length === 0 && !hasVaultHealthContent) return null;
 
@@ -69,12 +68,12 @@ export function WatchlistWidget({
           </p>
         ) : null}
 
-        {activeContacts.length > 0 ? (
+        {activeFriends.length > 0 ? (
           <div className="text-sm text-zinc-700 dark:text-zinc-300">
-            {contactsWithoutCapsules.length === 0
-              ? `Tutti i ${activeContacts.length} contatti fiduciari sono collegati ad almeno una capsula.`
-              : `${contactsWithoutCapsules.length} di ${activeContacts.length} contatti fiduciari non sono ancora collegati a nessuna capsula.`}
-            <SourceList sources={contactSources} />
+            {friendsWithoutCapsules.length === 0
+              ? `Tutti i ${activeFriends.length} amici sono collegati ad almeno una capsula.`
+              : `${friendsWithoutCapsules.length} di ${activeFriends.length} amici non sono ancora collegati a nessuna capsula.`}
+            <SourceList sources={friendSources} />
           </div>
         ) : null}
 

@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-12
 
+### "Contatti fiduciari" diventa "Amici"; il flag "amico" diventa "Guardiano"
+
+**Cosa fa:** la sezione prima chiamata "Contatti"/"Contatti fiduciari" ora si chiama **Amici** ovunque nell'app --- voce di menu, titoli di pagina, url (`/friends` invece di `/contacts`), esportazione dati, ricerca globale, cronologia, registro Attività. Il flag interno che segnala chi riceve un avviso informale in caso di lunga inattività (in precedenza "amico") diventa **Guardiano**, per non sovrapporsi al nuovo nome della sezione --- semanticamente è anche più preciso: un guardiano è letteralmente qualcuno a cui affidi un ruolo di tutela.
+
+**Note tecniche:** rinominati route (`src/app/(app)/contacts` → `friends`), componenti (`TrustedContactsPanel` → `FriendsPanel`, `ContactPicker` → `FriendPicker`, `CreateContactForm`/`EditContactForm` → `CreateFriendForm`/`EditFriendForm`), dominio (`domain/contacts` → `domain/friends`, `TrustedContactListItem` → `FriendListItem`, `isFriend` → `isGuardian`), e ogni punto che referenziava l'entità come chiave interna (`ListSection`, `ImportKind`, `AuditEventCategory`, `TimelineEntryKind`, contatori dashboard, contesto AI). Migrazione DB (`20260912020000_contacts_to_friends.sql`): tabella `trusted_contacts` → `friends`, colonna `is_friend` → `is_guardian`, indice/trigger/policy/vincolo di chiave esterna rinominati di conseguenza, tipo di evento audit `trusted_contact_added` → `friend_added` (righe già registrate durante lo sviluppo riscritte prima di stringere il vincolo). Formato di esportazione dati (`ExportManifest`) portato a `hinthialExportVersion: 2` per lo stesso motivo (`trustedContacts` → `friends`). Nessun dato reale da preservare (progetto in sviluppo, v. README) --- migrazione applicata direttamente, nessun redirect da `/contacts` predisposto.
+
 ### Ridotto al minimo lo spazio riservato in fondo lista per il "+" in sovraimpressione
 
 **Cosa fa:** in Archivio, Beni, Contatti, Scadenze e Capsule, lo spazio vuoto lasciato in fondo alla lista su smartphone per non far coprire l'ultima riga dal "+" (v. voce precedente) ora è molto più piccolo --- resta giusto un margine, non più una fascia vuota vistosa.

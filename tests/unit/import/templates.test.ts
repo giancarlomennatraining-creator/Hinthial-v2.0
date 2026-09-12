@@ -4,7 +4,7 @@ import { parseCsv } from "@/domain/import/csv";
 
 describe("generateTemplateCsv", () => {
   it("uses ; as the delimiter, matching Excel's Italian-locale default", () => {
-    const csv = generateTemplateCsv("contacts");
+    const csv = generateTemplateCsv("friends");
     // BOM-stripped, first line only --- must contain the header's separators as `;`, not `,`.
     const firstLine = csv.replace(/^﻿/, "").split(/\r\n/)[0];
     expect(firstLine).toBe("Nome;Email;Ruolo");

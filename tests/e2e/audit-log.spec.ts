@@ -68,23 +68,23 @@ test("Impostazioni > Attività si interroga con filtri (data e tipo) e apre il d
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "Contatti", exact: true }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
+  await page.getByRole("link", { name: "Amici", exact: true }).click();
+  await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await page.getByLabel("Nome").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria.rossi@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
-  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
-  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
+  await page.getByRole("button", { name: "Aggiungi amico" }).click();
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
 
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await page.getByRole("tab", { name: "Attività" }).click();
   await page.getByRole("button", { name: "Trova" }).click();
   await expect(page.getByText("Contenuto aggiunto all'archivio")).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText("Contatto fiduciario aggiunto")).toBeVisible();
+  await expect(page.getByText("Amico aggiunto")).toBeVisible();
 
-  await page.getByRole("checkbox", { name: "Contatti" }).check();
+  await page.getByRole("checkbox", { name: "Amici" }).check();
   await page.getByRole("button", { name: "Trova" }).click();
-  await expect(page.getByText("Contatto fiduciario aggiunto")).toBeVisible();
+  await expect(page.getByText("Amico aggiunto")).toBeVisible();
   await expect(page.getByText("Contenuto aggiunto all'archivio")).not.toBeVisible();
 });

@@ -2,23 +2,23 @@ import { serializeCsv } from "@/domain/import/csv";
 import type { ImportKind, ImportKindSpec } from "@/domain/import/types";
 
 export const IMPORT_KIND_SPECS: Record<ImportKind, ImportKindSpec> = {
-  contacts: {
-    kind: "contacts",
-    label: "Contatti fiduciari",
-    filenamePrefix: "contatti-fiduciari",
+  friends: {
+    kind: "friends",
+    label: "Amici",
+    filenamePrefix: "amici",
     columns: [
       {
         key: "name",
         label: "Nome",
         required: true,
-        description: "Nome e cognome del contatto.",
+        description: "Nome e cognome dell'amico.",
         example: "Maria Rossi",
       },
       {
         key: "email",
         label: "Email",
         required: true,
-        description: "Indirizzo email del contatto.",
+        description: "Indirizzo email dell'amico.",
         example: "maria.rossi@esempio.it",
       },
       {

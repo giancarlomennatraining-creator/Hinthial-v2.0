@@ -3,7 +3,7 @@ import { CheckCircleIcon } from "@/components/icons/nav-icons";
 /**
  * Il messaggio "✅ X creato/aggiornato." dopo un salvataggio riuscito ---
  * identico (stesso colore, stessa forma) in ogni pannello con un form di
- * creazione/modifica (v. AssetsPanel, CapsulesPanel, TrustedContactsPanel,
+ * creazione/modifica (v. AssetsPanel, CapsulesPanel, FriendsPanel,
  * DocumentsPanel, RemindersPanel): estratto qui per avere l'icona a linea
  * (v. icons/nav-icons.tsx) in un solo punto invece che ricopiata ovunque.
  */

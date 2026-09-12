@@ -34,7 +34,7 @@ test("la dashboard mostra i contatori per sezione, resta a due colonne anche a v
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("link", { name: "Archivio: 0" })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole("link", { name: "Beni: 0" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Contatti: 0" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Amici: 0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Capsule: 0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Categorie: 10" })).toBeVisible();
   // "Onboarding" compare due volte in pagina (la card e l'indicatore
@@ -78,24 +78,24 @@ test("la dashboard mostra i contatori per sezione, resta a due colonne anche a v
   await expect(page.getByRole("link", { name: "Barca" })).toHaveCount(1);
   await expect(page.getByText(/beni non hanno ancora contenuti collegati/)).not.toBeVisible();
 
-  // Un contatto attivo e amico: il sotto-contatore in "Contatti" lo riflette.
-  await page.getByRole("link", { name: "Contatti", exact: true }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
+  // Un amico attivo e guardiano: il sotto-contatore in "Amici" lo riflette.
+  await page.getByRole("link", { name: "Amici", exact: true }).click();
+  await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await page.getByLabel("Nome").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria.rossi@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
-  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
-  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
-  const contactRow = page.locator("li", { hasText: "Maria Rossi" });
-  await expect(contactRow).toBeVisible({ timeout: 10_000 });
-  await openRowMenu(contactRow);
+  await page.getByRole("button", { name: "Aggiungi amico" }).click();
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
+  const friendRow = page.locator("li", { hasText: "Maria Rossi" });
+  await expect(friendRow).toBeVisible({ timeout: 10_000 });
+  await openRowMenu(friendRow);
   await page.getByRole("menuitem", { name: "Segna come attivo" }).click();
-  await expect(contactRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
-  await openRowMenu(contactRow);
-  await page.getByRole("menuitem", { name: "Segna come amico" }).click();
+  await expect(friendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
+  await openRowMenu(friendRow);
+  await page.getByRole("menuitem", { name: "Segna come guardiano" }).click();
 
   await page.getByRole("link", { name: "Dashboard" }).click();
-  await expect(page.getByRole("link", { name: "Contatti: 1 (1 attivi e 1 amici)" })).toBeVisible({
+  await expect(page.getByRole("link", { name: "Amici: 1 (1 attivi e 1 guardiani)" })).toBeVisible({
     timeout: 10_000,
   });
 });

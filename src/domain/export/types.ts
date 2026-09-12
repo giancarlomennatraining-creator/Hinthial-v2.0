@@ -7,8 +7,12 @@
  */
 export interface ExportManifest {
   generatedAt: string;
-  /** Bump if the manifest shape ever changes, so a future importer/reader can tell versions apart. */
-  hinthialExportVersion: 1;
+  /**
+   * Bump if the manifest shape ever changes, so a future importer/reader
+   * can tell versions apart. 2: `trustedContacts` renamed to `friends`
+   * (Contatti fiduciari -> Amici).
+   */
+  hinthialExportVersion: 2;
   profile: {
     firstName: string;
     lastName: string;
@@ -48,7 +52,7 @@ export interface ExportManifest {
     relatedAssetId: string | null;
     createdAt: string;
   }[];
-  trustedContacts: {
+  friends: {
     id: string;
     name: string;
     email: string;
@@ -63,7 +67,7 @@ export interface ExportManifest {
     status: string;
     accessCondition: string;
     openAt: string | null;
-    relatedContactIds: string[];
+    relatedFriendIds: string[];
     linkedDocumentIds: string[];
     createdAt: string;
     attachments: {

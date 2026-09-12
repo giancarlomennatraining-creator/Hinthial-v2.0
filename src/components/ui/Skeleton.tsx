@@ -10,7 +10,7 @@ export function Skeleton({ className = "" }: { className?: string }) {
 
 /**
  * Placeholder for a list panel while its data is being fetched and
- * decrypted (Documenti, Beni, Scadenze, Contatti, Capsule) --- same
+ * decrypted (Documenti, Beni, Scadenze, Amici, Capsule) --- same
  * bordered/divided container as the real list, so the page doesn't
  * visibly jump once the content arrives. One generic row shape (a title
  * line, a subtitle line, a trailing badge) approximates all five list

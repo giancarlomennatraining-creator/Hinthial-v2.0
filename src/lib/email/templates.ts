@@ -27,12 +27,12 @@ function formattedToday(): string {
 }
 
 /**
- * Invito a registrarsi, inviato da chi aggiunge un contatto fiduciario e
- * spunta "Invita su Hinthial" (v. domain/contacts). Il nome del contatto
- * non compare mai qui --- è cifrato, l'email si rivolge genericamente a
- * chi la riceve.
+ * Invito a registrarsi, inviato da chi aggiunge un amico e spunta
+ * "Invita su Hinthial" (v. domain/friends). Il nome dell'amico non
+ * compare mai qui --- è cifrato, l'email si rivolge genericamente a chi
+ * la riceve.
  */
-export function contactInviteEmail(inviterName: string): { subject: string; html: string } {
+export function friendInviteEmail(inviterName: string): { subject: string; html: string } {
   const homepageUrl = appUrl();
   const registerUrl = `${homepageUrl}/register`;
 
@@ -40,7 +40,7 @@ export function contactInviteEmail(inviterName: string): { subject: string; html
     subject: `${inviterName} ti ha invitato su Hinthial`,
     html: emailShell(`
       <p><strong>${inviterName}</strong> in data ${formattedToday()} ti ha invitato a registrarti nell'applicazione <a href="${homepageUrl}">Hinthial</a>.</p>
-      <p>Hinthial è un posto sicuro e cifrato per documenti, contatti fiduciari e messaggi da lasciare a chi vuoi tu.</p>
+      <p>Hinthial è un posto sicuro e cifrato per documenti, amici e messaggi da lasciare a chi vuoi tu.</p>
       ${primaryButton(registerUrl, "Crea il tuo account")}
       <p style="font-size:12px; color:#71717a;">Se non ti aspettavi questo invito, puoi ignorare questa email.</p>
     `),
@@ -52,7 +52,7 @@ export function accountDeletedEmail(): { subject: string; html: string } {
   return {
     subject: "Il tuo account Hinthial è stato cancellato",
     html: emailShell(`
-      <p>Il tuo account Hinthial e tutti i dati ad esso collegati (documenti, asset, contatti fiduciari, capsule, promemoria) sono stati cancellati definitivamente in data ${formattedToday()}.</p>
+      <p>Il tuo account Hinthial e tutti i dati ad esso collegati (documenti, asset, amici, capsule, promemoria) sono stati cancellati definitivamente in data ${formattedToday()}.</p>
       <p>Se non sei stato tu, o hai cambiato idea, contattaci il prima possibile: questa operazione non può essere annullata.</p>
     `),
   };
@@ -63,7 +63,7 @@ export function accountResetEmail(): { subject: string; html: string } {
   return {
     subject: "Il tuo account Hinthial è stato reimpostato",
     html: emailShell(`
-      <p>In data ${formattedToday()} il tuo vault Hinthial (documenti, asset, contatti fiduciari, capsule) è stato svuotato completamente, come richiesto da Impostazioni > Zona pericolosa.</p>
+      <p>In data ${formattedToday()} il tuo vault Hinthial (documenti, asset, amici, capsule) è stato svuotato completamente, come richiesto da Impostazioni > Zona pericolosa.</p>
       <p>Il tuo account resta attivo: puoi continuare a usarlo normalmente, ripartendo da zero.</p>
       <p>Se non sei stato tu, cambia subito la password del tuo account.</p>
     `),

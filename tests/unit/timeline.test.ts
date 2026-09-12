@@ -8,14 +8,14 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
     assets: [],
     documents: [],
     reminders: [],
-    contacts: [],
+    friends: [],
     capsules: [],
     ...overrides,
   };
 }
 
 describe("buildTimeline", () => {
-  it("includes one entry per document/asset/reminder/contact/capsule", () => {
+  it("includes one entry per document/asset/reminder/friend/capsule", () => {
     const context = buildContext({
       assets: [{ id: "asset-1", name: "Auto", categoryId: null, createdAt: "2026-01-10" }],
       documents: [
@@ -48,8 +48,8 @@ describe("buildTimeline", () => {
           createdAt: "2026-03-01",
         },
       ],
-      contacts: [
-        { id: "contact-1", name: "Maria", email: "m@x.it", role: "Coniuge", status: "active", isFriend: false, createdAt: "2026-04-01" },
+      friends: [
+        { id: "friend-1", name: "Maria", email: "m@x.it", role: "Coniuge", status: "active", isGuardian: false, createdAt: "2026-04-01" },
       ],
       capsules: [
         {
@@ -59,7 +59,7 @@ describe("buildTimeline", () => {
           contentStyle: "simple",
           attachments: [],
           linkedDocuments: [],
-          relatedContacts: [],
+          relatedFriends: [],
           status: "draft",
           accessCondition: "manual",
           openAt: null,
@@ -71,7 +71,7 @@ describe("buildTimeline", () => {
     const timeline = buildTimeline(context);
     expect(timeline).toHaveLength(5);
     expect(timeline.map((e) => e.kind).sort()).toEqual(
-      ["asset", "capsule", "contact", "document", "reminder"].sort(),
+      ["asset", "capsule", "friend", "document", "reminder"].sort(),
     );
   });
 

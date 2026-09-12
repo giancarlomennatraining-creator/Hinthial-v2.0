@@ -11,14 +11,14 @@ function buildData(overrides: Partial<OnboardingSourceData> = {}): OnboardingSou
   return {
     documents: [],
     assets: [],
-    contacts: [],
+    friends: [],
     capsules: [],
     ...overrides,
   };
 }
 
 describe("computeOnboardingSteps", () => {
-  it("lists 8 steps, none of them optional --- concrete steps before the ones that introduce a new concept (friend/Dead Man's Switch)", () => {
+  it("lists 8 steps, none of them optional --- concrete steps before the ones that introduce a new concept (guardian/Dead Man's Switch)", () => {
     const steps = computeOnboardingSteps(buildData());
     expect(steps.map((s) => s.key)).toEqual([
       "account",
@@ -27,46 +27,46 @@ describe("computeOnboardingSteps", () => {
       "category",
       "asset",
       "capsule",
-      "friend",
-      "capsule-contact",
+      "guardian",
+      "capsule-friend",
     ]);
     expect(steps.every((s) => !("optional" in s))).toBe(true);
   });
 
-  it("marks 'friend' done only when at least one contact has isFriend", () => {
-    const withoutFriend = computeOnboardingSteps(
+  it("marks 'guardian' done only when at least one friend has isGuardian", () => {
+    const withoutGuardian = computeOnboardingSteps(
       buildData({
-        contacts: [
+        friends: [
           {
             id: "c1",
             name: "Maria",
             email: "maria@esempio.it",
             role: "Coniuge",
             status: "active",
-            isFriend: false,
+            isGuardian: false,
             createdAt: "2026-01-01",
           },
         ],
       }),
     );
-    expect(withoutFriend.find((s) => s.key === "friend")?.done).toBe(false);
+    expect(withoutGuardian.find((s) => s.key === "guardian")?.done).toBe(false);
 
-    const withFriend = computeOnboardingSteps(
+    const withGuardian = computeOnboardingSteps(
       buildData({
-        contacts: [
+        friends: [
           {
             id: "c1",
             name: "Maria",
             email: "maria@esempio.it",
             role: "Coniuge",
             status: "active",
-            isFriend: true,
+            isGuardian: true,
             createdAt: "2026-01-01",
           },
         ],
       }),
     );
-    expect(withFriend.find((s) => s.key === "friend")?.done).toBe(true);
+    expect(withGuardian.find((s) => s.key === "guardian")?.done).toBe(true);
   });
 });
 
@@ -96,14 +96,14 @@ describe("isOnboardingComplete", () => {
             transcript: "",
           },
         ],
-        contacts: [
+        friends: [
           {
             id: "c1",
             name: "Maria",
             email: "maria@esempio.it",
             role: "Coniuge",
             status: "active",
-            isFriend: true,
+            isGuardian: true,
             createdAt: "2026-01-01",
           },
         ],
@@ -116,14 +116,14 @@ describe("isOnboardingComplete", () => {
             contentStyle: "simple",
             attachments: [],
             linkedDocuments: [],
-            relatedContacts: [
+            relatedFriends: [
               {
                 id: "c1",
                 name: "Maria",
                 email: "maria@esempio.it",
                 role: "Coniuge",
                 status: "active",
-                isFriend: true,
+                isGuardian: true,
                 createdAt: "2026-01-01",
               },
             ],

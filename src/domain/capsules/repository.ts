@@ -18,7 +18,7 @@ import {
   uploadEncryptedCapsulePayload,
 } from "@/lib/storage/capsules-bucket";
 import { downloadDocument, getDocumentsByIds } from "@/domain/documents/repository";
-import { getTrustedContactsByIds } from "@/domain/contacts/repository";
+import { getFriendsByIds } from "@/domain/friends/repository";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import type {
   CapsuleAccessCondition,
@@ -51,8 +51,8 @@ interface CapsulePayload {
   attachments: CapsuleAttachment[];
   /** Ids of existing Documenti vault entries linked as attachments --- resolved via getDocumentsByIds. */
   linkedDocumentIds: string[];
-  /** Ids of trusted contacts this capsule is meant for --- resolved via getTrustedContactsByIds. */
-  relatedContactIds: string[];
+  /** Ids of friends this capsule is meant for --- resolved via getFriendsByIds. */
+  relatedFriendIds: string[];
   /** ISO YYYY-MM-DD, or null --- see CapsuleListItem.openAt. */
   openAt: string | null;
 }
@@ -79,7 +79,7 @@ async function decryptPayload(masterKey: CryptoKey, row: CapsuleRow): Promise<Ca
     contentStyle: payload.contentStyle ?? "simple",
     attachments: payload.attachments ?? [],
     linkedDocumentIds: payload.linkedDocumentIds ?? [],
-    relatedContactIds: payload.relatedContactIds ?? [],
+    relatedFriendIds: payload.relatedFriendIds ?? [],
     openAt: payload.openAt ?? null,
   };
 }
@@ -87,7 +87,7 @@ async function decryptPayload(masterKey: CryptoKey, row: CapsuleRow): Promise<Ca
 /**
  * Lists the current user's capsules (most recent first), decrypting the
  * payload (title/content/attachment metadata) --- any linked Documenti
- * entries and related trusted contacts, if any --- client-side with
+ * entries and related friends, if any --- client-side with
  * the Master Key. Both are resolved in one batched query each, across
  * every capsule, not one query per capsule.
  */
@@ -108,13 +108,13 @@ export async function listCapsules(
   const payloads = await Promise.all(rows.map((row) => decryptPayload(masterKey, row)));
 
   const allLinkedIds = [...new Set(payloads.flatMap((p) => p.linkedDocumentIds))];
-  const allContactIds = [...new Set(payloads.flatMap((p) => p.relatedContactIds))];
-  const [linkedDocuments, relatedContacts] = await Promise.all([
+  const allFriendIds = [...new Set(payloads.flatMap((p) => p.relatedFriendIds))];
+  const [linkedDocuments, relatedFriends] = await Promise.all([
     getDocumentsByIds(supabase, masterKey, allLinkedIds),
-    getTrustedContactsByIds(supabase, masterKey, allContactIds),
+    getFriendsByIds(supabase, masterKey, allFriendIds),
   ]);
   const linkedDocumentsById = new Map(linkedDocuments.map((doc) => [doc.id, doc]));
-  const relatedContactsById = new Map(relatedContacts.map((contact) => [contact.id, contact]));
+  const relatedFriendsById = new Map(relatedFriends.map((friend) => [friend.id, friend]));
 
   const items = rows.map((row, i) => {
     const payload = payloads[i];
@@ -129,13 +129,13 @@ export async function listCapsules(
       content: payload.content,
       contentStyle: payload.contentStyle,
       attachments: payload.attachments,
-      // Ids whose document/contact was since deleted resolve to nothing here --- filtered out on purpose.
+      // Ids whose document/friend was since deleted resolve to nothing here --- filtered out on purpose.
       linkedDocuments: payload.linkedDocumentIds
         .map((id) => linkedDocumentsById.get(id))
         .filter((doc): doc is NonNullable<typeof doc> => doc !== undefined),
-      relatedContacts: payload.relatedContactIds
-        .map((id) => relatedContactsById.get(id))
-        .filter((contact): contact is NonNullable<typeof contact> => contact !== undefined),
+      relatedFriends: payload.relatedFriendIds
+        .map((id) => relatedFriendsById.get(id))
+        .filter((friend): friend is NonNullable<typeof friend> => friend !== undefined),
       status: row.status,
       accessCondition: row.access_condition,
       openAt,
@@ -223,7 +223,7 @@ export async function createCapsule(
     contentStyle: input.contentStyle,
     attachments,
     linkedDocumentIds: input.linkedDocumentIds,
-    relatedContactIds: input.relatedContactIds,
+    relatedFriendIds: input.relatedFriendIds,
     openAt: input.openAt,
   };
   const encryptedPayload = await encryptBytes(masterKey, utf8ToBytes(JSON.stringify(payload)));
@@ -288,7 +288,7 @@ export async function updateCapsule(
     contentStyle: input.contentStyle,
     attachments: [...keptAttachments, ...uploadedAttachments],
     linkedDocumentIds: input.linkedDocumentIds,
-    relatedContactIds: input.relatedContactIds,
+    relatedFriendIds: input.relatedFriendIds,
     openAt: input.openAt,
   };
   const encryptedPayload = await encryptBytes(masterKey, utf8ToBytes(JSON.stringify(payload)));
@@ -336,7 +336,7 @@ export async function closeCapsule(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
   ownerId: string,
-  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "attachments" | "linkedDocuments" | "relatedContacts" | "openAt">,
+  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "attachments" | "linkedDocuments" | "relatedFriends" | "openAt">,
 ): Promise<void> {
   const newAttachments: CapsuleAttachment[] = [];
   try {
@@ -376,7 +376,7 @@ export async function closeCapsule(
     attachments: [...capsule.attachments, ...newAttachments],
     // Tutto ciò che era un riferimento è ora una copia propria: la capsula chiusa non ne ha più bisogno.
     linkedDocumentIds: [],
-    relatedContactIds: capsule.relatedContacts.map((c) => c.id),
+    relatedFriendIds: capsule.relatedFriends.map((c) => c.id),
     openAt: capsule.openAt,
   };
   const encryptedPayload = await encryptBytes(masterKey, utf8ToBytes(JSON.stringify(payload)));
@@ -430,7 +430,7 @@ export async function updateCapsuleAttachmentTranscript(
   masterKey: CryptoKey,
   capsule: Pick<
     CapsuleListItem,
-    "id" | "title" | "content" | "contentStyle" | "attachments" | "linkedDocuments" | "relatedContacts" | "openAt"
+    "id" | "title" | "content" | "contentStyle" | "attachments" | "linkedDocuments" | "relatedFriends" | "openAt"
   >,
   attachmentId: string,
   transcript: string,
@@ -446,7 +446,7 @@ export async function updateCapsuleAttachmentTranscript(
     contentStyle: capsule.contentStyle,
     attachments,
     linkedDocumentIds: capsule.linkedDocuments.map((d) => d.id),
-    relatedContactIds: capsule.relatedContacts.map((c) => c.id),
+    relatedFriendIds: capsule.relatedFriends.map((c) => c.id),
     openAt: capsule.openAt,
   };
   const encryptedPayload = await encryptBytes(masterKey, utf8ToBytes(JSON.stringify(payload)));

@@ -1,13 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
-import { createTrustedContact } from "@/domain/contacts/repository";
+import { createFriend } from "@/domain/friends/repository";
 import { createAsset } from "@/domain/assets/repository";
 import { createCategory } from "@/domain/categories/repository";
 import { createReminder } from "@/domain/reminders/repository";
 import { isRowReady } from "@/domain/import/types";
 import type {
   AssetRow,
-  ContactRow,
+  FriendRow,
   ImportRowResult,
   ReferenceResolution,
   ReminderRow,
@@ -41,11 +41,11 @@ function skippedResult(rowNumber: number, message: string): ImportRowResult {
   return { rowNumber, status: "skipped", message };
 }
 
-export async function importContacts(
+export async function importFriends(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
   ownerId: string,
-  rows: ContactRow[],
+  rows: FriendRow[],
 ): Promise<ImportRowResult[]> {
   const results: ImportRowResult[] = [];
 
@@ -55,7 +55,7 @@ export async function importContacts(
       continue;
     }
     try {
-      await createTrustedContact(supabase, masterKey, ownerId, {
+      await createFriend(supabase, masterKey, ownerId, {
         name: row.name,
         email: row.email,
         role: row.role,

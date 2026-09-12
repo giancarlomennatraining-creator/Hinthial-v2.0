@@ -15,9 +15,9 @@ async function unlockMasterKey(page: Page) {
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// Copre solo Contatti fiduciari (creazione economica, niente cifratura di
-// file) --- ListViewToggle/Pagination sono gli stessi componenti condivisi
-// da tutte e sei le sezioni (v. lib/list-view.ts), quindi un solo giro qui
+// Copre solo Amici (creazione economica, niente cifratura di file) ---
+// ListViewToggle/Pagination sono gli stessi componenti condivisi da
+// tutte e sei le sezioni (v. lib/list-view.ts), quindi un solo giro qui
 // li esercita tutti.
 
 test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si applica alla sezione tramite l'interruttore sincronizzato lì, e resta impostata dopo un refresh", async ({
@@ -34,7 +34,7 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "Contatti" }).click();
+  await page.getByRole("link", { name: "Amici" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
@@ -43,14 +43,14 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
   ).toBeVisible({ timeout: 45_000 });
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
-  await expect(page.getByRole("heading", { name: "Contatti fiduciari" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
 
-  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
+  await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await page.getByLabel("Nome").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
-  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
-  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
+  await page.getByRole("button", { name: "Aggiungi amico" }).click();
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
   await expect(page.getByText("Maria Rossi")).toBeVisible({ timeout: 10_000 });
 
   // Di default è a elenco: nessuna tabella in vista.
@@ -60,9 +60,9 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Aspetto" }).click();
   await expect(page.getByRole("heading", { name: "Visualizzazione delle liste" })).toBeVisible();
-  const contactsRow = page.getByRole("listitem").filter({ hasText: "Contatti" });
-  await contactsRow.getByRole("radio", { name: "Vista a tabella" }).click();
-  await expect(contactsRow.getByRole("radio", { name: "Vista a tabella" })).toHaveAttribute(
+  const friendsRow = page.getByRole("listitem").filter({ hasText: "Amici" });
+  await friendsRow.getByRole("radio", { name: "Vista a tabella" }).click();
+  await expect(friendsRow.getByRole("radio", { name: "Vista a tabella" })).toHaveAttribute(
     "aria-checked",
     "true",
   );
@@ -70,9 +70,9 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
   // Si applica subito alla sezione, senza bisogno di ricaricare la pagina.
   // (page.goto è una navigazione vera: la master key, solo in memoria,
   // va risbloccata --- v. unlockMasterKey.)
-  await page.getByRole("link", { name: "Contatti" }).click();
+  await page.getByRole("link", { name: "Amici" }).click();
   await unlockMasterKey(page);
-  await expect(page.getByRole("heading", { name: "Contatti fiduciari" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
   await expect(page.locator("table")).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Nome" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Maria Rossi", exact: true })).toBeVisible();
@@ -90,7 +90,7 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
   // Resta impostata dopo un refresh vero --- sincronizzata sul server, non solo in localStorage.
   await page.reload();
   await unlockMasterKey(page);
-  await expect(page.getByRole("heading", { name: "Contatti fiduciari" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
   await expect(page.getByRole("radio", { name: "Vista a elenco" })).toHaveAttribute(
     "aria-checked",
     "true",
@@ -100,7 +100,7 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Aspetto" }).click();
   await expect(
-    page.getByRole("listitem").filter({ hasText: "Contatti" }).getByRole("radio", {
+    page.getByRole("listitem").filter({ hasText: "Amici" }).getByRole("radio", {
       name: "Vista a elenco",
     }),
   ).toHaveAttribute("aria-checked", "true", { timeout: 10_000 });
@@ -118,7 +118,7 @@ test("in modalità tabellare le liste lunghe sono impaginate", async ({ page }) 
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "Contatti" }).click();
+  await page.getByRole("link", { name: "Amici" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
@@ -127,19 +127,19 @@ test("in modalità tabellare le liste lunghe sono impaginate", async ({ page }) 
   ).toBeVisible({ timeout: 45_000 });
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
-  await expect(page.getByRole("heading", { name: "Contatti fiduciari" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
 
-  // 11 contatti --- una pagina più di TABLE_PAGE_SIZE (10), v. lib/list-view.ts.
+  // 11 amici --- una pagina più di TABLE_PAGE_SIZE (10), v. lib/list-view.ts.
   for (let i = 1; i <= 11; i++) {
-    await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
-    await expect(page.getByRole("heading", { name: "Nuovo contatto fiduciario" })).toBeVisible();
-    await page.getByLabel("Nome").fill(`Contatto ${String(i).padStart(2, "0")}`);
-    await page.getByLabel("Email").fill(`contatto${i}@esempio.it`);
+    await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
+    await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
+    await page.getByLabel("Nome").fill(`Persona ${String(i).padStart(2, "0")}`);
+    await page.getByLabel("Email").fill(`persona${i}@esempio.it`);
     await page.getByLabel("Ruolo").fill("Amico");
-    await page.getByRole("button", { name: "Aggiungi contatto" }).click();
-    await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
+    await page.getByRole("button", { name: "Aggiungi amico" }).click();
+    await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
   }
-  await expect(page.getByText("Contatto 11")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("Persona 11")).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole("radio", { name: "Vista a tabella" }).click();
   await expect(page.locator("table")).toBeVisible();

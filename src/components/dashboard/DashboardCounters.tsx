@@ -1,39 +1,39 @@
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
 import type { AIContext } from "@/domain/ai/types";
-import { ArchiveIcon, AssetIcon, CapsuleIcon, CategoryIcon, ContactIcon } from "@/components/icons/nav-icons";
+import { ArchiveIcon, AssetIcon, CapsuleIcon, CategoryIcon, FriendIcon } from "@/components/icons/nav-icons";
 
 /** Stesse icone già usate per le voci di menu corrispondenti (v. nav-items.ts) --- Categorie non ha una voce di menu propria (vive in Impostazioni), le si dà un'icona a sé (v. icons/nav-icons.tsx, CategoryIcon): non è legata a nessuna categoria specifica dell'utente (quelle restano emoji scelte da lui, v. IconPicker), è solo la decorazione di questo riquadro. */
 const COUNTERS: {
-  key: "documents" | "assets" | "contacts" | "capsules" | "categories";
+  key: "documents" | "assets" | "friends" | "capsules" | "categories";
   label: string;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
   href: string;
 }[] = [
   { key: "documents", label: "Archivio", icon: ArchiveIcon, href: "/archive" },
   { key: "assets", label: "Beni", icon: AssetIcon, href: "/assets" },
-  { key: "contacts", label: "Contatti", icon: ContactIcon, href: "/contacts" },
+  { key: "friends", label: "Amici", icon: FriendIcon, href: "/friends" },
   { key: "capsules", label: "Capsule", icon: CapsuleIcon, href: "/capsules" },
   { key: "categories", label: "Categorie", icon: CategoryIcon, href: "/settings" },
 ];
 
 /** Quanti elementi ci sono in ogni sezione, a colpo d'occhio --- niente di nuovo da calcolare: lo stesso AIContext già decifrato per il resto della dashboard. */
 export function DashboardCounters({ context }: { context: AIContext }) {
-  // Sotto-contatori solo per Contatti --- due conteggi distinti (non
+  // Sotto-contatori solo per Amici --- due conteggi distinti (non
   // l'intersezione): quanti sono Attivi e, separatamente, quanti sono
-  // Amici (v. domain/contacts, isFriend --- Dead Man's Switch
+  // Guardiani (v. domain/friends, isGuardian --- Dead Man's Switch
   // semplificato delle capsule). Mostrati solo se esiste almeno un
-  // contatto: a vault vuoto sarebbero solo rumore.
-  const activeCount = context.contacts.filter((c) => c.status === "active").length;
-  const friendCount = context.contacts.filter((c) => c.isFriend).length;
+  // amico: a vault vuoto sarebbero solo rumore.
+  const activeCount = context.friends.filter((c) => c.status === "active").length;
+  const guardianCount = context.friends.filter((c) => c.isGuardian).length;
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {COUNTERS.map((counter) => {
         const count = context[counter.key].length;
         const subLabel =
-          counter.key === "contacts" && context.contacts.length > 0
-            ? `${activeCount} attivi e ${friendCount} amici`
+          counter.key === "friends" && context.friends.length > 0
+            ? `${activeCount} attivi e ${guardianCount} guardiani`
             : null;
 
         return (

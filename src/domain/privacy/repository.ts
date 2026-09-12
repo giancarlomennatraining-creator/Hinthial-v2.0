@@ -10,17 +10,17 @@ const EMPTY_CAPSULE_STATUS_COUNTS: Record<CapsuleStatus, number> = { draft: 0, r
 /**
  * Riepilogo di quello che il server può vedere in chiaro di questo
  * account --- ogni query qui sotto legge solo colonne mai cifrate
- * (conteggi, `status`/`is_friend` di trusted_contacts, `status` di
- * capsules, la tassonomia delle categorie, le preferenze di profilo):
- * nessuna richiede la master key, perché nessuna deve decifrare nulla.
- * È esattamente ciò che il server ha sempre potuto leggere, solo mai
+ * (conteggi, `status`/`is_guardian` di friends, `status` di capsules, la
+ * tassonomia delle categorie, le preferenze di profilo): nessuna
+ * richiede la master key, perché nessuna deve decifrare nulla. È
+ * esattamente ciò che il server ha sempre potuto leggere, solo mai
  * mostrato esplicitamente prima --- v. Impostazioni > Privacy.
  */
 export async function fetchAccountVisibilitySummary(
   supabase: SupabaseClient<Database>,
   userId: string,
 ): Promise<AccountVisibilitySummary> {
-  const [profileResult, documentsCount, assetsCount, contactsResult, capsulesResult, categories] =
+  const [profileResult, documentsCount, assetsCount, friendsResult, capsulesResult, categories] =
     await Promise.all([
       supabase
         .from("profiles")
@@ -29,7 +29,7 @@ export async function fetchAccountVisibilitySummary(
         .single(),
       supabase.from("documents").select("id", { count: "exact", head: true }),
       supabase.from("assets").select("id", { count: "exact", head: true }),
-      supabase.from("trusted_contacts").select("status, is_friend"),
+      supabase.from("friends").select("status, is_guardian"),
       supabase.from("capsules").select("status"),
       listCategories(supabase),
     ]);
@@ -43,14 +43,14 @@ export async function fetchAccountVisibilitySummary(
   if (assetsCount.error) {
     throw new Error(`Impossibile contare i beni: ${assetsCount.error.message}`);
   }
-  if (contactsResult.error) {
-    throw new Error(`Impossibile caricare i contatti fiduciari: ${contactsResult.error.message}`);
+  if (friendsResult.error) {
+    throw new Error(`Impossibile caricare gli amici: ${friendsResult.error.message}`);
   }
   if (capsulesResult.error) {
     throw new Error(`Impossibile caricare le capsule: ${capsulesResult.error.message}`);
   }
 
-  const contacts = contactsResult.data ?? [];
+  const friends = friendsResult.data ?? [];
   const capsules = capsulesResult.data ?? [];
 
   const capsuleStatusCounts = { ...EMPTY_CAPSULE_STATUS_COUNTS };
@@ -62,9 +62,9 @@ export async function fetchAccountVisibilitySummary(
     accountCreatedAt: profileResult.data.created_at,
     documentCount: documentsCount.count ?? 0,
     assetCount: assetsCount.count ?? 0,
-    contactCount: contacts.length,
-    activeContactCount: contacts.filter((c) => c.status === "active").length,
-    friendContactCount: contacts.filter((c) => c.is_friend).length,
+    friendCount: friends.length,
+    activeFriendCount: friends.filter((c) => c.status === "active").length,
+    guardianCount: friends.filter((c) => c.is_guardian).length,
     capsuleCount: capsules.length,
     capsuleStatusCounts,
     categoryNames: categories.map((c) => c.name),

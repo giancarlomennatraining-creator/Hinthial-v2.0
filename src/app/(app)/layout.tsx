@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 
 /**
  * Shared layout for every authenticated section (dashboard, documents,
- * reminders, assets, contacts, capsules, ai, settings). A route group
+ * reminders, assets, friends, capsules, ai, settings). A route group
  * ((app)) so it applies to all of them without adding a URL segment.
  *
  * This is the single place that guards these routes: it redirects to

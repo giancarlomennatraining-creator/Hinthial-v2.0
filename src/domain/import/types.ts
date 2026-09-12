@@ -1,4 +1,4 @@
-export type ImportKind = "contacts" | "assets" | "reminders";
+export type ImportKind = "friends" | "assets" | "reminders";
 
 /** One CSV column, described for both the template generator and the step-2 explanation. */
 export interface ImportColumn {
@@ -34,8 +34,8 @@ export type ReferenceResolution =
   | { kind: "unresolved"; rawName: string }
   | { kind: "create"; rawName: string };
 
-export interface ContactRow {
-  kind: "contacts";
+export interface FriendRow {
+  kind: "friends";
   /** 1-based, counting the header as row 1 --- matches what the user sees if they open the CSV. */
   rowNumber: number;
   name: string;
@@ -64,7 +64,7 @@ export interface ReminderRow {
   asset: ReferenceResolution;
 }
 
-export type ImportRow = ContactRow | AssetRow | ReminderRow;
+export type ImportRow = FriendRow | AssetRow | ReminderRow;
 
 /** True when a row has nothing left blocking it from being written. */
 export function isRowReady(row: ImportRow): boolean {

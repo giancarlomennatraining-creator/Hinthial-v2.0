@@ -19,7 +19,7 @@ const KIND_LABEL: Record<TimelineEntryKind, string> = {
   document: "Archivio",
   asset: "Bene",
   reminder: "Scadenza",
-  contact: "Contatto",
+  friend: "Amico",
   capsule: "Capsula",
 };
 

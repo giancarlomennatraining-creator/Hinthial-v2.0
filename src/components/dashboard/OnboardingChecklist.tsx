@@ -29,7 +29,7 @@ export interface OnboardingStep {
  *
  * La descrizione compare solo sotto i passi non ancora fatti --- una
  * volta completato un passo non serve più rispiegarlo, e i passi che
- * introducono un concetto nuovo (es. "Aggiungi un amico", legato al Dead
+ * introducono un concetto nuovo (es. "Aggiungi un guardiano", legato al Dead
  * Man's Switch) restano altrimenti solo un'etichetta senza contesto.
  *
  * Nessun riquadro attorno alla lista: chi la mostra (il pannello laterale

@@ -22,7 +22,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         createdAt: "2026-01-01",
       },
     ],
-    contacts: [],
+    friends: [],
     capsules: [],
     ...overrides,
   };

@@ -4,23 +4,23 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
-import { listTrustedContacts, updateTrustedContact } from "@/domain/contacts/repository";
-import { inviteContactToHinthial } from "@/lib/contacts/actions";
-import type { TrustedContactListItem } from "@/domain/contacts/types";
+import { listFriends, updateFriend } from "@/domain/friends/repository";
+import { inviteFriendToHinthial } from "@/lib/friends/actions";
+import type { FriendListItem } from "@/domain/friends/types";
 
 /**
- * Pagina dedicata alla modifica di un contatto fiduciario --- prima era
- * un form inline nella riga di TrustedContactsPanel, ora una pagina a sé
- * come la creazione (stesso pattern di conferma via `?updated=1`
- * nell'URL, mai il nome in chiaro). Nessun elenco per id già pronto lato
- * repository (come per beni/capsule): si carica l'intero elenco già
- * decifrato e si cerca l'id, esattamente come faceva il pannello prima.
+ * Pagina dedicata alla modifica di un amico --- prima era un form
+ * inline nella riga di FriendsPanel, ora una pagina a sé come la
+ * creazione (stesso pattern di conferma via `?updated=1` nell'URL, mai
+ * il nome in chiaro). Nessun elenco per id già pronto lato repository
+ * (come per beni/capsule): si carica l'intero elenco già decifrato e si
+ * cerca l'id, esattamente come faceva il pannello prima.
  */
-export function EditContactForm({ masterKey, contactId }: { masterKey: CryptoKey; contactId: string }) {
+export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; friendId: string }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
 
-  const [contact, setContact] = useState<TrustedContactListItem | null>(null);
+  const [friend, setFriend] = useState<FriendListItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -29,14 +29,14 @@ export function EditContactForm({ masterKey, contactId }: { masterKey: CryptoKey
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const contacts = await listTrustedContacts(supabase, masterKey);
-      setContact(contacts.find((c) => c.id === contactId) ?? null);
+      const friends = await listFriends(supabase, masterKey);
+      setFriend(friends.find((c) => c.id === friendId) ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare il contatto fiduciario.");
+      setError(err instanceof Error ? err.message : "Impossibile caricare l'amico.");
     } finally {
       setLoading(false);
     }
-  }, [supabase, masterKey, contactId]);
+  }, [supabase, masterKey, friendId]);
 
   useEffect(() => {
     // See DocumentsPanel.tsx for why fetch-on-mount is legitimate here.
@@ -61,22 +61,22 @@ export function EditContactForm({ masterKey, contactId }: { masterKey: CryptoKey
 
     setSaving(true);
     try {
-      await updateTrustedContact(supabase, masterKey, contactId, { name, email, role });
+      await updateFriend(supabase, masterKey, friendId, { name, email, role });
 
       // Un invito non riuscito non deve impedire di aver salvato le
       // modifiche: si segnala con un parametro a parte, non un errore.
       let inviteFailed = false;
       if (invite) {
         try {
-          await inviteContactToHinthial(email);
+          await inviteFriendToHinthial(email);
         } catch {
           inviteFailed = true;
         }
       }
 
-      router.push(`/contacts?updated=1${inviteFailed ? "&inviteFailed=1" : ""}`);
+      router.push(`/friends?updated=1${inviteFailed ? "&inviteFailed=1" : ""}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare il contatto fiduciario.");
+      setError(err instanceof Error ? err.message : "Impossibile aggiornare l'amico.");
       setSaving(false);
     }
   }
@@ -85,21 +85,21 @@ export function EditContactForm({ masterKey, contactId }: { masterKey: CryptoKey
     <div className="flex flex-col gap-6">
       <div>
         <Link
-          href="/contacts"
+          href="/friends"
           className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
         >
-          ← Torna ai contatti
+          ← Torna agli amici
         </Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
-          Modifica contatto fiduciario
+          Modifica amico
         </h1>
       </div>
 
       {loading ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
-      ) : !contact ? (
+      ) : !friend ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          Contatto non trovato.
+          Amico non trovato.
         </p>
       ) : (
         <form
@@ -115,7 +115,7 @@ export function EditContactForm({ masterKey, contactId }: { masterKey: CryptoKey
               name="name"
               type="text"
               required
-              defaultValue={contact.name}
+              defaultValue={friend.name}
               className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             />
           </div>
@@ -129,7 +129,7 @@ export function EditContactForm({ masterKey, contactId }: { masterKey: CryptoKey
               name="email"
               type="email"
               required
-              defaultValue={contact.email}
+              defaultValue={friend.email}
               className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             />
           </div>
@@ -143,7 +143,7 @@ export function EditContactForm({ masterKey, contactId }: { masterKey: CryptoKey
               name="role"
               type="text"
               required
-              defaultValue={contact.role}
+              defaultValue={friend.role}
               className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             />
           </div>
@@ -154,7 +154,7 @@ export function EditContactForm({ masterKey, contactId }: { masterKey: CryptoKey
               checked={invite}
               onChange={(e) => setInvite(e.target.checked)}
             />
-            Invita questo contatto su Hinthial
+            Invita questo amico su Hinthial
           </label>
 
           {error ? (
@@ -171,7 +171,7 @@ export function EditContactForm({ masterKey, contactId }: { masterKey: CryptoKey
             {saving ? "Salvataggio…" : "Salva modifiche"}
           </button>
           <Link
-            href="/contacts"
+            href="/friends"
             className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
           >
             Annulla

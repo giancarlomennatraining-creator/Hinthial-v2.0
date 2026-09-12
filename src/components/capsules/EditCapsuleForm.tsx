@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
 import { listCapsules, updateCapsule } from "@/domain/capsules/repository";
-import { listTrustedContacts } from "@/domain/contacts/repository";
+import { listFriends } from "@/domain/friends/repository";
 import { listDocuments } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
-import { ContactPicker } from "@/components/capsules/ContactPicker";
+import { FriendPicker } from "@/components/capsules/FriendPicker";
 import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachmentPicker";
 import { CapsuleOpenAtField } from "@/components/capsules/CapsuleOpenAtField";
 import { CapsuleLetterEditor } from "@/components/capsules/CapsuleLetterEditor";
 import { AudioVideoRecorder } from "@/components/media/AudioVideoRecorder";
 import type { CapsuleAttachment, CapsuleContentStyle, CapsuleListItem } from "@/domain/capsules/types";
-import type { TrustedContactListItem } from "@/domain/contacts/types";
+import type { FriendListItem } from "@/domain/friends/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 
@@ -53,7 +53,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
   const router = useRouter();
 
   const [capsule, setCapsule] = useState<CapsuleListItem | null>(null);
-  const [activeContacts, setActiveContacts] = useState<TrustedContactListItem[]>([]);
+  const [activeFriends, setActiveFriends] = useState<FriendListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [documents, setDocuments] = useState<DocumentListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +66,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
   const [contentStyle, setContentStyle] = useState<CapsuleContentStyle>("simple");
   const [openAt, setOpenAt] = useState("");
   const [showAttachmentTools, setShowAttachmentTools] = useState(false);
-  const [relatedContacts, setRelatedContacts] = useState<TrustedContactListItem[]>([]);
+  const [relatedFriends, setRelatedFriends] = useState<FriendListItem[]>([]);
   const [linkedDocuments, setLinkedDocuments] = useState<DocumentListItem[]>([]);
   // Allegati diretti (audio/video) --- keptAttachments parte dagli
   // esistenti, "Rimuovi" li sposta in removedAttachments (cancellati da
@@ -92,16 +92,16 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
     const requestId = ++latestRequestRef.current;
     setError(null);
     try {
-      const [capsules, contacts, categoriesResult, documentsResult] = await Promise.all([
+      const [capsules, friends, categoriesResult, documentsResult] = await Promise.all([
         listCapsules(supabase, masterKey),
-        listTrustedContacts(supabase, masterKey),
+        listFriends(supabase, masterKey),
         listCategories(supabase),
         listDocuments(supabase, masterKey),
       ]);
       if (requestId !== latestRequestRef.current) return;
       const found = capsules.find((c) => c.id === capsuleId) ?? null;
       setCapsule(found);
-      setActiveContacts(contacts.filter((c) => c.status === "active"));
+      setActiveFriends(friends.filter((c) => c.status === "active"));
       setCategories(categoriesResult);
       setDocuments(documentsResult);
       if (found) {
@@ -109,7 +109,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
         setContent(found.content);
         setContentStyle(found.contentStyle);
         setOpenAt(found.openAt ?? "");
-        setRelatedContacts(found.relatedContacts);
+        setRelatedFriends(found.relatedFriends);
         setLinkedDocuments(found.linkedDocuments);
         setKeptAttachments(found.attachments);
       }
@@ -185,7 +185,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
         title: title.trim(),
         content: content.trim(),
         contentStyle,
-        relatedContactIds: relatedContacts.map((c) => c.id),
+        relatedFriendIds: relatedFriends.map((c) => c.id),
         linkedDocumentIds: linkedDocuments.map((d) => d.id),
         newFiles,
         openAt,
@@ -244,11 +244,11 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                 />
               </div>
 
-              <ContactPicker
+              <FriendPicker
                 idPrefix="edit"
-                contacts={activeContacts}
-                selected={relatedContacts}
-                onChange={setRelatedContacts}
+                friends={activeFriends}
+                selected={relatedFriends}
+                onChange={setRelatedFriends}
               />
 
               <CapsuleOpenAtField id="openAt" value={openAt} onChange={setOpenAt} />

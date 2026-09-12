@@ -1,6 +1,6 @@
 import type { AuditEventType } from "@/lib/audit/log-event";
 
-export type AuditEventCategory = "access" | "content" | "contacts" | "security";
+export type AuditEventCategory = "access" | "content" | "friends" | "security";
 
 export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   login: "Accesso effettuato",
@@ -18,7 +18,7 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   capsule_deleted: "Capsula eliminata",
   category_created: "Categoria creata",
   category_deleted: "Categoria eliminata",
-  trusted_contact_added: "Contatto fiduciario aggiunto",
+  friend_added: "Amico aggiunto",
   vault_wiped: "Vault svuotato",
   ai_chat_used: "Domanda inviata all'assistente AI reale",
 };
@@ -39,7 +39,7 @@ export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
   capsule_deleted: "🗑️",
   category_created: "🏷️",
   category_deleted: "🗑️",
-  trusted_contact_added: "🤝",
+  friend_added: "🤝",
   vault_wiped: "⚠️",
   ai_chat_used: "🤖",
 };
@@ -60,7 +60,7 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
   capsule_deleted: "content",
   category_created: "content",
   category_deleted: "content",
-  trusted_contact_added: "contacts",
+  friend_added: "friends",
   vault_wiped: "security",
   ai_chat_used: "security",
 };
@@ -68,8 +68,8 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
 export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {
   access: "Accessi",
   content: "Contenuti",
-  contacts: "Contatti",
+  friends: "Amici",
   security: "Sicurezza",
 };
 
-export const AUDIT_EVENT_CATEGORIES: AuditEventCategory[] = ["access", "content", "contacts", "security"];
+export const AUDIT_EVENT_CATEGORIES: AuditEventCategory[] = ["access", "content", "friends", "security"];

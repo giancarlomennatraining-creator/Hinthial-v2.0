@@ -9,7 +9,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
     assets: [],
     documents: [],
     reminders: [],
-    contacts: [],
+    friends: [],
     capsules: [],
     ...overrides,
   };

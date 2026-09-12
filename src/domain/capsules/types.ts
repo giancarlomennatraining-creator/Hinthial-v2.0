@@ -1,5 +1,5 @@
 import type { DocumentListItem } from "@/domain/documents/types";
-import type { TrustedContactListItem } from "@/domain/contacts/types";
+import type { FriendListItem } from "@/domain/friends/types";
 
 /**
  * FASE 8: bozza -> chiusa -> condivisa. Chiudere è irreversibile e, da
@@ -7,8 +7,8 @@ import type { TrustedContactListItem } from "@/domain/contacts/types";
  * referenziato viene copiato al suo interno (v. repository.ts,
  * closeCapsule) --- l'originale in Archivio torna libero non appena la
  * copia è fatta, nessun blocco di sorta. "Condividi" resta solo un
- * cambio di stato registrato (v. HINTHIAL_MVP.md, come per il contatto
- * fiduciario di FASE 7) --- non concede ancora alcun accesso reale a
+ * cambio di stato registrato (v. HINTHIAL_MVP.md, come per l'amico di
+ * FASE 7) --- non concede ancora alcun accesso reale a
  * nessuno. L'apertura vera e propria da parte dei destinatari arriverà
  * con la futura fase Dead Man's Switch (FASE 12-13).
  */
@@ -58,12 +58,12 @@ export interface CapsuleListItem {
    */
   linkedDocuments: DocumentListItem[];
   /**
-   * One or more trusted contacts (FASE 7) --- ids live inside
-   * encrypted_payload, not a plaintext column, so the server can't see
-   * which contacts a capsule is meant for either. Ids whose contact was
-   * since deleted are silently omitted, same as linkedDocuments.
+   * One or more friends (FASE 7) --- ids live inside encrypted_payload,
+   * not a plaintext column, so the server can't see which friends a
+   * capsule is meant for either. Ids whose friend was since deleted are
+   * silently omitted, same as linkedDocuments.
    */
-  relatedContacts: TrustedContactListItem[];
+  relatedFriends: FriendListItem[];
   status: CapsuleStatus;
   accessCondition: CapsuleAccessCondition;
   /**
@@ -86,7 +86,7 @@ export interface CapsuleInput {
   title: string;
   content: string;
   contentStyle: CapsuleContentStyle;
-  relatedContactIds: string[];
+  relatedFriendIds: string[];
   files: File[];
   linkedDocumentIds: string[];
   openAt: string;
@@ -103,7 +103,7 @@ export interface CapsuleEditInput {
   title: string;
   content: string;
   contentStyle: CapsuleContentStyle;
-  relatedContactIds: string[];
+  relatedFriendIds: string[];
   linkedDocumentIds: string[];
   newFiles: File[];
   openAt: string;

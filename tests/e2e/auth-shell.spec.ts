@@ -89,7 +89,7 @@ test("un utente autenticato può navigare la shell e fare logout", async ({
   // master key (compresa AI, da FASE 10 in poi) --- il flusso di setup
   // vero e proprio è coperto da tests/e2e/archive.spec.ts,
   // tests/e2e/reminders.spec.ts, tests/e2e/assets.spec.ts,
-  // tests/e2e/contacts.spec.ts e tests/e2e/capsules.spec.ts; qui basta
+  // tests/e2e/friends.spec.ts e tests/e2e/capsules.spec.ts; qui basta
   // verificare che la navigazione porti alla schermata giusta.
   await page.getByRole("link", { name: "AI", exact: true }).click();
   await expect(page).toHaveURL(/\/ai$/);

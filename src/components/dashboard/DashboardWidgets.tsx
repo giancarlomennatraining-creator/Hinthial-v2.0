@@ -64,7 +64,7 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
   const documents = context?.documents ?? [];
   const reminders = context?.reminders ?? [];
   const assets = context?.assets ?? [];
-  const contacts = context?.contacts ?? [];
+  const friends = context?.friends ?? [];
   const capsules = context?.capsules ?? [];
 
   const upcoming = reminders
@@ -80,7 +80,7 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
   // components/layout/OnboardingStatus): account e cifratura sono per
   // definizione già fatti se questo componente sta renderizzando (è
   // gated da MasterKey "unlocked", v. DashboardPanel).
-  const onboardingSteps = computeOnboardingSteps({ documents, assets, contacts, capsules });
+  const onboardingSteps = computeOnboardingSteps({ documents, assets, friends, capsules });
   const onboardingComplete = isOnboardingComplete(onboardingSteps);
 
   if (error) {

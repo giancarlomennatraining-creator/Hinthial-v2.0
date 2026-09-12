@@ -31,7 +31,7 @@ const KIND_LABEL_IT: Record<MinimalItem["kind"], string> = {
   asset: "Bene",
   document: "Documento",
   reminder: "Scadenza",
-  contact: "Contatto",
+  friend: "Amico",
   capsule: "Capsula",
 };
 

@@ -13,9 +13,9 @@ export interface AccountVisibilitySummary {
   accountCreatedAt: string;
   documentCount: number;
   assetCount: number;
-  contactCount: number;
-  activeContactCount: number;
-  friendContactCount: number;
+  friendCount: number;
+  activeFriendCount: number;
+  guardianCount: number;
   capsuleCount: number;
   capsuleStatusCounts: Record<CapsuleStatus, number>;
   /** Nomi delle categorie usate --- la tassonomia è in chiaro, non un dato del vault. */

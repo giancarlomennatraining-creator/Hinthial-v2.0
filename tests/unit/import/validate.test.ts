@@ -2,17 +2,17 @@ import { describe, expect, it } from "vitest";
 import {
   findMissingColumns,
   parseAssetRows,
-  parseContactRows,
+  parseFriendRows,
   parseReminderRows,
 } from "@/domain/import/validate";
 
 describe("findMissingColumns", () => {
   it("finds no missing columns when the header matches the template", () => {
-    expect(findMissingColumns(["Nome", "Email", "Ruolo"], "contacts")).toEqual([]);
+    expect(findMissingColumns(["Nome", "Email", "Ruolo"], "friends")).toEqual([]);
   });
 
   it("reports required columns absent from the header", () => {
-    expect(findMissingColumns(["Nome"], "contacts")).toEqual(["Email", "Ruolo"]);
+    expect(findMissingColumns(["Nome"], "friends")).toEqual(["Email", "Ruolo"]);
   });
 
   it("doesn't flag an optional column as missing", () => {
@@ -20,15 +20,15 @@ describe("findMissingColumns", () => {
   });
 
   it("matches header labels case- and whitespace-insensitively", () => {
-    expect(findMissingColumns([" nome ", " EMAIL", "ruolo"], "contacts")).toEqual([]);
+    expect(findMissingColumns([" nome ", " EMAIL", "ruolo"], "friends")).toEqual([]);
   });
 });
 
-describe("parseContactRows", () => {
+describe("parseFriendRows", () => {
   const header = ["Nome", "Email", "Ruolo"];
 
   it("parses a valid row with no errors", () => {
-    const [row] = parseContactRows([header, ["Maria Rossi", "maria@esempio.it", "Coniuge"]]);
+    const [row] = parseFriendRows([header, ["Maria Rossi", "maria@esempio.it", "Coniuge"]]);
     expect(row).toMatchObject({
       rowNumber: 2,
       name: "Maria Rossi",
@@ -39,7 +39,7 @@ describe("parseContactRows", () => {
   });
 
   it("flags missing required fields", () => {
-    const [row] = parseContactRows([header, ["", "", ""]]);
+    const [row] = parseFriendRows([header, ["", "", ""]]);
     expect(row.fieldErrors).toEqual({
       name: "Obbligatorio.",
       email: "Obbligatorio.",
@@ -48,12 +48,12 @@ describe("parseContactRows", () => {
   });
 
   it("flags an invalid email", () => {
-    const [row] = parseContactRows([header, ["Maria Rossi", "non-una-email", "Coniuge"]]);
+    const [row] = parseFriendRows([header, ["Maria Rossi", "non-una-email", "Coniuge"]]);
     expect(row.fieldErrors.email).toBe("Email non valida.");
   });
 
   it("returns nothing for a file with only a header", () => {
-    expect(parseContactRows([header])).toEqual([]);
+    expect(parseFriendRows([header])).toEqual([]);
   });
 });
 

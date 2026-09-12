@@ -55,7 +55,7 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await expect(panel).toBeVisible();
   await expect(panel.getByText("2/8")).toBeVisible();
   await expect(panel.getByRole("link", { name: "Aggiungi il primo contenuto all'archivio" })).toBeVisible();
-  await expect(panel.getByRole("link", { name: "Aggiungi un amico" })).toBeVisible();
+  await expect(panel.getByRole("link", { name: "Aggiungi un guardiano" })).toBeVisible();
   await expect(panel.getByText("(opzionale)")).toHaveCount(0);
 
   // Il pulsante "Chiudi" (o un click sullo sfondo) lo richiude --- un
@@ -85,25 +85,25 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await expect(panel.getByText("4/8")).toBeVisible();
   await page.getByRole("button", { name: "Chiudi" }).click();
 
-  // Un amico completa un altro passo: 5 su 8 -> 63%.
-  await page.getByRole("link", { name: "Contatti", exact: true }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
+  // Un guardiano completa un altro passo: 5 su 8 -> 63%.
+  await page.getByRole("link", { name: "Amici", exact: true }).click();
+  await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await page.getByLabel("Nome").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria.rossi@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
-  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
-  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
-  const contactRow = page.locator("li", { hasText: "Maria Rossi" });
-  await expect(contactRow).toBeVisible({ timeout: 10_000 });
-  await openRowMenu(contactRow);
+  await page.getByRole("button", { name: "Aggiungi amico" }).click();
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
+  const friendRow = page.locator("li", { hasText: "Maria Rossi" });
+  await expect(friendRow).toBeVisible({ timeout: 10_000 });
+  await openRowMenu(friendRow);
   // Si attende la risposta di rete prima di procedere: il click aggiorna
   // la riga otticamente, ma il salvataggio vero è ancora in volo --- lo
   // stesso motivo per cui nav-orientation.spec.ts fa lo stesso.
   await Promise.all([
     page.waitForResponse(
-      (res) => res.url().includes("/trusted_contacts") && res.request().method() === "PATCH",
+      (res) => res.url().includes("/friends") && res.request().method() === "PATCH",
     ),
-    page.getByRole("menuitem", { name: "Segna come amico" }).click(),
+    page.getByRole("menuitem", { name: "Segna come guardiano" }).click(),
   ]);
 
   await statusButton.click();
@@ -123,6 +123,6 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByRole("button", { name: "Sblocca" }).click();
-  await expect(page.getByRole("heading", { name: "Contatti fiduciari" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
   await expect(statusButton).not.toBeVisible();
 });

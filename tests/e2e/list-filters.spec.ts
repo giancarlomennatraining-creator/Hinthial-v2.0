@@ -102,7 +102,7 @@ test("la ricerca e il filtro per categoria funzionano in Beni e Archivio", async
   await expect(page.getByText("polizza.txt")).not.toBeVisible();
 });
 
-test("la ricerca e il filtro per stato funzionano in Scadenze, Contatti fiduciari e Capsule", async ({
+test("la ricerca e il filtro per stato funzionano in Scadenze, Amici e Capsule", async ({
   page,
 }) => {
   test.slow();
@@ -146,23 +146,23 @@ test("la ricerca e il filtro per stato funzionano in Scadenze, Contatti fiduciar
   await expect(page.getByText("Revisione auto")).toBeVisible();
   await expect(page.getByText("Rinnovo passaporto")).not.toBeVisible();
 
-  // Contatti fiduciari: uno attivo, uno in attesa.
-  await page.getByRole("link", { name: "Contatti", exact: true }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo contatto fiduciario" })).toBeVisible();
+  // Amici: uno attivo, uno in attesa.
+  await page.getByRole("link", { name: "Amici", exact: true }).click();
+  await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
   await page.getByLabel("Nome").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
-  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
-  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
+  await page.getByRole("button", { name: "Aggiungi amico" }).click();
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo contatto fiduciario" })).toBeVisible();
+  await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
   await page.getByLabel("Nome").fill("Luca Bianchi");
   await page.getByLabel("Email").fill("luca@esempio.it");
   await page.getByLabel("Ruolo").fill("Avvocato");
-  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
-  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
+  await page.getByRole("button", { name: "Aggiungi amico" }).click();
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
 
   const mariaRow = page.getByRole("listitem").filter({ hasText: "Maria Rossi" });
   await openRowMenu(mariaRow);

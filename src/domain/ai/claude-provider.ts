@@ -64,10 +64,10 @@ function projectSource(source: AISource, context: AIContext): MinimalItem | null
         detail: `scadenza: ${reminder.dueAt}; ${reminder.completed ? "completata" : "non completata"}`,
       };
     }
-    case "contact": {
-      const contact = context.contacts.find((c) => c.id === source.id);
-      if (!contact) return null;
-      return { kind: "contact", label: contact.name, detail: contact.role ? `ruolo: ${contact.role}` : undefined };
+    case "friend": {
+      const friend = context.friends.find((c) => c.id === source.id);
+      if (!friend) return null;
+      return { kind: "friend", label: friend.name, detail: friend.role ? `ruolo: ${friend.role}` : undefined };
     }
     case "capsule": {
       const capsule = context.capsules.find((c) => c.id === source.id);

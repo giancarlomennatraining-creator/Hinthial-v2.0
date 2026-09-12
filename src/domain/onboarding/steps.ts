@@ -1,13 +1,13 @@
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
-import type { TrustedContactListItem } from "@/domain/contacts/types";
+import type { FriendListItem } from "@/domain/friends/types";
 import type { CapsuleListItem } from "@/domain/capsules/types";
 import type { OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
 
 export interface OnboardingSourceData {
   documents: DocumentListItem[];
   assets: AssetListItem[];
-  contacts: TrustedContactListItem[];
+  friends: FriendListItem[];
   capsules: CapsuleListItem[];
 }
 
@@ -46,17 +46,17 @@ function securityStep(done: boolean): OnboardingStep {
  * sbloccata) --- v. computeBasicOnboardingSteps per i due passi da soli,
  * mostrabili anche prima. Nessun passo è opzionale: contano tutti nel
  * conteggio (v. isOnboardingComplete/onboardingCompletionPercent sotto).
- * "Amico" è un prerequisito reale: senza almeno un amico non si può
- * attivare il Dead Man's Switch semplificato per le capsule (v.
- * domain/contacts, isFriend) --- messo dopo bene/capsula apposta,
- * insieme al collegamento capsula-contatto che lo richiede: i passi che
+ * "Guardiano" è un prerequisito reale: senza almeno un guardiano non si
+ * può attivare il Dead Man's Switch semplificato per le capsule (v.
+ * domain/friends, isGuardian) --- messo dopo bene/capsula apposta,
+ * insieme al collegamento capsula-amico che lo richiede: i passi che
  * presuppongono un concetto nuovo vengono dopo quelli concreti e
  * immediati, non mescolati. "Imposta una scadenza" non è più un passo:
  * è un'attività passiva rispetto al contribuire un contenuto vero e
  * proprio.
  */
 export function computeOnboardingSteps(data: OnboardingSourceData): OnboardingStep[] {
-  const { documents, assets, contacts, capsules } = data;
+  const { documents, assets, friends, capsules } = data;
 
   return [
     ACCOUNT_STEP,
@@ -90,18 +90,18 @@ export function computeOnboardingSteps(data: OnboardingSourceData): OnboardingSt
       href: "/capsules",
     },
     {
-      key: "friend",
-      label: "Aggiungi un amico",
+      key: "guardian",
+      label: "Aggiungi un guardiano",
       description:
-        "Segna almeno un contatto fiduciario come amico: senza almeno un amico non si può attivare il Dead Man's Switch delle capsule.",
-      done: contacts.some((c) => c.isFriend),
-      href: "/contacts",
+        "Segna almeno un amico come guardiano: senza almeno un guardiano non si può attivare il Dead Man's Switch delle capsule.",
+      done: friends.some((c) => c.isGuardian),
+      href: "/friends",
     },
     {
-      key: "capsule-contact",
-      label: "Collega una capsula a un contatto",
-      description: "Scegli chi riceverà una delle tue capsule, tra i tuoi contatti fiduciari.",
-      done: capsules.some((c) => c.relatedContacts.length > 0),
+      key: "capsule-friend",
+      label: "Collega una capsula a un amico",
+      description: "Scegli chi riceverà una delle tue capsule, tra i tuoi amici.",
+      done: capsules.some((c) => c.relatedFriends.length > 0),
       href: "/capsules",
     },
   ];

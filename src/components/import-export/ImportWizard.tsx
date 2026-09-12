@@ -7,14 +7,14 @@ import { listCategories } from "@/domain/categories/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { parseCsv } from "@/domain/import/csv";
 import { IMPORT_KIND_SPECS, generateTemplateCsv, templateFilename } from "@/domain/import/templates";
-import { findMissingColumns, parseAssetRows, parseContactRows, parseReminderRows } from "@/domain/import/validate";
-import { importAssets, importContacts, importReminders } from "@/domain/import/repository";
+import { findMissingColumns, parseAssetRows, parseFriendRows, parseReminderRows } from "@/domain/import/validate";
+import { importAssets, importFriends, importReminders } from "@/domain/import/repository";
 import { isRowReady } from "@/domain/import/types";
 import { saveBlobAsFile } from "@/lib/download";
 import { ReferenceCell } from "@/components/import-export/ReferenceCell";
 import type {
   AssetRow,
-  ContactRow,
+  FriendRow,
   ImportKind,
   ImportRow,
   ImportRowResult,
@@ -26,24 +26,24 @@ import type { AssetListItem } from "@/domain/assets/types";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
-const KIND_ORDER: ImportKind[] = ["contacts", "assets", "reminders"];
+const KIND_ORDER: ImportKind[] = ["friends", "assets", "reminders"];
 
 const DESTINATION_LINK: Record<ImportKind, { href: string; label: string }> = {
-  contacts: { href: "/contacts", label: "Vai a Contatti" },
+  friends: { href: "/friends", label: "Vai ad Amici" },
   assets: { href: "/assets", label: "Vai a Beni" },
   reminders: { href: "/reminders", label: "Vai a Scadenze" },
 };
 
 /**
  * FASE successiva alla FASE 9 --- Importazione: wizard a 5 passi, tutto
- * su questa stessa pagina (nessuna navigazione tra route). Contatti
- * fiduciari e Beni non hanno dipendenze; le Scadenze qui importate sono
- * solo quelle libere, non legate a un documento --- quelle nasceranno in
- * futuro come effetto collaterale di HINTHIAL AI che legge i documenti
- * caricati (v. discussione FASE AI). La cifratura avviene qui, nel
- * browser, con la Master Key già sbloccata: il server riceve solo
- * ciphertext, stesso percorso di scrittura dei form manuali (domain/import/repository.ts
- * chiama semplicemente createTrustedContact/createAsset/createReminder in loop).
+ * su questa stessa pagina (nessuna navigazione tra route). Amici e Beni
+ * non hanno dipendenze; le Scadenze qui importate sono solo quelle
+ * libere, non legate a un documento --- quelle nasceranno in futuro come
+ * effetto collaterale di HINTHIAL AI che legge i documenti caricati (v.
+ * discussione FASE AI). La cifratura avviene qui, nel browser, con la
+ * Master Key già sbloccata: il server riceve solo ciphertext, stesso
+ * percorso di scrittura dei form manuali (domain/import/repository.ts
+ * chiama semplicemente createFriend/createAsset/createReminder in loop).
  */
 export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
@@ -116,8 +116,8 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
     }
 
     const parsed: ImportRow[] =
-      kind === "contacts"
-        ? parseContactRows(csvRows)
+      kind === "friends"
+        ? parseFriendRows(csvRows)
         : kind === "assets"
           ? parseAssetRows(csvRows, categories)
           : parseReminderRows(csvRows, assets);
@@ -153,8 +153,8 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
       if (!user) throw new Error("Sessione scaduta. Ricarica la pagina e riprova.");
 
       const outcome =
-        kind === "contacts"
-          ? await importContacts(supabase, masterKey, user.id, rows as ContactRow[])
+        kind === "friends"
+          ? await importFriends(supabase, masterKey, user.id, rows as FriendRow[])
           : kind === "assets"
             ? await importAssets(supabase, masterKey, user.id, rows as AssetRow[])
             : await importReminders(supabase, masterKey, user.id, rows as ReminderRow[]);
@@ -309,8 +309,8 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
           </div>
 
           <div className="overflow-x-auto rounded-md border border-zinc-200 dark:border-zinc-800">
-            {kind === "contacts" ? (
-              <ContactsPreviewTable rows={rows as ContactRow[]} />
+            {kind === "friends" ? (
+              <FriendsPreviewTable rows={rows as FriendRow[]} />
             ) : kind === "assets" ? (
               <AssetsPreviewTable rows={rows as AssetRow[]} categories={categories} onResolve={updateReference} />
             ) : (
@@ -367,7 +367,7 @@ function RowStatusBadge({ row }: { row: ImportRow }) {
   );
 }
 
-function ContactsPreviewTable({ rows }: { rows: ContactRow[] }) {
+function FriendsPreviewTable({ rows }: { rows: FriendRow[] }) {
   return (
     <table className="w-full min-w-[36rem] text-left text-sm">
       <thead>

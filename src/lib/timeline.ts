@@ -7,7 +7,7 @@ import type { AIContext } from "@/domain/ai/types";
  * nessun nuovo dato, nessuna nuova query. Costruita dallo stesso
  * AIContext già usato da dashboard/ricerca globale/Assistente AI.
  */
-export type TimelineEntryKind = "document" | "asset" | "reminder" | "contact" | "capsule";
+export type TimelineEntryKind = "document" | "asset" | "reminder" | "friend" | "capsule";
 
 export interface TimelineEntry {
   id: string;
@@ -23,7 +23,7 @@ export interface TimelineEntry {
 const OTHER_KIND_ICON: Record<Exclude<TimelineEntryKind, "document">, string> = {
   asset: "🏠",
   reminder: "⏰",
-  contact: "🤝",
+  friend: "🤝",
   capsule: "📦",
 };
 
@@ -53,13 +53,13 @@ export function buildTimeline(context: AIContext): TimelineEntry[] {
       date: r.createdAt,
       href: "/reminders",
     })),
-    ...context.contacts.map((c) => ({
+    ...context.friends.map((c) => ({
       id: c.id,
-      kind: "contact" as const,
-      icon: OTHER_KIND_ICON.contact,
+      kind: "friend" as const,
+      icon: OTHER_KIND_ICON.friend,
       label: c.name,
       date: c.createdAt,
-      href: "/contacts",
+      href: "/friends",
     })),
     ...context.capsules.map((c) => ({
       id: c.id,

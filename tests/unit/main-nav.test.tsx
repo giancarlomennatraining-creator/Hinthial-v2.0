@@ -27,7 +27,7 @@ describe("MainNav", () => {
       "Archivio",
       "Scadenze",
       "Beni",
-      "Contatti",
+      "Amici",
       "Capsule",
       "Cronologia",
       "AI",

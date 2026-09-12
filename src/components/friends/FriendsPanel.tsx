@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import {
-  deleteTrustedContact,
-  listTrustedContacts,
-  setTrustedContactFriend,
-  setTrustedContactStatus,
-} from "@/domain/contacts/repository";
+  deleteFriend,
+  listFriends,
+  setFriendGuardian,
+  setFriendStatus,
+} from "@/domain/friends/repository";
 import { listCapsules } from "@/domain/capsules/repository";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -21,7 +21,7 @@ import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
 import { useListViewPreferences } from "@/components/layout/ListViewPreferencesProvider";
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
-import type { TrustedContactListItem, TrustedContactStatus } from "@/domain/contacts/types";
+import type { FriendListItem, FriendStatus } from "@/domain/friends/types";
 import type { CapsuleListItem } from "@/domain/capsules/types";
 import { SuccessMessage } from "@/components/ui/SuccessMessage";
 import { AlertTriangleIcon } from "@/components/icons/nav-icons";
@@ -34,13 +34,13 @@ function formatDate(iso: string): string {
   });
 }
 
-const STATUS_LABEL: Record<TrustedContactStatus, string> = {
+const STATUS_LABEL: Record<FriendStatus, string> = {
   pending: "In attesa",
   active: "Attivo",
   revoked: "Revocato",
 };
 
-const STATUS_BADGE_CLASS: Record<TrustedContactStatus, string> = {
+const STATUS_BADGE_CLASS: Record<FriendStatus, string> = {
   pending:
     "bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400",
   active: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
@@ -49,7 +49,7 @@ const STATUS_BADGE_CLASS: Record<TrustedContactStatus, string> = {
 
 type SortColumn = "name" | "email" | "role" | "status" | "capsules";
 
-/** Al passaggio del mouse, l'elenco delle capsule che indicano questo contatto tra i destinatari. */
+/** Al passaggio del mouse, l'elenco delle capsule che indicano questo amico tra i destinatari. */
 function CapsulesBadge({ capsules }: { capsules: CapsuleListItem[] }) {
   if (capsules.length === 0) return null;
 
@@ -78,52 +78,56 @@ function CapsulesBadge({ capsules }: { capsules: CapsuleListItem[] }) {
 }
 
 /**
- * FASE 7 --- Contatto fiduciario: solo struttura dati e gestione dello
- * stato, nessuno sblocco automatico dei dati (v. HINTHIAL_MVP.md).
+ * FASE 7 --- Amico: solo struttura dati e gestione dello stato, nessuno
+ * sblocco automatico dei dati (v. HINTHIAL_MVP.md). "Guardiano" è il
+ * flag interno che segnala chi riceve un avviso informale in caso di
+ * inattività prolungata (v. domain/friends/types, isGuardian) --- non va
+ * confuso col nome della sezione, che indica genericamente le persone
+ * qui registrate.
  */
-export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
+export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [contacts, setContacts] = useState<TrustedContactListItem[]>([]);
+  const [friends, setFriends] = useState<FriendListItem[]>([]);
   const [capsules, setCapsules] = useState<CapsuleListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<TrustedContactStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<FriendStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "name", direction: "asc" });
 
   const { modeFor } = useListViewPreferences();
-  const viewMode = modeFor("contacts");
+  const viewMode = modeFor("friends");
 
-  // "?created=1"/"?updated=1" arrivano da /contacts/new e da
-  // /contacts/[id]/edit dopo un salvataggio riuscito --- v.
+  // "?created=1"/"?updated=1" arrivano da /friends/new e da
+  // /friends/[id]/edit dopo un salvataggio riuscito --- v.
   // CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
   const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
   // "&inviteFailed=1" si aggiunge agli stessi redirect quando la
   // checkbox "Invita ... su Hinthial" era spuntata ma l'invio dell'email
-  // non è riuscito --- il contatto è comunque salvato, non è un errore
-  // che blocca il salvataggio, solo un avviso a parte.
+  // non è riuscito --- l'amico è comunque salvato, non è un errore che
+  // blocca il salvataggio, solo un avviso a parte.
   const [showInviteFailedMessage] = useState(() => searchParams.get("inviteFailed") === "1");
   useEffect(() => {
-    if (showCreatedMessage || showUpdatedMessage) router.replace("/contacts");
+    if (showCreatedMessage || showUpdatedMessage) router.replace("/friends");
   }, [showCreatedMessage, showUpdatedMessage, router]);
 
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [contactsResult, capsulesResult] = await Promise.all([
-        listTrustedContacts(supabase, masterKey),
+      const [friendsResult, capsulesResult] = await Promise.all([
+        listFriends(supabase, masterKey),
         listCapsules(supabase, masterKey),
       ]);
-      setContacts(contactsResult);
+      setFriends(friendsResult);
       setCapsules(capsulesResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare i contatti fiduciari.");
+      setError(err instanceof Error ? err.message : "Impossibile caricare gli amici.");
     } finally {
       setLoading(false);
     }
@@ -135,49 +139,49 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
     refresh();
   }, [refresh]);
 
-  async function handleSetStatus(contact: TrustedContactListItem, status: TrustedContactStatus) {
-    setBusyId(contact.id);
+  async function handleSetStatus(friend: FriendListItem, status: FriendStatus) {
+    setBusyId(friend.id);
     setError(null);
     try {
-      await setTrustedContactStatus(supabase, contact.id, status);
-      setContacts((prev) => prev.map((c) => (c.id === contact.id ? { ...c, status } : c)));
+      await setFriendStatus(supabase, friend.id, status);
+      setFriends((prev) => prev.map((c) => (c.id === friend.id ? { ...c, status } : c)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare lo stato del contatto.");
+      setError(err instanceof Error ? err.message : "Impossibile aggiornare lo stato dell'amico.");
     } finally {
       setBusyId(null);
     }
   }
 
-  async function handleToggleFriend(contact: TrustedContactListItem) {
-    const isFriend = !contact.isFriend;
-    setBusyId(contact.id);
+  async function handleToggleGuardian(friend: FriendListItem) {
+    const isGuardian = !friend.isGuardian;
+    setBusyId(friend.id);
     setError(null);
     try {
-      await setTrustedContactFriend(supabase, contact.id, isFriend);
-      setContacts((prev) => prev.map((c) => (c.id === contact.id ? { ...c, isFriend } : c)));
+      await setFriendGuardian(supabase, friend.id, isGuardian);
+      setFriends((prev) => prev.map((c) => (c.id === friend.id ? { ...c, isGuardian } : c)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare il contatto.");
+      setError(err instanceof Error ? err.message : "Impossibile aggiornare l'amico.");
     } finally {
       setBusyId(null);
     }
   }
 
-  function capsulesFor(contact: TrustedContactListItem): CapsuleListItem[] {
-    return capsules.filter((capsule) => capsule.relatedContacts.some((c) => c.id === contact.id));
+  function capsulesFor(friend: FriendListItem): CapsuleListItem[] {
+    return capsules.filter((capsule) => capsule.relatedFriends.some((c) => c.id === friend.id));
   }
 
-  function sortValueFor(contact: TrustedContactListItem, column: SortColumn): string {
+  function sortValueFor(friend: FriendListItem, column: SortColumn): string {
     switch (column) {
       case "name":
-        return contact.name;
+        return friend.name;
       case "email":
-        return contact.email;
+        return friend.email;
       case "role":
-        return contact.role;
+        return friend.role;
       case "status":
-        return STATUS_LABEL[contact.status];
+        return STATUS_LABEL[friend.status];
       case "capsules":
-        return String(capsulesFor(contact).length);
+        return String(capsulesFor(friend).length);
     }
   }
 
@@ -185,36 +189,36 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
     setSort((prev) => toggleSort(prev, column));
   }
 
-  const filteredContacts = contacts
-    .filter((contact) => {
+  const filteredFriends = friends
+    .filter((friend) => {
       const normalized = query.trim().toLowerCase();
       if (!normalized) return true;
-      return [contact.name, contact.email, contact.role].join(" ").toLowerCase().includes(normalized);
+      return [friend.name, friend.email, friend.role].join(" ").toLowerCase().includes(normalized);
     })
-    .filter((contact) => statusFilter === "all" || contact.status === statusFilter);
+    .filter((friend) => statusFilter === "all" || friend.status === statusFilter);
 
   // Solo la vista a tabella si ordina --- l'elenco resta cronologico.
-  const sortedContacts = applySort(filteredContacts, sort, sortValueFor);
+  const sortedFriends = applySort(filteredFriends, sort, sortValueFor);
 
   // Si riclampa invece di resettare con un effect: se un filtro riduce i
   // risultati, la pagina torna da sola entro il range valido.
-  const pageCount = Math.max(1, Math.ceil(filteredContacts.length / TABLE_PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(filteredFriends.length / TABLE_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
-  const pagedContacts = sortedContacts.slice(
+  const pagedFriends = sortedFriends.slice(
     (currentPage - 1) * TABLE_PAGE_SIZE,
     currentPage * TABLE_PAGE_SIZE,
   );
 
-  async function handleDelete(contact: TrustedContactListItem) {
-    if (!window.confirm(`Eliminare il contatto fiduciario "${contact.name}"?`)) return;
+  async function handleDelete(friend: FriendListItem) {
+    if (!window.confirm(`Eliminare l'amico "${friend.name}"?`)) return;
 
-    setBusyId(contact.id);
+    setBusyId(friend.id);
     setError(null);
     try {
-      await deleteTrustedContact(supabase, contact.id);
-      setContacts((prev) => prev.filter((c) => c.id !== contact.id));
+      await deleteFriend(supabase, friend.id);
+      setFriends((prev) => prev.filter((c) => c.id !== friend.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare il contatto fiduciario.");
+      setError(err instanceof Error ? err.message : "Impossibile eliminare l'amico.");
     } finally {
       setBusyId(null);
     }
@@ -225,34 +229,30 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="min-w-0 w-full sm:flex-1">
           <h1 className="text-2xl font-semibold tracking-tight text-brand">
-            Contatti fiduciari
+            Amici
           </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Persone che potranno essere autorizzate in futuro ad accedere ai tuoi dati. Per ora
-            questa sezione registra solo il contatto e il suo stato --- nessun accesso viene
-            concesso automaticamente.
+            questa sezione registra solo l&apos;amico e il suo stato --- nessun accesso viene concesso
+            automaticamente.
           </p>
         </div>
         <Link
-          href="/contacts/new"
+          href="/friends/new"
           className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
         >
-          + Aggiungi contatto
+          + Aggiungi amico
         </Link>
       </div>
 
-      <MobileAddFab href="/contacts/new" label="Aggiungi contatto" />
+      <MobileAddFab href="/friends/new" label="Aggiungi amico" />
 
-      {showCreatedMessage ? (
-        <SuccessMessage>Contatto aggiunto.</SuccessMessage>
-      ) : null}
-      {showUpdatedMessage ? (
-        <SuccessMessage>Contatto aggiornato.</SuccessMessage>
-      ) : null}
+      {showCreatedMessage ? <SuccessMessage>Amico aggiunto.</SuccessMessage> : null}
+      {showUpdatedMessage ? <SuccessMessage>Amico aggiornato.</SuccessMessage> : null}
       {showInviteFailedMessage ? (
         <p className="flex items-start gap-1.5 text-sm text-orange-700 dark:text-orange-400">
           <AlertTriangleIcon width={16} height={16} className="mt-0.5 shrink-0" />
-          Non è stato possibile inviare l&apos;invito via email. Il contatto è stato comunque
+          Non è stato possibile inviare l&apos;invito via email. L&apos;amico è stato comunque
           salvato.
         </p>
       ) : null}
@@ -265,10 +265,10 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       {loading ? (
         <ListSkeleton />
-      ) : contacts.length === 0 ? (
+      ) : friends.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Nessun contatto fiduciario ancora. Aggiungine uno col tasto qui sopra.
+            Nessun amico ancora. Aggiungine uno col tasto qui sopra.
           </p>
         </div>
       ) : (
@@ -277,7 +277,7 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
             <SearchInput value={query} onChange={setQuery} placeholder="Cerca per nome, email o ruolo…" />
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as TrustedContactStatus | "all")}
+              onChange={(e) => setStatusFilter(e.target.value as FriendStatus | "all")}
               aria-label="Filtra per stato"
               className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             >
@@ -286,12 +286,12 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
               <option value="active">Attivi</option>
               <option value="revoked">Revocati</option>
             </select>
-            <ListViewToggle section="contacts" hideOnMobile />
+            <ListViewToggle section="friends" hideOnMobile />
           </div>
 
-          {filteredContacts.length === 0 ? (
+          {filteredFriends.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Nessun contatto corrisponde alla ricerca.
+              Nessun amico corrisponde alla ricerca.
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">
@@ -313,54 +313,54 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                    {pagedContacts.map((contact) => {
-                      const busy = busyId === contact.id;
+                    {pagedFriends.map((friend) => {
+                      const busy = busyId === friend.id;
 
                       return (
-                        <tr key={contact.id}>
+                        <tr key={friend.id}>
                           <td className="max-w-[12rem] truncate p-3 font-medium text-zinc-900 dark:text-zinc-100">
-                            {contact.name}
+                            {friend.name}
                           </td>
                           <td className="max-w-[14rem] truncate p-3 text-zinc-600 dark:text-zinc-400">
-                            {contact.email}
+                            {friend.email}
                           </td>
                           <td className="max-w-[10rem] truncate p-3 text-zinc-600 dark:text-zinc-400">
-                            {contact.role}
+                            {friend.role}
                           </td>
                           <td className="p-3">
                             <span
-                              className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[contact.status]}`}
+                              className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[friend.status]}`}
                             >
-                              {STATUS_LABEL[contact.status]}
+                              {STATUS_LABEL[friend.status]}
                             </span>
-                            {contact.isFriend ? (
+                            {friend.isGuardian ? (
                               <span className="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-400">
-                                🤝 Amico
+                                🛡️ Guardiano
                               </span>
                             ) : null}
                           </td>
                           <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                            {capsulesFor(contact).length}
+                            {capsulesFor(friend).length}
                           </td>
                           <td className="p-3">
-                            <RowActionsMenu label={`Azioni per ${contact.name}`}>
-                              {contact.status === "pending" ? (
-                                <RowMenuItem disabled={busy} onClick={() => handleSetStatus(contact, "active")}>
+                            <RowActionsMenu label={`Azioni per ${friend.name}`}>
+                              {friend.status === "pending" ? (
+                                <RowMenuItem disabled={busy} onClick={() => handleSetStatus(friend, "active")}>
                                   Segna come attivo
                                 </RowMenuItem>
                               ) : null}
-                              {contact.status !== "revoked" ? (
-                                <RowMenuItem disabled={busy} onClick={() => handleSetStatus(contact, "revoked")}>
+                              {friend.status !== "revoked" ? (
+                                <RowMenuItem disabled={busy} onClick={() => handleSetStatus(friend, "revoked")}>
                                   Revoca
                                 </RowMenuItem>
                               ) : null}
-                              <RowMenuItem disabled={busy} onClick={() => handleToggleFriend(contact)}>
-                                {contact.isFriend ? "Rimuovi dagli amici" : "Segna come amico"}
+                              <RowMenuItem disabled={busy} onClick={() => handleToggleGuardian(friend)}>
+                                {friend.isGuardian ? "Rimuovi dai guardiani" : "Segna come guardiano"}
                               </RowMenuItem>
-                              <RowMenuItem disabled={busy} onClick={() => router.push(`/contacts/${contact.id}/edit`)}>
+                              <RowMenuItem disabled={busy} onClick={() => router.push(`/friends/${friend.id}/edit`)}>
                                 Modifica
                               </RowMenuItem>
-                              <RowMenuItem disabled={busy} danger onClick={() => handleDelete(contact)}>
+                              <RowMenuItem disabled={busy} danger onClick={() => handleDelete(friend)}>
                                 Elimina
                               </RowMenuItem>
                             </RowActionsMenu>
@@ -375,51 +375,51 @@ export function TrustedContactsPanel({ masterKey }: { masterKey: CryptoKey }) {
             </div>
           ) : (
             <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
-              {filteredContacts.map((contact) => {
-                const busy = busyId === contact.id;
+              {filteredFriends.map((friend) => {
+                const busy = busyId === friend.id;
 
                 return (
-                  <li key={contact.id} className="flex items-center justify-between gap-4 p-4">
+                  <li key={friend.id} className="flex items-center justify-between gap-4 p-4">
                     <div className="min-w-0">
                       {/* div, non p: la nuvoletta di CapsulesBadge contiene <ul>/<li>, non ammessi dentro un <p>. */}
                       <div className="flex items-center gap-2">
                         <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                          {contact.name}
+                          {friend.name}
                         </span>
                         <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[contact.status]}`}
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[friend.status]}`}
                         >
-                          {STATUS_LABEL[contact.status]}
+                          {STATUS_LABEL[friend.status]}
                         </span>
-                        {contact.isFriend ? (
+                        {friend.isGuardian ? (
                           <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-400">
-                            🤝 Amico
+                            🛡️ Guardiano
                           </span>
                         ) : null}
-                        <CapsulesBadge capsules={capsulesFor(contact)} />
+                        <CapsulesBadge capsules={capsulesFor(friend)} />
                       </div>
                       <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
-                        {contact.email} · {contact.role} · dal {formatDate(contact.createdAt)}
+                        {friend.email} · {friend.role} · dal {formatDate(friend.createdAt)}
                       </p>
                     </div>
-                    <RowActionsMenu label={`Azioni per ${contact.name}`}>
-                      {contact.status === "pending" ? (
-                        <RowMenuItem disabled={busy} onClick={() => handleSetStatus(contact, "active")}>
+                    <RowActionsMenu label={`Azioni per ${friend.name}`}>
+                      {friend.status === "pending" ? (
+                        <RowMenuItem disabled={busy} onClick={() => handleSetStatus(friend, "active")}>
                           Segna come attivo
                         </RowMenuItem>
                       ) : null}
-                      {contact.status !== "revoked" ? (
-                        <RowMenuItem disabled={busy} onClick={() => handleSetStatus(contact, "revoked")}>
+                      {friend.status !== "revoked" ? (
+                        <RowMenuItem disabled={busy} onClick={() => handleSetStatus(friend, "revoked")}>
                           Revoca
                         </RowMenuItem>
                       ) : null}
-                      <RowMenuItem disabled={busy} onClick={() => handleToggleFriend(contact)}>
-                        {contact.isFriend ? "Rimuovi dagli amici" : "Segna come amico"}
+                      <RowMenuItem disabled={busy} onClick={() => handleToggleGuardian(friend)}>
+                        {friend.isGuardian ? "Rimuovi dai guardiani" : "Segna come guardiano"}
                       </RowMenuItem>
-                      <RowMenuItem disabled={busy} onClick={() => router.push(`/contacts/${contact.id}/edit`)}>
+                      <RowMenuItem disabled={busy} onClick={() => router.push(`/friends/${friend.id}/edit`)}>
                         Modifica
                       </RowMenuItem>
-                      <RowMenuItem disabled={busy} danger onClick={() => handleDelete(contact)}>
+                      <RowMenuItem disabled={busy} danger onClick={() => handleDelete(friend)}>
                         Elimina
                       </RowMenuItem>
                     </RowActionsMenu>

@@ -61,7 +61,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         createdAt: "2026-01-01",
       },
     ],
-    contacts: [],
+    friends: [],
     capsules: [],
     ...overrides,
   };
@@ -128,7 +128,7 @@ describe("mockAIProvider.search", () => {
             },
           ],
           linkedDocuments: [],
-          relatedContacts: [],
+          relatedFriends: [],
           status: "draft",
           accessCondition: "manual",
           openAt: null,
@@ -187,8 +187,8 @@ describe("mockAIProvider.retrieve", () => {
               transcript: "",
             },
           ],
-          relatedContacts: [
-            { id: "contact-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", isFriend: false, createdAt: "2026-01-01" },
+          relatedFriends: [
+            { id: "friend-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", isGuardian: false, createdAt: "2026-01-01" },
           ],
           status: "draft",
           accessCondition: "manual",
@@ -201,7 +201,7 @@ describe("mockAIProvider.retrieve", () => {
     const results = mockAIProvider.retrieve("maria", context);
     const ids = results.map((r) => `${r.kind}:${r.id}`);
     expect(ids).toContain("capsule:capsule-1");
-    expect(ids).toContain("contact:contact-1");
+    expect(ids).toContain("friend:friend-1");
     expect(ids).toContain("document:doc-polizza");
   });
 
@@ -214,16 +214,16 @@ describe("mockAIProvider.retrieve", () => {
     expect(ids).not.toContain("document:doc-polizza");
   });
 
-  it('falls back to every item of a kind when nothing specific matches, e.g. "quanti contatti ho?"', () => {
+  it('falls back to every item of a kind when nothing specific matches, e.g. "quanti amici ho?"', () => {
     const context = buildContext({
-      contacts: [
-        { id: "contact-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", isFriend: false, createdAt: "2026-01-01" },
-        { id: "contact-2", name: "Luca Bianchi", email: "luca@esempio.it", role: "Fratello", status: "active", isFriend: false, createdAt: "2026-01-01" },
+      friends: [
+        { id: "friend-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", isGuardian: false, createdAt: "2026-01-01" },
+        { id: "friend-2", name: "Luca Bianchi", email: "luca@esempio.it", role: "Fratello", status: "active", isGuardian: false, createdAt: "2026-01-01" },
       ],
     });
 
-    const results = mockAIProvider.retrieve("quanti contatti ho?", context);
-    expect(results.map((r) => r.id).sort()).toEqual(["contact-1", "contact-2"]);
+    const results = mockAIProvider.retrieve("quanti amici ho?", context);
+    expect(results.map((r) => r.id).sort()).toEqual(["friend-1", "friend-2"]);
   });
 
   it("does not fall back to \"list everything of this kind\" when the rest of the question already narrowed the results", () => {

@@ -36,11 +36,11 @@ type AuditEventTypeColumn =
   | "capsule_deleted"
   | "category_created"
   | "category_deleted"
-  | "trusted_contact_added"
+  | "friend_added"
   | "vault_wiped"
   | "ai_chat_used";
 
-type TrustedContactStatusColumn = "pending" | "active" | "revoked";
+type FriendStatusColumn = "pending" | "active" | "revoked";
 
 type NavOrientationColumn = "sidebar-left" | "sidebar-right" | "topbar";
 
@@ -413,15 +413,15 @@ export type Database = {
           },
         ];
       };
-      trusted_contacts: {
+      friends: {
         Row: {
           id: string;
           owner_id: string;
           encrypted_name: string;
           encrypted_email: string;
           role: string;
-          status: TrustedContactStatusColumn;
-          is_friend: boolean;
+          status: FriendStatusColumn;
+          is_guardian: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -431,8 +431,8 @@ export type Database = {
           encrypted_name: string;
           encrypted_email: string;
           role: string;
-          status?: TrustedContactStatusColumn;
-          is_friend?: boolean;
+          status?: FriendStatusColumn;
+          is_guardian?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -442,14 +442,14 @@ export type Database = {
           encrypted_name?: string;
           encrypted_email?: string;
           role?: string;
-          status?: TrustedContactStatusColumn;
-          is_friend?: boolean;
+          status?: FriendStatusColumn;
+          is_guardian?: boolean;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "trusted_contacts_owner_id_fkey";
+            foreignKeyName: "friends_owner_id_fkey";
             columns: ["owner_id"];
             isOneToOne: false;
             referencedRelation: "users";

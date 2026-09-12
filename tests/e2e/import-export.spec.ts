@@ -3,7 +3,7 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("importa contatti fiduciari da CSV: template, anteprima con riga da correggere, risultato", async ({
+test("importa amici da CSV: template, anteprima con riga da correggere, risultato", async ({
   page,
 }) => {
   test.slow();
@@ -37,10 +37,10 @@ test("importa contatti fiduciari da CSV: template, anteprima con riga da corregg
   await expect(importTab).toHaveAttribute("aria-selected", "true");
 
   // PASSO 1: scelta del tipo.
-  await page.getByRole("button", { name: "Contatti fiduciari" }).click();
+  await page.getByRole("button", { name: "Amici" }).click();
 
   // PASSO 2: template + spiegazione colonne.
-  await expect(page.getByRole("heading", { name: "Template: Contatti fiduciari" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Template: Amici" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Nome", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Email", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Ruolo", exact: true })).toBeVisible();
@@ -49,7 +49,7 @@ test("importa contatti fiduciari da CSV: template, anteprima con riga da corregg
     page.waitForEvent("download"),
     page.getByRole("button", { name: "Scarica template .csv" }).click(),
   ]);
-  expect(templateDownload.suggestedFilename()).toBe("hinthial-template-contatti-fiduciari.csv");
+  expect(templateDownload.suggestedFilename()).toBe("hinthial-template-amici.csv");
 
   await page.getByRole("button", { name: "Avanti" }).click();
 
@@ -60,7 +60,7 @@ test("importa contatti fiduciari da CSV: template, anteprima con riga da corregg
     "Luca Bianchi,non-una-email,Fratello",
   ].join("\n");
   await page.setInputFiles('input[type="file"]', {
-    name: "contatti.csv",
+    name: "amici.csv",
     mimeType: "text/csv",
     buffer: Buffer.from(csv, "utf-8"),
   });
@@ -82,8 +82,8 @@ test("importa contatti fiduciari da CSV: template, anteprima con riga da corregg
   await expect(page.getByText("1 elemento importato.")).toBeVisible();
   await expect(page.getByText("1 riga saltata.")).toBeVisible();
 
-  await page.getByRole("link", { name: "Vai a Contatti" }).click();
-  await expect(page).toHaveURL(/\/contacts$/);
+  await page.getByRole("link", { name: "Vai ad Amici" }).click();
+  await expect(page).toHaveURL(/\/friends$/);
   await expect(page.locator("li", { hasText: "Maria Rossi" })).toBeVisible();
   await expect(page.getByText("Luca Bianchi")).not.toBeVisible();
 

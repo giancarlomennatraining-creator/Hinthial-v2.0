@@ -4,8 +4,8 @@ import {
   ArchiveIcon,
   AssetIcon,
   CapsuleIcon,
-  ContactIcon,
   DashboardIcon,
+  FriendIcon,
   ReminderIcon,
   TimelineIcon,
 } from "@/components/icons/nav-icons";
@@ -29,7 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Archivio", href: "/archive", icon: ArchiveIcon, requiresEncryption: true },
   { label: "Scadenze", href: "/reminders", icon: ReminderIcon, requiresEncryption: true },
   { label: "Beni", href: "/assets", icon: AssetIcon, requiresEncryption: true },
-  { label: "Contatti", href: "/contacts", icon: ContactIcon, requiresEncryption: true },
+  { label: "Amici", href: "/friends", icon: FriendIcon, requiresEncryption: true },
   { label: "Capsule", href: "/capsules", icon: CapsuleIcon, requiresEncryption: true },
   { label: "Cronologia", href: "/timeline", icon: TimelineIcon, requiresEncryption: true },
   { label: "AI", href: "/ai", icon: AIIcon, requiresEncryption: true },

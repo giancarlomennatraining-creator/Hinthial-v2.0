@@ -67,7 +67,7 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
         computeOnboardingSteps({
           documents: context.documents,
           assets: context.assets,
-          contacts: context.contacts,
+          friends: context.friends,
           capsules: context.capsules,
         }),
       );

@@ -11,7 +11,7 @@ import { accountDeletedEmail, accountResetEmail } from "@/lib/email/templates";
  * "Cancella il tuo account") --- irreversibile, distinta da "Reimposta
  * l'account" (v. domain/danger-zone/repository.ts): qui sparisce anche
  * l'account stesso, non solo il suo contenuto. Ogni riga collegata
- * (profiles, documents, assets, trusted_contacts, capsules, categories,
+ * (profiles, documents, assets, friends, capsules, categories,
  * reminders, mfa_backup_codes, encryption_setup, audit_events) ha già
  * ON DELETE CASCADE da auth.users (v. le rispettive migrazioni):
  * cancellare l'utente Auth le elimina già tutte da sé --- solo Storage

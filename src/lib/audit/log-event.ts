@@ -22,13 +22,13 @@ export type AuditEventType =
   | "capsule_deleted"
   | "category_created"
   | "category_deleted"
-  | "trusted_contact_added"
+  | "friend_added"
   | "vault_wiped"
   | "ai_chat_used";
 
 /**
  * Metadati tecnici facoltativi per un evento --- mai contenuti, nomi
- * file/contatto o altro dato del vault, solo dettagli sul "come" (es. il
+ * file/amico o altro dato del vault, solo dettagli sul "come" (es. il
  * metodo di login, IP e user agent, il motivo di un fallimento).
  */
 export interface AuditEventMetadata {

@@ -3,7 +3,7 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("\"Cancella tutto\" svuota Archivio, Beni, Contatti e Capsule, ripristina le categorie predefinite, e non tocca le Scadenze", async ({
+test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le categorie predefinite, e non tocca le Scadenze", async ({
   page,
 }) => {
   test.slow();
@@ -71,15 +71,15 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Contatti e Capsule, ripristina l
   await expect(page).toHaveURL(/\/reminders$/, { timeout: 15_000 });
   await expect(page.getByText("Pagamento IMU")).toBeVisible({ timeout: 10_000 });
 
-  // Un contatto fiduciario.
-  await page.getByRole("link", { name: "Contatti" }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo contatto fiduciario" })).toBeVisible();
+  // Un amico.
+  await page.getByRole("link", { name: "Amici" }).click();
+  await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
   await page.getByLabel("Nome").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
-  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
-  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
+  await page.getByRole("button", { name: "Aggiungi amico" }).click();
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
   await expect(page.getByText("Maria Rossi")).toBeVisible({ timeout: 10_000 });
 
   // Una capsula.
@@ -117,15 +117,15 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Contatti e Capsule, ripristina l
 
   await expect(page.getByText("Il vault è stato svuotato.")).toBeVisible({ timeout: 15_000 });
 
-  // Archivio, Beni, Contatti e Capsule sono vuoti.
+  // Archivio, Beni, Amici e Capsule sono vuoti.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await expect(page.getByText("Ancora nulla in archivio.")).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole("link", { name: "Beni" }).click();
   await expect(page.getByText("Nessun bene ancora")).toBeVisible({ timeout: 10_000 });
 
-  await page.getByRole("link", { name: "Contatti" }).click();
-  await expect(page.getByText("Nessun contatto fiduciario ancora")).toBeVisible({ timeout: 10_000 });
+  await page.getByRole("link", { name: "Amici" }).click();
+  await expect(page.getByText("Nessun amico ancora")).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole("link", { name: "Capsule" }).click();
   await expect(page.getByText("Nessuna capsula ancora")).toBeVisible({ timeout: 10_000 });

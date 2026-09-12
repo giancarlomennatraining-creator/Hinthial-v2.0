@@ -43,7 +43,7 @@ export function OnboardingSettingsPanel({ masterKey }: { masterKey: CryptoKey })
         computeOnboardingSteps({
           documents: context.documents,
           assets: context.assets,
-          contacts: context.contacts,
+          friends: context.friends,
           capsules: context.capsules,
         }),
       );

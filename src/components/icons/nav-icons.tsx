@@ -68,7 +68,7 @@ export function AssetIcon(props: IconProps) {
   );
 }
 
-export function ContactIcon(props: IconProps) {
+export function FriendIcon(props: IconProps) {
   return (
     <svg {...baseProps(props)}>
       <circle cx="8.5" cy="8" r="3" />

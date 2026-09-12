@@ -5,15 +5,15 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
 import { createCapsule } from "@/domain/capsules/repository";
-import { listTrustedContacts } from "@/domain/contacts/repository";
+import { listFriends } from "@/domain/friends/repository";
 import { listDocuments } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachmentPicker";
-import { ContactPicker } from "@/components/capsules/ContactPicker";
+import { FriendPicker } from "@/components/capsules/FriendPicker";
 import { CapsuleOpenAtField } from "@/components/capsules/CapsuleOpenAtField";
 import { CapsuleLetterEditor } from "@/components/capsules/CapsuleLetterEditor";
 import { AudioVideoRecorder } from "@/components/media/AudioVideoRecorder";
-import type { TrustedContactListItem } from "@/domain/contacts/types";
+import type { FriendListItem } from "@/domain/friends/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 import type { CapsuleContentStyle } from "@/domain/capsules/types";
@@ -45,7 +45,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
 
-  const [contacts, setContacts] = useState<TrustedContactListItem[]>([]);
+  const [friends, setFriends] = useState<FriendListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [documents, setDocuments] = useState<DocumentListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,9 +55,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const [step, setStep] = useState<Step>(1);
   const [title, setTitle] = useState("");
   const [openAt, setOpenAt] = useState("");
-  const [pendingRelatedContacts, setPendingRelatedContacts] = useState<TrustedContactListItem[]>(
-    [],
-  );
+  const [pendingRelatedFriends, setPendingRelatedFriends] = useState<FriendListItem[]>([]);
 
   const [content, setContent] = useState("");
   const [contentStyle, setContentStyle] = useState<CapsuleContentStyle>("simple");
@@ -68,12 +66,12 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [contactsResult, categoriesResult, documentsResult] = await Promise.all([
-        listTrustedContacts(supabase, masterKey),
+      const [friendsResult, categoriesResult, documentsResult] = await Promise.all([
+        listFriends(supabase, masterKey),
         listCategories(supabase),
         listDocuments(supabase, masterKey),
       ]);
-      setContacts(contactsResult);
+      setFriends(friendsResult);
       setCategories(categoriesResult);
       setDocuments(documentsResult);
     } catch (err) {
@@ -136,7 +134,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
         title: title.trim(),
         content: content.trim(),
         contentStyle,
-        relatedContactIds: pendingRelatedContacts.map((c) => c.id),
+        relatedFriendIds: pendingRelatedFriends.map((c) => c.id),
         files: recordedFiles,
         linkedDocumentIds: pendingLinkedDocuments.map((d) => d.id),
         openAt,
@@ -148,8 +146,8 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  // Solo contatti fiduciari ATTIVI possono essere scelti come destinatario.
-  const activeContacts = contacts.filter((c) => c.status === "active");
+  // Solo amici ATTIVI possono essere scelti come destinatario.
+  const activeFriends = friends.filter((c) => c.status === "active");
 
   return (
     <div className="flex flex-col gap-6">
@@ -195,11 +193,11 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
                 />
               </div>
 
-              <ContactPicker
+              <FriendPicker
                 idPrefix="create"
-                contacts={activeContacts}
-                selected={pendingRelatedContacts}
-                onChange={setPendingRelatedContacts}
+                friends={activeFriends}
+                selected={pendingRelatedFriends}
+                onChange={setPendingRelatedFriends}
               />
 
               <CapsuleOpenAtField id="openAt" value={openAt} onChange={setOpenAt} />

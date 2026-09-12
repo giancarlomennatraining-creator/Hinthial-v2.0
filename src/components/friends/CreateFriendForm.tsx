@@ -4,17 +4,17 @@ import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
-import { createTrustedContact } from "@/domain/contacts/repository";
-import { inviteContactToHinthial } from "@/lib/contacts/actions";
+import { createFriend } from "@/domain/friends/repository";
+import { inviteFriendToHinthial } from "@/lib/friends/actions";
 
 /**
- * Pagina dedicata alla creazione di un contatto fiduciario (estratta da
- * TrustedContactsPanel). Stesso pattern usato per capsule/beni/scadenze:
- * alla creazione riuscita torna a /contacts con un messaggio di conferma
- * passato come flag nell'URL (`?created=1`), mai il nome --- finirebbe
- * in chiaro nella cronologia del browser.
+ * Pagina dedicata alla creazione di un amico (estratta da FriendsPanel).
+ * Stesso pattern usato per capsule/beni/scadenze: alla creazione riuscita
+ * torna a /friends con un messaggio di conferma passato come flag
+ * nell'URL (`?created=1`), mai il nome --- finirebbe in chiaro nella
+ * cronologia del browser.
  */
-export function CreateContactForm({ masterKey }: { masterKey: CryptoKey }) {
+export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
 
@@ -44,22 +44,22 @@ export function CreateContactForm({ masterKey }: { masterKey: CryptoKey }) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
 
-      await createTrustedContact(supabase, masterKey, user.id, { name, email, role });
+      await createFriend(supabase, masterKey, user.id, { name, email, role });
 
-      // Un invito non riuscito non deve impedire di aver salvato il
-      // contatto: si segnala con un parametro a parte, non un errore.
+      // Un invito non riuscito non deve impedire di aver salvato
+      // l'amico: si segnala con un parametro a parte, non un errore.
       let inviteFailed = false;
       if (invite) {
         try {
-          await inviteContactToHinthial(email);
+          await inviteFriendToHinthial(email);
         } catch {
           inviteFailed = true;
         }
       }
 
-      router.push(`/contacts?created=1${inviteFailed ? "&inviteFailed=1" : ""}`);
+      router.push(`/friends?created=1${inviteFailed ? "&inviteFailed=1" : ""}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiungere il contatto fiduciario.");
+      setError(err instanceof Error ? err.message : "Impossibile aggiungere l'amico.");
       setCreating(false);
     }
   }
@@ -68,18 +68,18 @@ export function CreateContactForm({ masterKey }: { masterKey: CryptoKey }) {
     <div className="flex flex-col gap-6">
       <div>
         <Link
-          href="/contacts"
+          href="/friends"
           className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
         >
-          ← Torna ai contatti
+          ← Torna agli amici
         </Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
-          Nuovo contatto fiduciario
+          Nuovo amico
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Una persona che potrà essere autorizzata in futuro ad accedere ai tuoi dati. Per ora
-          questa sezione registra solo il contatto e il suo stato --- nessun accesso viene
-          concesso automaticamente.
+          questa sezione registra solo l&apos;amico e il suo stato --- nessun accesso viene concesso
+          automaticamente.
         </p>
       </div>
 
@@ -135,7 +135,7 @@ export function CreateContactForm({ masterKey }: { masterKey: CryptoKey }) {
             checked={invite}
             onChange={(e) => setInvite(e.target.checked)}
           />
-          Invita questo contatto su Hinthial
+          Invita questo amico su Hinthial
         </label>
 
         {error ? (
@@ -149,10 +149,10 @@ export function CreateContactForm({ masterKey }: { masterKey: CryptoKey }) {
           disabled={creating}
           className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
         >
-          {creating ? "Aggiunta…" : "Aggiungi contatto"}
+          {creating ? "Aggiunta…" : "Aggiungi amico"}
         </button>
         <Link
-          href="/contacts"
+          href="/friends"
           className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
         >
           Annulla

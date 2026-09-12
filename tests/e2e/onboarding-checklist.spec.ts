@@ -74,34 +74,34 @@ test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (ness
   await expect(page.getByRole("link", { name: "Aggiungi il primo bene" })).not.toBeVisible();
   await expect(page.getByText("5/8")).toBeVisible();
 
-  // Un contatto, attivo (per poter poi ricevere una capsula) e amico
-  // (completa il passo "friend"): 6/8.
-  await page.getByRole("link", { name: "Contatti", exact: true }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
+  // Un amico, attivo (per poter poi ricevere una capsula) e guardiano
+  // (completa il passo "guardian"): 6/8.
+  await page.getByRole("link", { name: "Amici", exact: true }).click();
+  await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await page.getByLabel("Nome").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria.rossi@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
-  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
-  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
-  const contactRow = page.locator("li", { hasText: "Maria Rossi" });
-  await expect(contactRow).toBeVisible({ timeout: 10_000 });
-  await openRowMenu(contactRow);
+  await page.getByRole("button", { name: "Aggiungi amico" }).click();
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
+  const friendRow = page.locator("li", { hasText: "Maria Rossi" });
+  await expect(friendRow).toBeVisible({ timeout: 10_000 });
+  await openRowMenu(friendRow);
   await page.getByRole("menuitem", { name: "Segna come attivo" }).click();
-  await expect(contactRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
-  await openRowMenu(contactRow);
-  await page.getByRole("menuitem", { name: "Segna come amico" }).click();
+  await expect(friendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
+  await openRowMenu(friendRow);
+  await page.getByRole("menuitem", { name: "Segna come guardiano" }).click();
 
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByText("6/8")).toBeVisible();
 
-  // Una capsula con quel contatto come destinatario completa insieme
-  // "capsula" e "collegamento capsula-contatto": 8/8, checklist sparita.
+  // Una capsula con quell'amico come destinatario completa insieme
+  // "capsula" e "collegamento capsula-amico": 8/8, checklist sparita.
   await page.getByRole("link", { name: "Capsule", exact: true }).click();
   await page.getByRole("link", { name: "+ Crea capsula" }).click();
   await expect(page.getByRole("heading", { name: "Nuova capsula" })).toBeVisible();
   await page.getByLabel("Titolo").fill("Per Maria");
   await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
-  await page.locator("#create-contact").selectOption({ label: "Maria Rossi" });
+  await page.locator("#create-friend").selectOption({ label: "Maria Rossi" });
   await page.getByRole("button", { name: "+ Aggiungi" }).click();
   await expect(page.getByText("Maria Rossi")).toBeVisible();
   await page.getByRole("button", { name: "Avanti" }).click();

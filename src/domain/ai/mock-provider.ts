@@ -72,9 +72,9 @@ function search(query: string, context: AIContext): AISource[] {
     }
   }
 
-  for (const contact of context.contacts) {
-    if (textMatches([contact.name, contact.email, contact.role].join(" "), tokens)) {
-      sources.push({ kind: "contact", id: contact.id, label: contact.name, href: "/contacts" });
+  for (const friend of context.friends) {
+    if (textMatches([friend.name, friend.email, friend.role].join(" "), tokens)) {
+      sources.push({ kind: "friend", id: friend.id, label: friend.name, href: "/friends" });
     }
   }
 
@@ -96,7 +96,7 @@ function matchedCategoryIds(query: string, context: AIContext): Set<string> {
   );
 }
 
-/** Parole che nominano un intero tipo di entità (singolare e plurale) --- "quanti CONTATTI ho?", "quali DOCUMENTI ho?". */
+/** Parole che nominano un intero tipo di entità (singolare e plurale) --- "quanti AMICI ho?", "quali DOCUMENTI ho?". */
 const LIST_ALL_TRIGGERS: Record<string, AISource["kind"]> = {
   bene: "asset",
   beni: "asset",
@@ -104,8 +104,8 @@ const LIST_ALL_TRIGGERS: Record<string, AISource["kind"]> = {
   documenti: "document",
   scadenza: "reminder",
   scadenze: "reminder",
-  contatto: "contact",
-  contatti: "contact",
+  amico: "friend",
+  amici: "friend",
   capsula: "capsule",
   capsule: "capsule",
 };
@@ -127,8 +127,8 @@ function allSourcesOfKind(kind: AISource["kind"], context: AIContext): AISource[
       return context.documents.map((d) => ({ kind: "document", id: d.id, label: d.filename, href: "/archive" }));
     case "reminder":
       return context.reminders.map((r) => ({ kind: "reminder", id: r.id, label: r.title, href: "/reminders" }));
-    case "contact":
-      return context.contacts.map((c) => ({ kind: "contact", id: c.id, label: c.name, href: "/contacts" }));
+    case "friend":
+      return context.friends.map((c) => ({ kind: "friend", id: c.id, label: c.name, href: "/friends" }));
     case "capsule":
       return context.capsules.map((c) => ({ kind: "capsule", id: c.id, label: c.title, href: "/capsules" }));
   }
@@ -184,8 +184,8 @@ function retrieve(query: string, context: AIContext): AISource[] {
   for (const capsuleId of matchedCapsuleIds) {
     const capsule = context.capsules.find((c) => c.id === capsuleId);
     if (!capsule) continue;
-    for (const contact of capsule.relatedContacts) {
-      sources.push({ kind: "contact", id: contact.id, label: contact.name, href: "/contacts" });
+    for (const friend of capsule.relatedFriends) {
+      sources.push({ kind: "friend", id: friend.id, label: friend.name, href: "/friends" });
     }
     for (const doc of capsule.linkedDocuments) {
       sources.push({ kind: "document", id: doc.id, label: doc.filename, href: "/archive" });
@@ -196,7 +196,7 @@ function retrieve(query: string, context: AIContext): AISource[] {
   if (specific.length > 0) return specific;
 
   // Nulla di specifico trovato --- se la domanda nomina comunque un
-  // intero tipo di entità ("quanti contatti ho?"), l'interpretazione più
+  // intero tipo di entità ("quanti amici ho?"), l'interpretazione più
   // ragionevole è "elencameli tutti", non "niente trovato". Un
   // ripiego, non la prima interpretazione: "quali documenti riguardano
   // la casa?" deve restare filtrato a quelli su "casa" (v. sopra), non

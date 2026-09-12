@@ -294,7 +294,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       case "status":
         return STATUS_LABEL[capsule.status];
       case "recipients":
-        return sortAlphabetically(capsule.relatedContacts, (c) => c.name)
+        return sortAlphabetically(capsule.relatedFriends, (c) => c.name)
           .map((c) => c.name)
           .join(", ");
       case "openAt":
@@ -455,8 +455,8 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                             </span>
                           </td>
                           <td className="max-w-[12rem] truncate p-3 text-zinc-600 dark:text-zinc-400">
-                            {capsule.relatedContacts.length > 0
-                              ? sortAlphabetically(capsule.relatedContacts, (c) => c.name)
+                            {capsule.relatedFriends.length > 0
+                              ? sortAlphabetically(capsule.relatedFriends, (c) => c.name)
                                   .map((c) => c.name)
                                   .join(", ")
                               : "—"}
@@ -521,8 +521,8 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                           </span>
                         </p>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                          {capsule.relatedContacts.length > 0
-                            ? `Per ${sortAlphabetically(capsule.relatedContacts, (c) => c.name)
+                          {capsule.relatedFriends.length > 0
+                            ? `Per ${sortAlphabetically(capsule.relatedFriends, (c) => c.name)
                                 .map((c) => c.name)
                                 .join(", ")} · `
                             : ""}

@@ -64,7 +64,7 @@ test("le intestazioni delle tabelle in Archivio ordinano lessicograficamente, co
   await expect(nameCells).toHaveText(["📄 Ananas.txt", "📄 Banana.txt", "📄 Ciliegia.txt"]);
 });
 
-test("le intestazioni delle tabelle in Contatti fiduciari ordinano lessicograficamente", async ({
+test("le intestazioni delle tabelle in Amici ordinano lessicograficamente", async ({
   page,
 }) => {
   test.slow();
@@ -78,7 +78,7 @@ test("le intestazioni delle tabelle in Contatti fiduciari ordinano lessicografic
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "Contatti" }).click();
+  await page.getByRole("link", { name: "Amici" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
@@ -87,19 +87,19 @@ test("le intestazioni delle tabelle in Contatti fiduciari ordinano lessicografic
   ).toBeVisible({ timeout: 45_000 });
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
-  await expect(page.getByRole("heading", { name: "Contatti fiduciari" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
 
   for (const [name, email] of [
     ["Luca Bianchi", "luca@esempio.it"],
     ["Anna Verdi", "anna@esempio.it"],
   ]) {
-    await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
-    await expect(page.getByRole("heading", { name: "Nuovo contatto fiduciario" })).toBeVisible();
+    await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
+    await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
     await page.getByLabel("Nome").fill(name);
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Ruolo").fill("Amico");
-    await page.getByRole("button", { name: "Aggiungi contatto" }).click();
-    await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
+    await page.getByRole("button", { name: "Aggiungi amico" }).click();
+    await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
     await expect(page.getByText(name)).toBeVisible({ timeout: 10_000 });
   }
 

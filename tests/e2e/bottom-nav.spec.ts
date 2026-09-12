@@ -102,7 +102,7 @@ test("oltre 5 voci scelte, le altre caselle si disabilitano", async ({ page }) =
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     page.getByRole("checkbox", { name: "Beni" }).click(),
   ]);
-  const sixthCheckbox = page.getByRole("checkbox", { name: "Contatti" });
+  const sixthCheckbox = page.getByRole("checkbox", { name: "Amici" });
   await expect(sixthCheckbox).toBeDisabled();
 });
 

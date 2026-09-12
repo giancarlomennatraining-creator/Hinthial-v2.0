@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { DashboardCounters } from "@/components/dashboard/DashboardCounters";
 import type { AIContext } from "@/domain/ai/types";
-import type { TrustedContactListItem } from "@/domain/contacts/types";
+import type { FriendListItem } from "@/domain/friends/types";
 
 function buildContext(overrides: Partial<AIContext> = {}): AIContext {
   return {
@@ -10,20 +10,20 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
     assets: [],
     documents: [],
     reminders: [],
-    contacts: [],
+    friends: [],
     capsules: [],
     ...overrides,
   };
 }
 
-function buildContact(overrides: Partial<TrustedContactListItem> = {}): TrustedContactListItem {
+function buildFriend(overrides: Partial<FriendListItem> = {}): FriendListItem {
   return {
-    id: "contact-1",
+    id: "friend-1",
     name: "Maria Rossi",
     email: "maria@esempio.it",
     role: "Coniuge",
     status: "active",
-    isFriend: false,
+    isGuardian: false,
     createdAt: "2026-01-01",
     ...overrides,
   };
@@ -35,7 +35,7 @@ describe("DashboardCounters", () => {
 
     expect(screen.getByRole("link", { name: "Archivio: 0" })).toHaveAttribute("href", "/archive");
     expect(screen.getByRole("link", { name: "Beni: 0" })).toHaveAttribute("href", "/assets");
-    expect(screen.getByRole("link", { name: "Contatti: 0" })).toHaveAttribute("href", "/contacts");
+    expect(screen.getByRole("link", { name: "Amici: 0" })).toHaveAttribute("href", "/friends");
     expect(screen.getByRole("link", { name: "Capsule: 0" })).toHaveAttribute("href", "/capsules");
     expect(screen.getByRole("link", { name: "Categorie: 0" })).toHaveAttribute("href", "/settings");
   });
@@ -67,33 +67,33 @@ describe("DashboardCounters", () => {
     expect(screen.getByRole("link", { name: "Categorie: 1" })).toBeInTheDocument();
   });
 
-  it("shows no sub-counter for Contatti when there are no contacts at all", () => {
+  it("shows no sub-counter for Amici when there are no friends at all", () => {
     render(<DashboardCounters context={buildContext()} />);
-    expect(screen.queryByText(/attivi e amici/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/attivi e guardiani/)).not.toBeInTheDocument();
   });
 
-  it("splits the Contatti sub-counter into two separate tallies --- Attivi and Amici, not their intersection", () => {
+  it("splits the Amici sub-counter into two separate tallies --- Attivi and Guardiani, not their intersection", () => {
     const context = buildContext({
-      contacts: [
-        buildContact({ id: "c1", status: "active", isFriend: true }),
-        // Amico ma non ancora Attivo --- conta per "amici", non per "attivi".
-        buildContact({ id: "c2", status: "pending", isFriend: true }),
-        // Attivo ma non Amico --- conta per "attivi", non per "amici".
-        buildContact({ id: "c3", status: "active", isFriend: false }),
+      friends: [
+        buildFriend({ id: "f1", status: "active", isGuardian: true }),
+        // Guardiano ma non ancora Attivo --- conta per "guardiani", non per "attivi".
+        buildFriend({ id: "f2", status: "pending", isGuardian: true }),
+        // Attivo ma non Guardiano --- conta per "attivi", non per "guardiani".
+        buildFriend({ id: "f3", status: "active", isGuardian: false }),
       ],
     });
 
     render(<DashboardCounters context={context} />);
-    expect(screen.getByRole("link", { name: "Contatti: 3 (2 attivi e 2 amici)" })).toBeInTheDocument();
-    expect(screen.getByText("2 attivi e 2 amici")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Amici: 3 (2 attivi e 2 guardiani)" })).toBeInTheDocument();
+    expect(screen.getByText("2 attivi e 2 guardiani")).toBeInTheDocument();
   });
 
-  it("shows the sub-counter at 0 e 0 when there are contacts but none qualify yet", () => {
+  it("shows the sub-counter at 0 e 0 when there are friends but none qualify yet", () => {
     const context = buildContext({
-      contacts: [buildContact({ status: "pending", isFriend: false })],
+      friends: [buildFriend({ status: "pending", isGuardian: false })],
     });
 
     render(<DashboardCounters context={context} />);
-    expect(screen.getByText("0 attivi e 0 amici")).toBeInTheDocument();
+    expect(screen.getByText("0 attivi e 0 guardiani")).toBeInTheDocument();
   });
 });

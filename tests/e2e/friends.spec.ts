@@ -4,7 +4,7 @@ import { openRowMenu } from "./row-actions";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("aggiunge un contatto fiduciario, ne segue lo stato e lo elimina", async ({ page }) => {
+test("aggiunge un amico, ne segue lo stato e lo elimina", async ({ page }) => {
   // Real PBKDF2 (600,000 iterations, x2) in-browser during setup can push
   // this past the default 30s test timeout under load.
   test.slow();
@@ -18,7 +18,7 @@ test("aggiunge un contatto fiduciario, ne segue lo stato e lo elimina", async ({
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "Contatti" }).click();
+  await page.getByRole("link", { name: "Amici" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
@@ -28,12 +28,12 @@ test("aggiunge un contatto fiduciario, ne segue lo stato e lo elimina", async ({
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
 
-  await expect(page.getByRole("heading", { name: "Contatti fiduciari" })).toBeVisible();
-  await expect(page.getByText("Nessun contatto fiduciario ancora")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
+  await expect(page.getByText("Nessun amico ancora")).toBeVisible();
 
   // Aggiunta: nasce con stato "In attesa".
-  await page.getByRole("link", { name: "+ Aggiungi contatto" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo contatto fiduciario" })).toBeVisible();
+  await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
   await page.getByLabel("Nome").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria.rossi@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
@@ -41,12 +41,12 @@ test("aggiunge un contatto fiduciario, ne segue lo stato e lo elimina", async ({
   // un'email vera (Resend è configurato con una chiave reale anche nei
   // test), da non fare qui solo per verificare che il form la mostri.
   await expect(
-    page.getByRole("checkbox", { name: "Invita questo contatto su Hinthial" }),
+    page.getByRole("checkbox", { name: "Invita questo amico su Hinthial" }),
   ).not.toBeChecked();
-  await page.getByRole("button", { name: "Aggiungi contatto" }).click();
+  await page.getByRole("button", { name: "Aggiungi amico" }).click();
 
-  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
-  await expect(page.getByText("Contatto aggiunto.")).toBeVisible();
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
+  await expect(page.getByText("Amico aggiunto.")).toBeVisible();
   const row = page.locator("li", { hasText: "Maria Rossi" });
   await expect(row).toBeVisible({ timeout: 10_000 });
   await expect(row.getByText("In attesa")).toBeVisible();
@@ -68,17 +68,17 @@ test("aggiunge un contatto fiduciario, ne segue lo stato e lo elimina", async ({
   await expect(page.getByRole("menuitem", { name: "Revoca" })).not.toBeVisible();
 
   // Modifica: pagina dedicata (come la creazione) --- si può correggere
-  // anche un contatto già revocato.
+  // anche un amico già revocato.
   await page.getByRole("menuitem", { name: "Modifica" }).click();
-  await expect(page).toHaveURL(/\/contacts\/[^/]+\/edit$/);
-  await expect(page.getByRole("heading", { name: "Modifica contatto fiduciario" })).toBeVisible();
+  await expect(page).toHaveURL(/\/friends\/[^/]+\/edit$/);
+  await expect(page.getByRole("heading", { name: "Modifica amico" })).toBeVisible();
   await page.getByLabel("Nome").fill("Maria Bianchi");
   await page.getByLabel("Email").fill("maria.bianchi@esempio.it");
   await page.getByLabel("Ruolo").fill("Sorella");
   await page.getByRole("button", { name: "Salva modifiche" }).click();
 
-  await expect(page).toHaveURL(/\/contacts$/, { timeout: 15_000 });
-  await expect(page.getByText("Contatto aggiornato.")).toBeVisible();
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
+  await expect(page.getByText("Amico aggiornato.")).toBeVisible();
   const updatedRow = page.locator("li", { hasText: "Maria Bianchi" });
   await expect(updatedRow).toBeVisible({ timeout: 10_000 });
   await expect(updatedRow.getByText("maria.bianchi@esempio.it · Sorella")).toBeVisible();
@@ -89,7 +89,7 @@ test("aggiunge un contatto fiduciario, ne segue lo stato e lo elimina", async ({
   page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(updatedRow);
   await page.getByRole("menuitem", { name: "Elimina" }).click();
-  await expect(page.getByText("Nessun contatto fiduciario ancora")).toBeVisible({
+  await expect(page.getByText("Nessun amico ancora")).toBeVisible({
     timeout: 10_000,
   });
 });

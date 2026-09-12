@@ -10,6 +10,6 @@ export const AI_SOURCE_KIND_LABELS: Record<AISource["kind"], string> = {
   asset: "Beni",
   document: "Archivio",
   reminder: "Scadenze",
-  contact: "Contatti",
+  friend: "Amici",
   capsule: "Capsule",
 };
