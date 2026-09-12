@@ -139,7 +139,7 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
             {!masterEnabled ? (
               <>
                 Il consenso generale all&apos;IA reale non è attivo --- attivalo nella scheda
-                Privacy di{" "}
+                Intelligenza artificiale di{" "}
                 <Link href="/settings" className="underline underline-offset-2 hover:no-underline">
                   Impostazioni
                 </Link>{" "}

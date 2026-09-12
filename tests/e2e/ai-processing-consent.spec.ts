@@ -6,16 +6,16 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
 /**
  * FASE 11 --- "Explicit AI processing" (v. HINTHIAL_MVP.md sezione 8),
  * con due livelli di consenso (v. discussione con l'utente): un
- * "cancello" generale in Impostazioni > Privacy (ai_master_enabled) e un
- * consenso specifico per la Chat (ai_chat_consent), gestibile sia lì
- * sia direttamente nella pagina AI --- sincronizzati, come
- * ListViewToggle/ListViewSettings. Non serve una vera ANTHROPIC_API_KEY
- * per verificare questo percorso end-to-end: con entrambi i consensi
- * attivi ma la chiave non configurata (il caso di questo ambiente di
- * sviluppo), la route risponde con un errore chiaro invece di un crash
- * silenzioso.
+ * "cancello" generale nella scheda a sé "Intelligenza artificiale" di
+ * Impostazioni (ai_master_enabled) e un consenso specifico per la Chat
+ * (ai_chat_consent), gestibile sia lì sia direttamente nella pagina AI
+ * --- sincronizzati, come ListViewToggle/ListViewSettings. Non serve una
+ * vera ANTHROPIC_API_KEY per verificare questo percorso end-to-end: con
+ * entrambi i consensi attivi ma la chiave non configurata (il caso di
+ * questo ambiente di sviluppo), la route risponde con un errore chiaro
+ * invece di un crash silenzioso.
  */
-test("il consenso all'AI reale ha un cancello generale (Impostazioni > Privacy) e un consenso specifico per la Chat, entrambi necessari", async ({
+test("il consenso all'AI reale ha un cancello generale (Impostazioni > Intelligenza artificiale) e un consenso specifico per la Chat, entrambi necessari", async ({
   page,
 }) => {
   test.slow();
@@ -61,10 +61,11 @@ test("il consenso all'AI reale ha un cancello generale (Impostazioni > Privacy) 
   await expect(chatToggle).toBeDisabled();
   await expect(page.getByText(/consenso generale.*non è attivo/)).toBeVisible();
 
-  // Il rimando porta davvero a Impostazioni --- da lì, la scheda Privacy.
+  // Il rimando porta davvero a Impostazioni --- da lì, la scheda a sé
+  // "Intelligenza artificiale" (non più una sottoparte di Privacy).
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await expect(page).toHaveURL(/\/settings$/);
-  await page.getByRole("tab", { name: "Privacy" }).click();
+  await page.getByRole("tab", { name: "Intelligenza artificiale" }).click();
   await expect(page.getByRole("heading", { name: "Intelligenza artificiale" })).toBeVisible();
 
   const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di IA esterna" });
@@ -107,7 +108,7 @@ test("il consenso all'AI reale ha un cancello generale (Impostazioni > Privacy) 
   // Spegnere il cancello generale spegne anche la funzione specifica.
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
-  await page.getByRole("tab", { name: "Privacy" }).click();
+  await page.getByRole("tab", { name: "Intelligenza artificiale" }).click();
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     masterSwitch.click(),
@@ -116,11 +117,11 @@ test("il consenso all'AI reale ha un cancello generale (Impostazioni > Privacy) 
   await expect(chatCheckbox).not.toBeChecked();
   await expect(chatCheckbox).toBeDisabled();
 
-  // Resta impostato dopo un refresh vero --- Privacy non richiede la
-  // Master Key sbloccata (v. PrivacyPanel), quindi qui basta ripescare
-  // la scheda giusta dopo il ricaricamento.
+  // Resta impostato dopo un refresh vero --- questa scheda non richiede
+  // la Master Key sbloccata (come Privacy), quindi qui basta ripescarla
+  // dopo il ricaricamento.
   await page.reload();
-  await page.getByRole("tab", { name: "Privacy" }).click();
+  await page.getByRole("tab", { name: "Intelligenza artificiale" }).click();
   await expect(page.getByRole("heading", { name: "Intelligenza artificiale" })).toBeVisible();
   await expect(masterSwitch).toHaveAttribute("aria-checked", "false");
 });

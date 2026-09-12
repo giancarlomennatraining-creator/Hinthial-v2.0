@@ -16,9 +16,11 @@ import { ListViewSettings } from "@/components/settings/ListViewSettings";
 import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { ImportExportTabs } from "@/components/import-export/ImportExportTabs";
+import { AIConsentSettings } from "@/components/settings/AIConsentSettings";
 import type { ComponentType, SVGProps } from "react";
 import {
   ActivityIcon,
+  AIIcon,
   AlertTriangleIcon,
   CategoryIcon,
   ChecklistIcon,
@@ -38,12 +40,14 @@ type Tab =
   | "appearance"
   | "activity"
   | "import-export"
+  | "ai"
   | "danger-zone";
 
 const TABS: { id: Tab; label: string; icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
   { id: "user-info", label: "Informazioni utente", icon: UserIcon },
   { id: "security", label: "Sicurezza", icon: SecurityIcon },
   { id: "privacy", label: "Privacy", icon: EyeIcon },
+  { id: "ai", label: "Intelligenza artificiale", icon: AIIcon },
   { id: "categories", label: "Categorie", icon: CategoryIcon },
   { id: "import-export", label: "Importa/Esporta", icon: ImportExportIcon },
   { id: "onboarding", label: "Onboarding", icon: ChecklistIcon },
@@ -132,6 +136,25 @@ export function SettingsTabs({
       // Layer di identità (login), non di cifratura --- non richiede
       // la master key (v. domain/mfa/repository.ts).
       return <MfaSettingsPanel userId={userId} />;
+    }
+    if (activeTab === "ai") {
+      // Una scheda a sé (non più una sottoparte di Privacy, v. richiesta
+      // utente) --- non richiede la master key, il consenso riguarda
+      // solo dati già decifrati e mostrati altrove (v. AIPanel).
+      return (
+        <div className="flex max-w-md flex-col gap-4">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            Intelligenza artificiale
+          </h2>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Per impostazione predefinita nessuna funzione di IA reale è attiva --- ogni domanda
+            e ogni contenuto restano elaborati solo sul tuo dispositivo. Attivando il cancello
+            generale qui sotto, attivi solo la possibilità di accendere le singole funzioni, una
+            per una.
+          </p>
+          <AIConsentSettings />
+        </div>
+      );
     }
     if (activeTab === "categories") {
       return <CategoriesPanel />;
@@ -234,8 +257,8 @@ export function SettingsTabs({
                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
                   >
                     <t.icon
-                      width={18}
-                      height={18}
+                      width={20}
+                      height={20}
                       className={t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand"}
                     />
                     <span
@@ -300,8 +323,8 @@ export function SettingsTabs({
                   pericolosa" (v. sopra), che resta nel proprio colore di
                   avviso. */}
               <t.icon
-                width={18}
-                height={18}
+                width={20}
+                height={20}
                 className={t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand"}
               />
               {t.label}
