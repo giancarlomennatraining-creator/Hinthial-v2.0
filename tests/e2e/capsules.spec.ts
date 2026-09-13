@@ -198,9 +198,9 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await expect(updatedRow.getByText("Bozza")).toBeVisible();
   await expect(updatedRow.getByText("Per Maria Rossi · ")).toBeVisible();
   await expect(updatedRow.getByText("apertura prevista 15 mar 2027, 10:00")).toBeVisible();
-  // Countdown visivo verso l'apertura (v. CapsuleCountdown) --- una data
-  // così lontana nel futuro resta sempre "tra N giorni".
-  await expect(updatedRow.getByText(/Si aprirà tra \d+ giorni/)).toBeVisible();
+  // Il countdown visivo (v. CapsuleCountdown) non ha senso su una bozza,
+  // dato che openAt può ancora cambiare: appare solo dopo la chiusura.
+  await expect(updatedRow.getByText(/Si aprirà tra/)).not.toBeVisible();
   // Il vecchio allegato è sparito, il nuovo è al suo posto.
   await expect(updatedRow.getByText("messaggio.mp3", { exact: true })).not.toBeVisible();
   await expect(updatedRow.getByText("messaggio-nuovo.mp3")).toBeVisible();
@@ -220,6 +220,9 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await openRowMenu(updatedRow);
   await page.getByRole("menuitem", { name: "Chiudi la capsula" }).click();
   await expect(updatedRow.getByText("Chiusa", { exact: true })).toBeVisible({ timeout: 10_000 });
+  // Ora che non è più una bozza, il countdown compare (v. CapsuleCountdown)
+  // --- una data così lontana nel futuro resta sempre "tra N giorni".
+  await expect(updatedRow.getByText(/Si aprirà tra \d+ giorni/)).toBeVisible();
   // Una volta non più in bozza, non è più modificabile né richiudibile.
   await openRowMenu(updatedRow);
   await expect(page.getByRole("menuitem", { name: "Chiudi la capsula" })).not.toBeVisible();

@@ -633,7 +633,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                           dal {formatDate(capsule.createdAt)}
                           {capsule.openAt ? ` · apertura prevista ${formatDateTime(capsule.openAt)}` : ""}
                         </p>
-                        {capsule.openAt ? (
+                        {capsule.openAt && capsule.status !== "draft" ? (
                           <div className="mt-1.5">
                             <CapsuleCountdown createdAt={capsule.createdAt} openAt={capsule.openAt} />
                           </div>

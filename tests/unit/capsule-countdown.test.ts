@@ -16,10 +16,25 @@ describe("computeCountdown", () => {
     expect(label).toBe("Si aprirà domani");
   });
 
-  it("says 'oggi' when the opening date is today", () => {
-    const { daysUntil, label } = computeCountdown(CREATED_AT, "2026-06-15T18:00:00.000Z", NOW);
-    expect(daysUntil).toBe(0);
-    expect(label).toBe("Si apre oggi");
+  it("counts hours remaining when under 1 day away", () => {
+    const { daysUntil, label } = computeCountdown(CREATED_AT, "2026-06-16T04:00:00.000Z", NOW);
+    expect(daysUntil).toBe(1);
+    expect(label).toBe("Si aprirà tra 16 ore");
+  });
+
+  it("reports a single hour remaining in the singular", () => {
+    const { label } = computeCountdown(CREATED_AT, "2026-06-15T13:00:00.000Z", NOW);
+    expect(label).toBe("Si aprirà tra 1 ora");
+  });
+
+  it("counts minutes remaining when under 1 hour away", () => {
+    const { label } = computeCountdown(CREATED_AT, "2026-06-15T12:14:00.000Z", NOW);
+    expect(label).toBe("Si aprirà tra 14 minuti");
+  });
+
+  it("reports a single minute remaining in the singular", () => {
+    const { label } = computeCountdown(CREATED_AT, "2026-06-15T12:01:00.000Z", NOW);
+    expect(label).toBe("Si aprirà tra 1 minuto");
   });
 
   it("reports a single day passed in the singular", () => {

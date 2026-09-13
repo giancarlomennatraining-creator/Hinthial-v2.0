@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-13
 
+### Il conto alla rovescia della capsula scende a ore e minuti; compare solo dopo la chiusura
+
+**Cosa fa:** quando manca meno di un giorno all'apertura di una capsula, il conto alla rovescia non dice più genericamente "oggi" --- ti dice "si aprirà tra 16 ore", e sotto l'ora "si aprirà tra 14 minuti". Inoltre ora lo vedi solo sulle capsule chiuse (o condivise): su una bozza non compare più, dato che lì la data di apertura può ancora cambiare e un conto alla rovescia non avrebbe senso.
+
+**Note tecniche:** `computeCountdown` (`lib/capsule-countdown.ts`) ora ramifica sulla differenza esatta in millisecondi da `openAt`, non solo sulla differenza di data di calendario: sotto le 24h mostra le ore intere, sotto l'ora i minuti interi (entrambi arrotondati e con singolare/plurale corretto; clampati rispettivamente a 23 e 59 per evitare che un arrotondamento al bordo mostri "24 ore" o "60 minuti"). Sopra le 24h il comportamento resta quello di prima (giorni interi, "domani" per esattamente un giorno). `CapsulesPanel` mostra `CapsuleCountdown` solo quando `status !== "draft"`.
+
 ### La data di apertura di una capsula diventa data e ora
 
 **Cosa fa:** quando crei o modifichi una capsula, "Si aprirà il ..." ora chiede anche l'orario, non solo il giorno --- lo stesso calendario nativo dello smartphone/browser, con in più la scelta dell'ora. Ovunque compaia una data di apertura (elenco Capsule, anteprima, "Condivise con me", il conteggio alla rovescia) viene mostrata con l'orario incluso.
