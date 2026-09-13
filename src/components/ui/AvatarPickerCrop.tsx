@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { clampOffset, computeCropRect, coverScale } from "@/lib/image-crop";
 
@@ -13,10 +13,20 @@ const MAX_ZOOM = 3;
  * (Impostazioni > Informazioni utente) per essere riusato anche per la
  * foto di un amico (v. Create/EditFriendForm): stesso ritaglio via
  * `<canvas>` lato client, un solo file già pronto in uscita (mai un
- * zoom/posizione da riapplicare altrove). "Scatta foto"/"Carica foto"
- * riusano il trucco già validato in Archivio (v. CreateArchiveItemForm):
- * un solo `<input type="file">`, con `capture` impostato un istante
- * prima solo per il primo tasto.
+ * zoom/posizione da riapplicare altrove).
+ *
+ * "Carica foto"/"Scatta foto" sono DUE `<input type="file">` distinti,
+ * non uno solo con `capture` attivato/disattivato al volo (v. richiesta
+ * utente: su smartphone i due tasti aprivano sempre la fotocamera) ---
+ * quel trucco (ancora usato in CreateArchiveItemForm) dipende dal
+ * ripristino dell'attributo `capture` al blur, che su alcuni
+ * browser/OS mobile non scatta mai quando si annulla la fotocamera,
+ * lasciandolo attivo per il tasto successivo. Con due input separati,
+ * "Carica" non ha mai `capture` e "Scatta" ce l'ha sempre: nessuno stato
+ * da ripristinare. Su schermi larghi (desktop, senza fotocamera
+ * "capture" del sistema operativo) "Scatta foto" apre invece la
+ * webcam direttamente nel browser (`getUserMedia`), con un fotogramma
+ * catturato su un `<canvas>` --- v. handleWebcamCapture.
  */
 export function AvatarPickerCrop({
   currentAvatarUrl,
@@ -35,8 +45,8 @@ export function AvatarPickerCrop({
   onCropped: (blob: Blob) => void | Promise<void>;
   onRemove?: () => void | Promise<void>;
 }) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const dragState = useRef<{
     startX: number;
     startY: number;
@@ -51,37 +61,70 @@ export function AvatarPickerCrop({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Webcam (desktop) --- v. handleStartWebcam/handleWebcamCapture/handleStopWebcam.
+  const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null);
+
   const scale = naturalSize ? coverScale(naturalSize.width, naturalSize.height, CONTAINER_SIZE) * zoom : 1;
   const displayedWidth = naturalSize ? naturalSize.width * scale : 0;
   const displayedHeight = naturalSize ? naturalSize.height * scale : 0;
+
+  // Ferma sempre la webcam allo smontaggio --- altrimenti la spia della
+  // fotocamera del dispositivo resterebbe accesa a componente sparito.
+  useEffect(() => {
+    return () => {
+      webcamStream?.getTracks().forEach((track) => track.stop());
+    };
+  }, [webcamStream]);
 
   function resetCropState() {
     if (pickedImageSrc) URL.revokeObjectURL(pickedImageSrc);
     setPickedImageSrc(null);
     setNaturalSize(null);
     setZoom(1);
-    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+    event.target.value = ""; // stesso file scelto due volte di fila deve comunque riattivare onChange
     if (!file) return;
     setError(null);
     setPickedImageSrc(URL.createObjectURL(file));
     setZoom(1);
   }
 
-  // V. CreateArchiveItemForm per il ragionamento completo: `capture`
-  // impostato un istante prima dell'apertura, tolto dopo, un solo input.
-  function handleCameraClick() {
-    const input = fileInputRef.current;
-    if (!input) return;
-    input.setAttribute("capture", "environment");
-    input.click();
+  async function handleStartWebcam() {
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      setWebcamStream(stream);
+    } catch {
+      setError("Impossibile accedere alla videocamera. Controlla i permessi del browser.");
+    }
   }
 
-  function handleFileInputBlur(event: React.FocusEvent<HTMLInputElement>) {
-    event.target.removeAttribute("capture");
+  function handleStopWebcam() {
+    webcamStream?.getTracks().forEach((track) => track.stop());
+    setWebcamStream(null);
+  }
+
+  function handleWebcamCapture() {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) return;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      setPickedImageSrc(URL.createObjectURL(blob));
+      setZoom(1);
+    }, "image/jpeg");
+
+    handleStopWebcam();
   }
 
   function handleImageLoad() {
@@ -254,6 +297,36 @@ export function AvatarPickerCrop({
             </button>
           </div>
         </div>
+      ) : webcamStream ? (
+        <div className="flex flex-col gap-3">
+          <video
+            ref={(el) => {
+              videoRef.current = el;
+              if (el && el.srcObject !== webcamStream) el.srcObject = webcamStream;
+            }}
+            autoPlay
+            playsInline
+            muted
+            className="rounded-2xl border border-zinc-300 dark:border-zinc-700"
+            style={{ width: CONTAINER_SIZE, height: CONTAINER_SIZE, objectFit: "cover" }}
+          />
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleWebcamCapture}
+              className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+            >
+              📷 Scatta
+            </button>
+            <button
+              type="button"
+              onClick={handleStopWebcam}
+              className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            >
+              Annulla
+            </button>
+          </div>
+        </div>
       ) : (
         <div className="flex items-center gap-4">
           <Avatar
@@ -267,22 +340,29 @@ export function AvatarPickerCrop({
             <div className="flex flex-wrap gap-2">
               <label className="w-fit cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900">
                 {currentAvatarUrl ? "Cambia foto" : "Carica foto"}
+                <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+              </label>
+              {/* Su smartphone/tablet (md:hidden): apre la fotocamera nativa
+                  del dispositivo --- `capture` è impostato una volta per
+                  tutte in JSX, mai attivato/disattivato al volo (v. doc
+                  comment in cima al file). */}
+              <label className="w-fit cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 md:hidden dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900">
+                📷 Scatta foto
                 <input
-                  ref={fileInputRef}
                   type="file"
                   accept="image/*"
+                  capture="environment"
                   className="hidden"
                   onChange={handleFileChange}
-                  onBlur={handleFileInputBlur}
                 />
               </label>
-              {/* Solo su smartphone --- su desktop l'attributo capture viene
-                  ignorato e si apre comunque la normale finestra di scelta
-                  (v. CreateArchiveItemForm). */}
+              {/* Su desktop (hidden md:inline-flex): niente fotocamera di
+                  sistema da aprire via input file --- si usa direttamente
+                  la webcam del dispositivo nel browser. */}
               <button
                 type="button"
-                onClick={handleCameraClick}
-                className="w-fit rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                onClick={handleStartWebcam}
+                className="hidden w-fit rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 md:inline-flex dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
               >
                 📷 Scatta foto
               </button>
