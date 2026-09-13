@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import QRCode from "qrcode";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { PasswordComparisonNote } from "@/components/crypto/PasswordComparisonNote";
 import { TextField } from "@/components/ui/TextField";
@@ -27,7 +26,16 @@ export function SetupMasterKeyForm() {
   useEffect(() => {
     if (!pending) return;
     let cancelled = false;
-    QRCode.toDataURL(pending.setup.recoveryKey.formatted, { margin: 1, width: 320 })
+    // Import dinamico apposta: "qrcode" serve solo in questo istante,
+    // una volta sola per account (la primissima configurazione della
+    // cifratura) --- caricarla staticamente in cima al file la
+    // spedirebbe invece con ogni pagina protetta da RequireMasterKey,
+    // dato che quel gate importa questo form anche per chi ha già
+    // configurato la cifratura da tempo e non lo vedrà mai renderizzato.
+    import("qrcode")
+      .then(({ default: QRCode }) =>
+        QRCode.toDataURL(pending.setup.recoveryKey.formatted, { margin: 1, width: 320 }),
+      )
       .then((url) => {
         if (!cancelled) setQrDataUrl(url);
       })

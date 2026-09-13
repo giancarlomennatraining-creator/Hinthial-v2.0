@@ -12,6 +12,13 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-13
 
+### Ottimizzazioni di velocità: meno un giro di rete per pagina, meno codice caricato a vuoto
+
+**Cosa fa:** le pagine dovrebbero rispondere un po' più svelte, in particolare la prima interazione dopo il login e il passaggio da una sezione all'altra. Non un cambiamento visibile in interfaccia --- solo meno lavoro superfluo dietro le quinte a ogni navigazione.
+
+**Note tecniche:** misurato con un confronto reale dev-vs-produzione (che ha anche confermato che gran parte della "lentezza" percepita durante lo sviluppo è dovuta a Turbopack che compila ogni pagina al primo accesso di ogni sessione dev --- normale, e assente in produzione). Due interventi concreti trovati comunque validi: (1) `getCurrentUser()` non richiama più `supabase.auth.getUser()` (un giro di rete verso il server di autenticazione) ma legge la sessione già verificata pochi istanti prima da `src/proxy.ts`, il cui matcher copre ogni pagina qui interessata --- da lì in poi nella stessa richiesta non serve verificarla una seconda volta. (2) La libreria `qrcode` (usata solo per il QR del kit di recovery, in `SetupMasterKeyForm`) è passata da un import statico --- che la spediva con ogni pagina protetta da `RequireMasterKey`, quindi quasi ovunque nell'app, anche per chi ha configurato la cifratura da tempo --- a un import dinamico, caricato solo nell'istante in cui serve davvero. Verificato che non venga più scaricata visitando una sezione qualunque.
+
+
 ### "Novità" diventa una voce di menu a sé, non più una card in Dashboard
 
 **Cosa fa:** la card "Novità" e il suo pannello laterale sono spariti dalla Dashboard --- al loro posto, una nuova voce nel menu principale, "Novità", apre una pagina a sé (come Cronologia, ma senza filtri) con le ultime 10 modifiche a Hinthial in tabella, dalla più recente, e un tasto "Vedi tutte" per il resto.
