@@ -55,9 +55,13 @@ export async function importFriends(
       continue;
     }
     try {
+      // Il CSV non porta nome/cognome separati --- solo "Nome
+      // visualizzato" (v. FriendInput), come già prima di questo campo.
       await createFriend(supabase, masterKey, ownerId, {
         name: row.name,
         email: row.email,
+        firstName: "",
+        lastName: "",
         role: row.role,
       });
       results.push({ rowNumber: row.rowNumber, status: "imported" });

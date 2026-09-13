@@ -6,9 +6,27 @@ export type FriendStatus = "pending" | "active" | "revoked";
 
 export interface FriendListItem {
   id: string;
-  /** Decrypted client-side for display. */
+  /**
+   * "Nome visualizzato" in interfaccia --- non necessariamente "nome
+   * cognome": alla creazione parte come combinazione dei due (v.
+   * Create/EditFriendForm), ma resta un campo a sé, modificabile in
+   * seguito senza che si aggiorni più da solo. Decrypted client-side.
+   */
   name: string;
   email: string;
+  /** "" se non impostato (amici creati prima che questi campi esistessero) --- mai un errore. Decrypted client-side. */
+  firstName: string;
+  /** V. firstName. */
+  lastName: string;
+  /** Path Storage di una foto caricata a mano dal proprietario, o null --- v. avatarUrl. */
+  avatarPath: string | null;
+  /**
+   * URL pubblico della SOLA foto caricata a mano (da avatarPath) --- la
+   * foto reale di un eventuale account collegato si risolve altrove, di
+   * proposito (v. FriendsPanel.tsx, checkLinkedAccounts): una chiamata a
+   * parte per amico, per non rallentare ogni caricamento dell'elenco.
+   */
+  avatarUrl: string | null;
   /** Free text (es. "Coniuge", "Avvocato", "Fratello") --- non cifrato, etichetta gestionale. */
   role: string;
   status: FriendStatus;
@@ -38,7 +56,11 @@ export interface LinkedAccountMatch {
 }
 
 export interface FriendInput {
+  /** "Nome visualizzato" --- v. FriendListItem.name. */
   name: string;
   email: string;
+  /** Facoltativi --- v. FriendListItem.firstName/lastName. */
+  firstName: string;
+  lastName: string;
   role: string;
 }

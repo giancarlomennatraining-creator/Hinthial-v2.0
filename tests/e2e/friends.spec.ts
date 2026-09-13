@@ -34,7 +34,7 @@ test("aggiunge un amico, ne segue lo stato e lo elimina", async ({ page }) => {
   // Aggiunta: nasce con stato "In attesa".
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
-  await page.getByLabel("Nome").fill("Maria Rossi");
+  await page.getByLabel("Nome visualizzato").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria.rossi@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
   // Presente ma volutamente lasciata deselezionata --- spuntarla invierebbe
@@ -72,7 +72,7 @@ test("aggiunge un amico, ne segue lo stato e lo elimina", async ({ page }) => {
   await page.getByRole("menuitem", { name: "Modifica" }).click();
   await expect(page).toHaveURL(/\/friends\/[^/]+\/edit$/);
   await expect(page.getByRole("heading", { name: "Modifica amico" })).toBeVisible();
-  await page.getByLabel("Nome").fill("Maria Bianchi");
+  await page.getByLabel("Nome visualizzato").fill("Maria Bianchi");
   await page.getByLabel("Email").fill("maria.bianchi@esempio.it");
   await page.getByLabel("Ruolo").fill("Sorella");
   await page.getByRole("button", { name: "Salva modifiche" }).click();
@@ -92,4 +92,54 @@ test("aggiunge un amico, ne segue lo stato e lo elimina", async ({ page }) => {
   await expect(page.getByText("Nessun amico ancora")).toBeVisible({
     timeout: 10_000,
   });
+});
+
+test("nome e cognome riempiono da soli il nome visualizzato, finché non lo si tocca; senza foto mostra le iniziali", async ({
+  page,
+}) => {
+  test.slow();
+
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password").fill(user.password);
+  await page.getByRole("button", { name: "Accedi" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+
+  await page.getByRole("link", { name: "Amici" }).click();
+  await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
+  await page.getByLabel("Conferma master password").fill("una-master-password-solida");
+  await page.getByRole("button", { name: "Crea" }).click();
+  await expect(
+    page.getByLabel("Ho salvato la recovery key in un posto sicuro."),
+  ).toBeVisible({ timeout: 45_000 });
+  await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
+  await page.getByRole("button", { name: "Continua" }).click();
+  await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
+
+  await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
+  await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
+
+  const displayNameField = page.getByLabel("Nome visualizzato");
+  await page.getByLabel("Nome", { exact: true }).fill("Giulia");
+  await expect(displayNameField).toHaveValue("Giulia");
+  await page.getByLabel("Cognome").fill("Verdi");
+  await expect(displayNameField).toHaveValue("Giulia Verdi");
+
+  // Toccato direttamente, non segue più nome/cognome.
+  await displayNameField.fill("La mia amica Giulia");
+  await page.getByLabel("Cognome").fill("Verdi-Neri");
+  await expect(displayNameField).toHaveValue("La mia amica Giulia");
+
+  await page.getByLabel("Email").fill("giulia@esempio.it");
+  await page.getByLabel("Ruolo").fill("Amica");
+  await page.getByRole("button", { name: "Aggiungi amico" }).click();
+
+  await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
+  const row = page.locator("li", { hasText: "La mia amica Giulia" });
+  await expect(row).toBeVisible({ timeout: 10_000 });
+  // Nessuna foto caricata --- iniziali di nome/cognome (Giulia Verdi-Neri -> GV).
+  await expect(row.getByText("GV", { exact: true })).toBeVisible();
 });

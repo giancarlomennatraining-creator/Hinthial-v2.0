@@ -70,7 +70,7 @@ test("Impostazioni > Attività si interroga con filtri (data e tipo) e apre il d
 
   await page.getByRole("link", { name: "Amici", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
-  await page.getByLabel("Nome").fill("Maria Rossi");
+  await page.getByLabel("Nome visualizzato").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria.rossi@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();

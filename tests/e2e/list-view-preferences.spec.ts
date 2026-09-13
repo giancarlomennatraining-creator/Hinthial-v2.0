@@ -46,7 +46,7 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
   await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
 
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
-  await page.getByLabel("Nome").fill("Maria Rossi");
+  await page.getByLabel("Nome visualizzato").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
@@ -133,7 +133,7 @@ test("in modalità tabellare le liste lunghe sono impaginate", async ({ page }) 
   for (let i = 1; i <= 11; i++) {
     await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
     await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
-    await page.getByLabel("Nome").fill(`Persona ${String(i).padStart(2, "0")}`);
+    await page.getByLabel("Nome visualizzato").fill(`Persona ${String(i).padStart(2, "0")}`);
     await page.getByLabel("Email").fill(`persona${i}@esempio.it`);
     await page.getByLabel("Ruolo").fill("Amico");
     await page.getByRole("button", { name: "Aggiungi amico" }).click();

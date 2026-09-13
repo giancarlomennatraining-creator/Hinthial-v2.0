@@ -95,7 +95,7 @@ test("le intestazioni delle tabelle in Amici ordinano lessicograficamente", asyn
   ]) {
     await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
     await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
-    await page.getByLabel("Nome").fill(name);
+    await page.getByLabel("Nome visualizzato").fill(name);
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Ruolo").fill("Amico");
     await page.getByRole("button", { name: "Aggiungi amico" }).click();
@@ -106,7 +106,10 @@ test("le intestazioni delle tabelle in Amici ordinano lessicograficamente", asyn
   await page.getByRole("radio", { name: "Vista a tabella" }).click();
   await expect(page.locator("table")).toBeVisible();
 
-  const nameCells = page.locator("tbody tr td:first-child");
+  // Solo il nome, non l'intera cella --- che ora contiene anche l'avatar
+  // (le iniziali "?" di chi non ha ancora nome/cognome impostati, v.
+  // Avatar.tsx) prima del nome stesso.
+  const nameCells = page.locator("tbody tr td:first-child span.truncate");
 
   // Già ordinata per Nome crescente di default, senza bisogno di alcun click.
   await expect(nameCells).toHaveText(["Anna Verdi", "Luca Bianchi"]);

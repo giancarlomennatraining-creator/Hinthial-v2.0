@@ -19,6 +19,17 @@ export function avatarStoragePath(ownerId: string): string {
   return `${ownerId}/avatar-${Date.now()}.jpg`;
 }
 
+/**
+ * Come avatarStoragePath, ma per la foto di un amico caricata a mano dal
+ * proprietario (v. domain/friends/repository.ts) --- resta comunque
+ * nella cartella `{ownerId}/...` di chi la carica: stessa policy di
+ * Storage di sopra, nessuna nuova regola necessaria. `friendId` nel nome
+ * serve solo a riconoscere il file a colpo d'occhio, non a niente altro.
+ */
+export function friendAvatarStoragePath(ownerId: string, friendId: string): string {
+  return `${ownerId}/friend-${friendId}-${Date.now()}.jpg`;
+}
+
 export async function uploadAvatarBlob(
   supabase: SupabaseClient<Database>,
   path: string,

@@ -6,12 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import {
   deleteFriend,
+  getLinkedFriendAvatarUrl,
   listFriends,
   lookupFriendAccount,
   setFriendGuardian,
   setFriendLinkedUser,
   setFriendStatus,
 } from "@/domain/friends/repository";
+import { Avatar } from "@/components/ui/Avatar";
 import { listCapsules, syncCapsuleSharesForLinkedFriend } from "@/domain/capsules/repository";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -108,6 +110,10 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [statusFilter, setStatusFilter] = useState<FriendStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "name", direction: "asc" });
+  // Foto reale di un account collegato, quando l'amico non ne ha una
+  // caricata a mano --- risolta a parte per non rallentare/appesantire
+  // ogni caricamento dell'elenco (v. resolveLinkedAvatar sotto).
+  const [linkedAvatarUrls, setLinkedAvatarUrls] = useState<Record<string, string>>({});
 
   const { modeFor } = useListViewPreferences();
   const viewMode = modeFor("friends");
@@ -127,6 +133,27 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   }, [showCreatedMessage, showUpdatedMessage, router]);
 
   /**
+   * Foto reale di un amico collegato a un account Hinthial, quando non
+   * ne ha caricata una a mano (quella vince sempre, v.
+   * domain/friends/types, FriendListItem.avatarPath) --- una chiamata a
+   * parte per amico (v. get_linked_friend_avatar_path), best-effort e
+   * silenziosa come checkLinkedAccounts qui sotto: un fallimento lascia
+   * semplicemente le iniziali colorate al posto della foto.
+   */
+  const resolveLinkedAvatar = useCallback(
+    async (friend: FriendListItem) => {
+      if (friend.avatarUrl || !friend.linkedUserId) return;
+      try {
+        const url = await getLinkedFriendAvatarUrl(supabase, friend.id);
+        if (url) setLinkedAvatarUrls((prev) => ({ ...prev, [friend.id]: url }));
+      } catch {
+        // Best-effort --- v. commento sopra.
+      }
+    },
+    [supabase],
+  );
+
+  /**
    * FASE A del piano di condivisione capsule: per ogni amico non ancora
    * collegato a un account (`linkedUserId` nullo), verifica se la sua
    * email corrisponde a un account Hinthial registrato --- così se un
@@ -142,11 +169,16 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
    * account --- altrimenti resterebbero per sempre invisibili in
    * "Condivise con me" solo perché il collegamento è arrivato in
    * ritardo (esattamente il caso che ha motivato la Fase A). `capsules`
-   * è già in memoria da refresh(), nessuna nuova decrittazione.
+   * è già in memoria da refresh(), nessuna nuova decrittazione. Anche la
+   * foto reale (v. resolveLinkedAvatar) si risolve qui: subito per chi
+   * era già collegato, appena dopo per chi si collega ora per la prima
+   * volta.
    */
   const checkLinkedAccounts = useCallback(
     async (list: FriendListItem[], ownedCapsules: CapsuleListItem[]) => {
       const sharedCapsules = ownedCapsules.filter((c) => c.status === "shared");
+
+      void Promise.all(list.filter((f) => f.linkedUserId !== null).map((f) => resolveLinkedAvatar(f)));
 
       for (const friend of list.filter((f) => f.linkedUserId === null)) {
         try {
@@ -156,6 +188,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
           setFriends((prev) =>
             prev.map((f) => (f.id === friend.id ? { ...f, linkedUserId: match.userId } : f)),
           );
+          void resolveLinkedAvatar({ ...friend, linkedUserId: match.userId });
 
           const {
             data: { user },
@@ -168,7 +201,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
         }
       }
     },
-    [supabase],
+    [supabase, resolveLinkedAvatar],
   );
 
   const refresh = useCallback(async () => {
@@ -223,6 +256,11 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   function capsulesFor(friend: FriendListItem): CapsuleListItem[] {
     return capsules.filter((capsule) => capsule.relatedFriends.some((c) => c.id === friend.id));
+  }
+
+  /** Foto caricata a mano, altrimenti quella reale dell'account collegato (se già risolta), altrimenti nessuna --- v. resolveLinkedAvatar sopra. */
+  function avatarUrlFor(friend: FriendListItem): string | null {
+    return friend.avatarUrl ?? linkedAvatarUrls[friend.id] ?? null;
   }
 
   function sortValueFor(friend: FriendListItem, column: SortColumn): string {
@@ -373,16 +411,25 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
                       return (
                         <tr key={friend.id}>
-                          <td className="max-w-[12rem] truncate p-3 font-medium text-zinc-900 dark:text-zinc-100">
-                            {friend.name}
-                            {friend.linkedUserId ? (
-                              <span
-                                title="Ha un account Hinthial"
-                                className="ml-1 rounded-full bg-lime-100 px-2 py-0.5 text-xs font-medium text-lime-700 dark:bg-lime-950 dark:text-lime-400"
-                              >
-                                ✓ Su Hinthial
-                              </span>
-                            ) : null}
+                          <td className="max-w-[12rem] p-3 font-medium text-zinc-900 dark:text-zinc-100">
+                            <div className="flex items-center gap-2">
+                              <Avatar
+                                firstName={friend.firstName}
+                                lastName={friend.lastName}
+                                avatarUrl={avatarUrlFor(friend)}
+                                seed={friend.id}
+                                size="sm"
+                              />
+                              <span className="truncate">{friend.name}</span>
+                              {friend.linkedUserId ? (
+                                <span
+                                  title="Ha un account Hinthial"
+                                  className="shrink-0 rounded-full bg-lime-100 px-2 py-0.5 text-xs font-medium text-lime-700 dark:bg-lime-950 dark:text-lime-400"
+                                >
+                                  ✓ Su Hinthial
+                                </span>
+                              ) : null}
+                            </div>
                           </td>
                           <td className="max-w-[14rem] truncate p-3 text-zinc-600 dark:text-zinc-400">
                             {friend.email}
@@ -443,7 +490,14 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
                 return (
                   <li key={friend.id} className="flex items-center justify-between gap-4 p-4">
-                    <div className="min-w-0">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <Avatar
+                        firstName={friend.firstName}
+                        lastName={friend.lastName}
+                        avatarUrl={avatarUrlFor(friend)}
+                        seed={friend.id}
+                      />
+                      <div className="min-w-0">
                       {/* div, non p: la nuvoletta di CapsulesBadge contiene <ul>/<li>, non ammessi dentro un <p>. */}
                       <div className="flex items-center gap-2">
                         <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
@@ -472,6 +526,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                       <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
                         {friend.email} · {friend.role} · dal {formatDate(friend.createdAt)}
                       </p>
+                      </div>
                     </div>
                     <RowActionsMenu label={`Azioni per ${friend.name}`}>
                       {friend.status === "pending" ? (

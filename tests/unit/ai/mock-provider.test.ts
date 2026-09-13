@@ -188,7 +188,7 @@ describe("mockAIProvider.retrieve", () => {
             },
           ],
           relatedFriends: [
-            { id: "friend-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", isGuardian: false, linkedUserId: null, createdAt: "2026-01-01" },
+            { id: "friend-1", name: "Maria Rossi", email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null, role: "Coniuge", status: "active", isGuardian: false, linkedUserId: null, createdAt: "2026-01-01" },
           ],
           status: "draft",
           accessCondition: "manual",
@@ -217,8 +217,8 @@ describe("mockAIProvider.retrieve", () => {
   it('falls back to every item of a kind when nothing specific matches, e.g. "quanti amici ho?"', () => {
     const context = buildContext({
       friends: [
-        { id: "friend-1", name: "Maria Rossi", email: "maria@esempio.it", role: "Coniuge", status: "active", isGuardian: false, linkedUserId: null, createdAt: "2026-01-01" },
-        { id: "friend-2", name: "Luca Bianchi", email: "luca@esempio.it", role: "Fratello", status: "active", isGuardian: false, linkedUserId: null, createdAt: "2026-01-01" },
+        { id: "friend-1", name: "Maria Rossi", email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null, role: "Coniuge", status: "active", isGuardian: false, linkedUserId: null, createdAt: "2026-01-01" },
+        { id: "friend-2", name: "Luca Bianchi", email: "luca@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null, role: "Fratello", status: "active", isGuardian: false, linkedUserId: null, createdAt: "2026-01-01" },
       ],
     });
 

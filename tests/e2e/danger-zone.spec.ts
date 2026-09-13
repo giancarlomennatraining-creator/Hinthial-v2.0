@@ -75,7 +75,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await page.getByRole("link", { name: "Amici" }).click();
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
-  await page.getByLabel("Nome").fill("Maria Rossi");
+  await page.getByLabel("Nome visualizzato").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();

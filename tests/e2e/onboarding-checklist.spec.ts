@@ -78,7 +78,7 @@ test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (ness
   // (completa il passo "guardian"): 6/8.
   await page.getByRole("link", { name: "Amici", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
-  await page.getByLabel("Nome").fill("Maria Rossi");
+  await page.getByLabel("Nome visualizzato").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria.rossi@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();

@@ -81,7 +81,7 @@ test("la dashboard mostra i contatori per sezione, resta a due colonne anche a v
   // Un amico attivo e guardiano: il sotto-contatore in "Amici" lo riflette.
   await page.getByRole("link", { name: "Amici", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
-  await page.getByLabel("Nome").fill("Maria Rossi");
+  await page.getByLabel("Nome visualizzato").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria.rossi@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();

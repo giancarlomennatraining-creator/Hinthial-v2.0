@@ -40,7 +40,7 @@ describe("computeOnboardingSteps", () => {
           {
             id: "c1",
             name: "Maria",
-            email: "maria@esempio.it",
+            email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null,
             role: "Coniuge",
             status: "active",
             isGuardian: false,
@@ -58,7 +58,7 @@ describe("computeOnboardingSteps", () => {
           {
             id: "c1",
             name: "Maria",
-            email: "maria@esempio.it",
+            email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null,
             role: "Coniuge",
             status: "active",
             isGuardian: true,
@@ -102,7 +102,7 @@ describe("isOnboardingComplete", () => {
           {
             id: "c1",
             name: "Maria",
-            email: "maria@esempio.it",
+            email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null,
             role: "Coniuge",
             status: "active",
             isGuardian: true,
@@ -123,7 +123,7 @@ describe("isOnboardingComplete", () => {
               {
                 id: "c1",
                 name: "Maria",
-                email: "maria@esempio.it",
+                email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null,
                 role: "Coniuge",
                 status: "active",
                 isGuardian: true,

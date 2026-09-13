@@ -1,11 +1,17 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
-import { createFriend } from "@/domain/friends/repository";
+import { createFriend, updateFriendAvatar } from "@/domain/friends/repository";
 import { inviteFriendToHinthial } from "@/lib/friends/actions";
+import { AvatarPickerCrop } from "@/components/ui/AvatarPickerCrop";
+
+/** Un seed stabile per il colore delle iniziali finché l'amico non ha ancora un id --- basta che non cambi ad ogni digitazione. */
+function avatarSeedFor(firstName: string, lastName: string): string {
+  return `${firstName}-${lastName}` || "new-friend";
+}
 
 /**
  * Pagina dedicata alla creazione di un amico (estratta da FriendsPanel).
@@ -22,18 +28,53 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
   const [creating, setCreating] = useState(false);
   const [invite, setInvite] = useState(false);
 
+  // "Nome visualizzato" parte come "Nome Cognome" e resta in sincronia
+  // finché non viene toccato direttamente (v. richiesta utente) --- da
+  // quel momento in poi resta un campo a sé, anche continuando a
+  // modificare nome/cognome.
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [displayNameEdited, setDisplayNameEdited] = useState(false);
+
+  const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+
+  function handleFirstNameChange(event: ChangeEvent<HTMLInputElement>) {
+    const value = event.target.value;
+    setFirstName(value);
+    if (!displayNameEdited) setDisplayName(`${value} ${lastName}`.trim());
+  }
+
+  function handleLastNameChange(event: ChangeEvent<HTMLInputElement>) {
+    const value = event.target.value;
+    setLastName(value);
+    if (!displayNameEdited) setDisplayName(`${firstName} ${value}`.trim());
+  }
+
+  function handleDisplayNameChange(event: ChangeEvent<HTMLInputElement>) {
+    setDisplayName(event.target.value);
+    setDisplayNameEdited(true);
+  }
+
+  function handleAvatarCropped(blob: Blob) {
+    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+    setAvatarBlob(blob);
+    setAvatarPreviewUrl(URL.createObjectURL(blob));
+  }
+
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
 
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const name = String(formData.get("name") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
     const role = String(formData.get("role") ?? "").trim();
+    const name = displayName.trim();
 
     if (!name || !email || !role) {
-      setError("Compila nome, email e ruolo.");
+      setError("Compila nome visualizzato, email e ruolo.");
       return;
     }
 
@@ -44,7 +85,25 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
 
-      await createFriend(supabase, masterKey, user.id, { name, email, role });
+      const created = await createFriend(supabase, masterKey, user.id, {
+        name,
+        email,
+        firstName,
+        lastName,
+        role,
+      });
+
+      // Una foto scelta ma non ancora salvata non deve impedire di
+      // salvare l'amico: come per l'invito qui sotto, un fallimento qui
+      // si segnala a parte, mai un errore che fa perdere tutto il resto.
+      let avatarFailed = false;
+      if (avatarBlob) {
+        try {
+          await updateFriendAvatar(supabase, user.id, created.id, avatarBlob, null);
+        } catch {
+          avatarFailed = true;
+        }
+      }
 
       // Un invito non riuscito non deve impedire di aver salvato
       // l'amico: si segnala con un parametro a parte, non un errore.
@@ -57,7 +116,9 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
         }
       }
 
-      router.push(`/friends?created=1${inviteFailed ? "&inviteFailed=1" : ""}`);
+      router.push(
+        `/friends?created=1${inviteFailed ? "&inviteFailed=1" : ""}${avatarFailed ? "&avatarFailed=1" : ""}`,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile aggiungere l'amico.");
       setCreating(false);
@@ -83,13 +144,54 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
         </p>
       </div>
 
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+        <p className="mb-3 text-xs font-medium text-zinc-600 dark:text-zinc-400">Foto (facoltativa)</p>
+        <AvatarPickerCrop
+          currentAvatarUrl={avatarPreviewUrl}
+          fallbackFirstName={firstName}
+          fallbackLastName={lastName}
+          fallbackSeed={avatarSeedFor(firstName, lastName)}
+          onCropped={handleAvatarCropped}
+        />
+      </div>
+
       <form
         onSubmit={handleCreate}
         className="flex flex-wrap items-end gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
       >
         <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
-          <label htmlFor="name" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          <label htmlFor="firstName" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
             Nome
+          </label>
+          <input
+            id="firstName"
+            name="firstName"
+            type="text"
+            placeholder="es. Maria"
+            value={firstName}
+            onChange={handleFirstNameChange}
+            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+          />
+        </div>
+
+        <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
+          <label htmlFor="lastName" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            Cognome
+          </label>
+          <input
+            id="lastName"
+            name="lastName"
+            type="text"
+            placeholder="es. Rossi"
+            value={lastName}
+            onChange={handleLastNameChange}
+            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+          />
+        </div>
+
+        <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
+          <label htmlFor="name" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            Nome visualizzato
           </label>
           <input
             id="name"
@@ -97,6 +199,8 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
             type="text"
             required
             placeholder="es. Maria Rossi"
+            value={displayName}
+            onChange={handleDisplayNameChange}
             className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
           />
         </div>
@@ -161,3 +265,4 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
     </div>
   );
 }
+

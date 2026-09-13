@@ -20,7 +20,7 @@ function buildFriend(overrides: Partial<FriendListItem> = {}): FriendListItem {
   return {
     id: "friend-1",
     name: "Maria Rossi",
-    email: "maria@esempio.it",
+    email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null,
     role: "Coniuge",
     status: "active",
     isGuardian: false,

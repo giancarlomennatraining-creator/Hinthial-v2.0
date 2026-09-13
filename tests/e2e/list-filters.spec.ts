@@ -150,7 +150,7 @@ test("la ricerca e il filtro per stato funzionano in Scadenze, Amici e Capsule",
   await page.getByRole("link", { name: "Amici", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
-  await page.getByLabel("Nome").fill("Maria Rossi");
+  await page.getByLabel("Nome visualizzato").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
@@ -158,7 +158,7 @@ test("la ricerca e il filtro per stato funzionano in Scadenze, Amici e Capsule",
 
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
-  await page.getByLabel("Nome").fill("Luca Bianchi");
+  await page.getByLabel("Nome visualizzato").fill("Luca Bianchi");
   await page.getByLabel("Email").fill("luca@esempio.it");
   await page.getByLabel("Ruolo").fill("Avvocato");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
