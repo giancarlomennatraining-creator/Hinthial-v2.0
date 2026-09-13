@@ -15,6 +15,13 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 }
 
+/** Come formatDate, ma con l'orario --- solo per l'apertura di una capsula, l'unica data dell'app che ora ne porta uno significativo. */
+function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  const time = date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  return `${formatDate(iso)}, ${time}`;
+}
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -214,7 +221,7 @@ export function CapsulePreview({
         <div className="rounded-2xl border border-[#EDE1C4] bg-[#FBF6EA] px-6 py-5">
           {shownCapsule.openAt ? (
             <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#6B5730]">
-              Si aprirà il {formatDate(shownCapsule.openAt)}
+              Si aprirà il {formatDateTime(shownCapsule.openAt)}
             </p>
           ) : null}
           {shownCapsule.content ? (

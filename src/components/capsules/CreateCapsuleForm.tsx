@@ -30,7 +30,7 @@ const STEP_LABEL: Record<Step, string> = {
  * Pagina dedicata alla creazione di una capsula (estratta da
  * CapsulesPanel, che ora mostra solo l'elenco più un tasto "Crea
  * capsula"). Wizard a tre passi (FASE 14): passo 1 chi/quando (titolo,
- * data di apertura, destinatari), passo 2 elementi già presenti in
+ * data e ora di apertura, destinatari), passo 2 elementi già presenti in
  * Archivio da collegare, passo 3 contenuto scritto e audio/video
  * registrati o caricati sul momento --- questi ultimi restano privati
  * della capsula, mai copiati in Archivio: sono pensati come un
@@ -95,7 +95,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
     if (!openAt) {
       // Obbligatoria (Dead Man's Switch semplificato per le capsule):
       // raggiunta questa data, il destinatario può vederne il contenuto.
-      setError("Scegli una data di apertura.");
+      setError("Scegli data e ora di apertura.");
       return;
     }
     setError(null);
@@ -118,7 +118,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
     setError(null);
 
     if (!title.trim() || !openAt) {
-      setError(!title.trim() ? "Inserisci almeno un titolo." : "Scegli una data di apertura.");
+      setError(!title.trim() ? "Inserisci almeno un titolo." : "Scegli data e ora di apertura.");
       setStep(1);
       return;
     }

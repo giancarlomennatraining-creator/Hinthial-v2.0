@@ -100,7 +100,7 @@ test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (ness
   await page.getByRole("link", { name: "+ Crea capsula" }).click();
   await expect(page.getByRole("heading", { name: "Nuova capsula" })).toBeVisible();
   await page.getByLabel("Titolo").fill("Per Maria");
-  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
+  await page.getByLabel("Data e ora di apertura", { exact: true }).fill("2027-01-01T10:00");
   await page.locator("#create-friend").selectOption({ label: "Maria Rossi" });
   await page.getByRole("button", { name: "+ Aggiungi" }).click();
   await expect(page.getByText("Maria Rossi")).toBeVisible();

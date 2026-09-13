@@ -36,6 +36,13 @@ function formatDate(iso: string): string {
   });
 }
 
+/** Come formatDate, ma con l'orario --- solo per l'apertura di una capsula, l'unica data dell'app che ora ne porta uno significativo. */
+function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  const time = date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  return `${formatDate(iso)}, ${time}`;
+}
+
 const STATUS_LABEL: Record<FriendStatus, string> = {
   pending: "In attesa",
   active: "Attivo",
@@ -69,7 +76,7 @@ function CapsulesBadge({ capsules }: { capsules: CapsuleListItem[] }) {
               </p>
               <p className="text-zinc-500 dark:text-zinc-400">
                 creata il {formatDate(capsule.createdAt)}
-                {capsule.openAt ? ` · apertura prevista ${formatDate(capsule.openAt)}` : ""}
+                {capsule.openAt ? ` · apertura prevista ${formatDateTime(capsule.openAt)}` : ""}
               </p>
             </li>
           ))}

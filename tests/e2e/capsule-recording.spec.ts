@@ -34,7 +34,7 @@ test("registra un messaggio audio e lo allega a una capsula", async ({ page }) =
   await expect(page.getByRole("heading", { name: "Nuova capsula" })).toBeVisible();
 
   await page.getByLabel("Titolo").fill("Per Maria");
-  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
+  await page.getByLabel("Data e ora di apertura", { exact: true }).fill("2027-01-01T10:00");
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 2 di 3")).toBeVisible();
   await page.getByRole("button", { name: "Avanti" }).click();

@@ -67,15 +67,16 @@ export interface CapsuleListItem {
   status: CapsuleStatus;
   accessCondition: CapsuleAccessCondition;
   /**
-   * Data in cui la capsula è pensata per essere aperta --- obbligatoria
-   * per ogni capsula nuova o modificata (Dead Man's Switch semplificato
-   * per le capsule, v. domain/capsules/repository.ts): raggiunta quella
-   * data, il destinatario può vederne il contenuto, a prescindere
-   * dall'inattività del proprietario. In chiaro lato server (v. colonna
-   * `open_at`, migrazione 20260905000000) --- necessario perché il
-   * server possa saperlo senza decifrare nulla. ISO YYYY-MM-DD, o null
-   * solo per le capsule create prima che diventasse obbligatoria, non
-   * ancora sanate (v. listCapsules).
+   * Data E ORA in cui la capsula è pensata per essere aperta ---
+   * obbligatoria per ogni capsula nuova o modificata (Dead Man's Switch
+   * semplificato per le capsule, v. domain/capsules/repository.ts):
+   * raggiunto quel momento, il destinatario può vederne il contenuto, a
+   * prescindere dall'inattività del proprietario. In chiaro lato server
+   * (v. colonna `open_at`, migrazioni 20260905000000 e 20260913010000)
+   * --- necessario perché il server possa saperlo senza decifrare
+   * nulla. ISO datetime completo (UTC), o null solo per le capsule
+   * create prima che diventasse obbligatoria, non ancora sanate (v.
+   * listCapsules).
    */
   openAt: string | null;
   createdAt: string;

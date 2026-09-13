@@ -48,6 +48,13 @@ function formatDate(iso: string): string {
   });
 }
 
+/** Come formatDate, ma con l'orario --- solo per l'apertura di una capsula, l'unica data dell'app che ora ne porta uno significativo. */
+function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  const time = date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  return `${formatDate(iso)}, ${time}`;
+}
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -328,7 +335,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
           .map((c) => c.name)
           .join(", ");
       case "openAt":
-        return capsule.openAt ? formatDate(capsule.openAt) : "";
+        return capsule.openAt ? formatDateTime(capsule.openAt) : "";
       case "contents":
         return String(capsule.attachments.length + capsule.linkedDocuments.length);
     }
@@ -465,7 +472,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                 </div>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   Condivisa il {formatDate(shared.sharedAt)}
-                  {shared.openAt ? ` · apertura prevista ${formatDate(shared.openAt)}` : ""}
+                  {shared.openAt ? ` · apertura prevista ${formatDateTime(shared.openAt)}` : ""}
                 </p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   Il contenuto non è ancora consultabile qui --- arriverà con una fase futura, quando
@@ -559,7 +566,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                               : "—"}
                           </td>
                           <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                            {capsule.openAt ? formatDate(capsule.openAt) : "—"}
+                            {capsule.openAt ? formatDateTime(capsule.openAt) : "—"}
                           </td>
                           <td className="p-3 text-zinc-600 dark:text-zinc-400">{contentCount}</td>
                           <td className="p-3">
@@ -624,7 +631,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                                 .join(", ")} · `
                             : ""}
                           dal {formatDate(capsule.createdAt)}
-                          {capsule.openAt ? ` · apertura prevista ${formatDate(capsule.openAt)}` : ""}
+                          {capsule.openAt ? ` · apertura prevista ${formatDateTime(capsule.openAt)}` : ""}
                         </p>
                         {capsule.openAt ? (
                           <div className="mt-1.5">

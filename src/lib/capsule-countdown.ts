@@ -16,7 +16,7 @@ export interface CountdownInfo {
   label: string;
 }
 
-/** Midnight (local time) of the given date --- openAt is a date, not a timestamp (v. domain/capsules/types.ts), so "days until" must compare calendar dates, not raw 24h spans. */
+/** Midnight (local time) of the given date --- the label deliberately rounds to whole calendar days even though openAt now carries a precise time too (v. domain/capsules/types.ts), so "days until" compares calendar dates, not raw 24h spans. */
 function dateOnly(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }

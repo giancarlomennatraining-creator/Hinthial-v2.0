@@ -54,7 +54,7 @@ interface CapsulePayload {
   linkedDocumentIds: string[];
   /** Ids of friends this capsule is meant for --- resolved via getFriendsByIds. */
   relatedFriendIds: string[];
-  /** ISO YYYY-MM-DD, or null --- see CapsuleListItem.openAt. */
+  /** ISO datetime (UTC), or null --- see CapsuleListItem.openAt. */
   openAt: string | null;
 }
 

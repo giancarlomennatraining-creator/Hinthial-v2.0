@@ -10,6 +10,14 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-13
+
+### La data di apertura di una capsula diventa data e ora
+
+**Cosa fa:** quando crei o modifichi una capsula, "Si aprirà il ..." ora chiede anche l'orario, non solo il giorno --- lo stesso calendario nativo dello smartphone/browser, con in più la scelta dell'ora. Ovunque compaia una data di apertura (elenco Capsule, anteprima, "Condivise con me", il conteggio alla rovescia) viene mostrata con l'orario incluso.
+
+**Note tecniche:** `CapsuleOpenAtField` passa da `<input type="date">` a `<input type="datetime-local">` --- la conversione da/verso il formato locale "YYYY-MM-DDTHH:mm" richiesto dall'input resta un dettaglio interno del componente: verso l'esterno `value`/`onChange` restano un ISO datetime (UTC), come ogni altra data dell'app (stesso principio già usato per `reminders.due_at`). Colonna `capsules.open_at` da `date` a `timestamptz`. Il conto alla rovescia (`lib/capsule-countdown.ts`) continua deliberatamente ad arrotondare ai giorni interi nell'etichetta ("Si aprirà tra N giorni") --- non ne serviva una più precisa, solo il momento scelto doveva poter includere l'ora.
+
 ## 2026-09-12
 
 ### "Condivise con me" dentro Capsule (FASE B della condivisione capsule)

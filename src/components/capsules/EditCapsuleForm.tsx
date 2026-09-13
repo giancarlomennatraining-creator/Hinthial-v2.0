@@ -41,7 +41,7 @@ const STEP_LABEL: Record<Step, string> = {
  * unico form lungo. Solo le capsule ancora in Bozza sono modificabili
  * (v. updateCapsule): chiudere una capsula la rende autosufficiente,
  * non più legata agli originali --- una volta chiusa non ha più senso
- * "modificarla" qui. Titolo, data di apertura, destinatari, contenuto
+ * "modificarla" qui. Titolo, data e ora di apertura, destinatari, contenuto
  * testuale, contenuti collegati dall'Archivio E allegati audio/video
  * diretti (registrati o caricati) sono tutti modificabili --- questi
  * ultimi con lo stesso registratore/upload della creazione (passo 3):
@@ -135,7 +135,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
     if (!openAt) {
       // Obbligatoria (Dead Man's Switch semplificato per le capsule) ---
       // anche una capsula creata prima che lo diventasse va sanata qui.
-      setError("Scegli una data di apertura.");
+      setError("Scegli data e ora di apertura.");
       return;
     }
     setError(null);
@@ -168,7 +168,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
     if (!openAt) {
       // Obbligatoria (Dead Man's Switch semplificato per le capsule) ---
       // anche una capsula creata prima che lo diventasse va sanata qui.
-      setError("Scegli una data di apertura.");
+      setError("Scegli data e ora di apertura.");
       setStep(1);
       return;
     }

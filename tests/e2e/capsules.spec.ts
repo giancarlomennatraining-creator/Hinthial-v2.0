@@ -83,7 +83,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
 
   const fileContent = `messaggio segreto --- ${Date.now()}`;
   await page.getByLabel("Titolo").fill("Per Maria");
-  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
+  await page.getByLabel("Data e ora di apertura", { exact: true }).fill("2027-01-01T10:00");
   // Una capsula può essere destinata a più amici: se ne aggiungono due.
   await page.locator("#create-friend").selectOption({ label: "Luca Bianchi" });
   await page.getByRole("button", { name: "+ Aggiungi" }).click();
@@ -153,7 +153,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   // Passo 1 --- gli stessi tre passi della creazione (v. CreateCapsuleForm).
   await expect(page.getByText("Passo 1 di 3")).toBeVisible();
   await page.getByLabel("Titolo").fill("Per Maria (aggiornato)");
-  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-03-15");
+  await page.getByLabel("Data e ora di apertura", { exact: true }).fill("2027-03-15T10:00");
   await page.getByRole("button", { name: "Rimuovi Luca Bianchi" }).click();
   await page.getByRole("button", { name: "Avanti" }).click();
 
@@ -197,7 +197,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await expect(updatedPreview).not.toBeVisible();
   await expect(updatedRow.getByText("Bozza")).toBeVisible();
   await expect(updatedRow.getByText("Per Maria Rossi · ")).toBeVisible();
-  await expect(updatedRow.getByText("apertura prevista 15 mar 2027")).toBeVisible();
+  await expect(updatedRow.getByText("apertura prevista 15 mar 2027, 10:00")).toBeVisible();
   // Countdown visivo verso l'apertura (v. CapsuleCountdown) --- una data
   // così lontana nel futuro resta sempre "tra N giorni".
   await expect(updatedRow.getByText(/Si aprirà tra \d+ giorni/)).toBeVisible();
@@ -238,7 +238,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await expect(mariaCapsulesBadge).toBeVisible();
   await mariaCapsulesBadge.hover();
   await expect(friendRow.getByText("Per Maria (aggiornato)")).toBeVisible();
-  await expect(friendRow.getByText("apertura prevista 15 mar 2027")).toBeVisible();
+  await expect(friendRow.getByText("apertura prevista 15 mar 2027, 10:00")).toBeVisible();
   await expect(secondFriendRow.getByText("📦", { exact: false })).not.toBeVisible();
 
   await page.getByRole("link", { name: "Capsule" }).click();
@@ -296,7 +296,7 @@ test("collega un documento già presente in Archivio a una capsula, selezionando
   await goToNewCapsule(page);
 
   await page.getByLabel("Titolo").fill("Documenti per dopo");
-  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
+  await page.getByLabel("Data e ora di apertura", { exact: true }).fill("2027-01-01T10:00");
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 2 di 3")).toBeVisible();
   await page.locator("#create-category").selectOption({ label: "📄 Contratti" });
@@ -389,7 +389,7 @@ test("chiudere una capsula copia il contenuto collegato al suo interno; l'origin
   await expect(page.getByRole("heading", { name: "Capsule" })).toBeVisible();
   await goToNewCapsule(page);
   await page.getByLabel("Titolo").fill("Capsula da chiudere");
-  await page.getByLabel("Data di apertura", { exact: true }).fill("2027-01-01");
+  await page.getByLabel("Data e ora di apertura", { exact: true }).fill("2027-01-01T10:00");
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 2 di 3")).toBeVisible();
   await page.locator("#create-category").selectOption({ label: "📄 Contratti" });
