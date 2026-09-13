@@ -12,6 +12,31 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-13
 
+### Amici: foto profilo, anche per gli account collegati
+
+**Cosa fa:** ogni amico può avere una foto, in elenco, in tabella e nella pagina di modifica. La carichi tu (con lo stesso ritaglio a quadrato già usato per la tua foto profilo, e ora anche "📷 Scatta foto" oltre a "Carica foto" --- comparso anche nelle tue Impostazioni, per coerenza) --- oppure, se quell'amico è già un account Hinthial collegato, vedi automaticamente la sua foto vera, senza doverla caricare tu. Una foto caricata a mano vince sempre su quella reale. Senza nessuna delle due, le iniziali di nome e cognome su uno sfondo colorato, come per il tuo profilo.
+
+**Note tecniche:** `AvatarPickerCrop` estrae il ritaglio già scritto per `AvatarUploadForm` (canvas, drag, zoom) in un componente riusabile, condiviso ora da profilo e amico; il tasto "Scatta foto" riusa il trucco già in Archivio (`capture="environment"` impostato un istante prima del click, tolto subito dopo). Nuova colonna `friends.avatar_path` (bucket `avatars`, pubblico, in chiaro --- stesso principio già accettato per l'avatar del profilo), path `{owner_id}/friend-{friend_id}-{ts}.jpg`: nessuna nuova policy di Storage necessaria, la cartella resta quella di chi carica. Per la foto reale di un account collegato, niente accesso diretto alla sua riga `profiles` (che nel tempo si è riempita di parecchie colonne non pertinenti --- preferenze, consensi IA, data di nascita): una funzione dedicata `get_linked_friend_avatar_path` (SECURITY DEFINER, stesso schema di `lookup_friend_account`) restituisce solo il path della sua foto, verificando che chi chiama possieda davvero quella riga `friends`. Risolta in `FriendsPanel` in un passaggio a parte (`resolveLinkedAvatar`), mai bloccando il caricamento dell'elenco.
+
+### Il "Nome" degli amici diventa "Nome visualizzato"; aggiunti Nome e Cognome
+
+**Cosa fa:** in Amici, il campo che finora si chiamava "Nome" ora si chiama "Nome visualizzato" --- è lo stesso campo di sempre, solo con un nome più preciso su cosa fa: decide cosa vedi in elenco e in tabella. Accanto, due nuovi campi facoltativi, Nome e Cognome: compilandoli, il Nome visualizzato si aggiorna da solo come "Nome Cognome", finché non lo tocchi direttamente --- da quel momento resta quello che hai scritto, anche continuando a correggere nome o cognome.
+
+**Note tecniche:** `encrypted_name` (rinominato solo concettualmente, nessuna migrazione: resta la stessa colonna) affiancato da due nuove colonne cifrate `encrypted_first_name`/`encrypted_last_name`, nullable --- gli amici già esistenti restano "" decifrati, mai un errore. La sincronizzazione "Nome Cognome" -> Nome visualizzato vive lato client (`displayNameEdited`, un booleano che smette di seguire dopo il primo tocco diretto sul campo); in modifica, lo stato iniziale di quel booleano si deduce confrontando il nome visualizzato già salvato con "nome cognome" attuale --- se combaciano è ancora "automatico", altrimenti si considera già personalizzato (copre da sé anche gli amici creati prima che nome/cognome esistessero).
+
+### Novità in Dashboard: la storia di Hinthial raccontata a te
+
+**Cosa fa:** dove ci sono i contatori, in Dashboard, una nuova sezione "Novità" mostra le ultime 5 modifiche fatte a Hinthial, spiegate in modo amichevole e rivolte direttamente a te --- non i dettagli tecnici del changelog di sviluppo, solo cosa cambia per chi usa l'app. Un tasto "Vedi tutte" apre un pannello laterale con tutta la storia, cercabile.
+
+**Note tecniche:** nuova tabella `product_updates` (title, description, published_on) --- la prima dell'app senza `owner_id`: contenuto uguale per tutti gli utenti, una sola policy RLS (`select` per chi è autenticato, `using (true)`) e nessuna policy di scrittura per il client: si popola solo da migrazioni, mai da un'azione dell'interfaccia. Backfill storico ispirato al changelog di sviluppo ma curato a mano (non ogni voce tecnica lì merita una riga qui) e riscritto in seconda persona. `ProductUpdatesWidget` carica l'intero elenco una sola volta (poche decine di righe), mostra le prime 5 e filtra il resto lato client nel pannello "Vedi tutte" (stesso `SidePanel`/`SearchInput` già usati per il dettaglio di un'attività).
+
+### Il countdown delle capsule diventa un cartellino che scatta; puoi nasconderlo
+
+**Cosa fa:** il conto alla rovescia verso l'apertura di una capsula (in elenco, in tabella --- ora in una colonna propria "Tra quanto" --- e nell'anteprima) è ora un cartellino animato che segna giorni, ore, minuti e secondi, aggiornato dal vivo mentre lo guardi: giorni/ore/minuti scattano con un piccolo "flip" meccanico, i secondi si limitano a cambiare numero (scattare ogni secondo sarebbe frenetico invece che piacevole). Oltre i 100 giorni un numero secco sostituisce i cartellini; una volta raggiunta la data, un badge "🔓 Disponibile da adesso" al loro posto. Se preferisci un'interfaccia più essenziale, un nuovo interruttore in Impostazioni > Aspetto lo nasconde ovunque.
+
+**Note tecniche:** `computeCountdownParts` (nuovo, in `lib/capsule-countdown.ts`) scompone il tempo restante per difetto (mai arrotondato, a differenza dell'etichetta testuale già esistente, che resta la fonte dell'aria-label di accessibilità --- non ricalcolata al secondo, per non spammare chi usa uno screen reader). Un solo `setInterval` al secondo condiviso da ogni `CapsuleCountdown` montato nella pagina (`use-countdown-tick.ts`), non uno per riga. Nuova colonna `profiles.capsule_countdown_visible` (default true), letta/scritta da `CapsulesPanel`/`CapsuleCountdownSettings`.
+
+
 ### Il conto alla rovescia della capsula scende a ore e minuti; compare solo dopo la chiusura
 
 **Cosa fa:** quando manca meno di un giorno all'apertura di una capsula, il conto alla rovescia non dice più genericamente "oggi" --- ti dice "si aprirà tra 16 ore", e sotto l'ora "si aprirà tra 14 minuti". Inoltre ora lo vedi solo sulle capsule chiuse (o condivise): su una bozza non compare più, dato che lì la data di apertura può ancora cambiare e un conto alla rovescia non avrebbe senso.
