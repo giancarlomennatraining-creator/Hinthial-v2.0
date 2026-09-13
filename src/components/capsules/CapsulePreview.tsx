@@ -6,6 +6,7 @@ import { downloadCapsuleAttachment } from "@/domain/capsules/repository";
 import { downloadDocument } from "@/domain/documents/repository";
 import { saveBytesAsFile } from "@/lib/download";
 import { contentKindFor, CONTENT_KIND_ICON, hasInlinePlayer } from "@/lib/content-kind";
+import { CapsuleCountdown } from "@/components/capsules/CapsuleCountdown";
 import { useMountedTransition } from "@/lib/use-mounted-transition";
 import { cn } from "@/lib/utils";
 import type { CapsuleAttachment, CapsuleListItem } from "@/domain/capsules/types";
@@ -45,11 +46,14 @@ type PreviewItem =
 export function CapsulePreview({
   masterKey,
   capsule,
+  showCountdown = true,
   onClose,
 }: {
   masterKey: CryptoKey;
   /** null --- niente da mostrare (v. richiesta utente, dissolvenza in-out): il componente resta comunque montato, per animare l'uscita invece di sparire di scatto. */
   capsule: CapsuleListItem | null;
+  /** Impostazioni > Aspetto --- v. CapsulesPanel.tsx, CapsuleCountdownSettings. */
+  showCountdown?: boolean;
   onClose: () => void;
 }) {
   const supabase = useRef(createClient()).current;
@@ -238,6 +242,15 @@ export function CapsulePreview({
             <p className="text-sm text-[#8F7A4A]">Nessun testo scritto.</p>
           )}
         </div>
+
+        {shownCapsule.openAt && shownCapsule.status !== "draft" && showCountdown ? (
+          <div className="flex flex-col items-center gap-2 rounded-2xl border border-zinc-200 bg-white py-5 dark:border-zinc-800 dark:bg-zinc-950">
+            <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+              La capsula si aprirà tra
+            </p>
+            <CapsuleCountdown createdAt={shownCapsule.createdAt} openAt={shownCapsule.openAt} size="lg" />
+          </div>
+        ) : null}
 
         {items.length > 0 ? (
           <ul className="flex flex-col gap-2">

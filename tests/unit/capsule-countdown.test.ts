@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeCountdown } from "@/lib/capsule-countdown";
+import { computeCountdown, computeCountdownParts } from "@/lib/capsule-countdown";
 
 const NOW = new Date("2026-06-15T12:00:00.000Z");
 const CREATED_AT = "2026-06-01T00:00:00.000Z";
@@ -62,5 +62,30 @@ describe("computeCountdown", () => {
   it("clamps progress to 0 for an opening date before creation (shouldn't normally happen, but stays safe)", () => {
     const { progressPercent } = computeCountdown("2026-06-20T00:00:00.000Z", "2026-06-10T00:00:00.000Z", NOW);
     expect(progressPercent).toBe(100);
+  });
+});
+
+describe("computeCountdownParts", () => {
+  it("breaks a multi-day span down into days/hours/minutes/seconds, always by floor", () => {
+    // 10 giorni, 3 ore, 25 minuti e 40 secondi esatti da NOW.
+    const target = new Date(NOW.getTime() + ((10 * 24 + 3) * 60 + 25) * 60 * 1000 + 40 * 1000).toISOString();
+    const parts = computeCountdownParts(target, NOW);
+    expect(parts).toEqual({ days: 10, hours: 3, minutes: 25, seconds: 40, isPast: false });
+  });
+
+  it("never rounds up --- 15h59m59s left stays at 15 hours, not 16", () => {
+    const target = new Date(NOW.getTime() + (15 * 3600 + 59 * 60 + 59) * 1000).toISOString();
+    const parts = computeCountdownParts(target, NOW);
+    expect(parts.hours).toBe(15);
+  });
+
+  it("reports isPast and all-zero parts once openAt has passed", () => {
+    const parts = computeCountdownParts("2026-06-14T06:00:00.000Z", NOW);
+    expect(parts).toEqual({ days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true });
+  });
+
+  it("reports isPast at the exact instant openAt is reached", () => {
+    const parts = computeCountdownParts(NOW.toISOString(), NOW);
+    expect(parts.isPast).toBe(true);
   });
 });

@@ -247,3 +247,43 @@ export async function markMasterKeyIntroSeen(
     throw new Error(`Impossibile salvare la preferenza: ${error.message}`);
   }
 }
+
+/**
+ * Legge se il countdown a cartellini delle capsule (v.
+ * components/capsules/CapsuleCountdown.tsx) è visibile --- letta lato
+ * client da CapsulesPanel/CapsuleCountdownSettings, non al login come
+ * nav_orientation: qui un breve stato di caricamento (default true
+ * mentre si attende la risposta) non crea alcun lampo percepibile,
+ * a differenza della disposizione del menu.
+ */
+export async function getCapsuleCountdownVisible(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("capsule_countdown_visible")
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    throw new Error(`Impossibile leggere la preferenza del countdown: ${error.message}`);
+  }
+  return data?.capsule_countdown_visible ?? true;
+}
+
+/** Persiste la preferenza letta da getCapsuleCountdownVisible sopra --- v. CapsuleCountdownSettings (Impostazioni > Aspetto). */
+export async function updateCapsuleCountdownVisible(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  visible: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ capsule_countdown_visible: visible })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare la preferenza del countdown: ${error.message}`);
+  }
+}

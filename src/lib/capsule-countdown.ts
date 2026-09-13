@@ -58,3 +58,37 @@ export function computeCountdown(
 
   return { daysUntil, progressPercent, label };
 }
+
+export interface CountdownParts {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  /** true una volta raggiunta (o superata) openAt. */
+  isPast: boolean;
+}
+
+/**
+ * Scomposizione grezza (sempre per difetto, mai arrotondata) di quanto
+ * manca a openAt --- per i "cartellini" del countdown visivo (v.
+ * components/capsules/CapsuleCountdown.tsx), non per l'etichetta
+ * testuale/di accessibilità qui sopra: quella resta deliberatamente più
+ * "arrotondata" e non pensata per aggiornarsi al secondo (v. commento su
+ * computeCountdown). Un vero cartellino meccanico non arrotonda mai per
+ * eccesso --- passa da 15 a 16 ore solo al minuto esatto in cui scattano,
+ * mai un minuto prima.
+ */
+export function computeCountdownParts(openAt: string, now: Date = new Date()): CountdownParts {
+  const msUntil = new Date(openAt).getTime() - now.getTime();
+  const isPast = msUntil <= 0;
+  const totalSeconds = isPast ? 0 : Math.floor(msUntil / 1000);
+
+  const secondsInADay = DAY_MS / 1000;
+  return {
+    days: Math.floor(totalSeconds / secondsInADay),
+    hours: Math.floor((totalSeconds % secondsInADay) / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
+    seconds: totalSeconds % 60,
+    isPast,
+  };
+}

@@ -13,6 +13,7 @@ import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { NavOrientationSettings } from "@/components/settings/NavOrientationSettings";
 import { BottomNavItemsSettings } from "@/components/settings/BottomNavItemsSettings";
 import { ListViewSettings } from "@/components/settings/ListViewSettings";
+import { CapsuleCountdownSettings } from "@/components/settings/CapsuleCountdownSettings";
 import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { ImportExportTabs } from "@/components/import-export/ImportExportTabs";
@@ -212,6 +213,16 @@ export function SettingsTabs({
               </p>
             </div>
             <ListViewSettings />
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Capsule</h2>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Elementi visivi propri di questa sezione.
+              </p>
+            </div>
+            <CapsuleCountdownSettings />
           </div>
         </div>
       );

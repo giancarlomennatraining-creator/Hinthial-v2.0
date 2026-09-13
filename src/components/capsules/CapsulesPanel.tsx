@@ -14,6 +14,7 @@ import {
   updateCapsuleAttachmentTranscript,
 } from "@/domain/capsules/repository";
 import { downloadDocument } from "@/domain/documents/repository";
+import { getCapsuleCountdownVisible } from "@/domain/profile/repository";
 import { sortAlphabetically } from "@/lib/utils";
 import { saveBytesAsFile } from "@/lib/download";
 import { contentKindFor, CONTENT_KIND_ICON, isTranscribable } from "@/lib/content-kind";
@@ -111,6 +112,11 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [sharedCapsules, setSharedCapsules] = useState<SharedCapsuleListItem[]>([]);
   const [sharedError, setSharedError] = useState<string | null>(null);
 
+  // Impostazioni > Aspetto --- v. CapsuleCountdownSettings. Default true
+  // mentre si attende la risposta: qui un lampo non è percepibile come
+  // lo sarebbe per la disposizione del menu (v. getCapsuleCountdownVisible).
+  const [showCountdown, setShowCountdown] = useState(true);
+
   // Trascrizione di un allegato audio/video (v. domain/transcription) --- uno alla volta.
   const [transcribingAttachmentId, setTranscribingAttachmentId] = useState<string | null>(null);
   const [transcriptDraft, setTranscriptDraft] = useState("");
@@ -152,6 +158,17 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       setSharedCapsules(await listCapsulesSharedWithMe(supabase));
     } catch (err) {
       setSharedError(err instanceof Error ? err.message : "Impossibile caricare le capsule condivise con te.");
+    }
+
+    // Anche questa best-effort: se fallisce si resta sul default (true),
+    // non deve impedire di vedere le proprie capsule.
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) setShowCountdown(await getCapsuleCountdownVisible(supabase, user.id));
+    } catch {
+      // Resta il default.
     }
   }, [supabase, masterKey]);
 
@@ -532,6 +549,16 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                         sort={sort}
                         onSort={handleSort}
                       />
+                      {showCountdown ? (
+                        // Non ordinabile --- stesso ordine di "Apertura", da cui deriva
+                        // (v. richiesta utente: colonna propria, non integrata lì dentro).
+                        <th className="p-3">
+                          Tra quanto
+                          <span className="mt-0.5 block text-[9px] font-semibold tracking-wide text-zinc-400 normal-case dark:text-zinc-500">
+                            gg&nbsp;&nbsp;hh&nbsp;&nbsp;mm&nbsp;&nbsp;ss
+                          </span>
+                        </th>
+                      ) : null}
                       <SortableColumnHeader
                         label="Contenuti"
                         sortKey="contents"
@@ -568,6 +595,15 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                           <td className="p-3 text-zinc-600 dark:text-zinc-400">
                             {capsule.openAt ? formatDateTime(capsule.openAt) : "—"}
                           </td>
+                          {showCountdown ? (
+                            <td className="p-3">
+                              {capsule.openAt && capsule.status !== "draft" ? (
+                                <CapsuleCountdown createdAt={capsule.createdAt} openAt={capsule.openAt} size="xs" />
+                              ) : (
+                                <span className="text-zinc-400 dark:text-zinc-600">—</span>
+                              )}
+                            </td>
+                          ) : null}
                           <td className="p-3 text-zinc-600 dark:text-zinc-400">{contentCount}</td>
                           <td className="p-3">
                             <RowActionsMenu label={`Azioni per "${capsule.title}"`}>
@@ -633,9 +669,9 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                           dal {formatDate(capsule.createdAt)}
                           {capsule.openAt ? ` · apertura prevista ${formatDateTime(capsule.openAt)}` : ""}
                         </p>
-                        {capsule.openAt && capsule.status !== "draft" ? (
+                        {capsule.openAt && capsule.status !== "draft" && showCountdown ? (
                           <div className="mt-1.5">
-                            <CapsuleCountdown createdAt={capsule.createdAt} openAt={capsule.openAt} />
+                            <CapsuleCountdown createdAt={capsule.createdAt} openAt={capsule.openAt} size="sm" showProgress />
                           </div>
                         ) : null}
                       </div>
@@ -776,6 +812,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       <CapsulePreview
         masterKey={masterKey}
         capsule={previewCapsule}
+        showCountdown={showCountdown}
         onClose={() => setPreviewCapsule(null)}
       />
     </div>

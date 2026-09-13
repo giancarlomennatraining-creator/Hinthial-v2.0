@@ -64,6 +64,7 @@ export type Database = {
           master_key_intro_seen: boolean;
           ai_master_enabled: boolean;
           ai_chat_consent: boolean;
+          capsule_countdown_visible: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -80,6 +81,7 @@ export type Database = {
           master_key_intro_seen?: boolean;
           ai_master_enabled?: boolean;
           ai_chat_consent?: boolean;
+          capsule_countdown_visible?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -96,6 +98,7 @@ export type Database = {
           master_key_intro_seen?: boolean;
           ai_master_enabled?: boolean;
           ai_chat_consent?: boolean;
+          capsule_countdown_visible?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -419,6 +422,9 @@ export type Database = {
           owner_id: string;
           encrypted_name: string;
           encrypted_email: string;
+          encrypted_first_name: string | null;
+          encrypted_last_name: string | null;
+          avatar_path: string | null;
           role: string;
           status: FriendStatusColumn;
           is_guardian: boolean;
@@ -431,6 +437,9 @@ export type Database = {
           owner_id: string;
           encrypted_name: string;
           encrypted_email: string;
+          encrypted_first_name?: string | null;
+          encrypted_last_name?: string | null;
+          avatar_path?: string | null;
           role: string;
           status?: FriendStatusColumn;
           is_guardian?: boolean;
@@ -443,6 +452,9 @@ export type Database = {
           owner_id?: string;
           encrypted_name?: string;
           encrypted_email?: string;
+          encrypted_first_name?: string | null;
+          encrypted_last_name?: string | null;
+          avatar_path?: string | null;
           role?: string;
           status?: FriendStatusColumn;
           is_guardian?: boolean;
@@ -548,6 +560,30 @@ export type Database = {
           },
         ];
       };
+      product_updates: {
+        Row: {
+          id: string;
+          title: string;
+          description: string;
+          published_on: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description: string;
+          published_on: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          description?: string;
+          published_on?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -558,6 +594,10 @@ export type Database = {
       lookup_friend_account: {
         Args: { target_email: string };
         Returns: { matched_user_id: string; matched_display_name: string }[];
+      };
+      get_linked_friend_avatar_path: {
+        Args: { p_friend_id: string };
+        Returns: string | null;
       };
     };
     Enums: Record<string, never>;
