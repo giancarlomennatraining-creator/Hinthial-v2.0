@@ -12,6 +12,33 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-13
 
+### "Novità" diventa una voce di menu a sé, non più una card in Dashboard
+
+**Cosa fa:** la card "Novità" e il suo pannello laterale sono spariti dalla Dashboard --- al loro posto, una nuova voce nel menu principale, "Novità", apre una pagina a sé (come Cronologia, ma senza filtri) con le ultime 10 modifiche a Hinthial in tabella, dalla più recente, e un tasto "Vedi tutte" per il resto.
+
+**Note tecniche:** `ProductUpdatesWidget` rimosso; `UpdatesPanel` (nuova pagina `/updates`) riusa lo stesso `domain/product-updates/repository.ts` --- un solo caricamento di tutte le righe, "Vedi tutte" si limita a mostrarne il resto senza una seconda richiesta. Voce di menu con `requiresEncryption: false` (come Dashboard): contenuto globale, non serve la master key.
+
+### Voci del menu principale: quali mostrare, e in che ordine
+
+**Cosa fa:** in Impostazioni > Aspetto puoi ora scegliere quali voci compaiono nel menu di navigazione principale (barra laterale o orizzontale), e in quale ordine --- stesso meccanismo già usato per la barra in basso su smartphone, applicato qui alla barra principale su ogni dispositivo.
+
+**Note tecniche:** nuova colonna `profiles.main_nav_items` (jsonb, come `bottom_nav_items`) e `lib/main-nav.ts`/`MainNavItemsProvider`/`useOrderedNavItems()`, consumato da Sidebar/TopNav (l'intero elenco) e MobileNavBar (il cassetto, meno le voci già nella barra in basso). A differenza della barra in basso, qui nascondere una voce non lascia un "altrove" dove ritrovarla: resta comunque raggiungibile da Dashboard o dalla ricerca globale.
+
+### Impostazioni: Aspetto a due colonne, contenuto a piena larghezza ovunque
+
+**Cosa fa:** in Impostazioni > Aspetto le sezioni (Tema, Disposizione del menu, Voci del menu, Barra in basso, Liste, Capsule) si affiancano su due colonne quando lo schermo è abbastanza largo. In generale, il contenuto di ogni scheda di Impostazioni usa ora tutta la larghezza disponibile, invece di restare compresso in una colonna stretta anche su schermi ampi.
+
+### Onboarding: rispetta "Nascondi" anche in Dashboard
+
+**Cosa fa:** una volta scelto "Nascondi" per il gadget Onboarding, la checklist non ricompare più nemmeno come card in Dashboard --- prima spariva solo dalla barra di navigazione. La primissima volta (prima di aver mai scelto "Nascondi") continua a comparire in entrambi i posti, come sempre.
+
+### Foto di un amico/del profilo: fotocamera e galleria, ognuna il suo tasto
+
+**Cosa fa:** "Carica foto" apre sempre la scelta di un file esistente (la galleria su smartphone); "Scatta foto" apre sempre la fotocamera --- prima capitava che entrambi aprissero la fotocamera su smartphone. Su computer, "Scatta foto" ora accende davvero la webcam del dispositivo, con un'anteprima dal vivo, invece di aprire la solita finestra di scelta file.
+
+**Note tecniche:** due `<input type="file">` distinti invece di uno solo con `capture` attivato/disattivato al volo (quel trucco dipende dal blur per ripristinarsi, che su alcuni browser/OS mobile non scatta mai dopo aver annullato la fotocamera). Su desktop, `getUserMedia` con un fotogramma catturato su `<canvas>`, alimentato nello stesso ritaglio a quadrato già esistente.
+
+
 ### Amici: foto profilo, anche per gli account collegati
 
 **Cosa fa:** ogni amico può avere una foto, in elenco, in tabella e nella pagina di modifica. La carichi tu (con lo stesso ritaglio a quadrato già usato per la tua foto profilo, e ora anche "📷 Scatta foto" oltre a "Carica foto" --- comparso anche nelle tue Impostazioni, per coerenza) --- oppure, se quell'amico è già un account Hinthial collegato, vedi automaticamente la sua foto vera, senza doverla caricare tu. Una foto caricata a mano vince sempre su quella reale. Senza nessuna delle due, le iniziali di nome e cognome su uno sfondo colorato, come per il tuo profilo.
