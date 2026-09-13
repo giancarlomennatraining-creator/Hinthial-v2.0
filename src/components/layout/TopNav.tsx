@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { MainNav } from "@/components/layout/MainNav";
+import { useOrderedNavItems } from "@/components/layout/MainNavItemsProvider";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { OnboardingStatus } from "@/components/layout/OnboardingStatus";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
@@ -27,6 +30,8 @@ export function TopNav({
   displayName: string;
   avatarUrl: string | null;
 }) {
+  const navItems = useOrderedNavItems();
+
   return (
     // Sotto md la sostituisce MobileNavBar (v. AppShell).
     <header className="hidden flex-wrap items-center gap-4 border-b border-zinc-200 bg-white p-4 md:flex dark:border-zinc-800 dark:bg-zinc-950">
@@ -35,7 +40,7 @@ export function TopNav({
         <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-8 w-auto sm:h-10" />
       </Link>
 
-      <MainNav horizontal />
+      <MainNav horizontal items={navItems} />
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <GlobalSearch />

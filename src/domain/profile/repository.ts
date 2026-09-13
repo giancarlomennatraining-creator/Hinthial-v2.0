@@ -162,6 +162,25 @@ export async function updateBottomNavItems(
 }
 
 /**
+ * Persists which nav items appear in the general navigation bar
+ * (sidebar/topbar, v. lib/main-nav.ts), and in what order --- read
+ * server-side on the next full navigation (see getCurrentUser), like
+ * bottom_nav_items, to avoid a flash of the wrong/full set of icons in
+ * persistent shell chrome.
+ */
+export async function updateMainNavItems(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  items: string[],
+): Promise<void> {
+  const { error } = await supabase.from("profiles").update({ main_nav_items: items }).eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare la barra di navigazione: ${error.message}`);
+  }
+}
+
+/**
  * Persists whether the "Onboarding" nav-bar gadget is hidden (v.
  * OnboardingWidgetVisibilityProvider) --- sincronizzato sul server, come
  * nav_orientation, così "Nascondi" vale per davvero anche a un login

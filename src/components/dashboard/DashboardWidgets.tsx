@@ -6,9 +6,9 @@ import { createClient } from "@/lib/db/supabase/client";
 import { buildAIContext } from "@/domain/ai/context";
 import { mockAIProvider } from "@/domain/ai/mock-provider";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
+import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 import { computeOnboardingSteps, isOnboardingComplete } from "@/domain/onboarding/steps";
 import { DashboardCounters } from "@/components/dashboard/DashboardCounters";
-import { ProductUpdatesWidget } from "@/components/dashboard/ProductUpdatesWidget";
 import { WatchlistWidget } from "@/components/dashboard/WatchlistWidget";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import type { AIContext, AISuggestion } from "@/domain/ai/types";
@@ -33,6 +33,7 @@ function formatDate(iso: string): string {
  */
 export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
+  const { hidden: onboardingWidgetHidden } = useOnboardingWidgetVisibility();
 
   const [context, setContext] = useState<AIContext | null>(null);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
@@ -106,8 +107,6 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
             la pagina, oltre la larghezza dello schermo su mobile. */}
         <div className="flex min-w-0 flex-col gap-6">
           <DashboardCounters context={context} />
-
-          <ProductUpdatesWidget />
 
           <div className="grid min-w-0 gap-6 sm:grid-cols-3">
             <section className="min-w-0 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
@@ -192,9 +191,15 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
             non è più qui sotto (v. richiesta utente): ha una riga propria
             a piena larghezza subito dopo questa griglia, invece di
             restare compressa nella stessa colonna stretta
-            dell'Onboarding. */}
+            dell'Onboarding. Rispetta anche "Nascondi" (v.
+            OnboardingWidgetVisibilityProvider): una volta nascosto
+            esplicitamente, non deve ricomparire nemmeno qui --- solo la
+            primissima volta (prima di essere mai stato nascosto) si vede
+            di default. */}
         <div className="min-w-0">
-          {onboardingComplete ? null : <OnboardingChecklist steps={onboardingSteps} />}
+          {onboardingComplete || onboardingWidgetHidden ? null : (
+            <OnboardingChecklist steps={onboardingSteps} />
+          )}
         </div>
       </div>
 

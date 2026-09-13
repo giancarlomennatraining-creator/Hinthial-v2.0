@@ -92,7 +92,7 @@ export function PrivacyPanel({
   ];
 
   return (
-    <div className="flex max-w-4xl flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Cosa sa Hinthial di te

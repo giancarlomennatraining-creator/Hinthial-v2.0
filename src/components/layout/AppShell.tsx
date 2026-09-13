@@ -9,12 +9,14 @@ import { MasterKeyIntroModal } from "@/components/crypto/MasterKeyIntroModal";
 import { ListViewPreferencesProvider } from "@/components/layout/ListViewPreferencesProvider";
 import { NavOrientationProvider, useNavOrientation } from "@/components/layout/NavOrientationProvider";
 import { BottomNavItemsProvider } from "@/components/layout/BottomNavItemsProvider";
+import { MainNavItemsProvider } from "@/components/layout/MainNavItemsProvider";
 import { OnboardingWidgetVisibilityProvider } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 import { AIChatProvider } from "@/components/ai/AIChatProvider";
 import { AIProcessingConsentProvider } from "@/components/ai/AIProcessingConsentProvider";
 import { cn } from "@/lib/utils";
 import type { NavOrientation } from "@/lib/nav-orientation";
 import type { BottomNavItems } from "@/lib/bottom-nav";
+import type { MainNavItems } from "@/lib/main-nav";
 
 /**
  * Shared chrome for the authenticated app (nav + user menu).
@@ -31,6 +33,7 @@ export function AppShell({
   avatarUrl,
   initialNavOrientation,
   initialBottomNavItems,
+  initialMainNavItems,
   initialOnboardingWidgetHidden,
   initialMasterKeyIntroSeen,
   initialAIMasterEnabled,
@@ -44,6 +47,7 @@ export function AppShell({
   avatarUrl: string | null;
   initialNavOrientation: NavOrientation;
   initialBottomNavItems: BottomNavItems;
+  initialMainNavItems: MainNavItems;
   initialOnboardingWidgetHidden: boolean;
   initialMasterKeyIntroSeen: boolean;
   initialAIMasterEnabled: boolean;
@@ -55,6 +59,7 @@ export function AppShell({
       <MasterKeyIntroModal userId={userId} initialSeen={initialMasterKeyIntroSeen} />
       <NavOrientationProvider userId={userId} initialOrientation={initialNavOrientation}>
         <BottomNavItemsProvider userId={userId} initialItems={initialBottomNavItems}>
+        <MainNavItemsProvider userId={userId} initialItems={initialMainNavItems}>
           <ListViewPreferencesProvider userId={userId}>
             <OnboardingWidgetVisibilityProvider userId={userId} initialHidden={initialOnboardingWidgetHidden}>
               <AIProcessingConsentProvider
@@ -74,6 +79,7 @@ export function AppShell({
               </AIProcessingConsentProvider>
             </OnboardingWidgetVisibilityProvider>
           </ListViewPreferencesProvider>
+        </MainNavItemsProvider>
         </BottomNavItemsProvider>
       </NavOrientationProvider>
     </MasterKeyProvider>

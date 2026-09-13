@@ -8,7 +8,7 @@ import { UserMenu } from "@/components/layout/UserMenu";
 import { OnboardingStatus } from "@/components/layout/OnboardingStatus";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { useBottomNavItems } from "@/components/layout/BottomNavItemsProvider";
-import { NAV_ITEMS } from "@/components/layout/nav-items";
+import { useOrderedNavItems } from "@/components/layout/MainNavItemsProvider";
 import { useMountedTransition } from "@/lib/use-mounted-transition";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +42,8 @@ export function MobileNavBar({
 
   // Le voci già raggiungibili dalla barra fissa in basso (v. BottomNavBar)
   // non vanno ripetute qui --- solo il resto, come chiesto dall'utente.
-  const drawerItems = NAV_ITEMS.filter((item) => !bottomNavItems.includes(item.href));
+  const navItems = useOrderedNavItems();
+  const drawerItems = navItems.filter((item) => !bottomNavItems.includes(item.href));
 
   // Una navigazione riuscita chiude il menu --- altrimenti resterebbe
   // aperto sopra la nuova pagina.

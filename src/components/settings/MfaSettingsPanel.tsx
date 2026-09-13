@@ -217,7 +217,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="flex max-w-lg flex-col gap-10">
+    <div className="flex flex-col gap-10">
       {/* --- TOTP (app authenticator) --- */}
       <div className="flex flex-col gap-6">
         <div>

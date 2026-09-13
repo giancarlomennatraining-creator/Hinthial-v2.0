@@ -76,7 +76,7 @@ export function OnboardingSettingsPanel({ masterKey }: { masterKey: CryptoKey })
   const percent = onboardingCompletionPercent(steps);
 
   return (
-    <div className="flex max-w-2xl flex-col gap-8">
+    <div className="flex flex-col gap-8">
       <div className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-6 text-center sm:flex-row sm:items-center sm:text-left dark:border-zinc-800 dark:bg-zinc-950">
         <span
           aria-hidden="true"

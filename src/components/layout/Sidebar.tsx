@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MainNav } from "@/components/layout/MainNav";
+import { useOrderedNavItems } from "@/components/layout/MainNavItemsProvider";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { OnboardingStatus } from "@/components/layout/OnboardingStatus";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
@@ -36,6 +37,7 @@ export function Sidebar({
   side?: "left" | "right";
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const navItems = useOrderedNavItems();
 
   useEffect(() => {
     // Legge una preferenza già decisa altrove (localStorage), non deriva
@@ -97,7 +99,7 @@ export function Sidebar({
       </div>
 
       <GlobalSearch collapsed={collapsed} />
-      <MainNav collapsed={collapsed} />
+      <MainNav collapsed={collapsed} items={navItems} />
 
       <div className="mt-auto flex flex-col gap-2">
         <OnboardingStatus collapsed={collapsed} />

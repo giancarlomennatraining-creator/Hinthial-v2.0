@@ -12,6 +12,7 @@ import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { NavOrientationSettings } from "@/components/settings/NavOrientationSettings";
 import { BottomNavItemsSettings } from "@/components/settings/BottomNavItemsSettings";
+import { MainNavItemsSettings } from "@/components/settings/MainNavItemsSettings";
 import { ListViewSettings } from "@/components/settings/ListViewSettings";
 import { CapsuleCountdownSettings } from "@/components/settings/CapsuleCountdownSettings";
 import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
@@ -143,11 +144,11 @@ export function SettingsTabs({
       // utente) --- non richiede la master key, il consenso riguarda
       // solo dati già decifrati e mostrati altrove (v. AIPanel).
       return (
-        <div className="flex max-w-md flex-col gap-4">
+        <div className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Intelligenza artificiale
           </h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
             Per impostazione predefinita nessuna funzione di IA reale è attiva --- ogni domanda
             e ogni contenuto restano elaborati solo sul tuo dispositivo. Attivando il cancello
             generale qui sotto, attivi solo la possibilità di accendere le singole funzioni, una
@@ -162,7 +163,11 @@ export function SettingsTabs({
     }
     if (activeTab === "appearance") {
       return (
-        <div className="flex max-w-md flex-col gap-8">
+        // A due colonne da lg in su (v. richiesta utente) --- una sola
+        // sotto, dove non ci sarebbe spazio per restare leggibili
+        // affiancate. Niente più max-w: qui come nel resto di
+        // Impostazioni il contenuto usa tutta la larghezza disponibile.
+        <div className="grid gap-8 lg:grid-cols-2">
           <div className="flex flex-col gap-4">
             <div>
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Tema</h2>
@@ -185,6 +190,18 @@ export function SettingsTabs({
               </p>
             </div>
             <NavOrientationSettings />
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                Voci del menu principale
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Scegli quali voci mostrare nel menu di navigazione, e in che ordine.
+              </p>
+            </div>
+            <MainNavItemsSettings />
           </div>
 
           <div className="flex flex-col gap-4">
