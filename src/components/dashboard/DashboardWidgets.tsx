@@ -8,6 +8,7 @@ import { mockAIProvider } from "@/domain/ai/mock-provider";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { computeOnboardingSteps, isOnboardingComplete } from "@/domain/onboarding/steps";
 import { DashboardCounters } from "@/components/dashboard/DashboardCounters";
+import { ProductUpdatesWidget } from "@/components/dashboard/ProductUpdatesWidget";
 import { WatchlistWidget } from "@/components/dashboard/WatchlistWidget";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import type { AIContext, AISuggestion } from "@/domain/ai/types";
@@ -105,6 +106,8 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
             la pagina, oltre la larghezza dello schermo su mobile. */}
         <div className="flex min-w-0 flex-col gap-6">
           <DashboardCounters context={context} />
+
+          <ProductUpdatesWidget />
 
           <div className="grid min-w-0 gap-6 sm:grid-cols-3">
             <section className="min-w-0 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
