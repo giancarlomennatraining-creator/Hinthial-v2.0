@@ -10,7 +10,14 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
-## 2026-09-13
+## 2026-09-14
+
+### Bug corretto: un amico collegato a un account non si scollegava più cambiandogli l'email
+
+**Cosa fa:** se un amico risulta "✓ Su Hinthial" (collegato automaticamente a un vero account, per email corrispondente) e poi gli cambi l'email, il collegamento --- e con lui la foto reale mostrata --- ora si azzera subito, invece di restare agganciato all'account di prima. Alla prossima visita ad Amici, se la nuova email corrisponde a un altro account, si ricollega da solo a quello; altrimenti resta scollegato.
+
+**Note tecniche:** `updateFriend()` (`domain/friends/repository.ts`) non toccava mai `linked_user_id`, e `checkLinkedAccounts` (`FriendsPanel.tsx`) riprova il collegamento solo per chi non ne ha già uno --- combinati, un amico già collegato non veniva più ricontrollato per il resto della sua vita, anche cambiandogli completamente email. `EditFriendForm` confronta ora l'email appena scritta con quella originale (già decifrata, già in mano al client) e passa un flag `emailChanged` a `updateFriend()`, che azzera `linked_user_id` nella stessa scrittura --- mai `avatar_path`, che è una foto caricata a mano, indipendente dall'email. Nuovo test e2e dedicato (`friend-account-link.spec.ts`), prima area senza copertura per questa funzionalità.
+
 
 ### Ottimizzazioni di velocità: meno un giro di rete per pagina, meno codice caricato a vuoto
 

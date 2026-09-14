@@ -154,12 +154,29 @@ export async function createFriend(
   return { id: data.id };
 }
 
-/** Re-encrypts name/email/first/last name and updates the plaintext role --- same fields as createFriend, no status change. */
+/**
+ * Re-encrypts name/email/first/last name and updates the plaintext role
+ * --- same fields as createFriend, no status change.
+ *
+ * `emailChanged` (il chiamante lo sa già, avendo sia l'email decifrata
+ * originale sia quella appena scritta): quando true, azzera anche
+ * `linked_user_id` --- il collegamento a un account Hinthial è per
+ * definizione legato a QUELLA email, e resterebbe altrimenti agganciato
+ * per sempre all'account sbagliato (v. richiesta utente: cambiando
+ * l'email di un amico già collegato, badge "✓ Su Hinthial" e foto reale
+ * restavano quelli di prima). Non tocca invece `avatar_path` --- una
+ * foto caricata a mano non ha nulla a che fare con l'email. Il
+ * ricollegamento alla nuova email, se corrisponde a un account, avviene
+ * da sé al prossimo caricamento di Amici (v. FriendsPanel.tsx,
+ * checkLinkedAccounts, che riprova solo per chi non ha già un
+ * linked_user_id): nessuna nuova verifica va fatta qui.
+ */
 export async function updateFriend(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
   friendId: string,
   input: FriendInput,
+  emailChanged: boolean,
 ): Promise<void> {
   const [encryptedName, encryptedEmail, encryptedFirstName, encryptedLastName] = await Promise.all([
     encryptBytes(masterKey, utf8ToBytes(input.name)),
@@ -176,6 +193,7 @@ export async function updateFriend(
       encrypted_first_name: encryptedFirstName,
       encrypted_last_name: encryptedLastName,
       role: input.role,
+      ...(emailChanged ? { linked_user_id: null } : {}),
     })
     .eq("id", friendId);
 

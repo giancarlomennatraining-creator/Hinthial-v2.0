@@ -125,6 +125,9 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    // Il form è renderizzato solo quando `friend` non è null (v. sotto) ---
+    // questo handler può quindi scattare solo a quel punto.
+    if (!friend) return;
 
     const form = event.currentTarget;
     const formData = new FormData(form);
@@ -137,9 +140,15 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
       return;
     }
 
+    // Il collegamento a un account Hinthial (v. domain/friends/repository.ts,
+    // updateFriend) è legato a QUESTA email --- se cambia, va azzerato,
+    // altrimenti badge "✓ Su Hinthial" e foto reale resterebbero
+    // agganciati per sempre all'account sbagliato.
+    const emailChanged = email.toLowerCase() !== friend.email.trim().toLowerCase();
+
     setSaving(true);
     try {
-      await updateFriend(supabase, masterKey, friendId, { name, email, firstName, lastName, role });
+      await updateFriend(supabase, masterKey, friendId, { name, email, firstName, lastName, role }, emailChanged);
 
       // Un invito non riuscito non deve impedire di aver salvato le
       // modifiche: si segnala con un parametro a parte, non un errore.
