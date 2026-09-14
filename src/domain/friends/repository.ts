@@ -309,6 +309,26 @@ export async function getLinkedFriendAvatarUrl(
 }
 
 /**
+ * FASE C1 del piano di condivisione capsule --- la chiave pubblica ECDH
+ * (v. lib/crypto/keypair.ts) dell'account collegato a un amico, o null
+ * se non è collegato o non ha ancora una chiave (v. migrazione
+ * account_keypair, get_linked_friend_public_key). Serve per cifrare una
+ * capsula appositamente per lui al momento della condivisione (v.
+ * domain/capsules/repository.ts, shareCapsule).
+ */
+export async function getLinkedFriendPublicKey(
+  supabase: SupabaseClient<Database>,
+  friendId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase.rpc("get_linked_friend_public_key", { p_friend_id: friendId });
+
+  if (error) {
+    throw new Error(`Impossibile verificare la chiave dell'amico: ${error.message}`);
+  }
+  return data ?? null;
+}
+
+/**
  * FASE A del piano di condivisione capsule --- verifica se una singola
  * email (già decifrata lato client per UN amico) corrisponde a un
  * account Hinthial registrato. Passa dalla funzione Postgres

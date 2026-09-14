@@ -194,14 +194,21 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
             data: { user },
           } = await supabase.auth.getUser();
           if (user) {
-            await syncCapsuleSharesForLinkedFriend(supabase, user.id, friend.id, match.userId, sharedCapsules);
+            await syncCapsuleSharesForLinkedFriend(
+              supabase,
+              masterKey,
+              user.id,
+              friend.id,
+              match.userId,
+              sharedCapsules,
+            );
           }
         } catch {
           // Verifica best-effort --- v. commento sopra.
         }
       }
     },
-    [supabase, resolveLinkedAvatar],
+    [supabase, resolveLinkedAvatar, masterKey],
   );
 
   const refresh = useCallback(async () => {

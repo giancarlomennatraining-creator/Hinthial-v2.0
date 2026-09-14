@@ -10,6 +10,14 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-15
+
+### FASE C1 --- una capsula chiusa e condivisa diventa davvero apribile da chi la riceve
+
+**Cosa fa:** se hai un amico "✓ Su Hinthial" (un vero account collegato) tra i destinatari di una capsula, quando la chiudi e la condividi lui la ritrova nella scheda "Condivise con me" di Capsule, con lo stesso countdown visivo che vedi tu. Prima della data di apertura può solo guardare il countdown; da quel momento in poi compare un tasto "🔓 Apri" che gli mostra il contenuto --- testo e allegati, decifrati sul suo dispositivo con la sua Master Key, mai con la tua.
+
+**Note tecniche:** ogni account guadagna ora una coppia di chiavi ECDH (P-256, generata via Web Crypto API), pubblica in chiaro e privata cifrata dalla Master Key del proprietario (stessa cifratura di una Document Key --- v. `lib/crypto/keypair.ts`); creata al primo setup, oppure retroattivamente al primo sblocco successivo per chi ha un account precedente a questa fase (`ensureKeyPair` in `MasterKeyProvider.tsx`, best-effort). Le capsule cifrano già il proprio payload direttamente con la Master Key del proprietario (non con una Document Key indipendente, a differenza dei Documenti): condividerlo con un destinatario ha quindi richiesto una seconda cifratura parallela, pensata apposta per lui --- alla chiusura/condivisione, una coppia di chiavi ECDH effimera (usa e getta) deriva una chiave AES-256-GCM condivisa con la chiave pubblica del destinatario, usata per cifrare una copia del contenuto (titolo, testo, allegati con le rispettive Document Key in chiaro) in una nuova tabella, `capsule_share_keys`. Il destinatario rideriva la stessa identica chiave con la propria chiave privata (proprietà simmetrica di ECDH) e la usa per decifrare. La data di apertura non è solo un controllo lato interfaccia: una policy RLS dedicata nega la lettura di quella riga --- e degli allegati su Storage --- finché `capsules.open_at` non è nel passato, verificato dal database stesso, non dal client. Se il destinatario non ha ancora una propria coppia di chiavi al momento della condivisione, la capsula resta comunque visibile in "Condivise con me" ma senza possibilità di aprirla --- nessun ritentativo automatico per questo caso specifico (diverso dal ricollegamento automatico di un amico, che riprova già da solo). Non è ancora il Dead Man's Switch --- resta un meccanismo di apertura manuale a data fissa (v. HINTHIAL_MVP.md, FASE 12 futura per l'interruttore vero e proprio). Verificato con un nuovo test e2e dedicato (`capsule-sharing.spec.ts`, due account reali) oltre a un test unitario sullo scambio di chiavi (`keypair.test.ts`) che prova che il segreto condiviso è davvero lo stesso su entrambi i lati e che un terzo non può derivarlo.
+
 ## 2026-09-14
 
 ### Bug corretto: un amico collegato a un account non si scollegava più cambiandogli l'email

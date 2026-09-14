@@ -153,6 +153,8 @@ export type Database = {
           master_key_wrapped_by_password: string;
           master_key_wrapped_by_recovery_key: string;
           pbkdf2_params: string;
+          public_key: string | null;
+          wrapped_private_key: string | null;
           created_at: string;
         };
         Insert: {
@@ -160,6 +162,8 @@ export type Database = {
           master_key_wrapped_by_password: string;
           master_key_wrapped_by_recovery_key: string;
           pbkdf2_params: string;
+          public_key?: string | null;
+          wrapped_private_key?: string | null;
           created_at?: string;
         };
         Update: {
@@ -167,6 +171,8 @@ export type Database = {
           master_key_wrapped_by_password?: string;
           master_key_wrapped_by_recovery_key?: string;
           pbkdf2_params?: string;
+          public_key?: string | null;
+          wrapped_private_key?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -563,6 +569,58 @@ export type Database = {
           },
         ];
       };
+      capsule_share_keys: {
+        Row: {
+          id: string;
+          capsule_id: string;
+          owner_id: string;
+          recipient_user_id: string;
+          ephemeral_public_key: string;
+          encrypted_payload_for_recipient: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          capsule_id: string;
+          owner_id: string;
+          recipient_user_id: string;
+          ephemeral_public_key: string;
+          encrypted_payload_for_recipient: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          capsule_id?: string;
+          owner_id?: string;
+          recipient_user_id?: string;
+          ephemeral_public_key?: string;
+          encrypted_payload_for_recipient?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "capsule_share_keys_capsule_id_fkey";
+            columns: ["capsule_id"];
+            isOneToOne: false;
+            referencedRelation: "capsules";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "capsule_share_keys_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "capsule_share_keys_recipient_user_id_fkey";
+            columns: ["recipient_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       product_updates: {
         Row: {
           id: string;
@@ -599,6 +657,10 @@ export type Database = {
         Returns: { matched_user_id: string; matched_display_name: string }[];
       };
       get_linked_friend_avatar_path: {
+        Args: { p_friend_id: string };
+        Returns: string | null;
+      };
+      get_linked_friend_public_key: {
         Args: { p_friend_id: string };
         Returns: string | null;
       };

@@ -9,6 +9,14 @@ import {
   serializeEnvelope,
   utf8ToBytes,
   bytesToUtf8,
+  bytesToBase64,
+  base64ToBytes,
+  exportKeyRaw,
+  importKeyRaw,
+  unwrapKey,
+  unwrapPrivateKey,
+  deriveSharedKeyAsSender,
+  deriveSharedKeyAsRecipient,
   type EncryptedDocument,
 } from "@/lib/crypto";
 import {
@@ -18,7 +26,7 @@ import {
   uploadEncryptedCapsulePayload,
 } from "@/lib/storage/capsules-bucket";
 import { downloadDocument, getDocumentsByIds } from "@/domain/documents/repository";
-import { getFriendsByIds } from "@/domain/friends/repository";
+import { getFriendsByIds, getLinkedFriendPublicKey } from "@/domain/friends/repository";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import type {
   CapsuleAccessCondition,
@@ -28,7 +36,9 @@ import type {
   CapsuleInput,
   CapsuleListItem,
   CapsuleStatus,
+  SharedCapsuleAttachment,
   SharedCapsuleListItem,
+  SharedCapsuleOpenedContent,
 } from "@/domain/capsules/types";
 
 const CAPSULE_COLUMNS = "id, encrypted_payload, status, access_condition, open_at, created_at";
@@ -419,32 +429,122 @@ export async function setCapsuleStatus(
 }
 
 /**
- * FASE B del piano di condivisione capsule --- "Condividi" (ready ->
- * shared) non è più solo un cambio di stato: per ogni destinatario già
- * collegato a un account Hinthial (v. friends.linked_user_id), crea
- * anche la riga che lo lega a questa capsula in "Condivise con me" (v.
- * listCapsulesSharedWithMe). Un destinatario non ancora collegato non
- * riceve nulla qui --- verrà agganciato retroattivamente quando si
- * collegherà (v. syncCapsuleSharesForLinkedFriend), esattamente come
- * l'amico dell'esempio che ha ispirato la Fase A. Nessun accesso al
- * contenuto viene concesso in nessun caso: resta cifrato con la Master
- * Key del proprietario.
+ * Prepara il contenuto di una capsula già chiusa per un destinatario:
+ * stesso titolo/contenuto/allegati, ma la Document Key di ogni allegato
+ * è qui in chiaro (v. SharedCapsuleAttachment) invece che avvolta dalla
+ * Master Key del proprietario --- il destinatario non la possiede, e
+ * non gli serve un secondo involucro: l'intero risultato di questa
+ * funzione finisce comunque dentro una busta cifrata apposta per lui
+ * (v. createOrRefreshShareKey).
  */
-export async function shareCapsule(
-  supabase: SupabaseClient<Database>,
-  ownerId: string,
-  capsule: Pick<CapsuleListItem, "id" | "relatedFriends">,
-): Promise<void> {
-  const linkedRecipientIds = capsule.relatedFriends
-    .map((friend) => friend.linkedUserId)
-    .filter((id): id is string => id !== null);
+async function buildRecipientPayload(
+  masterKey: CryptoKey,
+  capsule: Pick<CapsuleListItem, "title" | "content" | "contentStyle" | "attachments">,
+): Promise<SharedCapsuleOpenedContent> {
+  const attachments: SharedCapsuleAttachment[] = await Promise.all(
+    capsule.attachments.map(async (attachment) => {
+      const documentKey = await unwrapKey(masterKey, parseEnvelope(attachment.wrappedDocumentKey), true);
+      const raw = await exportKeyRaw(documentKey);
+      return {
+        id: attachment.id,
+        filename: attachment.filename,
+        mimeType: attachment.mimeType,
+        size: attachment.size,
+        documentKeyRaw: bytesToBase64(raw),
+        transcript: attachment.transcript,
+      };
+    }),
+  );
 
-  if (linkedRecipientIds.length > 0) {
-    const { error } = await supabase.from("capsule_shares").upsert(
-      linkedRecipientIds.map((recipientUserId) => ({
+  return { title: capsule.title, content: capsule.content, contentStyle: capsule.contentStyle, attachments };
+}
+
+/**
+ * FASE C1 --- crea (o rinnova) la busta cifrata che permette a UN
+ * destinatario già collegato a un account Hinthial di decifrare
+ * davvero questa capsula, una volta raggiunta la data di apertura (v.
+ * migrazione capsule_share_keys, che nega la lettura di questa riga
+ * prima di allora). Scambio di chiavi ECDH (v. lib/crypto/keypair.ts):
+ * una coppia effimera per questa condivisione, la cui privata non
+ * viene mai salvata da nessuna parte --- serve solo qui, un istante,
+ * per derivare la chiave condivisa.
+ *
+ * Best-effort e silenzioso apposta: se il destinatario non ha ancora
+ * una chiave pubblica (non ha mai sbloccato il proprio vault dopo
+ * questa fase --- v. MasterKeyProvider), la riga "involucro"
+ * (capsule_shares) viene comunque creata dal chiamante --- così
+ * "Condivise con me" la mostra già --- solo senza possibilità di
+ * apertura finché non si riprova. Nessun meccanismo di nuovo tentativo
+ * automatico esiste ancora per questo caso specifico: va tenuto a mente
+ * come limite noto.
+ */
+async function createOrRefreshShareKey(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  ownerId: string,
+  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "attachments">,
+  friendId: string,
+  recipientUserId: string,
+): Promise<void> {
+  try {
+    const recipientPublicKeyJwk = await getLinkedFriendPublicKey(supabase, friendId);
+    if (!recipientPublicKeyJwk) return;
+
+    const [{ sharedKey, ephemeralPublicKeyJwk }, recipientPayload] = await Promise.all([
+      deriveSharedKeyAsSender(recipientPublicKeyJwk),
+      buildRecipientPayload(masterKey, capsule),
+    ]);
+    const encryptedPayloadForRecipient = await encryptBytes(
+      sharedKey,
+      utf8ToBytes(JSON.stringify(recipientPayload)),
+    );
+
+    const { error } = await supabase.from("capsule_share_keys").upsert(
+      {
         capsule_id: capsule.id,
         owner_id: ownerId,
         recipient_user_id: recipientUserId,
+        ephemeral_public_key: ephemeralPublicKeyJwk,
+        encrypted_payload_for_recipient: serializeEnvelope(encryptedPayloadForRecipient),
+      },
+      { onConflict: "capsule_id,recipient_user_id" },
+    );
+    if (error) throw error;
+  } catch {
+    // Best-effort --- v. commento sopra.
+  }
+}
+
+/**
+ * FASE B/C1 del piano di condivisione capsule --- "Condividi" (ready ->
+ * shared) non è più solo un cambio di stato: per ogni destinatario già
+ * collegato a un account Hinthial (v. friends.linked_user_id), crea sia
+ * la riga che lo lega a questa capsula in "Condivise con me" (v.
+ * listCapsulesSharedWithMe) sia la busta cifrata apposta per lui che
+ * gli permetterà di apriria davvero, a data di apertura raggiunta (v.
+ * createOrRefreshShareKey). Un destinatario non ancora collegato non
+ * riceve nulla qui --- verrà agganciato retroattivamente quando si
+ * collegherà (v. syncCapsuleSharesForLinkedFriend), esattamente come
+ * l'amico dell'esempio che ha ispirato la Fase A.
+ */
+export async function shareCapsule(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  ownerId: string,
+  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "attachments" | "relatedFriends">,
+): Promise<void> {
+  const linkedFriends = capsule.relatedFriends.filter((friend) => friend.linkedUserId !== null);
+
+  for (const friend of linkedFriends) {
+    await createOrRefreshShareKey(supabase, masterKey, ownerId, capsule, friend.id, friend.linkedUserId as string);
+  }
+
+  if (linkedFriends.length > 0) {
+    const { error } = await supabase.from("capsule_shares").upsert(
+      linkedFriends.map((friend) => ({
+        capsule_id: capsule.id,
+        owner_id: ownerId,
+        recipient_user_id: friend.linkedUserId as string,
       })),
       { onConflict: "capsule_id,recipient_user_id" },
     );
@@ -461,20 +561,27 @@ export async function shareCapsule(
  * Retroattivo: quando un amico si collega a un account Hinthial (v.
  * domain/friends, lookupFriendAccount) dopo che una o più capsule erano
  * già state condivise con lui, questa funzione crea le righe di
- * condivisione mancanti --- così "Condivise con me" le mostra comunque,
- * invece di restare per sempre invisibili solo perché il collegamento è
- * arrivato in ritardo. `sharedCapsules` va già filtrata a status
- * "shared" dal chiamante (v. FriendsPanel, che le ha già in memoria).
+ * condivisione mancanti E la busta cifrata per aprirle (v.
+ * createOrRefreshShareKey) --- così "Condivise con me" le mostra
+ * comunque, invece di restare per sempre invisibili (o per sempre non
+ * apribili) solo perché il collegamento è arrivato in ritardo.
+ * `sharedCapsules` va già filtrata a status "shared" dal chiamante (v.
+ * FriendsPanel, che le ha già in memoria, già decifrate).
  */
 export async function syncCapsuleSharesForLinkedFriend(
   supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
   ownerId: string,
   friendId: string,
   linkedUserId: string,
-  sharedCapsules: Pick<CapsuleListItem, "id" | "relatedFriends">[],
+  sharedCapsules: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "attachments" | "relatedFriends">[],
 ): Promise<void> {
   const relevant = sharedCapsules.filter((c) => c.relatedFriends.some((f) => f.id === friendId));
   if (relevant.length === 0) return;
+
+  for (const capsule of relevant) {
+    await createOrRefreshShareKey(supabase, masterKey, ownerId, capsule, friendId, linkedUserId);
+  }
 
   const { error } = await supabase.from("capsule_shares").upsert(
     relevant.map((c) => ({ capsule_id: c.id, owner_id: ownerId, recipient_user_id: linkedUserId })),
@@ -534,6 +641,7 @@ export async function listCapsulesSharedWithMe(
 
       return {
         id: share.capsule_id,
+        ownerId: share.owner_id,
         ownerName: `${profile.first_name} ${profile.last_name}`.trim(),
         sharedAt: share.shared_at,
         status: capsule.status,
@@ -541,6 +649,75 @@ export async function listCapsulesSharedWithMe(
       };
     })
     .filter((item): item is SharedCapsuleListItem => item !== null);
+}
+
+/**
+ * FASE C1 --- apre davvero una capsula condivisa: sblocca la propria
+ * chiave privata (con la propria Master Key, appena sbloccata come per
+ * qualunque altro contenuto), ridriva la chiave condivisa con la
+ * chiave pubblica effimera che il proprietario ha generato per questa
+ * condivisione, e decifra il contenuto. La riga da cui parte tutto
+ * (capsule_share_keys) è visibile solo dopo la data di apertura --- se
+ * questa funzione non la trova, non è ancora il momento (o non è mai
+ * stata condivisa una chiave, v. createOrRefreshShareKey).
+ */
+export async function openSharedCapsule(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  capsuleId: string,
+): Promise<SharedCapsuleOpenedContent> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Devi essere autenticato.");
+
+  const [setupResult, shareKeyResult] = await Promise.all([
+    supabase.from("encryption_setup").select("wrapped_private_key").eq("owner_id", user.id).single(),
+    supabase
+      .from("capsule_share_keys")
+      .select("ephemeral_public_key, encrypted_payload_for_recipient")
+      .eq("capsule_id", capsuleId)
+      .eq("recipient_user_id", user.id)
+      .single(),
+  ]);
+
+  if (setupResult.error || !setupResult.data?.wrapped_private_key) {
+    throw new Error("La tua chiave di decifratura non è ancora pronta. Riprova dopo aver sbloccato di nuovo Hinthial.");
+  }
+  if (shareKeyResult.error || !shareKeyResult.data) {
+    throw new Error("Questa capsula non è ancora apribile: non è la data di apertura, oppure la chiave non è ancora arrivata.");
+  }
+
+  const privateKey = await unwrapPrivateKey(masterKey, parseEnvelope(setupResult.data.wrapped_private_key));
+  const sharedKey = await deriveSharedKeyAsRecipient(privateKey, shareKeyResult.data.ephemeral_public_key);
+  const plaintext = await decryptBytes(
+    sharedKey,
+    parseEnvelope(shareKeyResult.data.encrypted_payload_for_recipient),
+  );
+
+  return JSON.parse(bytesToUtf8(plaintext)) as SharedCapsuleOpenedContent;
+}
+
+/**
+ * Scarica e decifra un allegato di una capsula condivisa --- v.
+ * openSharedCapsule per il contenuto a cui appartiene. A differenza di
+ * downloadCapsuleAttachment (il proprietario), qui la Document Key è
+ * già in chiaro dentro l'allegato stesso (v. SharedCapsuleAttachment),
+ * non avvolta: non serve la Master Key di nessuno, solo importarla.
+ */
+export async function downloadSharedCapsuleAttachment(
+  supabase: SupabaseClient<Database>,
+  ownerId: string,
+  capsuleId: string,
+  attachment: SharedCapsuleAttachment,
+): Promise<{ filename: string; mimeType: string; bytes: Uint8Array }> {
+  const path = capsuleAttachmentStoragePath(ownerId, capsuleId, attachment.id);
+  const serializedPayload = await downloadEncryptedCapsulePayload(supabase, path);
+
+  const documentKey = await importKeyRaw(base64ToBytes(attachment.documentKeyRaw));
+  const bytes = await decryptBytes(documentKey, parseEnvelope(serializedPayload));
+
+  return { filename: attachment.filename, mimeType: attachment.mimeType, bytes };
 }
 
 /**

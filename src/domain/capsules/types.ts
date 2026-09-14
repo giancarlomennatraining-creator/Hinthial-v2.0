@@ -115,11 +115,14 @@ export interface CapsuleEditInput {
  * altro ha condiviso con l'utente corrente ("Condivise con me"). Solo
  * metadati già in chiaro lato server: il titolo/contenuto restano
  * cifrati con la Master Key del proprietario, illeggibili qui --- lo
- * sblocco vero arriverà con la Fase C1 (scambio di chiavi).
+ * sblocco vero (v. SharedCapsuleOpenedContent) passa dalla Fase C1
+ * (scambio di chiavi, v. openSharedCapsule).
  */
 export interface SharedCapsuleListItem {
   /** Id della capsula --- non del collegamento di condivisione. */
   id: string;
+  /** Serve per costruire il percorso Storage degli allegati (v. capsuleAttachmentStoragePath) --- mai mostrato. */
+  ownerId: string;
   /** Nome e cognome del proprietario --- già in chiaro lato server. */
   ownerName: string;
   /** ISO --- quando è stata condivisa. */
@@ -127,4 +130,36 @@ export interface SharedCapsuleListItem {
   status: CapsuleStatus;
   /** V. CapsuleListItem.openAt --- null solo per le capsule create prima che diventasse obbligatoria. */
   openAt: string | null;
+}
+
+/**
+ * Un allegato dentro il contenuto sbloccato di una capsula condivisa
+ * (v. SharedCapsuleOpenedContent) --- a differenza di CapsuleAttachment,
+ * porta la propria Document Key già in chiaro (`documentKeyRaw`) invece
+ * che avvolta dalla Master Key del proprietario (il destinatario non
+ * la possiede): non serve un secondo involucro, l'intero contenuto è
+ * già protetto dalla busta cifrata per lui (v. capsule_share_keys).
+ */
+export interface SharedCapsuleAttachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  /** Base64, bytes grezzi della Document Key di questo allegato. */
+  documentKeyRaw: string;
+  transcript?: string;
+}
+
+/**
+ * FASE C1 --- il contenuto vero e proprio di una capsula condivisa, una
+ * volta decifrato con la chiave ricavata dallo scambio ECDH (v.
+ * domain/capsules/repository.ts, openSharedCapsule). Ottenibile solo
+ * dopo la data di apertura --- prima, il database nega la lettura della
+ * riga da cui si ricava (v. migrazione capsule_share_keys).
+ */
+export interface SharedCapsuleOpenedContent {
+  title: string;
+  content: string;
+  contentStyle: CapsuleContentStyle;
+  attachments: SharedCapsuleAttachment[];
 }

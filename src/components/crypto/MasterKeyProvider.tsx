@@ -6,6 +6,7 @@ import {
   setupMasterKey,
   unlockMasterKeyWithPassword,
   unlockMasterKeyWithRecoveryKey,
+  setupKeyPair,
   serializeEnvelope,
   serializePbkdf2Params,
   parseEnvelope,
@@ -90,11 +91,19 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
   const confirmSetup = useCallback(async (result: MasterKeySetup, masterKey: CryptoKey) => {
     const { supabase, userId } = await requireUserId();
 
+    // FASE C1: ogni account guadagna qui la propria coppia di chiavi
+    // ECDH (v. lib/crypto/keypair.ts) --- così è garantita presente fin
+    // dal primo momento, per quando qualcuno vorrà condividere una
+    // capsula con questo account.
+    const keyPair = await setupKeyPair(masterKey);
+
     const { error } = await supabase.from("encryption_setup").insert({
       owner_id: userId,
       master_key_wrapped_by_password: serializeEnvelope(result.masterKeyWrappedByPassword),
       master_key_wrapped_by_recovery_key: serializeEnvelope(result.masterKeyWrappedByRecoveryKey),
       pbkdf2_params: serializePbkdf2Params(result.pbkdf2Params),
+      public_key: keyPair.publicKeyJwk,
+      wrapped_private_key: serializeEnvelope(keyPair.wrappedPrivateKey),
     });
     if (error) {
       throw new Error(`Impossibile salvare la configurazione di cifratura: ${error.message}`);
@@ -103,44 +112,84 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
     setStatus({ kind: "unlocked", masterKey });
   }, []);
 
-  const unlockWithPassword = useCallback(async (password: string) => {
-    const { supabase, userId } = await requireUserId();
+  /**
+   * FASE C1, sanamento pigro: un account creato prima di questa fase
+   * non ha ancora una coppia di chiavi --- gliene viene generata una qui,
+   * al primo sblocco successivo, così diventa comunque raggiungibile da
+   * chi in futuro vorrà condividere una capsula con lui. Best-effort:
+   * un fallimento non deve impedire lo sblocco stesso, si riprova al
+   * prossimo (v. backfillOpenAtColumn per lo stesso principio altrove).
+   */
+  const ensureKeyPair = useCallback(
+    async (
+      supabase: ReturnType<typeof createClient>,
+      userId: string,
+      masterKey: CryptoKey,
+      existingPublicKey: string | null,
+    ) => {
+      if (existingPublicKey) return;
+      try {
+        const keyPair = await setupKeyPair(masterKey);
+        await supabase
+          .from("encryption_setup")
+          .update({
+            public_key: keyPair.publicKeyJwk,
+            wrapped_private_key: serializeEnvelope(keyPair.wrappedPrivateKey),
+          })
+          .eq("owner_id", userId);
+      } catch {
+        // Best-effort --- v. commento sopra.
+      }
+    },
+    [],
+  );
 
-    const { data, error } = await supabase
-      .from("encryption_setup")
-      .select("master_key_wrapped_by_password, pbkdf2_params")
-      .eq("owner_id", userId)
-      .single();
-    if (error || !data) {
-      throw new Error("Configurazione di cifratura non trovata.");
-    }
+  const unlockWithPassword = useCallback(
+    async (password: string) => {
+      const { supabase, userId } = await requireUserId();
 
-    const masterKey = await unlockMasterKeyWithPassword(
-      password,
-      parsePbkdf2Params(data.pbkdf2_params),
-      parseEnvelope(data.master_key_wrapped_by_password),
-    );
-    setStatus({ kind: "unlocked", masterKey });
-  }, []);
+      const { data, error } = await supabase
+        .from("encryption_setup")
+        .select("master_key_wrapped_by_password, pbkdf2_params, public_key")
+        .eq("owner_id", userId)
+        .single();
+      if (error || !data) {
+        throw new Error("Configurazione di cifratura non trovata.");
+      }
 
-  const unlockWithRecoveryKey = useCallback(async (formattedRecoveryKey: string) => {
-    const { supabase, userId } = await requireUserId();
+      const masterKey = await unlockMasterKeyWithPassword(
+        password,
+        parsePbkdf2Params(data.pbkdf2_params),
+        parseEnvelope(data.master_key_wrapped_by_password),
+      );
+      void ensureKeyPair(supabase, userId, masterKey, data.public_key);
+      setStatus({ kind: "unlocked", masterKey });
+    },
+    [ensureKeyPair],
+  );
 
-    const { data, error } = await supabase
-      .from("encryption_setup")
-      .select("master_key_wrapped_by_recovery_key")
-      .eq("owner_id", userId)
-      .single();
-    if (error || !data) {
-      throw new Error("Configurazione di cifratura non trovata.");
-    }
+  const unlockWithRecoveryKey = useCallback(
+    async (formattedRecoveryKey: string) => {
+      const { supabase, userId } = await requireUserId();
 
-    const masterKey = await unlockMasterKeyWithRecoveryKey(
-      formattedRecoveryKey,
-      parseEnvelope(data.master_key_wrapped_by_recovery_key),
-    );
-    setStatus({ kind: "unlocked", masterKey });
-  }, []);
+      const { data, error } = await supabase
+        .from("encryption_setup")
+        .select("master_key_wrapped_by_recovery_key, public_key")
+        .eq("owner_id", userId)
+        .single();
+      if (error || !data) {
+        throw new Error("Configurazione di cifratura non trovata.");
+      }
+
+      const masterKey = await unlockMasterKeyWithRecoveryKey(
+        formattedRecoveryKey,
+        parseEnvelope(data.master_key_wrapped_by_recovery_key),
+      );
+      void ensureKeyPair(supabase, userId, masterKey, data.public_key);
+      setStatus({ kind: "unlocked", masterKey });
+    },
+    [ensureKeyPair],
+  );
 
   const lock = useCallback(() => setStatus({ kind: "locked" }), []);
 

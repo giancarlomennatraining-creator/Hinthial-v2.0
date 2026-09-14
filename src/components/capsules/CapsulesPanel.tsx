@@ -21,6 +21,7 @@ import { contentKindFor, CONTENT_KIND_ICON, isTranscribable } from "@/lib/conten
 import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
 import { CapsuleCountdown } from "@/components/capsules/CapsuleCountdown";
 import { CapsulePreview } from "@/components/capsules/CapsulePreview";
+import { SharedCapsuleViewer } from "@/components/capsules/SharedCapsuleViewer";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
@@ -102,6 +103,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "title", direction: "asc" });
   const [previewCapsule, setPreviewCapsule] = useState<CapsuleListItem | null>(null);
+  const [openingShared, setOpeningShared] = useState<SharedCapsuleListItem | null>(null);
 
   // FASE B del piano di condivisione capsule --- "Condivise con me" è
   // una scheda a sé qui dentro, non una voce di menu a parte: stesso
@@ -213,7 +215,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
 
-      await shareCapsule(supabase, user.id, capsule);
+      await shareCapsule(supabase, masterKey, user.id, capsule);
       setCapsules((prev) => prev.map((c) => (c.id === capsule.id ? { ...c, status: "shared" } : c)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile condividere la capsula.");
@@ -475,28 +477,53 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
           </div>
         ) : (
           <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
-            {sharedCapsules.map((shared) => (
-              <li key={shared.id} className="flex flex-col gap-1 p-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    Da {shared.ownerName}
-                  </span>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[shared.status]}`}
-                  >
-                    {STATUS_LABEL[shared.status]}
-                  </span>
-                </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Condivisa il {formatDate(shared.sharedAt)}
-                  {shared.openAt ? ` · apertura prevista ${formatDateTime(shared.openAt)}` : ""}
-                </p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Il contenuto non è ancora consultabile qui --- arriverà con una fase futura, quando
-                  Hinthial saprà anche scambiare le chiavi necessarie a decifrarlo.
-                </p>
-              </li>
-            ))}
+            {sharedCapsules.map((shared) => {
+              // FASE C1 --- il vero sblocco: prima di questa data, il
+              // database nega comunque la lettura della busta cifrata
+              // (v. migrazione capsule_share_keys), qui il controllo è
+              // solo per decidere se mostrare il tasto "Apri" o il
+              // countdown.
+              const canOpen = shared.openAt !== null && new Date(shared.openAt) <= new Date();
+
+              return (
+                <li key={shared.id} className="flex flex-col gap-2 p-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      Da {shared.ownerName}
+                    </span>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[shared.status]}`}
+                    >
+                      {STATUS_LABEL[shared.status]}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Condivisa il {formatDate(shared.sharedAt)}
+                    {shared.openAt ? ` · apertura prevista ${formatDateTime(shared.openAt)}` : ""}
+                  </p>
+
+                  {shared.openAt && showCountdown ? (
+                    <div className="mt-1">
+                      <CapsuleCountdown createdAt={shared.sharedAt} openAt={shared.openAt} size="sm" />
+                    </div>
+                  ) : null}
+
+                  {canOpen ? (
+                    <button
+                      type="button"
+                      onClick={() => setOpeningShared(shared)}
+                      className="mt-1 w-fit rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-hover"
+                    >
+                      🔓 Apri
+                    </button>
+                  ) : (
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                      Potrai aprirla quando arriverà la data di apertura.
+                    </p>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )
       ) : loading ? (
@@ -814,6 +841,15 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         capsule={previewCapsule}
         showCountdown={showCountdown}
         onClose={() => setPreviewCapsule(null)}
+      />
+
+      {/* FASE C1 --- sempre montato per lo stesso motivo di CapsulePreview qui sopra. */}
+      <SharedCapsuleViewer
+        masterKey={masterKey}
+        capsuleId={openingShared?.id ?? null}
+        ownerId={openingShared?.ownerId ?? ""}
+        ownerName={openingShared?.ownerName ?? ""}
+        onClose={() => setOpeningShared(null)}
       />
     </div>
   );
