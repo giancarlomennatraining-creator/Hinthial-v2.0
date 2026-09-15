@@ -11,8 +11,24 @@ import {
   serializePbkdf2Params,
   parseEnvelope,
   parsePbkdf2Params,
+  wrapKey,
+  unwrapKey,
+  isDeviceLockSupported,
+  registerDeviceCredential,
+  deriveDeviceKeyForCredential,
   type MasterKeySetup,
 } from "@/lib/crypto";
+import {
+  getDeviceLockRecord,
+  setDeviceLockRecord,
+  clearDeviceLockRecord,
+} from "@/lib/device-lock-storage";
+import {
+  registerTrustedDevice,
+  findActiveTrustedDevice,
+  touchTrustedDeviceLastActive,
+  forgetTrustedDevice,
+} from "@/domain/trusted-devices/repository";
 
 export type MasterKeyStatus =
   | { kind: "checking" }
@@ -34,11 +50,32 @@ interface MasterKeyContextValue {
   unlockWithPassword: (password: string) => Promise<void>;
   unlockWithRecoveryKey: (formattedRecoveryKey: string) => Promise<void>;
   lock: () => void;
+  // FASE 13 --- dispositivi fidati (v. lib/crypto/device-lock.ts).
+  /** `null` finché non ancora verificato --- evita un lampo "non disponibile" mentre il controllo è in corso. */
+  deviceLockSupported: boolean | null;
+  /** true se questo browser ha già una registrazione locale per l'utente corrente. */
+  deviceLockAvailable: boolean;
+  /** Sblocca usando la copia locale del Master Key, protetta da WebAuthn --- mai chiamata se `deviceLockAvailable` è false. */
+  unlockWithDeviceLock: () => Promise<void>;
+  /**
+   * Registra questo dispositivo come fidato --- richiede di nuovo la
+   * master password (anche se il vault è già sbloccato in questa
+   * sessione): l'unico modo di ottenere una copia esportabile del
+   * Master Key, l'unica concessione a questa garanzia in tutta l'app
+   * (v. lib/crypto/master-key.ts).
+   */
+  registerDeviceLock: (password: string, label: string) => Promise<void>;
+  /** "Dimentica questo dispositivo": rimuove la registrazione qui e sul server. */
+  forgetDeviceLock: () => Promise<void>;
 }
 
 const MasterKeyContext = createContext<MasterKeyContextValue | null>(null);
 
-async function requireUserId(): Promise<{ supabase: ReturnType<typeof createClient>; userId: string }> {
+async function requireUserId(): Promise<{
+  supabase: ReturnType<typeof createClient>;
+  userId: string;
+  userEmail: string;
+}> {
   const supabase = createClient();
   const {
     data: { user },
@@ -46,11 +83,13 @@ async function requireUserId(): Promise<{ supabase: ReturnType<typeof createClie
   if (!user) {
     throw new Error("Devi essere autenticato.");
   }
-  return { supabase, userId: user.id };
+  return { supabase, userId: user.id, userEmail: user.email ?? user.id };
 }
 
 export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<MasterKeyStatus>({ kind: "checking" });
+  const [deviceLockSupported, setDeviceLockSupported] = useState<boolean | null>(null);
+  const [deviceLockAvailable, setDeviceLockAvailable] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,8 +109,15 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
 
       if (!cancelled) {
         setStatus(data ? { kind: "locked" } : { kind: "not-set-up" });
+        setDeviceLockAvailable(getDeviceLockRecord(user.id) !== null);
       }
     })();
+
+    // Indipendente dallo stato di cifratura --- solo una domanda al
+    // browser, non tocca l'account.
+    isDeviceLockSupported().then((supported) => {
+      if (!cancelled) setDeviceLockSupported(supported);
+    });
 
     return () => {
       cancelled = true;
@@ -191,11 +237,113 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
     [ensureKeyPair],
   );
 
+  /**
+   * FASE 13 --- sblocco via la copia locale del Master Key, cifrata con
+   * una chiave derivata da WebAuthn (v. lib/crypto/device-lock.ts). La
+   * verifica lato server (findActiveTrustedDevice) non è lì per
+   * "autenticare" --- l'account è già autenticato come sempre --- ma per
+   * accorgersi se questo dispositivo è stato revocato da un'altra
+   * sessione nel frattempo: senza, la revoca sarebbe solo cosmetica.
+   */
+  const unlockWithDeviceLock = useCallback(async () => {
+    const { supabase, userId } = await requireUserId();
+
+    const record = getDeviceLockRecord(userId);
+    if (!record) {
+      throw new Error("Nessun dispositivo fidato registrato qui per questo account.");
+    }
+
+    const activeDevice = await findActiveTrustedDevice(supabase, userId, record.credentialId);
+    if (!activeDevice) {
+      clearDeviceLockRecord(userId);
+      setDeviceLockAvailable(false);
+      throw new Error("Questo dispositivo non è più fidato --- sblocca con la master password.");
+    }
+
+    const deviceKey = await deriveDeviceKeyForCredential(record.credentialId);
+    const masterKey = await unwrapKey(deviceKey, parseEnvelope(record.wrappedMasterKey));
+
+    void touchTrustedDeviceLastActive(supabase, activeDevice.id);
+    setStatus({ kind: "unlocked", masterKey });
+  }, []);
+
+  /**
+   * Registra questo dispositivo come fidato. Richiede di nuovo la
+   * master password anche se il vault è già sbloccato in questa
+   * sessione --- v. il commento su `registerDeviceLock` nel tipo del
+   * contesto: è l'unico modo di ottenere una copia esportabile del
+   * Master Key, mai altrimenti concessa (v. lib/crypto/master-key.ts).
+   */
+  const registerDeviceLock = useCallback(async (password: string, label: string) => {
+    const { supabase, userId, userEmail } = await requireUserId();
+
+    const { data, error } = await supabase
+      .from("encryption_setup")
+      .select("master_key_wrapped_by_password, pbkdf2_params")
+      .eq("owner_id", userId)
+      .single();
+    if (error || !data) {
+      throw new Error("Configurazione di cifratura non trovata.");
+    }
+
+    const extractableMasterKey = await unlockMasterKeyWithPassword(
+      password,
+      parsePbkdf2Params(data.pbkdf2_params),
+      parseEnvelope(data.master_key_wrapped_by_password),
+      true,
+    );
+
+    const { credentialId, deviceKey } = await registerDeviceCredential(userId, userEmail);
+    const wrappedMasterKey = await wrapKey(deviceKey, extractableMasterKey);
+
+    const { id } = await registerTrustedDevice(supabase, userId, credentialId, label);
+    setDeviceLockRecord(userId, {
+      deviceId: id,
+      credentialId,
+      wrappedMasterKey: serializeEnvelope(wrappedMasterKey),
+    });
+    setDeviceLockAvailable(true);
+  }, []);
+
+  const forgetDeviceLock = useCallback(async () => {
+    const { supabase, userId } = await requireUserId();
+    const record = getDeviceLockRecord(userId);
+    if (!record) return;
+
+    await forgetTrustedDevice(supabase, record.deviceId);
+    clearDeviceLockRecord(userId);
+    setDeviceLockAvailable(false);
+  }, []);
+
   const lock = useCallback(() => setStatus({ kind: "locked" }), []);
 
   const value = useMemo<MasterKeyContextValue>(
-    () => ({ status, setup, confirmSetup, unlockWithPassword, unlockWithRecoveryKey, lock }),
-    [status, setup, confirmSetup, unlockWithPassword, unlockWithRecoveryKey, lock],
+    () => ({
+      status,
+      setup,
+      confirmSetup,
+      unlockWithPassword,
+      unlockWithRecoveryKey,
+      lock,
+      deviceLockSupported,
+      deviceLockAvailable,
+      unlockWithDeviceLock,
+      registerDeviceLock,
+      forgetDeviceLock,
+    }),
+    [
+      status,
+      setup,
+      confirmSetup,
+      unlockWithPassword,
+      unlockWithRecoveryKey,
+      lock,
+      deviceLockSupported,
+      deviceLockAvailable,
+      unlockWithDeviceLock,
+      registerDeviceLock,
+      forgetDeviceLock,
+    ],
   );
 
   return <MasterKeyContext.Provider value={value}>{children}</MasterKeyContext.Provider>;

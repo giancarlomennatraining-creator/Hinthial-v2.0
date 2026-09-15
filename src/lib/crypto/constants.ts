@@ -25,3 +25,25 @@ export const RECOVERY_KEY_LENGTH_BYTES = 384;
 
 /** Domain-separation string for deriving a key from the recovery key via HKDF. */
 export const RECOVERY_KEY_HKDF_INFO = "hinthial:recovery-key:v1";
+
+/**
+ * Domain-separation string for deriving a key from a WebAuthn PRF
+ * output via HKDF (v. lib/crypto/device-lock.ts, FASE 13) --- stessa
+ * ragione di RECOVERY_KEY_HKDF_INFO: queste stesse informazioni non
+ * possono diventare, per errore o in una versione futura, la chiave
+ * per qualcos'altro.
+ */
+export const DEVICE_LOCK_HKDF_INFO = "hinthial:device-lock:v1";
+
+/**
+ * Il "salt" dato in input all'estensione PRF di WebAuthn (v.
+ * lib/crypto/device-lock.ts) --- non deve essere segreto (è l'output
+ * del PRF, non l'input, ciò che conta davvero), solo stabile: lo stesso
+ * valore va usato a ogni sblocco per ottenere lo stesso risultato dallo
+ * stesso dispositivo/credenziale. Fisso qui invece che generato al
+ * volo --- a differenza del salt PBKDF2/di un envelope, che DEVONO
+ * essere unici per ogni segreto, questo resta deliberatamente lo
+ * stesso per ogni cifratura del Master Key su questo dispositivo,
+ * sotto lo stesso "uso" della credenziale WebAuthn.
+ */
+export const DEVICE_LOCK_PRF_SALT_LABEL = "hinthial:device-lock:prf-salt:v1";

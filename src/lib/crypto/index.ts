@@ -20,6 +20,7 @@ export * from "@/lib/crypto/recovery-key";
 export * from "@/lib/crypto/master-key";
 export * from "@/lib/crypto/document-key";
 export * from "@/lib/crypto/keypair";
+export * from "@/lib/crypto/device-lock";
 export { encryptBytes, decryptBytes } from "@/lib/crypto/aes-gcm";
 export { generateSymmetricKey, exportKeyRaw, importKeyRaw } from "@/lib/crypto/symmetric-key";
 export { wrapKey, unwrapKey } from "@/lib/crypto/key-wrapping";

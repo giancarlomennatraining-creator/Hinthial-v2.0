@@ -6,10 +6,29 @@ import { TextField } from "@/components/ui/TextField";
 import { UnlockedIcon } from "@/components/icons/nav-icons";
 
 export function UnlockMasterKeyForm() {
-  const { unlockWithPassword, unlockWithRecoveryKey } = useMasterKey();
+  const { unlockWithPassword, unlockWithRecoveryKey, deviceLockAvailable, unlockWithDeviceLock } =
+    useMasterKey();
   const [useRecoveryKey, setUseRecoveryKey] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // FASE 13: tentato una volta sola, all'apertura di questa schermata,
+  // non a ogni render --- se l'utente annulla la cerimonia biometrica
+  // (o sceglie "usa la password" prima che il browser gliela mostri),
+  // il campo password resta comunque la via di sempre.
+  const [deviceLockAttempted, setDeviceLockAttempted] = useState(false);
+
+  async function handleDeviceLockUnlock() {
+    setDeviceLockAttempted(true);
+    setError(null);
+    setBusy(true);
+    try {
+      await unlockWithDeviceLock();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sblocco non riuscito. Usa la master password.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,6 +65,24 @@ export function UnlockMasterKeyForm() {
             : "Inserisci la tua master password per accedere ai documenti."}
         </p>
       </div>
+
+      {deviceLockAvailable && !deviceLockAttempted ? (
+        <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Questo dispositivo è fidato --- puoi sbloccare con l&apos;impronta o Face ID, senza
+            digitare la master password.
+          </p>
+          <button
+            type="button"
+            onClick={handleDeviceLockUnlock}
+            disabled={busy}
+            className="flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+          >
+            {busy ? "Sblocco…" : "Sblocca con impronta/Face ID"}
+          </button>
+          <p className="text-center text-xs text-zinc-400 dark:text-zinc-500">oppure, con la master password</p>
+        </div>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {useRecoveryKey ? (

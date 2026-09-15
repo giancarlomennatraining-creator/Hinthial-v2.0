@@ -7,6 +7,7 @@ import { UserInfoPanel } from "@/components/settings/UserInfoPanel";
 import { OnboardingSettingsPanel } from "@/components/settings/OnboardingSettingsPanel";
 import { PrivacyPanel } from "@/components/settings/PrivacyPanel";
 import { MfaSettingsPanel } from "@/components/settings/MfaSettingsPanel";
+import { DeviceLockPanel } from "@/components/settings/DeviceLockPanel";
 import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
@@ -136,8 +137,28 @@ export function SettingsTabs({
     }
     if (activeTab === "security") {
       // Layer di identità (login), non di cifratura --- non richiede
-      // la master key (v. domain/mfa/repository.ts).
-      return <MfaSettingsPanel userId={userId} />;
+      // la master key (v. domain/mfa/repository.ts). "Dispositivi
+      // fidati" (FASE 13) invece la sblocca da sé, chiedendo di nuovo
+      // la master password nel proprio modulo (v. DeviceLockPanel):
+      // niente RequireMasterKey qui, per non forzare uno sblocco solo
+      // per vedere lo stato dell'MFA.
+      return (
+        <div className="flex flex-col gap-10">
+          <MfaSettingsPanel userId={userId} />
+          <div className="flex flex-col gap-4 border-t border-zinc-200 pt-10 dark:border-zinc-800">
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                Dispositivi fidati
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Sblocca il vault con l&apos;impronta o Face ID su questo dispositivo, invece della
+                master password.
+              </p>
+            </div>
+            <DeviceLockPanel />
+          </div>
+        </div>
+      );
     }
     if (activeTab === "ai") {
       // Una scheda a sé (non più una sottoparte di Privacy, v. richiesta

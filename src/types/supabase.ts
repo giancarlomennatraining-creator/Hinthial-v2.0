@@ -645,6 +645,44 @@ export type Database = {
         };
         Relationships: [];
       };
+      trusted_devices: {
+        Row: {
+          id: string;
+          owner_id: string;
+          credential_id: string;
+          label: string;
+          created_at: string;
+          last_active_at: string;
+          revoked_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          credential_id: string;
+          label: string;
+          created_at?: string;
+          last_active_at?: string;
+          revoked_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          credential_id?: string;
+          label?: string;
+          created_at?: string;
+          last_active_at?: string;
+          revoked_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "trusted_devices_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {

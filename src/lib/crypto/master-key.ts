@@ -59,14 +59,24 @@ export async function setupMasterKey(
 /**
  * Unlocks (unwraps) the Master Key using the master password.
  * Throws `DecryptionError` if the password is wrong.
+ *
+ * `extractable` --- sempre `false` (il normale sblocco della sessione:
+ * la chiave vive solo in memoria, mai esportabile) tranne per un solo
+ * caso, FASE 13 (v. MasterKeyProvider.tsx, registerDeviceLock): per
+ * cifrare il Master Key per un nuovo dispositivo fidato serve poterlo
+ * esportare almeno per l'istante necessario a farlo --- la decisione
+ * architetturale che HINTHIAL_MVP.md segnala esplicitamente di
+ * sciogliere consapevolmente, non un rilassamento generale della
+ * garanzia per lo sblocco di tutti i giorni.
  */
 export async function unlockMasterKeyWithPassword(
   password: string,
   pbkdf2Params: Pbkdf2Params,
   masterKeyWrappedByPassword: EncryptedEnvelope,
+  extractable = false,
 ): Promise<CryptoKey> {
   const passwordKey = await deriveKeyFromPassword(password, pbkdf2Params);
-  return unwrapKey(passwordKey, masterKeyWrappedByPassword);
+  return unwrapKey(passwordKey, masterKeyWrappedByPassword, extractable);
 }
 
 /**
