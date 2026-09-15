@@ -52,7 +52,11 @@ const DEBUG_OVERLAY_SCRIPT = `
     if (box) return box;
     box = document.createElement("div");
     box.id = "__hinthial_debug_overlay__";
-    box.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:999999;background:#111827;color:#fff;font:11px/1.4 monospace;padding:6px 8px;max-height:50vh;overflow:auto;white-space:pre-wrap;";
+    // pointer-events:none --- il primo giro copriva fisicamente il tasto
+    // ☰ (anche lui in cima, sticky) intercettando il tocco prima che
+    // arrivasse al pulsante sotto: resta visibile ma non blocca più
+    // nulla (v. segnalazione utente).
+    box.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:999999;background:#111827;color:#fff;font:11px/1.4 monospace;padding:6px 8px;max-height:30vh;overflow:auto;white-space:pre-wrap;pointer-events:none;opacity:0.92;";
     document.body.appendChild(box);
     return box;
   }
