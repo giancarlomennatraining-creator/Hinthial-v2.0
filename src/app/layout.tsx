@@ -34,82 +34,6 @@ if ("serviceWorker" in navigator) {
 }
 `;
 
-/**
- * DIAGNOSTICA TEMPORANEA --- da togliere non appena trovata la causa del
- * menu che non risponde subito dopo il login su alcuni dispositivi (v.
- * conversazione). Uno script puro (non un componente React): se il
- * problema è proprio che l'idratazione di React fallisce/non si aggancia
- * su quel primo caricamento, un componente React per catturare l'errore
- * avrebbe lo stesso identico problema. Cattura errori globali,
- * unhandledrejection e console.error, e li scrive in un banner in cima
- * allo schermo --- niente da collegare, visibile direttamente sul
- * dispositivo che manifesta il problema.
- */
-const DEBUG_OVERLAY_SCRIPT = `
-(function () {
-  var box = null;
-  function ensureBox() {
-    if (box) return box;
-    box = document.createElement("div");
-    box.id = "__hinthial_debug_overlay__";
-    // pointer-events:none --- il primo giro copriva fisicamente il tasto
-    // ☰ (anche lui in cima, sticky) intercettando il tocco prima che
-    // arrivasse al pulsante sotto: resta visibile ma non blocca più
-    // nulla (v. segnalazione utente).
-    box.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:999999;background:#111827;color:#fff;font:11px/1.4 monospace;padding:6px 8px;max-height:30vh;overflow:auto;white-space:pre-wrap;pointer-events:none;opacity:0.92;";
-    document.body.appendChild(box);
-    return box;
-  }
-  function report(label, detail, isError) {
-    try {
-      var b = ensureBox();
-      if (isError) b.style.background = "#b91c1c";
-      var line = document.createElement("div");
-      line.style.cssText = "border-top:1px solid rgba(255,255,255,0.3);padding-top:4px;margin-top:4px;";
-      line.textContent = "[" + new Date().toLocaleTimeString() + "] " + label + ": " + detail;
-      b.appendChild(line);
-    } catch (e) {}
-  }
-  // Marcatore sempre visibile --- conferma che lo script è partito
-  // davvero, cosa che l'assenza di un errore da sola non garantisce.
-  report("diagnostica", "script di diagnostica avviato", false);
-  // capture:true --- necessario per gli errori di caricamento di una
-  // risorsa (uno <script src> o <link> che fallisce): non risalgono
-  // (bubbling) fino a window come i normali errori js, si intercettano
-  // solo in fase di capture.
-  window.addEventListener("error", function (e) {
-    if (e.target && e.target !== window && e.target.tagName) {
-      report(
-        "risorsa non caricata",
-        e.target.tagName + " " + (e.target.src || e.target.href || ""),
-        true,
-      );
-      return;
-    }
-    report("error", (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || ""), true);
-  }, true);
-  window.addEventListener("unhandledrejection", function (e) {
-    var reason = e.reason;
-    var msg = reason && reason.message ? reason.message : String(reason);
-    report("unhandledrejection", msg, true);
-  });
-  var origError = console.error;
-  console.error = function () {
-    try {
-      report("console.error", Array.prototype.slice.call(arguments).map(String).join(" "), true);
-    } catch (e) {}
-    return origError.apply(console, arguments);
-  };
-  var origWarn = console.warn;
-  console.warn = function () {
-    try {
-      report("console.warn", Array.prototype.slice.call(arguments).map(String).join(" "), false);
-    } catch (e) {}
-    return origWarn.apply(console, arguments);
-  };
-})();
-`;
-
 /*
  * Font della direzione visiva "Fresh Clarity" (v. mockup condiviso con
  * l'utente): Manrope per i titoli, Work Sans per il resto --- Geist Mono
@@ -181,10 +105,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <Script id="theme-init" strategy="beforeInteractive">
           {THEME_INIT_SCRIPT}
-        </Script>
-        {/* DIAGNOSTICA TEMPORANEA --- v. commento su DEBUG_OVERLAY_SCRIPT. Da togliere insieme allo script sopra. */}
-        <Script id="debug-overlay" strategy="beforeInteractive">
-          {DEBUG_OVERLAY_SCRIPT}
         </Script>
         {children}
         <Script id="sw-register" strategy="afterInteractive">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { MainNav } from "@/components/layout/MainNav";
 import { UserMenu } from "@/components/layout/UserMenu";
@@ -46,9 +46,30 @@ export function MobileNavBar({
   const drawerItems = navItems.filter((item) => !bottomNavItems.includes(item.href));
 
   // Una navigazione riuscita chiude il menu --- altrimenti resterebbe
-  // aperto sopra la nuova pagina.
+  // aperto sopra la nuova pagina. `skipFirstRun` --- ogni useEffect
+  // scatta comunque una prima volta dopo il commit iniziale, non solo
+  // ai cambi successivi di pathname: su questo primissimo giro è per
+  // definizione un no-op (open è già false)... a meno che quel giro,
+  // asincrono e ritardato dopo il commit, non arrivi DOPO un tocco
+  // sul tasto (setOpen(true)) capitato nel frattempo --- più
+  // probabile su una pagina che al primo montaggio ha molto da fare
+  // (es. Dashboard con molti dati reali da decifrare, che tiene
+  // occupato il thread principale un momento più a lungo). In quel
+  // caso non è più un no-op: richiude il cassetto appena apparso,
+  // percepito come "il tasto non fa nulla" (v. segnalazione utente).
+  // Saltare quel primo giro --- l'unico per cui è garantito essere un
+  // no-op quando tutto va normale --- rimuove il rischio senza
+  // cambiare il resto del comportamento (che resta un useEffect vero,
+  // non un aggiustamento di stato durante il render: la stessa
+  // indagine ha in realtà scoperto la causa vera altrove, in
+  // useMountedTransition --- v. quel file --- e l'ha corretta lì;
+  // questo resta comunque un miglioramento a sé, indipendente).
+  const skipFirstRun = useRef(true);
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- v. GlobalSearch.tsx per lo stesso pattern (si azzera uno stato in risposta a un cambiamento esterno, il pathname).
+    if (skipFirstRun.current) {
+      skipFirstRun.current = false;
+      return;
+    }
     setOpen(false);
   }, [pathname]);
 

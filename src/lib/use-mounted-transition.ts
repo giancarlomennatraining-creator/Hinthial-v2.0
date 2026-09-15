@@ -19,6 +19,22 @@ import { useEffect, useState } from "react";
  * tramite un effetto) --- altrimenti un effetto del chiamante che
  * dipende a sua volta da `open` (es. dare il focus a un campo appena
  * aperto) troverebbe l'elemento non ancora nel DOM.
+ *
+ * La rete di sicurezza nell'useEffect qui sotto (non solo l'aggiustamento
+ * durante il render) --- diagnosticato con un caso reale: aprire il
+ * cassetto di navigazione (v. MobileNavBar) mentre, nello stesso istante,
+ * altri componenti si montano per la prima volta al suo interno (la
+ * ricerca globale, l'indicatore Onboarding) può far "perdere" a React
+ * l'aggiustamento fatto durante il render --- `mounted` torna a `false`
+ * senza che nulla chiami esplicitamente `setMounted(false)`, lasciando
+ * il cassetto invisibile nonostante `open` sia `true` (v. segnalazione
+ * utente: il tasto "non ha alcun effetto"). Non è mai stato possibile
+ * risalire al meccanismo esatto internamente a React, ma il correttivo
+ * qui sotto --- verificato empiricamente contro quello stesso scenario,
+ * su una build di produzione pulita --- lo risolve: un effetto separato
+ * riafferma `mounted = true` ogni volta che `open` è true ma `mounted`
+ * non lo è ancora, indipendentemente dal percorso "durante il render"
+ * qui sopra.
  */
 export function useMountedTransition(
   open: boolean,
@@ -36,6 +52,14 @@ export function useMountedTransition(
     setPrevOpen(open);
     if (open) setMounted(true);
   }
+
+  // Rete di sicurezza --- v. commento sopra: senza, un aggiustamento
+  // "perso" lascerebbe il cassetto invisibile per sempre (mai più
+  // tentato, dato che open non cambia più da qui in avanti).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- rete di sicurezza per l'aggiustamento durante il render qui sopra, non deriva stato nuovo: si limita a riaffermarlo se per qualche motivo non ha "preso" (v. commento della funzione).
+    if (open && !mounted) setMounted(true);
+  }, [open, mounted]);
 
   useEffect(() => {
     let raf1: number;

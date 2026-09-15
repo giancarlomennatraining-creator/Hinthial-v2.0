@@ -12,6 +12,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ## 2026-09-15
 
+### Bug corretto: il tasto ☰ poteva restare senza effetto subito dopo il login
+
+**Cosa fa:** in alcuni casi, toccare il tasto ☰ appena arrivati sulla Dashboard non apriva il menu di navigazione, pur sembrando normale --- bastava però passare a un'altra sezione e tornare indietro perché tornasse a funzionare. Ora si apre subito, in modo affidabile, anche al primissimo tocco dopo il login.
+
+**Note tecniche:** diagnosticato isolando una sequenza esatta riproducibile (chiudere il popup "Crea la tua master key" e toccare subito dopo il tasto ☰) e tracciando passo per passo i render di `useMountedTransition` (v. `lib/use-mounted-transition.ts`, condiviso anche da anteprima capsule, ricerca globale e pannelli laterali) su una build di produzione pulita. Il meccanismo interno esatto in React non è mai stato individuato con certezza --- ma il momento critico coincide sempre con il montaggio per la prima volta di altri componenti dentro il cassetto appena apparso (ricerca globale, indicatore Onboarding): l'aggiustamento di stato "durante il render" che decide se il cassetto è montato può restare senza effetto proprio in quell'istante, senza che nulla lo richieda esplicitamente né lasci traccia in console. Corretto con una rete di sicurezza --- un effetto separato che riafferma lo stato "montato" se per qualche motivo il primo tentativo non ha avuto seguito --- verificata empiricamente contro lo scenario reale, ripetuta più volte su una build di produzione. Aggiunto anche un piccolo miglioramento indipendente in `MobileNavBar`: l'effetto che chiude il cassetto a ogni cambio pagina non scatta più (inutilmente) anche al primo montaggio. Nuovo test e2e dedicato (`mobile-nav-after-intro.spec.ts`) che riproduce la sequenza esatta.
+
 ### Bug corretto: il menu di navigazione (☰ su smartphone, barra laterale sopra) scorreva via con la pagina
 
 **Cosa fa:** su qualunque pagina più alta di una schermata --- praticamente sempre, con dati reali --- il tasto ☰ per aprire il menu (sotto una certa larghezza) e la barra laterale con l'avatar (sopra) ora restano sempre visibili e raggiungibili mentre si scorre la pagina, invece di scorrere via insieme al resto del contenuto. Corregge la segnalazione di un menu che "non si apriva più" o appariva "sotto" il corpo della pagina --- in realtà semplicemente scorso fuori vista.
