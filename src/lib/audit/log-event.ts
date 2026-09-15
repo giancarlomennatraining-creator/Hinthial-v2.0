@@ -24,7 +24,9 @@ export type AuditEventType =
   | "category_deleted"
   | "friend_added"
   | "vault_wiped"
-  | "ai_chat_used";
+  | "ai_chat_used"
+  | "trusted_device_registered"
+  | "trusted_device_revoked";
 
 /**
  * Metadati tecnici facoltativi per un evento --- mai contenuti, nomi

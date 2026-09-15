@@ -15,6 +15,35 @@ export interface TrustedDeviceListItem {
   lastActiveAt: string;
 }
 
+/**
+ * Elenco di tutti i dispositivi fidati dell'account, da qualunque
+ * dispositivo tu stia guardando --- FASE 13, ultimo passo. Solo quelli
+ * ancora attivi (non revocati): uno revocato è già equivalente,
+ * lato sicurezza, a non esistere più (v. findActiveTrustedDevice), non
+ * ha senso continuare a mostrarlo.
+ */
+export async function listTrustedDevices(
+  supabase: SupabaseClient<Database>,
+  ownerId: string,
+): Promise<TrustedDeviceListItem[]> {
+  const { data, error } = await supabase
+    .from("trusted_devices")
+    .select("id, credential_id, label, created_at, last_active_at")
+    .eq("owner_id", ownerId)
+    .is("revoked_at", null)
+    .order("last_active_at", { ascending: false });
+  if (error) {
+    throw new Error(`Impossibile caricare i dispositivi fidati: ${error.message}`);
+  }
+  return data.map((row) => ({
+    id: row.id,
+    credentialId: row.credential_id,
+    label: row.label,
+    createdAt: row.created_at,
+    lastActiveAt: row.last_active_at,
+  }));
+}
+
 export async function registerTrustedDevice(
   supabase: SupabaseClient<Database>,
   ownerId: string,

@@ -31,6 +31,7 @@ import {
   touchTrustedDeviceLastActive,
   forgetTrustedDevice,
 } from "@/domain/trusted-devices/repository";
+import { logAuditEvent } from "@/lib/audit/log-event";
 import {
   createPairingRequest,
   checkPairingRequestApproved,
@@ -314,6 +315,7 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
     const wrappedMasterKey = await wrapKey(deviceKey, extractableMasterKey);
 
     const { id } = await registerTrustedDevice(supabase, userId, credentialId, label);
+    void logAuditEvent(supabase, userId, "trusted_device_registered");
     setDeviceLockRecord(userId, {
       deviceId: id,
       credentialId,
@@ -328,6 +330,7 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
     if (!record) return;
 
     await forgetTrustedDevice(supabase, record.deviceId);
+    void logAuditEvent(supabase, userId, "trusted_device_revoked");
     clearDeviceLockRecord(userId);
     setDeviceLockAvailable(false);
   }, []);

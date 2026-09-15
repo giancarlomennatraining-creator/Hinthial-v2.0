@@ -155,7 +155,7 @@ export function SettingsTabs({
                 master password.
               </p>
             </div>
-            <DeviceLockPanel />
+            <DeviceLockPanel userId={userId} />
           </div>
         </div>
       );

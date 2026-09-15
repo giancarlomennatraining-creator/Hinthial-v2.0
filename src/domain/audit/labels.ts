@@ -21,6 +21,8 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   friend_added: "Amico aggiunto",
   vault_wiped: "Vault svuotato",
   ai_chat_used: "Domanda inviata all'assistente AI reale",
+  trusted_device_registered: "Dispositivo fidato registrato",
+  trusted_device_revoked: "Dispositivo fidato revocato",
 };
 
 export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
@@ -42,6 +44,8 @@ export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
   friend_added: "🤝",
   vault_wiped: "⚠️",
   ai_chat_used: "🤖",
+  trusted_device_registered: "📱",
+  trusted_device_revoked: "🚫",
 };
 
 export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategory> = {
@@ -63,6 +67,8 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
   friend_added: "friends",
   vault_wiped: "security",
   ai_chat_used: "security",
+  trusted_device_registered: "security",
+  trusted_device_revoked: "security",
 };
 
 export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {
