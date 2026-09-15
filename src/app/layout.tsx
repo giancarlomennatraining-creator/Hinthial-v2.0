@@ -34,6 +34,55 @@ if ("serviceWorker" in navigator) {
 }
 `;
 
+/**
+ * DIAGNOSTICA TEMPORANEA --- da togliere non appena trovata la causa del
+ * menu che non risponde subito dopo il login su alcuni dispositivi (v.
+ * conversazione). Uno script puro (non un componente React): se il
+ * problema è proprio che l'idratazione di React fallisce/non si aggancia
+ * su quel primo caricamento, un componente React per catturare l'errore
+ * avrebbe lo stesso identico problema. Cattura errori globali,
+ * unhandledrejection e console.error, e li scrive in un banner in cima
+ * allo schermo --- niente da collegare, visibile direttamente sul
+ * dispositivo che manifesta il problema.
+ */
+const DEBUG_OVERLAY_SCRIPT = `
+(function () {
+  var box = null;
+  function ensureBox() {
+    if (box) return box;
+    box = document.createElement("div");
+    box.id = "__hinthial_debug_overlay__";
+    box.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:999999;background:#b91c1c;color:#fff;font:11px/1.4 monospace;padding:8px;max-height:45vh;overflow:auto;white-space:pre-wrap;";
+    document.body.appendChild(box);
+    return box;
+  }
+  function report(label, detail) {
+    try {
+      var b = ensureBox();
+      var line = document.createElement("div");
+      line.style.cssText = "border-top:1px solid rgba(255,255,255,0.3);padding-top:4px;margin-top:4px;";
+      line.textContent = "[" + new Date().toLocaleTimeString() + "] " + label + ": " + detail;
+      b.appendChild(line);
+    } catch (e) {}
+  }
+  window.addEventListener("error", function (e) {
+    report("error", (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || ""));
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    var reason = e.reason;
+    var msg = reason && reason.message ? reason.message : String(reason);
+    report("unhandledrejection", msg);
+  });
+  var origError = console.error;
+  console.error = function () {
+    try {
+      report("console.error", Array.prototype.slice.call(arguments).map(String).join(" "));
+    } catch (e) {}
+    return origError.apply(console, arguments);
+  };
+})();
+`;
+
 /*
  * Font della direzione visiva "Fresh Clarity" (v. mockup condiviso con
  * l'utente): Manrope per i titoli, Work Sans per il resto --- Geist Mono
@@ -105,6 +154,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <Script id="theme-init" strategy="beforeInteractive">
           {THEME_INIT_SCRIPT}
+        </Script>
+        {/* DIAGNOSTICA TEMPORANEA --- v. commento su DEBUG_OVERLAY_SCRIPT. Da togliere insieme allo script sopra. */}
+        <Script id="debug-overlay" strategy="beforeInteractive">
+          {DEBUG_OVERLAY_SCRIPT}
         </Script>
         {children}
         <Script id="sw-register" strategy="afterInteractive">
