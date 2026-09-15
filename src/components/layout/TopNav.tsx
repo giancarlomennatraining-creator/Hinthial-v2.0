@@ -33,8 +33,10 @@ export function TopNav({
   const navItems = useOrderedNavItems();
 
   return (
-    // Sotto md la sostituisce MobileNavBar (v. AppShell).
-    <header className="hidden flex-wrap items-center gap-4 border-b border-zinc-200 bg-white p-4 md:flex dark:border-zinc-800 dark:bg-zinc-950">
+    // Sotto md la sostituisce MobileNavBar (v. AppShell). sticky top-0 ---
+    // stesso motivo della barra mobile (v. MobileNavBar.tsx): senza,
+    // scorreva via con la pagina, portandosi dietro anche il menu utente.
+    <header className="sticky top-0 z-30 hidden flex-wrap items-center gap-4 border-b border-zinc-200 bg-white p-4 md:flex dark:border-zinc-800 dark:bg-zinc-950">
       <Link href="/dashboard" className="shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
         <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-8 w-auto sm:h-10" />

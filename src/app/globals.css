@@ -46,6 +46,18 @@
  * genuinamente adattivo (v. DashboardCounters/DashboardWidgets, min-w-0
  * dove serve), ma copre eventuali arrotondamenti/margini di un pixel che
  * un layout responsive comunque corretto può produrre.
+ *
+ * Solo su <html>, non anche su <body>: impostarlo su entrambi (com'era
+ * prima) fa sì che la regola CSS che accoppia gli assi (un overflow-x
+ * non "visible" forza anche overflow-y a diventare "auto", non solo su
+ * quell'elemento) crei DUE contenitori di scroll verticale distinti e
+ * ambigui invece di uno solo --- e siccome lo scroll vero della pagina
+ * avviene su <html>, non su <body>, qualunque `position: sticky` (v.
+ * Sidebar/TopNav/MobileNavBar) finiva per ancorarsi al contenitore
+ * sbagliato: restava "sticky" di nome (v. getComputedStyle) ma scorreva
+ * via lo stesso, invece di restare fissa alla finestra --- il vero bug
+ * dietro alla segnalazione utente sul menu che "non si apre più"/appare
+ * "sotto" al corpo della pagina (in realtà semplicemente scorso via).
  */
 html {
   overflow-x: hidden;
@@ -55,7 +67,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-work-sans), Arial, Helvetica, sans-serif;
-  overflow-x: hidden;
 }
 
 /* Titolo di pagina (es. "Capsule", "Ciao, ...") --- Baloo 2, lo stesso

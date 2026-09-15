@@ -62,7 +62,18 @@ export function Sidebar({
         // richiesta utente) diventa un movimento fluido invece di un
         // cambio di scatto: stessa proprietà anche in senso inverso
         // (espandendo), nessuna classe separata serve per le due direzioni.
-        "hidden flex-col gap-6 overflow-hidden border-b border-zinc-200 bg-white transition-[width,padding] duration-300 ease-in-out md:flex md:shrink-0 md:border-b-0 dark:border-zinc-800 dark:bg-zinc-950",
+        // md:sticky md:top-0 md:h-screen --- senza, l'altezza di <aside>
+        // seguiva quella di <main> (allineamento flex di default), quindi
+        // su qualunque pagina più alta di uno schermo (praticamente
+        // sempre, con dati reali) l'avatar in fondo alla barra finiva ben
+        // sotto la parte visibile, irraggiungibile senza scorrere tutta
+        // la pagina --- specie evidente in orizzontale su smartphone, dove
+        // la finestra è bassa (v. segnalazione utente). overflow-x-hidden
+        // resta per la transizione di larghezza qui sopra; overflow-y-auto
+        // (invece di overflow-hidden su entrambi gli assi) è la rete di
+        // sicurezza se il proprio contenuto della barra superasse
+        // comunque l'altezza della finestra.
+        "hidden flex-col gap-6 overflow-x-hidden overflow-y-auto border-b border-zinc-200 bg-white transition-[width,padding] duration-300 ease-in-out md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:border-b-0 dark:border-zinc-800 dark:bg-zinc-950",
         // Bordo di confine col contenuto e ordine visivo sul lato
         // corretto --- v. doc comment sopra. L'ordine resta quello del
         // markup su mobile (flex-col): solo da md in su, dove il

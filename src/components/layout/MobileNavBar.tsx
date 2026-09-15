@@ -69,7 +69,16 @@ export function MobileNavBar({
         pagina --- un secondo <header> qui (anche se nascosto via CSS sopra
         md) lo duplicherebbe, rendendo ambiguo cosa sia "il" banner.
       */}
-      <div className="flex items-center justify-between border-b border-zinc-200 bg-white p-3 md:hidden dark:border-zinc-800 dark:bg-zinc-950">
+      {/*
+        sticky top-0 --- senza, questa barra (col tasto ☰) scorreva via
+        con il resto della pagina come qualunque altro contenuto: su una
+        pagina più lunga di una schermata, bastava scorrere un po' perché
+        il tasto per aprire il menu finisse fuori vista, toccando "il
+        vuoto" a quel punto della pagina invece del tasto vero (v.
+        segnalazione utente). z-30, sotto i z-40/z-50 di barra in basso e
+        finestre di sovraimpressione, così non le copre mai.
+      */}
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-zinc-200 bg-white p-3 md:hidden dark:border-zinc-800 dark:bg-zinc-950">
         <Link href="/dashboard" className="shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
           <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-8 w-auto" />
