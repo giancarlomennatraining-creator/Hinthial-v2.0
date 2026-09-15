@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { TextField } from "@/components/ui/TextField";
 import { UnlockedIcon } from "@/components/icons/nav-icons";
+import { DevicePairingUnlock } from "@/components/crypto/DevicePairingUnlock";
 
 export function UnlockMasterKeyForm() {
   const { unlockWithPassword, unlockWithRecoveryKey, deviceLockAvailable, unlockWithDeviceLock } =
@@ -132,6 +133,13 @@ export function UnlockMasterKeyForm() {
       >
         {useRecoveryKey ? "Usa invece la master password" : "Hai perso la password? Usa la recovery key"}
       </button>
+
+      {/* FASE 13, terzo passo --- sbloccare QUESTO dispositivo (non
+          ancora fidato) facendolo approvare da uno che lo è già, via QR
+          code: v. DevicePairingUnlock.tsx. Indipendente dall'opzione
+          "impronta/Face ID" qui sopra, che riguarda invece QUESTO
+          stesso dispositivo se era GIÀ fidato in precedenza. */}
+      <DevicePairingUnlock />
     </div>
   );
 }

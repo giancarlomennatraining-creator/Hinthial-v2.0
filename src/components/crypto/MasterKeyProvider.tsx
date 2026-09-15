@@ -16,6 +16,8 @@ import {
   isDeviceLockSupported,
   registerDeviceCredential,
   deriveDeviceKeyForCredential,
+  generateEphemeralKeyPair,
+  deriveSharedKeyAsRecipient,
   type MasterKeySetup,
 } from "@/lib/crypto";
 import {
@@ -29,6 +31,11 @@ import {
   touchTrustedDeviceLastActive,
   forgetTrustedDevice,
 } from "@/domain/trusted-devices/repository";
+import {
+  createPairingRequest,
+  checkPairingRequestApproved,
+  deletePairingRequest,
+} from "@/domain/device-pairing/repository";
 
 export type MasterKeyStatus =
   | { kind: "checking" }
@@ -67,6 +74,16 @@ interface MasterKeyContextValue {
   registerDeviceLock: (password: string, label: string) => Promise<void>;
   /** "Dimentica questo dispositivo": rimuove la registrazione qui e sul server. */
   forgetDeviceLock: () => Promise<void>;
+  // FASE 13, terzo passo --- pairing tra dispositivi via QR (v.
+  // domain/device-pairing/repository.ts): questo dispositivo (nuovo,
+  // non ancora fidato) genera una richiesta e la mostra come QR code;
+  // un dispositivo già fidato la approva scansionandola.
+  /** Apre una nuova richiesta di pairing --- v. DevicePairingUnlock.tsx per l'uso (QR + attesa). */
+  startDevicePairing: () => Promise<{ requestId: string; pairingUrl: string; privateKey: CryptoKey }>;
+  /** Un giro di controllo: `true` se approvata (e il vault è già sbloccato a questo punto), `false` se non ancora. */
+  tryCompleteDevicePairing: (requestId: string, privateKey: CryptoKey) => Promise<boolean>;
+  /** Annulla una richiesta non ancora approvata (es. l'utente chiude il pannello prima che qualcuno scansioni). */
+  cancelDevicePairing: (requestId: string) => Promise<void>;
 }
 
 const MasterKeyContext = createContext<MasterKeyContextValue | null>(null);
@@ -315,6 +332,45 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
     setDeviceLockAvailable(false);
   }, []);
 
+  /**
+   * FASE 13, terzo passo --- lato dispositivo nuovo (non ancora fidato).
+   * La chiave privata effimera resta qui, in memoria, chiamante per
+   * chiamante --- mai salvata da nessuna parte: se la pagina si
+   * chiude prima che qualcuno approvi, la richiesta resta semplicemente
+   * inutilizzabile (nessuno può derivare il segreto senza di lei) finché
+   * non scade da sé.
+   */
+  const startDevicePairing = useCallback(async () => {
+    const { supabase, userId } = await requireUserId();
+    const { privateKey, publicKeyJwk } = await generateEphemeralKeyPair();
+    const request = await createPairingRequest(supabase, userId, publicKeyJwk);
+    const pairingUrl = `${window.location.origin}/pair/${request.id}`;
+    return { requestId: request.id, pairingUrl, privateKey };
+  }, []);
+
+  const tryCompleteDevicePairing = useCallback(async (requestId: string, privateKey: CryptoKey) => {
+    const { supabase } = await requireUserId();
+    const approved = await checkPairingRequestApproved(supabase, requestId);
+    if (!approved) return false;
+
+    const sharedKey = await deriveSharedKeyAsRecipient(privateKey, approved.approverPublicKey);
+    const masterKey = await unwrapKey(sharedKey, parseEnvelope(approved.encryptedMasterKey));
+    // Nessun ensureKeyPair qui --- a differenza di unlockWithPassword/
+    // unlockWithRecoveryKey, non abbiamo già in mano public_key da
+    // controllare senza un giro in più sul database, e la coppia di
+    // chiavi dell'account (v. FASE C1) è quasi certamente già presente
+    // da un sblocco precedente altrove: se davvero mancasse, verrà
+    // comunque creata al prossimo sblocco con password o impronta.
+    void deletePairingRequest(supabase, requestId);
+    setStatus({ kind: "unlocked", masterKey });
+    return true;
+  }, []);
+
+  const cancelDevicePairing = useCallback(async (requestId: string) => {
+    const { supabase } = await requireUserId();
+    await deletePairingRequest(supabase, requestId);
+  }, []);
+
   const lock = useCallback(() => setStatus({ kind: "locked" }), []);
 
   const value = useMemo<MasterKeyContextValue>(
@@ -330,6 +386,9 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
       unlockWithDeviceLock,
       registerDeviceLock,
       forgetDeviceLock,
+      startDevicePairing,
+      tryCompleteDevicePairing,
+      cancelDevicePairing,
     }),
     [
       status,
@@ -343,6 +402,9 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
       unlockWithDeviceLock,
       registerDeviceLock,
       forgetDeviceLock,
+      startDevicePairing,
+      tryCompleteDevicePairing,
+      cancelDevicePairing,
     ],
   );
 

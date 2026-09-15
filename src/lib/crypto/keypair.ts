@@ -80,6 +80,27 @@ export async function unwrapPrivateKey(
 }
 
 /**
+ * Genera una coppia di chiavi ECDH effimera (usa e getta) senza
+ * derivare subito nulla --- v. FASE 13 (pairing tra dispositivi,
+ * domain/device-pairing): a differenza di deriveSharedKeyAsSender, qui
+ * chi genera la coppia non conosce ancora una chiave pubblica altrui
+ * con cui derivare (il "nuovo dispositivo" la mostra come QR code e
+ * aspetta che un dispositivo fidato risponda con LA SUA chiave pubblica
+ * effimera, v. deriveSharedKeyAsRecipient per completare lo scambio da
+ * questo lato). La chiave privata resta nella CryptoKey restituita,
+ * mai serializzata --- vive solo in memoria, buttata via insieme alla
+ * pagina se lo scambio non si completa.
+ */
+export async function generateEphemeralKeyPair(): Promise<{
+  privateKey: CryptoKey;
+  publicKeyJwk: string;
+}> {
+  const keyPair = await crypto.subtle.generateKey(ECDH_PARAMS, true, ["deriveKey"]);
+  const publicJwk = await crypto.subtle.exportKey("jwk", keyPair.publicKey);
+  return { privateKey: keyPair.privateKey, publicKeyJwk: JSON.stringify(publicJwk) };
+}
+
+/**
  * Lato mittente: genera una coppia di chiavi effimera (usa e getta, una
  * per ogni condivisione) e deriva con essa la chiave AES-256-GCM
  * condivisa con il destinatario, a partire dalla sua chiave pubblica.

@@ -683,6 +683,44 @@ export type Database = {
           },
         ];
       };
+      device_pairing_requests: {
+        Row: {
+          id: string;
+          owner_id: string;
+          new_device_public_key: string;
+          approver_public_key: string | null;
+          encrypted_master_key: string | null;
+          created_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          new_device_public_key: string;
+          approver_public_key?: string | null;
+          encrypted_master_key?: string | null;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          new_device_public_key?: string;
+          approver_public_key?: string | null;
+          encrypted_master_key?: string | null;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "device_pairing_requests_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
