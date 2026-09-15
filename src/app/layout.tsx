@@ -52,33 +52,56 @@ const DEBUG_OVERLAY_SCRIPT = `
     if (box) return box;
     box = document.createElement("div");
     box.id = "__hinthial_debug_overlay__";
-    box.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:999999;background:#b91c1c;color:#fff;font:11px/1.4 monospace;padding:8px;max-height:45vh;overflow:auto;white-space:pre-wrap;";
+    box.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:999999;background:#111827;color:#fff;font:11px/1.4 monospace;padding:6px 8px;max-height:50vh;overflow:auto;white-space:pre-wrap;";
     document.body.appendChild(box);
     return box;
   }
-  function report(label, detail) {
+  function report(label, detail, isError) {
     try {
       var b = ensureBox();
+      if (isError) b.style.background = "#b91c1c";
       var line = document.createElement("div");
       line.style.cssText = "border-top:1px solid rgba(255,255,255,0.3);padding-top:4px;margin-top:4px;";
       line.textContent = "[" + new Date().toLocaleTimeString() + "] " + label + ": " + detail;
       b.appendChild(line);
     } catch (e) {}
   }
+  // Marcatore sempre visibile --- conferma che lo script è partito
+  // davvero, cosa che l'assenza di un errore da sola non garantisce.
+  report("diagnostica", "script di diagnostica avviato", false);
+  // capture:true --- necessario per gli errori di caricamento di una
+  // risorsa (uno <script src> o <link> che fallisce): non risalgono
+  // (bubbling) fino a window come i normali errori js, si intercettano
+  // solo in fase di capture.
   window.addEventListener("error", function (e) {
-    report("error", (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || ""));
-  });
+    if (e.target && e.target !== window && e.target.tagName) {
+      report(
+        "risorsa non caricata",
+        e.target.tagName + " " + (e.target.src || e.target.href || ""),
+        true,
+      );
+      return;
+    }
+    report("error", (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || ""), true);
+  }, true);
   window.addEventListener("unhandledrejection", function (e) {
     var reason = e.reason;
     var msg = reason && reason.message ? reason.message : String(reason);
-    report("unhandledrejection", msg);
+    report("unhandledrejection", msg, true);
   });
   var origError = console.error;
   console.error = function () {
     try {
-      report("console.error", Array.prototype.slice.call(arguments).map(String).join(" "));
+      report("console.error", Array.prototype.slice.call(arguments).map(String).join(" "), true);
     } catch (e) {}
     return origError.apply(console, arguments);
+  };
+  var origWarn = console.warn;
+  console.warn = function () {
+    try {
+      report("console.warn", Array.prototype.slice.call(arguments).map(String).join(" "), false);
+    } catch (e) {}
+    return origWarn.apply(console, arguments);
   };
 })();
 `;
