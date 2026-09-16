@@ -19,7 +19,7 @@ import { buildIcsCalendar } from "@/lib/ics";
 import { saveBlobAsFile } from "@/lib/download";
 import { sanitizeFilename } from "@/lib/utils";
 import type { ReminderListItem } from "@/domain/reminders/types";
-import { SuccessMessage } from "@/components/ui/SuccessMessage";
+import { useToast } from "@/components/ui/ToastProvider";
 
 type StatusFilter = "all" | "pending" | "completed";
 
@@ -64,6 +64,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const showToast = useToast();
 
   const [reminders, setReminders] = useState<ReminderListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,8 +82,9 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   // v. CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
   useEffect(() => {
+    if (showCreatedMessage) showToast("Scadenza creata.");
     if (showCreatedMessage) router.replace("/reminders");
-  }, [showCreatedMessage, router]);
+  }, [showCreatedMessage, router, showToast]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -198,10 +200,6 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
       </div>
 
       <MobileAddFab href="/reminders/new" label="Aggiungi scadenza" />
-
-      {showCreatedMessage ? (
-        <SuccessMessage>Scadenza creata.</SuccessMessage>
-      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">

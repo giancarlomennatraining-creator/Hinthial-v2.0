@@ -40,7 +40,7 @@ import type {
   SharedCapsuleListItem,
 } from "@/domain/capsules/types";
 import type { DocumentListItem } from "@/domain/documents/types";
-import { SuccessMessage } from "@/components/ui/SuccessMessage";
+import { useToast } from "@/components/ui/ToastProvider";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -92,6 +92,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const showToast = useToast();
 
   const [capsules, setCapsules] = useState<CapsuleListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,8 +139,10 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
   const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
   useEffect(() => {
+    if (showCreatedMessage) showToast("Capsula creata.");
+    if (showUpdatedMessage) showToast("Capsula aggiornata.");
     if (showCreatedMessage || showUpdatedMessage) router.replace("/capsules");
-  }, [showCreatedMessage, showUpdatedMessage, router]);
+  }, [showCreatedMessage, showUpdatedMessage, router, showToast]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -199,6 +202,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       await closeCapsule(supabase, masterKey, user.id, capsule);
       await refresh();
+      showToast("Capsula chiusa.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile chiudere la capsula.");
     } finally {
@@ -217,6 +221,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       await shareCapsule(supabase, masterKey, user.id, capsule);
       setCapsules((prev) => prev.map((c) => (c.id === capsule.id ? { ...c, status: "shared" } : c)));
+      showToast("Capsula condivisa.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile condividere la capsula.");
     } finally {
@@ -420,13 +425,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       </div>
 
       <MobileAddFab href="/capsules/new" label="Aggiungi capsula" />
-
-      {showCreatedMessage ? (
-        <SuccessMessage>Capsula creata.</SuccessMessage>
-      ) : null}
-      {showUpdatedMessage ? (
-        <SuccessMessage>Capsula aggiornata.</SuccessMessage>
-      ) : null}
 
       {/* "Condivise con me" (FASE B) è una scheda qui dentro, non una voce
           di menu a parte --- stesso tipo di contenuto, solo guardato dal

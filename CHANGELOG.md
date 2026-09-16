@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-16
+
+### Avvisi di condivisione capsule (email + popup in Dashboard), messaggi di conferma come popup, avatar al posto del ☰ su smartphone
+
+**Cosa fa:** quattro piccoli miglioramenti richiesti dall'utente. (1) Nel menu su smartphone, il tasto con le tre lineette per aprire il menu è ora l'avatar dell'account (foto o iniziali) --- coerente con la barra laterale/superiore su schermi più larghi. (2) Chi riceve una capsula condivisa riceve ora anche un'email di avviso, oltre a vederla in "Condivise con me". (3) I messaggi "creato/aggiornato/chiuso/condiviso con successo", prima integrati nella pagina, appaiono ora come popup in sovraimpressione che sparisce da solo dopo pochi secondi --- non spostano più il resto del contenuto sotto di loro. (4) Chi riceve una capsula condivisa trova, la prima volta che apre la Dashboard dopo la condivisione, un popup che lo avvisa --- resta finché non lo chiude, poi non ricompare più per quella capsula (ma un'altra condivisione futura avrà il suo).
+
+**Note tecniche:** l'email di avviso (`notifyCapsuleShared`, `lib/capsules/actions.ts`) è una Server Action best-effort chiamata da `shareCapsule`/`syncCapsuleSharesForLinkedFriend` (`domain/capsules/repository.ts`) --- un fallimento nell'invio non blocca mai la condivisione vera e propria, di cui è solo un effetto collaterale. L'indirizzo del destinatario non è mai conosciuto dal chiamante (solo un id account collegato): viene risolto qui, server-side, con l'API admin (`getUserById`) a partire dal solo id --- lo stesso schema già in uso per l'eliminazione account. Il popup "per sempre" in Dashboard si appoggia a una nuova colonna (`capsule_shares.dismissed_at`, migrazione `20260916010000`) con una policy RLS dedicata che permette al solo destinatario di segnare la propria riga come vista --- non ha alcun ruolo di sicurezza, serve solo a ricordare cosa è già stato mostrato, sopravvivendo a un refresh o a un altro dispositivo. I popup di conferma condividono un nuovo `ToastProvider` (`components/ui/ToastProvider.tsx`, montato in `AppShell`), che sostituisce interamente il vecchio `SuccessMessage` (rimosso, nessun altro consumatore) nei cinque pannelli che lo usavano, più due nuove chiamate per "capsula chiusa"/"capsula condivisa" che prima non avevano alcuna conferma. Riusa `useMountedTransition` per l'animazione, come il resto dell'app; testi identici ravvicinati (es. due "Bene creato." di fila) non si accodano due volte, si limitano a restare visibili. Durante la verifica con l'intera suite e2e, scoperto e corretto un difetto pre-esistente della FASE 13 (non causato da questa modifica): il tasto "Sblocca con un dispositivo fidato" (sempre presente nella schermata di sblocco, per il pairing via QR) rende ambiguo qualunque test che cerchi il tasto "Sblocca" per nome senza `exact: true` --- corretto nei cinque punti interessati.
+
+---
+
 ## 2026-09-15
 
 ### FASE 13, ultimo passo --- elenco e revoca di tutti i dispositivi fidati, da qualunque dispositivo

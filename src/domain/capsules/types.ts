@@ -130,6 +130,8 @@ export interface SharedCapsuleListItem {
   status: CapsuleStatus;
   /** V. CapsuleListItem.openAt --- null solo per le capsule create prima che diventasse obbligatoria. */
   openAt: string | null;
+  /** Quando il destinatario ha chiuso il popup di notifica in Dashboard --- null finché non lo fa (v. dismissCapsuleShareNotification). */
+  dismissedAt: string | null;
 }
 
 /**

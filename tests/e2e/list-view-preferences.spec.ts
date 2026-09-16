@@ -10,7 +10,7 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 async function unlockMasterKey(page: Page) {
   await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
-  await page.getByRole("button", { name: "Sblocca" }).click();
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
 }
 
 // Requires a configured Supabase project (.env.local) --- see README.md.

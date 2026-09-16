@@ -28,6 +28,7 @@ import {
 import { downloadDocument, getDocumentsByIds } from "@/domain/documents/repository";
 import { getFriendsByIds, getLinkedFriendPublicKey } from "@/domain/friends/repository";
 import { logAuditEvent } from "@/lib/audit/log-event";
+import { notifyCapsuleShared } from "@/lib/capsules/actions";
 import type {
   CapsuleAccessCondition,
   CapsuleAttachment,
@@ -552,6 +553,10 @@ export async function shareCapsule(
     if (error) {
       throw new Error(`Impossibile condividere la capsula: ${error.message}`);
     }
+
+    for (const friend of linkedFriends) {
+      void notifyCapsuleShared(friend.linkedUserId as string);
+    }
   }
 
   await setCapsuleStatus(supabase, capsule.id, "shared");
@@ -591,6 +596,8 @@ export async function syncCapsuleSharesForLinkedFriend(
   if (error) {
     throw new Error(`Impossibile collegare le capsule già condivise: ${error.message}`);
   }
+
+  void notifyCapsuleShared(linkedUserId);
 }
 
 /**
@@ -607,7 +614,7 @@ export async function listCapsulesSharedWithMe(
 ): Promise<SharedCapsuleListItem[]> {
   const { data: shares, error: sharesError } = await supabase
     .from("capsule_shares")
-    .select("capsule_id, owner_id, shared_at")
+    .select("capsule_id, owner_id, shared_at, dismissed_at")
     .order("shared_at", { ascending: false });
 
   if (sharesError) {
@@ -646,9 +653,32 @@ export async function listCapsulesSharedWithMe(
         sharedAt: share.shared_at,
         status: capsule.status,
         openAt: capsule.open_at,
+        dismissedAt: share.dismissed_at,
       };
     })
     .filter((item): item is SharedCapsuleListItem => item !== null);
+}
+
+/**
+ * Chiude "per sempre" il popup di notifica in Dashboard per QUESTA
+ * capsula condivisa (v. richiesta utente) --- niente ruolo di
+ * sicurezza, solo un promemoria lato server di cosa il destinatario ha
+ * già visto, così sopravvive a un refresh o a un altro dispositivo.
+ * Manda sempre e solo `dismissed_at` (v. la policy RLS dedicata,
+ * capsule_shares_update_recipient): mai altro, per definizione non può
+ * riassegnare la condivisione a qualcun altro.
+ */
+export async function dismissCapsuleShareNotification(
+  supabase: SupabaseClient<Database>,
+  capsuleId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("capsule_shares")
+    .update({ dismissed_at: new Date().toISOString() })
+    .eq("capsule_id", capsuleId);
+  if (error) {
+    throw new Error(`Impossibile chiudere la notifica: ${error.message}`);
+  }
 }
 
 /**

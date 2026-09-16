@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AlertTriangleIcon, CheckCircleIcon } from "@/components/icons/nav-icons";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
+import { SharedCapsuleNotificationPopup } from "@/components/dashboard/SharedCapsuleNotificationPopup";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { computeBasicOnboardingSteps } from "@/domain/onboarding/steps";
 
@@ -53,7 +54,10 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
       </div>
 
       {status.kind === "unlocked" ? (
-        <DashboardWidgets masterKey={status.masterKey} />
+        <>
+          <SharedCapsuleNotificationPopup />
+          <DashboardWidgets masterKey={status.masterKey} />
+        </>
       ) : status.kind === "checking" ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
       ) : (

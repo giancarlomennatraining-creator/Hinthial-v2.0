@@ -10,6 +10,7 @@ import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { useBottomNavItems } from "@/components/layout/BottomNavItemsProvider";
 import { useOrderedNavItems } from "@/components/layout/MainNavItemsProvider";
 import { useMountedTransition } from "@/lib/use-mounted-transition";
+import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 
 /**
@@ -109,11 +110,9 @@ export function MobileNavBar({
           onClick={() => setOpen(true)}
           aria-label="Apri il menu"
           aria-expanded={open}
-          className="shrink-0 rounded-md p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
+          className="shrink-0 rounded-full p-0.5 hover:ring-2 hover:ring-zinc-200 dark:hover:ring-zinc-800"
         >
-          <span aria-hidden="true" className="block text-xl leading-none">
-            ☰
-          </span>
+          <Avatar firstName={firstName} lastName={lastName} avatarUrl={avatarUrl} seed={userId} size="sm" />
         </button>
       </div>
 

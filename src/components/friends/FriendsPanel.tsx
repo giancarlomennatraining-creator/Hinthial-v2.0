@@ -27,7 +27,7 @@ import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import type { FriendListItem, FriendStatus } from "@/domain/friends/types";
 import type { CapsuleListItem } from "@/domain/capsules/types";
-import { SuccessMessage } from "@/components/ui/SuccessMessage";
+import { useToast } from "@/components/ui/ToastProvider";
 import { AlertTriangleIcon } from "@/components/icons/nav-icons";
 
 function formatDate(iso: string): string {
@@ -100,6 +100,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const showToast = useToast();
 
   const [friends, setFriends] = useState<FriendListItem[]>([]);
   const [capsules, setCapsules] = useState<CapsuleListItem[]>([]);
@@ -129,8 +130,10 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   // blocca il salvataggio, solo un avviso a parte.
   const [showInviteFailedMessage] = useState(() => searchParams.get("inviteFailed") === "1");
   useEffect(() => {
+    if (showCreatedMessage) showToast("Amico aggiunto.");
+    if (showUpdatedMessage) showToast("Amico aggiornato.");
     if (showCreatedMessage || showUpdatedMessage) router.replace("/friends");
-  }, [showCreatedMessage, showUpdatedMessage, router]);
+  }, [showCreatedMessage, showUpdatedMessage, router, showToast]);
 
   /**
    * Foto reale di un amico collegato a un account Hinthial, quando non
@@ -347,8 +350,6 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       <MobileAddFab href="/friends/new" label="Aggiungi amico" />
 
-      {showCreatedMessage ? <SuccessMessage>Amico aggiunto.</SuccessMessage> : null}
-      {showUpdatedMessage ? <SuccessMessage>Amico aggiornato.</SuccessMessage> : null}
       {showInviteFailedMessage ? (
         <p className="flex items-start gap-1.5 text-sm text-orange-700 dark:text-orange-400">
           <AlertTriangleIcon width={16} height={16} className="mt-0.5 shrink-0" />

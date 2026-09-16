@@ -31,7 +31,7 @@ import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
 import { useListViewPreferences } from "@/components/layout/ListViewPreferencesProvider";
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
-import { SuccessMessage } from "@/components/ui/SuccessMessage";
+import { useToast } from "@/components/ui/ToastProvider";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -70,6 +70,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const showToast = useToast();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
@@ -109,8 +110,10 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
   const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
   useEffect(() => {
+    if (showCreatedMessage) showToast("Contenuto aggiunto.");
+    if (showUpdatedMessage) showToast("Contenuto aggiornato.");
     if (showCreatedMessage || showUpdatedMessage) router.replace("/archive");
-  }, [showCreatedMessage, showUpdatedMessage, router]);
+  }, [showCreatedMessage, showUpdatedMessage, router, showToast]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -374,13 +377,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
       </div>
 
       <MobileAddFab href="/archive/new" label="Aggiungi contenuto" />
-
-      {showCreatedMessage ? (
-        <SuccessMessage>Contenuto aggiunto.</SuccessMessage>
-      ) : null}
-      {showUpdatedMessage ? (
-        <SuccessMessage>Contenuto aggiornato.</SuccessMessage>
-      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">

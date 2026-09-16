@@ -532,6 +532,7 @@ export type Database = {
           owner_id: string;
           recipient_user_id: string;
           shared_at: string;
+          dismissed_at: string | null;
         };
         Insert: {
           id?: string;
@@ -539,6 +540,7 @@ export type Database = {
           owner_id: string;
           recipient_user_id: string;
           shared_at?: string;
+          dismissed_at?: string | null;
         };
         Update: {
           id?: string;
@@ -546,6 +548,7 @@ export type Database = {
           owner_id?: string;
           recipient_user_id?: string;
           shared_at?: string;
+          dismissed_at?: string | null;
         };
         Relationships: [
           {

@@ -132,12 +132,12 @@ test("un secondo login richiede lo sblocco con la master password", async ({
 
   // Password sbagliata --- errore chiaro, non un crash.
   await page.getByLabel("Master password").fill("password-sbagliata");
-  await page.getByRole("button", { name: "Sblocca" }).click();
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible();
 
   // Password corretta --- sblocca e torna al pannello Archivio.
   await page.getByLabel("Master password").fill("un-altra-master-password");
-  await page.getByRole("button", { name: "Sblocca" }).click();
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 });

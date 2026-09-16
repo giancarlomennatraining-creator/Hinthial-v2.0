@@ -122,7 +122,7 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await page.reload();
   await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
-  await page.getByRole("button", { name: "Sblocca" }).click();
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
   await expect(statusButton).not.toBeVisible();
 });

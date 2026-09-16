@@ -140,7 +140,7 @@ test("chiudere e condividere una capsula la rende apribile dal destinatario coll
   await page.getByRole("link", { name: "Capsule" }).click();
   await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
-  await page.getByRole("button", { name: "Sblocca" }).click();
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Capsule" })).toBeVisible();
 
   await page.getByRole("button", { name: /Condivise con me/ }).click();

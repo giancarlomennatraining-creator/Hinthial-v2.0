@@ -24,7 +24,7 @@ import type { AssetListItem } from "@/domain/assets/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
-import { SuccessMessage } from "@/components/ui/SuccessMessage";
+import { useToast } from "@/components/ui/ToastProvider";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -40,6 +40,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const showToast = useToast();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
@@ -62,8 +63,10 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
   const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
   useEffect(() => {
+    if (showCreatedMessage) showToast("Bene creato.");
+    if (showUpdatedMessage) showToast("Bene aggiornato.");
     if (showCreatedMessage || showUpdatedMessage) router.replace("/assets");
-  }, [showCreatedMessage, showUpdatedMessage, router]);
+  }, [showCreatedMessage, showUpdatedMessage, router, showToast]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -180,13 +183,6 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
       </div>
 
       <MobileAddFab href="/assets/new" label="Aggiungi bene" />
-
-      {showCreatedMessage ? (
-        <SuccessMessage>Bene creato.</SuccessMessage>
-      ) : null}
-      {showUpdatedMessage ? (
-        <SuccessMessage>Bene aggiornato.</SuccessMessage>
-      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">

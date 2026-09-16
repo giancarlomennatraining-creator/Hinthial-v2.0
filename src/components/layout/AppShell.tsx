@@ -13,6 +13,7 @@ import { MainNavItemsProvider } from "@/components/layout/MainNavItemsProvider";
 import { OnboardingWidgetVisibilityProvider } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 import { AIChatProvider } from "@/components/ai/AIChatProvider";
 import { AIProcessingConsentProvider } from "@/components/ai/AIProcessingConsentProvider";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 import { cn } from "@/lib/utils";
 import type { NavOrientation } from "@/lib/nav-orientation";
 import type { BottomNavItems } from "@/lib/bottom-nav";
@@ -55,6 +56,7 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   return (
+    <ToastProvider>
     <MasterKeyProvider>
       <MasterKeyIntroModal userId={userId} initialSeen={initialMasterKeyIntroSeen} />
       <NavOrientationProvider userId={userId} initialOrientation={initialNavOrientation}>
@@ -83,6 +85,7 @@ export function AppShell({
         </BottomNavItemsProvider>
       </NavOrientationProvider>
     </MasterKeyProvider>
+    </ToastProvider>
   );
 }
 

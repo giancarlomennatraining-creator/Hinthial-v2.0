@@ -47,6 +47,25 @@ export function friendInviteEmail(inviterName: string): { subject: string; html:
   };
 }
 
+/**
+ * Avviso di una capsula condivisa con l'account che la riceve (v.
+ * lib/capsules/actions.ts, notifyCapsuleShared) --- niente su titolo o
+ * contenuto della capsula, mai passati qui: sono cifrati, questo
+ * server non li vede mai.
+ */
+export function capsuleSharedEmail(ownerName: string): { subject: string; html: string } {
+  const dashboardUrl = `${appUrl()}/dashboard`;
+
+  return {
+    subject: `${ownerName} ha condiviso una capsula con te su Hinthial`,
+    html: emailShell(`
+      <p><strong>${ownerName}</strong> ha condiviso con te una capsula su Hinthial in data ${formattedToday()}.</p>
+      <p>La trovi nella scheda "Condivise con me" di Capsule, da dove puoi seguirne il conto alla rovescia e aprirla appena arriva la data prevista.</p>
+      ${primaryButton(dashboardUrl, "Vai a Hinthial")}
+    `),
+  };
+}
+
 /** Conferma dopo la cancellazione definitiva dell'account (v. domain/danger-zone). */
 export function accountDeletedEmail(): { subject: string; html: string } {
   return {
