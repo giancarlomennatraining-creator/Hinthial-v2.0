@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-16 (2)
+
+### Bug corretto: chi condivide una capsula la ritrovava anche nel proprio elenco "Condivise con me"
+
+**Cosa fa:** dopo aver condiviso una capsula, il mittente non la vedeva più (per errore) tra le proprie "Condivise con me" --- una sezione pensata solo per chi *riceve*, non per chi manda.
+
+**Note tecniche:** `listCapsulesSharedWithMe` (`domain/capsules/repository.ts`) leggeva `capsule_shares` senza alcun filtro esplicito, affidandosi solo a RLS --- ma la tabella ha due policy SELECT permissive separate (`capsule_shares_select_owner` e `capsule_shares_select_recipient`, migrazione `20260912040000`), combinate in OR da Postgres: il proprietario può leggere le proprie righe per altri motivi (gestirle, revocarle), quindi la query senza filtro tornava le righe sia come destinatario sia come mittente. Corretto aggiungendo `.eq("recipient_user_id", user.id)` alla query --- non tocca la RLS (corretta per il proprio scopo), solo restringe questa specifica query al significato voluto. Diagnosticato dalla segnalazione dell'utente su un account reale (`giancarlo.menna.training` vedeva la propria capsula condivisa con `mennaarna` anche nel proprio elenco).
+
+---
+
 ## 2026-09-16
 
 ### Avvisi di condivisione capsule (email + popup in Dashboard), messaggi di conferma come popup, avatar al posto del ☰ su smartphone

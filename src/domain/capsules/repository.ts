@@ -612,9 +612,20 @@ export async function syncCapsuleSharesForLinkedFriend(
 export async function listCapsulesSharedWithMe(
   supabase: SupabaseClient<Database>,
 ): Promise<SharedCapsuleListItem[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  // Esplicito, non solo affidato a RLS: la riga RLS che permette la
+  // lettura qui ammette SIA il proprietario SIA il destinatario (due
+  // policy separate, v. migrazione capsule_shares), quindi senza questo
+  // filtro chi condivide una capsula la ritroverebbe anche nel proprio
+  // elenco "Condivise con me" (v. segnalazione utente).
   const { data: shares, error: sharesError } = await supabase
     .from("capsule_shares")
     .select("capsule_id, owner_id, shared_at, dismissed_at")
+    .eq("recipient_user_id", user.id)
     .order("shared_at", { ascending: false });
 
   if (sharesError) {
