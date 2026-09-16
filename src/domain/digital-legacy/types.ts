@@ -19,6 +19,14 @@ export type DigitalLegacyPreset = "cautious" | "balanced" | "relaxed" | "custom"
 export type GuardianQuorum = "unanimous" | "majority" | "single";
 
 export interface DigitalLegacySettings {
+  /**
+   * Spento di default per ogni account (v. richiesta utente, discussa
+   * esplicitamente prima di costruire l'automazione): finché è spento,
+   * nessuna email parte e nessuno stato cambia da solo, qualunque
+   * preset/valore sia configurato qui sotto --- un preset scelto in
+   * anticipo non ha alcun effetto prima di questo interruttore.
+   */
+  enabled: boolean;
   preset: DigitalLegacyPreset;
   /** Giorni di inattività prima di iniziare i promemoria. */
   inactivityDays: number;
@@ -35,7 +43,7 @@ export interface DigitalLegacySettings {
   finalWaitDays: number;
 }
 
-export type DigitalLegacyPresetValues = Omit<DigitalLegacySettings, "preset">;
+export type DigitalLegacyPresetValues = Omit<DigitalLegacySettings, "preset" | "enabled">;
 
 /** I tre preset proposti all'utente --- "custom" non ha valori propri: è ciò che si ottiene modificando uno di questi a mano. */
 export const DIGITAL_LEGACY_PRESET_ORDER: Exclude<DigitalLegacyPreset, "custom">[] = [
@@ -98,6 +106,7 @@ const GUARDIAN_QUORUM_SUMMARY_FRAGMENT: Record<GuardianQuorum, string> = {
 };
 
 export const DEFAULT_DIGITAL_LEGACY_SETTINGS: DigitalLegacySettings = {
+  enabled: false,
   preset: "balanced",
   ...DIGITAL_LEGACY_PRESET_VALUES.balanced,
 };
@@ -179,4 +188,103 @@ export function describeDigitalLegacySettings(settings: DigitalLegacyPresetValue
     `${formatDays(settings.formalVerificationDays + settings.finalWaitDays)} di verifica. ` +
     `In totale, nel caso peggiore, ${formatApprox(total)} prima che le capsule si aprano.`
   );
+}
+
+/**
+ * Fasi 1-3 della roadmap (v. HINTHIAL_MVP.md sezione 10): rilevamento
+ * inattività, promemoria, periodo di grazia --- fin dove arriva questo
+ * incremento. "awaiting_guardians" è un punto fermo, non ancora una
+ * fase attiva: significa "il periodo di grazia è scaduto, in attesa
+ * che una fase futura (coinvolgimento guardiani, non costruita) prenda
+ * in carico questo account" --- v. computeDigitalLegacyTransition, che
+ * da qui non fa avanzare più nulla.
+ */
+export type DigitalLegacyState = "normal" | "reminding" | "grace_period" | "awaiting_guardians";
+
+/** Lo stato osservato di un account al momento del controllo --- letto da profiles, mai inventato. */
+export interface DigitalLegacyRuntimeState {
+  state: DigitalLegacyState;
+  /** ISO --- quando è iniziato lo stato attuale. */
+  stateEnteredAt: string;
+  /** Quanti promemoria sono già stati inviati nello stato "reminding" attuale. */
+  remindersSent: number;
+  /** ISO, o null se nessun promemoria è ancora stato inviato in questo stato. */
+  lastReminderAt: string | null;
+}
+
+/**
+ * L'unica azione da compiere per questo account a questo giro di
+ * controllo --- "none" nella grande maggioranza dei casi. Il chiamante
+ * (v. domain/digital-legacy/automation.ts) applica l'azione: aggiorna
+ * la riga, manda l'email se prevista, registra l'evento in Attività.
+ */
+export type DigitalLegacyAction =
+  | { type: "none" }
+  /** Un accesso avvenuto DOPO l'inizio dello stato attuale annulla tutto: si torna a "normal". */
+  | { type: "reset" }
+  /**
+   * Invia un promemoria --- `enteringReminding: true` per il primo (che
+   * fa anche scattare lo stato "reminding" da "normal", nello stesso
+   * momento: niente attesa aggiuntiva oltre alla soglia di inattività
+   * già trascorsa prima di scrivere per la prima volta).
+   */
+  | { type: "send_reminder"; reminderNumber: number; enteringReminding: boolean }
+  | { type: "start_grace_period" }
+  | { type: "start_awaiting_guardians" };
+
+/**
+ * Il "cervello" dell'automazione --- puro, senza alcun accesso a
+ * database o orologio di sistema (li riceve come parametri): interamente
+ * testabile con date fisse, senza dover davvero aspettare mesi né poter
+ * manipolare `last_sign_in_at` di Supabase (gestito da GoTrue, non
+ * scrivibile a piacere). v. domain/digital-legacy/automation.ts per chi
+ * lo chiama con i dati veri.
+ */
+export function computeDigitalLegacyTransition(params: {
+  now: Date;
+  /** L'ultimo accesso noto --- oggi la sola definizione di "attività" usata (v. roadmap, "inactivity detection"); fasi future potranno ampliarla. */
+  lastSignInAt: Date;
+  settings: DigitalLegacyPresetValues;
+  runtime: DigitalLegacyRuntimeState;
+}): DigitalLegacyAction {
+  const { now, lastSignInAt, settings, runtime } = params;
+
+  // Un accesso avvenuto dopo l'inizio dello stato attuale vale più di
+  // qualunque fase in corso, a prescindere da quale sia: annulla tutto,
+  // sempre. Controllato prima di ogni altra cosa, non solo dentro ai
+  // singoli stati.
+  if (runtime.state !== "normal" && lastSignInAt.getTime() > new Date(runtime.stateEnteredAt).getTime()) {
+    return { type: "reset" };
+  }
+
+  const daysSince = (from: Date): number => (now.getTime() - from.getTime()) / 86_400_000;
+
+  if (runtime.state === "normal") {
+    if (daysSince(lastSignInAt) >= settings.inactivityDays) {
+      return { type: "send_reminder", reminderNumber: 1, enteringReminding: true };
+    }
+    return { type: "none" };
+  }
+
+  if (runtime.state === "reminding") {
+    if (runtime.remindersSent >= settings.reminderCount) {
+      return { type: "start_grace_period" };
+    }
+    const since = runtime.lastReminderAt ? new Date(runtime.lastReminderAt) : new Date(runtime.stateEnteredAt);
+    if (daysSince(since) >= settings.reminderIntervalDays) {
+      return { type: "send_reminder", reminderNumber: runtime.remindersSent + 1, enteringReminding: false };
+    }
+    return { type: "none" };
+  }
+
+  if (runtime.state === "grace_period") {
+    if (daysSince(new Date(runtime.stateEnteredAt)) >= settings.gracePeriodDays) {
+      return { type: "start_awaiting_guardians" };
+    }
+    return { type: "none" };
+  }
+
+  // "awaiting_guardians": fermo qui finché non esiste una fase futura
+  // che sappia cosa farne (v. doc comment di DigitalLegacyState sopra).
+  return { type: "none" };
 }

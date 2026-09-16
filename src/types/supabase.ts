@@ -40,7 +40,11 @@ type AuditEventTypeColumn =
   | "vault_wiped"
   | "ai_chat_used"
   | "trusted_device_registered"
-  | "trusted_device_revoked";
+  | "trusted_device_revoked"
+  | "digital_legacy_reminder_sent"
+  | "digital_legacy_grace_period_started"
+  | "digital_legacy_awaiting_guardians"
+  | "digital_legacy_reset";
 
 type FriendStatusColumn = "pending" | "active" | "revoked";
 
@@ -51,6 +55,7 @@ type CapsuleAccessConditionColumn = "manual";
 
 type DigitalLegacyPresetColumn = "cautious" | "balanced" | "relaxed" | "custom";
 type GuardianQuorumColumn = "unanimous" | "majority" | "single";
+type DigitalLegacyStateColumn = "normal" | "reminding" | "grace_period" | "awaiting_guardians";
 
 export type Database = {
   public: {
@@ -71,6 +76,7 @@ export type Database = {
           ai_master_enabled: boolean;
           ai_chat_consent: boolean;
           capsule_countdown_visible: boolean;
+          digital_legacy_enabled: boolean;
           digital_legacy_preset: DigitalLegacyPresetColumn;
           digital_legacy_inactivity_days: number;
           digital_legacy_reminder_interval_days: number;
@@ -79,6 +85,10 @@ export type Database = {
           digital_legacy_guardian_quorum: GuardianQuorumColumn;
           digital_legacy_formal_verification_days: number;
           digital_legacy_final_wait_days: number;
+          digital_legacy_state: DigitalLegacyStateColumn;
+          digital_legacy_state_entered_at: string;
+          digital_legacy_reminders_sent: number;
+          digital_legacy_last_reminder_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -97,6 +107,7 @@ export type Database = {
           ai_master_enabled?: boolean;
           ai_chat_consent?: boolean;
           capsule_countdown_visible?: boolean;
+          digital_legacy_enabled?: boolean;
           digital_legacy_preset?: DigitalLegacyPresetColumn;
           digital_legacy_inactivity_days?: number;
           digital_legacy_reminder_interval_days?: number;
@@ -105,6 +116,10 @@ export type Database = {
           digital_legacy_guardian_quorum?: GuardianQuorumColumn;
           digital_legacy_formal_verification_days?: number;
           digital_legacy_final_wait_days?: number;
+          digital_legacy_state?: DigitalLegacyStateColumn;
+          digital_legacy_state_entered_at?: string;
+          digital_legacy_reminders_sent?: number;
+          digital_legacy_last_reminder_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -123,6 +138,7 @@ export type Database = {
           ai_master_enabled?: boolean;
           ai_chat_consent?: boolean;
           capsule_countdown_visible?: boolean;
+          digital_legacy_enabled?: boolean;
           digital_legacy_preset?: DigitalLegacyPresetColumn;
           digital_legacy_inactivity_days?: number;
           digital_legacy_reminder_interval_days?: number;
@@ -131,6 +147,10 @@ export type Database = {
           digital_legacy_guardian_quorum?: GuardianQuorumColumn;
           digital_legacy_formal_verification_days?: number;
           digital_legacy_final_wait_days?: number;
+          digital_legacy_state?: DigitalLegacyStateColumn;
+          digital_legacy_state_entered_at?: string;
+          digital_legacy_reminders_sent?: number;
+          digital_legacy_last_reminder_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

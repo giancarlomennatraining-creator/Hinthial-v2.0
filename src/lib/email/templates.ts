@@ -66,6 +66,52 @@ export function capsuleSharedEmail(ownerName: string): { subject: string; html: 
   };
 }
 
+/**
+ * Fasi 1-3 di "Eredità digitale" (v. domain/digital-legacy/automation.ts)
+ * --- il solo accesso a Hinthial, non serve altro, annulla questo avviso
+ * (v. computeDigitalLegacyTransition, azione "reset"). Mai un tono
+ * allarmante qui: è ancora solo un promemoria tra i tanti previsti,
+ * niente ancora di irreversibile.
+ */
+export function digitalLegacyReminderEmail(
+  reminderNumber: number,
+  totalReminders: number,
+): { subject: string; html: string } {
+  const dashboardUrl = `${appUrl()}/dashboard`;
+
+  return {
+    subject: "Tutto bene? Non ti vediamo su Hinthial da un po'",
+    html: emailShell(`
+      <p>Non accedi a Hinthial da un po' di tempo --- ci teniamo a sapere che stai bene.</p>
+      <p>Se va tutto bene, basta accedere di nuovo: non serve fare altro, il solo accesso annulla questo avviso.</p>
+      <p>Questo è il promemoria ${reminderNumber} di ${totalReminders} previsti dalla tua strategia di "Eredità digitale", prima di passare a un periodo di verifica più formale.</p>
+      ${primaryButton(dashboardUrl, "Accedi a Hinthial")}
+      <p style="font-size:12px; color:#71717a;">Puoi modificare o disattivare questa strategia in qualsiasi momento da Impostazioni &gt; Eredità digitale.</p>
+    `),
+  };
+}
+
+/**
+ * Inviata una sola volta, al passaggio da "reminding" a "grace_period"
+ * (v. computeDigitalLegacyTransition) --- il tono si fa più concreto,
+ * ma resta tutto reversibile con un solo accesso: i guardiani non sono
+ * ancora coinvolti (arriverà con una fase futura, non costruita).
+ */
+export function digitalLegacyGracePeriodEmail(gracePeriodDays: number): { subject: string; html: string } {
+  const dashboardUrl = `${appUrl()}/dashboard`;
+
+  return {
+    subject: "Un passo più concreto: periodo di grazia iniziato su Hinthial",
+    html: emailShell(`
+      <p>Non siamo ancora riusciti a raggiungerti, dopo diversi promemoria: da oggi inizia un periodo di grazia di ${gracePeriodDays} giorni, previsto dalla tua strategia di "Eredità digitale".</p>
+      <p>Se accedi anche una sola volta entro questo periodo, tutto si annulla automaticamente --- nessun'altra azione richiesta.</p>
+      <p>Se questo periodo terminasse senza tue notizie, il passo successivo (non ancora attivo in questa versione di Hinthial) coinvolgerebbe i tuoi guardiani per verificare che tu stia bene.</p>
+      ${primaryButton(dashboardUrl, "Accedi a Hinthial")}
+      <p style="font-size:12px; color:#71717a;">Puoi modificare o disattivare questa strategia in qualsiasi momento da Impostazioni &gt; Eredità digitale.</p>
+    `),
+  };
+}
+
 /** Conferma dopo la cancellazione definitiva dell'account (v. domain/danger-zone). */
 export function accountDeletedEmail(): { subject: string; html: string } {
   return {

@@ -25,11 +25,23 @@ test("Impostazioni > Eredità digitale mostra i preset, il riepilogo si aggiorna
 
   await expect(page.getByRole("heading", { name: "Eredità digitale" })).toBeVisible();
 
+  // Spento di default (v. richiesta utente: opt-in esplicito) --- il
+  // riepilogo lo dice esplicitamente, non solo l'interruttore.
+  const enableToggle = page.getByRole("checkbox", { name: "Attiva Eredità digitale" });
+  await expect(enableToggle).not.toBeChecked();
+  await expect(page.getByText("Il monitoraggio è spento")).toBeVisible();
+
   // Default: "Normale" già selezionato, nessuna etichetta "Personalizzato".
   const normale = page.getByRole("radio", { name: "Normale" });
   await expect(normale).toHaveAttribute("aria-checked", "true");
   await expect(page.getByText("Personalizzato --- almeno un valore")).not.toBeVisible();
   await expect(page.getByText(/In totale, nel caso peggiore, circa 7 mesi/)).toBeVisible();
+
+  // Attivarlo chiede conferma (v. window.confirm) e fa sparire l'avviso "spento".
+  page.once("dialog", (dialog) => dialog.accept());
+  await enableToggle.click();
+  await expect(enableToggle).toBeChecked();
+  await expect(page.getByText("Il monitoraggio è spento")).not.toBeVisible();
 
   // Scegliere "Prudente" aggiorna subito il riepilogo, senza bisogno di salvare.
   await page.getByRole("radio", { name: "Prudente" }).click();
@@ -53,6 +65,9 @@ test("Impostazioni > Eredità digitale mostra i preset, il riepilogo si aggiorna
   await page.reload();
   await page.getByRole("tab", { name: "Eredità digitale" }).click();
   await expect(page.getByText("Personalizzato --- almeno un valore")).toBeVisible();
+  // Anche l'interruttore acceso sopravvive al refresh --- niente più conferma qui: solo l'ACCENSIONE la richiede.
+  await expect(page.getByRole("checkbox", { name: "Attiva Eredità digitale" })).toBeChecked();
+  await expect(page.getByText("Il monitoraggio è spento")).not.toBeVisible();
   // Il preset è "custom": i campi sono già aperti, niente da cliccare per vederli.
   await expect(page.getByRole("button", { name: "Nascondi i valori" })).toBeVisible();
   await expect(page.getByLabel("Soglia di inattività (giorni)")).toHaveValue("200");

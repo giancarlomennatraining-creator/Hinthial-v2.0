@@ -1,6 +1,6 @@
 import type { AuditEventType } from "@/lib/audit/log-event";
 
-export type AuditEventCategory = "access" | "content" | "friends" | "security";
+export type AuditEventCategory = "access" | "content" | "friends" | "security" | "digital-legacy";
 
 export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   login: "Accesso effettuato",
@@ -23,6 +23,10 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   ai_chat_used: "Domanda inviata all'assistente AI reale",
   trusted_device_registered: "Dispositivo fidato registrato",
   trusted_device_revoked: "Dispositivo fidato revocato",
+  digital_legacy_reminder_sent: "Promemoria di inattività inviato",
+  digital_legacy_grace_period_started: "Periodo di grazia iniziato",
+  digital_legacy_awaiting_guardians: "Periodo di grazia scaduto, in attesa",
+  digital_legacy_reset: "Eredità digitale annullata (accesso rilevato)",
 };
 
 export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
@@ -46,6 +50,10 @@ export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
   ai_chat_used: "🤖",
   trusted_device_registered: "📱",
   trusted_device_revoked: "🚫",
+  digital_legacy_reminder_sent: "💌",
+  digital_legacy_grace_period_started: "⏳",
+  digital_legacy_awaiting_guardians: "⏸️",
+  digital_legacy_reset: "✅",
 };
 
 export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategory> = {
@@ -69,6 +77,10 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
   ai_chat_used: "security",
   trusted_device_registered: "security",
   trusted_device_revoked: "security",
+  digital_legacy_reminder_sent: "digital-legacy",
+  digital_legacy_grace_period_started: "digital-legacy",
+  digital_legacy_awaiting_guardians: "digital-legacy",
+  digital_legacy_reset: "digital-legacy",
 };
 
 export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {
@@ -76,6 +88,13 @@ export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {
   content: "Contenuti",
   friends: "Amici",
   security: "Sicurezza",
+  "digital-legacy": "Eredità digitale",
 };
 
-export const AUDIT_EVENT_CATEGORIES: AuditEventCategory[] = ["access", "content", "friends", "security"];
+export const AUDIT_EVENT_CATEGORIES: AuditEventCategory[] = [
+  "access",
+  "content",
+  "friends",
+  "security",
+  "digital-legacy",
+];

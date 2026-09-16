@@ -98,7 +98,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
   }, [supabase, userId]);
 
   function selectPreset(preset: Exclude<DigitalLegacyPreset, "custom">) {
-    setSettings({ preset, ...DIGITAL_LEGACY_PRESET_VALUES[preset] });
+    setSettings((prev) => (prev ? { ...prev, preset, ...DIGITAL_LEGACY_PRESET_VALUES[preset] } : prev));
   }
 
   function updateNumericField(key: (typeof NUMERIC_FIELDS)[number]["key"], raw: string) {
@@ -148,6 +148,21 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
     );
   }
 
+  function toggleEnabled() {
+    setSettings((prev) => {
+      if (!prev) return prev;
+      if (
+        !prev.enabled &&
+        !window.confirm(
+          "Attivare Eredità digitale? Da questo momento, se non accedi a Hinthial per il periodo previsto dalla strategia scelta qui sotto, inizierai a ricevere email di verifica.",
+        )
+      ) {
+        return prev;
+      }
+      return { ...prev, enabled: !prev.enabled };
+    });
+  }
+
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <div>
@@ -156,12 +171,30 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
           Se un giorno non dovessi più poter accedere a Hinthial, questa è la strategia che
           decide quando le tue capsule arrivano davvero a chi le doveva ricevere --- con più
           promemoria a te prima, e la verifica dei tuoi guardiani dopo, non un&apos;apertura
-          improvvisa. Qui sotto scegli solo i tempi: nessuna capsula si apre da sola finché
-          questa parte del progetto non sarà completata.
+          improvvisa.
         </p>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+        <input
+          type="checkbox"
+          checked={settings.enabled}
+          onChange={toggleEnabled}
+          className="h-4 w-4 shrink-0 accent-brand"
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            Attiva Eredità digitale
+          </span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            Finché è spento, nessuna email di verifica viene inviata e nessuna capsula si apre da
+            sola, qualunque preset o valore tu scelga qui sotto --- puoi configurare tutto in
+            anticipo e accendere l&apos;interruttore solo quando sei pronto.
+          </span>
+        </span>
+      </label>
+
+      <div className={cn("flex flex-col gap-2", settings.enabled ? undefined : "opacity-60")}>
         <div
           role="radiogroup"
           aria-label="Preset di Eredità digitale"
@@ -192,8 +225,16 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
         ) : null}
       </div>
 
-      <p className="rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
-        {describeDigitalLegacySettings(settings)}
+      <p
+        className={cn(
+          "rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400",
+          settings.enabled ? undefined : "opacity-60",
+        )}
+      >
+        {settings.enabled
+          ? describeDigitalLegacySettings(settings)
+          : "Il monitoraggio è spento: nessuna email verrà inviata. Ecco comunque cosa succederebbe se lo accendessi con questi valori --- " +
+            describeDigitalLegacySettings(settings)}
       </p>
 
       <div className="flex flex-col gap-4">

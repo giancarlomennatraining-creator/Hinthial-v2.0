@@ -26,7 +26,11 @@ export type AuditEventType =
   | "vault_wiped"
   | "ai_chat_used"
   | "trusted_device_registered"
-  | "trusted_device_revoked";
+  | "trusted_device_revoked"
+  | "digital_legacy_reminder_sent"
+  | "digital_legacy_grace_period_started"
+  | "digital_legacy_awaiting_guardians"
+  | "digital_legacy_reset";
 
 /**
  * Metadati tecnici facoltativi per un evento --- mai contenuti, nomi

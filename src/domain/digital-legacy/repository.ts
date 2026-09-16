@@ -3,7 +3,7 @@ import type { Database } from "@/types/supabase";
 import { DEFAULT_DIGITAL_LEGACY_SETTINGS, type DigitalLegacySettings } from "@/domain/digital-legacy/types";
 
 const COLUMNS =
-  "digital_legacy_preset, digital_legacy_inactivity_days, digital_legacy_reminder_interval_days, digital_legacy_reminder_count, digital_legacy_grace_period_days, digital_legacy_guardian_quorum, digital_legacy_formal_verification_days, digital_legacy_final_wait_days";
+  "digital_legacy_enabled, digital_legacy_preset, digital_legacy_inactivity_days, digital_legacy_reminder_interval_days, digital_legacy_reminder_count, digital_legacy_grace_period_days, digital_legacy_guardian_quorum, digital_legacy_formal_verification_days, digital_legacy_final_wait_days";
 
 /**
  * Legge i parametri di "Eredità digitale" (v. domain/digital-legacy/types.ts)
@@ -25,6 +25,7 @@ export async function getDigitalLegacySettings(
   if (!data) return DEFAULT_DIGITAL_LEGACY_SETTINGS;
 
   return {
+    enabled: data.digital_legacy_enabled,
     preset: data.digital_legacy_preset,
     inactivityDays: data.digital_legacy_inactivity_days,
     reminderIntervalDays: data.digital_legacy_reminder_interval_days,
@@ -45,6 +46,7 @@ export async function updateDigitalLegacySettings(
   const { error } = await supabase
     .from("profiles")
     .update({
+      digital_legacy_enabled: settings.enabled,
       digital_legacy_preset: settings.preset,
       digital_legacy_inactivity_days: settings.inactivityDays,
       digital_legacy_reminder_interval_days: settings.reminderIntervalDays,

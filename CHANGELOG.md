@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-16 (6)
+
+### FASE 12, secondo passo --- rilevamento inattività e promemoria, opt-in esplicito
+
+**Cosa fa:** in Impostazioni > Eredità digitale compare ora un interruttore, "Attiva Eredità digitale", spento di default per ogni account --- **nessuna email parte finché non lo si accende esplicitamente**, qualunque preset sia già configurato (discusso a fondo con l'utente prima di costruire questo pezzo). Da acceso, un controllo quotidiano osserva l'ultimo accesso di ciascun account: superata la soglia di inattività scelta, arriva un'email ("tutto bene? non ti vediamo su Hinthial da un po'"), ripetuta secondo la cadenza scelta; se nessun accesso arriva, dopo l'ultimo promemoria comincia il periodo di grazia (un'altra email, più esplicita: da qui in poi un solo accesso annulla tutto). **Ancora nessun coinvolgimento dei guardiani né apertura di capsule** --- il periodo di grazia scaduto lascia l'account in un'attesa che una fase futura, non ancora costruita, dovrà raccogliere.
+
+**Note tecniche:** "attività" oggi significa solo "accesso" (`auth.users.last_sign_in_at`, gestito da Supabase stesso, mai una colonna nostra da tenere sincronizzata). Il cuore della logica (`computeDigitalLegacyTransition`, in `domain/digital-legacy/types.ts`) è una funzione pura --- riceve data corrente e ultimo accesso come parametri, senza alcun accesso a database --- interamente testabile con date finte, dato che `last_sign_in_at` è gestito da GoTrue e non scrivibile a piacere via API; 19 nuovi test unitari coprono ogni transizione, incluso il reset quando un accesso avviene dopo l'inizio dello stato corrente. L'orchestrazione vera (`runDigitalLegacyCheck`, in `domain/digital-legacy/automation.ts`) pagina tutti gli utenti via l'API admin, applica l'azione decisa dalla funzione pura, manda l'email (best-effort: un invio fallito non deve impedire di registrare comunque la transizione) e registra l'evento in Attività (4 nuovi tipi, con una categoria propria nel registro) --- verificata anche con un test di integrazione contro il database reale (non può simulare una vera inattività, ma prova che l'intera pipeline gira senza errori). Eseguita una volta al giorno da un nuovo cron job Vercel (`vercel.json` + `app/api/cron/digital-legacy`), protetto da un secret che Vercel stesso invia quando la variabile `CRON_SECRET` è configurata sul progetto --- senza, la route rifiuta ogni richiesta, cron incluso, invece di girare senza protezione (verificato: senza quella variabile risponde 401 anche a una richiesta locale genuina). Cinque nuove colonne su `profiles` per lo stato della macchina a stati (`digital_legacy_enabled`/`_state`/`_state_entered_at`/`_reminders_sent`/`_last_reminder_at`).
+
+**Da fare, solo l'utente può farlo:** impostare `CRON_SECRET` (un valore a caso, lungo) sia in `.env.local` sia nelle variabili d'ambiente del progetto su Vercel --- senza, il cron non farà mai nulla (fallisce in modo sicuro, non in modo silenzioso: risponde sempre 401).
+
+---
+
 ## 2026-09-16 (5)
 
 ### FASE 12, primo passo --- Impostazioni > Eredità digitale: solo i parametri, nessuna automazione ancora
