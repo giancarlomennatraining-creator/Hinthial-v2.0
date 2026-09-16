@@ -5,8 +5,6 @@ import { AlertTriangleIcon, CheckCircleIcon } from "@/components/icons/nav-icons
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
 import { SharedCapsuleNotificationPopup } from "@/components/dashboard/SharedCapsuleNotificationPopup";
-import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
-import { computeBasicOnboardingSteps } from "@/domain/onboarding/steps";
 
 /**
  * The greeting always renders, regardless of encryption status ---
@@ -15,10 +13,10 @@ import { computeBasicOnboardingSteps } from "@/domain/onboarding/steps";
  * takeover. A brand-new user (no encryption set up yet) or a returning
  * one after a refresh (locked) should still see "Ciao, ..." immediately.
  *
- * Prima dello sblocco, il prompt è lo stesso mini-checklist (2 passi)
- * del gadget nella barra (v. OnboardingStatus/computeBasicOnboardingSteps)
- * invece di un semplice link: dà un punto di partenza esplicito appena
- * si atterra in dashboard, non solo il badge qui sotto.
+ * Niente checklist "Onboarding" qui (v. richiesta utente) --- resta
+ * comunque consultabile dal gadget persistente nella barra laterale
+ * (v. OnboardingStatus), che copre lo stesso scopo senza occupare corpo
+ * della pagina.
  */
 export function DashboardPanel({ displayName }: { displayName: string }) {
   const { status } = useMasterKey();
@@ -61,18 +59,25 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
       ) : status.kind === "checking" ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
       ) : (
-        <div className="max-w-sm">
-          <OnboardingChecklist steps={computeBasicOnboardingSteps(status.kind === "locked")} />
+        <p className="max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
           {status.kind === "locked" ? (
-            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <>
               Sblocca la cifratura per vedere le tue scadenze e il tuo archivio recente:{" "}
               <Link href="/archive" className="font-medium text-brand hover:underline">
                 vai all&apos;archivio
               </Link>
               .
-            </p>
-          ) : null}
-        </div>
+            </>
+          ) : (
+            <>
+              Crea la tua master password per iniziare a usare Hinthial:{" "}
+              <Link href="/archive" className="font-medium text-brand hover:underline">
+                vai all&apos;archivio
+              </Link>
+              .
+            </>
+          )}
+        </p>
       )}
     </div>
   );

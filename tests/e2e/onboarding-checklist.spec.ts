@@ -4,7 +4,7 @@ import { openRowMenu } from "./row-actions";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (nessuno opzionale) e sparisce solo a lista completa", async ({
+test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra laterale, mostra il progresso su tutti gli 8 passi (nessuno opzionale)", async ({
   page,
 }) => {
   test.slow();
@@ -29,17 +29,30 @@ test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (ness
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
+  // La checklist non vive più nel corpo della Dashboard (v. richiesta
+  // utente): si verifica lo stesso avanzamento dal pannello
+  // dell'indicatore persistente nella barra laterale (v. OnboardingStatus).
+  const statusButton = page.getByRole("button", { name: /Onboarding/ });
+  const panel = page.getByRole("dialog", { name: "Onboarding" });
+
+  async function openPanel() {
+    await statusButton.click();
+    await expect(panel).toBeVisible();
+  }
+  async function closePanel() {
+    await panel.getByRole("button", { name: "Chiudi" }).click();
+    await expect(panel).not.toBeVisible();
+  }
+
   // Account e cifratura già fatti, nient'altro: 2/8. Nessuna voce è
   // marcata "(opzionale)" --- non esiste più questa distinzione.
-  // "Onboarding" compare due volte in pagina (la card qui e l'indicatore
-  // nella barra laterale): si verifica la card dal rapporto "2/8", che
-  // solo lei mostra.
-  await page.getByRole("link", { name: "Dashboard" }).click();
-  await expect(page.getByText("2/8")).toBeVisible();
-  await expect(page.getByText("(opzionale)")).toHaveCount(0);
+  await openPanel();
+  await expect(panel.getByText("2/8")).toBeVisible();
+  await expect(panel.getByText("(opzionale)")).toHaveCount(0);
   await expect(
-    page.getByRole("link", { name: "Aggiungi il primo contenuto all'archivio" }),
+    panel.getByRole("link", { name: "Aggiungi il primo contenuto all'archivio" }),
   ).toBeVisible();
+  await closePanel();
 
   // Un documento con una categoria assegnata completa due passi in un colpo solo. 4/8.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
@@ -57,11 +70,13 @@ test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (ness
 
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("heading", { name: "Aggiunti di recente" })).toBeVisible();
-  await expect(page.getByText("4/8")).toBeVisible();
+  await openPanel();
+  await expect(panel.getByText("4/8")).toBeVisible();
   // La voce completata resta elencata, non barrata.
-  const doneDocumentStep = page.getByText("Aggiungi il primo contenuto all'archivio");
+  const doneDocumentStep = panel.getByText("Aggiungi il primo contenuto all'archivio");
   await expect(doneDocumentStep).toBeVisible();
   await expect(doneDocumentStep).not.toHaveClass(/line-through/);
+  await closePanel();
 
   // Un bene: 5/8.
   await page.getByRole("link", { name: "Beni", exact: true }).click();
@@ -71,8 +86,10 @@ test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (ness
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
 
   await page.getByRole("link", { name: "Dashboard" }).click();
-  await expect(page.getByRole("link", { name: "Aggiungi il primo bene" })).not.toBeVisible();
-  await expect(page.getByText("5/8")).toBeVisible();
+  await openPanel();
+  await expect(panel.getByRole("link", { name: "Aggiungi il primo bene" })).not.toBeVisible();
+  await expect(panel.getByText("5/8")).toBeVisible();
+  await closePanel();
 
   // Un amico, attivo (per poter poi ricevere una capsula) e guardiano
   // (completa il passo "guardian"): 6/8.
@@ -92,7 +109,9 @@ test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (ness
   await page.getByRole("menuitem", { name: "Segna come guardiano" }).click();
 
   await page.getByRole("link", { name: "Dashboard" }).click();
-  await expect(page.getByText("6/8")).toBeVisible();
+  await openPanel();
+  await expect(panel.getByText("6/8")).toBeVisible();
+  await closePanel();
 
   // Una capsula con quell'amico come destinatario completa insieme
   // "capsula" e "collegamento capsula-amico": 8/8, checklist sparita.
@@ -113,16 +132,17 @@ test("la checklist \"Onboarding\" mostra il progresso su tutti gli 8 passi (ness
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
   await expect(page.getByText("Capsula creata.")).toBeVisible();
 
-  // La card sparisce: nessun rapporto "N/8" resta in pagina (l'indicatore
-  // nella barra laterale mostra invece una percentuale, non un rapporto,
-  // e resta comunque visibile --- v. onboarding-status.spec.ts).
+  // 8/8: la checklist, nel pannello, mostra il rapporto completo ---
+  // resta comunque elencata (v. OnboardingChecklist), solo l'indicatore
+  // che la apre passa a mostrare una percentuale invece che un rapporto.
   await page.getByRole("link", { name: "Dashboard" }).click();
-  await expect(page.getByText(/\d+\/8/)).not.toBeVisible();
+  await openPanel();
+  await expect(panel.getByText("8/8")).toBeVisible();
+  await closePanel();
 
   // L'indicatore nella barra laterale si ricarica solo all'apertura del
-  // pannello (v. OnboardingStatus), non ad ogni navigazione come la
-  // card: un click lo forza ad aggiornarsi al nuovo 100%.
-  const statusButton = page.getByRole("button", { name: /Onboarding/ });
+  // pannello (v. OnboardingStatus): un click lo forza ad aggiornarsi al
+  // nuovo 100%.
   await statusButton.click();
   await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 100% completato", {
     timeout: 10_000,

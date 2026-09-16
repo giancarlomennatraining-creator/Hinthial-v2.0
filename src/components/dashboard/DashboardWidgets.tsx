@@ -5,9 +5,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/db/supabase/client";
 import { buildAIContext } from "@/domain/ai/context";
 import { mockAIProvider } from "@/domain/ai/mock-provider";
-import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
-import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWidgetVisibilityProvider";
-import { computeOnboardingSteps, isOnboardingComplete } from "@/domain/onboarding/steps";
 import { DashboardCounters } from "@/components/dashboard/DashboardCounters";
 import { WatchlistWidget } from "@/components/dashboard/WatchlistWidget";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
@@ -22,18 +19,18 @@ function formatDate(iso: string): string {
 }
 
 /**
- * Il corpo della dashboard, a due colonne (la prima più larga): a
- * sinistra i contatori per sezione, prossime scadenze, aggiunti di
- * recente ed elementi da completare; a destra la guida "Onboarding"
- * (finché non completata) e "Da tenere d'occhio" (v. WatchlistWidget).
- * Tutto derivato da un unico AIContext (v. domain/ai/context.ts) --- lo
- * stesso snapshot già decifrato che usano Assistente AI e ricerca
- * globale, costruito una sola volta qui invece che con una query per
- * widget.
+ * Il corpo della dashboard: contatori per sezione, prossime scadenze,
+ * aggiunti di recente ed elementi da completare, poi "Da tenere
+ * d'occhio" (v. WatchlistWidget) a piena larghezza. Niente checklist
+ * "Onboarding" qui (v. richiesta utente) --- resta comunque
+ * consultabile dal gadget persistente nella barra laterale (v.
+ * OnboardingStatus). Tutto derivato da un unico AIContext (v.
+ * domain/ai/context.ts) --- lo stesso snapshot già decifrato che
+ * usano Assistente AI e ricerca globale, costruito una sola volta qui
+ * invece che con una query per widget.
  */
 export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
-  const { hidden: onboardingWidgetHidden } = useOnboardingWidgetVisibility();
 
   const [context, setContext] = useState<AIContext | null>(null);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
@@ -65,9 +62,6 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
 
   const documents = context?.documents ?? [];
   const reminders = context?.reminders ?? [];
-  const assets = context?.assets ?? [];
-  const friends = context?.friends ?? [];
-  const capsules = context?.capsules ?? [];
 
   const upcoming = reminders
     .filter((r) => !r.completed && new Date(r.dueAt).getTime() >= now)
@@ -76,14 +70,6 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
     .filter((r) => !r.completed && new Date(r.dueAt).getTime() < now)
     .slice(0, 5);
   const recentDocuments = documents.slice(0, 5);
-
-  // "Prima esperienza" della spec (v. domain/onboarding/steps.ts, condivisa
-  // con l'indicatore persistente nel menu laterale --- v.
-  // components/layout/OnboardingStatus): account e cifratura sono per
-  // definizione già fatti se questo componente sta renderizzando (è
-  // gated da MasterKey "unlocked", v. DashboardPanel).
-  const onboardingSteps = computeOnboardingSteps({ documents, assets, friends, capsules });
-  const onboardingComplete = isOnboardingComplete(onboardingSteps);
 
   if (error) {
     return (
@@ -98,109 +84,88 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   return (
+    // min-w-0 --- altrimenti un elemento a larghezza intrinseca (es. un
+    // nome file lungo senza spazi) può forzare la colonna, e con essa la
+    // pagina, oltre la larghezza dello schermo su mobile.
     <div className="flex min-w-0 flex-col gap-6">
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[2fr_1fr]">
-        {/* Colonna larga: un colpo d'occhio su quanto c'è, cosa scade,
-            cosa è arrivato di recente, cosa va completato. min-w-0 ---
-            altrimenti un elemento a larghezza intrinseca (es. un nome
-            file lungo senza spazi) può forzare la colonna, e con essa
-            la pagina, oltre la larghezza dello schermo su mobile. */}
-        <div className="flex min-w-0 flex-col gap-6">
-          <DashboardCounters context={context} />
+      <DashboardCounters context={context} />
 
-          <div className="grid min-w-0 gap-6 sm:grid-cols-3">
-            <section className="min-w-0 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                Prossime scadenze
-              </h2>
-              {upcoming.length === 0 ? (
-                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Nessuna in arrivo.</p>
-              ) : (
-                <ul className="mt-2 flex flex-col gap-2">
-                  {upcoming.map((r) => (
-                    <li key={r.id} className="min-w-0 text-xs">
-                      <p className="truncate font-medium text-zinc-800 dark:text-zinc-200">{r.title}</p>
-                      <p className="text-zinc-500 dark:text-zinc-400">{formatDate(r.dueAt)}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Link
-                href="/reminders"
-                className="mt-3 inline-block text-xs font-medium text-brand hover:underline"
-              >
-                Vai alle scadenze
-              </Link>
-            </section>
-
-            <section className="min-w-0 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                Aggiunti di recente
-              </h2>
-              {recentDocuments.length === 0 ? (
-                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  Ancora nulla in archivio.
-                </p>
-              ) : (
-                <ul className="mt-2 flex flex-col gap-2">
-                  {recentDocuments.map((doc) => (
-                    <li key={doc.id} className="min-w-0 text-xs">
-                      <p className="truncate font-medium text-zinc-800 dark:text-zinc-200">
-                        {doc.filename}
-                      </p>
-                      <p className="text-zinc-500 dark:text-zinc-400">{formatDate(doc.createdAt)}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Link
-                href="/archive"
-                className="mt-3 inline-block text-xs font-medium text-brand hover:underline"
-              >
-                Vai all&apos;archivio
-              </Link>
-            </section>
-
-            <section className="min-w-0 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                Elementi da completare
-              </h2>
-              {overdue.length === 0 ? (
-                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Tutto in regola.</p>
-              ) : (
-                <ul className="mt-2 flex flex-col gap-2">
-                  {overdue.map((r) => (
-                    <li key={r.id} className="min-w-0 text-xs">
-                      <p className="truncate font-medium text-red-700 dark:text-red-400">{r.title}</p>
-                      <p className="text-zinc-500 dark:text-zinc-400">scaduta il {formatDate(r.dueAt)}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Link
-                href="/reminders"
-                className="mt-3 inline-block text-xs font-medium text-brand hover:underline"
-              >
-                Vai alle scadenze
-              </Link>
-            </section>
-          </div>
-        </div>
-
-        {/* Colonna stretta: guida (primi passi) --- "Da tenere d'occhio"
-            non è più qui sotto (v. richiesta utente): ha una riga propria
-            a piena larghezza subito dopo questa griglia, invece di
-            restare compressa nella stessa colonna stretta
-            dell'Onboarding. Rispetta anche "Nascondi" (v.
-            OnboardingWidgetVisibilityProvider): una volta nascosto
-            esplicitamente, non deve ricomparire nemmeno qui --- solo la
-            primissima volta (prima di essere mai stato nascosto) si vede
-            di default. */}
-        <div className="min-w-0">
-          {onboardingComplete || onboardingWidgetHidden ? null : (
-            <OnboardingChecklist steps={onboardingSteps} />
+      <div className="grid min-w-0 gap-6 sm:grid-cols-3">
+        <section className="min-w-0 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Prossime scadenze
+          </h2>
+          {upcoming.length === 0 ? (
+            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Nessuna in arrivo.</p>
+          ) : (
+            <ul className="mt-2 flex flex-col gap-2">
+              {upcoming.map((r) => (
+                <li key={r.id} className="min-w-0 text-xs">
+                  <p className="truncate font-medium text-zinc-800 dark:text-zinc-200">{r.title}</p>
+                  <p className="text-zinc-500 dark:text-zinc-400">{formatDate(r.dueAt)}</p>
+                </li>
+              ))}
+            </ul>
           )}
-        </div>
+          <Link
+            href="/reminders"
+            className="mt-3 inline-block text-xs font-medium text-brand hover:underline"
+          >
+            Vai alle scadenze
+          </Link>
+        </section>
+
+        <section className="min-w-0 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Aggiunti di recente
+          </h2>
+          {recentDocuments.length === 0 ? (
+            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Ancora nulla in archivio.
+            </p>
+          ) : (
+            <ul className="mt-2 flex flex-col gap-2">
+              {recentDocuments.map((doc) => (
+                <li key={doc.id} className="min-w-0 text-xs">
+                  <p className="truncate font-medium text-zinc-800 dark:text-zinc-200">
+                    {doc.filename}
+                  </p>
+                  <p className="text-zinc-500 dark:text-zinc-400">{formatDate(doc.createdAt)}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link
+            href="/archive"
+            className="mt-3 inline-block text-xs font-medium text-brand hover:underline"
+          >
+            Vai all&apos;archivio
+          </Link>
+        </section>
+
+        <section className="min-w-0 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Elementi da completare
+          </h2>
+          {overdue.length === 0 ? (
+            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Tutto in regola.</p>
+          ) : (
+            <ul className="mt-2 flex flex-col gap-2">
+              {overdue.map((r) => (
+                <li key={r.id} className="min-w-0 text-xs">
+                  <p className="truncate font-medium text-red-700 dark:text-red-400">{r.title}</p>
+                  <p className="text-zinc-500 dark:text-zinc-400">scaduta il {formatDate(r.dueAt)}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link
+            href="/reminders"
+            className="mt-3 inline-block text-xs font-medium text-brand hover:underline"
+          >
+            Vai alle scadenze
+          </Link>
+        </section>
       </div>
 
       <WatchlistWidget context={context} suggestions={suggestions} />

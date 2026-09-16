@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-16 (4)
+
+### Rimossa la checklist "Onboarding" dal corpo della pagina Dashboard
+
+**Cosa fa:** la Dashboard non mostra più la checklist "Onboarding" (i passi per iniziare a usare Hinthial) tra i propri contenuti --- resta comunque consultabile in ogni momento dall'indicatore persistente nella barra laterale (l'anello con la percentuale, v. "Onboarding"), che apre la stessa identica lista in un pannello.
+
+**Note tecniche:** rimossa la card dal layout a due colonne di `DashboardWidgets` (ora una singola colonna: contatori, i tre riquadri scadenze/recenti/da completare, poi "Da tenere d'occhio") e la mini-checklist (2 passi) mostrata in `DashboardPanel` prima dello sblocco, sostituita lì da un semplice link ("vai all'archivio") coerente con quello già presente per lo stato "locked". Nessuna modifica alla logica di calcolo dei passi (`domain/onboarding/steps.ts`) né al gadget in barra laterale (`OnboardingStatus`), unico punto rimasto da cui la checklist è raggiungibile. Aggiornati i test e2e che verificavano l'avanzamento tramite la card ormai rimossa (`onboarding-checklist.spec.ts`, `dashboard-layout.spec.ts`) per verificarlo invece dal pannello del gadget.
+
+---
+
 ## 2026-09-16 (3)
 
 ### Bug corretto: il tasto "+" tondo su smartphone poteva apparire spostato oltre il bordo destro dello schermo, con scorrimento orizzontale indesiderato

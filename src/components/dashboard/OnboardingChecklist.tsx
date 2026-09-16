@@ -22,10 +22,9 @@ export interface OnboardingStep {
  * passivo rispetto al contribuire un contenuto): tutti contano nel
  * conteggio e nessuno è considerato "extra". Calcolata dal vivo dai dati
  * già caricati dal chiamante --- nessuno stato "onboarding completato"
- * persistito da nessuna parte: quando ogni passo è fatto, la checklist
- * smette semplicemente di comparire (v. DashboardWidgets); le voci già
- * fatte restano comunque elencate qui, senza barrato --- un promemoria
- * di percorso, non qualcosa da nascondere.
+ * persistito da nessuna parte: le voci già fatte restano comunque
+ * elencate qui, senza barrato --- un promemoria di percorso, non
+ * qualcosa da nascondere.
  *
  * La descrizione compare solo sotto i passi non ancora fatti --- una
  * volta completato un passo non serve più rispiegarlo, e i passi che
@@ -33,7 +32,8 @@ export interface OnboardingStep {
  * Man's Switch) restano altrimenti solo un'etichetta senza contesto.
  *
  * Nessun riquadro attorno alla lista: chi la mostra (il pannello laterale
- * del gadget, la card in Dashboard) fornisce già il proprio contenitore.
+ * del gadget in barra laterale, v. OnboardingStatus) fornisce già il
+ * proprio contenitore.
  */
 export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
   const doneCount = steps.filter((s) => s.done).length;

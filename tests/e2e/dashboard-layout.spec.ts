@@ -4,7 +4,7 @@ import { openRowMenu } from "./row-actions";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("la dashboard mostra i contatori per sezione, resta a due colonne anche a vault vuoto, e aggiorna i contatori e \"Da tenere d'occhio\" quando si aggiunge contenuto", async ({
+test("la dashboard mostra i contatori per sezione e i tre riquadri anche a vault vuoto, e aggiorna i contatori e \"Da tenere d'occhio\" quando si aggiunge contenuto", async ({
   page,
 }) => {
   test.slow();
@@ -29,17 +29,14 @@ test("la dashboard mostra i contatori per sezione, resta a due colonne anche a v
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  // Vault ancora vuoto: contatori tutti a zero, ma il layout a due
-  // colonne resta comunque intero --- niente più collasso alla sola checklist.
+  // Vault ancora vuoto: contatori tutti a zero, ma i tre riquadri
+  // (scadenze/recenti/da completare) restano comunque interi.
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("link", { name: "Archivio: 0" })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole("link", { name: "Beni: 0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Amici: 0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Capsule: 0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Categorie: 10" })).toBeVisible();
-  // "Onboarding" compare due volte in pagina (la card e l'indicatore
-  // nella barra laterale): si verifica la card dal rapporto "2/8".
-  await expect(page.getByText("2/8")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Prossime scadenze" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Aggiunti di recente" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Elementi da completare" })).toBeVisible();
