@@ -257,6 +257,17 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
     try {
       await setFriendGuardian(supabase, friend.id, isGuardian);
       setFriends((prev) => prev.map((c) => (c.id === friend.id ? { ...c, isGuardian } : c)));
+      // Resta permesso segnarlo comunque (v. richiesta utente): un
+      // guardiano senza account collegato non può essere avvisato --- il
+      // server non ha modo di raggiungerlo, la sua email è cifrata con la
+      // master key del proprietario --- ma vale la pena farlo contare in
+      // un secondo momento, appena si collega. Il badge in elenco (v.
+      // sotto) resta comunque il promemoria persistente, non solo questo avviso.
+      if (isGuardian && !friend.linkedUserId) {
+        showToast("Guardiano aggiunto --- non potrà essere avvisato finché non collega il suo account Hinthial.");
+      } else if (isGuardian) {
+        showToast("Guardiano aggiunto.");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile aggiornare l'amico.");
     } finally {
@@ -452,8 +463,19 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                               {STATUS_LABEL[friend.status]}
                             </span>
                             {friend.isGuardian ? (
-                              <span className="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-400">
-                                🛡️ Guardiano
+                              <span
+                                title={
+                                  friend.linkedUserId
+                                    ? undefined
+                                    : "Non potrà essere avvisato come guardiano finché non collega il suo account Hinthial"
+                                }
+                                className={
+                                  friend.linkedUserId
+                                    ? "ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-400"
+                                    : "ml-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-400"
+                                }
+                              >
+                                {friend.linkedUserId ? "🛡️ Guardiano" : "🛡️ Guardiano (non collegato)"}
                               </span>
                             ) : null}
                           </td>
@@ -517,8 +539,19 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           {STATUS_LABEL[friend.status]}
                         </span>
                         {friend.isGuardian ? (
-                          <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-400">
-                            🛡️ Guardiano
+                          <span
+                            title={
+                              friend.linkedUserId
+                                ? undefined
+                                : "Non potrà essere avvisato come guardiano finché non collega il suo account Hinthial"
+                            }
+                            className={
+                              friend.linkedUserId
+                                ? "shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-400"
+                                : "shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-400"
+                            }
+                          >
+                            {friend.linkedUserId ? "🛡️ Guardiano" : "🛡️ Guardiano (non collegato)"}
                           </span>
                         ) : null}
                         {friend.linkedUserId ? (

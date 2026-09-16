@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-16 (7)
+
+### Amici: un guardiano senza account collegato avvisa che non potrà essere raggiunto
+
+**Cosa fa:** segnare come guardiano un contatto che non ha (ancora) un account Hinthial collegato è ancora permesso, ma ora lo dice chiaramente: un popup lo conferma subito ("non potrà essere avvisato finché non collega il suo account Hinthial") e il badge "🛡️ Guardiano" nell'elenco Amici diventa arancione con la stessa indicazione, invece del solito blu, finché quel contatto non si collega.
+
+**Note tecniche:** decisione presa discutendo la fase successiva di "Eredità digitale" (il coinvolgimento dei guardiani, non ancora costruito): un guardiano non collegato è oggi irraggiungibile dal server per definizione --- la sua email è cifrata con la master key del proprietario, come già per la condivisione capsule --- quindi la fase futura potrà contare solo i guardiani con `linked_user_id` non nullo per il quorum. Nessuna modifica al modello dati: solo interfaccia, in `FriendsPanel.tsx` (badge in entrambe le viste, tabella ed elenco) --- nuovo test e2e dedicato.
+
+---
+
 ## 2026-09-16 (6)
 
 ### FASE 12, secondo passo --- rilevamento inattività e promemoria, opt-in esplicito
