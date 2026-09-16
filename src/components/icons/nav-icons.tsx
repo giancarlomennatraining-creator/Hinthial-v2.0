@@ -137,6 +137,15 @@ export function UserIcon(props: IconProps) {
 }
 
 /** Scheda "Sicurezza" in Impostazioni (stesso lucchetto del badge "zero-knowledge" nella hero). */
+/** Impostazioni > Eredità digitale --- cura/custodia nel tempo, non il lucchetto di SecurityIcon (quella è "chi entra", questa è "quando qualcosa si attiva da solo"). */
+export function HeartIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <path d="M12 20.5s-7.5-4.6-9.8-9C.7 8.2 1.7 4.5 5.3 4.5c2.1 0 3.5 1.3 4.3 2.4.8-1.1 2.2-2.4 4.3-2.4 3.6 0 4.6 3.7 3.1 7C19.5 15.9 12 20.5 12 20.5z" />
+    </svg>
+  );
+}
+
 export function SecurityIcon(props: IconProps) {
   return (
     <svg {...baseProps(props)}>

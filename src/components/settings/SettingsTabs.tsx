@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useCrossfade } from "@/lib/use-crossfade";
 import { UserInfoPanel } from "@/components/settings/UserInfoPanel";
 import { OnboardingSettingsPanel } from "@/components/settings/OnboardingSettingsPanel";
+import { DigitalLegacySettingsPanel } from "@/components/settings/DigitalLegacySettingsPanel";
 import { PrivacyPanel } from "@/components/settings/PrivacyPanel";
 import { MfaSettingsPanel } from "@/components/settings/MfaSettingsPanel";
 import { DeviceLockPanel } from "@/components/settings/DeviceLockPanel";
@@ -28,6 +29,7 @@ import {
   CategoryIcon,
   ChecklistIcon,
   EyeIcon,
+  HeartIcon,
   ImportExportIcon,
   SecurityIcon,
   SlidersIcon,
@@ -39,6 +41,7 @@ type Tab =
   | "onboarding"
   | "privacy"
   | "security"
+  | "digital-legacy"
   | "categories"
   | "appearance"
   | "activity"
@@ -49,6 +52,7 @@ type Tab =
 const TABS: { id: Tab; label: string; icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
   { id: "user-info", label: "Informazioni utente", icon: UserIcon },
   { id: "security", label: "Sicurezza", icon: SecurityIcon },
+  { id: "digital-legacy", label: "Eredità digitale", icon: HeartIcon },
   { id: "privacy", label: "Privacy", icon: EyeIcon },
   { id: "ai", label: "Intelligenza artificiale", icon: AIIcon },
   { id: "categories", label: "Categorie", icon: CategoryIcon },
@@ -159,6 +163,11 @@ export function SettingsTabs({
           </div>
         </div>
       );
+    }
+    if (activeTab === "digital-legacy") {
+      // Solo parametri (v. domain/digital-legacy) --- nessun dato
+      // cifrato coinvolto, come Sicurezza: non richiede la master key.
+      return <DigitalLegacySettingsPanel userId={userId} />;
     }
     if (activeTab === "ai") {
       // Una scheda a sé (non più una sottoparte di Privacy, v. richiesta

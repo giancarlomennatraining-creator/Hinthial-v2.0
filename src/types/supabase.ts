@@ -49,6 +49,9 @@ type NavOrientationColumn = "sidebar-left" | "sidebar-right" | "topbar";
 type CapsuleStatusColumn = "draft" | "ready" | "shared";
 type CapsuleAccessConditionColumn = "manual";
 
+type DigitalLegacyPresetColumn = "cautious" | "balanced" | "relaxed" | "custom";
+type GuardianQuorumColumn = "unanimous" | "majority" | "single";
+
 export type Database = {
   public: {
     Tables: {
@@ -68,6 +71,14 @@ export type Database = {
           ai_master_enabled: boolean;
           ai_chat_consent: boolean;
           capsule_countdown_visible: boolean;
+          digital_legacy_preset: DigitalLegacyPresetColumn;
+          digital_legacy_inactivity_days: number;
+          digital_legacy_reminder_interval_days: number;
+          digital_legacy_reminder_count: number;
+          digital_legacy_grace_period_days: number;
+          digital_legacy_guardian_quorum: GuardianQuorumColumn;
+          digital_legacy_formal_verification_days: number;
+          digital_legacy_final_wait_days: number;
           created_at: string;
           updated_at: string;
         };
@@ -86,6 +97,14 @@ export type Database = {
           ai_master_enabled?: boolean;
           ai_chat_consent?: boolean;
           capsule_countdown_visible?: boolean;
+          digital_legacy_preset?: DigitalLegacyPresetColumn;
+          digital_legacy_inactivity_days?: number;
+          digital_legacy_reminder_interval_days?: number;
+          digital_legacy_reminder_count?: number;
+          digital_legacy_grace_period_days?: number;
+          digital_legacy_guardian_quorum?: GuardianQuorumColumn;
+          digital_legacy_formal_verification_days?: number;
+          digital_legacy_final_wait_days?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -104,6 +123,14 @@ export type Database = {
           ai_master_enabled?: boolean;
           ai_chat_consent?: boolean;
           capsule_countdown_visible?: boolean;
+          digital_legacy_preset?: DigitalLegacyPresetColumn;
+          digital_legacy_inactivity_days?: number;
+          digital_legacy_reminder_interval_days?: number;
+          digital_legacy_reminder_count?: number;
+          digital_legacy_grace_period_days?: number;
+          digital_legacy_guardian_quorum?: GuardianQuorumColumn;
+          digital_legacy_formal_verification_days?: number;
+          digital_legacy_final_wait_days?: number;
           created_at?: string;
           updated_at?: string;
         };

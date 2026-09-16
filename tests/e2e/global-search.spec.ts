@@ -39,7 +39,7 @@ test("la ricerca globale trova un bene per nome e ci porta alla sua pagina", asy
   const dialog = page.getByRole("dialog", { name: "Ricerca globale" });
   await expect(dialog).toBeVisible();
 
-  const input = page.getByPlaceholder("Cerca nell'archivio, beni, scadenze, contatti, capsule…");
+  const input = page.getByPlaceholder("Cerca nell'archivio, beni, scadenze, amici, capsule…");
   await expect(input).toBeFocused();
   await input.fill("panda");
 
@@ -57,6 +57,6 @@ test("la ricerca globale trova un bene per nome e ci porta alla sua pagina", asy
 
   // Nessuna corrispondenza: messaggio esplicito, non una lista vuota muta.
   await page.getByRole("button", { name: /Cerca/ }).click();
-  await page.getByPlaceholder("Cerca nell'archivio, beni, scadenze, contatti, capsule…").fill("xyzxyz");
+  await page.getByPlaceholder("Cerca nell'archivio, beni, scadenze, amici, capsule…").fill("xyzxyz");
   await expect(page.getByText('Nessun risultato per "xyzxyz".')).toBeVisible();
 });

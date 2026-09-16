@@ -80,11 +80,16 @@ test("Impostazioni > Attività si interroga con filtri (data e tipo) e apre il d
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await page.getByRole("tab", { name: "Attività" }).click();
   await page.getByRole("button", { name: "Trova" }).click();
-  await expect(page.getByText("Contenuto aggiunto all'archivio")).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText("Amico aggiunto")).toBeVisible();
+  // Scope alla tabella --- non a getByText su tutta la pagina: il popup
+  // di conferma "Amico aggiunto." (v. ToastProvider), ancora visibile
+  // per pochi secondi dopo l'azione appena fatta, altrimenti crea
+  // un'ambiguità con la riga omonima nella tabella qui sotto.
+  const table = page.getByRole("table");
+  await expect(table.getByText("Contenuto aggiunto all'archivio")).toBeVisible({ timeout: 10_000 });
+  await expect(table.getByText("Amico aggiunto")).toBeVisible();
 
   await page.getByRole("checkbox", { name: "Amici" }).check();
   await page.getByRole("button", { name: "Trova" }).click();
-  await expect(page.getByText("Amico aggiunto")).toBeVisible();
-  await expect(page.getByText("Contenuto aggiunto all'archivio")).not.toBeVisible();
+  await expect(table.getByText("Amico aggiunto")).toBeVisible();
+  await expect(table.getByText("Contenuto aggiunto all'archivio")).not.toBeVisible();
 });

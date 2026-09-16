@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-16 (5)
+
+### FASE 12, primo passo --- Impostazioni > Eredità digitale: solo i parametri, nessuna automazione ancora
+
+**Cosa fa:** una nuova scheda in Impostazioni, "Eredità digitale", dove scegliere la strategia che deciderà --- in una fase futura, non ancora costruita --- quando le tue capsule arrivano davvero a chi le doveva ricevere, se un giorno non dovessi più poter accedere a Hinthial. Tre preset a scelta rapida (Prudente/Normale/Rilassato, dal più lento e cauto al più rapido) mostrati come tasti in fila, più "Personalizza i valori" per modificarli uno per uno (soglia di inattività, numero e cadenza dei promemoria, periodo di grazia, quorum dei guardiani richiesto, durata della verifica formale e dell'attesa finale) --- ogni valore ha una breve spiegazione, e un riepilogo in linguaggio semplice sopra si aggiorna in tempo reale con la scelta corrente. Toccare anche un solo valore passa automaticamente alla scelta "Personalizzato". **Importante:** questa è solo la configurazione --- nessun rilevamento di inattività, promemoria, coinvolgimento dei guardiani o apertura di capsule è ancora stato costruito; i valori vengono salvati ma per ora non succede nulla da soli.
+
+**Note tecniche:** discusso a fondo con l'utente prima di scrivere qualunque riga di codice (nome della funzionalità, terminologia guardiano/protetto, struttura del flusso a 7 fasi, valori dei tre preset) --- v. `domain/digital-legacy/types.ts` per il resoconto in forma di commenti. Otto nuove colonne su `profiles` (come `nav_orientation`/`onboarding_widget_hidden`, non una tabella dedicata: sono valori singoli per account), con vincoli `check` che impediscono configurazioni assurde anche in modalità "custom" (es. una soglia di inattività di due giorni) --- applicati anche client-side al salvataggio (`clampDigitalLegacyField`), non solo lasciati al database. Diagnosticati e corretti durante la verifica con la suite e2e completa due difetti pre-esistenti scoperti per caso, non causati da questa modifica: `global-search.spec.ts` cercava ancora la vecchia dicitura "contatti" nel placeholder della ricerca, mai aggiornata dopo la rinomina "Contatti fiduciari" → "Amici" di molti commit fa; `audit-log.spec.ts` aveva un'ambiguità tra la riga "Amico aggiunto" nella tabella e il popup di conferma omonimo (v. voce del 2026-09-16 (1) su ToastProvider), che a volte era ancora visibile nello stesso istante.
+
+---
+
 ## 2026-09-16 (4)
 
 ### Rimossa la checklist "Onboarding" dal corpo della pagina Dashboard
