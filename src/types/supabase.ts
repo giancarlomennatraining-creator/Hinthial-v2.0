@@ -44,7 +44,11 @@ type AuditEventTypeColumn =
   | "digital_legacy_reminder_sent"
   | "digital_legacy_grace_period_started"
   | "digital_legacy_awaiting_guardians"
-  | "digital_legacy_reset";
+  | "digital_legacy_reset"
+  | "digital_legacy_guardian_requested"
+  | "digital_legacy_guardian_responded"
+  | "digital_legacy_guardians_confirmed"
+  | "digital_legacy_reset_by_guardian";
 
 type FriendStatusColumn = "pending" | "active" | "revoked";
 
@@ -55,7 +59,13 @@ type CapsuleAccessConditionColumn = "manual";
 
 type DigitalLegacyPresetColumn = "cautious" | "balanced" | "relaxed" | "custom";
 type GuardianQuorumColumn = "unanimous" | "majority" | "single";
-type DigitalLegacyStateColumn = "normal" | "reminding" | "grace_period" | "awaiting_guardians";
+type DigitalLegacyStateColumn =
+  | "normal"
+  | "reminding"
+  | "grace_period"
+  | "awaiting_guardians"
+  | "guardians_confirmed";
+type GuardianVerificationResponseColumn = "ok" | "unknown" | "unreachable";
 
 export type Database = {
   public: {
@@ -773,11 +783,67 @@ export type Database = {
           },
         ];
       };
+      guardian_verification_requests: {
+        Row: {
+          id: string;
+          owner_id: string;
+          guardian_user_id: string;
+          friend_id: string | null;
+          response: GuardianVerificationResponseColumn | null;
+          responded_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          guardian_user_id: string;
+          friend_id?: string | null;
+          response?: GuardianVerificationResponseColumn | null;
+          responded_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          guardian_user_id?: string;
+          friend_id?: string | null;
+          response?: GuardianVerificationResponseColumn | null;
+          responded_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "guardian_verification_requests_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "guardian_verification_requests_guardian_user_id_fkey";
+            columns: ["guardian_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "guardian_verification_requests_friend_id_fkey";
+            columns: ["friend_id"];
+            isOneToOne: false;
+            referencedRelation: "friends";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       log_failed_login_attempt: {
         Args: { target_email: string };
+        Returns: undefined;
+      };
+      respond_to_guardian_verification_request: {
+        Args: { request_id: string; response_value: GuardianVerificationResponseColumn };
         Returns: undefined;
       };
       lookup_friend_account: {

@@ -27,6 +27,10 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   digital_legacy_grace_period_started: "Periodo di grazia iniziato",
   digital_legacy_awaiting_guardians: "Periodo di grazia scaduto, in attesa",
   digital_legacy_reset: "Eredità digitale annullata (accesso rilevato)",
+  digital_legacy_guardian_requested: "Verifica richiesta a un guardiano",
+  digital_legacy_guardian_responded: "Un guardiano ha risposto",
+  digital_legacy_guardians_confirmed: "Guardiani: irraggiungibilità confermata",
+  digital_legacy_reset_by_guardian: "Eredità digitale annullata (un guardiano ha confermato che va tutto bene)",
 };
 
 export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
@@ -54,6 +58,10 @@ export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
   digital_legacy_grace_period_started: "⏳",
   digital_legacy_awaiting_guardians: "⏸️",
   digital_legacy_reset: "✅",
+  digital_legacy_guardian_requested: "🛡️",
+  digital_legacy_guardian_responded: "💬",
+  digital_legacy_guardians_confirmed: "🚨",
+  digital_legacy_reset_by_guardian: "✅",
 };
 
 export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategory> = {
@@ -81,6 +89,10 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
   digital_legacy_grace_period_started: "digital-legacy",
   digital_legacy_awaiting_guardians: "digital-legacy",
   digital_legacy_reset: "digital-legacy",
+  digital_legacy_guardian_requested: "digital-legacy",
+  digital_legacy_guardian_responded: "digital-legacy",
+  digital_legacy_guardians_confirmed: "digital-legacy",
+  digital_legacy_reset_by_guardian: "digital-legacy",
 };
 
 export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {

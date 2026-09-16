@@ -30,7 +30,11 @@ export type AuditEventType =
   | "digital_legacy_reminder_sent"
   | "digital_legacy_grace_period_started"
   | "digital_legacy_awaiting_guardians"
-  | "digital_legacy_reset";
+  | "digital_legacy_reset"
+  | "digital_legacy_guardian_requested"
+  | "digital_legacy_guardian_responded"
+  | "digital_legacy_guardians_confirmed"
+  | "digital_legacy_reset_by_guardian";
 
 /**
  * Metadati tecnici facoltativi per un evento --- mai contenuti, nomi

@@ -191,15 +191,48 @@ export function describeDigitalLegacySettings(settings: DigitalLegacyPresetValue
 }
 
 /**
- * Fasi 1-3 della roadmap (v. HINTHIAL_MVP.md sezione 10): rilevamento
- * inattività, promemoria, periodo di grazia --- fin dove arriva questo
- * incremento. "awaiting_guardians" è un punto fermo, non ancora una
- * fase attiva: significa "il periodo di grazia è scaduto, in attesa
- * che una fase futura (coinvolgimento guardiani, non costruita) prenda
- * in carico questo account" --- v. computeDigitalLegacyTransition, che
- * da qui non fa avanzare più nulla.
+ * Fasi 1-4 della roadmap (v. HINTHIAL_MVP.md sezione 10): rilevamento
+ * inattività, promemoria, periodo di grazia, coinvolgimento guardiani
+ * --- fin dove arriva questo incremento. "guardians_confirmed" è un
+ * punto fermo, non ancora una fase attiva: significa "i guardiani
+ * hanno confermato di non riuscire più a raggiungere il proprietario,
+ * in attesa che una fase futura (verifica formale, non costruita)
+ * prenda in carico questo account" --- v. computeDigitalLegacyTransition,
+ * che da qui non fa avanzare più nulla.
  */
-export type DigitalLegacyState = "normal" | "reminding" | "grace_period" | "awaiting_guardians";
+export type DigitalLegacyState =
+  | "normal"
+  | "reminding"
+  | "grace_period"
+  | "awaiting_guardians"
+  | "guardians_confirmed";
+
+/** Il riscontro raccolto finora dai guardiani per l'episodio "awaiting_guardians" in corso --- v. domain/digital-legacy/automation.ts, che lo calcola dalle righe di guardian_verification_requests. */
+export interface GuardianTally {
+  /** Quanti guardiani collegati sono stati interpellati in questo episodio --- congelato alla creazione delle richieste, non ricalcolato sui guardiani attuali. */
+  totalGuardians: number;
+  /** Se almeno un guardiano ha risposto "sta bene" --- vale come un accesso del proprietario stesso: annulla tutto. */
+  anyConfirmedOk: boolean;
+  /** Quanti guardiani hanno risposto "confermo che non riesco a raggiungerlo". */
+  confirmedUnreachableCount: number;
+}
+
+/**
+ * Se il riscontro dei guardiani raggiunge la soglia richiesta dal
+ * quorum scelto (v. Impostazioni > Eredità digitale) --- mai vero con
+ * zero guardiani interpellati, qualunque sia il quorum.
+ */
+export function isGuardianQuorumSatisfied(quorum: GuardianQuorum, tally: GuardianTally): boolean {
+  if (tally.totalGuardians === 0) return false;
+  switch (quorum) {
+    case "unanimous":
+      return tally.confirmedUnreachableCount >= tally.totalGuardians;
+    case "majority":
+      return tally.confirmedUnreachableCount > tally.totalGuardians / 2;
+    case "single":
+      return tally.confirmedUnreachableCount >= 1;
+  }
+}
 
 /** Lo stato osservato di un account al momento del controllo --- letto da profiles, mai inventato. */
 export interface DigitalLegacyRuntimeState {
@@ -220,8 +253,13 @@ export interface DigitalLegacyRuntimeState {
  */
 export type DigitalLegacyAction =
   | { type: "none" }
-  /** Un accesso avvenuto DOPO l'inizio dello stato attuale annulla tutto: si torna a "normal". */
-  | { type: "reset" }
+  /**
+   * Un accesso del proprietario DOPO l'inizio dello stato attuale
+   * ("login"), o un guardiano che conferma "sta bene"
+   * ("guardian_confirmed_ok") --- annullano tutto allo stesso modo, si
+   * torna a "normal", ma restano distinti nel registro Attività.
+   */
+  | { type: "reset"; reason: "login" | "guardian_confirmed_ok" }
   /**
    * Invia un promemoria --- `enteringReminding: true` per il primo (che
    * fa anche scattare lo stato "reminding" da "normal", nello stesso
@@ -230,7 +268,9 @@ export type DigitalLegacyAction =
    */
   | { type: "send_reminder"; reminderNumber: number; enteringReminding: boolean }
   | { type: "start_grace_period" }
-  | { type: "start_awaiting_guardians" };
+  | { type: "start_awaiting_guardians" }
+  /** Il quorum dei guardiani è stato raggiunto --- v. isGuardianQuorumSatisfied. */
+  | { type: "guardians_confirmed" };
 
 /**
  * Il "cervello" dell'automazione --- puro, senza alcun accesso a
@@ -246,15 +286,17 @@ export function computeDigitalLegacyTransition(params: {
   lastSignInAt: Date;
   settings: DigitalLegacyPresetValues;
   runtime: DigitalLegacyRuntimeState;
+  /** Solo significativo in "awaiting_guardians" --- null altrove, o se le richieste non sono ancora state create. */
+  guardianTally?: GuardianTally | null;
 }): DigitalLegacyAction {
-  const { now, lastSignInAt, settings, runtime } = params;
+  const { now, lastSignInAt, settings, runtime, guardianTally } = params;
 
   // Un accesso avvenuto dopo l'inizio dello stato attuale vale più di
   // qualunque fase in corso, a prescindere da quale sia: annulla tutto,
   // sempre. Controllato prima di ogni altra cosa, non solo dentro ai
   // singoli stati.
   if (runtime.state !== "normal" && lastSignInAt.getTime() > new Date(runtime.stateEnteredAt).getTime()) {
-    return { type: "reset" };
+    return { type: "reset", reason: "login" };
   }
 
   const daysSince = (from: Date): number => (now.getTime() - from.getTime()) / 86_400_000;
@@ -284,7 +326,19 @@ export function computeDigitalLegacyTransition(params: {
     return { type: "none" };
   }
 
-  // "awaiting_guardians": fermo qui finché non esiste una fase futura
-  // che sappia cosa farne (v. doc comment di DigitalLegacyState sopra).
+  if (runtime.state === "awaiting_guardians") {
+    if (guardianTally?.anyConfirmedOk) {
+      return { type: "reset", reason: "guardian_confirmed_ok" };
+    }
+    if (guardianTally && isGuardianQuorumSatisfied(settings.guardianQuorum, guardianTally)) {
+      return { type: "guardians_confirmed" };
+    }
+    return { type: "none" };
+  }
+
+  // "guardians_confirmed": fermo qui finché non esiste una fase futura
+  // che sappia cosa farne (v. doc comment di DigitalLegacyState sopra)
+  // --- solo un vero accesso del proprietario (controllato più sopra)
+  // può ancora annullarlo da qui.
   return { type: "none" };
 }

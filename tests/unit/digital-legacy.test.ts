@@ -6,8 +6,10 @@ import {
   clampDigitalLegacyField,
   computeDigitalLegacyTransition,
   describeDigitalLegacySettings,
+  isGuardianQuorumSatisfied,
   totalWorstCaseDays,
   type DigitalLegacyRuntimeState,
+  type GuardianTally,
 } from "@/domain/digital-legacy/types";
 
 const NOW = new Date("2026-06-01T00:00:00.000Z");
@@ -185,7 +187,7 @@ describe("computeDigitalLegacyTransition", () => {
         settings,
         runtime: runtime({ state, stateEnteredAt: new Date(NOW.getTime() - 5 * DAY).toISOString() }),
       });
-      expect(action).toEqual({ type: "reset" });
+      expect(action).toEqual({ type: "reset", reason: "login" });
     }
   });
 
@@ -201,6 +203,87 @@ describe("computeDigitalLegacyTransition", () => {
         lastReminderAt: new Date(NOW.getTime() - 5 * DAY).toISOString(),
       }),
     });
-    expect(action).not.toEqual({ type: "reset" });
+    expect(action.type).not.toBe("reset");
+    expect(action).toEqual({ type: "none" }); // interval (10 days) not yet elapsed since the last reminder (5 days ago)
+  });
+
+  it("waits while awaiting_guardians without a tally, or with one still short of quorum", () => {
+    const noTally = computeDigitalLegacyTransition({
+      now: NOW,
+      lastSignInAt: new Date(NOW.getTime() - 200 * DAY),
+      settings, // majority
+      runtime: runtime({ state: "awaiting_guardians" }),
+    });
+    expect(noTally).toEqual({ type: "none" });
+
+    const shortOfMajority = computeDigitalLegacyTransition({
+      now: NOW,
+      lastSignInAt: new Date(NOW.getTime() - 200 * DAY),
+      settings,
+      runtime: runtime({ state: "awaiting_guardians" }),
+      guardianTally: { totalGuardians: 3, anyConfirmedOk: false, confirmedUnreachableCount: 1 }, // 1/3, not > half
+    });
+    expect(shortOfMajority).toEqual({ type: "none" });
+  });
+
+  it("moves to guardians_confirmed once the tally satisfies the configured quorum", () => {
+    const action = computeDigitalLegacyTransition({
+      now: NOW,
+      lastSignInAt: new Date(NOW.getTime() - 200 * DAY),
+      settings, // majority
+      runtime: runtime({ state: "awaiting_guardians" }),
+      guardianTally: { totalGuardians: 3, anyConfirmedOk: false, confirmedUnreachableCount: 2 }, // 2/3 > half
+    });
+    expect(action).toEqual({ type: "guardians_confirmed" });
+  });
+
+  it("resets (reason: guardian_confirmed_ok) as soon as any guardian says the owner is fine, even short of quorum", () => {
+    const action = computeDigitalLegacyTransition({
+      now: NOW,
+      lastSignInAt: new Date(NOW.getTime() - 200 * DAY),
+      settings,
+      runtime: runtime({ state: "awaiting_guardians" }),
+      guardianTally: { totalGuardians: 3, anyConfirmedOk: true, confirmedUnreachableCount: 0 },
+    });
+    expect(action).toEqual({ type: "reset", reason: "guardian_confirmed_ok" });
+  });
+
+  it("never advances from guardians_confirmed on its own --- only a real owner login (checked above) can", () => {
+    const action = computeDigitalLegacyTransition({
+      now: NOW,
+      lastSignInAt: new Date(NOW.getTime() - 300 * DAY), // still before the state began
+      settings,
+      runtime: runtime({ state: "guardians_confirmed", stateEnteredAt: new Date(NOW.getTime() - 5 * DAY).toISOString() }),
+    });
+    expect(action).toEqual({ type: "none" });
+  });
+});
+
+describe("isGuardianQuorumSatisfied", () => {
+  const tally = (totalGuardians: number, confirmedUnreachableCount: number): GuardianTally => ({
+    totalGuardians,
+    anyConfirmedOk: false,
+    confirmedUnreachableCount,
+  });
+
+  it("is never satisfied with zero guardians, whatever the quorum policy", () => {
+    for (const quorum of ["unanimous", "majority", "single"] as const) {
+      expect(isGuardianQuorumSatisfied(quorum, tally(0, 0))).toBe(false);
+    }
+  });
+
+  it("'single' needs just one confirmation", () => {
+    expect(isGuardianQuorumSatisfied("single", tally(5, 0))).toBe(false);
+    expect(isGuardianQuorumSatisfied("single", tally(5, 1))).toBe(true);
+  });
+
+  it("'majority' needs strictly more than half", () => {
+    expect(isGuardianQuorumSatisfied("majority", tally(4, 2))).toBe(false); // exactly half, not enough
+    expect(isGuardianQuorumSatisfied("majority", tally(4, 3))).toBe(true);
+  });
+
+  it("'unanimous' needs every guardian", () => {
+    expect(isGuardianQuorumSatisfied("unanimous", tally(3, 2))).toBe(false);
+    expect(isGuardianQuorumSatisfied("unanimous", tally(3, 3))).toBe(true);
   });
 });

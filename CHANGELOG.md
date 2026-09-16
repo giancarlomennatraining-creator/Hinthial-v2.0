@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-17
+
+### FASE 12, terzo passo --- coinvolgimento dei guardiani
+
+**Cosa fa:** quando il periodo di grazia scade senza risposta, ogni guardiano collegato a un account Hinthial (v. la voce di ieri sui guardiani non collegati) riceve un'email: *"[Nome] ti ha indicato come guardiano --- non riusciamo a raggiungerlo/la, hai sue notizie?"*, con un link a una pagina dove rispondere "Sì, sta bene" / "Non lo so" / "Confermo che non riesco a raggiungerlo/la" (richiede di accedere con il proprio account Hinthial per rispondere, mai un click anonimo). Una sola risposta "sta bene" annulla tutto, come un accesso del proprietario stesso. Se invece abbastanza guardiani confermano di non riuscire più a raggiungerlo --- quanti, dipende dal quorum scelto in Impostazioni: tutti, la maggioranza, o basta uno solo --- il proprietario riceve un ultimo avviso via email, e l'account entra in un'attesa che una fase futura (verifica formale, non ancora costruita) dovrà raccogliere.
+
+**Note tecniche:** nuova tabella `guardian_verification_requests` (una riga per coppia proprietario/guardiano, azzerata a ogni nuovo episodio) con RLS che lascia leggere la richiesta a entrambe le parti ma rispondere solo al guardiano interpellato; una nuova policy su `profiles` lascia il guardiano leggere il nome (in chiaro) del proprietario, stesso schema già usato per "Condivise con me". Registrare la risposta nel registro Attività *del proprietario* (non del guardiano che risponde, un `owner_id` diverso da `auth.uid()`) non è possibile con un insert diretto sotto RLS --- risolto con una funzione Postgres SECURITY DEFINER (`respond_to_guardian_verification_request`), stesso schema già usato per `log_failed_login_attempt`, che ripete a mano il controllo che l'RLS farebbe invece di limitarsi a bypassarlo. La logica del quorum (`isGuardianQuorumSatisfied`) e l'estensione della macchina a stati pura (`computeDigitalLegacyTransition`, ora con un nuovo stato "guardians_confirmed" e un parametro opzionale col riscontro dei guardiani) restano prive di accesso a database, testate con 12 nuovi casi. La parte che tocca davvero il database (creazione delle richieste, invio email, aggiornamento di stato) è verificata con un test di integrazione end-to-end contro il database reale --- due account veri, l'uno guardiano collegato dell'altro --- che copre l'intero percorso: richiesta creata, lettura sotto RLS, risposta via RPC, quorum raggiunto, evento registrato sotto l'account giusto. Non è stato possibile simulare la vera attesa per inattività in quel test (un accesso reale ha sempre `last_sign_in_at` più recente di qualunque data retrodatata, il che fa scattare correttamente il reset invece della transizione che si voleva testare) --- risolto avviando il test già nello stato "awaiting_guardians" e chiamando `notifyGuardians` (ora esportata apposta) direttamente.
+
+---
+
 ## 2026-09-16 (7)
 
 ### Amici: un guardiano senza account collegato avvisa che non potrà essere raggiunto

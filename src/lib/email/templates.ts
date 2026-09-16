@@ -105,9 +105,53 @@ export function digitalLegacyGracePeriodEmail(gracePeriodDays: number): { subjec
     html: emailShell(`
       <p>Non siamo ancora riusciti a raggiungerti, dopo diversi promemoria: da oggi inizia un periodo di grazia di ${gracePeriodDays} giorni, previsto dalla tua strategia di "Eredità digitale".</p>
       <p>Se accedi anche una sola volta entro questo periodo, tutto si annulla automaticamente --- nessun'altra azione richiesta.</p>
-      <p>Se questo periodo terminasse senza tue notizie, il passo successivo (non ancora attivo in questa versione di Hinthial) coinvolgerebbe i tuoi guardiani per verificare che tu stia bene.</p>
+      <p>Se questo periodo terminasse senza tue notizie, il passo successivo coinvolgerebbe i tuoi guardiani, chiedendo loro di confermare che tu stia bene.</p>
       ${primaryButton(dashboardUrl, "Accedi a Hinthial")}
       <p style="font-size:12px; color:#71717a;">Puoi modificare o disattivare questa strategia in qualsiasi momento da Impostazioni &gt; Eredità digitale.</p>
+    `),
+  };
+}
+
+/**
+ * Inviata a UN guardiano collegato quando il proprietario entra in
+ * "awaiting_guardians" (v. automation.ts) --- mai a un guardiano non
+ * collegato: il server non conoscerebbe nemmeno il suo indirizzo (v.
+ * FriendsPanel.tsx, badge "non collegato"). Il link porta a una pagina
+ * dentro l'app (v. app/(app)/guardian-check/[requestId]), non a
+ * un'azione compiuta direttamente dall'email: chi risponde deve essere
+ * autenticato con il PROPRIO account, non un click anonimo.
+ */
+export function digitalLegacyGuardianRequestEmail(
+  ownerName: string,
+  respondUrl: string,
+): { subject: string; html: string } {
+  return {
+    subject: `${ownerName} ti ha indicato come guardiano su Hinthial --- riesci a raggiungerlo/la?`,
+    html: emailShell(`
+      <p><strong>${ownerName}</strong> ti ha indicato come guardiano su Hinthial --- una persona di fiducia da contattare se non risponde più da un po' di tempo.</p>
+      <p>Non riusciamo a raggiungerlo/la da diverse settimane, nonostante diversi promemoria. Puoi dirci se hai sue notizie?</p>
+      ${primaryButton(respondUrl, "Rispondi")}
+      <p style="font-size:12px; color:#71717a;">Dovrai accedere al tuo account Hinthial per rispondere --- la tua risposta conta solo se arriva da lì, mai da un semplice click su questa email.</p>
+    `),
+  };
+}
+
+/**
+ * Inviata al proprietario quando i suoi guardiani confermano di non
+ * riuscire a raggiungerlo (v. isGuardianQuorumSatisfied) --- un'ultima
+ * rete di sicurezza, anche se l'account potrebbe non poterla leggere:
+ * se anche questa email non riceve risposta, il passo successivo
+ * (verifica formale) non è ancora costruito in questa versione.
+ */
+export function digitalLegacyGuardiansConfirmedEmail(): { subject: string; html: string } {
+  const dashboardUrl = `${appUrl()}/dashboard`;
+
+  return {
+    subject: "I tuoi guardiani non riescono a raggiungerti su Hinthial",
+    html: emailShell(`
+      <p>I guardiani che hai indicato per "Eredità digitale" hanno confermato di non riuscire più a raggiungerti.</p>
+      <p>Se stai bene, accedi subito a Hinthial: basta un accesso per annullare tutto.</p>
+      ${primaryButton(dashboardUrl, "Accedi a Hinthial")}
     `),
   };
 }
