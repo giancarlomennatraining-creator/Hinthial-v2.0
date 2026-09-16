@@ -107,9 +107,22 @@ export async function listCapsules(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
 ): Promise<CapsuleListItem[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  // Esplicito, non solo affidato a RLS: da FASE B esiste anche
+  // "capsules_select_shared_recipient", una seconda policy SELECT
+  // permissiva che ammette le capsule condivise CON questo utente (non
+  // sue) --- senza questo filtro, un account che ha ricevuto una
+  // capsula la ritroverebbe anche qui, e decryptPayload la cifrerebbe
+  // con la chiave sbagliata (quella del proprietario, non la propria),
+  // fallendo con "Decryption failed" (v. segnalazione utente).
   const { data, error } = await supabase
     .from("capsules")
     .select(CAPSULE_COLUMNS)
+    .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) {

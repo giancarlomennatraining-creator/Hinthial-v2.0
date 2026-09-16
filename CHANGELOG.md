@@ -18,6 +18,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 **Note tecniche:** `listCapsulesSharedWithMe` (`domain/capsules/repository.ts`) leggeva `capsule_shares` senza alcun filtro esplicito, affidandosi solo a RLS --- ma la tabella ha due policy SELECT permissive separate (`capsule_shares_select_owner` e `capsule_shares_select_recipient`, migrazione `20260912040000`), combinate in OR da Postgres: il proprietario può leggere le proprie righe per altri motivi (gestirle, revocarle), quindi la query senza filtro tornava le righe sia come destinatario sia come mittente. Corretto aggiungendo `.eq("recipient_user_id", user.id)` alla query --- non tocca la RLS (corretta per il proprio scopo), solo restringe questa specifica query al significato voluto. Diagnosticato dalla segnalazione dell'utente su un account reale (`giancarlo.menna.training` vedeva la propria capsula condivisa con `mennaarna` anche nel proprio elenco).
 
+### Bug corretto: "Decryption failed" nella pagina Capsule per chi ha ricevuto una capsula ma non ne possiede ancora nessuna propria
+
+**Cosa fa:** un account senza capsule proprie, ma con almeno una capsula ricevuta in condivisione, vedeva un errore ("Decryption failed: wrong key or corrupted/tampered data") invece della propria lista (vuota) di capsule.
+
+**Note tecniche:** stessa classe di difetto della voce precedente, questa volta in `listCapsules` (le proprie capsule, non "Condivise con me"): nessun filtro esplicito su `owner_id`, solo RLS --- che per `capsules` ammette in SELECT sia `capsules_select_own` sia `capsules_select_shared_recipient` (migrazione `20260912040000`, quest'ultima pensata apposta per lasciar leggere status/open_at/il nome del mittente a chi ha ricevuto una condivisione). Senza filtro, `listCapsules` tornava anche le righe delle capsule condivise CON l'utente --- il cui `encrypted_payload` è cifrato con la Master Key del *proprietario*, non la propria: `decryptPayload` falliva puntualmente su quella riga. Corretto aggiungendo `.eq("owner_id", user.id)`, verificato riproducendo esattamente lo scenario sul database reale (account `mennaarna`: zero capsule proprie, una ricevuta).
+
 ---
 
 ## 2026-09-16
