@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-16 (3)
+
+### Bug corretto: il tasto "+" tondo su smartphone poteva apparire spostato oltre il bordo destro dello schermo, con scorrimento orizzontale indesiderato
+
+**Cosa fa:** su smartphone, il tasto "+" tondo in sovraimpressione (v. `MobileAddFab`, usato da Capsule/Beni/Amici/Scadenze/Archivio) poteva finire fuori dal bordo destro visibile, raggiungibile solo scorrendo la pagina di lato --- un effetto mai voluto.
+
+**Note tecniche:** `<html>` ha già `overflow-x: hidden` (v. voce del 2026-09-15 sul menu che scorreva via), ma non basta da solo su alcuni browser mobile: un elemento `position: fixed` come questo tasto può comunque calcolare il proprio `right` rispetto alla larghezza reale del documento, se un qualunque altro contenuto della pagina eccede anche di poco quella dello schermo --- `<html>` lo taglia visivamente, ma non impedisce il calcolo sbagliato a un discendente fisso. Serve tagliare anche su `<body>`, ma non con un secondo `overflow-x: hidden`: due `hidden` (uno per elemento) avevano già causato, risolto in precedenza, un accoppiamento indesiderato dell'asse verticale in due contenitori di scroll distinti (rompendo `position: sticky` di Sidebar/TopNav/MobileNavBar). Usato invece `overflow: clip` su `<body>` --- non crea alcun contenitore scrollabile (nemmeno invisibile, raggiungibile da tastiera/JS), quindi non soffre dello stesso accoppiamento, pur tagliando comunque l'eccesso. Verificato che `position: sticky` continua a funzionare (suite e2e `sticky-nav.spec.ts` e affini, tutte verdi) --- lo scroll vero della pagina resta solo su `<html>`, come prima.
+
+---
+
 ## 2026-09-16 (2)
 
 ### Bug corretto: chi condivide una capsula la ritrovava anche nel proprio elenco "Condivise con me"

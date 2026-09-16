@@ -63,10 +63,32 @@ html {
   overflow-x: hidden;
 }
 
+/*
+ * `overflow-x: hidden` da solo su <html> non basta su alcuni browser
+ * mobile (segnalato: il tasto "+" tondo, position: fixed, in basso a
+ * destra --- v. MobileAddFab --- poteva apparire spostato oltre il
+ * bordo destro dello schermo, con tanto di scorrimento orizzontale
+ * indesiderato per raggiungerlo). Causa: un elemento `position: fixed`
+ * viene comunque posizionato rispetto alla larghezza reale del
+ * documento se QUALCHE contenuto, altrove nella pagina, eccede anche
+ * di poco quella dello schermo --- <html> lo taglia visivamente, ma
+ * non impedisce a un discendente fisso di calcolare il proprio `right`
+ * da quel bordo più largo, invece che da quello visibile.
+ *
+ * Serve tagliarlo anche su <body> --- ma non con `overflow-x: hidden`
+ * come su <html>: due `hidden` avevano già causato il bug del menu
+ * "che scorre via" risolto altrove (v. commento sopra) accoppiando
+ * anche l'asse verticale in due contenitori di scroll distinti.
+ * `clip`, non `hidden`: NON crea un contenitore scrollabile (nemmeno
+ * "invisibile", raggiungibile da tastiera/JS) e quindi non soffre dello
+ * stesso accoppiamento --- taglia il contenuto in eccesso senza
+ * ripetere il problema precedente.
+ */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-work-sans), Arial, Helvetica, sans-serif;
+  overflow: clip;
 }
 
 /* Titolo di pagina (es. "Capsule", "Ciao, ...") --- Baloo 2, lo stesso
