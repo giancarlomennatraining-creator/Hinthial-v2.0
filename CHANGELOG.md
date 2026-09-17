@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-17 (9)
+
+### "Novità" aggiornata dal 15 al 17 settembre
+
+**Cosa fa:** la pagina "Novità" era ferma al 13 settembre (segnalato dall'utente) --- mancavano 10 voci per tutto ciò che vale la pena raccontare costruito da allora: sblocco biometrico e pairing dispositivi via QR, capsule condivise davvero apribili, avvisi email/popup per le capsule, Eredità digitale (raccontata come funzionalità completa, non le sue 4 fasi), la riorganizzazione di Impostazioni, e le tre novità di Amici (attivo di default, badge collegamento, amicizia/guardiano reciproci).
+
+**Note tecniche:** nuova migrazione `20260918020000_product_updates_backfill_15_to_17.sql`, stesso criterio di curatela già usato per il backfill iniziale (v. migrazione `20260914020000`) --- niente bug fix, niente ottimizzazioni invisibili, niente puro restyling, e deliberatamente esclusa la voce sul "guardiano non collegato" (16/9): comportamento sostituito il giorno dopo dal nuovo modello Amici v2, mai arrivato ad essere annunciato. Verificato visivamente: le 10 righe compaiono nell'ordine e con il testo attesi nella pagina `/updates` reale.
+
+---
+
 ## 2026-09-17 (8)
 
 ### Amici v2: PERSONA vs AMICO, e il Guardiano richiede consenso
