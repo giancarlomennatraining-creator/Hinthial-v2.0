@@ -345,15 +345,18 @@ export function SettingsTabs({
           )}
         >
           {displayedMobileView === "list" ? (
-            <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+            // Un blocco per gruppo, non un unico elenco continuo (v.
+            // richiesta utente) --- il nome del gruppo vive sopra e fuori
+            // dal proprio blocco, non più incollato dentro come prima riga.
+            <div className="flex flex-col gap-6">
               {TAB_GROUPS.map((group, groupIndex) => (
-                <li key={group.label ?? `group-${groupIndex}`}>
+                <div key={group.label ?? `group-${groupIndex}`} className="flex flex-col gap-2">
                   {group.label ? (
-                    <p className="px-4 pt-3 pb-1 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+                    <p className="px-1 text-sm font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
                       {group.label}
                     </p>
                   ) : null}
-                  <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
+                  <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
                     {group.tabs.map((t) => (
                       <li key={t.id}>
                         <button
@@ -384,9 +387,9 @@ export function SettingsTabs({
                       </li>
                     ))}
                   </ul>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           ) : (
             <div className="flex flex-col gap-4">
               <button
@@ -418,7 +421,7 @@ export function SettingsTabs({
               {group.label ? (
                 <p
                   className={cn(
-                    "px-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500",
+                    "px-3 text-sm font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500",
                     groupIndex === 0 ? undefined : "mt-3",
                   )}
                 >

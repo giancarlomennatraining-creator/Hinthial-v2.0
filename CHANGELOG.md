@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-17 (5)
+
+### Menu di Impostazioni: intestazioni di gruppo più grandi, blocchi separati su smartphone
+
+**Cosa fa:** i nomi delle aree in Impostazioni (SICUREZZA, PRIVACY E DATI, PERSONALIZZAZIONE) sono ora più grandi, sia da desktop sia su smartphone. Su smartphone, ogni area ha ora il proprio riquadro separato invece di un unico elenco continuo, con il nome dell'area sopra e fuori dal riquadro, non più come prima riga al suo interno.
+
+**Note tecniche:** solo `SettingsTabs.tsx` toccato --- intestazioni di gruppo passate da `text-xs` a `text-sm` (sia sidebar desktop sia elenco mobile); l'elenco mobile, prima un unico `<ul>` con tutti i gruppi separati da `divide-y`, ora rende ogni gruppo come coppia intestazione (fuori) + `<ul>` proprio (bordo/sfondo arrotondato), con `gap-6` tra i blocchi. Nessuna modifica a routing, contenuto delle schede o al layout desktop oltre alla dimensione del testo. Verificato visivamente con uno script Playwright throwaway (utente di test usa e getta via API admin di Supabase, poi eliminato) su viewport desktop (1600px) e smartphone (390px).
+
+---
+
 ## 2026-09-17 (4)
 
 ### Eredità digitale usa tutta la larghezza disponibile in Impostazioni
