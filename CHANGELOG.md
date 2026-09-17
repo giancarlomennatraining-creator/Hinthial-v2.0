@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-17 (10)
+
+### HINTHIA compare nell'intestazione della pagina AI
+
+**Cosa fa:** l'avatar di HINTHIA (l'orbetta blu con i germogli, disegnata dall'utente) affianca ora il titolo della pagina "Assistente AI" --- primo punto dell'interfaccia in cui il personaggio si vede davvero.
+
+**Note tecniche:** usa la copia ridotta a 128px (`public/brand/hinthia/hinthia-128.png`, 8 KB) mostrata a 48px, non l'originale da 1,3 MB --- v. `public/brand/README.md` per come è stato ricavato il set. `alt` vuoto di proposito: il titolo accanto dice già cos'è la pagina, ripeterlo a uno screen reader sarebbe rumore. Verificato a schermo su tema chiaro e scuro. Resta aperta la scelta di prodotto se il nome "Hinthia" debba sostituire "Assistente AI" nel titolo: oggi l'app distingue con cura il motore locale dalle risposte reali di Claude, e dare un nome unico alle due modalità è una decisione da prendere prima, non un dettaglio grafico.
+
+---
+
 ## 2026-09-17 (9)
 
 ### "Novità" aggiornata dal 15 al 17 settembre

@@ -120,9 +120,22 @@ export function AIPanel({ masterKey }: { masterKey: CryptoKey }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-brand">
-          Assistente AI
-        </h1>
+        <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- brand asset, not user content */}
+          <img
+            // Copia ridotta dell'avatar HINTHIA (v. public/brand/README.md):
+            // l'originale è un PNG da 1312x1199 dentro un guscio SVG, 1,3 MB
+            // --- qui ne bastano 8 KB. `alt` vuoto di proposito: è il titolo
+            // accanto a dire cos'è questa pagina, ripeterlo a chi usa uno
+            // screen reader aggiungerebbe rumore, non informazione.
+            src="/brand/hinthia/hinthia-128.png"
+            alt=""
+            className="h-12 w-12 shrink-0"
+          />
+          <h1 className="text-2xl font-semibold tracking-tight text-brand">
+            Assistente AI
+          </h1>
+        </div>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           {active
             ? "Fai domande sui tuoi dati. Le risposte vengono generate da Claude (Anthropic): solo la tua domanda e i pochi elementi pertinenti trovati qui sul dispositivo vengono inviati --- mai l'intero archivio."
