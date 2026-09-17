@@ -3,7 +3,7 @@ import { createConfirmedTestUser, forceOwnFriendToGuardian, uniqueTestUser } fro
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("la dashboard mostra i contatori per sezione e i tre riquadri anche a vault vuoto, e aggiorna i contatori e \"Da tenere d'occhio\" quando si aggiunge contenuto", async ({
+test("la dashboard mostra i contatori per sezione e i tre riquadri anche a vault vuoto, aggiorna i contatori quando si aggiunge contenuto, e non mostra più \"Da tenere d'occhio\"", async ({
   page,
 }) => {
   test.slow();
@@ -61,18 +61,17 @@ test("la dashboard mostra i contatori per sezione e i tre riquadri anche a vault
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("polizza.txt")).toBeVisible({ timeout: 15_000 });
 
-  // I contatori si aggiornano, e "Da tenere d'occhio" segnala il bene scollegato --- un'unica sezione.
+  // I contatori si aggiornano.
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("link", { name: "Archivio: 1" })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole("link", { name: "Beni: 1" })).toBeVisible();
 
-  // mockAIProvider.suggest() segnala già da solo un bene senza documenti
-  // collegati: "Da tenere d'occhio" non lo ripete anche come riga di
-  // salute del vault a parte (stesso bene due volte nella stessa card).
-  await expect(page.getByText("Da tenere d'occhio")).toBeVisible();
-  await expect(page.getByText("Questo bene non ha ancora documenti collegati: Barca.")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Barca" })).toHaveCount(1);
-  await expect(page.getByText(/beni non hanno ancora contenuti collegati/)).not.toBeVisible();
+  // Niente più "Da tenere d'occhio" in dashboard (v. richiesta utente):
+  // ripeteva dati già presenti nelle card qui sopra, e per il resto
+  // misurava la completezza invece di segnalare un rischio. I
+  // suggerimenti proattivi restano in Assistente AI, dove si chiedono.
+  await expect(page.getByText("Da tenere d'occhio")).not.toBeVisible();
+  await expect(page.getByText("Questo bene non ha ancora documenti collegati: Barca.")).not.toBeVisible();
 
   // Un amico attivo e guardiano: il sotto-contatore in "Amici" lo riflette.
   await page.getByRole("link", { name: "Amici", exact: true }).click();

@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-17 (11)
+
+### Rimossa la sezione "Da tenere d'occhio" dalla Dashboard
+
+**Cosa fa:** la Dashboard non mostra più la sezione "Da tenere d'occhio" in fondo. Restano i contatori per sezione e i tre riquadri (Prossime scadenze, Aggiunti di recente, Elementi da completare). I suggerimenti proattivi continuano a esistere in Assistente AI, dove si chiedono esplicitamente.
+
+**Note tecniche:** discusso con l'utente prima di toccare il codice, misurando la sovrapposizione reale --- due delle tre righe "suggerimento" ripetevano dati già mostrati nelle card immediatamente sopra (scadenze scadute = "Elementi da completare"; scadenze entro 7 giorni = sottoinsieme di "Prossime scadenze"), e il resto erano metriche di completezza ("N di M amici non collegati a nessuna capsula", "N di M contenuti hanno una scadenza tracciata") che misurano l'ordine, non un rischio. Il difetto di fondo: costruita su regole deterministiche che contano sempre qualcosa, la sezione aveva sempre qualcosa da dire --- e così smetteva di significare qualcosa. Rimossa anche la riga sui beni senza documenti collegati, per scelta esplicita dell'utente: non è stata riportata in "Elementi da completare". `DashboardWidgets` non chiama più `mockAIProvider.suggest()` (un calcolo in meno a ogni caricamento). Eliminati `WatchlistWidget.tsx` e `VaultHealthWidget.tsx` con i rispettivi test unitari: il primo non è più usato, il secondo **era già codice morto** --- non renderizzato da nessuna parte, pur avendo ancora un test che lo copriva e un commento in `WatchlistWidget` che affermava il contrario. Aggiornato il test e2e `dashboard-layout.spec.ts`, che ora verifica l'assenza della sezione invece della sua presenza.
+
+**Ipotesi per il futuro, discussa e non implementata:** una sezione "Avvisi" generata dall'IA reale al posto di questa --- utile proprio perché potrebbe restare **vuota** quando non c'è nulla da dire, al contrario di una regola che conta sempre. Richiederebbe però un consenso proprio (guardare il vault senza che l'utente abbia chiesto nulla è una postura di privacy diversa dalla Chat, dove è lui a interrogare), una cadenza controllata (una chiamata a ogni apertura della Dashboard sarebbe lenta e cara: l'infrastruttura cron esiste già da Eredità digitale), e sarebbe la casa naturale di HINTHIA.
+
+---
+
 ## 2026-09-17 (10)
 
 ### HINTHIA compare nell'intestazione della pagina AI

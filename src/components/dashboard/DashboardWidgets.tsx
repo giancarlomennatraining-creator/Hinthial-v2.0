@@ -4,11 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/db/supabase/client";
 import { buildAIContext } from "@/domain/ai/context";
-import { mockAIProvider } from "@/domain/ai/mock-provider";
 import { DashboardCounters } from "@/components/dashboard/DashboardCounters";
-import { WatchlistWidget } from "@/components/dashboard/WatchlistWidget";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
-import type { AIContext, AISuggestion } from "@/domain/ai/types";
+import type { AIContext } from "@/domain/ai/types";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -20,20 +18,31 @@ function formatDate(iso: string): string {
 
 /**
  * Il corpo della dashboard: contatori per sezione, prossime scadenze,
- * aggiunti di recente ed elementi da completare, poi "Da tenere
- * d'occhio" (v. WatchlistWidget) a piena larghezza. Niente checklist
+ * aggiunti di recente ed elementi da completare. Niente checklist
  * "Onboarding" qui (v. richiesta utente) --- resta comunque
  * consultabile dal gadget persistente nella barra laterale (v.
- * OnboardingStatus). Tutto derivato da un unico AIContext (v.
- * domain/ai/context.ts) --- lo stesso snapshot già decifrato che
- * usano Assistente AI e ricerca globale, costruito una sola volta qui
- * invece che con una query per widget.
+ * OnboardingStatus).
+ *
+ * Niente più "Da tenere d'occhio" (v. richiesta utente): due delle sue
+ * tre righe ripetevano dati già mostrati nelle card qui sopra
+ * (scadenze scadute = "Elementi da completare", scadenze entro 7
+ * giorni = "Prossime scadenze"), e il resto erano metriche di
+ * completezza ("N di M amici non collegati a nessuna capsula") che
+ * misurano l'ordine, non un rischio --- una sezione costruita su
+ * regole che contano sempre qualcosa ha sempre qualcosa da dire, e
+ * così smette di significare qualcosa. I suggerimenti proattivi
+ * restano dove sono chiesti esplicitamente, in Assistente AI (v.
+ * SuggestionsList).
+ *
+ * Tutto derivato da un unico AIContext (v. domain/ai/context.ts) ---
+ * lo stesso snapshot già decifrato che usano Assistente AI e ricerca
+ * globale, costruito una sola volta qui invece che con una query per
+ * widget.
  */
 export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
 
   const [context, setContext] = useState<AIContext | null>(null);
-  const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +51,6 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
     try {
       const built = await buildAIContext(supabase, masterKey);
       setContext(built);
-      setSuggestions(mockAIProvider.suggest(built));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare la dashboard.");
     } finally {
@@ -168,7 +176,6 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
         </section>
       </div>
 
-      <WatchlistWidget context={context} suggestions={suggestions} />
     </div>
   );
 }
