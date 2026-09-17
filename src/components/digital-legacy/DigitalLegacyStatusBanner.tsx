@@ -41,8 +41,8 @@ export function DigitalLegacyStatusBanner({ userId, reminderCount }: { userId: s
       role="status"
       className={
         urgent
-          ? "rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-300"
-          : "rounded-xl border border-orange-300 bg-orange-50 p-4 text-sm text-orange-800 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-300"
+          ? "max-w-2xl rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-300"
+          : "max-w-2xl rounded-xl border border-orange-300 bg-orange-50 p-4 text-sm text-orange-800 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-300"
       }
     >
       {describeDigitalLegacyStatus(status, reminderCount)}

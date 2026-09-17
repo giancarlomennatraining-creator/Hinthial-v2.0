@@ -165,10 +165,16 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="flex max-w-2xl flex-col gap-6">
+    // Niente max-w qui: come nel resto di Impostazioni (v. Aspetto), il
+    // contenuto usa tutta la larghezza disponibile --- v. richiesta
+    // utente. Solo il testo discorsivo (paragrafi) resta limitato a una
+    // lunghezza di riga leggibile con un max-w-2xl sul singolo elemento,
+    // non sul contenitore: il resto (interruttore, preset, valori
+    // personalizzati) si allarga per davvero, non solo di nome.
+    <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Eredità digitale</h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
           Se un giorno non dovessi più poter accedere a Hinthial, questa è la strategia che
           decide quando le tue capsule arrivano davvero a chi le doveva ricevere --- con più
           promemoria a te prima, e la verifica dei tuoi guardiani dopo, non un&apos;apertura
@@ -178,7 +184,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
 
       <DigitalLegacyStatusBanner userId={userId} reminderCount={settings.reminderCount} />
 
-      <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+      <label className="flex max-w-2xl items-center gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
         <input
           type="checkbox"
           checked={settings.enabled}
@@ -230,7 +236,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
 
       <p
         className={cn(
-          "rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400",
+          "max-w-2xl rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400",
           settings.enabled ? undefined : "opacity-60",
         )}
       >
@@ -251,7 +257,11 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
         </button>
 
         {customOpen ? (
-          <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+          // Griglia responsiva, non più una colonna sola --- v. richiesta
+          // utente: usa per davvero la larghezza disponibile invece di
+          // impilare 7 campi corti uno sotto l'altro con tutto quello
+          // spazio vuoto ai lati sugli schermi larghi.
+          <div className="grid gap-4 rounded-xl border border-zinc-200 p-4 sm:grid-cols-2 lg:grid-cols-3 dark:border-zinc-800">
             {NUMERIC_FIELDS.map((field) => (
               <div key={field.key} className="flex flex-col gap-1">
                 <label
@@ -267,7 +277,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
                   max={DIGITAL_LEGACY_BOUNDS[field.key].max}
                   value={settings[field.key]}
                   onChange={(e) => updateNumericField(field.key, e.target.value)}
-                  className="w-32 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
                 />
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   {field.description} Tra {DIGITAL_LEGACY_BOUNDS[field.key].min} e{" "}
@@ -287,7 +297,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
                 id="digital-legacy-guardian-quorum"
                 value={settings.guardianQuorum}
                 onChange={(e) => updateQuorum(e.target.value as GuardianQuorum)}
-                className="w-fit rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
               >
                 {GUARDIAN_QUORUM_ORDER.map((quorum) => (
                   <option key={quorum} value={quorum}>

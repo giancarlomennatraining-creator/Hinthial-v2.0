@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-17 (4)
+
+### Eredità digitale usa tutta la larghezza disponibile in Impostazioni
+
+**Cosa fa:** la scheda "Eredità digitale" non è più incolonnata stretta a sinistra --- usa tutto lo spazio disponibile, come "Aspetto". I valori personalizzati (quando aperti) si dispongono ora su più colonne sugli schermi larghi invece di impilarsi uno sotto l'altro; su smartphone restano comunque a colonna singola, come prima.
+
+**Note tecniche:** rimosso il `max-w-2xl` dal contenitore esterno del pannello, rimesso solo sui singoli paragrafi discorsivi (intro, riepilogo, riquadro di stato, interruttore) per mantenerli leggibili --- il resto (selettore preset, valori personalizzati, tasto Salva) può allargarsi per davvero. I sei campi numerici più il quorum sono ora in una griglia (`sm:grid-cols-2 lg:grid-cols-3`) invece di una colonna sola. Verificato visivamente su viewport desktop (1600px) e smartphone (390px).
+
+---
+
 ## 2026-09-17 (3)
 
 ### Impostazioni riorganizzate in macro-aree
