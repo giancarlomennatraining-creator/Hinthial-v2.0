@@ -108,11 +108,27 @@ export function UpdatesIcon(props: IconProps) {
   );
 }
 
+/**
+ * La faccia di HINTHIA (v. public/brand/hinthia-avatar.svg) ridotta a
+ * glifo --- al posto delle due stelline, il cliché con cui ogni
+ * prodotto segna l'IA (v. richiesta utente). Non l'avatar a colori:
+ * qui l'icona è alta 19px, a quella misura una PNG a colori non si
+ * leggerebbe e per giunta ignorerebbe lo stato attivo/hover, che ogni
+ * icona di questo file eredita da `currentColor`.
+ *
+ * Gli occhi sono curvati DI PIÙ di quanto sembri giusto guardando il
+ * glifo in grande: a 19px un arco poco profondo si appiattisce in un
+ * trattino e la faccia diventa assonnata invece che sorridente ---
+ * verificato sui pixel reali, ingranditi. Niente germoglio: a questa
+ * misura si riduce a una macchiolina e ruba spazio agli occhi, che
+ * sono la vera identità del personaggio.
+ */
 export function AIIcon(props: IconProps) {
   return (
     <svg {...baseProps(props)}>
-      <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" />
-      <path d="M19 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2z" />
+      <circle cx="12" cy="12" r="9.2" />
+      <path d="M7.1 13 A 1.9 1.9 0 0 1 11.1 13" />
+      <path d="M12.9 13 A 1.9 1.9 0 0 1 16.9 13" />
     </svg>
   );
 }

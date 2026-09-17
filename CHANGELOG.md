@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-17 (13)
+
+### La voce AI ha la faccia di HINTHIA al posto delle due stelline
+
+**Cosa fa:** nel menu (e nella scheda Impostazioni > Intelligenza artificiale) l'icona della voce AI non è più il solito paio di stelline --- il cliché con cui ogni prodotto segna l'IA --- ma la faccia sorridente di HINTHIA, disegnata a tratto come tutte le altre icone di sistema.
+
+**Note tecniche:** un glifo 24x24 `currentColor`, non l'avatar a colori: a 19px (la misura vera nel menu) una PNG non si leggerebbe e ignorerebbe gli stati attivo/hover, che ogni icona di `nav-icons.tsx` eredita dal colore del testo. Scelta la variante con **occhi molto più curvi di quanto sembri corretto guardando il glifo in grande**: verificato ingrandendo i pixel reali a 19px che un arco poco profondo si appiattisce in un trattino, trasformando il sorriso in una faccia assonnata --- compensazione ottica, non un errore di proporzione. Escluso il germoglio: a quella misura si riduce a una macchiolina e ruba spazio agli occhi, che sono la vera identità del personaggio. Scartate lungo la strada, dopo averle renderizzate e guardate a 19px, una versione con l'asta diagonale (leggeva come il simbolo di Marte ♂) e una a semicerchi pieni (due blocchi al posto degli occhi). Verificato nell'app reale nel menu (stato normale e attivo) e nell'elenco schede di Impostazioni.
+
+---
+
 ## 2026-09-17 (12)
 
 ### Le tabelle si adattano allo schermo nascondendo le colonne secondarie
