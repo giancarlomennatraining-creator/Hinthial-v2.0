@@ -32,6 +32,13 @@ const SIZE_CLASSES = {
   lg: "h-20 w-20 text-2xl",
 } as const;
 
+/** Il tondino "H" nell'angolo, in scala con l'avatar --- v. prop `linked` sotto. */
+const BADGE_SIZE_CLASSES = {
+  sm: "h-2.5 w-2.5 text-[0.35rem]",
+  md: "h-3.5 w-3.5 text-[0.5rem]",
+  lg: "h-6 w-6 text-[0.65rem]",
+} as const;
+
 /**
  * Cerchio con la foto profilo, o le iniziali su sfondo colorato quando
  * non ne è stata caricata una --- v. Impostazioni -> Informazioni utente.
@@ -42,6 +49,7 @@ export function Avatar({
   avatarUrl,
   seed,
   size = "md",
+  linked = false,
 }: {
   firstName: string;
   lastName: string;
@@ -49,26 +57,42 @@ export function Avatar({
   /** Qualcosa di stabile per questo utente (es. il suo id) --- decide solo il colore delle iniziali. */
   seed: string;
   size?: keyof typeof SIZE_CLASSES;
+  /**
+   * Piccolo badge "H" blu nell'angolo in basso a destra --- questa
+   * persona ha un account Hinthial collegato (v. Amici). Sostituisce
+   * l'etichetta testuale "✓ Su Hinthial" che, insieme agli altri badge
+   * della riga (stato, Guardiano...), finiva per sforare lo schermo su
+   * smartphone (v. richiesta utente).
+   */
+  linked?: boolean;
 }) {
   const sizeClass = SIZE_CLASSES[size];
 
-  if (avatarUrl) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage URL, not a static local asset
-      <img
-        src={avatarUrl}
-        alt=""
-        className={`${sizeClass} shrink-0 rounded-full object-cover`}
-      />
-    );
-  }
-
-  return (
+  const inner = avatarUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage URL, not a static local asset
+    <img src={avatarUrl} alt="" className={`${sizeClass} rounded-full object-cover`} />
+  ) : (
     <span
       aria-hidden="true"
-      className={`${sizeClass} flex shrink-0 items-center justify-center rounded-full font-semibold text-white ${colorFor(seed)}`}
+      className={`${sizeClass} flex items-center justify-center rounded-full font-semibold text-white ${colorFor(seed)}`}
     >
       {initialsOf(firstName, lastName)}
+    </span>
+  );
+
+  return (
+    <span className="relative inline-flex shrink-0">
+      {inner}
+      {linked ? (
+        <span
+          role="img"
+          aria-label="Ha un account Hinthial"
+          title="Ha un account Hinthial"
+          className={`absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-full bg-brand font-bold text-white ring-2 ring-white dark:ring-zinc-950 ${BADGE_SIZE_CLASSES[size]}`}
+        >
+          H
+        </span>
+      ) : null}
     </span>
   );
 }

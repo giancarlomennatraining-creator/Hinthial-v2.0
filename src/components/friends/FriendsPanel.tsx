@@ -438,16 +438,9 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                                 avatarUrl={avatarUrlFor(friend)}
                                 seed={friend.id}
                                 size="sm"
+                                linked={friend.linkedUserId !== null}
                               />
                               <span className="truncate">{friend.name}</span>
-                              {friend.linkedUserId ? (
-                                <span
-                                  title="Ha un account Hinthial"
-                                  className="shrink-0 rounded-full bg-lime-100 px-2 py-0.5 text-xs font-medium text-lime-700 dark:bg-lime-950 dark:text-lime-400"
-                                >
-                                  ✓ Su Hinthial
-                                </span>
-                              ) : null}
                             </div>
                           </td>
                           <td className="max-w-[14rem] truncate p-3 text-zinc-600 dark:text-zinc-400">
@@ -526,6 +519,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         lastName={friend.lastName}
                         avatarUrl={avatarUrlFor(friend)}
                         seed={friend.id}
+                        linked={friend.linkedUserId !== null}
                       />
                       <div className="min-w-0">
                       {/* div, non p: la nuvoletta di CapsulesBadge contiene <ul>/<li>, non ammessi dentro un <p>. */}
@@ -552,14 +546,6 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                             }
                           >
                             {friend.linkedUserId ? "🛡️ Guardiano" : "🛡️ Guardiano (non collegato)"}
-                          </span>
-                        ) : null}
-                        {friend.linkedUserId ? (
-                          <span
-                            title="Ha un account Hinthial"
-                            className="shrink-0 rounded-full bg-lime-100 px-2 py-0.5 text-xs font-medium text-lime-700 dark:bg-lime-950 dark:text-lime-400"
-                          >
-                            ✓ Su Hinthial
                           </span>
                         ) : null}
                         <CapsulesBadge capsules={capsulesFor(friend)} />

@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-17 (6)
+
+### Amici: badge "Su Hinthial" spostato sull'avatar
+
+**Cosa fa:** l'etichetta "✓ Su Hinthial" non è più un badge testuale nella riga dell'amico --- quando l'amico ha un account Hinthial collegato, compare invece un piccolo tondo blu con una "H" bianca nell'angolo in basso a destra della sua foto/iniziali. Con badge di stato, Guardiano e "Su Hinthial" tutti sulla stessa riga, su smartphone finivano per sforare lo schermo; ora la riga resta compatta.
+
+**Note tecniche:** `Avatar` (src/components/ui/Avatar.tsx) accetta una nuova prop opzionale `linked` che aggiunge il badge in overlay, in scala con la taglia dell'avatar (`sm`/`md`/`lg`); `FriendsPanel` la passa come `friend.linkedUserId !== null` sia nella vista a elenco sia in quella a tabella, al posto del vecchio `<span>` testuale. Il badge resta accessibile (`role="img"` + `aria-label`/`title` "Ha un account Hinthial") anche senza il testo visibile. Aggiornati i 4 test e2e che verificavano il vecchio testo (`friend-account-link.spec.ts`, `friends.spec.ts`, `capsule-sharing.spec.ts`) per cercare il badge via `getByTitle` invece di `getByText` --- tutti verificati passanti.
+
+---
+
 ## 2026-09-17 (5)
 
 ### Menu di Impostazioni: intestazioni di gruppo più grandi, blocchi separati su smartphone

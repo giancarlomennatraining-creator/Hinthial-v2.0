@@ -179,7 +179,7 @@ test("segnare come guardiano un amico senza account collegato avvisa che non pot
 
   const row = page.locator("li", { hasText: "Luca Neri" });
   await expect(row).toBeVisible({ timeout: 10_000 });
-  await expect(row.getByText("✓ Su Hinthial")).not.toBeVisible();
+  await expect(row.getByTitle("Ha un account Hinthial")).not.toBeVisible();
 
   await openRowMenu(row);
   await page.getByRole("menuitem", { name: "Segna come guardiano" }).click();

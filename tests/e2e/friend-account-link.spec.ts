@@ -39,7 +39,7 @@ test("un amico collegato a un account si scollega da solo se gli si cambia l'ema
 
   const row = page.locator("li", { hasText: "Amico Collegato" });
   await expect(row).toBeVisible({ timeout: 10_000 });
-  await expect(row.getByText("✓ Su Hinthial")).toBeVisible({ timeout: 15_000 });
+  await expect(row.getByTitle("Ha un account Hinthial")).toBeVisible({ timeout: 15_000 });
 
   // Cambiando l'email a qualcosa che non corrisponde più a nessun
   // account, il badge deve sparire --- non restare agganciato
@@ -53,5 +53,5 @@ test("un amico collegato a un account si scollega da solo se gli si cambia l'ema
 
   const updatedRow = page.locator("li", { hasText: "Amico Collegato" });
   await expect(updatedRow).toBeVisible({ timeout: 10_000 });
-  await expect(updatedRow.getByText("✓ Su Hinthial")).not.toBeVisible();
+  await expect(updatedRow.getByTitle("Ha un account Hinthial")).not.toBeVisible();
 });
