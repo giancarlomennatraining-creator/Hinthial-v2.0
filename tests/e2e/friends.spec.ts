@@ -31,7 +31,7 @@ test("aggiunge un amico, ne segue lo stato e lo elimina", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
   await expect(page.getByText("Nessun amico ancora")).toBeVisible();
 
-  // Aggiunta: nasce con stato "In attesa".
+  // Aggiunta: nasce già "Attivo" --- nessun concetto di "In attesa" da sbloccare a mano.
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
   await page.getByLabel("Nome visualizzato").fill("Maria Rossi");
@@ -49,19 +49,13 @@ test("aggiunge un amico, ne segue lo stato e lo elimina", async ({ page }) => {
   await expect(page.getByText("Amico aggiunto.")).toBeVisible();
   const row = page.locator("li", { hasText: "Maria Rossi" });
   await expect(row).toBeVisible({ timeout: 10_000 });
-  await expect(row.getByText("In attesa")).toBeVisible();
+  await expect(row.getByText("Attivo")).toBeVisible();
   await expect(row.getByText("maria.rossi@esempio.it · Coniuge")).toBeVisible();
-
-  // "Segna come attivo": In attesa -> Attivo.
-  await openRowMenu(row);
-  await page.getByRole("menuitem", { name: "Segna come attivo" }).click();
-  await expect(row.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
-  await openRowMenu(row);
-  await expect(page.getByRole("menuitem", { name: "Segna come attivo" })).not.toBeVisible();
 
   // "Revoca": Attivo -> Revocato. Non implementiamo ancora nessuno
   // sblocco automatico dei dati (FASE 7): revocare è solo un cambio di
   // stato registrato, non tocca alcun permesso reale.
+  await openRowMenu(row);
   await page.getByRole("menuitem", { name: "Revoca" }).click();
   await expect(row.getByText("Revocato")).toBeVisible({ timeout: 10_000 });
   await openRowMenu(row);

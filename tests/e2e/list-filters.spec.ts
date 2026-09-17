@@ -146,7 +146,7 @@ test("la ricerca e il filtro per stato funzionano in Scadenze, Amici e Capsule",
   await expect(page.getByText("Revisione auto")).toBeVisible();
   await expect(page.getByText("Rinnovo passaporto")).not.toBeVisible();
 
-  // Amici: uno attivo, uno in attesa.
+  // Amici: uno attivo, uno revocato.
   await page.getByRole("link", { name: "Amici", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
@@ -164,11 +164,11 @@ test("la ricerca e il filtro per stato funzionano in Scadenze, Amici e Capsule",
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
 
-  const mariaRow = page.getByRole("listitem").filter({ hasText: "Maria Rossi" });
-  await openRowMenu(mariaRow);
-  await page.getByRole("menuitem", { name: "Segna come attivo" }).click();
+  const lucaRow = page.getByRole("listitem").filter({ hasText: "Luca Bianchi" });
+  await openRowMenu(lucaRow);
+  await page.getByRole("menuitem", { name: "Revoca" }).click();
   await expect(
-    page.getByRole("listitem").filter({ hasText: "Maria Rossi" }).getByText("Attivo"),
+    page.getByRole("listitem").filter({ hasText: "Luca Bianchi" }).getByText("Revocato"),
   ).toBeVisible();
 
   await page.getByPlaceholder("Cerca per nome, email o ruolo…").fill("avvocato");

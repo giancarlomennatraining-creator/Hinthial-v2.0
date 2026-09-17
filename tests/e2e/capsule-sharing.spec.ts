@@ -81,8 +81,7 @@ test("chiudere e condividere una capsula la rende apribile dal destinatario coll
   const friendRow = page.locator("li", { hasText: "Destinatario Collegato" });
   await expect(friendRow).toBeVisible({ timeout: 10_000 });
   await expect(friendRow.getByTitle("Ha un account Hinthial")).toBeVisible({ timeout: 15_000 });
-  await openRowMenu(friendRow);
-  await page.getByRole("menuitem", { name: "Segna come attivo" }).click();
+  // Nasce già "Attivo" --- niente concetto di "In attesa" da sbloccare a mano.
   await expect(friendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
 
   // Capsula con data di apertura già nel passato --- non serve aspettare

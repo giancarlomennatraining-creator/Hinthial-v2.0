@@ -46,14 +46,11 @@ function formatDateTime(iso: string): string {
 }
 
 const STATUS_LABEL: Record<FriendStatus, string> = {
-  pending: "In attesa",
   active: "Attivo",
   revoked: "Revocato",
 };
 
 const STATUS_BADGE_CLASS: Record<FriendStatus, string> = {
-  pending:
-    "bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400",
   active: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
   revoked: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400",
 };
@@ -394,7 +391,6 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
               className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             >
               <option value="all">Tutti</option>
-              <option value="pending">In attesa</option>
               <option value="active">Attivi</option>
               <option value="revoked">Revocati</option>
             </select>
@@ -477,11 +473,6 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           </td>
                           <td className="p-3">
                             <RowActionsMenu label={`Azioni per ${friend.name}`}>
-                              {friend.status === "pending" ? (
-                                <RowMenuItem disabled={busy} onClick={() => handleSetStatus(friend, "active")}>
-                                  Segna come attivo
-                                </RowMenuItem>
-                              ) : null}
                               {friend.status !== "revoked" ? (
                                 <RowMenuItem disabled={busy} onClick={() => handleSetStatus(friend, "revoked")}>
                                   Revoca
@@ -556,11 +547,6 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                       </div>
                     </div>
                     <RowActionsMenu label={`Azioni per ${friend.name}`}>
-                      {friend.status === "pending" ? (
-                        <RowMenuItem disabled={busy} onClick={() => handleSetStatus(friend, "active")}>
-                          Segna come attivo
-                        </RowMenuItem>
-                      ) : null}
                       {friend.status !== "revoked" ? (
                         <RowMenuItem disabled={busy} onClick={() => handleSetStatus(friend, "revoked")}>
                           Revoca

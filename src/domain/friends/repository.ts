@@ -203,9 +203,10 @@ export async function updateFriend(
 }
 
 /**
- * Changes a friend's status --- "Segna come attivo" (pending -> active)
- * o "Revoca" (-> revoked). Doesn't grant/revoke any actual data access:
- * no unlock logic exists yet (FASE 7 is data-structure-only).
+ * Changes a friend's status --- oggi solo "Revoca" (active -> revoked)
+ * lo usa davvero (ogni amico nasce già "active", v. FriendStatus).
+ * Doesn't grant/revoke any actual data access: no unlock logic exists
+ * yet (FASE 7 is data-structure-only).
  */
 export async function setFriendStatus(
   supabase: SupabaseClient<Database>,

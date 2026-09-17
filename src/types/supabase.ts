@@ -53,7 +53,7 @@ type AuditEventTypeColumn =
   | "digital_legacy_final_wait_started"
   | "digital_legacy_triggered";
 
-type FriendStatusColumn = "pending" | "active" | "revoked";
+type FriendStatusColumn = "active" | "revoked";
 
 type NavOrientationColumn = "sidebar-left" | "sidebar-right" | "topbar";
 

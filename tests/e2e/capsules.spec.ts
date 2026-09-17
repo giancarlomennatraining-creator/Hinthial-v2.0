@@ -65,12 +65,10 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   const secondFriendRow = page.locator("li", { hasText: "Luca Bianchi" });
   await expect(secondFriendRow).toBeVisible({ timeout: 10_000 });
 
-  // Solo gli amici ATTIVI sono selezionabili come destinatari di una capsula.
-  await openRowMenu(friendRow);
-  await page.getByRole("menuitem", { name: "Segna come attivo" }).click();
+  // Gli amici nascono già ATTIVI --- solo i revocati non sono
+  // selezionabili come destinatari di una capsula, nessun passo in più
+  // qui.
   await expect(friendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
-  await openRowMenu(secondFriendRow);
-  await page.getByRole("menuitem", { name: "Segna come attivo" }).click();
   await expect(secondFriendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
 
   // Creazione della capsula, nella sua pagina dedicata --- un wizard a tre

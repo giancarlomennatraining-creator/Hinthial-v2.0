@@ -1,8 +1,12 @@
 /**
  * FASE 7: solo struttura dati e gestione dello stato --- nessuno sblocco
- * automatico dei dati in questa fase (v. HINTHIAL_MVP.md).
+ * automatico dei dati in questa fase (v. HINTHIAL_MVP.md). Ogni amico
+ * nasce "active": lo stato intermedio "pending" ("In attesa") è stato
+ * eliminato (v. richiesta utente) --- non bloccava nulla di voluto, solo
+ * nascondeva l'amico dal selettore dei destinatari delle capsule finché
+ * non lo si segnava a mano come attivo, un effetto collaterale confuso.
  */
-export type FriendStatus = "pending" | "active" | "revoked";
+export type FriendStatus = "active" | "revoked";
 
 export interface FriendListItem {
   id: string;

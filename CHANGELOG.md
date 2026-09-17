@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-17 (7)
+
+### Amici: eliminato lo stato "In attesa"
+
+**Cosa fa:** ogni nuovo amico nasce ora direttamente "Attivo", non più "In attesa". Lo stato "In attesa" non serviva a nulla di voluto --- il suo unico effetto reale era nascondere l'amico dal selettore dei destinatari quando si crea o modifica una capsula, finché non lo si segnava a mano come attivo dal menu azioni. Un utente aggiungeva un amico, andava a condividere una capsula, non lo trovava in elenco, e non aveva nessun indizio del perché. Restano due soli stati: "Attivo" e "Revocato" (tramite "Revoca", sempre disponibile dal menu azioni).
+
+**Note tecniche:** `FriendStatus` (domain/friends/types.ts) e `FriendStatusColumn` (types/supabase.ts) passano da 3 a 2 valori; migrazione `20260917050000_remove_friend_pending_status.sql` promuove a "active" ogni riga `friends` ancora "pending", cambia il default della colonna da "pending" ad "active" e stringe il check constraint (rinominato da `trusted_contacts_status_check`, retaggio del nome originale della tabella, a `friends_status_check`). Rimossi da `FriendsPanel.tsx` la voce di menu "Segna come attivo", l'opzione "In attesa" del filtro per stato e la relativa etichetta/colore badge --- `setFriendStatus` resta, usata oggi solo da "Revoca". Aggiornati i test che si appoggiavano al vecchio comportamento (`friends.spec.ts`, `capsules.spec.ts`, `list-filters.spec.ts`, `dashboard-counters.test.tsx`) per riflettere che gli amici nascono già attivi --- tutti verificati passanti, uniti al resto della suite (277 unit test, e2e di Amici/Capsule/filtri).
+
+---
+
 ## 2026-09-17 (6)
 
 ### Amici: badge "Su Hinthial" spostato sull'avatar

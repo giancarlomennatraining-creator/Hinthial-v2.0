@@ -77,8 +77,8 @@ describe("DashboardCounters", () => {
     const context = buildContext({
       friends: [
         buildFriend({ id: "f1", status: "active", isGuardian: true }),
-        // Guardiano ma non ancora Attivo --- conta per "guardiani", non per "attivi".
-        buildFriend({ id: "f2", status: "pending", isGuardian: true }),
+        // Guardiano ma revocato --- conta per "guardiani", non per "attivi".
+        buildFriend({ id: "f2", status: "revoked", isGuardian: true }),
         // Attivo ma non Guardiano --- conta per "attivi", non per "guardiani".
         buildFriend({ id: "f3", status: "active", isGuardian: false }),
       ],
@@ -91,7 +91,7 @@ describe("DashboardCounters", () => {
 
   it("shows the sub-counter at 0 e 0 when there are friends but none qualify yet", () => {
     const context = buildContext({
-      friends: [buildFriend({ status: "pending", isGuardian: false })],
+      friends: [buildFriend({ status: "revoked", isGuardian: false })],
     });
 
     render(<DashboardCounters context={context} />);
