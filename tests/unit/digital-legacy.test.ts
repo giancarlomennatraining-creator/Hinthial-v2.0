@@ -6,9 +6,11 @@ import {
   clampDigitalLegacyField,
   computeDigitalLegacyTransition,
   describeDigitalLegacySettings,
+  describeDigitalLegacyStatus,
   isGuardianQuorumSatisfied,
   totalWorstCaseDays,
   type DigitalLegacyRuntimeState,
+  type DigitalLegacyStatus,
   type GuardianTally,
 } from "@/domain/digital-legacy/types";
 
@@ -180,7 +182,14 @@ describe("computeDigitalLegacyTransition", () => {
   });
 
   it("resets to normal from any non-normal state as soon as a login after the state started is seen", () => {
-    for (const state of ["reminding", "grace_period", "awaiting_guardians"] as const) {
+    for (const state of [
+      "reminding",
+      "grace_period",
+      "awaiting_guardians",
+      "guardians_confirmed",
+      "formal_verification",
+      "final_wait",
+    ] as const) {
       const action = computeDigitalLegacyTransition({
         now: NOW,
         lastSignInAt: new Date(NOW.getTime() - 1 * DAY), // logged in AFTER the state began
@@ -248,14 +257,70 @@ describe("computeDigitalLegacyTransition", () => {
     expect(action).toEqual({ type: "reset", reason: "guardian_confirmed_ok" });
   });
 
-  it("never advances from guardians_confirmed on its own --- only a real owner login (checked above) can", () => {
+  it("advances from guardians_confirmed to formal_verification right away, with no waiting period of its own", () => {
     const action = computeDigitalLegacyTransition({
       now: NOW,
       lastSignInAt: new Date(NOW.getTime() - 300 * DAY), // still before the state began
       settings,
       runtime: runtime({ state: "guardians_confirmed", stateEnteredAt: new Date(NOW.getTime() - 5 * DAY).toISOString() }),
     });
+    expect(action).toEqual({ type: "start_formal_verification" });
+  });
+
+  it("waits out formalVerificationDays before starting the final wait", () => {
+    const tooSoon = computeDigitalLegacyTransition({
+      now: NOW,
+      lastSignInAt: new Date(NOW.getTime() - 300 * DAY),
+      settings, // formalVerificationDays: 14
+      runtime: runtime({ state: "formal_verification", stateEnteredAt: new Date(NOW.getTime() - 10 * DAY).toISOString() }),
+    });
+    expect(tooSoon).toEqual({ type: "none" });
+
+    const elapsed = computeDigitalLegacyTransition({
+      now: NOW,
+      lastSignInAt: new Date(NOW.getTime() - 300 * DAY),
+      settings,
+      runtime: runtime({ state: "formal_verification", stateEnteredAt: new Date(NOW.getTime() - 15 * DAY).toISOString() }),
+    });
+    expect(elapsed).toEqual({ type: "start_final_wait" });
+  });
+
+  it("waits out finalWaitDays before triggering the release", () => {
+    const tooSoon = computeDigitalLegacyTransition({
+      now: NOW,
+      lastSignInAt: new Date(NOW.getTime() - 300 * DAY),
+      settings, // finalWaitDays: 14
+      runtime: runtime({ state: "final_wait", stateEnteredAt: new Date(NOW.getTime() - 10 * DAY).toISOString() }),
+    });
+    expect(tooSoon).toEqual({ type: "none" });
+
+    const elapsed = computeDigitalLegacyTransition({
+      now: NOW,
+      lastSignInAt: new Date(NOW.getTime() - 300 * DAY),
+      settings,
+      runtime: runtime({ state: "final_wait", stateEnteredAt: new Date(NOW.getTime() - 15 * DAY).toISOString() }),
+    });
+    expect(elapsed).toEqual({ type: "trigger_release" });
+  });
+
+  it("never advances further on its own once triggered --- only a real owner login (checked above) can move the state, and it can never undo the release itself", () => {
+    const action = computeDigitalLegacyTransition({
+      now: NOW,
+      lastSignInAt: new Date(NOW.getTime() - 300 * DAY), // still before the state began
+      settings,
+      runtime: runtime({ state: "triggered", stateEnteredAt: new Date(NOW.getTime() - 100 * DAY).toISOString() }),
+    });
     expect(action).toEqual({ type: "none" });
+  });
+
+  it("still resets to normal from triggered on a genuine later login", () => {
+    const action = computeDigitalLegacyTransition({
+      now: NOW,
+      lastSignInAt: new Date(NOW.getTime() - 1 * DAY), // logged in AFTER the state began
+      settings,
+      runtime: runtime({ state: "triggered", stateEnteredAt: new Date(NOW.getTime() - 5 * DAY).toISOString() }),
+    });
+    expect(action).toEqual({ type: "reset", reason: "login" });
   });
 });
 
@@ -285,5 +350,62 @@ describe("isGuardianQuorumSatisfied", () => {
   it("'unanimous' needs every guardian", () => {
     expect(isGuardianQuorumSatisfied("unanimous", tally(3, 2))).toBe(false);
     expect(isGuardianQuorumSatisfied("unanimous", tally(3, 3))).toBe(true);
+  });
+});
+
+describe("describeDigitalLegacyStatus", () => {
+  function status(overrides: Partial<DigitalLegacyStatus> = {}): DigitalLegacyStatus {
+    return {
+      state: "normal",
+      stateEnteredAt: NOW.toISOString(),
+      triggeredAt: null,
+      remindersSent: 0,
+      guardianResponseCounts: null,
+      ...overrides,
+    };
+  }
+
+  it("reports the reminder count so far, out of the total configured", () => {
+    const text = describeDigitalLegacyStatus(status({ state: "reminding", remindersSent: 2 }), 3);
+    expect(text).toContain("2 di 3");
+  });
+
+  it("reports the guardian tally when requests exist", () => {
+    const text = describeDigitalLegacyStatus(
+      status({
+        state: "awaiting_guardians",
+        guardianResponseCounts: { total: 3, responded: 2, unreachable: 1 },
+      }),
+      3,
+    );
+    expect(text).toContain("2 di 3");
+    expect(text).toContain("1 confermano");
+  });
+
+  it("mentions the release date once triggered", () => {
+    const text = describeDigitalLegacyStatus(
+      status({ state: "triggered", triggeredAt: "2026-06-01T00:00:00.000Z" }),
+      3,
+    );
+    expect(text).toContain("2026");
+    expect(text.toLowerCase()).toContain("aperte");
+  });
+
+  it("never mentions raw enum values like 'awaiting_guardians' or 'unreachable'", () => {
+    for (const state of [
+      "reminding",
+      "grace_period",
+      "awaiting_guardians",
+      "guardians_confirmed",
+      "formal_verification",
+      "final_wait",
+      "triggered",
+    ] as const) {
+      const text = describeDigitalLegacyStatus(
+        status({ state, guardianResponseCounts: { total: 1, responded: 1, unreachable: 1 } }),
+        3,
+      );
+      expect(text).not.toMatch(/_/); // niente snake_case grezzo trapelato in un testo per l'utente
+    }
   });
 });

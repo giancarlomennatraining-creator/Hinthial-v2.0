@@ -48,7 +48,10 @@ type AuditEventTypeColumn =
   | "digital_legacy_guardian_requested"
   | "digital_legacy_guardian_responded"
   | "digital_legacy_guardians_confirmed"
-  | "digital_legacy_reset_by_guardian";
+  | "digital_legacy_reset_by_guardian"
+  | "digital_legacy_formal_verification_started"
+  | "digital_legacy_final_wait_started"
+  | "digital_legacy_triggered";
 
 type FriendStatusColumn = "pending" | "active" | "revoked";
 
@@ -64,7 +67,10 @@ type DigitalLegacyStateColumn =
   | "reminding"
   | "grace_period"
   | "awaiting_guardians"
-  | "guardians_confirmed";
+  | "guardians_confirmed"
+  | "formal_verification"
+  | "final_wait"
+  | "triggered";
 type GuardianVerificationResponseColumn = "ok" | "unknown" | "unreachable";
 
 export type Database = {
@@ -99,6 +105,7 @@ export type Database = {
           digital_legacy_state_entered_at: string;
           digital_legacy_reminders_sent: number;
           digital_legacy_last_reminder_at: string | null;
+          digital_legacy_triggered_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -130,6 +137,7 @@ export type Database = {
           digital_legacy_state_entered_at?: string;
           digital_legacy_reminders_sent?: number;
           digital_legacy_last_reminder_at?: string | null;
+          digital_legacy_triggered_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -161,6 +169,7 @@ export type Database = {
           digital_legacy_state_entered_at?: string;
           digital_legacy_reminders_sent?: number;
           digital_legacy_last_reminder_at?: string | null;
+          digital_legacy_triggered_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

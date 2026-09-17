@@ -3,6 +3,8 @@ import type { Database } from "@/types/supabase";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import { sendEmail } from "@/lib/email/send-email";
 import {
+  digitalLegacyCapsuleReleasedEmail,
+  digitalLegacyFinalWaitEmail,
   digitalLegacyGracePeriodEmail,
   digitalLegacyGuardianRequestEmail,
   digitalLegacyGuardiansConfirmedEmail,
@@ -24,9 +26,10 @@ export interface DigitalLegacyCheckSummary {
 }
 
 /**
- * Il giro periodico di "Eredità digitale" (fasi 1-4: rilevamento
- * inattività, promemoria, periodo di grazia, coinvolgimento guardiani)
- * --- chiamato una volta al giorno dal cron di Vercel (v.
+ * Il giro periodico di "Eredità digitale" (tutte e 7 le fasi:
+ * rilevamento inattività, promemoria, periodo di grazia, coinvolgimento
+ * guardiani, verifica formale, attesa finale, apertura capsule) ---
+ * chiamato una volta al giorno dal cron di Vercel (v.
  * app/api/cron/digital-legacy/route.ts). Ignora completamente chi ha
  * `digital_legacy_enabled` spento (v. richiesta utente: opt-in
  * esplicito, mai attivo di default) e chi non ha mai effettuato un
@@ -36,9 +39,18 @@ export interface DigitalLegacyCheckSummary {
  * gestito da Supabase stesso --- niente colonna nostra da mantenere in
  * sincrono): la definizione più semplice possibile per queste prime
  * fasi, ampliabile in futuro.
+ *
+ * `now` è iniettabile (di default l'ora vera) solo per i test: le fasi
+ * più lunghe (verifica formale, attesa finale) non si possono simulare
+ * aspettando per davvero, né retrodatando `state_entered_at` da solo
+ * (finirebbe prima di `last_sign_in_at`, facendo scattare il reset
+ * invece della transizione che si vuole osservare) --- v.
+ * guardian-verification.integration.test.ts.
  */
-export async function runDigitalLegacyCheck(admin: SupabaseClient<Database>): Promise<DigitalLegacyCheckSummary> {
-  const now = new Date();
+export async function runDigitalLegacyCheck(
+  admin: SupabaseClient<Database>,
+  now: Date = new Date(),
+): Promise<DigitalLegacyCheckSummary> {
   let usersChecked = 0;
   let transitions = 0;
   let page = 1;
@@ -226,24 +238,136 @@ async function applyDigitalLegacyAction(
     return;
   }
 
-  // "guardians_confirmed": ultimo passo di questo incremento --- un
-  // avviso finale al proprietario (potrebbe non poterlo più leggere,
-  // ma è comunque l'ultima rete di sicurezza), poi ferma qui: la
-  // verifica formale è una fase futura, non ancora costruita.
+  if (action.type === "guardians_confirmed") {
+    // Un avviso al proprietario (potrebbe non poterlo più leggere, ma
+    // è comunque l'ultima rete di sicurezza finché resta qualcuno che
+    // può ancora leggerla) --- poi, senza attesa propria, si passa
+    // subito alla verifica formale (v. computeDigitalLegacyTransition).
+    await admin
+      .from("profiles")
+      .update({ digital_legacy_state: "guardians_confirmed", digital_legacy_state_entered_at: nowIso })
+      .eq("id", userId);
+
+    if (email) {
+      try {
+        const { subject, html } = digitalLegacyGuardiansConfirmedEmail();
+        await sendEmail({ to: email, subject, html });
+      } catch (err) {
+        console.error("[digital-legacy] failed to send guardians-confirmed email:", err);
+      }
+    }
+    await logAuditEvent(admin, userId, "digital_legacy_guardians_confirmed");
+    return;
+  }
+
+  if (action.type === "start_formal_verification") {
+    // Passaggio immediato, senza email propria (l'avviso "guardians_confirmed"
+    // qui sopra ha già detto tutto quello che c'è da dire finché non
+    // comincia l'ultima attesa vera, v. sotto) --- solo bookkeeping e audit.
+    await admin
+      .from("profiles")
+      .update({ digital_legacy_state: "formal_verification", digital_legacy_state_entered_at: nowIso })
+      .eq("id", userId);
+    await logAuditEvent(admin, userId, "digital_legacy_formal_verification_started");
+    return;
+  }
+
+  if (action.type === "start_final_wait") {
+    await admin
+      .from("profiles")
+      .update({ digital_legacy_state: "final_wait", digital_legacy_state_entered_at: nowIso })
+      .eq("id", userId);
+
+    if (email) {
+      try {
+        const { subject, html } = digitalLegacyFinalWaitEmail(settings.finalWaitDays);
+        await sendEmail({ to: email, subject, html });
+      } catch (err) {
+        console.error("[digital-legacy] failed to send final-wait email:", err);
+      }
+    }
+    await logAuditEvent(admin, userId, "digital_legacy_final_wait_started");
+    return;
+  }
+
+  // "trigger_release": l'azione finale --- v. doc comment di
+  // DigitalLegacyState per perché digital_legacy_triggered_at è una
+  // colonna a sé, mai azzerata da un reset successivo.
   await admin
     .from("profiles")
-    .update({ digital_legacy_state: "guardians_confirmed", digital_legacy_state_entered_at: nowIso })
+    .update({
+      digital_legacy_state: "triggered",
+      digital_legacy_state_entered_at: nowIso,
+      digital_legacy_triggered_at: nowIso,
+    })
     .eq("id", userId);
+  await logAuditEvent(admin, userId, "digital_legacy_triggered");
+  await releaseCapsulesToRecipients(admin, userId);
+}
 
-  if (email) {
+/**
+ * Avvisa ogni destinatario di una capsula già condivisa (v.
+ * capsule_shares) che può ora aprirla --- l'accesso vero è già concesso
+ * da questo momento dalla policy RLS su capsule_share_keys/
+ * storage.objects (v. migrazione digital_legacy_release, che controlla
+ * `digital_legacy_triggered_at` in OR con la open_at della capsula):
+ * questa funzione manda solo l'email, non è lei a concedere l'accesso.
+ * Una capsula ancora "draft"/"ready" ma mai condivisa non ha nessuna
+ * riga in capsule_shares --- resta semplicemente fuori da qui, come
+ * deve: "Eredità digitale" non decide da sola chi riceve cosa, rende
+ * solo prima disponibile ciò che il proprietario aveva già condiviso.
+ */
+async function releaseCapsulesToRecipients(admin: SupabaseClient<Database>, ownerId: string): Promise<void> {
+  const { data: profile, error: profileError } = await admin
+    .from("profiles")
+    .select("first_name, last_name")
+    .eq("id", ownerId)
+    .maybeSingle();
+  if (profileError || !profile) {
+    console.error("[digital-legacy] failed to read owner profile for capsule release:", profileError?.message);
+    return;
+  }
+  const ownerName = `${profile.first_name} ${profile.last_name}`.trim();
+
+  // Due query batch, mai un join lato server (stesso schema di
+  // listCapsulesSharedWithMe): prima le capsule davvero condivise di
+  // questo proprietario, poi chi le riceve.
+  const { data: sharedCapsules, error: capsulesError } = await admin
+    .from("capsules")
+    .select("id")
+    .eq("owner_id", ownerId)
+    .eq("status", "shared");
+  if (capsulesError) {
+    console.error("[digital-legacy] failed to list shared capsules:", capsulesError.message);
+    return;
+  }
+  if (!sharedCapsules || sharedCapsules.length === 0) return;
+
+  const { data: shares, error: sharesError } = await admin
+    .from("capsule_shares")
+    .select("recipient_user_id")
+    .in(
+      "capsule_id",
+      sharedCapsules.map((c) => c.id),
+    );
+  if (sharesError) {
+    console.error("[digital-legacy] failed to list capsule recipients:", sharesError.message);
+    return;
+  }
+  if (!shares || shares.length === 0) return;
+
+  const recipientIds = [...new Set(shares.map((s) => s.recipient_user_id))];
+  for (const recipientId of recipientIds) {
     try {
-      const { subject, html } = digitalLegacyGuardiansConfirmedEmail();
-      await sendEmail({ to: email, subject, html });
+      const { data: recipientAuth, error: recipientAuthError } = await admin.auth.admin.getUserById(recipientId);
+      if (recipientAuthError || !recipientAuth.user?.email) continue;
+
+      const { subject, html } = digitalLegacyCapsuleReleasedEmail(ownerName);
+      await sendEmail({ to: recipientAuth.user.email, subject, html });
     } catch (err) {
-      console.error("[digital-legacy] failed to send guardians-confirmed email:", err);
+      console.error("[digital-legacy] failed to notify a capsule recipient:", err);
     }
   }
-  await logAuditEvent(admin, userId, "digital_legacy_guardians_confirmed");
 }
 
 /**

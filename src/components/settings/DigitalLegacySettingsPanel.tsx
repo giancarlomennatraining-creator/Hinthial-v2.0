@@ -19,6 +19,7 @@ import {
   type GuardianQuorum,
 } from "@/domain/digital-legacy/types";
 import { useToast } from "@/components/ui/ToastProvider";
+import { DigitalLegacyStatusBanner } from "@/components/digital-legacy/DigitalLegacyStatusBanner";
 import { cn } from "@/lib/utils";
 
 const GUARDIAN_QUORUM_ORDER: GuardianQuorum[] = ["unanimous", "majority", "single"];
@@ -174,6 +175,8 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
           improvvisa.
         </p>
       </div>
+
+      <DigitalLegacyStatusBanner userId={userId} reminderCount={settings.reminderCount} />
 
       <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
         <input

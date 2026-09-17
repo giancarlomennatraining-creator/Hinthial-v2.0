@@ -139,9 +139,10 @@ export function digitalLegacyGuardianRequestEmail(
 /**
  * Inviata al proprietario quando i suoi guardiani confermano di non
  * riuscire a raggiungerlo (v. isGuardianQuorumSatisfied) --- un'ultima
- * rete di sicurezza, anche se l'account potrebbe non poterla leggere:
- * se anche questa email non riceve risposta, il passo successivo
- * (verifica formale) non è ancora costruito in questa versione.
+ * rete di sicurezza, anche se l'account potrebbe non poterla leggere.
+ * Segue una verifica formale, poi un'attesa finale (v.
+ * digitalLegacyFinalWaitEmail): un solo accesso, in qualunque momento
+ * prima che l'attesa finale scada, annulla comunque tutto.
  */
 export function digitalLegacyGuardiansConfirmedEmail(): { subject: string; html: string } {
   const dashboardUrl = `${appUrl()}/dashboard`;
@@ -152,6 +153,45 @@ export function digitalLegacyGuardiansConfirmedEmail(): { subject: string; html:
       <p>I guardiani che hai indicato per "Eredità digitale" hanno confermato di non riuscire più a raggiungerti.</p>
       <p>Se stai bene, accedi subito a Hinthial: basta un accesso per annullare tutto.</p>
       ${primaryButton(dashboardUrl, "Accedi a Hinthial")}
+    `),
+  };
+}
+
+/**
+ * L'ultima email al proprietario prima dell'apertura vera e propria
+ * delle capsule --- inviata all'inizio dell'attesa finale (v.
+ * computeDigitalLegacyTransition, "start_final_wait"), l'unico avviso
+ * che dice esplicitamente cosa sta per succedere e quando.
+ */
+export function digitalLegacyFinalWaitEmail(finalWaitDays: number): { subject: string; html: string } {
+  const dashboardUrl = `${appUrl()}/dashboard`;
+
+  return {
+    subject: "Ultimo avviso: le tue capsule su Hinthial stanno per aprirsi",
+    html: emailShell(`
+      <p>Questo è l'ultimo avviso prima che le tue capsule già condivise diventino leggibili ai loro destinatari, a prescindere dalla data di apertura che avevi scelto.</p>
+      <p>Hai ancora ${finalWaitDays} giorni: se accedi anche una sola volta entro questo periodo, tutto si annulla e nessuna capsula si apre in anticipo.</p>
+      ${primaryButton(dashboardUrl, "Accedi a Hinthial")}
+    `),
+  };
+}
+
+/**
+ * Inviata a ogni destinatario di una capsula già condivisa, quando
+ * "Eredità digitale" fa scattare l'apertura (v. domain/digital-legacy/
+ * automation.ts, releaseCapsulesToRecipients) --- mai il titolo o il
+ * contenuto della capsula, ancora cifrati e mai visti da questo
+ * server: solo l'avviso che è arrivato il momento di aprirla.
+ */
+export function digitalLegacyCapsuleReleasedEmail(ownerName: string): { subject: string; html: string } {
+  const dashboardUrl = `${appUrl()}/dashboard`;
+
+  return {
+    subject: `Una capsula di ${ownerName} è ora disponibile su Hinthial`,
+    html: emailShell(`
+      <p>Una capsula che <strong>${ownerName}</strong> aveva condiviso con te è ora disponibile --- non siamo riusciti a raggiungerlo/la per un periodo prolungato, e i guardiani che aveva indicato hanno confermato la stessa cosa.</p>
+      <p>La trovi nella scheda "Condivise con me" di Capsule.</p>
+      ${primaryButton(dashboardUrl, "Vai a Hinthial")}
     `),
   };
 }

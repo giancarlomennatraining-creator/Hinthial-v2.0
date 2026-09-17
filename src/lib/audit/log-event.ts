@@ -34,7 +34,10 @@ export type AuditEventType =
   | "digital_legacy_guardian_requested"
   | "digital_legacy_guardian_responded"
   | "digital_legacy_guardians_confirmed"
-  | "digital_legacy_reset_by_guardian";
+  | "digital_legacy_reset_by_guardian"
+  | "digital_legacy_formal_verification_started"
+  | "digital_legacy_final_wait_started"
+  | "digital_legacy_triggered";
 
 /**
  * Metadati tecnici facoltativi per un evento --- mai contenuti, nomi

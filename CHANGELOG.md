@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-17 (2)
+
+### FASE 12, quarto e ultimo passo --- verifica formale, attesa finale, apertura capsule
+
+**Cosa fa:** completate le ultime tre fasi della roadmap. Dopo la conferma dei guardiani, l'account entra in una verifica formale, poi in un'attesa finale (durate configurabili come tutto il resto, in Impostazioni), con un'ultima email al proprietario all'inizio dell'attesa finale --- l'ultimo momento in cui un semplice accesso annulla tutto. Se anche l'attesa finale scade senza risposta, **le capsule già condivise dal proprietario diventano leggibili ai loro destinatari da quel momento, indipendentemente dalla data di apertura originale** --- ognuno riceve un'email che lo avvisa. Discusso esplicitamente con l'utente prima di scrivere questa parte: senza, le fasi 1-6 non avrebbero avuto nessun effetto reale sulle capsule, solo sullo stato interno dell'account. In Impostazioni > Eredità digitale compare anche un nuovo riquadro con lo stato attuale del proprio processo (se non "normale"), con i conteggi di quanti guardiani hanno risposto --- mai i loro nomi, cifrati e leggibili solo dalla propria rubrica Amici.
+
+**Note tecniche:** una nuova colonna `digital_legacy_triggered_at` su `profiles`, deliberatamente separata da `digital_legacy_state`: quest'ultima può tornare "normal" con un accesso successivo del proprietario (il monitoraggio futuro riparte da zero), ma `digital_legacy_triggered_at`, una volta impostata, non viene mai più azzerata --- l'accesso alle capsule già concesso ai destinatari non si può ritirare, anche se il proprietario si fa poi vivo. Le due policy RLS che governano l'accesso ai contenuti condivisi (`capsule_share_keys` e lo storage degli allegati) ora concedono la lettura in OR tra due condizioni indipendenti: la `open_at` della capsula già raggiunta, oppure `digital_legacy_triggered_at` dell'account non nullo --- una capsula mai condivisa (ancora bozza o solo chiusa) non ha alcuna riga di chiave da concedere, quindi non è mai coinvolta: "Eredità digitale" non decide da sola chi riceve cosa, rende solo prima disponibile ciò che il proprietario aveva già esplicitamente condiviso. `runDigitalLegacyCheck` accetta ora un orologio iniettabile (di default quello vero) solo per i test: le fasi più lunghe non si possono simulare aspettando per davvero, né retrodatando `state_entered_at` da solo (finirebbe prima di `last_sign_in_at`, facendo scattare il reset invece della transizione voluta). Verificato con un test di integrazione end-to-end esteso che copre l'intera catena contro il database reale: una capsula condivisa con `open_at` a 1000 giorni nel futuro non è leggibile dal destinatario prima dell'attivazione, lo diventa subito dopo, e resta leggibile anche dopo che il proprietario torna ad accedere (confermando che il reset dello stato non ritira l'accesso già concesso).
+
+**Cosa resta fuori, deliberatamente:** la revisione legale e di sicurezza che la roadmap richiede esplicitamente prima che questa funzionalità tocchi dati reali in produzione (non è qualcosa che si possa implementare in codice); e una vista per il guardiano che elenchi "di chi sono guardiano" prima ancora che arrivi una richiesta di verifica attiva --- oggi lo scopre solo quando l'email di richiesta arriva davvero. Entrambi discussi esplicitamente con l'utente e lasciati fuori da questo incremento.
+
+---
+
 ## 2026-09-17
 
 ### FASE 12, terzo passo --- coinvolgimento dei guardiani

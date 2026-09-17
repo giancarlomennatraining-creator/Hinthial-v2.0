@@ -187,4 +187,162 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
     expect(eventTypes).toContain("digital_legacy_guardian_responded");
     expect(eventTypes).toContain("digital_legacy_guardians_confirmed");
   });
+
+  // Fasi 5-7 (verifica formale, attesa finale, apertura capsule) da qui
+  // in poi --- lo stesso proprietario/guardiano di sopra, già in
+  // "guardians_confirmed". `now` iniettato in runDigitalLegacyCheck (v.
+  // doc comment della funzione) per avanzare i giorni senza doverli
+  // aspettare per davvero, senza toccare last_sign_in_at/state_entered_at
+  // reali --- l'unico modo di testare fasi con una vera durata senza
+  // incappare di nuovo nel problema del reset-su-login descritto sopra.
+  let capsuleId = "";
+
+  it("shares a capsule whose open_at is far in the future --- not readable by the recipient yet", async () => {
+    const { data: capsule, error: capsuleError } = await admin
+      .from("capsules")
+      .insert({
+        owner_id: ownerId,
+        encrypted_payload: "test-encrypted-payload",
+        status: "shared",
+        open_at: new Date(Date.now() + 1000 * 86_400_000).toISOString(), // 1000 giorni nel futuro
+      })
+      .select("id")
+      .single();
+    expect(capsuleError).toBeNull();
+    capsuleId = capsule!.id;
+
+    const { error: shareError } = await admin.from("capsule_shares").insert({
+      capsule_id: capsuleId,
+      owner_id: ownerId,
+      recipient_user_id: guardianId, // riusa lo stesso account guardiano come destinatario --- basta per verificare l'RLS
+    });
+    expect(shareError).toBeNull();
+
+    const { error: keyError } = await admin.from("capsule_share_keys").insert({
+      capsule_id: capsuleId,
+      owner_id: ownerId,
+      recipient_user_id: guardianId,
+      ephemeral_public_key: "test-ephemeral-key",
+      encrypted_payload_for_recipient: "test-encrypted-for-recipient",
+    });
+    expect(keyError).toBeNull();
+
+    // Prima dell'attivazione: open_at lontanissima, nessun accesso concesso.
+    const { data: readBefore } = await guardianClient
+      .from("capsule_share_keys")
+      .select("id")
+      .eq("capsule_id", capsuleId)
+      .maybeSingle();
+    expect(readBefore).toBeNull();
+  });
+
+  it("advances guardians_confirmed -> formal_verification immediately, with no waiting period of its own", async () => {
+    const now = new Date();
+    await runDigitalLegacyCheck(admin, now);
+
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("digital_legacy_state, digital_legacy_state_entered_at")
+      .eq("id", ownerId)
+      .single();
+    expect(profile?.digital_legacy_state).toBe("formal_verification");
+  });
+
+  it("waits out formalVerificationDays (default 14) before starting the final wait", async () => {
+    const { data: before } = await admin
+      .from("profiles")
+      .select("digital_legacy_state_entered_at")
+      .eq("id", ownerId)
+      .single();
+    const enteredAt = new Date(before!.digital_legacy_state_entered_at);
+
+    // Ancora presto: nessun cambiamento.
+    await runDigitalLegacyCheck(admin, new Date(enteredAt.getTime() + 5 * 86_400_000));
+    const { data: tooSoon } = await admin
+      .from("profiles")
+      .select("digital_legacy_state")
+      .eq("id", ownerId)
+      .single();
+    expect(tooSoon?.digital_legacy_state).toBe("formal_verification");
+
+    // 14 giorni dopo: passa all'attesa finale.
+    await runDigitalLegacyCheck(admin, new Date(enteredAt.getTime() + 15 * 86_400_000));
+    const { data: elapsed } = await admin
+      .from("profiles")
+      .select("digital_legacy_state")
+      .eq("id", ownerId)
+      .single();
+    expect(elapsed?.digital_legacy_state).toBe("final_wait");
+  });
+
+  it("waits out finalWaitDays (default 14), then triggers the release --- opening the capsule to its recipient", async () => {
+    const { data: before } = await admin
+      .from("profiles")
+      .select("digital_legacy_state_entered_at")
+      .eq("id", ownerId)
+      .single();
+    const enteredAt = new Date(before!.digital_legacy_state_entered_at);
+
+    await runDigitalLegacyCheck(admin, new Date(enteredAt.getTime() + 15 * 86_400_000));
+
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("digital_legacy_state, digital_legacy_triggered_at")
+      .eq("id", ownerId)
+      .single();
+    expect(profile?.digital_legacy_state).toBe("triggered");
+    expect(profile?.digital_legacy_triggered_at).not.toBeNull();
+
+    const { data: events } = await admin.from("audit_events").select("event_type").eq("owner_id", ownerId);
+    expect((events ?? []).map((e) => e.event_type)).toContain("digital_legacy_triggered");
+
+    // Il cuore della fase 7: la capsula, con open_at ancora a 1000 giorni
+    // nel futuro, è ora leggibile dal destinatario --- l'irraggiungibilità
+    // confermata ha fatto scattare l'accesso indipendentemente dalla data.
+    const { data: readAfter, error: readAfterError } = await guardianClient
+      .from("capsule_share_keys")
+      .select("id, encrypted_payload_for_recipient")
+      .eq("capsule_id", capsuleId)
+      .single();
+    expect(readAfterError).toBeNull();
+    expect(readAfter?.encrypted_payload_for_recipient).toBe("test-encrypted-for-recipient");
+  });
+
+  it("still resets to normal on a genuine later login, without undoing the already-granted capsule access", async () => {
+    // digital_legacy_state_entered_at è rimasto molto avanti nel "futuro
+    // finto" per via delle chiamate con `now` iniettato qui sopra --- un
+    // vero accesso adesso sarebbe comunque cronologicamente PRIMA di
+    // quel valore, e non farebbe scattare il reset per errore di
+    // impostazione del test, non del codice. Lo si riporta a un istante
+    // reale nel passato apposta per questo test: "triggered" è uno
+    // stato terminale (v. computeDigitalLegacyTransition), retrodatarlo
+    // non rischia di fargli saltare qualche altra transizione.
+    await admin
+      .from("profiles")
+      .update({ digital_legacy_state_entered_at: new Date(Date.now() - 60 * 60 * 1000).toISOString() })
+      .eq("id", ownerId);
+
+    // Un vero secondo accesso, DOPO quell'istante.
+    const anon = createClient(SUPABASE_URL!, ANON_KEY!, noSession);
+    const signIn = await anon.auth.signInWithPassword(owner);
+    expect(signIn.error).toBeNull();
+
+    await runDigitalLegacyCheck(admin);
+
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("digital_legacy_state, digital_legacy_triggered_at")
+      .eq("id", ownerId)
+      .single();
+    expect(profile?.digital_legacy_state).toBe("normal");
+    expect(profile?.digital_legacy_triggered_at).not.toBeNull(); // mai azzerato
+
+    // L'accesso già concesso resta --- non si può ritirare.
+    const { data: stillReadable } = await guardianClient
+      .from("capsule_share_keys")
+      .select("id")
+      .eq("capsule_id", capsuleId)
+      .maybeSingle();
+    expect(stillReadable).not.toBeNull();
+  });
 });

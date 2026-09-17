@@ -191,21 +191,28 @@ export function describeDigitalLegacySettings(settings: DigitalLegacyPresetValue
 }
 
 /**
- * Fasi 1-4 della roadmap (v. HINTHIAL_MVP.md sezione 10): rilevamento
- * inattività, promemoria, periodo di grazia, coinvolgimento guardiani
- * --- fin dove arriva questo incremento. "guardians_confirmed" è un
- * punto fermo, non ancora una fase attiva: significa "i guardiani
- * hanno confermato di non riuscire più a raggiungere il proprietario,
- * in attesa che una fase futura (verifica formale, non costruita)
- * prenda in carico questo account" --- v. computeDigitalLegacyTransition,
- * che da qui non fa avanzare più nulla.
+ * Tutte e 7 le fasi della roadmap (v. HINTHIAL_MVP.md sezione 10):
+ * rilevamento inattività, promemoria, periodo di grazia, coinvolgimento
+ * guardiani, verifica formale, attesa finale, apertura capsule.
+ * "guardians_confirmed" resta comunque solo un istante di passaggio
+ * (avanza da sé a "formal_verification" al giro successivo, senza una
+ * propria durata): il vero tempo di attesa di quella fase vive nello
+ * stato che segue. "triggered" è l'unico stato senza ritorno per
+ * l'EFFETTO che produce (v. digital_legacy_triggered_at su profiles,
+ * un marcatore permanente separato da questa colonna, mai azzerato da
+ * un reset): l'accesso alle capsule già concesso ai destinatari non si
+ * può ritirare, anche se lo stato stesso può tornare "normal" con un
+ * accesso successivo del proprietario.
  */
 export type DigitalLegacyState =
   | "normal"
   | "reminding"
   | "grace_period"
   | "awaiting_guardians"
-  | "guardians_confirmed";
+  | "guardians_confirmed"
+  | "formal_verification"
+  | "final_wait"
+  | "triggered";
 
 /** Il riscontro raccolto finora dai guardiani per l'episodio "awaiting_guardians" in corso --- v. domain/digital-legacy/automation.ts, che lo calcola dalle righe di guardian_verification_requests. */
 export interface GuardianTally {
@@ -270,7 +277,12 @@ export type DigitalLegacyAction =
   | { type: "start_grace_period" }
   | { type: "start_awaiting_guardians" }
   /** Il quorum dei guardiani è stato raggiunto --- v. isGuardianQuorumSatisfied. */
-  | { type: "guardians_confirmed" };
+  | { type: "guardians_confirmed" }
+  /** Passaggio immediato, senza attesa propria --- v. doc comment di DigitalLegacyState. */
+  | { type: "start_formal_verification" }
+  | { type: "start_final_wait" }
+  /** L'azione finale: rende le capsule già condivise leggibili ai destinatari da subito, a prescindere dalla loro open_at --- v. domain/digital-legacy/automation.ts, releaseCapsulesToRecipients. */
+  | { type: "trigger_release" };
 
 /**
  * Il "cervello" dell'automazione --- puro, senza alcun accesso a
@@ -336,9 +348,82 @@ export function computeDigitalLegacyTransition(params: {
     return { type: "none" };
   }
 
-  // "guardians_confirmed": fermo qui finché non esiste una fase futura
-  // che sappia cosa farne (v. doc comment di DigitalLegacyState sopra)
-  // --- solo un vero accesso del proprietario (controllato più sopra)
-  // può ancora annullarlo da qui.
+  // "guardians_confirmed" non ha una propria durata --- avanza da sé,
+  // subito, al giro successivo (v. doc comment di DigitalLegacyState).
+  if (runtime.state === "guardians_confirmed") {
+    return { type: "start_formal_verification" };
+  }
+
+  if (runtime.state === "formal_verification") {
+    if (daysSince(new Date(runtime.stateEnteredAt)) >= settings.formalVerificationDays) {
+      return { type: "start_final_wait" };
+    }
+    return { type: "none" };
+  }
+
+  if (runtime.state === "final_wait") {
+    if (daysSince(new Date(runtime.stateEnteredAt)) >= settings.finalWaitDays) {
+      return { type: "trigger_release" };
+    }
+    return { type: "none" };
+  }
+
+  // "triggered": l'effetto (l'accesso alle capsule già concesso) resta
+  // per sempre --- v. digital_legacy_triggered_at, un marcatore
+  // separato --- ma lo STATO può comunque tornare "normal" con un vero
+  // accesso successivo del proprietario (controllato più sopra):
+  // qui non c'è altro da fare da soli.
   return { type: "none" };
+}
+
+/** Quante richieste ai guardiani, per l'episodio in corso, hanno già una risposta --- letto da guardian_verification_requests dal solo proprietario (v. domain/digital-legacy/repository.ts, getDigitalLegacyStatus). */
+export interface GuardianResponseCounts {
+  total: number;
+  responded: number;
+  unreachable: number;
+}
+
+/** Ciò che il proprietario vede di sé stesso in Impostazioni > Eredità digitale --- mai i nomi dei guardiani qui (cifrati, decifrabili solo dalla propria rubrica Amici): solo conteggi, già in chiaro lato server. */
+export interface DigitalLegacyStatus {
+  state: DigitalLegacyState;
+  stateEnteredAt: string;
+  triggeredAt: string | null;
+  remindersSent: number;
+  guardianResponseCounts: GuardianResponseCounts | null;
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+}
+
+/**
+ * La frase mostrata al proprietario per il proprio stato attuale ---
+ * pura, nessun accesso a database: riceve già tutto ciò che le serve
+ * come parametri (v. describeDigitalLegacySettings per lo stesso
+ * principio). "normal" non produce un banner in interfaccia (v.
+ * DigitalLegacyStatusBanner.tsx) --- questa funzione non è nemmeno
+ * chiamata in quel caso.
+ */
+export function describeDigitalLegacyStatus(status: DigitalLegacyStatus, reminderCount: number): string {
+  switch (status.state) {
+    case "normal":
+      return "Tutto normale: nessun promemoria in corso.";
+    case "reminding":
+      return `Non hai effettuato l'accesso da un po': finora ti abbiamo scritto ${status.remindersSent} di ${reminderCount} promemoria previsti. Accedi in qualunque momento per annullare tutto.`;
+    case "grace_period":
+      return `Sei nel periodo di grazia, iniziato il ${formatDate(status.stateEnteredAt)}: nessun guardiano è stato ancora coinvolto. Accedi in qualunque momento per annullare tutto.`;
+    case "awaiting_guardians": {
+      const c = status.guardianResponseCounts;
+      return c
+        ? `I tuoi guardiani sono stati interpellati: ${c.responded} di ${c.total} hanno risposto finora (${c.unreachable} confermano di non riuscire a raggiungerti). Accedi in qualunque momento per annullare tutto.`
+        : "I tuoi guardiani sono stati interpellati, in attesa di risposta. Accedi in qualunque momento per annullare tutto.";
+    }
+    case "guardians_confirmed":
+    case "formal_verification":
+      return "I tuoi guardiani hanno confermato di non riuscire a raggiungerti: è in corso una verifica formale. Accedi in qualunque momento per annullare tutto.";
+    case "final_wait":
+      return "Ultima fase prima dell'apertura delle tue capsule già condivise: accedi ora per annullare tutto.";
+    case "triggered":
+      return `Le tue capsule già condivise sono state aperte ai loro destinatari${status.triggeredAt ? ` il ${formatDate(status.triggeredAt)}` : ""}. Se hai effettuato di nuovo l'accesso, il monitoraggio per il futuro è ripartito da zero --- l'apertura già avvenuta resta però definitiva.`;
+  }
 }
