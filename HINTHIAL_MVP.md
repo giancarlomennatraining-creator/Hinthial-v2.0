@@ -782,7 +782,159 @@ finché una delle due non viene eliminata.
 
 ------------------------------------------------------------------------
 
-# 13. UI / UX
+# 13. FASI 17-26 --- HINTHIAL AI: dalla lettura locale all'assistente che agisce
+
+Estensione concreta di quanto la FASE 11 lascia abbozzato ("Proactive
+AI", "Retrieval"): portare HINTHIAL da un assistente che *risponde* a
+uno che **legge i contenuti, ne estrae fatti, propone oggetti e aiuta a
+tenere in ordine archivio e vita**.
+
+Numerate dalla 17 perché 15 (security/legal hardening) e 16 (production
+release) sono già assegnate nella roadmap sintetica --- coerente con la
+scala di priorità del documento, che mette "intelligente" per ultimo.
+
+Il piano è diviso in tre blocchi, con una sola regola che li ordina:
+**tutto ciò che si può fare senza far uscire nulla dal dispositivo viene
+prima.**
+
+------------------------------------------------------------------------
+
+## Blocco A --- valore senza rischio (FASI 17-21)
+
+Nessun contenuto lascia il dispositivo, nessun consenso nuovo da
+chiedere. Da solo copre gran parte del valore percepito: archivio che si
+nomina e cataloga da sé, scadenze che nascono dai documenti, ricerca
+dentro i file, spese sommate per anno.
+
+### FASE 17 --- Lettura locale dei contenuti
+
+Estrarre testo dai contenuti già in Archivio, tutto in-browser: PDF (via
+pdf.js), immagini (OCR), audio/video (trascrizione --- sostituisce lo
+stub attuale in `domain/transcription`, che restituisce sempre `null`).
+Il testo estratto si cifra con la Master Key come ogni altro campo.
+
+Effetto immediato e verificabile: la ricerca globale smette di cercare
+tra i nomi dei file e cerca **dentro**; la categorizzazione euristica
+(`domain/categorizer`), che oggi vede solo il nome, diventa attendibile.
+
+### FASE 18 --- Estrazione strutturata locale
+
+Dal testo estratto ai campi: data del documento, scadenze dichiarate
+("ricontrollo tra 6 mesi"), importi, emittente. Sono schemi, non
+ragionamento: nessun modello coinvolto. Alimenta le prime proposte
+(rinomina, data corretta, scadenza).
+
+### FASE 19 --- Meccanismo delle proposte
+
+Non porta funzioni visibili: porta la **fiducia**, e va costruita prima
+di qualunque scrittura automatica. Un oggetto "proposta" con cosa, la
+fonte da cui nasce, e accetta/modifica/rifiuta; memoria dei rifiuti (non
+ripropone ciò che hai già scartato); annullamento; ogni azione tracciata
+in Attività con tipi di evento propri.
+
+Vincolo architetturale da rispettare: **il server può proporre, solo il
+client può scrivere** --- gli oggetti vanno cifrati con la Master Key,
+che il server non possiede.
+
+### FASE 20 --- Fascicoli
+
+Nuovo oggetto **trasversale alle categorie**, per le vicende che si
+sviluppano nel tempo (un problema di salute, l'acquisto di una casa, un
+incidente): cronologia invece di elenco, stato aperto/chiuso, totale
+delle spese, condivisione in blocco. Creazione manuale in questa fase.
+
+Non richiede IA: è una struttura che manca già oggi. Categoria = un
+cassetto; fascicolo = una storia che attraversa più cassetti. È anche
+l'unità naturale da lasciare in una capsula.
+
+### FASE 21 --- Import massivo e riconoscimento di insiemi
+
+Caricamento di molti file in una volta con riepilogo **per gruppi**
+invece di una conferma per file; rilevamento di serie ricorrenti (lo
+stesso valore misurato nel tempo); proposta di fascicoli dai
+raggruppamenti evidenti; totali di spesa per anno e categoria.
+
+Limite deliberato: mostrare andamenti e numeri, **mai interpretarli**.
+Un valore fuori range si segnala solo se è il documento stesso a dirlo.
+
+------------------------------------------------------------------------
+
+## Blocco B --- l'IA reale (FASI 22-24)
+
+Da qui cambia la postura di privacy: ogni passo va consentito
+esplicitamente. Dipende dalla FASE 15 (security/legal hardening): mandare
+documenti personali a un fornitore terzo richiede DPA, privacy policy
+aggiornata e una decisione esplicita sui dati particolari.
+
+### FASE 22 --- Analisi dei contenuti con Claude
+
+**Unica fase irreversibile del piano:** un contenuto uscito è uscito.
+
+Consenso granulare su tre assi --- funzione (rispondere / leggere
+contenuti / avvisare) x ambito (categoria) x singolo contenuto --- con
+possibilità di permessi a scadenza ("solo questo", "per 30 giorni"), di
+escludere un singolo file anche dentro una categoria abilitata, e di
+vedere in Attività cosa è uscito, quando e perché.
+
+Salute dietro interruttore separato; diagnosi con consenso ulteriore. Il
+principio: escludere l'**invio**, non l'intelligenza --- date, scadenze e
+richiami sanitari si ricavano già in locale dalle FASI 17-18.
+
+L'analisi produce output strutturato che rientra nel meccanismo della
+FASE 19, mai scritture dirette.
+
+### FASE 23 --- Chat con memoria e azioni
+
+Conversazioni persistite e cifrate (quindi rimandate dal client a ogni
+richiesta: il server non può leggerle). La chat smette di produrre solo
+testo e comincia a produrre proposte. Ricorda cosa ha già proposto e
+cosa è stato rifiutato.
+
+### FASE 24 --- Avvisi proattivi
+
+La sezione che **deve poter restare vuota** --- ed è vuota quasi sempre.
+Sostituisce concettualmente "Da tenere d'occhio", rimossa dalla
+Dashboard proprio perché costruita su regole che contano sempre
+qualcosa, e quindi parlava sempre.
+
+Vincolo strutturale: il cron gira sul server, che non può leggere nulla.
+Quindi o l'analisi gira sul dispositivo all'apertura dell'app, oppure
+richiede il consenso della FASE 22. Non esiste una terza via.
+
+------------------------------------------------------------------------
+
+## Blocco C --- fonti esterne (FASI 25-26)
+
+Il problema numero uno di un archivio è ricordarsi di riempirlo. Queste
+due fasi lo risolvono, ma vanno per ultime.
+
+### FASE 25 --- Google Drive
+
+Scope ristretto ai soli file scelti dall'utente. L'import è una **copia
+cifrata dentro Hinthial, non un collegamento**: un contenuto che resta
+fuori dal vault vanificherebbe la promessa. Rilevamento dei duplicati
+(lo stesso documento arrivato da più strade).
+
+### FASE 26 --- Gmail
+
+Per ultima non per difficoltà tecnica: leggere la posta richiede uno
+scope "restricted" di Google, con verifica e **audit di sicurezza
+annuale a pagamento** per un'app pubblica --- una decisione di budget
+prima che di codice (da riverificare sulla documentazione aggiornata).
+
+Il controllo gira **sul dispositivo all'apertura dell'app**, non su un
+cron lato server: un server che legge la posta vedrebbe i contenuti in
+chiaro, ed è il primo pezzo di Hinthial che lo farebbe. Nemmeno i soli
+metadati sono una via di mezzo accettabile --- sapere che scrive un
+oncologo è già un'informazione clinica.
+
+Serve inoltre una lista di mittenti che contano, appresa dai sì e dai no
+dell'utente: una proposta per ogni allegato PDF renderebbe la funzione
+insopportabile in due giorni.
+
+------------------------------------------------------------------------
+
+# 14. UI / UX
 
 L'app deve comunicare ordine, sicurezza e semplicità.
 
@@ -820,7 +972,7 @@ L'utente deve vedere valore immediatamente.
 
 ------------------------------------------------------------------------
 
-# 14. Cosa NON costruire nella prima versione
+# 15. Cosa NON costruire nella prima versione
 
 Non implementare:
 
@@ -842,7 +994,7 @@ L'obiettivo è costruire una base solida, non un prodotto completo.
 
 ------------------------------------------------------------------------
 
-# 15. Struttura repository suggerita
+# 16. Struttura repository suggerita
 
 ``` text
 src/
@@ -899,7 +1051,7 @@ Separare sempre:
 
 ------------------------------------------------------------------------
 
-# 16. Regole per Claude Code
+# 17. Regole per Claude Code
 
 Claude Code deve lavorare **una fase alla volta**.
 
@@ -934,7 +1086,7 @@ le alternative invece di prendere una decisione irreversibile.
 
 ------------------------------------------------------------------------
 
-# 17. Definition of Done
+# 18. Definition of Done
 
 Una fase è completata quando:
 
@@ -949,7 +1101,7 @@ Una fase è completata quando:
 
 ------------------------------------------------------------------------
 
-# 17. Roadmap sintetica
+# 19. Roadmap sintetica
 
 ``` text
 0  Bootstrap
@@ -969,6 +1121,22 @@ Una fase è completata quando:
 14 Archivio multi-tipo e capsule autosufficienti
 15 Security/legal hardening
 16 Production release
+
+   HINTHIAL AI --- blocco A: niente esce dal dispositivo
+17 Lettura locale dei contenuti (PDF/OCR/trascrizione)
+18 Estrazione strutturata locale (date, importi, emittente)
+19 Meccanismo delle proposte (accetta/modifica/rifiuta + Attività)
+20 Fascicoli (vicende trasversali alle categorie)
+21 Import massivo e riconoscimento di insiemi
+
+   HINTHIAL AI --- blocco B: l'IA reale (dipende da 15)
+22 Analisi dei contenuti con Claude --- unica fase irreversibile
+23 Chat con memoria e azioni
+24 Avvisi proattivi (possono restare vuoti)
+
+   HINTHIAL AI --- blocco C: fonti esterne
+25 Google Drive (import = copia cifrata, non collegamento)
+26 Gmail (scope restricted: decisione di budget)
 ```
 
 La priorità è:
@@ -979,7 +1147,7 @@ Non il contrario.
 
 ------------------------------------------------------------------------
 
-## 18. Stato iniziale del progetto
+## 20. Stato iniziale del progetto
 
 Partire dalla **FASE 0**.
 
