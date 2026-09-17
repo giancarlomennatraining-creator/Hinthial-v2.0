@@ -218,3 +218,45 @@ export function accountResetEmail(): { subject: string; html: string } {
     `),
   };
 }
+
+/**
+ * Richiesta di amicizia (v. domain/friends/friend-requests.ts) --- inviata
+ * a un utente Hinthial già esistente, trovato per email. Il link porta
+ * alla scheda Amici, dove la richiesta è già in attesa: chi risponde deve
+ * essere autenticato con il proprio account, mai un click anonimo.
+ */
+export function friendRequestEmail(senderName: string): { subject: string; html: string } {
+  const friendsUrl = `${appUrl()}/friends`;
+
+  return {
+    subject: `${senderName} ti ha chiesto l'amicizia su Hinthial`,
+    html: emailShell(`
+      <p><strong>${senderName}</strong> ti ha chiesto di diventare amico su Hinthial.</p>
+      <p>Puoi accettare o rifiutare la richiesta dalla scheda Amici --- se accetti, comparirete entrambi nella rispettiva lista amici.</p>
+      ${primaryButton(friendsUrl, "Vai ad Amici")}
+      <p style="font-size:12px; color:#71717a;">Se non ti aspettavi questa richiesta, puoi semplicemente ignorarla.</p>
+    `),
+  };
+}
+
+/**
+ * Richiesta di diventare guardiano (v. domain/friends/guardian-requests.ts)
+ * --- distinta dalla verifica di "Eredità digitale" già in corso
+ * (digitalLegacyGuardianRequestEmail): questa è il consenso preliminare
+ * per DIVENTARE guardiano di un amico, non ancora la verifica reale di
+ * un'inattività. Il link porta alla scheda "Protetti", dove la richiesta
+ * è già in attesa.
+ */
+export function guardianRoleRequestEmail(ownerName: string): { subject: string; html: string } {
+  const protectedUrl = `${appUrl()}/friends/protected`;
+
+  return {
+    subject: `${ownerName} ti ha chiesto di diventare suo guardiano su Hinthial`,
+    html: emailShell(`
+      <p><strong>${ownerName}</strong> ti ha chiesto di diventare il suo guardiano su Hinthial --- una persona di fiducia da contattare se un giorno non dovesse più poter accedere al proprio account.</p>
+      <p>Non è richiesto nulla ora: solo se in futuro non dovesse più accedere per molto tempo, ti verrà chiesto di confermare se hai sue notizie.</p>
+      ${primaryButton(protectedUrl, "Vai a Protetti")}
+      <p style="font-size:12px; color:#71717a;">Puoi accettare, rifiutare, o smettere di essere guardiano in qualunque momento.</p>
+    `),
+  };
+}

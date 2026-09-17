@@ -5,6 +5,7 @@ import { AlertTriangleIcon, CheckCircleIcon } from "@/components/icons/nav-icons
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
 import { SharedCapsuleNotificationPopup } from "@/components/dashboard/SharedCapsuleNotificationPopup";
+import { FriendRequestNotificationPopup } from "@/components/dashboard/FriendRequestNotificationPopup";
 
 /**
  * The greeting always renders, regardless of encryption status ---
@@ -54,6 +55,7 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
       {status.kind === "unlocked" ? (
         <>
           <SharedCapsuleNotificationPopup />
+          <FriendRequestNotificationPopup masterKey={status.masterKey} />
           <DashboardWidgets masterKey={status.masterKey} />
         </>
       ) : status.kind === "checking" ? (

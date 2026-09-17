@@ -58,8 +58,8 @@ describe("VaultHealthWidget", () => {
   it("flags an active friend not referenced by any capsule, but not a revoked one", () => {
     const context = buildContext({
       friends: [
-        { id: "friend-1", name: "Maria Rossi", email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null, role: "Coniuge", status: "active", isGuardian: false, linkedUserId: null, createdAt: "2026-01-01" },
-        { id: "friend-2", name: "Ex Avvocato", email: "ex@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null, role: "Avvocato", status: "revoked", isGuardian: false, linkedUserId: null, createdAt: "2026-01-01" },
+        { id: "friend-1", name: "Maria Rossi", email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null, role: "Coniuge", status: "active", isFriend: false, isGuardian: false, linkedUserId: null, createdAt: "2026-01-01" },
+        { id: "friend-2", name: "Ex Avvocato", email: "ex@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null, role: "Avvocato", status: "revoked", isFriend: false, isGuardian: false, linkedUserId: null, createdAt: "2026-01-01" },
       ],
     });
     render(<VaultHealthWidget context={context} />);

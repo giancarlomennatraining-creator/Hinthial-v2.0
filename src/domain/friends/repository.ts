@@ -18,7 +18,7 @@ import {
 import type { FriendInput, FriendListItem, FriendStatus, LinkedAccountMatch } from "@/domain/friends/types";
 
 const FRIEND_COLUMNS =
-  "id, encrypted_name, encrypted_email, encrypted_first_name, encrypted_last_name, avatar_path, role, status, is_guardian, linked_user_id, created_at";
+  "id, encrypted_name, encrypted_email, encrypted_first_name, encrypted_last_name, avatar_path, role, status, is_guardian, is_friend, linked_user_id, created_at";
 
 type FriendRow = {
   id: string;
@@ -30,6 +30,7 @@ type FriendRow = {
   role: string;
   status: FriendStatus;
   is_guardian: boolean;
+  is_friend: boolean;
   linked_user_id: string | null;
   created_at: string;
 };
@@ -70,6 +71,7 @@ async function toFriendListItem(
     avatarUrl: row.avatar_path ? avatarPublicUrl(supabase, row.avatar_path) : null,
     role: row.role,
     status: row.status,
+    isFriend: row.is_friend,
     isGuardian: row.is_guardian,
     linkedUserId: row.linked_user_id,
     createdAt: row.created_at,
@@ -217,23 +219,6 @@ export async function setFriendStatus(
 
   if (error) {
     throw new Error(`Impossibile aggiornare lo stato dell'amico: ${error.message}`);
-  }
-}
-
-/**
- * Marca/smarca un amico come "guardiano" (Dead Man's Switch semplificato
- * per le capsule, v. domain/capsules) --- solo un flag, come lo stato:
- * nessuna conferma richiesta da parte sua, nessun accesso concesso.
- */
-export async function setFriendGuardian(
-  supabase: SupabaseClient<Database>,
-  friendId: string,
-  isGuardian: boolean,
-): Promise<void> {
-  const { error } = await supabase.from("friends").update({ is_guardian: isGuardian }).eq("id", friendId);
-
-  if (error) {
-    throw new Error(`Impossibile aggiornare l'amico: ${error.message}`);
   }
 }
 

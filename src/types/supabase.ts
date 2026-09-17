@@ -51,9 +51,19 @@ type AuditEventTypeColumn =
   | "digital_legacy_reset_by_guardian"
   | "digital_legacy_formal_verification_started"
   | "digital_legacy_final_wait_started"
-  | "digital_legacy_triggered";
+  | "digital_legacy_triggered"
+  | "friend_request_sent"
+  | "friend_request_accepted"
+  | "friend_request_rejected"
+  | "guardian_role_requested"
+  | "guardian_role_accepted"
+  | "guardian_role_rejected"
+  | "guardian_role_revoked"
+  | "guardian_role_resigned";
 
 type FriendStatusColumn = "active" | "revoked";
+
+type RequestStatusColumn = "pending" | "accepted" | "rejected";
 
 type NavOrientationColumn = "sidebar-left" | "sidebar-right" | "topbar";
 
@@ -505,6 +515,7 @@ export type Database = {
           role: string;
           status: FriendStatusColumn;
           is_guardian: boolean;
+          is_friend: boolean;
           linked_user_id: string | null;
           created_at: string;
           updated_at: string;
@@ -520,6 +531,7 @@ export type Database = {
           role: string;
           status?: FriendStatusColumn;
           is_guardian?: boolean;
+          is_friend?: boolean;
           linked_user_id?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -535,6 +547,7 @@ export type Database = {
           role?: string;
           status?: FriendStatusColumn;
           is_guardian?: boolean;
+          is_friend?: boolean;
           linked_user_id?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -844,6 +857,103 @@ export type Database = {
           },
         ];
       };
+      friend_requests: {
+        Row: {
+          id: string;
+          sender_id: string;
+          recipient_id: string;
+          sender_email: string;
+          status: RequestStatusColumn;
+          created_at: string;
+          responded_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          sender_id: string;
+          recipient_id: string;
+          sender_email: string;
+          status?: RequestStatusColumn;
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          sender_id?: string;
+          recipient_id?: string;
+          sender_email?: string;
+          status?: RequestStatusColumn;
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "friend_requests_sender_id_fkey";
+            columns: ["sender_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "friend_requests_recipient_id_fkey";
+            columns: ["recipient_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      guardian_role_requests: {
+        Row: {
+          id: string;
+          owner_id: string;
+          guardian_user_id: string;
+          friend_id: string | null;
+          status: RequestStatusColumn;
+          created_at: string;
+          responded_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          guardian_user_id: string;
+          friend_id?: string | null;
+          status?: RequestStatusColumn;
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          guardian_user_id?: string;
+          friend_id?: string | null;
+          status?: RequestStatusColumn;
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "guardian_role_requests_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "guardian_role_requests_guardian_user_id_fkey";
+            columns: ["guardian_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "guardian_role_requests_friend_id_fkey";
+            columns: ["friend_id"];
+            isOneToOne: false;
+            referencedRelation: "friends";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -866,6 +976,30 @@ export type Database = {
       get_linked_friend_public_key: {
         Args: { p_friend_id: string };
         Returns: string | null;
+      };
+      accept_friend_request: {
+        Args: { request_id: string };
+        Returns: undefined;
+      };
+      reject_friend_request: {
+        Args: { request_id: string };
+        Returns: undefined;
+      };
+      accept_guardian_role_request: {
+        Args: { request_id: string };
+        Returns: undefined;
+      };
+      reject_guardian_role_request: {
+        Args: { request_id: string };
+        Returns: undefined;
+      };
+      revoke_guardian_role: {
+        Args: { p_friend_id: string };
+        Returns: undefined;
+      };
+      resign_as_guardian: {
+        Args: { request_id: string };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;

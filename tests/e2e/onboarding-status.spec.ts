@@ -1,6 +1,5 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
-import { openRowMenu } from "./row-actions";
+import { createConfirmedTestUser, forceOwnFriendToGuardian, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -95,16 +94,15 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
   const friendRow = page.locator("li", { hasText: "Maria Rossi" });
   await expect(friendRow).toBeVisible({ timeout: 10_000 });
-  await openRowMenu(friendRow);
-  // Si attende la risposta di rete prima di procedere: il click aggiorna
-  // la riga otticamente, ma il salvataggio vero è ancora in volo --- lo
-  // stesso motivo per cui nav-orientation.spec.ts fa lo stesso.
-  await Promise.all([
-    page.waitForResponse(
-      (res) => res.url().includes("/friends") && res.request().method() === "PATCH",
-    ),
-    page.getByRole("menuitem", { name: "Segna come guardiano" }).click(),
-  ]);
+  // Amico + guardiano richiederebbe ora una doppia richiesta di consenso
+  // reale tra due account (v. friends.spec.ts per quel flusso) --- qui
+  // serve solo come dato di partenza per il passo "guardian", quindi si
+  // forza direttamente via il client admin (v. test-users.ts).
+  await forceOwnFriendToGuardian(user.email);
+  await page.reload();
+  await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
+  await expect(friendRow.getByText("🛡️ Guardiano")).toBeVisible({ timeout: 10_000 });
 
   await statusButton.click();
   await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 63% completato", {

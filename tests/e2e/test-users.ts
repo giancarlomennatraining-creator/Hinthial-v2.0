@@ -59,6 +59,40 @@ export async function createConfirmedTestUser(user: TestUser): Promise<void> {
   }
 }
 
+/**
+ * Forza `is_friend`/`is_guardian` direttamente via il client admin,
+ * bypassando la vera doppia richiesta di consenso (v.
+ * domain/friends/friend-requests.ts, guardian-requests.ts) --- SOLO per
+ * i test che hanno bisogno di "un amico guardiano" come dato di
+ * partenza per verificare qualcos'altro (contatori, onboarding), non
+ * per chi verifica il flusso di consenso in sé (v. friends.spec.ts).
+ * Paginata come deleteUserByEmail sotto: con centinaia di utenti di test
+ * accumulati nel progetto dev, un `perPage` singolo potrebbe non
+ * bastare.
+ */
+export async function forceOwnFriendToGuardian(ownerEmail: string): Promise<void> {
+  const admin = adminClient();
+
+  const perPage = 200;
+  let ownerId: string | null = null;
+  for (let page = 1; !ownerId; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error || !data) throw new Error(`Impossibile trovare l'utente: ${error?.message}`);
+    ownerId = data.users.find((u) => u.email === ownerEmail)?.id ?? null;
+    if (!ownerId && data.users.length < perPage) {
+      throw new Error(`Nessun account con email ${ownerEmail}.`);
+    }
+  }
+
+  const { error } = await admin
+    .from("friends")
+    .update({ is_friend: true, is_guardian: true })
+    .eq("owner_id", ownerId);
+  if (error) {
+    throw new Error(`Impossibile forzare l'amico a guardiano: ${error.message}`);
+  }
+}
+
 function adminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

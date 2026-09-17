@@ -34,6 +34,14 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   digital_legacy_formal_verification_started: "Verifica formale iniziata",
   digital_legacy_final_wait_started: "Attesa finale iniziata",
   digital_legacy_triggered: "Eredità digitale attivata: capsule aperte ai destinatari",
+  friend_request_sent: "Richiesta di amicizia inviata",
+  friend_request_accepted: "Richiesta di amicizia accettata",
+  friend_request_rejected: "Richiesta di amicizia rifiutata",
+  guardian_role_requested: "Richiesta di diventare guardiano inviata",
+  guardian_role_accepted: "Richiesta di diventare guardiano accettata",
+  guardian_role_rejected: "Richiesta di diventare guardiano rifiutata",
+  guardian_role_revoked: "Guardiano rimosso",
+  guardian_role_resigned: "Dimissioni da guardiano",
 };
 
 export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
@@ -68,6 +76,14 @@ export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
   digital_legacy_formal_verification_started: "🔍",
   digital_legacy_final_wait_started: "⏳",
   digital_legacy_triggered: "🔓",
+  friend_request_sent: "🤝",
+  friend_request_accepted: "🤝",
+  friend_request_rejected: "🙅",
+  guardian_role_requested: "🛡️",
+  guardian_role_accepted: "🛡️",
+  guardian_role_rejected: "🙅",
+  guardian_role_revoked: "🛡️",
+  guardian_role_resigned: "🛡️",
 };
 
 export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategory> = {
@@ -102,6 +118,14 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
   digital_legacy_formal_verification_started: "digital-legacy",
   digital_legacy_final_wait_started: "digital-legacy",
   digital_legacy_triggered: "digital-legacy",
+  friend_request_sent: "friends",
+  friend_request_accepted: "friends",
+  friend_request_rejected: "friends",
+  guardian_role_requested: "friends",
+  guardian_role_accepted: "friends",
+  guardian_role_rejected: "friends",
+  guardian_role_revoked: "friends",
+  guardian_role_resigned: "friends",
 };
 
 export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {

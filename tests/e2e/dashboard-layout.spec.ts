@@ -1,6 +1,5 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
-import { openRowMenu } from "./row-actions";
+import { createConfirmedTestUser, forceOwnFriendToGuardian, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -85,11 +84,15 @@ test("la dashboard mostra i contatori per sezione e i tre riquadri anche a vault
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
   const friendRow = page.locator("li", { hasText: "Maria Rossi" });
   await expect(friendRow).toBeVisible({ timeout: 10_000 });
-  await openRowMenu(friendRow);
-  await page.getByRole("menuitem", { name: "Segna come attivo" }).click();
-  await expect(friendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
-  await openRowMenu(friendRow);
-  await page.getByRole("menuitem", { name: "Segna come guardiano" }).click();
+  // Amico + guardiano richiederebbe ora una doppia richiesta di consenso
+  // reale tra due account (v. friends.spec.ts per quel flusso) --- qui
+  // serve solo come dato di partenza per il contatore sotto, quindi si
+  // forza direttamente via il client admin (v. test-users.ts).
+  await forceOwnFriendToGuardian(user.email);
+  await page.reload();
+  await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
+  await expect(friendRow.getByText("🛡️ Guardiano")).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("link", { name: "Amici: 1 (1 attivi e 1 guardiani)" })).toBeVisible({

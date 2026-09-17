@@ -35,10 +35,19 @@ export interface FriendListItem {
   role: string;
   status: FriendStatus;
   /**
+   * PERSONA (false) vs AMICO (true) --- v. domain/friends/friend-requests.
+   * Diventa true SOLO se una richiesta di amicizia è stata accettata da
+   * entrambe le parti: mai impostabile direttamente, a differenza di
+   * `status`/`isGuardian`. Una PERSONA resta comunque un destinatario
+   * valido di capsule --- solo un AMICO può diventare GUARDIANO.
+   */
+  isFriend: boolean;
+  /**
    * "Guardiano" --- riceve un avviso informale se il proprietario risulta
    * inattivo a lungo (Dead Man's Switch semplificato per le capsule, v.
-   * domain/capsules). Nessuna conferma richiesta da parte sua, nessun
-   * accesso concesso: solo un flag, come `status`.
+   * domain/capsules). Diventa true solo accettando una richiesta apposita
+   * (v. domain/friends/guardian-requests) --- possibile solo se `isFriend`
+   * è già true. Nessun accesso concesso di per sé: solo un flag.
    */
   isGuardian: boolean;
   /**

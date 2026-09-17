@@ -1,8 +1,9 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { createAdminClient } from "@/lib/db/supabase/admin";
 import { sendEmail } from "@/lib/email/send-email";
-import { friendInviteEmail } from "@/lib/email/templates";
+import { friendInviteEmail, friendRequestEmail, guardianRoleRequestEmail } from "@/lib/email/templates";
 
 /**
  * Invia l'email di invito a registrarsi su Hinthial --- v.
@@ -21,4 +22,45 @@ export async function inviteFriendToHinthial(friendEmail: string): Promise<void>
 
   const { subject, html } = friendInviteEmail(user.displayName);
   await sendEmail({ to: friendEmail, subject, html });
+}
+
+/**
+ * Invia l'email di una richiesta di amicizia --- v.
+ * domain/friends/friend-requests.ts, sendFriendRequest, che scrive la
+ * riga; questa è solo la notifica, best-effort come inviteFriendToHinthial
+ * (una richiesta salvata ma senza email non blocca comunque nulla: resta
+ * comunque visibile nella scheda Amici del destinatario).
+ */
+export async function sendFriendRequestEmail(recipientEmail: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error("Devi essere autenticato.");
+  }
+
+  const { subject, html } = friendRequestEmail(user.displayName);
+  await sendEmail({ to: recipientEmail, subject, html });
+}
+
+/**
+ * Invia l'email di una richiesta di diventare guardiano --- l'indirizzo
+ * del destinatario non è mai leggibile dal client (è il suo vero account
+ * Hinthial, non un dato cifrato nella rubrica di chi lo richiede): si usa
+ * il client admin, l'unico che può risalire dall'id utente alla sua email
+ * reale (v. lib/db/supabase/admin.ts), esattamente come già fa
+ * automation.ts per le email di "Eredità digitale".
+ */
+export async function sendGuardianRoleRequestEmail(guardianUserId: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error("Devi essere autenticato.");
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.getUserById(guardianUserId);
+  if (error || !data.user.email) {
+    throw new Error("Impossibile trovare l'email del guardiano.");
+  }
+
+  const { subject, html } = guardianRoleRequestEmail(user.displayName);
+  await sendEmail({ to: data.user.email, subject, html });
 }

@@ -138,7 +138,15 @@ test("nome e cognome riempiono da soli il nome visualizzato, finché non lo si t
   await expect(row.getByText("GV", { exact: true })).toBeVisible();
 });
 
-test("segnare come guardiano un amico senza account collegato avvisa che non potrà essere avvisato", async ({
+// Modello Amici v2 (v. richiesta utente): PERSONA (contatto privato) vs
+// AMICO (amicizia reciproca, richiesta + accettata) vs GUARDIANO (una
+// seconda richiesta distinta, possibile solo tra AMICI). Solo uno smoke
+// test qui, sulla sola pagina/interfaccia raggiungibile in una singola
+// sessione --- il flusso incrociato reale tra due account (richieste,
+// RLS, RPC) è verificato contro il database vero in
+// friend-and-guardian-requests.integration.test.ts, come già per
+// guardian-verification.spec.ts/.integration.test.ts.
+test("una PERSONA non collegata non offre né \"Richiedi amicizia\" né \"Chiedi di diventare guardiano\", e \"Protetti\" parte vuota", async ({
   page,
 }) => {
   test.slow();
@@ -163,7 +171,8 @@ test("segnare come guardiano un amico senza account collegato avvisa che non pot
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
 
-  // Un amico "di rubrica", mai collegato a un account reale.
+  // Un amico "di rubrica", mai collegato a un account reale --- resta
+  // una PERSONA per costruzione: nessuna delle due richieste è possibile.
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await page.getByLabel("Nome visualizzato").fill("Luca Neri");
   await page.getByLabel("Email").fill("luca.neri@esempio.it");
@@ -174,16 +183,17 @@ test("segnare come guardiano un amico senza account collegato avvisa che non pot
   const row = page.locator("li", { hasText: "Luca Neri" });
   await expect(row).toBeVisible({ timeout: 10_000 });
   await expect(row.getByTitle("Ha un account Hinthial")).not.toBeVisible();
+  await expect(row.getByText("🤝 Amico")).not.toBeVisible();
+  await expect(row.getByText("🛡️ Guardiano")).not.toBeVisible();
 
   await openRowMenu(row);
-  await page.getByRole("menuitem", { name: "Segna come guardiano" }).click();
-  await expect(
-    page.getByText("Guardiano aggiunto --- non potrà essere avvisato finché non collega il suo account Hinthial."),
-  ).toBeVisible();
-  await expect(row.getByText("🛡️ Guardiano (non collegato)")).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Richiedi amicizia" })).not.toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Chiedi di diventare guardiano" })).not.toBeVisible();
+  await page.getByRole("heading", { name: "Amici" }).click();
 
-  // Rimuoverlo funziona come sempre, senza alcun avviso.
-  await openRowMenu(row);
-  await page.getByRole("menuitem", { name: "Rimuovi dai guardiani" }).click();
-  await expect(row.getByText("🛡️ Guardiano (non collegato)")).not.toBeVisible();
+  // "Protetti": nessuna richiesta in attesa, nessuno protetto ancora.
+  await page.getByRole("link", { name: "Vedi chi proteggi" }).click();
+  await expect(page.getByRole("heading", { name: "Protetti" })).toBeVisible();
+  await expect(page.getByText("Nessuna richiesta in attesa.")).toBeVisible();
+  await expect(page.getByText("Non sei ancora guardiano di nessuno.")).toBeVisible();
 });
