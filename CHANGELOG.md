@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-17 (3)
+
+### Impostazioni riorganizzate in macro-aree
+
+**Cosa fa:** le 11 voci di Impostazioni, prima tutte allo stesso livello, sono ora raggruppate in aree: **Sicurezza** (Sicurezza, Eredità digitale, Attività), **Privacy e dati** (Privacy, Intelligenza artificiale, Categorie, Importa/Esporta), **Personalizzazione** (Aspetto, Onboarding) --- con "Informazioni utente" in cima e "Zona pericolosa" in fondo, entrambe da sole, fuori da ogni gruppo. Stesso comportamento di sempre (un clic per scheda, niente di nuovo da imparare), solo più facile da scorrere a colpo d'occhio --- sia da desktop sia nell'elenco di Impostazioni su smartphone.
+
+**Note tecniche:** discusso a fondo con l'utente prima di riorganizzare, verificando voce per voce se ogni funzione fosse ancora al posto giusto, non solo raggruppando --- due spostamenti concettuali oltre al semplice raggruppamento: "Intelligenza artificiale" (un consenso al trattamento dati, non un'impostazione a sé) e "Categorie" (tassonomia dei propri contenuti) sono passate da voci isolate a "Privacy e dati"; "Onboarding" (oggi quasi solo un interruttore mostra/nascondi per il gadget in barra laterale) sotto "Personalizzazione", la stessa famiglia di "Aspetto". Solo `SettingsTabs.tsx` toccato: le singole schede (route, contenuto, logica) restano identiche, cambia solo come sono organizzate nella navigazione --- nessuna modifica al modello dati, nessun test e2e esistente aggiornato (i selettori per nome/ruolo restano validi, le intestazioni di gruppo sono elementi non interattivi, non tab).
+
+---
+
 ## 2026-09-17 (2)
 
 ### FASE 12, quarto e ultimo passo --- verifica formale, attesa finale, apertura capsule

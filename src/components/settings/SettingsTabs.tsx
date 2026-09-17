@@ -49,23 +49,62 @@ type Tab =
   | "ai"
   | "danger-zone";
 
-const TABS: { id: Tab; label: string; icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
-  { id: "user-info", label: "Informazioni utente", icon: UserIcon },
-  { id: "security", label: "Sicurezza", icon: SecurityIcon },
-  { id: "digital-legacy", label: "Eredità digitale", icon: HeartIcon },
-  { id: "privacy", label: "Privacy", icon: EyeIcon },
-  { id: "ai", label: "Intelligenza artificiale", icon: AIIcon },
-  { id: "categories", label: "Categorie", icon: CategoryIcon },
-  { id: "import-export", label: "Importa/Esporta", icon: ImportExportIcon },
-  { id: "onboarding", label: "Onboarding", icon: ChecklistIcon },
-  { id: "activity", label: "Attività", icon: ActivityIcon },
-  { id: "appearance", label: "Aspetto", icon: SlidersIcon },
-  // Sola eccezione: resta nel proprio rosso/arancio di avviso invece del
-  // blu del logo (v. sotto) --- è l'unica voce che segnala un rischio,
-  // non solo una sezione, e perderebbe il senso diventando blu come le
-  // altre.
-  { id: "danger-zone", label: "Zona pericolosa", icon: AlertTriangleIcon },
+interface TabDef {
+  id: Tab;
+  label: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+}
+
+/**
+ * Raggruppate in macro-aree (v. richiesta utente: 11 voci piatte erano
+ * diventate difficili da scorrere) --- un gruppo con `label: null` non
+ * mostra intestazione, per le due voci pensate per restare da sole,
+ * fuori da qualunque cartella: "Informazioni utente" in cima (la più
+ * visitata, niente da cercare) e "Zona pericolosa" in fondo (l'unica
+ * che segnala un rischio, non deve confondersi con una cartella
+ * qualunque). Due spostamenti concettuali rispetto a prima:
+ * "Intelligenza artificiale" (un consenso al trattamento dati, non
+ * un'impostazione a sé) e "Categorie" (tassonomia dei propri contenuti)
+ * ora vivono sotto "Privacy e dati" invece che da sole; "Onboarding"
+ * (oggi quasi solo un interruttore mostra/nascondi per il gadget in
+ * barra laterale) sotto "Personalizzazione", la stessa famiglia di
+ * "Aspetto". "Attività" (il registro) sotto "Sicurezza": il suo uso
+ * principale è accorgersi di qualcosa di sospetto sul proprio account.
+ */
+const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
+  { label: null, tabs: [{ id: "user-info", label: "Informazioni utente", icon: UserIcon }] },
+  {
+    label: "Sicurezza",
+    tabs: [
+      { id: "security", label: "Sicurezza", icon: SecurityIcon },
+      { id: "digital-legacy", label: "Eredità digitale", icon: HeartIcon },
+      { id: "activity", label: "Attività", icon: ActivityIcon },
+    ],
+  },
+  {
+    label: "Privacy e dati",
+    tabs: [
+      { id: "privacy", label: "Privacy", icon: EyeIcon },
+      { id: "ai", label: "Intelligenza artificiale", icon: AIIcon },
+      { id: "categories", label: "Categorie", icon: CategoryIcon },
+      { id: "import-export", label: "Importa/Esporta", icon: ImportExportIcon },
+    ],
+  },
+  {
+    label: "Personalizzazione",
+    tabs: [
+      { id: "appearance", label: "Aspetto", icon: SlidersIcon },
+      { id: "onboarding", label: "Onboarding", icon: ChecklistIcon },
+    ],
+  },
+  // Sola eccezione di colore: resta nel proprio rosso/arancio di avviso
+  // invece del blu del logo (v. sotto) --- è l'unica voce che segnala
+  // un rischio, non solo una sezione, e perderebbe il senso diventando
+  // blu come le altre.
+  { label: null, tabs: [{ id: "danger-zone", label: "Zona pericolosa", icon: AlertTriangleIcon }] },
 ];
+
+const TABS: TabDef[] = TAB_GROUPS.flatMap((group) => group.tabs);
 
 export function SettingsTabs({
   userId,
@@ -307,33 +346,44 @@ export function SettingsTabs({
         >
           {displayedMobileView === "list" ? (
             <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
-              {TABS.map((t) => (
-                <li key={t.id}>
-                  <button
-                    type="button"
-                    onClick={() => setMobileSection(t.id)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
-                  >
-                    <t.icon
-                      width={20}
-                      height={20}
-                      className={cn(
-                        "shrink-0",
-                        t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand",
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        "flex-1",
-                        t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : undefined,
-                      )}
-                    >
-                      {t.label}
-                    </span>
-                    <span aria-hidden="true" className="text-zinc-400 dark:text-zinc-600">
-                      ›
-                    </span>
-                  </button>
+              {TAB_GROUPS.map((group, groupIndex) => (
+                <li key={group.label ?? `group-${groupIndex}`}>
+                  {group.label ? (
+                    <p className="px-4 pt-3 pb-1 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+                      {group.label}
+                    </p>
+                  ) : null}
+                  <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
+                    {group.tabs.map((t) => (
+                      <li key={t.id}>
+                        <button
+                          type="button"
+                          onClick={() => setMobileSection(t.id)}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                        >
+                          <t.icon
+                            width={20}
+                            height={20}
+                            className={cn(
+                              "shrink-0",
+                              t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand",
+                            )}
+                          />
+                          <span
+                            className={cn(
+                              "flex-1",
+                              t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : undefined,
+                            )}
+                          >
+                            {t.label}
+                          </span>
+                          <span aria-hidden="true" className="text-zinc-400 dark:text-zinc-600">
+                            ›
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>
@@ -363,36 +413,50 @@ export function SettingsTabs({
           aria-orientation="vertical"
           className="flex shrink-0 flex-col gap-1 md:w-60 md:border-r md:border-zinc-200 md:pr-4 dark:md:border-zinc-800"
         >
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={tab === t.id}
-              onClick={() => setTab(t.id)}
-              className={cn(
-                "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
-                tab === t.id
-                  ? t.id === "danger-zone"
-                    ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                    : "bg-brand/10 text-brand"
-                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
-              )}
-            >
-              {/* Icona sempre blu (colore del logo), a prescindere dallo
-                  stato attivo/inattivo della scheda --- eccetto "Zona
-                  pericolosa" (v. sopra), che resta nel proprio colore di
-                  avviso. */}
-              <t.icon
-                width={20}
-                height={20}
-                className={cn(
-                  "shrink-0",
-                  t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand",
-                )}
-              />
-              {t.label}
-            </button>
+          {TAB_GROUPS.map((group, groupIndex) => (
+            <div key={group.label ?? `group-${groupIndex}`} className="flex flex-col gap-1">
+              {group.label ? (
+                <p
+                  className={cn(
+                    "px-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500",
+                    groupIndex === 0 ? undefined : "mt-3",
+                  )}
+                >
+                  {group.label}
+                </p>
+              ) : null}
+              {group.tabs.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.id}
+                  onClick={() => setTab(t.id)}
+                  className={cn(
+                    "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
+                    tab === t.id
+                      ? t.id === "danger-zone"
+                        ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                        : "bg-brand/10 text-brand"
+                      : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
+                  )}
+                >
+                  {/* Icona sempre blu (colore del logo), a prescindere dallo
+                      stato attivo/inattivo della scheda --- eccetto "Zona
+                      pericolosa" (v. sopra), che resta nel proprio colore di
+                      avviso. */}
+                  <t.icon
+                    width={20}
+                    height={20}
+                    className={cn(
+                      "shrink-0",
+                      t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand",
+                    )}
+                  />
+                  {t.label}
+                </button>
+              ))}
+            </div>
           ))}
         </div>
 
