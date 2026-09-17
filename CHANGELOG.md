@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-17 (12)
+
+### Le tabelle si adattano allo schermo nascondendo le colonne secondarie
+
+**Cosa fa:** con il telefono in orizzontale (o in qualunque altro caso di spazio stretto) le tabelle di Archivio, Beni, Scadenze, Amici e Capsule non sforano più verso destra costringendo a scorrere di lato: le colonne meno importanti si nascondono da sole finché la tabella non entra nello spazio disponibile, e ricompaiono una a una appena c'è di nuovo posto. **Il menu azioni di ogni riga non sparisce mai**, come la colonna che identifica la riga (Nome/Titolo) --- segnalato dall'utente: è il punto da cui si fa tutto, deve restare sempre raggiungibile. In Archivio, per esempio, su un telefono in orizzontale restano Nome, Categoria, Scadenza e Azioni; allargando compaiono Creato il, poi Bene, poi Dimensione.
+
+**Note tecniche:** container queries (`@container` sul riquadro della tabella + `hidden @xl:table-cell` e simili sulle celle), non breakpoint di viewport --- così la soglia tiene conto dello spazio **vero** del riquadro, quindi anche della barra laterale aperta o chiusa, che a parità di finestra cambia di ~150px la larghezza utile. Stesso strumento già usato in `UserInfoPanel`. `SortableColumnHeader` accetta ora una `className` per portare la regola di visibilità, che va ripetuta identica sulla `<td>` corrispondente. Ordine di comparsa deciso per valore informativo, uno per tabella (es. Archivio: Categoria → Scadenza → Creato il → Bene → Dimensione; Amici: Stato → Ruolo → Email → Capsule). `overflow-x-auto` resta come rete di sicurezza per un nome molto lungo, ma nel caso normale non ha più nulla da far scorrere. Scelto di non misurare le larghezze in JavaScript ("nascondi finché non entra" letterale): soglie fisse per contenitore danno lo stesso risultato pratico senza un ciclo misura-ridisegna a ogni resize, e sotto la soglia minima restano comunque solo identificativo e azioni, che entrano ovunque. Verificato misurando l'overflow reale (`scrollWidth - clientWidth`) a 915px (telefono in orizzontale), 1100px e 1500px: **0px in tutti e tre**, con il menu azioni sempre presente; più i test e2e che usano la vista a tabella (ordinamento, impaginazione, filtri, preferenze di vista).
+
+---
+
 ## 2026-09-17 (11)
 
 ### Rimossa la sezione "Da tenere d'occhio" dalla Dashboard

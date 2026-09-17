@@ -247,7 +247,10 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">
-              <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+              {/* @container --- v. DocumentsPanel per il ragionamento. Qui
+                  restano sempre anche "Fatto" (la spunta è un'azione, non
+                  un dato) oltre a Titolo e Azioni. */}
+              <div className="@container overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
@@ -263,12 +266,14 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
                         sortKey="dueAt"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @lg:table-cell"
                       />
                       <SortableColumnHeader
                         label="Collegamenti"
                         sortKey="links"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @2xl:table-cell"
                       />
                       <th className="p-3">Azioni</th>
                     </tr>
@@ -297,7 +302,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
                           >
                             {reminder.title}
                           </td>
-                          <td className="p-3">
+                          <td className="hidden p-3 @lg:table-cell">
                             <span
                               className={
                                 status === "overdue"
@@ -310,7 +315,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
                               {formatDate(reminder.dueAt)}
                             </span>
                           </td>
-                          <td className="max-w-[14rem] truncate p-3 text-zinc-600 dark:text-zinc-400">
+                          <td className="hidden max-w-[14rem] truncate p-3 text-zinc-600 @2xl:table-cell dark:text-zinc-400">
                             {linksFor(reminder) || "—"}
                           </td>
                           <td className="p-3">

@@ -556,28 +556,39 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">
-              <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+              {/* @container --- v. DocumentsPanel per il ragionamento: le
+                  colonne secondarie si nascondono in base allo spazio
+                  vero del riquadro, Titolo e Azioni mai. */}
+              <div className="@container overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                       <SortableColumnHeader label="Titolo" sortKey="title" sort={sort} onSort={handleSort} />
-                      <SortableColumnHeader label="Stato" sortKey="status" sort={sort} onSort={handleSort} />
+                      <SortableColumnHeader
+                        label="Stato"
+                        sortKey="status"
+                        sort={sort}
+                        onSort={handleSort}
+                        className="hidden @lg:table-cell"
+                      />
                       <SortableColumnHeader
                         label="Destinatari"
                         sortKey="recipients"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @4xl:table-cell"
                       />
                       <SortableColumnHeader
                         label="Apertura"
                         sortKey="openAt"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @xl:table-cell"
                       />
                       {showCountdown ? (
                         // Non ordinabile --- stesso ordine di "Apertura", da cui deriva
                         // (v. richiesta utente: colonna propria, non integrata lì dentro).
-                        <th className="p-3">
+                        <th className="hidden p-3 @3xl:table-cell">
                           Tra quanto
                           <span className="mt-0.5 block text-[9px] font-semibold tracking-wide text-zinc-400 normal-case dark:text-zinc-500">
                             gg&nbsp;&nbsp;hh&nbsp;&nbsp;mm&nbsp;&nbsp;ss
@@ -589,6 +600,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                         sortKey="contents"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @5xl:table-cell"
                       />
                       <th className="p-3">Azioni</th>
                     </tr>
@@ -603,25 +615,25 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                           <td className="max-w-[14rem] truncate p-3 font-medium text-zinc-900 dark:text-zinc-100">
                             {capsule.title}
                           </td>
-                          <td className="p-3">
+                          <td className="hidden p-3 @lg:table-cell">
                             <span
                               className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[capsule.status]}`}
                             >
                               {STATUS_LABEL[capsule.status]}
                             </span>
                           </td>
-                          <td className="max-w-[12rem] truncate p-3 text-zinc-600 dark:text-zinc-400">
+                          <td className="hidden max-w-[12rem] truncate p-3 text-zinc-600 @4xl:table-cell dark:text-zinc-400">
                             {capsule.relatedFriends.length > 0
                               ? sortAlphabetically(capsule.relatedFriends, (c) => c.name)
                                   .map((c) => c.name)
                                   .join(", ")
                               : "—"}
                           </td>
-                          <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                          <td className="hidden p-3 text-zinc-600 @xl:table-cell dark:text-zinc-400">
                             {capsule.openAt ? formatDateTime(capsule.openAt) : "—"}
                           </td>
                           {showCountdown ? (
-                            <td className="p-3">
+                            <td className="hidden p-3 @3xl:table-cell">
                               {capsule.openAt && capsule.status !== "draft" ? (
                                 <CapsuleCountdown createdAt={capsule.createdAt} openAt={capsule.openAt} size="xs" />
                               ) : (
@@ -629,7 +641,9 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                               )}
                             </td>
                           ) : null}
-                          <td className="p-3 text-zinc-600 dark:text-zinc-400">{contentCount}</td>
+                          <td className="hidden p-3 text-zinc-600 @5xl:table-cell dark:text-zinc-400">
+                            {contentCount}
+                          </td>
                           <td className="p-3">
                             <RowActionsMenu label={`Azioni per "${capsule.title}"`}>
                               <RowMenuItem disabled={busy} onClick={() => setPreviewCapsule(capsule)}>

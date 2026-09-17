@@ -422,7 +422,15 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">
-              <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+              {/* @container: le colonne secondarie si nascondono in base
+                  allo spazio VERO di questo riquadro (v. le classi
+                  "hidden @...:table-cell" sotto), non alla larghezza
+                  della finestra --- così tiene conto anche della barra
+                  laterale aperta o chiusa. Nome e Azioni non spariscono
+                  mai: il menu di ogni riga deve restare raggiungibile
+                  (v. richiesta utente). overflow-x-auto resta solo come
+                  rete di sicurezza. */}
+              <div className="@container overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
@@ -432,25 +440,35 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         sortKey="category"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @lg:table-cell"
                       />
-                      <SortableColumnHeader label="Bene" sortKey="asset" sort={sort} onSort={handleSort} />
+                      <SortableColumnHeader
+                        label="Bene"
+                        sortKey="asset"
+                        sort={sort}
+                        onSort={handleSort}
+                        className="hidden @4xl:table-cell"
+                      />
                       <SortableColumnHeader
                         label="Dimensione"
                         sortKey="size"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @5xl:table-cell"
                       />
                       <SortableColumnHeader
                         label="Creato il"
                         sortKey="createdAt"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @3xl:table-cell"
                       />
                       <SortableColumnHeader
                         label="Scadenza"
                         sortKey="expiresAt"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @xl:table-cell"
                       />
                       <th className="p-3">Azioni</th>
                     </tr>
@@ -473,19 +491,19 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                             <td className="max-w-[16rem] truncate p-3 font-medium text-zinc-900 dark:text-zinc-100">
                               {CONTENT_KIND_ICON[kind]} {doc.filename}
                             </td>
-                            <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                            <td className="hidden p-3 text-zinc-600 @lg:table-cell dark:text-zinc-400">
                               {category ? `${category.icon} ${category.name}` : "—"}
                             </td>
-                            <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                            <td className="hidden p-3 text-zinc-600 @4xl:table-cell dark:text-zinc-400">
                               {asset ? asset.name : "—"}
                             </td>
-                            <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                            <td className="hidden p-3 text-zinc-600 @5xl:table-cell dark:text-zinc-400">
                               {formatSize(doc.size)}
                             </td>
-                            <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                            <td className="hidden p-3 text-zinc-600 @3xl:table-cell dark:text-zinc-400">
                               {formatDate(doc.createdAt)}
                             </td>
-                            <td className="p-3">
+                            <td className="hidden p-3 @xl:table-cell">
                               {doc.expiresAt ? (
                                 <span
                                   className={

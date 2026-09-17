@@ -224,7 +224,10 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">
-              <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+              {/* @container --- v. DocumentsPanel per il ragionamento: le
+                  colonne secondarie si nascondono in base allo spazio
+                  vero del riquadro, Nome e Azioni mai. */}
+              <div className="@container overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
@@ -234,24 +237,28 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         sortKey="category"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @lg:table-cell"
                       />
                       <SortableColumnHeader
                         label="Contenuti"
                         sortKey="documents"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @2xl:table-cell"
                       />
                       <SortableColumnHeader
                         label="Scadenze"
                         sortKey="reminders"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @3xl:table-cell"
                       />
                       <SortableColumnHeader
                         label="Creato il"
                         sortKey="createdAt"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @4xl:table-cell"
                       />
                       <th className="p-3">Azioni</th>
                     </tr>
@@ -268,16 +275,16 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           <td className="max-w-[16rem] truncate p-3 font-medium text-zinc-900 dark:text-zinc-100">
                             {asset.name}
                           </td>
-                          <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                          <td className="hidden p-3 text-zinc-600 @lg:table-cell dark:text-zinc-400">
                             {category ? `${category.icon} ${category.name}` : "—"}
                           </td>
-                          <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                          <td className="hidden p-3 text-zinc-600 @2xl:table-cell dark:text-zinc-400">
                             {linkedDocuments.length}
                           </td>
-                          <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                          <td className="hidden p-3 text-zinc-600 @3xl:table-cell dark:text-zinc-400">
                             {linkedReminders.length}
                           </td>
-                          <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                          <td className="hidden p-3 text-zinc-600 @4xl:table-cell dark:text-zinc-400">
                             {formatDate(asset.createdAt)}
                           </td>
                           <td className="p-3">

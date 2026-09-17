@@ -617,19 +617,41 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">
-              <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+              {/* @container --- v. DocumentsPanel per il ragionamento: le
+                  colonne secondarie si nascondono in base allo spazio
+                  vero del riquadro, Nome e Azioni mai. */}
+              <div className="@container overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                       <SortableColumnHeader label="Nome" sortKey="name" sort={sort} onSort={handleSort} />
-                      <SortableColumnHeader label="Email" sortKey="email" sort={sort} onSort={handleSort} />
-                      <SortableColumnHeader label="Ruolo" sortKey="role" sort={sort} onSort={handleSort} />
-                      <SortableColumnHeader label="Stato" sortKey="status" sort={sort} onSort={handleSort} />
+                      <SortableColumnHeader
+                        label="Email"
+                        sortKey="email"
+                        sort={sort}
+                        onSort={handleSort}
+                        className="hidden @3xl:table-cell"
+                      />
+                      <SortableColumnHeader
+                        label="Ruolo"
+                        sortKey="role"
+                        sort={sort}
+                        onSort={handleSort}
+                        className="hidden @2xl:table-cell"
+                      />
+                      <SortableColumnHeader
+                        label="Stato"
+                        sortKey="status"
+                        sort={sort}
+                        onSort={handleSort}
+                        className="hidden @lg:table-cell"
+                      />
                       <SortableColumnHeader
                         label="Capsule"
                         sortKey="capsules"
                         sort={sort}
                         onSort={handleSort}
+                        className="hidden @4xl:table-cell"
                       />
                       <th className="p-3">Azioni</th>
                     </tr>
@@ -653,13 +675,13 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                               <span className="truncate">{friend.name}</span>
                             </div>
                           </td>
-                          <td className="max-w-[14rem] truncate p-3 text-zinc-600 dark:text-zinc-400">
+                          <td className="hidden max-w-[14rem] truncate p-3 text-zinc-600 @3xl:table-cell dark:text-zinc-400">
                             {friend.email}
                           </td>
-                          <td className="max-w-[10rem] truncate p-3 text-zinc-600 dark:text-zinc-400">
+                          <td className="hidden max-w-[10rem] truncate p-3 text-zinc-600 @2xl:table-cell dark:text-zinc-400">
                             {friend.role}
                           </td>
-                          <td className="p-3">
+                          <td className="hidden p-3 @lg:table-cell">
                             <div className="flex flex-wrap items-center gap-1">
                               <span
                                 className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[friend.status]}`}
@@ -675,7 +697,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                               ) : null}
                             </div>
                           </td>
-                          <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                          <td className="hidden p-3 text-zinc-600 @4xl:table-cell dark:text-zinc-400">
                             {capsulesFor(friend).length}
                           </td>
                           <td className="p-3">
