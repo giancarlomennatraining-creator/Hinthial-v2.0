@@ -1,5 +1,6 @@
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { recognizeImage } from "@/domain/extraction/ocr-extractor";
+import { loadPdfjs } from "@/lib/pdf";
 import {
   normalizeExtractedText,
   type ExtractionProgress,
@@ -157,30 +158,9 @@ export const pdfTextExtractor: TextExtractor = {
     _mimeType: string,
     onProgress?: ExtractionProgress,
   ): Promise<string | null> {
-    // Build `legacy` e non quello moderno: è l'unico che funziona anche
-    // fuori dal browser --- pdf.js stesso lo raccomanda per Node. Così
-    // i test unitari esercitano esattamente lo stesso codice che gira
-    // in produzione, invece di una variante diversa. Costa qualcosa in
-    // dimensione, ma essendo caricato solo quando arriva davvero un PDF
-    // (v. sotto) non pesa su chi non ne carica mai.
-    const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-
-    // Il worker va indicato esplicitamente **solo nel browser**: senza,
-    // pdf.js prova a dedurne il percorso e in un bundle non lo trova.
-    // `new URL(..., import.meta.url)` lascia che sia il bundler a
-    // risolverlo e a servirlo come asset.
-    //
-    // Non si sovrascrive una configurazione già presente: fuori dal
-    // browser (i test unitari girano in jsdom, dove `window` esiste ma
-    // il loader ESM di Node accetta solo file:/data:) chi chiama può
-    // indicare il worker per conto proprio. Il percorso browser vero
-    // resta coperto dal test e2e che cerca dentro un PDF caricato.
-    if (!pdfjs.GlobalWorkerOptions.workerSrc && typeof window !== "undefined") {
-      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-        "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
-        import.meta.url,
-      ).toString();
-    }
+    // Import dinamico e worker: v. lib/pdf.ts, condiviso con
+    // l'anteprima della prima pagina (FASE 17e).
+    const pdfjs = await loadPdfjs();
 
     // pdf.js prende possesso del buffer che riceve (lo "detacha"): si
     // passa una copia, altrimenti chi chiama si ritrova i byte del file

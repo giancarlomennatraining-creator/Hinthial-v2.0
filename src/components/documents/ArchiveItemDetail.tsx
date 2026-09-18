@@ -22,6 +22,7 @@ import {
 } from "@/lib/content-kind";
 import { saveBytesAsFile } from "@/lib/download";
 import { formatDate, formatSize } from "@/lib/format";
+import { renderPdfFirstPage } from "@/lib/pdf";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
@@ -62,10 +63,15 @@ export function ArchiveItemDetail({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Anteprima: object URL per immagini/audio/video, testo per le note.
+  // Anteprima: object URL per immagini/audio/video e per la prima pagina
+  // disegnata di un PDF, testo per le note.
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [noteBody, setNoteBody] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  /** Pagine del PDF, per dire "prima di N" --- null se non è un PDF. */
+  const [pdfPageCount, setPdfPageCount] = useState<number | null>(null);
+  /** Un PDF che pdf.js non è riuscito a disegnare: si ripiega sul messaggio. */
+  const [previewUnavailable, setPreviewUnavailable] = useState(false);
 
   // Rilettura di questo singolo contenuto (v. handleReread).
   const [rereading, setRereading] = useState<number | null>(null);
@@ -114,11 +120,13 @@ export function ArchiveItemDetail({
 
   const kind = doc ? contentKindFor(doc.mimeType) : null;
 
-  // L'anteprima di un'immagine e il testo di una nota si aprono da soli:
-  // sono il contenuto stesso, ed è il motivo per cui si è arrivati qui.
-  // Audio e video no --- possono pesare decine di megabyte, e si scaricano
-  // solo se li si vuole davvero sentire.
-  const autoPreview = kind === "image" || kind === "note";
+  const isPdf = doc?.mimeType === "application/pdf";
+
+  // Immagine, nota e PDF si aprono da soli: sono il contenuto stesso, ed
+  // è il motivo per cui si è arrivati qui. Audio e video no --- possono
+  // pesare decine di megabyte, e si scaricano solo se li si vuole
+  // davvero sentire.
+  const autoPreview = kind === "image" || kind === "note" || isPdf;
 
   const loadPreview = useCallback(async () => {
     if (!doc) return;
@@ -126,13 +134,30 @@ export function ArchiveItemDetail({
     setError(null);
     try {
       const { mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
+
       if (contentKindFor(mimeType) === "note") {
         setNoteBody(bytesToUtf8(bytes));
-      } else {
-        setPreviewUrl(URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: mimeType })));
+        return;
       }
+
+      if (mimeType === "application/pdf") {
+        // Un PDF non si può mostrare com'è: se ne disegna la prima
+        // pagina, con lo stesso pdf.js che l'OCR usa per leggerle (v.
+        // lib/pdf.ts). Vale sia per i PDF nativi sia per le scansioni.
+        const rendered = await renderPdfFirstPage(bytes);
+        if (!rendered) {
+          setPreviewUnavailable(true);
+          return;
+        }
+        setPdfPageCount(rendered.pageCount);
+        setPreviewUrl(URL.createObjectURL(rendered.image));
+        return;
+      }
+
+      setPreviewUrl(URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: mimeType })));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile aprire il contenuto.");
+      setPreviewUnavailable(true);
     } finally {
       setPreviewLoading(false);
     }
@@ -140,10 +165,10 @@ export function ArchiveItemDetail({
 
   useEffect(() => {
     if (!doc || !autoPreview) return;
-    if (previewUrl || noteBody !== null || previewLoading) return;
+    if (previewUrl || noteBody !== null || previewLoading || previewUnavailable) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadPreview();
-  }, [doc, autoPreview, previewUrl, noteBody, previewLoading, loadPreview]);
+  }, [doc, autoPreview, previewUrl, noteBody, previewLoading, previewUnavailable, loadPreview]);
 
   async function handleDownload() {
     if (!doc) return;
@@ -291,9 +316,25 @@ export function ArchiveItemDetail({
           <p className="text-sm whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
             {noteBody || "(nota vuota)"}
           </p>
-        ) : kind === "image" && previewUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- object URL locale, decifrata sul dispositivo
-          <img src={previewUrl} alt={doc.filename} className="max-h-[32rem] max-w-full rounded-md" />
+        ) : (kind === "image" || isPdf) && previewUrl ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- object URL locale, decifrata sul dispositivo */}
+            <img
+              src={previewUrl}
+              alt={
+                isPdf ? `Prima pagina di ${doc.filename}` : doc.filename
+              }
+              className="max-h-[32rem] max-w-full self-start rounded-md border border-zinc-200 dark:border-zinc-800"
+            />
+            {isPdf && pdfPageCount !== null ? (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                {pdfPageCount === 1
+                  ? "Pagina unica."
+                  : `Prima pagina di ${pdfPageCount}.`}{" "}
+                Usa &laquo;Scarica&raquo; per sfogliarlo tutto.
+              </p>
+            ) : null}
+          </>
         ) : hasInlinePlayer(kind) && previewUrl ? (
           kind === "video" ? (
             <video src={previewUrl} controls className="max-h-[32rem] max-w-full rounded-md" />
@@ -310,8 +351,10 @@ export function ArchiveItemDetail({
           </button>
         ) : (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Un {CONTENT_KIND_LABEL[kind].toLowerCase()} non si può sfogliare qui: usa
-            &laquo;Scarica&raquo; per aprirlo con il tuo programma.
+            {isPdf
+              ? "Non sono riuscito a disegnarne l'anteprima."
+              : `Un ${CONTENT_KIND_LABEL[kind].toLowerCase()} di questo tipo non si può sfogliare qui.`}{" "}
+            Usa &laquo;Scarica&raquo; per aprirlo con il tuo programma.
           </p>
         )}
       </section>

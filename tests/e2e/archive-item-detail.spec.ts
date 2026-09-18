@@ -101,6 +101,14 @@ test("la scheda di un documento mostra il testo che Hinthial ci ha letto dentro"
 
   // La promessa dichiarata sulla pagina stessa.
   await expect(page.getByText(/non è mai uscito/)).toBeVisible();
+
+  // FASE 17e --- l'anteprima: la prima pagina del PDF disegnata con lo
+  // stesso pdf.js che l'OCR usa per leggerle. Un PDF non si può mostrare
+  // com'è, e il messaggio di ripiego ("usa Scarica") non deve comparire.
+  await expect(page.getByRole("img", { name: /Prima pagina di referto\.pdf/ })).toBeVisible({
+    timeout: 30_000,
+  });
+  await expect(page.getByText("Pagina unica.")).toBeVisible();
 });
 
 test("la scheda dice quando un contenuto non è ancora stato letto, e lo legge", async ({

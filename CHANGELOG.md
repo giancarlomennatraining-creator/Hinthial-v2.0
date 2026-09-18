@@ -18,6 +18,8 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 La pagina mostra l'anteprima del contenuto, la sua scheda (categoria, bene, scadenza, tag, note) e soprattutto un riquadro **"Cosa ho letto"**: il testo che Hinthial ha ricavato da quel file, per intero.
 
+**L'anteprima vale anche per i PDF**, che non si possono mostrare così come sono: se ne disegna la **prima pagina**, con lo stesso pdf.js che l'OCR usa per leggerle --- e quindi funziona identica per i PDF nativi e per le scansioni. Sotto è scritto quante pagine ha in tutto. Immagini e note si aprono da sole; audio e video no, perché possono pesare decine di megabyte e si scaricano solo se li vuoi davvero sentire.
+
 **Perché conta più di quanto sembri.** Dalla FASE 17 Hinthial legge i tuoi documenti, ma l'unica traccia visibile di quella lettura era uno spezzone di una riga nei risultati di ricerca — e solo se indovinavi la parola giusta. In un prodotto che promette *"niente esce dal tuo dispositivo"*, poter vedere esattamente cosa è stato letto non è un accessorio: è la dimostrazione della promessa. Sulla pagina è scritto a chiare lettere, accanto al testo: *letto qui, sul tuo dispositivo, non è mai uscito*.
 
 **I quattro stati finalmente si distinguono.** Fino a ieri, dal di fuori, erano indistinguibili --- in tre casi su quattro il testo risultava semplicemente vuoto:
@@ -30,6 +32,8 @@ La pagina mostra l'anteprima del contenuto, la sua scheda (categoria, bene, scad
 **Il testo estratto ora conserva l'impaginazione.** Fino alla 17d ogni a capo veniva schiacciato in uno spazio. Per cercare andava benissimo — la ricerca non guarda l'impaginazione — ma dal momento in cui quel testo si mostra, un referto di tre pagine diventava un unico paragrafo da ottomila caratteri: tecnicamente corretto e illeggibile. Ora le righe restano. I documenti caricati **prima** di oggi conservano la vecchia forma appiattita: il tasto **"Rileggi"** sulla loro scheda li recupera uno per uno. Deliberatamente nessuna migrazione forzata: il contenuto del testo non cambia, cambia solo come si legge, e non vale far ripartire da zero l'archivio di tutti.
 
 **Note tecniche:** `normalizeExtractedText` compatta gli spazi *dentro* la riga e riduce a una le righe vuote di troppo, invece di schiacciare tutto. pdf.js conosceva già la fine di ogni riga (`hasEOL`) e la stavamo buttando via. La contropartita è la regressione più facile da introdurre e la più difficile da notare: chi cerca *"risonanza magnetica"* deve trovarlo anche se nel documento le due parole stanno su righe diverse --- da qui `flattenForSearch`, applicato dove si cerca e dove si costruisce lo spezzone, con tre test che lo difendono.
+
+Nuovo `lib/pdf.ts`: la preparazione di pdf.js (import dinamico, worker) e il disegno di una pagina stavano per diventare due copie --- una nell'estrattore, una nell'anteprima --- e due copie divergono sempre. L'anteprima esce in JPEG e non PNG: una pagina scansionata è una fotografia, e in PNG peserebbe megabyte per un'immagine che si guarda e basta.
 
 Nuovo `domain/extraction/reading-state.ts` (7 test): una funzione pura che decide quale dei quattro stati raccontare. Se sbaglia, la pagina dice all'utente una cosa falsa sul proprio archivio, quindi è testata caso per caso. `formatSize`/`formatDate` estratte in `lib/format.ts` --- erano due copie della stessa funzione, e due copie divergono sempre.
 
