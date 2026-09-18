@@ -7,11 +7,14 @@ import { createClient } from "@/lib/db/supabase/client";
 import { bytesToUtf8 } from "@/lib/crypto";
 import {
   deleteDocument,
+  documentsAwaitingExtraction,
   downloadDocument,
+  extractTextForExistingDocument,
   listDocuments,
   updateDocumentTranscript,
   updateTextNoteContent,
 } from "@/domain/documents/repository";
+import { findTextSnippet } from "@/lib/text-snippet";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { contentKindFor, CONTENT_KIND_ICON, hasInlinePlayer, isTranscribable } from "@/lib/content-kind";
@@ -60,6 +63,33 @@ function expiryStatus(expiresAt: string | null): "none" | "overdue" | "soon" | "
 type SortColumn = "name" | "category" | "asset" | "size" | "createdAt" | "expiresAt";
 
 /**
+ * FASE 17b --- perché questo documento è comparso tra i risultati. Si
+ * mostra solo quando la parola cercata sta DENTRO il file e non nel
+ * nome: negli altri casi il motivo è già sotto gli occhi, e una riga in
+ * più sarebbe solo rumore (v. richiesta utente).
+ */
+function ContentSnippet({ doc, query }: { doc: DocumentListItem; query: string }) {
+  const normalized = query.trim();
+  if (!normalized) return null;
+  if (doc.filename.toLowerCase().includes(normalized.toLowerCase())) return null;
+
+  const snippet = findTextSnippet(doc.extractedText, normalized);
+  if (!snippet) return null;
+
+  return (
+    <p className="mt-0.5 truncate text-xs text-zinc-500 italic dark:text-zinc-400">
+      {snippet.truncatedStart ? "…" : ""}
+      {snippet.before}
+      <mark className="rounded bg-yellow-200 px-0.5 not-italic dark:bg-yellow-900 dark:text-yellow-100">
+        {snippet.match}
+      </mark>
+      {snippet.after}
+      {snippet.truncatedEnd ? "…" : ""}
+    </p>
+  );
+}
+
+/**
  * FASE 14 --- "Archivio": documenti, immagini, audio, video e note
  * testuali, tutti nella stessa lista con gli stessi attributi
  * (categoria, bene, scadenza, tag, note). Immagini/audio/video hanno
@@ -82,6 +112,10 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "name", direction: "asc" });
+  // FASE 17b --- avanzamento della lettura dei documenti già archiviati.
+  const [extractionProgress, setExtractionProgress] = useState<{ done: number; total: number } | null>(
+    null,
+  );
 
   const { modeFor } = useListViewPreferences();
   const viewMode = modeFor("archive");
@@ -331,6 +365,38 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     setSort((prev) => toggleSort(prev, column));
   }
 
+  // FASE 17b --- il recupero dei contenuti già in archivio. Uno alla
+  // volta e non in parallelo: ognuno richiede di scaricare, decifrare e
+  // leggere il file, e lanciarne dieci insieme su un telefono significa
+  // solo farlo arrancare. L'avanzamento è mostrato nel banner.
+  const pendingExtraction = documentsAwaitingExtraction(documents);
+
+  async function handleExtractPending() {
+    const queue = pendingExtraction;
+    setExtractionProgress({ done: 0, total: queue.length });
+    setError(null);
+
+    let failures = 0;
+    for (const [index, doc] of queue.entries()) {
+      try {
+        await extractTextForExistingDocument(supabase, masterKey, doc);
+      } catch {
+        // Un documento illeggibile non deve fermare gli altri: si conta
+        // e si prosegue (v. estrazione best-effort in domain/extraction).
+        failures++;
+      }
+      setExtractionProgress({ done: index + 1, total: queue.length });
+    }
+
+    setExtractionProgress(null);
+    await refresh();
+    showToast(
+      failures === 0
+        ? "Lettura completata: ora puoi cercare dentro questi documenti."
+        : `Lettura completata, ${failures} ${failures === 1 ? "documento" : "documenti"} non leggibili.`,
+    );
+  }
+
   function matchesQuery(doc: DocumentListItem): boolean {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return true;
@@ -396,6 +462,35 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
       ) : (
         <>
+          {/* FASE 17b --- i contenuti caricati prima che l'estrazione
+              esistesse non sono cercabili per contenuto, e senza questo
+              avviso l'utente non avrebbe modo di saperlo né di
+              rimediare (v. richiesta utente). Compare solo se ce ne
+              sono davvero, e sparisce da sé quando finisce. */}
+          {pendingExtraction.length > 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/30 bg-brand/5 p-4">
+              <p className="min-w-0 text-sm text-zinc-700 dark:text-zinc-300">
+                {extractionProgress
+                  ? `Sto leggendo i documenti… ${extractionProgress.done} di ${extractionProgress.total}`
+                  : `${pendingExtraction.length} ${
+                      pendingExtraction.length === 1
+                        ? "documento è stato caricato"
+                        : "documenti sono stati caricati"
+                    } prima che Hinthial sapesse leggerne il contenuto: ${
+                      pendingExtraction.length === 1 ? "non è" : "non sono"
+                    } ancora cercabili per quello che c'è scritto dentro.`}
+              </p>
+              <button
+                type="button"
+                disabled={extractionProgress !== null}
+                onClick={handleExtractPending}
+                className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+              >
+                {extractionProgress ? "Lettura in corso…" : "Leggili ora"}
+              </button>
+            </div>
+          ) : null}
+
           <div className="flex flex-wrap gap-3">
             <SearchInput
               value={query}
@@ -490,8 +585,11 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                       return (
                         <Fragment key={doc.id}>
                           <tr>
-                            <td className="max-w-[16rem] truncate p-3 font-medium text-zinc-900 dark:text-zinc-100">
-                              {CONTENT_KIND_ICON[kind]} {doc.filename}
+                            <td className="max-w-[16rem] p-3 font-medium text-zinc-900 dark:text-zinc-100">
+                              <span className="block truncate">
+                                {CONTENT_KIND_ICON[kind]} {doc.filename}
+                              </span>
+                              <ContentSnippet doc={doc} query={query} />
                             </td>
                             <td className="hidden p-3 text-zinc-600 @lg:table-cell dark:text-zinc-400">
                               {category ? `${category.icon} ${category.name}` : "—"}
@@ -688,6 +786,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                           {CONTENT_KIND_ICON[kind]} {doc.filename}
                         </p>
+                        <ContentSnippet doc={doc} query={query} />
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
                           {category ? `${category.icon} ${category.name} · ` : ""}
                           {asset ? `🔗 ${asset.name} · ` : ""}

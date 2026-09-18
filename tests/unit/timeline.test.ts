@@ -34,6 +34,7 @@ describe("buildTimeline", () => {
           tags: [],
           transcript: "",
           extractedText: "",
+          extractedAt: null,
         },
       ],
       reminders: [

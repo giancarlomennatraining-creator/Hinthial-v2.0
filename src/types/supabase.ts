@@ -354,6 +354,7 @@ export type Database = {
           encrypted_tags: string | null;
           encrypted_transcript: string | null;
           encrypted_extracted_text: string | null;
+          extracted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -373,6 +374,7 @@ export type Database = {
           encrypted_tags?: string | null;
           encrypted_transcript?: string | null;
           encrypted_extracted_text?: string | null;
+          extracted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -392,6 +394,7 @@ export type Database = {
           encrypted_tags?: string | null;
           encrypted_transcript?: string | null;
           encrypted_extracted_text?: string | null;
+          extracted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

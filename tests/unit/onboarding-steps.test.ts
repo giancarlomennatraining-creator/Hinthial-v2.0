@@ -99,6 +99,7 @@ describe("isOnboardingComplete", () => {
             tags: [],
             transcript: "",
             extractedText: "",
+            extractedAt: null,
           },
         ],
         friends: [

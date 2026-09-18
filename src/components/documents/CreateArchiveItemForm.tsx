@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
-import { createTextNote, uploadDocument } from "@/domain/documents/repository";
+import {
+  createTextNote,
+  uploadDocument,
+  type UploadPhase,
+} from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { heuristicCategorizer } from "@/domain/categorizer/heuristic-provider";
@@ -47,6 +51,10 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  // FASE 17b --- leggere un PDF lungo richiede qualche secondo: dirlo
+  // evita che il pulsante annunci "Salvataggio…" mentre in realtà sta
+  // ancora leggendo il documento (v. richiesta utente).
+  const [phase, setPhase] = useState<UploadPhase>("saving");
 
   const [mode, setMode] = useState<CreationMode>("upload");
   const [metadata, setMetadata] = useState<DocumentMetadataFieldsValue>(EMPTY_METADATA_FIELDS);
@@ -163,7 +171,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         );
       } else {
         const file = mode === "record" ? recordedFile! : pickedFile!;
-        await uploadDocument(supabase, masterKey, user.id, file, metadataInput);
+        await uploadDocument(supabase, masterKey, user.id, file, metadataInput, setPhase);
       }
 
       router.push("/archive?created=1");
@@ -318,7 +326,11 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
               disabled={creating || !canSubmit}
               className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
             >
-              {creating ? "Salvataggio…" : "Aggiungi all'archivio"}
+              {creating
+                ? phase === "reading"
+                  ? "Sto leggendo il documento…"
+                  : "Salvataggio…"
+                : "Aggiungi all'archivio"}
             </button>
             <Link
               href="/archive"

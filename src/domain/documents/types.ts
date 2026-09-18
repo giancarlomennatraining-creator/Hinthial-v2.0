@@ -31,6 +31,14 @@ export interface DocumentListItem {
    * scrive a mano. Stringa vuota se non applicabile o non estratto.
    */
   extractedText: string;
+  /**
+   * FASE 17b --- quando l'estrazione è stata *tentata*, a prescindere
+   * dall'esito. `null` significa "mai tentata" (contenuto caricato
+   * prima della FASE 17): è ciò che distingue un documento ancora da
+   * recuperare da uno già guardato che semplicemente non aveva testo da
+   * dare, come una scansione.
+   */
+  extractedAt: string | null;
 }
 
 /** Fields collected at upload time, in addition to the file itself. */

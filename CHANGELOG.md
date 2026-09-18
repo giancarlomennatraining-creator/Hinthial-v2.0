@@ -10,6 +10,26 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-18 (2)
+
+### FASE 17b --- il perché dei risultati, e i documenti già in archivio
+
+**Cosa fa:** tre cose che rendono percepibile la lettura dei PDF introdotta poco fa.
+
+**(1) Il risultato spiega perché è comparso.** Cerchi "cardiologia" e trovi `scan_0012.pdf`: sotto al nome compare ora lo spezzone di testo attorno alla parola, con la parola evidenziata --- *"…reparto di **cardiologia**. Referto della visita del 14 marzo…"*. Senza, vedevi un file il cui nome non c'entrava nulla e non avevi modo di capire se il risultato fosse giusto. Non compare quando la parola sta già nel nome: lì il motivo è sotto gli occhi e una riga in più sarebbe solo rumore.
+
+**(2) Il pulsante non mente più.** Durante il caricamento di un PDF dice *"Sto leggendo il documento…"* mentre legge, e *"Salvataggio…"* mentre salva. Prima diceva "Salvataggio…" per tutto il tempo, anche quando stava ancora leggendo: stessa attesa, ma inspiegata.
+
+**(3) I documenti già in archivio si recuperano.** Chi aveva file caricati prima non vedeva alcuna differenza: l'estrazione avveniva solo al caricamento. Ora in Archivio compare un avviso --- *"N documenti sono stati caricati prima che Hinthial sapesse leggerne il contenuto"* --- con un tasto **"Leggili ora"** che li scorre uno per uno mostrando l'avanzamento, e sparisce da sé quando ha finito.
+
+**Note tecniche:** nuova colonna `extracted_at` (solo una data, mai contenuto) che distingue tre stati prima indistinguibili, perché in tutti e tre il testo risultava vuoto: *mai tentata* (null, caricato prima della FASE 17), *tentata con esito* e *tentata a vuoto* (tipicamente una scansione, in attesa dell'OCR). Senza, il recupero non saprebbe quali file ha già guardato e riproverebbe all'infinito sugli stessi. Il recupero è **sequenziale e non parallelo**: ogni documento va scaricato, decifrato e letto, e lanciarne dieci insieme su un telefono lo farebbe solo arrancare; un file illeggibile viene contato e non ferma gli altri. `uploadDocument` accetta ora un `onPhase` opzionale per dire al form cosa sta facendo --- l'estrazione resta dentro il repository, così ogni chiamante futuro la eredita senza doversene ricordare. Nuovo `lib/text-snippet.ts` con 8 test: sceglie il primo termine presente, conserva la forma del testo e non quella digitata, allinea il taglio al confine di parola solo quando è vicino (meglio tagliare a metà parola che perdere il contesto), segnala se il testo continua oltre.
+
+Verificato: 8 test unitari sullo spezzone, più il test e2e esteso che ora copre anche il nuovo percorso --- lo spezzone compare cercando per contenuto e **non** compare cercando per nome, e il recupero dei documenti storici funziona davvero (si riporta un documento allo stato "mai letto", si verifica che la ricerca non lo trovi, si preme "Leggili ora", si verifica che ora lo trovi).
+
+**Resta fuori, deliberatamente:** l'avviso *"questo documento non contiene testo leggibile"* per le scansioni. Sarebbe un cartello che descrive un problema che l'OCR elimina --- si scriverebbe codice destinato a sparire un passo dopo. E lo spezzone nella ricerca globale: quella passa da `AISource`, lo stesso tipo che alimenta ciò che viene inviato a Claude (`claude-provider.ts`), dove oggi per scelta viaggiano solo metadati e mai contenuto. Aggiungerlo lì richiede una regola esplicita e un test che la difenda: si farà quando si lavorerà su quel confine.
+
+---
+
 ## 2026-09-18
 
 ### FASE 17, primo passo --- la ricerca guarda dentro i PDF

@@ -19,15 +19,22 @@ import {
 } from "@/lib/storage/documents-bucket";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import { NOTE_MIME_TYPE } from "@/lib/content-kind";
-import { extractText } from "@/domain/extraction/extract-text";
+import { canExtractText, extractText } from "@/domain/extraction/extract-text";
 import type {
   DocumentListItem,
   DocumentMetadataInput,
   TextNoteInput,
 } from "@/domain/documents/types";
 
+/**
+ * Le fasi visibili di un caricamento --- v. uploadDocument, `onPhase`.
+ * "reading" può durare qualche secondo su un PDF lungo, e dirlo è
+ * l'unica differenza tra un'attesa spiegata e una inspiegata.
+ */
+export type UploadPhase = "reading" | "saving";
+
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, extracted_at, created_at";
 
 type DocumentRow = {
   id: string;
@@ -43,6 +50,7 @@ type DocumentRow = {
   encrypted_tags: string | null;
   encrypted_transcript: string | null;
   encrypted_extracted_text: string | null;
+  extracted_at: string | null;
   created_at: string;
 };
 
@@ -103,6 +111,7 @@ async function toDocumentListItem(
     tags,
     transcript,
     extractedText,
+    extractedAt: row.extracted_at,
   };
 }
 
@@ -164,6 +173,7 @@ export async function uploadDocument(
   ownerId: string,
   file: File,
   metadata: DocumentMetadataInput,
+  onPhase?: (phase: UploadPhase) => void,
 ): Promise<void> {
   const plaintext = new Uint8Array(await file.arrayBuffer());
   const mimeType = file.type || "application/octet-stream";
@@ -173,7 +183,15 @@ export async function uploadDocument(
   // lascia il dispositivo (v. domain/extraction). Best-effort: se
   // l'estrazione non riesce si salva il documento lo stesso, si perde
   // solo la possibilità di cercarci dentro.
+  //
+  // `onPhase` esiste perché leggere un PDF lungo richiede qualche
+  // secondo: senza, l'interfaccia direbbe "Salvataggio…" mentre in
+  // realtà sta leggendo (v. FASE 17b, richiesta utente).
+  const willExtract = canExtractText(mimeType);
+  if (willExtract) onPhase?.("reading");
   const extractedText = await extractText(plaintext, mimeType);
+
+  onPhase?.("saving");
 
   const [
     { wrappedDocumentKey, payload },
@@ -208,6 +226,10 @@ export async function uploadDocument(
     encrypted_notes: encryptedNotes,
     encrypted_tags: encryptedTags,
     encrypted_extracted_text: encryptedExtractedText,
+    // Marcato solo se un motore ha davvero provato a leggere: per un
+    // tipo non ancora supportato resta null, così un OCR futuro saprà
+    // che quel contenuto è ancora tutto da guardare.
+    extracted_at: willExtract ? new Date().toISOString() : null,
   });
 
   if (error) {
@@ -389,6 +411,48 @@ export async function downloadDocument(
   const bytes = await decryptDocument(masterKey, encrypted);
 
   return { filename: doc.filename, mimeType: doc.mimeType, bytes };
+}
+
+/**
+ * FASE 17b --- i contenuti già in archivio da prima che l'estrazione
+ * esistesse: `extractedAt` null e un tipo che oggi sappiamo leggere.
+ * Sono gli unici per cui la ricerca dentro il file non funziona ancora.
+ */
+export function documentsAwaitingExtraction(documents: DocumentListItem[]): DocumentListItem[] {
+  return documents.filter((doc) => doc.extractedAt === null && canExtractText(doc.mimeType));
+}
+
+/**
+ * Legge un contenuto già archiviato e ne salva il testo --- l'unico
+ * caso in cui serve scaricare e decifrare il file, non avendolo più in
+ * chiaro come al momento del caricamento.
+ *
+ * Marca `extracted_at` **anche quando non trova nulla**: è ciò che
+ * distingue "già guardato, non aveva testo" (una scansione, in attesa
+ * dell'OCR) da "mai guardato", evitando di riprovare all'infinito sugli
+ * stessi file.
+ */
+export async function extractTextForExistingDocument(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  doc: DocumentListItem,
+): Promise<{ foundText: boolean }> {
+  const { bytes } = await downloadDocument(supabase, masterKey, doc);
+  const text = await extractText(bytes, doc.mimeType);
+
+  const { error } = await supabase
+    .from("documents")
+    .update({
+      encrypted_extracted_text: await encryptOptionalText(masterKey, text ?? ""),
+      extracted_at: new Date().toISOString(),
+    })
+    .eq("id", doc.id);
+
+  if (error) {
+    throw new Error(`Impossibile salvare il testo estratto: ${error.message}`);
+  }
+
+  return { foundText: Boolean(text) };
 }
 
 export async function deleteDocument(

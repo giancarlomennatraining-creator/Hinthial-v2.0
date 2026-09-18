@@ -93,6 +93,37 @@ export async function forceOwnFriendToGuardian(ownerEmail: string): Promise<void
   }
 }
 
+/**
+ * FASE 17b --- riporta i documenti di un account allo stato "mai letto"
+ * (`extracted_at` nullo, testo estratto assente): è com'erano i
+ * contenuti caricati prima che l'estrazione esistesse. Serve a provare
+ * il recupero dal banner in Archivio senza avere un archivio storico
+ * vero da cui partire. Il testo cifrato viene rimosso, non riscritto:
+ * questa funzione non ha la Master Key e non potrebbe comunque.
+ */
+export async function resetDocumentExtraction(ownerEmail: string): Promise<void> {
+  const admin = adminClient();
+
+  const perPage = 200;
+  let ownerId: string | null = null;
+  for (let page = 1; !ownerId; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error || !data) throw new Error(`Impossibile trovare l'utente: ${error?.message}`);
+    ownerId = data.users.find((u) => u.email === ownerEmail)?.id ?? null;
+    if (!ownerId && data.users.length < perPage) {
+      throw new Error(`Nessun account con email ${ownerEmail}.`);
+    }
+  }
+
+  const { error } = await admin
+    .from("documents")
+    .update({ extracted_at: null, encrypted_extracted_text: null })
+    .eq("owner_id", ownerId);
+  if (error) {
+    throw new Error(`Impossibile azzerare l'estrazione: ${error.message}`);
+  }
+}
+
 function adminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

@@ -61,6 +61,7 @@ describe("DashboardCounters", () => {
           tags: [],
           transcript: "",
           extractedText: "",
+          extractedAt: null,
         },
       ],
     });
