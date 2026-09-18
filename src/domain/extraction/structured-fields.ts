@@ -26,7 +26,7 @@
  * basta è l'unico comportamento onesto.
  */
 
-export type StructuredFieldKind = "document-date" | "expiry" | "amount" | "issuer";
+export type StructuredFieldKind = "document-date" | "expiry" | "amount" | "issuer" | "title";
 
 export interface StructuredField {
   kind: StructuredFieldKind;
@@ -251,6 +251,83 @@ function findIssuer(text: string): StructuredField | null {
   return null;
 }
 
+/** Quanto può essere lungo un titolo proposto: oltre, in un elenco non si legge. */
+const MAX_TITLE_CHARS = 70;
+
+/**
+ * FASE 19b --- un nome per il documento.
+ *
+ * È la proposta più utile di tutte, perché `IMG_4821.jpg` e
+ * `scan_0012.pdf` sono la gran parte di un archivio vero e sono il
+ * motivo per cui poi non si ritrova niente.
+ *
+ * Si costruisce da due pezzi che già sappiamo riconoscere: la riga che
+ * **descrive** il documento (quella che findIssuer scarta di proposito,
+ * perché è un titolo e non un'intestazione) e chi l'ha emesso. Insieme
+ * dicono cosa e di chi in una riga sola --- che è esattamente quello che
+ * si cerca scorrendo un elenco.
+ *
+ * È anche il posto dove l'emittente diventa finalmente utile: un campo
+ * "Emittente" per conto suo non lo filtrerebbe mai nessuno, dentro il
+ * nome invece si legge ogni volta.
+ */
+function findTitle(text: string, issuer: string | null): StructuredField | null {
+  const lines = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, ISSUER_LINES);
+
+  const described = lines.find(
+    (line) => DOCUMENT_TITLE_WORDS.test(line) && line.length <= MAX_TITLE_CHARS,
+  );
+  if (!described) return null;
+
+  // Il titolo di un documento è spesso tutto maiuscolo sulla carta
+  // stampata ("CERTIFICATO DI RESIDENZA"): in un elenco grida, e in
+  // mezzo ad altri nomi si legge peggio. Si ammorbidisce solo lui:
+  // l'emittente resta com'è, perché è un nome proprio e "GENERALI
+  // ITALIA S.p.A." ridotto a "Generali italia s.p.a." si legge peggio,
+  // non meglio.
+  const label = toSentenceCase(described);
+  const full = issuer ? `${label} --- ${issuer}` : label;
+
+  return {
+    kind: "title",
+    value: full.length > MAX_TITLE_CHARS ? label : full,
+    raw: described,
+    context: described,
+  };
+}
+
+function toSentenceCase(text: string): string {
+  if (text !== text.toUpperCase()) return text;
+  const lower = text.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+/**
+ * FASE 19b --- la frase del documento in cui compare questa data.
+ *
+ * Serve quando l'utente **corregge** una data proposta: se quella nuova
+ * è scritta nel documento, gliela si mostra nel suo contesto --- prova
+ * che la correzione corrisponde a qualcosa di scritto davvero, e non a
+ * un ricordo.
+ *
+ * Il confronto è tra **date**, non tra stringhe: chi corregge sceglie da
+ * un calendario e ottiene `2027-06-03`, mentre il documento dice "3
+ * giugno 2027". Cercare il testo non troverebbe mai niente.
+ *
+ * null quando quella data nel documento non c'è: succede spesso e per
+ * buoni motivi (l'OCR l'ha storpiata, oppure è una scadenza calcolata,
+ * oppure la sa l'utente da fuori), e va detto invece che nascosto.
+ */
+export function findDateContext(text: string, iso: string): string | null {
+  const match = findDates(text).find((date) => date.iso === iso);
+  if (!match) return null;
+  return contextAround(text, match.index, match.raw.length);
+}
+
 export function extractStructuredFields(text: string): StructuredField[] {
   if (!text.trim()) return [];
 
@@ -332,6 +409,9 @@ export function extractStructuredFields(text: string): StructuredField[] {
 
   const issuer = findIssuer(text);
   if (issuer) fields.push(issuer);
+
+  const title = findTitle(text, issuer?.value ?? null);
+  if (title) fields.push(title);
 
   return fields;
 }

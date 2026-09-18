@@ -28,6 +28,7 @@ const FIELD_LABEL: Record<StructuredFieldKind, string> = {
   expiry: "Scadenza",
   amount: "Importo",
   issuer: "Emittente",
+  title: "Titolo",
 };
 
 const FIELD_ICON: Record<StructuredFieldKind, string> = {
@@ -35,6 +36,7 @@ const FIELD_ICON: Record<StructuredFieldKind, string> = {
   expiry: "⏳",
   amount: "💶",
   issuer: "🏛️",
+  title: "🔖",
 };
 
 function displayValue(field: StructuredField): string {
@@ -45,6 +47,7 @@ function displayValue(field: StructuredField): string {
     case "amount":
       return formatAmount(field.value);
     case "issuer":
+    case "title":
       return field.value;
   }
 }

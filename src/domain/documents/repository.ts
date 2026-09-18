@@ -42,6 +42,32 @@ export type UploadPhase = "reading" | "saving";
  */
 export type UploadPhaseListener = (phase: UploadPhase, progress: number | null) => void;
 
+/**
+ * FASE 19b --- il risultato di una lettura già fatta altrove.
+ *
+ * Dal momento in cui il form legge il documento appena lo scegli (per
+ * poter proporre titolo, categoria e scadenza *prima* di salvare),
+ * rileggerlo al salvataggio sarebbe lavoro rifatto due volte --- su una
+ * scansione significa mezzo minuto buttato.
+ *
+ * `attempted: false` è il caso in cui l'utente ha premuto Salva mentre
+ * la lettura era ancora in corso: si salva subito e `extracted_at`
+ * resta nullo, così il documento finisce tra quelli che l'avviso
+ * "Leggili ora" recupera (v. FASE 17b). Salvare non deve mai aspettare.
+ */
+export interface PriorExtraction {
+  text: string | null;
+  attempted: boolean;
+}
+
+export interface UploadOptions {
+  /** Il nome con cui salvare il contenuto --- di default quello del file. */
+  title?: string;
+  /** Una lettura già fatta; se assente, si legge qui. */
+  extraction?: PriorExtraction;
+  onPhase?: UploadPhaseListener;
+}
+
 const DOCUMENT_COLUMNS =
   "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, extracted_at, created_at";
 
@@ -182,8 +208,9 @@ export async function uploadDocument(
   ownerId: string,
   file: File,
   metadata: DocumentMetadataInput,
-  onPhase?: UploadPhaseListener,
+  options: UploadOptions = {},
 ): Promise<void> {
+  const { title, extraction, onPhase } = options;
   const plaintext = new Uint8Array(await file.arrayBuffer());
   const mimeType = file.type || "application/octet-stream";
 
@@ -198,11 +225,20 @@ export async function uploadDocument(
   // realtà sta leggendo (v. FASE 17b, richiesta utente). L'OCR di una
   // foto ne richiede molti di più, e per quello riporta anche una
   // percentuale (v. FASE 17c).
-  const willExtract = canExtractText(mimeType);
-  if (willExtract) onPhase?.("reading", null);
-  const extractedText = await extractText(plaintext, mimeType, (fraction) =>
-    onPhase?.("reading", fraction),
-  );
+  // Se il form ha già letto il documento (v. PriorExtraction) si usa
+  // quel risultato: rileggere sarebbe lo stesso lavoro due volte.
+  let extractedText: string | null;
+  let attempted: boolean;
+  if (extraction) {
+    extractedText = extraction.text;
+    attempted = extraction.attempted;
+  } else {
+    attempted = canExtractText(mimeType);
+    if (attempted) onPhase?.("reading", null);
+    extractedText = await extractText(plaintext, mimeType, (fraction) =>
+      onPhase?.("reading", fraction),
+    );
+  }
 
   onPhase?.("saving", null);
 
@@ -214,7 +250,9 @@ export async function uploadDocument(
     encryptedExtractedText,
   ] = await Promise.all([
     encryptDocument(masterKey, plaintext),
-    encryptBytes(masterKey, utf8ToBytes(file.name)),
+    // Il nome scelto dall'utente se c'è, altrimenti quello del file:
+    // "scan_0012.pdf" diventa "Polizza RC auto --- Generali" (FASE 19b).
+    encryptBytes(masterKey, utf8ToBytes(title?.trim() || file.name)),
     encryptOptionalText(masterKey, metadata.notes),
     encryptTags(masterKey, metadata.tags),
     encryptOptionalText(masterKey, extractedText ?? ""),
@@ -240,9 +278,10 @@ export async function uploadDocument(
     encrypted_tags: encryptedTags,
     encrypted_extracted_text: encryptedExtractedText,
     // Marcato solo se un motore ha davvero provato a leggere: per un
-    // tipo non ancora supportato resta null, così un OCR futuro saprà
-    // che quel contenuto è ancora tutto da guardare.
-    extracted_at: willExtract ? new Date().toISOString() : null,
+    // tipo non ancora supportato --- o per un salvataggio arrivato
+    // mentre la lettura era ancora in corso --- resta null, così il
+    // recupero saprà che quel contenuto è ancora tutto da guardare.
+    extracted_at: attempted ? new Date().toISOString() : null,
   });
 
   if (error) {

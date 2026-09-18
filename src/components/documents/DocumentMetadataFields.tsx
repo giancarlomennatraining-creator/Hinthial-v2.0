@@ -48,6 +48,7 @@ export function DocumentMetadataFields({
   value,
   onChange,
   showExpiry = true,
+  hints,
 }: {
   idPrefix: string;
   categories: Category[];
@@ -55,13 +56,21 @@ export function DocumentMetadataFields({
   value: DocumentMetadataFieldsValue;
   onChange: (next: DocumentMetadataFieldsValue) => void;
   /**
-   * In creazione raramente si conosce già la scadenza esatta (e per
-   * audio/video/note spesso non ha proprio senso chiederla) --- il
-   * campo va aggiunto dopo, via "Modifica", una volta che si sa
-   * davvero (a mano, o in futuro suggerito dall'AI reale che legge il
-   * contenuto). Di default true per non rompere l'uso in modifica.
+   * Il campo scadenza era nascosto in creazione perché "raramente si
+   * conosce già la scadenza esatta --- la si aggiunge dopo, a mano o in
+   * futuro suggerita dall'AI che legge il contenuto". Quel futuro è
+   * arrivato (FASE 19b): il documento viene letto appena lo scegli, e
+   * se una scadenza c'è dentro la trova. Resta il parametro perché
+   * altrove (audio, video, note) chiederla non ha ancora senso.
    */
   showExpiry?: boolean;
+  /**
+   * FASE 19b --- una riga sotto a un campo, per dire chi ce l'ha messo e
+   * da dove viene ("suggerita da Hinthial", oppure la frase del
+   * documento in cui compare quella data). Sta qui e non nel chiamante
+   * perché è questo componente a possedere il layout dei campi.
+   */
+  hints?: Partial<Record<"categoryId" | "relatedAssetId" | "expiresAt", React.ReactNode>>;
 }) {
   // La categoria filtra i beni proposti (es. "Casa" -> solo i beni
   // di categoria "Casa") --- senza categoria selezionata, nessun bene è
@@ -106,6 +115,7 @@ export function DocumentMetadataFields({
               </option>
             ))}
           </select>
+          {hints?.categoryId}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -129,6 +139,7 @@ export function DocumentMetadataFields({
               </option>
             ))}
           </select>
+          {hints?.relatedAssetId}
         </div>
 
         {showExpiry ? (
@@ -146,6 +157,7 @@ export function DocumentMetadataFields({
               onChange={(e) => onChange({ ...value, expiresAt: e.target.value })}
               className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             />
+            {hints?.expiresAt}
           </div>
         ) : null}
       </div>

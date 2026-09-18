@@ -10,6 +10,42 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-18 (8)
+
+### FASE 19b --- il documento si legge da solo appena lo scegli
+
+**Cosa fa:** carichi un file e, **prima di salvare**, il form è già compilato. Scegli `scan_0012.pdf` e trovi:
+
+- un riquadro *"✓ Ho letto il documento"* con emittente, data e importo, ognuno con la riga da cui viene
+- **Categoria** *Assicurazioni* — ✨ suggerita da Hinthial
+- **Bene collegato** *Fiat Panda AB123CD* — ✨ riconosciuto nel documento
+- **Scadenza** *03/06/2027* — ✨ trovata nel documento, con la frase *"…Valida fino al 3 giugno 2027…"*
+- un titolo pronto da usare con un clic: *«Polizza responsabilità civile — GENERALI ITALIA S.p.A.»*
+
+Premi Salva e basta. Niente da digitare, e la polizza è già nelle Scadenze.
+
+**Perché serviva:** la FASE 19 era **mezza consegnata**. Aveva costruito il meccanismo delle proposte e l'aveva messo nel posto meno frequentato dell'app — una scheda che si apre solo andandola a cercare. Chi carica venti documenti senza aprirne nessuno non avrebbe mai visto una proposta. Il momento in cui hai la testa su quel documento è proprio quello in cui lo carichi; dopo non ci pensi più.
+
+**La lettura parte quando scegli il file, non quando premi Salva.** Così avviene mentre compili tag e note, e quando arrivi in fondo ha già finito: stesso lavoro, ma dentro il tempo che stavi già spendendo. Se premi Salva prima che abbia finito, aspetta — ma l'attesa è al massimo quella di prima, perché è cominciata prima.
+
+**Il bene collegato è l'aggancio più forte che ci sia.** I beni hanno spesso un identificativo unico: una targa, un IBAN, un numero di polizza. Se il bene si chiama *"Fiat Panda AB123CD"* e nel documento compare `AB123CD`, quella non è una somiglianza, è una certezza — e porta con sé anche la categoria giusta. Funziona anche se la targa è scritta spaziata da una parte e attaccata dall'altra.
+
+**Correggi una data e Hinthial ritrova la frase da cui viene.** È la richiesta esplicita dell'utente, e il suo valore sta nel caso più frequente: non che Hinthial non trovi la data, ma che ne trovi **cinque** e scelga quella sbagliata (una polizza ha emissione, decorrenza, scadenza, stampa). Correggi, e lei risponde *"quella è qui: «Emessa il 14 marzo 2026»"*. Il confronto è tra **date**, non tra stringhe: dal calendario arriva `2026-03-14` mentre il documento dice "14 marzo 2026", e cercare il testo non troverebbe mai niente. E quando davvero non c'è lo dice: *"Questa data nel documento non l'ho trovata. La salvo lo stesso."* — succede spesso e per buoni motivi (l'OCR l'ha storpiata, la scadenza è calcolata, o la sai tu da fuori).
+
+**Note tecniche --- due regole imparate strada facendo:**
+
+**In creazione si precompila, sulla scheda si chiede.** Non è un'incoerenza col meccanismo della 19: in creazione non c'è ancora niente dell'utente da sovrascrivere, e vedere il valore dentro un form che si sta già rivedendo riga per riga *è* il consenso. Su un documento già in archivio la categoria potresti averla scelta tu mesi fa.
+
+**Tranne il titolo, che si propone e non si impone** — e questo l'hanno scoperto i test. La prima versione precompilava anche il nome: dieci test e2e sono diventati rossi tutti insieme perché i documenti non si chiamavano più come il loro file. Il sintomo ha smascherato l'errore di progetto: categoria, bene e scadenza erano campi **vuoti**, e riempirli non toglie niente a nessuno; il nome del file invece c'è sempre, e sostituirlo d'ufficio viola la regola stessa della FASE 19 — *non si tocca ciò che è già compilato*. Ora il titolo è un clic.
+
+Il campo **Scadenza** compare ora anche in creazione: era nascosto perché "in creazione raramente si conosce già la scadenza esatta --- la si aggiunge dopo, a mano o in futuro suggerita dall'AI che legge il contenuto". Quel futuro è arrivato.
+
+Il segno *"✨ suggerito da Hinthial"* sparisce appena tocchi il campo: da quel momento il valore è tuo, e continuare a chiamarlo suggerito sarebbe falso.
+
+Verificato: 21 test unitari nuovi (il riconoscimento dei beni, il titolo, il ritrovamento di una data nel testo) e 3 e2e sul percorso completo — dal file scelto al documento salvato, compresa la correzione della data e la sparizione del segno. Più 24 e2e dell'Archivio rieseguiti in blocco, perché questa modifica tocca la strada che tutti percorrono.
+
+---
+
 ## 2026-09-18 (7)
 
 ### FASE 19 --- Hinthial propone, tu decidi

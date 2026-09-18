@@ -52,14 +52,13 @@ test("la ricerca in Archivio trova una foto per una parola scritta dentro l'imma
   // annunciata prima, non scoperta dopo (v. FASE 17c).
   await expect(page.getByText(/leggerà il testo scritto dentro l'immagine/)).toBeVisible();
 
+  // Dalla FASE 19b la lettura parte **qui**, appena scelto il file, e
+  // non al salvataggio: quando si preme "Aggiungi" ha già finito. È il
+  // motivo per cui l'attesa, prima di quella fase, era tutta sul
+  // pulsante.
+  await expect(page.getByText(/Ho letto il documento/)).toBeVisible({ timeout: 150_000 });
+
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
-
-  // Durante la lettura il pulsante dice cosa sta facendo, e sull'OCR
-  // anche a che punto è.
-  await expect(page.getByRole("button", { name: /Sto leggendo l'immagine/ })).toBeVisible({
-    timeout: 30_000,
-  });
-
   await expect(page).toHaveURL(/\/archive$/, { timeout: 150_000 });
   await expect(page.getByText("ocr-referto.png")).toBeVisible({ timeout: 20_000 });
 

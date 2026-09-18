@@ -10,6 +10,7 @@
 import { describe, expect, it } from "vitest";
 import {
   extractStructuredFields,
+  findDateContext,
   type StructuredField,
   type StructuredFieldKind,
 } from "@/domain/extraction/structured-fields";
@@ -196,6 +197,56 @@ describe("l'emittente", () => {
     it("una parola sola non basta", () => {
       expect(field("OSPEDALE\nreferto", "issuer")).toBeUndefined();
     });
+  });
+});
+
+describe("il titolo (FASE 19b)", () => {
+  it("unisce la riga che descrive il documento e chi l'ha emesso", () => {
+    const text = "GENERALI ITALIA S.p.A.\nPolizza responsabilita civile\nEmessa il 14 marzo 2026";
+    // L'emittente resta com'è scritto: è un nome proprio, e ridurlo a
+    // minuscolo si legge peggio, non meglio.
+    expect(field(text, "title")?.value).toBe(
+      "Polizza responsabilita civile --- GENERALI ITALIA S.p.A.",
+    );
+  });
+
+  it("riporta un titolo urlato in maiuscolo a una forma leggibile", () => {
+    // In un elenco, "CERTIFICATO DI RESIDENZA" grida e si legge peggio
+    // di tutti i nomi che gli stanno accanto.
+    expect(field("CERTIFICATO DI RESIDENZA\nComune di Perugia", "title")?.value).toContain(
+      "Certificato di residenza",
+    );
+  });
+
+  it("sta senza emittente quando non ce n'è uno", () => {
+    expect(field("Ricevuta di pagamento\nqualcosa d'altro", "title")?.value).toBe(
+      "Ricevuta di pagamento",
+    );
+  });
+
+  it("non inventa un titolo dove non c'è una riga che descriva il documento", () => {
+    expect(field("Ada Lovelace\nvia Manzoni 4\nMilano", "title")).toBeUndefined();
+  });
+});
+
+describe("ritrovare una data nel testo (FASE 19b)", () => {
+  const POLIZZA = "Emessa il 14 marzo 2026. Valida fino al 3 giugno 2027.";
+
+  it("ritrova una data scritta in lettere partendo dal formato del calendario", () => {
+    // È il punto: chi corregge sceglie da un calendario e ottiene
+    // "2027-06-03", mentre il documento dice "3 giugno 2027". Cercare il
+    // testo non troverebbe mai niente.
+    expect(findDateContext(POLIZZA, "2027-06-03")).toContain("Valida fino al 3 giugno 2027");
+  });
+
+  it("ritrova anche l'altra data del documento, se è quella corretta a mano", () => {
+    expect(findDateContext(POLIZZA, "2026-03-14")).toContain("Emessa il 14 marzo 2026");
+  });
+
+  it("dice di no quando quella data nel documento non c'è", () => {
+    // Succede spesso e per buoni motivi: l'OCR l'ha storpiata, oppure
+    // la scadenza è calcolata, oppure la sa l'utente da fuori.
+    expect(findDateContext(POLIZZA, "2030-01-01")).toBeNull();
   });
 });
 

@@ -873,6 +873,25 @@ accettato finisce comunque in chiaro in `documents.expires_at`, ma uno
 rifiutato non esisterebbe da nessuna parte sul server, e salvarlo in
 chiaro introdurrebbe un dato che senza questa fase non ci sarebbe.
 
+**19b --- le proposte al momento del caricamento.** La 19, da sola, era
+mezza consegnata: aveva costruito il meccanismo e l'aveva messo nel posto
+meno frequentato dell'app, una scheda che si apre solo andandola a
+cercare. Chi carica venti documenti senza aprirne nessuno non vedrebbe
+mai una proposta. Ora il file viene letto **appena lo scegli** (non al
+salvataggio: così la lettura avviene mentre compili il resto) e il form
+si precompila da solo --- titolo, categoria, bene collegato, scadenza.
+
+Due regole imparate qui:
+
+- **In creazione si precompila, sulla scheda si chiede.** Non è
+  incoerenza: in creazione non c'è ancora niente dell'utente da
+  sovrascrivere, e vedere il valore in un form che si sta già rivedendo
+  *è* il consenso.
+- **Tranne il titolo, che si propone.** È l'unico campo che arriva già
+  compilato --- il nome del file --- e vale anche lì la regola "non si
+  tocca ciò che è già compilato". Un titolo sbagliato messo in silenzio
+  cambierebbe l'identità del documento senza che nessuno se ne accorga.
+
 Proponibili oggi solo i due campi che hanno una casa dove essere scritti
 (`expires_at`, `category_id`). Data del documento, importo ed emittente
 (FASE 18) restano visibili ma non proponibili: inventare una colonna per
