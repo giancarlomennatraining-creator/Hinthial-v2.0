@@ -10,6 +10,13 @@ export function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/** Importo in euro, nella forma italiana --- v. FASE 18. */
+export function formatAmount(value: string): string {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return value;
+  return new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(amount);
+}
+
 export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
     day: "numeric",

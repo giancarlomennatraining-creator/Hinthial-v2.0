@@ -809,14 +809,27 @@ dentro i file, spese sommate per anno.
 ### FASE 17 --- Lettura locale dei contenuti
 
 Estrarre testo dai contenuti già in Archivio, tutto in-browser: PDF (via
-pdf.js), immagini (OCR), audio/video (trascrizione --- sostituisce lo
-stub attuale in `domain/transcription`, che restituisce sempre `null`).
-Il testo estratto si cifra con la Master Key come ogni altro campo.
+pdf.js) e immagini (OCR). Il testo estratto si cifra con la Master Key
+come ogni altro campo.
 
-*Stato:* fatto per PDF nativi (17a), ricerca che spiega i risultati e
+*Stato: **chiusa.*** PDF nativi (17a), ricerca che spiega i risultati e
 recupero dei contenuti storici (17b), OCR delle immagini (17c) e dei PDF
-scansionati (17d), scheda del contenuto con "cosa ho letto" (17e). Resta
-la trascrizione audio/video (17f), che chiude la fase.
+scansionati (17d), scheda del contenuto con "cosa ho letto" (17e).
+
+**La trascrizione audio/video è stata spostata nel blocco B** (v. FASE
+22b), e non è un rinvio per stanchezza: è l'unico pezzo di "lettura
+locale" che la tecnologia locale non sa ancora fare bene. Un modello
+vocale in-browser pesa 40-75 MB contro i 5,6 MB dell'OCR, su un telefono
+è spesso più lento del tempo reale, e in italiano sbaglia abbastanza da
+rendere la trascrizione un danno invece di un aiuto: a differenza
+dell'OCR, un modello vocale produce frasi plausibili anche quando ha
+capito male, e il filtro anti-spazzatura che protegge l'OCR (v.
+`ocr-extractor.ts`) lì non è replicabile. Costo massimo, resa minima
+(gli audio sono una frazione dei contenuti di un archivio personale) e
+qualità insufficiente: tre motivi concordi. Nel frattempo il
+comportamento resta onesto --- la scheda dichiara "non so ancora
+ascoltare gli audio" e la trascrizione si scrive a mano, con la ricerca
+che la usa.
 
 La scheda introdotta in 17e è anche il **pavimento delle fasi
 successive**: i campi estratti (18), le proposte (19), il fascicolo (20)
@@ -893,6 +906,21 @@ richiami sanitari si ricavano già in locale dalle FASI 17-18.
 
 L'analisi produce output strutturato che rientra nel meccanismo della
 FASE 19, mai scritture dirette.
+
+### FASE 22b --- Trascrizione audio/video
+
+Arrivava dalla FASE 17, dove era l'unico pezzo che la tecnologia locale
+non sa ancora fare abbastanza bene (v. FASE 17 per il ragionamento
+completo). Qui trova il suo posto naturale: un modello di qualità vera,
+dietro lo stesso consenso esplicito e la stessa tracciabilità in Attività
+di ogni altro invio. Sostituisce lo stub in `domain/transcription`, che
+oggi restituisce sempre `null`.
+
+Vincolo che resta dalla FASE 17: una trascrizione sbagliata è peggio di
+nessuna trascrizione, perché riempie la ricerca di parole mai dette.
+Serve la stessa soglia di fiducia applicata all'OCR --- e va deciso, una
+volta per tutte, se il testo trascritto sia correggibile a mano come oggi
+o in sola lettura come il testo estratto (v. FASE 17e).
 
 ### FASE 23 --- Chat con memoria e azioni
 
@@ -1134,14 +1162,15 @@ Una fase è completata quando:
 16 Production release
 
    HINTHIAL AI --- blocco A: niente esce dal dispositivo
-17 Lettura locale dei contenuti (PDF/OCR/trascrizione)
+17 Lettura locale dei contenuti (PDF + OCR) --- chiusa
 18 Estrazione strutturata locale (date, importi, emittente)
 19 Meccanismo delle proposte (accetta/modifica/rifiuta + Attività)
 20 Fascicoli (vicende trasversali alle categorie)
 21 Import massivo e riconoscimento di insiemi
 
    HINTHIAL AI --- blocco B: l'IA reale (dipende da 15)
-22 Analisi dei contenuti con Claude --- unica fase irreversibile
+22  Analisi dei contenuti con Claude --- unica fase irreversibile
+22b Trascrizione audio/video (arrivava dalla 17)
 23 Chat con memoria e azioni
 24 Avvisi proattivi (possono restare vuoti)
 

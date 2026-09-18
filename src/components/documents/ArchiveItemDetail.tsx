@@ -14,6 +14,8 @@ import {
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { readingStateFor } from "@/domain/extraction/reading-state";
+import { extractStructuredFields } from "@/domain/extraction/structured-fields";
+import { StructuredFieldsSection } from "@/components/documents/StructuredFieldsSection";
 import {
   contentKindFor,
   CONTENT_KIND_ICON,
@@ -255,6 +257,11 @@ export function ArchiveItemDetail({
   const category = categories.find((c) => c.id === doc.categoryId);
   const asset = assets.find((a) => a.id === doc.relatedAssetId);
   const reading = readingStateFor(doc);
+  // FASE 18 --- calcolati al volo dal testo già decifrato in memoria, non
+  // salvati: non c'è niente da migrare, valgono da subito su tutto
+  // l'archivio esistente, e non esiste proprio il modo di scrivere per
+  // sbaglio qualcosa che l'utente non ha accettato (v. FASE 19).
+  const structuredFields = extractStructuredFields(doc.extractedText);
 
   return (
     <div className="flex flex-col gap-6">
@@ -320,7 +327,7 @@ export function ArchiveItemDetail({
             né tag resterebbe mezzo riquadro vuoto. Ogni blocco è alto
             quanto ciò che contiene. */}
         <div className="grid items-start gap-6 @3xl:grid-cols-3">
-          <section className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 @3xl:col-span-1 dark:border-zinc-800 dark:bg-zinc-950">
+          <section aria-label="Anteprima" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 @3xl:col-span-1 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Anteprima</h2>
             {previewLoading ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
@@ -371,7 +378,7 @@ export function ArchiveItemDetail({
             )}
           </section>
 
-          <section className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 @3xl:col-span-2 dark:border-zinc-800 dark:bg-zinc-950">
+          <section aria-label="Scheda" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 @3xl:col-span-2 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Scheda</h2>
             <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[10rem_1fr]">
               <Field label="Categoria">
@@ -402,6 +409,11 @@ export function ArchiveItemDetail({
           </section>
         </div>
       </div>
+
+      {/* FASE 18 --- sopra il testo grezzo: quattro righe leggibili
+          valgono più di tremila caratteri, e il testo qui sotto serve
+          semmai a verificarle. */}
+      <StructuredFieldsSection fields={structuredFields} />
 
       {/* A tutta larghezza, sotto: è il testo di un documento, e in una
           colonna stretta si leggerebbe peggio di quanto si legga il
@@ -471,7 +483,7 @@ function ReadingSection({
     fullText || !tooLong ? doc.extractedText : doc.extractedText.slice(0, TEXT_PREVIEW_CHARS);
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <section aria-label="Cosa ho letto" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Cosa ho letto</h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">🔒 sul tuo dispositivo</p>

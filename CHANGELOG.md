@@ -10,6 +10,38 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-18 (6)
+
+### FASE 18 --- dal testo ai campi: "cosa ne ho ricavato"
+
+**Cosa fa:** sulla scheda di un contenuto compare un nuovo riquadro che dice cosa Hinthial ha **capito** leggendo il documento, non solo cosa c'è scritto: la data del documento, una scadenza, un importo, chi l'ha emesso.
+
+Carichi un referto scansionato e ti dice: *emittente* AZIENDA OSPEDALIERA DI GUBBIO, *data del documento* 14 mar 2026, *scadenza* 14 mar 2027. Quest'ultima non è scritta da nessuna parte sul foglio --- il documento dice *"si consiglia controllo tra dodici mesi"*, e Hinthial ha fatto il conto a partire dalla data del prelievo. Per questo accanto compare un'etichetta **"calcolata da Hinthial"**: dire che è un conto e non una data letta è la differenza tra una proposta e un'affermazione.
+
+**Ogni campo mostra il pezzo di documento da cui viene.** Devi poter dare ragione o torto a Hinthial in un colpo d'occhio, senza fidarti.
+
+**Non scrive niente, e lo dice.** In fondo al riquadro: *"Per ora te le mostro soltanto: non ho cambiato niente nella scheda qui sopra."* Non è una limitazione tecnica ma una scelta d'ordine: la scrittura automatica ha bisogno di accetta/modifica/rifiuta, della memoria dei rifiuti e dell'annullamento --- cioè della FASE 19. Farla prima significherebbe modificare i dati dell'utente senza avere ancora lo strumento per disfare.
+
+**Note tecniche:** sono **schemi, non ragionamento** --- nessun modello, nessun download, nessuna domanda di privacy. E non si salva niente nel database: i campi si calcolano al volo dal testo già decifrato in memoria. Tre conseguenze, tutte desiderabili: nessuna migrazione, valgono da subito su tutto l'archivio esistente, e **non esiste proprio il modo** di scrivere per sbaglio qualcosa che l'utente non ha accettato.
+
+Le regole restrittive contano più di quelle permissive, e sono quelle testate a fondo:
+
+- **Un numero con la virgola non è un importo.** Un referto di analisi del sangue ne è pieno: se "Glicemia 92,50" diventasse un importo, la funzione smetterebbe di essere utile per l'intera categoria Salute. Servono un simbolo di valuta oppure un'etichetta di totale **attaccata** al numero --- "TOTALE PROTEINE 7,25" non passa.
+- **Una data qualunque non è una scadenza.** In una polizza ce ne sono cinque: serve una parola che la qualifichi (*scade il*, *valida fino al*, *data di scadenza*).
+- **Il punto non separa le date.** Con `14.03.2026` valido, ogni `art. 2.1.3` di un contratto diventerebbe una data.
+- **Le scadenze a intervallo si calcolano solo se c'è una data del documento** da cui contare: partire da oggi sarebbe sbagliato per qualunque documento archiviato in ritardo, cioè per la maggioranza. E serve una parola che apra (*controllo*, *rinnovo*, *ripetere*): altrimenti ogni "da tre settimane" in un'anamnesi diventerebbe una scadenza.
+- **Il titolo di un documento non è chi l'ha emesso.** "CERTIFICATO DI RESIDENZA" in cima al foglio è maiuscolo esattamente come lo sarebbe una carta intestata vera: c'è una lista di parole che aprono un titolo, e quelle righe vengono scartate.
+
+Le quattro sezioni della scheda hanno ora un nome accessibile (`aria-label`), il che le rende vere *region* per chi naviga con lo screen reader --- e permette ai test di puntarle per nome invece che per testo contenuto.
+
+Verificato: 41 test unitari, dei quali circa la metà verificano ciò che **non** deve essere riconosciuto --- è lì che una regex troppo larga fa danni, perché non lancia un'eccezione: mostra un dato falso con l'aria di saperlo. Più un e2e end-to-end sulla scansione, che prova l'intera catena (OCR → testo → schemi → interfaccia) e verifica anche che la scheda sia rimasta intatta.
+
+### La trascrizione audio/video si sposta nel blocco B
+
+Era l'ultimo pezzo della FASE 17. Non è un rinvio per stanchezza: è l'unico pezzo di "lettura locale" che la tecnologia locale non sa ancora fare bene. Un modello vocale in-browser pesa 40-75 MB contro i 5,6 MB dell'OCR, su un telefono è spesso più lento del tempo reale, e in italiano sbaglia abbastanza da rendere la trascrizione un danno invece di un aiuto --- a differenza dell'OCR, un modello vocale produce frasi *plausibili* anche quando ha capito male, e il filtro anti-spazzatura che protegge l'OCR lì non è replicabile. Costo massimo, resa minima, qualità insufficiente. Diventa la FASE 22b, dove un modello vero è già previsto e dietro consenso esplicito. Nel frattempo il comportamento resta onesto: la scheda dichiara *"non so ancora ascoltare gli audio"* e la trascrizione si scrive a mano, con la ricerca che la usa. **La FASE 17 si chiude qui.**
+
+---
+
 ## 2026-09-18 (5)
 
 ### FASE 17e --- la scheda di un contenuto: "cosa ho letto"

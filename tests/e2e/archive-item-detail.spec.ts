@@ -111,6 +111,43 @@ test("la scheda di un documento mostra il testo che Hinthial ci ha letto dentro"
   await expect(page.getByText("Pagina unica.")).toBeVisible();
 });
 
+// FASE 18 --- dal testo ai campi. Il documento è la scansione: nessun
+// livello di testo, quindi tutto ciò che compare qui è passato per OCR e
+// poi per il riconoscimento degli schemi. Se funziona su questo, la
+// catena regge per intero.
+test("la scheda ricava data, emittente e scadenza dal testo del documento", async ({ page }) => {
+  test.setTimeout(180_000);
+
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+  await signInAndSetUpVault(page, user.email, user.password);
+
+  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.setInputFiles('input[type="file"]', "tests/e2e/fixtures/ocr-scansione.pdf");
+  await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 150_000 });
+
+  await page.getByRole("link", { name: /ocr-scansione\.pdf/ }).click();
+
+  const ricavato = page.getByRole("region", { name: "Cosa ne ho ricavato" });
+  await expect(ricavato).toBeVisible({ timeout: 30_000 });
+
+  // "AZIENDA OSPEDALIERA DI GUBBIO" è l'intestazione, non il titolo del
+  // documento ("Referto di esame istologico", che deve essere scartato).
+  await expect(ricavato).toContainText("AZIENDA OSPEDALIERA DI GUBBIO");
+  await expect(ricavato).toContainText("14 mar 2026");
+
+  // La scadenza non è scritta da nessuna parte sul foglio: viene da
+  // "Si consiglia controllo tra dodici mesi" più la data del prelievo.
+  await expect(ricavato).toContainText("14 mar 2027");
+  await expect(ricavato).toContainText("calcolata da Hinthial");
+
+  // E soprattutto: non ha scritto niente: la scheda resta vuota.
+  await expect(ricavato).toContainText("non ho cambiato niente");
+  const scheda = page.getByRole("region", { name: "Scheda" });
+  await expect(scheda).not.toContainText("2027");
+});
+
 test("la scheda dice quando un contenuto non è ancora stato letto, e lo legge", async ({
   page,
 }) => {
