@@ -15,6 +15,9 @@ const eslintConfig = defineConfig([
     // Generated test artifacts, not source:
     "playwright-report/**",
     "test-results/**",
+    // Motore OCR copiato da node_modules, non sorgente nostro
+    // (v. scripts/sync-ocr-assets.mjs):
+    "public/ocr/**",
   ]),
 ]);
 

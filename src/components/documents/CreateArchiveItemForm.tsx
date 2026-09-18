@@ -53,8 +53,11 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const [creating, setCreating] = useState(false);
   // FASE 17b --- leggere un PDF lungo richiede qualche secondo: dirlo
   // evita che il pulsante annunci "Salvataggio…" mentre in realtà sta
-  // ancora leggendo il documento (v. richiesta utente).
+  // ancora leggendo il documento (v. richiesta utente). FASE 17c: l'OCR
+  // di una foto può richiederne venti, e allora la percentuale non è un
+  // vezzo --- è ciò che distingue un'attesa lunga da un blocco.
   const [phase, setPhase] = useState<UploadPhase>("saving");
+  const [readProgress, setReadProgress] = useState<number | null>(null);
 
   const [mode, setMode] = useState<CreationMode>("upload");
   const [metadata, setMetadata] = useState<DocumentMetadataFieldsValue>(EMPTY_METADATA_FIELDS);
@@ -171,7 +174,17 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         );
       } else {
         const file = mode === "record" ? recordedFile! : pickedFile!;
-        await uploadDocument(supabase, masterKey, user.id, file, metadataInput, setPhase);
+        await uploadDocument(
+          supabase,
+          masterKey,
+          user.id,
+          file,
+          metadataInput,
+          (nextPhase, progress) => {
+            setPhase(nextPhase);
+            setReadProgress(progress);
+          },
+        );
       }
 
       router.push("/archive?created=1");
@@ -179,6 +192,18 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       setError(err instanceof Error ? err.message : "Impossibile aggiungere il contenuto.");
       setCreating(false);
     }
+  }
+
+  // Il file in gioco, qualunque sia il modo con cui è arrivato --- serve
+  // solo per parlare all'utente del contenuto giusto ("l'immagine" e non
+  // "il documento", v. sotto).
+  const fileInHand = mode === "record" ? recordedFile : pickedFile;
+  const isImage = fileInHand?.type.startsWith("image/") ?? false;
+
+  function readingLabel(): string {
+    const what = isImage ? "l'immagine" : "il documento";
+    const percent = readProgress === null ? "" : ` ${Math.round(readProgress * 100)}%`;
+    return `Sto leggendo ${what}…${percent}`;
   }
 
   const canSubmit =
@@ -305,6 +330,17 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           ) : null}
 
+          {/* FASE 17c --- l'OCR di una foto richiede qualche decina di
+              secondi, e la prima volta scarica anche il motore: detto
+              prima è un'attesa annunciata, scoperto dopo è un'app
+              lenta. */}
+          {isImage && !creating ? (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Hinthial leggerà il testo scritto dentro l&apos;immagine, sul tuo dispositivo, per
+              renderlo cercabile. Può richiedere qualche decina di secondi.
+            </p>
+          ) : null}
+
           <DocumentMetadataFields
             idPrefix="upload"
             categories={categories}
@@ -328,7 +364,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
             >
               {creating
                 ? phase === "reading"
-                  ? "Sto leggendo il documento…"
+                  ? readingLabel()
                   : "Salvataggio…"
                 : "Aggiungi all'archivio"}
             </button>

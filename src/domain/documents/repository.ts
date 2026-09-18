@@ -28,10 +28,19 @@ import type {
 
 /**
  * Le fasi visibili di un caricamento --- v. uploadDocument, `onPhase`.
- * "reading" può durare qualche secondo su un PDF lungo, e dirlo è
- * l'unica differenza tra un'attesa spiegata e una inspiegata.
+ * "reading" può durare qualche secondo su un PDF lungo, e parecchi di
+ * più sull'OCR di una foto: dirlo è l'unica differenza tra un'attesa
+ * spiegata e una inspiegata.
  */
 export type UploadPhase = "reading" | "saving";
+
+/**
+ * Notifica di avanzamento: la fase in corso e, quando il motore sa
+ * stimarlo, quanto manca (0-1). `null` significa "non stimabile", non
+ * "zero" --- chi lo riceve deve mostrare un'attesa senza percentuale,
+ * non una percentuale ferma a 0 (v. FASE 17c).
+ */
+export type UploadPhaseListener = (phase: UploadPhase, progress: number | null) => void;
 
 const DOCUMENT_COLUMNS =
   "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, extracted_at, created_at";
@@ -173,7 +182,7 @@ export async function uploadDocument(
   ownerId: string,
   file: File,
   metadata: DocumentMetadataInput,
-  onPhase?: (phase: UploadPhase) => void,
+  onPhase?: UploadPhaseListener,
 ): Promise<void> {
   const plaintext = new Uint8Array(await file.arrayBuffer());
   const mimeType = file.type || "application/octet-stream";
@@ -186,12 +195,16 @@ export async function uploadDocument(
   //
   // `onPhase` esiste perché leggere un PDF lungo richiede qualche
   // secondo: senza, l'interfaccia direbbe "Salvataggio…" mentre in
-  // realtà sta leggendo (v. FASE 17b, richiesta utente).
+  // realtà sta leggendo (v. FASE 17b, richiesta utente). L'OCR di una
+  // foto ne richiede molti di più, e per quello riporta anche una
+  // percentuale (v. FASE 17c).
   const willExtract = canExtractText(mimeType);
-  if (willExtract) onPhase?.("reading");
-  const extractedText = await extractText(plaintext, mimeType);
+  if (willExtract) onPhase?.("reading", null);
+  const extractedText = await extractText(plaintext, mimeType, (fraction) =>
+    onPhase?.("reading", fraction),
+  );
 
-  onPhase?.("saving");
+  onPhase?.("saving", null);
 
   const [
     { wrappedDocumentKey, payload },
@@ -436,9 +449,10 @@ export async function extractTextForExistingDocument(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
   doc: DocumentListItem,
+  onProgress?: (fraction: number) => void,
 ): Promise<{ foundText: boolean }> {
   const { bytes } = await downloadDocument(supabase, masterKey, doc);
-  const text = await extractText(bytes, doc.mimeType);
+  const text = await extractText(bytes, doc.mimeType, onProgress);
 
   const { error } = await supabase
     .from("documents")

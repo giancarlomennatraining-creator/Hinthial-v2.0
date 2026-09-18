@@ -49,3 +49,7 @@ next-env.d.ts
 # Claude Code local state
 /.claude/
 
+# OCR --- copiati da node_modules prima di dev/build/e2e, non sorgenti
+# (v. scripts/sync-ocr-assets.mjs)
+/public/ocr/
+

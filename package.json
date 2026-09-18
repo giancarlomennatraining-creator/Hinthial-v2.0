@@ -6,14 +6,19 @@
     "node": ">=24"
   },
   "scripts": {
+    "sync-ocr-assets": "node scripts/sync-ocr-assets.mjs",
+    "predev": "npm run sync-ocr-assets",
     "dev": "next dev",
+    "predev:https": "npm run sync-ocr-assets",
     "dev:https": "next dev --experimental-https --experimental-https-key ./certificates/localhost-key.pem --experimental-https-cert ./certificates/localhost.pem",
+    "prebuild": "npm run sync-ocr-assets",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "pretest:e2e": "npm run sync-ocr-assets",
     "test:e2e": "playwright test",
     "reset-dev-data": "node scripts/reset-dev-data.mjs"
   },
@@ -21,12 +26,14 @@
     "@anthropic-ai/sdk": "^0.125.0",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
+    "@tesseract.js-data/ita": "^1.0.0",
     "client-zip": "^2.5.0",
     "next": "16.3.3",
     "pdfjs-dist": "^6.3.289",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

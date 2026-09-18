@@ -9,9 +9,9 @@
  * Stesso schema a provider già usato da Categorizer (v.
  * domain/categorizer), TranscriptionProvider (v. domain/transcription) e
  * AIProvider (v. domain/ai): un'interfaccia stabile, implementazioni
- * sostituibili, chi chiama non cambia. Oggi c'è solo il PDF --- OCR per
- * le immagini e trascrizione audio/video arrivano nei passi successivi
- * della stessa fase, e si aggiungeranno qui senza toccare i chiamanti.
+ * sostituibili, chi chiama non cambia. Oggi PDF (pdf.js) e immagini
+ * (OCR); la trascrizione audio/video si aggiungerà qui senza toccare i
+ * chiamanti.
  */
 export interface TextExtractor {
   /** Mostrato in UI/log quando è utile sapere quale motore ha risposto. */
@@ -24,8 +24,21 @@ export interface TextExtractor {
    * arriva l'OCR. Non deve mai lanciare: chi chiama tratta
    * l'estrazione come best-effort e salva comunque il contenuto.
    */
-  extract(bytes: Uint8Array, mimeType: string): Promise<string | null>;
+  extract(
+    bytes: Uint8Array,
+    mimeType: string,
+    onProgress?: ExtractionProgress,
+  ): Promise<string | null>;
 }
+
+/**
+ * Avanzamento da 0 a 1, per i motori che ci mettono abbastanza da
+ * doverlo dire. L'OCR di una foto richiede secondi, non millisecondi: un
+ * pulsante fermo su "Sto leggendo…" per venti secondi è indistinguibile
+ * da uno bloccato (v. FASE 17c). Opzionale: chi non ha modo di stimare
+ * l'avanzamento semplicemente non chiama.
+ */
+export type ExtractionProgress = (fraction: number) => void;
 
 /**
  * Tetto al testo salvato per un singolo contenuto. Un PDF di mille

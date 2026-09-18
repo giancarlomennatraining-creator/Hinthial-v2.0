@@ -10,6 +10,34 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-18 (3)
+
+### FASE 17c --- Hinthial legge dentro le foto
+
+**Cosa fa:** fotografi uno scontrino, una ricetta, un referto stampato --- e Hinthial legge il testo scritto nell'immagine. Da quel momento quella foto si cerca per quello che c'è scritto sopra, non solo per come si chiama il file. È il caso più frequente di tutti in un archivio personale: quasi nessuno rinomina `IMG_4821.jpg`, ma tutti si ricordano che "c'era scritto Sassoferrato".
+
+Vale anche all'indietro: le immagini già in archivio compaiono nell'avviso *"Leggili ora"* introdotto poco fa, e si recuperano tutte insieme.
+
+**Come per i PDF, non esce niente.** Il riconoscimento avviene sul dispositivo. La prima volta Hinthial scarica una tantum il motore di lettura (~5,6 MB) --- **dal proprio dominio, non da una CDN esterna**: il contenuto non uscirebbe comunque, ma scaricare un modello da un terzo significherebbe dirgli "questo utente, a quest'ora, sta leggendo un documento", ed è esattamente il tipo di informazione che Hinthial promette di non far uscire. Da lì in poi resta in memoria sul dispositivo e funziona anche offline.
+
+**L'attesa è annunciata, non subita.** Scegliendo un'immagine compare subito l'avviso che verrà letta e che può richiedere qualche decina di secondi; durante la lettura il pulsante dice *"Sto leggendo l'immagine… 42%"*. L'OCR è lento per natura, e una percentuale è ciò che distingue un'attesa lunga da un'app bloccata.
+
+**Note tecniche:** Tesseract.js (WebAssembly) dietro la stessa interfaccia `TextExtractor` già usata per pdf.js --- registrarlo è stata una riga in `extract-text.ts`, nessun chiamante è cambiato. Tre scelte che vale la pena motivare:
+
+- **Un solo file di motore, non sei.** Si serve esplicitamente la variante SIMD/solo-LSTM invece di lasciare che Tesseract.js scelga da sé tra le sei disponibili (il che obbligherebbe a pubblicarle tutte, ~12 MB). SIMD è supportato da ogni browser dal 2021, e chi non ce l'ha non arriverebbe comunque fin qui.
+- **Solo italiano.** Ogni lingua in più è qualche megabyte in più al primo utilizzo. Aggiungerne una è una riga in `scripts/sync-ocr-assets.mjs` e una in `ocr-extractor.ts`.
+- **Un filtro contro la spazzatura.** Un OCR non dice mai "non ho trovato niente": davanti a un muro o a una firma restituisce comunque una manciata di simboli slegati. Senza filtro, la ricerca si riempirebbe di documenti che "contengono" parole che nessuno ci ha mai scritto. Si scarta ciò che sta sotto una soglia di confidenza **o** che non ha almeno tre gruppi di caratteri di lunghezza credibile: entrambe servono, perché la confidenza da sola può essere altissima su due sole lettere.
+
+Il motore resta acceso un minuto dopo l'ultima immagine invece di spegnersi subito: avviarlo costa qualche megabyte di WebAssembly da compilare, e chi recupera venti foto dal banner lo pagherebbe venti volte. `TextExtractor.extract` accetta ora un `onProgress` opzionale, che arriva fino al pulsante e al banner.
+
+I file del motore **non sono in git**: sono artefatti copiati da `node_modules` da `scripts/sync-ocr-assets.mjs`, che gira da sé prima di `dev`, `build` e dei test e2e.
+
+Verificato: 13 test unitari (quali file l'OCR accetta, e il filtro anti-spazzatura in tutti i suoi casi limite), più un test e2e che carica un'immagine vera dall'interfaccia vera e cerca una parola che esiste **solo dentro i pixel** --- unico modo di esercitare il percorso completo (Web Worker, WebAssembly, modello servito dal nostro dominio, cifratura, rilettura). Test completo in 25 secondi, download del motore incluso.
+
+**Resta fuori, per il passo successivo:** i PDF fatti di sole scansioni. Oggi l'OCR guarda le immagini; un PDF scansionato è un'immagine dentro un PDF, e pdf.js non ci trova testo. Sono i documenti sanitari e burocratici più comuni, e arrivano subito dopo.
+
+---
+
 ## 2026-09-18 (2)
 
 ### FASE 17b --- il perché dei risultati, e i documenti già in archivio

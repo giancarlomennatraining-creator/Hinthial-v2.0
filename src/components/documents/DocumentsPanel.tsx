@@ -113,9 +113,14 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "name", direction: "asc" });
   // FASE 17b --- avanzamento della lettura dei documenti già archiviati.
-  const [extractionProgress, setExtractionProgress] = useState<{ done: number; total: number } | null>(
-    null,
-  );
+  // `fraction` (FASE 17c) è l'avanzamento **dentro** il file corrente:
+  // con l'OCR un singolo contenuto può occupare mezzo minuto, e senza
+  // "3 di 7" resterebbe immobile per tutto quel tempo.
+  const [extractionProgress, setExtractionProgress] = useState<{
+    done: number;
+    total: number;
+    fraction: number | null;
+  } | null>(null);
 
   const { modeFor } = useListViewPreferences();
   const viewMode = modeFor("archive");
@@ -373,19 +378,21 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   async function handleExtractPending() {
     const queue = pendingExtraction;
-    setExtractionProgress({ done: 0, total: queue.length });
+    setExtractionProgress({ done: 0, total: queue.length, fraction: null });
     setError(null);
 
     let failures = 0;
     for (const [index, doc] of queue.entries()) {
       try {
-        await extractTextForExistingDocument(supabase, masterKey, doc);
+        await extractTextForExistingDocument(supabase, masterKey, doc, (fraction) =>
+          setExtractionProgress({ done: index, total: queue.length, fraction }),
+        );
       } catch {
         // Un documento illeggibile non deve fermare gli altri: si conta
         // e si prosegue (v. estrazione best-effort in domain/extraction).
         failures++;
       }
-      setExtractionProgress({ done: index + 1, total: queue.length });
+      setExtractionProgress({ done: index + 1, total: queue.length, fraction: null });
     }
 
     setExtractionProgress(null);
@@ -471,7 +478,14 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/30 bg-brand/5 p-4">
               <p className="min-w-0 text-sm text-zinc-700 dark:text-zinc-300">
                 {extractionProgress
-                  ? `Sto leggendo i documenti… ${extractionProgress.done} di ${extractionProgress.total}`
+                  ? `Sto leggendo i documenti… ${Math.min(
+                      extractionProgress.done + 1,
+                      extractionProgress.total,
+                    )} di ${extractionProgress.total}${
+                      extractionProgress.fraction === null
+                        ? ""
+                        : ` --- ${Math.round(extractionProgress.fraction * 100)}%`
+                    }`
                   : `${pendingExtraction.length} ${
                       pendingExtraction.length === 1
                         ? "documento è stato caricato"

@@ -57,7 +57,8 @@ function buildPdf(text: string): Uint8Array {
 describe("estrazione testo (FASE 17)", () => {
   it("riconosce i tipi che sa leggere", () => {
     expect(canExtractText("application/pdf")).toBe(true);
-    expect(canExtractText("image/jpeg")).toBe(false);
+    // Le immagini sono dell'OCR (FASE 17c, v. ocr-extractor.test.ts);
+    // l'audio aspetta ancora la trascrizione.
     expect(canExtractText("audio/webm")).toBe(false);
   });
 
