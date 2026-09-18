@@ -26,6 +26,15 @@ function tokenize(query: string): string[] {
     .filter((token) => token.length >= 3);
 }
 
+/**
+ * FASE 17e --- un risultato di ricerca porta sulla scheda del documento,
+ * non sull'elenco: prima toccava a chi cercava ritrovarselo in mezzo
+ * agli altri.
+ */
+function documentHref(doc: { id: string }): string {
+  return `/archive/${doc.id}`;
+}
+
 function textMatches(text: string, tokens: string[]): boolean {
   const normalized = text.toLowerCase();
   return tokens.some((token) => normalized.includes(token));
@@ -62,7 +71,7 @@ function search(query: string, context: AIContext): AISource[] {
   for (const doc of context.documents) {
     const haystack = [doc.filename, doc.notes, doc.transcript, doc.extractedText, ...doc.tags].join(" ");
     if (textMatches(haystack, tokens)) {
-      sources.push({ kind: "document", id: doc.id, label: doc.filename, href: "/archive" });
+      sources.push({ kind: "document", id: doc.id, label: doc.filename, href: documentHref(doc) });
     }
   }
 
@@ -124,7 +133,12 @@ function allSourcesOfKind(kind: AISource["kind"], context: AIContext): AISource[
     case "asset":
       return context.assets.map((a) => ({ kind: "asset", id: a.id, label: a.name, href: "/assets" }));
     case "document":
-      return context.documents.map((d) => ({ kind: "document", id: d.id, label: d.filename, href: "/archive" }));
+      return context.documents.map((d) => ({
+        kind: "document" as const,
+        id: d.id,
+        label: d.filename,
+        href: documentHref(d),
+      }));
     case "reminder":
       return context.reminders.map((r) => ({ kind: "reminder", id: r.id, label: r.title, href: "/reminders" }));
     case "friend":
@@ -151,7 +165,7 @@ function retrieve(query: string, context: AIContext): AISource[] {
     }
     for (const doc of context.documents) {
       if (doc.categoryId && categoryIds.has(doc.categoryId)) {
-        sources.push({ kind: "document", id: doc.id, label: doc.filename, href: "/archive" });
+        sources.push({ kind: "document", id: doc.id, label: doc.filename, href: documentHref(doc) });
       }
     }
   }
@@ -161,7 +175,7 @@ function retrieve(query: string, context: AIContext): AISource[] {
   for (const assetId of matchedAssetIds) {
     for (const doc of context.documents) {
       if (doc.relatedAssetId === assetId) {
-        sources.push({ kind: "document", id: doc.id, label: doc.filename, href: "/archive" });
+        sources.push({ kind: "document", id: doc.id, label: doc.filename, href: documentHref(doc) });
       }
     }
     for (const reminder of context.reminders) {
@@ -188,7 +202,7 @@ function retrieve(query: string, context: AIContext): AISource[] {
       sources.push({ kind: "friend", id: friend.id, label: friend.name, href: "/friends" });
     }
     for (const doc of capsule.linkedDocuments) {
-      sources.push({ kind: "document", id: doc.id, label: doc.filename, href: "/archive" });
+      sources.push({ kind: "document", id: doc.id, label: doc.filename, href: documentHref(doc) });
     }
   }
 

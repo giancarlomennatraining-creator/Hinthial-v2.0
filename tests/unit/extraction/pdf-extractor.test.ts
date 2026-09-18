@@ -91,14 +91,30 @@ describe("estrazione testo (FASE 17)", () => {
   }, 30_000);
 
   it("ignora i tipi senza un motore disponibile", async () => {
-    await expect(extractText(new Uint8Array([1, 2, 3]), "image/png")).resolves.toBeNull();
+    // Un audio: le immagini ormai le legge l'OCR (FASE 17c).
+    await expect(extractText(new Uint8Array([1, 2, 3]), "audio/webm")).resolves.toBeNull();
   });
 
-  it("normalizza gli spazi e taglia i testi enormi", () => {
-    expect(normalizeExtractedText("  ciao   \n  mondo ")).toBe("ciao mondo");
+  it("compatta gli spazi dentro la riga e taglia i testi enormi", () => {
+    expect(normalizeExtractedText("  ciao   mondo ")).toBe("ciao mondo");
     expect(normalizeExtractedText("   ")).toBeNull();
     expect(normalizeExtractedText("a".repeat(MAX_EXTRACTED_CHARS + 500))?.length).toBe(
       MAX_EXTRACTED_CHARS,
     );
+  });
+
+  // FASE 17e --- da quando il testo estratto si mostra all'utente,
+  // l'impaginazione non è più un dettaglio ignorabile: un referto senza
+  // a capo è un paragrafo unico da migliaia di caratteri.
+  it("conserva gli a capo, che ora si vedono", () => {
+    expect(normalizeExtractedText("  ciao   \n  mondo ")).toBe("ciao\nmondo");
+  });
+
+  it("riduce a una sola le righe vuote di troppo", () => {
+    expect(normalizeExtractedText("prima\n\n\n\n\nseconda")).toBe("prima\n\nseconda");
+  });
+
+  it("uniforma le fine riga di Windows", () => {
+    expect(normalizeExtractedText("prima\r\nseconda")).toBe("prima\nseconda");
   });
 });

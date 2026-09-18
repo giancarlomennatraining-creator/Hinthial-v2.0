@@ -57,7 +57,7 @@ test("trascrizione di un audio in Archivio: il motore automatico non è ancora d
   });
 
   // Ricercabile: il file si trova per una parola presente solo nella trascrizione, non nel nome.
-  const searchInput = page.getByPlaceholder("Cerca per nome, tag, note o trascrizione…");
+  const searchInput = page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…");
   await searchInput.fill("cassaforte");
   await expect(row).toBeVisible();
   await searchInput.fill("");

@@ -92,10 +92,10 @@ test("la ricerca e il filtro per categoria funzionano in Beni e Archivio", async
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible({ timeout: 15_000 });
 
-  await page.getByPlaceholder("Cerca per nome, tag, note o trascrizione…").fill("polizza");
+  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("polizza");
   await expect(page.getByText("polizza.txt")).toBeVisible();
   await expect(page.getByText("contratto-affitto.txt")).not.toBeVisible();
-  await page.getByPlaceholder("Cerca per nome, tag, note o trascrizione…").fill("");
+  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("");
 
   await page.getByLabel("Filtra per categoria").selectOption({ label: "🏠 Casa" });
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible();

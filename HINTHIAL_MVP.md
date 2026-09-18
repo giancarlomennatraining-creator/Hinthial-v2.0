@@ -815,7 +815,14 @@ Il testo estratto si cifra con la Master Key come ogni altro campo.
 
 *Stato:* fatto per PDF nativi (17a), ricerca che spiega i risultati e
 recupero dei contenuti storici (17b), OCR delle immagini (17c) e dei PDF
-scansionati (17d). Resta la trascrizione audio/video.
+scansionati (17d), scheda del contenuto con "cosa ho letto" (17e). Resta
+la trascrizione audio/video (17f), che chiude la fase.
+
+La scheda introdotta in 17e è anche il **pavimento delle fasi
+successive**: i campi estratti (18), le proposte (19), il fascicolo (20)
+e il consenso per singolo contenuto (22) atterrano tutti lì. È il motivo
+per cui è stata costruita prima della 18 e non dopo: senza, la 18
+estrarrebbe campi che nessuna schermata è in grado di mostrare.
 
 Effetto immediato e verificabile: la ricerca globale smette di cercare
 tra i nomi dei file e cerca **dentro**; la categorizzazione euristica

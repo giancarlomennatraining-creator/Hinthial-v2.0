@@ -14,7 +14,7 @@ import {
   updateDocumentTranscript,
   updateTextNoteContent,
 } from "@/domain/documents/repository";
-import { findTextSnippet } from "@/lib/text-snippet";
+import { findTextSnippet, flattenForSearch } from "@/lib/text-snippet";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { contentKindFor, CONTENT_KIND_ICON, hasInlinePlayer, isTranscribable } from "@/lib/content-kind";
@@ -23,6 +23,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
 import { saveBytesAsFile } from "@/lib/download";
+import { formatDate, formatSize } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -35,20 +36,6 @@ import { useListViewPreferences } from "@/components/layout/ListViewPreferencesP
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { useToast } from "@/components/ui/ToastProvider";
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("it-IT", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -407,9 +394,12 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   function matchesQuery(doc: DocumentListItem): boolean {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return true;
-    const haystack = [doc.filename, doc.notes, doc.transcript, doc.extractedText, ...doc.tags]
-      .join(" ")
-      .toLowerCase();
+    // flattenForSearch: dalla FASE 17e il testo estratto conserva gli a
+    // capo, e senza appiattirlo una frase a cavallo di due righe non si
+    // troverebbe più.
+    const haystack = flattenForSearch(
+      [doc.filename, doc.notes, doc.transcript, doc.extractedText, ...doc.tags].join(" "),
+    ).toLowerCase();
     return haystack.includes(normalized);
   }
 
@@ -600,9 +590,15 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         <Fragment key={doc.id}>
                           <tr>
                             <td className="max-w-[16rem] p-3 font-medium text-zinc-900 dark:text-zinc-100">
-                              <span className="block truncate">
+                              {/* FASE 17e --- il nome porta alla scheda del
+                                  contenuto: è l'unico posto dove si vede
+                                  cosa Hinthial ci ha letto dentro. */}
+                              <Link
+                                href={`/archive/${doc.id}`}
+                                className="block truncate underline-offset-2 hover:underline"
+                              >
                                 {CONTENT_KIND_ICON[kind]} {doc.filename}
-                              </span>
+                              </Link>
                               <ContentSnippet doc={doc} query={query} />
                             </td>
                             <td className="hidden p-3 text-zinc-600 @lg:table-cell dark:text-zinc-400">
@@ -797,9 +793,12 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                   <li key={doc.id} className="flex flex-col gap-3 p-4">
                     <div className="flex items-center justify-between gap-4">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        <Link
+                          href={`/archive/${doc.id}`}
+                          className="block truncate text-sm font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-100"
+                        >
                           {CONTENT_KIND_ICON[kind]} {doc.filename}
-                        </p>
+                        </Link>
                         <ContentSnippet doc={doc} query={query} />
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
                           {category ? `${category.icon} ${category.name} · ` : ""}

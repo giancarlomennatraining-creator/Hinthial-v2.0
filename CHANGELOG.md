@@ -10,6 +10,37 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-18 (5)
+
+### FASE 17e --- la scheda di un contenuto: "cosa ho letto"
+
+**Cosa fa:** ogni elemento dell'Archivio ha ora una pagina sua. Ci si arriva cliccando il nome nell'elenco, e ci si arriva anche dai risultati della ricerca globale (prima portavano genericamente all'Archivio, lasciando a te il compito di ritrovare il file in mezzo agli altri).
+
+La pagina mostra l'anteprima del contenuto, la sua scheda (categoria, bene, scadenza, tag, note) e soprattutto un riquadro **"Cosa ho letto"**: il testo che Hinthial ha ricavato da quel file, per intero.
+
+**Perché conta più di quanto sembri.** Dalla FASE 17 Hinthial legge i tuoi documenti, ma l'unica traccia visibile di quella lettura era uno spezzone di una riga nei risultati di ricerca — e solo se indovinavi la parola giusta. In un prodotto che promette *"niente esce dal tuo dispositivo"*, poter vedere esattamente cosa è stato letto non è un accessorio: è la dimostrazione della promessa. Sulla pagina è scritto a chiare lettere, accanto al testo: *letto qui, sul tuo dispositivo, non è mai uscito*.
+
+**I quattro stati finalmente si distinguono.** Fino a ieri, dal di fuori, erano indistinguibili --- in tre casi su quattro il testo risultava semplicemente vuoto:
+
+- *non l'ho ancora letto* (caricato prima che l'estrazione esistesse) → con il tasto **"Leggilo ora"**, senza tornare all'elenco
+- *l'ho guardato ma non ci ho trovato testo* → è qui che trova finalmente casa l'avviso che nella 17b avevo deliberatamente **non** messo nell'elenco: là sarebbe stato un cartello addosso a documenti di cui nessuno aveva chiesto niente, qui è la risposta a una domanda che hai appena fatto aprendo la scheda
+- *l'ho letto, ecco cosa c'è scritto* → con **"Rileggi"** se l'OCR ha sbagliato
+- *non so ancora ascoltare gli audio* → onesto sul fatto che manca, non silenzioso
+
+**Il testo estratto ora conserva l'impaginazione.** Fino alla 17d ogni a capo veniva schiacciato in uno spazio. Per cercare andava benissimo — la ricerca non guarda l'impaginazione — ma dal momento in cui quel testo si mostra, un referto di tre pagine diventava un unico paragrafo da ottomila caratteri: tecnicamente corretto e illeggibile. Ora le righe restano. I documenti caricati **prima** di oggi conservano la vecchia forma appiattita: il tasto **"Rileggi"** sulla loro scheda li recupera uno per uno. Deliberatamente nessuna migrazione forzata: il contenuto del testo non cambia, cambia solo come si legge, e non vale far ripartire da zero l'archivio di tutti.
+
+**Note tecniche:** `normalizeExtractedText` compatta gli spazi *dentro* la riga e riduce a una le righe vuote di troppo, invece di schiacciare tutto. pdf.js conosceva già la fine di ogni riga (`hasEOL`) e la stavamo buttando via. La contropartita è la regressione più facile da introdurre e la più difficile da notare: chi cerca *"risonanza magnetica"* deve trovarlo anche se nel documento le due parole stanno su righe diverse --- da qui `flattenForSearch`, applicato dove si cerca e dove si costruisce lo spezzone, con tre test che lo difendono.
+
+Nuovo `domain/extraction/reading-state.ts` (7 test): una funzione pura che decide quale dei quattro stati raccontare. Se sbaglia, la pagina dice all'utente una cosa falsa sul proprio archivio, quindi è testata caso per caso. `formatSize`/`formatDate` estratte in `lib/format.ts` --- erano due copie della stessa funzione, e due copie divergono sempre.
+
+**Di proposito NON c'è**, pur essendo tutto pronto per accoglierlo: nessun riquadro vuoto in attesa dei campi estratti (18), delle proposte (19), del fascicolo (20) o del consenso per singolo contenuto (22). Una pagina piena di sezioni "in arrivo" sembra quasi finita e non lo è. E il testo letto resta in **sola lettura**: renderlo modificabile lo trasformerebbe in un secondo campo Note e creerebbe una regola scomoda (una rilettura cancellerebbe la tua correzione). Le tue parole hanno già un posto. Resta aperta la decisione su come trattare allo stesso modo la trascrizione audio/video, che oggi invece è modificabile.
+
+Verificato: 10 test unitari nuovi, più due e2e che percorrono la strada vera --- si carica un PDF, si clicca il nome nell'elenco, si verifica che il testo mostrato sia quello dentro il file **e che gli a capo ci siano davvero** (controllato sul testo, non sul CSS); poi si riporta un documento a "mai letto", si verifica che la pagina lo dichiari, si preme "Leggilo ora" e si verifica che compaia.
+
+**Corretti di passaggio** due test e2e (`list-filters`, `transcription`) rimasti indietro dalla FASE 17a, quando il segnaposto della ricerca era stato rinominato: cercavano ancora *"Cerca per nome, tag, note o trascrizione…"*. Erano rotti da allora senza che nessuno li rieseguisse.
+
+---
+
 ## 2026-09-18 (4)
 
 ### FASE 17d --- anche i PDF che sono solo una scansione

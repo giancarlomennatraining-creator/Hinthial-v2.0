@@ -11,6 +11,20 @@
 /** Quanti caratteri mostrare prima e dopo la parola trovata. */
 const CONTEXT_CHARS = 60;
 
+/**
+ * Il testo come lo vede la ricerca: tutto su una riga.
+ *
+ * Dalla FASE 17e il testo estratto conserva l'impaginazione, perché
+ * viene mostrato all'utente (v. domain/extraction/types.ts). La ricerca
+ * però non deve accorgersene: chi cerca "risonanza magnetica" deve
+ * trovarlo anche se nel documento le due parole stanno su righe diverse.
+ * Appiattire qui è l'unico punto in cui serve --- e costa una passata su
+ * testo già in memoria e già decifrato.
+ */
+export function flattenForSearch(text: string): string {
+  return text.replace(/\s+/g, " ");
+}
+
 export interface TextSnippet {
   /** Testo prima della corrispondenza (già tagliato). */
   before: string;
@@ -33,7 +47,9 @@ export interface TextSnippet {
  * peggio di uno leggermente più corto.
  */
 export function findTextSnippet(text: string, query: string): TextSnippet | null {
-  const trimmed = text.trim();
+  // Appiattito: lo spezzone è una riga sola dentro un risultato di
+  // ricerca, e gli a capo del documento lì dentro non servono a niente.
+  const trimmed = flattenForSearch(text).trim();
   if (!trimmed) return null;
 
   const terms = query

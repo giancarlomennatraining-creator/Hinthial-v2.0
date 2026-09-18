@@ -58,10 +58,23 @@ async function readTextLayer(doc: PDFDocumentProxy): Promise<string | null> {
   for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber++) {
     const page = await doc.getPage(pageNumber);
     const content = await page.getTextContent();
-    pages.push(content.items.map((item) => ("str" in item ? item.str : "")).join(" "));
+
+    // pdf.js restituisce frammenti, non righe, ma sa dove la riga finisce
+    // (`hasEOL`): senza guardarlo, un documento intero tornerebbe come
+    // un unico periodo lunghissimo. Per la ricerca era indifferente; da
+    // quando il testo si mostra all'utente non lo è più (v. FASE 17e).
+    let text = "";
+    for (const item of content.items) {
+      if (!("str" in item)) continue;
+      text += item.str + (item.hasEOL ? "\n" : " ");
+    }
+    pages.push(text);
+
     page.cleanup();
   }
-  return normalizeExtractedText(pages.join("\n"));
+  // Riga vuota tra una pagina e l'altra: è il salto più grande che
+  // normalizeExtractedText conserva.
+  return normalizeExtractedText(pages.join("\n\n"));
 }
 
 /**
@@ -129,7 +142,7 @@ async function ocrScannedPages(
   canvas.width = 0;
   canvas.height = 0;
 
-  return pages.length > 0 ? normalizeExtractedText(pages.join("\n")) : null;
+  return pages.length > 0 ? normalizeExtractedText(pages.join("\n\n")) : null;
 }
 
 export const pdfTextExtractor: TextExtractor = {
