@@ -18,6 +18,8 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 La pagina mostra l'anteprima del contenuto, la sua scheda (categoria, bene, scadenza, tag, note) e soprattutto un riquadro **"Cosa ho letto"**: il testo che Hinthial ha ricavato da quel file, per intero.
 
+**L'impaginato:** anteprima e scheda affiancate in alto --- un terzo e due terzi --- e **"Cosa ho letto"** a tutta larghezza sotto, perché è il testo di un documento e in una colonna stretta si leggerebbe peggio del documento stesso. Su schermi stretti si impila tutto.
+
 **L'anteprima vale anche per i PDF**, che non si possono mostrare così come sono: se ne disegna la **prima pagina**, con lo stesso pdf.js che l'OCR usa per leggerle --- e quindi funziona identica per i PDF nativi e per le scansioni. Sotto è scritto quante pagine ha in tutto. Immagini e note si aprono da sole; audio e video no, perché possono pesare decine di megabyte e si scaricano solo se li vuoi davvero sentire.
 
 **Perché conta più di quanto sembri.** Dalla FASE 17 Hinthial legge i tuoi documenti, ma l'unica traccia visibile di quella lettura era uno spezzone di una riga nei risultati di ricerca — e solo se indovinavi la parola giusta. In un prodotto che promette *"niente esce dal tuo dispositivo"*, poter vedere esattamente cosa è stato letto non è un accessorio: è la dimostrazione della promessa. Sulla pagina è scritto a chiare lettere, accanto al testo: *letto qui, sul tuo dispositivo, non è mai uscito*.
