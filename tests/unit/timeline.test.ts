@@ -33,6 +33,7 @@ describe("buildTimeline", () => {
           notes: "",
           tags: [],
           transcript: "",
+          extractedText: "",
         },
       ],
       reminders: [

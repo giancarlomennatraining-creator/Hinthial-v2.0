@@ -31,6 +31,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         notes: "",
         tags: [],
         transcript: "",
+        extractedText: "",
       },
       {
         id: "doc-affitto",
@@ -46,6 +47,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         notes: "",
         tags: [],
         transcript: "",
+        extractedText: "",
       },
     ],
     reminders: [
@@ -102,11 +104,37 @@ describe("mockAIProvider.search", () => {
           notes: "",
           tags: [],
           transcript: "la combinazione della cassaforte è 12-34-56",
+          extractedText: "",
         },
       ],
     });
     const results = mockAIProvider.search("cassaforte", context);
     expect(results.map((r) => r.id)).toContain("doc-video");
+  });
+
+  it("finds a document by a word that appears only inside the file, not in its name (FASE 17)", () => {
+    const context = buildContext({
+      documents: [
+        {
+          id: "doc-pdf",
+          filename: "scan_0012.pdf",
+          mimeType: "application/pdf",
+          size: 1000,
+          categoryId: null,
+          relatedAssetId: null,
+          createdAt: "2026-01-01",
+          storagePath: "",
+          wrappedDocumentKey: "",
+          expiresAt: null,
+          notes: "",
+          tags: [],
+          transcript: "",
+          extractedText: "Polizza responsabilità civile autoveicoli --- scadenza 3 giugno 2027",
+        },
+      ],
+    });
+    const results = mockAIProvider.search("polizza", context);
+    expect(results.map((r) => r.id)).toContain("doc-pdf");
   });
 
   it("finds a capsule by a word written only in one attachment's transcript", () => {
@@ -185,6 +213,7 @@ describe("mockAIProvider.retrieve", () => {
               notes: "",
               tags: [],
               transcript: "",
+              extractedText: "",
             },
           ],
           relatedFriends: [

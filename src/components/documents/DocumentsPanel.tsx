@@ -334,7 +334,9 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   function matchesQuery(doc: DocumentListItem): boolean {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return true;
-    const haystack = [doc.filename, doc.notes, doc.transcript, ...doc.tags].join(" ").toLowerCase();
+    const haystack = [doc.filename, doc.notes, doc.transcript, doc.extractedText, ...doc.tags]
+      .join(" ")
+      .toLowerCase();
     return haystack.includes(normalized);
   }
 
@@ -398,7 +400,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             <SearchInput
               value={query}
               onChange={setQuery}
-              placeholder="Cerca per nome, tag, note o trascrizione…"
+              placeholder="Cerca per nome, tag, note o dentro i documenti…"
             />
             <select
               value={categoryFilter}

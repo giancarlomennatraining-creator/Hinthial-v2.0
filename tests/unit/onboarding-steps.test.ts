@@ -98,6 +98,7 @@ describe("isOnboardingComplete", () => {
             notes: "",
             tags: [],
             transcript: "",
+            extractedText: "",
           },
         ],
         friends: [

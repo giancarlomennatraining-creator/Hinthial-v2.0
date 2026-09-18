@@ -19,6 +19,7 @@ import {
 } from "@/lib/storage/documents-bucket";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import { NOTE_MIME_TYPE } from "@/lib/content-kind";
+import { extractText } from "@/domain/extraction/extract-text";
 import type {
   DocumentListItem,
   DocumentMetadataInput,
@@ -26,7 +27,7 @@ import type {
 } from "@/domain/documents/types";
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, created_at";
 
 type DocumentRow = {
   id: string;
@@ -41,6 +42,7 @@ type DocumentRow = {
   encrypted_notes: string | null;
   encrypted_tags: string | null;
   encrypted_transcript: string | null;
+  encrypted_extracted_text: string | null;
   created_at: string;
 };
 
@@ -78,11 +80,12 @@ async function toDocumentListItem(
   masterKey: CryptoKey,
   row: DocumentRow,
 ): Promise<DocumentListItem> {
-  const [filenameBytes, notes, tags, transcript] = await Promise.all([
+  const [filenameBytes, notes, tags, transcript, extractedText] = await Promise.all([
     decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
     decryptOptionalText(masterKey, row.encrypted_notes),
     decryptTags(masterKey, row.encrypted_tags),
     decryptOptionalText(masterKey, row.encrypted_transcript),
+    decryptOptionalText(masterKey, row.encrypted_extracted_text),
   ]);
 
   return {
@@ -99,6 +102,7 @@ async function toDocumentListItem(
     notes,
     tags,
     transcript,
+    extractedText,
   };
 }
 
@@ -162,13 +166,28 @@ export async function uploadDocument(
   metadata: DocumentMetadataInput,
 ): Promise<void> {
   const plaintext = new Uint8Array(await file.arrayBuffer());
-  const [{ wrappedDocumentKey, payload }, encryptedFilename, encryptedNotes, encryptedTags] =
-    await Promise.all([
-      encryptDocument(masterKey, plaintext),
-      encryptBytes(masterKey, utf8ToBytes(file.name)),
-      encryptOptionalText(masterKey, metadata.notes),
-      encryptTags(masterKey, metadata.tags),
-    ]);
+  const mimeType = file.type || "application/octet-stream";
+
+  // FASE 17 --- il testo si ricava QUI, dove il contenuto è ancora in
+  // chiaro in memoria: nessun download né decifratura in più, e nulla
+  // lascia il dispositivo (v. domain/extraction). Best-effort: se
+  // l'estrazione non riesce si salva il documento lo stesso, si perde
+  // solo la possibilità di cercarci dentro.
+  const extractedText = await extractText(plaintext, mimeType);
+
+  const [
+    { wrappedDocumentKey, payload },
+    encryptedFilename,
+    encryptedNotes,
+    encryptedTags,
+    encryptedExtractedText,
+  ] = await Promise.all([
+    encryptDocument(masterKey, plaintext),
+    encryptBytes(masterKey, utf8ToBytes(file.name)),
+    encryptOptionalText(masterKey, metadata.notes),
+    encryptTags(masterKey, metadata.tags),
+    encryptOptionalText(masterKey, extractedText ?? ""),
+  ]);
 
   const documentId = crypto.randomUUID();
   const storagePath = documentStoragePath(ownerId, documentId);
@@ -181,13 +200,14 @@ export async function uploadDocument(
     encrypted_filename: serializeEnvelope(encryptedFilename),
     wrapped_document_key: serializeEnvelope(wrappedDocumentKey),
     storage_path: storagePath,
-    mime_type: file.type || "application/octet-stream",
+    mime_type: mimeType,
     size: file.size,
     category_id: metadata.categoryId,
     related_asset_id: metadata.relatedAssetId,
     expires_at: metadata.expiresAt,
     encrypted_notes: encryptedNotes,
     encrypted_tags: encryptedTags,
+    encrypted_extracted_text: encryptedExtractedText,
   });
 
   if (error) {

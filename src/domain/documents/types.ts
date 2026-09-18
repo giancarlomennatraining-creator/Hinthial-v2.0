@@ -22,6 +22,15 @@ export interface DocumentListItem {
   tags: string[];
   /** Audio/video only, empty string when never set --- v. domain/transcription. */
   transcript: string;
+  /**
+   * FASE 17 --- testo ricavato automaticamente dal contenuto (oggi: i
+   * PDF), estratto sul dispositivo prima della cifratura e salvato
+   * cifrato come tutto il resto (v. domain/extraction). Serve a cercare
+   * DENTRO i file, non solo tra i nomi: non è pensato per essere
+   * mostrato né modificato, a differenza di `transcript`, che l'utente
+   * scrive a mano. Stringa vuota se non applicabile o non estratto.
+   */
+  extractedText: string;
 }
 
 /** Fields collected at upload time, in addition to the file itself. */

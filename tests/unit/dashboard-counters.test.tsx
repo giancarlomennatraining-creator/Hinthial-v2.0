@@ -60,6 +60,7 @@ describe("DashboardCounters", () => {
           notes: "",
           tags: [],
           transcript: "",
+          extractedText: "",
         },
       ],
     });

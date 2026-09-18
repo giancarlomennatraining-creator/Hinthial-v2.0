@@ -10,6 +10,24 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-18
+
+### FASE 17, primo passo --- la ricerca guarda dentro i PDF
+
+**Cosa fa:** quando carichi un PDF in Archivio, Hinthial ne legge il testo **sul tuo dispositivo** e lo salva cifrato insieme al resto. Da quel momento la ricerca non guarda più solo nome, tag e note: trova un documento anche per una parola scritta **dentro** il file. Cerchi "cardiologia" e salta fuori `scan_0012.pdf`, che nel nome non lo dice da nessuna parte. Vale sia per la ricerca dell'Archivio sia per quella globale (Ctrl+K).
+
+**Nessun consenso richiesto, perché non esce niente:** l'estrazione avviene nel browser, prima della cifratura --- è la differenza tra "leggere" e "far leggere a qualcun altro". I PDF fatti di sole scansioni non contengono testo e restano per ora invisibili alla ricerca: li leggerà l'OCR, secondo passo di questa fase.
+
+**Note tecniche:** nuovo modulo `domain/extraction` sullo stesso schema a provider già usato da `Categorizer`, `TranscriptionProvider` e `AIProvider` --- un'interfaccia `TextExtractor` con oggi una sola implementazione (pdf.js), a cui OCR e trascrizione si aggiungeranno senza toccare chi chiama. L'estrazione è agganciata dentro `uploadDocument`, l'unico punto in cui il contenuto è già in chiaro in memoria: nessun download né decifratura in più. È **best-effort e non lancia mai**: un PDF malformato o protetto non impedisce di salvare il file, si perde solo la ricerca dentro quel documento. Nuova colonna `encrypted_extracted_text`, deliberatamente distinta da `encrypted_transcript`: quella è scritta a mano dall'utente ed è un suo contenuto, questa è derivata dal file e rigenerabile --- tenerle insieme avrebbe significato che un'estrazione automatica può sovrascrivere ciò che l'utente ha scritto. Testo normalizzato negli spazi e tagliato a 200.000 caratteri: oltre, si cifrerebbero e ri-decifrerebbero megabyte a ogni caricamento dell'elenco per un guadagno nullo in ricerca.
+
+Due trappole trovate e risolte durante la scrittura, entrambe verificate e non dedotte: **(1)** pdf.js prende possesso del buffer che riceve (lo "detacha"), quindi gli si passa una copia --- senza, il documento verrebbe salvato vuoto, e c'è un test apposta che lo verifica; **(2)** il build moderno di pdf.js non funziona fuori dal browser (il loader ESM di Node rifiuta l'URL del worker), quindi si usa il build `legacy`, che pdf.js stesso raccomanda per Node: così i test unitari esercitano esattamente lo stesso codice che gira in produzione invece di una variante diversa. `import()` dinamico, come già per `qrcode`: oltre un megabyte che si carica solo quando arriva davvero un PDF.
+
+Verificato su due livelli: 6 test unitari su un PDF vero costruito nel test (lettura, byte non toccati, nessun lancio su file non validi, normalizzazione), più un test e2e che copre il percorso che i test unitari **non possono** toccare --- pdf.js con il suo worker dentro un browser vero: carica un PDF dall'interfaccia, cerca una parola che esiste solo dentro il file, e verifica anche che una parola assente non trovi nulla (altrimenti il test passerebbe pure con una ricerca rotta).
+
+**Nota non correlata:** durante la verifica, `tests/unit/crypto/aes-gcm.test.ts` ("round-trips a large payload") va in timeout su questa macchina. Verificato mettendo da parte le modifiche con `git stash`: **fallisce identico anche sul codice pulito**, quindi non è una regressione di questa fase --- cifra 4 MB in jsdom con un limite di 20 secondi, e la macchina è semplicemente più lenta di prima. Da rivedere a parte (alzare il limite o ridurre il payload).
+
+---
+
 ## 2026-09-17 (13)
 
 ### La voce AI ha la faccia di HINTHIA al posto delle due stelline
