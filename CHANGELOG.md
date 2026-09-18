@@ -10,6 +10,25 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-18 (4)
+
+### FASE 17d --- anche i PDF che sono solo una scansione
+
+**Cosa fa:** un referto passato dallo scanner dell'ospedale, un atto ritirato allo sportello, un contratto fotocopiato --- sono PDF che di testo non ne contengono nemmeno una parola: contengono la fotografia di un foglio. Fino a ieri Hinthial li apriva, non ci trovava niente e li archiviava muti. Ora, quando si accorge che un PDF non ha testo, ne disegna le pagine e le legge con l'OCR --- esattamente come farebbe con una foto.
+
+È il caso più comune di tutti nei documenti sanitari e burocratici italiani, ed è quello che rendeva la ricerca dentro i documenti una mezza promessa.
+
+**Note tecniche:** la scelta tra le due strade non è "il testo è vuoto?" ma "il testo è sotto i 40 caratteri?" --- un PDF scansionato raramente restituisce la stringa vuota: di solito porta con sé un numero di pagina, un'intestazione vettoriale o qualche carattere di scarto. Quaranta caratteri sono più di così e incomparabilmente meno di qualunque documento vero.
+
+- **Otto pagine al massimo.** Ogni pagina costa qualche secondo e l'attesa è dentro il salvataggio: otto coprono referti, ricette e contratti, mentre un faldone da cento bloccherebbe l'utente per dieci minuti per un guadagno che il tetto dei 200.000 caratteri taglierebbe comunque.
+- **1700 pixel di larghezza.** Tesseract legge male sotto i ~150 DPI e non migliora sopra i ~200: su un A4 quella larghezza sta in mezzo. Più grande significherebbe solo più memoria e più secondi.
+- **Il filtro anti-spazzatura vale per pagina, non per documento:** il retro bianco di un foglio scansionato non deve rovinare il testo delle pagine che invece si leggono benissimo.
+- Se anche l'OCR non trova nulla si tiene comunque il poco testo del livello testuale, se ce n'era.
+
+Verificato con un test e2e su un PDF che contiene **un unico JPEG e nessun livello di testo** --- verificato a parte che `getTextContent()` su quella pagina restituisce la stringa vuota. Se la ricerca trova una parola scritta lì dentro, l'ha letta l'OCR e non pdf.js. Il test ha anche confermato per caso una scelta della FASE 17b: cercando "Gubbio" lo spezzone evidenzia `GUBBIO`, perché conserva la forma del testo e non quella digitata.
+
+---
+
 ## 2026-09-18 (3)
 
 ### FASE 17c --- Hinthial legge dentro le foto

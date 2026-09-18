@@ -79,3 +79,55 @@ test("la ricerca in Archivio trova una foto per una parola scritta dentro l'imma
   await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("ortopedia");
   await expect(page.getByText("ocr-referto.png")).not.toBeVisible();
 });
+
+// FASE 17d --- il caso che conta di più nella pratica: un PDF che è solo
+// la fotografia di un foglio. Referti, atti, tutto ciò che passa da uno
+// sportello. pdf.js non ci trova una sola parola: il testo esiste solo
+// nei pixel, e va disegnata la pagina per poterla leggere.
+//
+// La fixture è un PDF con dentro un unico JPEG e **nessun livello di
+// testo** --- verificato: `getTextContent()` su quella pagina
+// restituisce la stringa vuota. Se la ricerca trova una parola scritta
+// lì dentro, l'ha letta l'OCR e non pdf.js.
+test("la ricerca in Archivio trova un PDF scansionato, che di testo non ne ha", async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password").fill(user.password);
+  await page.getByRole("button", { name: "Accedi" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+
+  await page.getByRole("link", { name: "Archivio", exact: true }).click();
+  await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
+  await page.getByLabel("Conferma master password").fill(MASTER_PASSWORD);
+  await page.getByRole("button", { name: "Crea" }).click();
+  await expect(page.getByLabel("Ho salvato la recovery key in un posto sicuro.")).toBeVisible({
+    timeout: 45_000,
+  });
+  await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
+  await page.getByRole("button", { name: "Continua" }).click();
+  await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
+
+  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.setInputFiles('input[type="file"]', "tests/e2e/fixtures/ocr-scansione.pdf");
+  await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 150_000 });
+  await expect(page.getByText("ocr-scansione.pdf")).toBeVisible({ timeout: 20_000 });
+
+  // "Gubbio" sta solo dentro l'immagine scansionata.
+  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("Gubbio");
+  await expect(page.getByText("ocr-scansione.pdf")).toBeVisible();
+  // Maiuscolo: nell'intestazione scansionata c'è scritto "GUBBIO", e lo
+  // spezzone conserva la forma del testo e non quella digitata (FASE 17b).
+  await expect(page.locator("mark").first()).toHaveText("GUBBIO");
+
+  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("ortopedia");
+  await expect(page.getByText("ocr-scansione.pdf")).not.toBeVisible();
+});

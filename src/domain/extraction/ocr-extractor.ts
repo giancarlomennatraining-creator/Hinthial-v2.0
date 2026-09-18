@@ -129,6 +129,39 @@ export function looksLikeRealText(text: string, confidence: number): boolean {
   return (words?.length ?? 0) >= MIN_OCR_WORDS;
 }
 
+/**
+ * Legge il testo di **una** immagine già pronta --- un Blob, oppure un
+ * canvas su cui qualcun altro ha disegnato (è così che si leggono le
+ * pagine di un PDF scansionato, v. pdf-extractor.ts).
+ *
+ * Restituisce null se quello che ha letto non sembra testo (v.
+ * looksLikeRealText): meglio niente che spazzatura nella ricerca.
+ */
+export async function recognizeImage(
+  image: Blob | HTMLCanvasElement,
+  onProgress?: ExtractionProgress,
+): Promise<string | null> {
+  const worker = await ocrEngine();
+
+  running++;
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = null;
+  }
+  reportProgress = onProgress ?? null;
+
+  try {
+    const { data } = await worker.recognize(image);
+    const text = normalizeExtractedText(data.text);
+    if (!text || !looksLikeRealText(text, data.confidence)) return null;
+    return text;
+  } finally {
+    reportProgress = null;
+    running--;
+    if (running === 0) scheduleIdleShutdown();
+  }
+}
+
 export const ocrTextExtractor: TextExtractor = {
   name: "Tesseract (sul dispositivo)",
 
@@ -141,29 +174,9 @@ export const ocrTextExtractor: TextExtractor = {
     mimeType: string,
     onProgress?: ExtractionProgress,
   ): Promise<string | null> {
-    const worker = await ocrEngine();
-
-    running++;
-    if (idleTimer) {
-      clearTimeout(idleTimer);
-      idleTimer = null;
-    }
-    reportProgress = onProgress ?? null;
-
-    try {
-      // Si passa un Blob e non i byte grezzi: la decodifica del JPEG/PNG
-      // la fa il browser, che lo sa fare molto meglio (e molto più in
-      // fretta) del decoder incluso in tesseract.js.
-      const image = new Blob([bytes as BlobPart], { type: mimeType });
-      const { data } = await worker.recognize(image);
-
-      const text = normalizeExtractedText(data.text);
-      if (!text || !looksLikeRealText(text, data.confidence)) return null;
-      return text;
-    } finally {
-      reportProgress = null;
-      running--;
-      if (running === 0) scheduleIdleShutdown();
-    }
+    // Si passa un Blob e non i byte grezzi: la decodifica del JPEG/PNG la
+    // fa il browser, che lo sa fare molto meglio (e molto più in fretta)
+    // del decoder incluso in tesseract.js.
+    return recognizeImage(new Blob([bytes as BlobPart], { type: mimeType }), onProgress);
   },
 };

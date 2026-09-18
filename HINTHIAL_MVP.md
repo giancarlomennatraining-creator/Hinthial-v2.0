@@ -813,6 +813,10 @@ pdf.js), immagini (OCR), audio/video (trascrizione --- sostituisce lo
 stub attuale in `domain/transcription`, che restituisce sempre `null`).
 Il testo estratto si cifra con la Master Key come ogni altro campo.
 
+*Stato:* fatto per PDF nativi (17a), ricerca che spiega i risultati e
+recupero dei contenuti storici (17b), OCR delle immagini (17c) e dei PDF
+scansionati (17d). Resta la trascrizione audio/video.
+
 Effetto immediato e verificabile: la ricerca globale smette di cercare
 tra i nomi dei file e cerca **dentro**; la categorizzazione euristica
 (`domain/categorizer`), che oggi vede solo il nome, diventa attendibile.
