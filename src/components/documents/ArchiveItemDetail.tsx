@@ -15,7 +15,20 @@ import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { readingStateFor } from "@/domain/extraction/reading-state";
 import { extractStructuredFields } from "@/domain/extraction/structured-fields";
+import { buildProposals } from "@/domain/proposals/build";
+import {
+  acceptProposal,
+  listProposalRejections,
+  rejectProposal,
+  undoAcceptance,
+  undoRejection,
+} from "@/domain/proposals/repository";
 import { StructuredFieldsSection } from "@/components/documents/StructuredFieldsSection";
+import {
+  ProposalsSection,
+  type UndoableAction,
+} from "@/components/documents/ProposalsSection";
+import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
 import {
   contentKindFor,
   CONTENT_KIND_ICON,
@@ -78,6 +91,14 @@ export function ArchiveItemDetail({
   // Rilettura di questo singolo contenuto (v. handleReread).
   const [rereading, setRereading] = useState<number | null>(null);
 
+  // FASE 19 --- proposte, rifiuti già espressi e l'ultima azione
+  // annullabile. L'annullamento vale per la permanenza sulla pagina: chi
+  // se ne accorge dopo può sempre correggere dalla scheda, che è dove
+  // quel valore vive.
+  const [rejections, setRejections] = useState<ProposalRejection[]>([]);
+  const [undoable, setUndoable] = useState<UndoableAction | null>(null);
+  const [proposalBusy, setProposalBusy] = useState(false);
+
   // Il testo letto può essere lungo: se ne mostra un pezzo e si apre a
   // richiesta. Aprirlo tutto sempre farebbe scorrere la pagina per
   // minuti su un contratto di trenta pagine.
@@ -91,15 +112,17 @@ export function ArchiveItemDetail({
     const requestId = ++latestRequestRef.current;
     setError(null);
     try {
-      const [documents, assetsResult, categoriesResult] = await Promise.all([
+      const [documents, assetsResult, categoriesResult, rejectionsResult] = await Promise.all([
         listDocuments(supabase, masterKey),
         listAssets(supabase, masterKey),
         listCategories(supabase),
+        listProposalRejections(supabase, masterKey, documentId),
       ]);
       if (requestId !== latestRequestRef.current) return;
       setDoc(documents.find((d) => d.id === documentId) ?? null);
       setAssets(assetsResult);
       setCategories(categoriesResult);
+      setRejections(rejectionsResult);
     } catch (err) {
       if (requestId !== latestRequestRef.current) return;
       setError(err instanceof Error ? err.message : "Impossibile caricare il contenuto.");
@@ -215,6 +238,65 @@ export function ArchiveItemDetail({
     }
   }
 
+  /**
+   * FASE 19 --- ogni azione su una proposta passa di qui: esegue,
+   * ricarica, e lascia pronta la strada per tornare indietro. Il
+   * `currentUserId()` serve perché l'audit registra a nome di chi.
+   */
+  async function runProposalAction(
+    action: (ownerId: string) => Promise<UndoableAction>,
+  ): Promise<void> {
+    setProposalBusy(true);
+    setError(null);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Devi essere autenticato.");
+
+      const next = await action(user.id);
+      await refresh();
+      setUndoable(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile applicare la proposta.");
+    } finally {
+      setProposalBusy(false);
+    }
+  }
+
+  function handleAcceptProposal(proposal: Proposal, value: string) {
+    if (!doc) return;
+    void runProposalAction(async (ownerId) => {
+      const accepted = await acceptProposal(supabase, ownerId, doc, proposal.kind, value);
+      return {
+        message:
+          proposal.kind === "expiry"
+            ? `Scadenza impostata al ${formatDate(value)}.`
+            : "Categoria impostata.",
+        onUndo: () =>
+          void runProposalAction(async (undoOwnerId) => {
+            await undoAcceptance(supabase, undoOwnerId, doc.id, accepted);
+            return { message: "Annullato.", onUndo: () => setUndoable(null) };
+          }),
+      };
+    });
+  }
+
+  function handleRejectProposal(proposal: Proposal) {
+    if (!doc) return;
+    void runProposalAction(async (ownerId) => {
+      const rejectionId = await rejectProposal(supabase, masterKey, ownerId, doc.id, proposal);
+      return {
+        message: "Non te lo richiederò più.",
+        onUndo: () =>
+          void runProposalAction(async (undoOwnerId) => {
+            await undoRejection(supabase, undoOwnerId, rejectionId);
+            return { message: "Annullato.", onUndo: () => setUndoable(null) };
+          }),
+      };
+    });
+  }
+
   async function handleDelete() {
     if (!doc) return;
     if (!window.confirm(`Eliminare "${doc.filename}"? L'operazione non è reversibile.`)) return;
@@ -261,7 +343,17 @@ export function ArchiveItemDetail({
   // salvati: non c'è niente da migrare, valgono da subito su tutto
   // l'archivio esistente, e non esiste proprio il modo di scrivere per
   // sbaglio qualcosa che l'utente non ha accettato (v. FASE 19).
-  const structuredFields = extractStructuredFields(doc.extractedText);
+  // FASE 19 --- che cosa c'è da proporre, tolto ciò che è già impostato e
+  // ciò che l'utente ha già scartato (v. domain/proposals/build.ts).
+  const proposals = buildProposals(doc, categories, rejections);
+
+  // Ciò che è già diventato una proposta non si ripete qui sotto come
+  // semplice informazione: sarebbe lo stesso valore due volte, con la
+  // stessa fonte, a distanza di due centimetri --- e la seconda copia,
+  // senza i tasti, sembrerebbe pure un'altra cosa.
+  const structuredFields = extractStructuredFields(doc.extractedText).filter(
+    (field) => !proposals.some((p) => p.kind === field.kind && p.value === field.value),
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -409,6 +501,18 @@ export function ArchiveItemDetail({
           </section>
         </div>
       </div>
+
+      {/* FASE 19 --- in cima a ciò che Hinthial ha capito: è l'unica
+          parte che chiede una risposta, e una domanda in fondo alla
+          pagina è una domanda che nessuno vede. */}
+      <ProposalsSection
+        proposals={proposals}
+        categories={categories}
+        busy={proposalBusy}
+        undoable={undoable}
+        onAccept={handleAcceptProposal}
+        onReject={handleRejectProposal}
+      />
 
       {/* FASE 18 --- sopra il testo grezzo: quattro righe leggibili
           valgono più di tremila caratteri, e il testo qui sotto serve

@@ -45,7 +45,10 @@ export type AuditEventType =
   | "guardian_role_accepted"
   | "guardian_role_rejected"
   | "guardian_role_revoked"
-  | "guardian_role_resigned";
+  | "guardian_role_resigned"
+  | "proposal_accepted"
+  | "proposal_rejected"
+  | "proposal_undone";
 
 /**
  * Metadati tecnici facoltativi per un evento --- mai contenuti, nomi

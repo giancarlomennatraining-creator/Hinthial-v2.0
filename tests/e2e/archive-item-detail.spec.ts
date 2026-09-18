@@ -139,8 +139,12 @@ test("la scheda ricava data, emittente e scadenza dal testo del documento", asyn
 
   // La scadenza non è scritta da nessuna parte sul foglio: viene da
   // "Si consiglia controllo tra dodici mesi" più la data del prelievo.
-  await expect(ricavato).toContainText("14 mar 2027");
-  await expect(ricavato).toContainText("calcolata da Hinthial");
+  // Dalla FASE 19 vive fra le proposte, non qui: un campo che aspetta
+  // una risposta non si mostra anche come semplice informazione.
+  const proposte = page.getByRole("region", { name: "Proposte" });
+  await expect(proposte).toContainText("14 mar 2027");
+  await expect(proposte).toContainText("calcolata da Hinthial");
+  await expect(ricavato).not.toContainText("14 mar 2027");
 
   // E soprattutto: non ha scritto niente: la scheda resta vuota.
   await expect(ricavato).toContainText("non ho cambiato niente");

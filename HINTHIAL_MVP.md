@@ -860,6 +860,25 @@ Vincolo architetturale da rispettare: **il server può proporre, solo il
 client può scrivere** --- gli oggetti vanno cifrati con la Master Key,
 che il server non possiede.
 
+*Stato: **fatta.*** Proposte su scadenza e categoria nella scheda di un
+contenuto, con accetta/modifica/rifiuta, fonte mostrata accanto a ogni
+proposta, memoria dei rifiuti cifrata (`proposal_rejections`),
+annullamento e tre nuovi tipi di evento in Attività.
+
+Il vincolo è rispettato in modo **strutturale** e non per disciplina: le
+proposte si calcolano nel browser dal testo già decifrato (v.
+`domain/proposals/build.ts`, funzione pura) e il server non le vede mai
+nascere. Il valore *rifiutato* è cifrato con la Master Key: un valore
+accettato finisce comunque in chiaro in `documents.expires_at`, ma uno
+rifiutato non esisterebbe da nessuna parte sul server, e salvarlo in
+chiaro introdurrebbe un dato che senza questa fase non ci sarebbe.
+
+Proponibili oggi solo i due campi che hanno una casa dove essere scritti
+(`expires_at`, `category_id`). Data del documento, importo ed emittente
+(FASE 18) restano visibili ma non proponibili: inventare una colonna per
+avere una proposta in più sarebbe il contrario del lavorare per fasi ---
+troveranno posto quando un oggetto vero le richiederà (v. FASE 20-21).
+
 ### FASE 20 --- Fascicoli
 
 Nuovo oggetto **trasversale alle categorie**, per le vicende che si

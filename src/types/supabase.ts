@@ -59,7 +59,10 @@ type AuditEventTypeColumn =
   | "guardian_role_accepted"
   | "guardian_role_rejected"
   | "guardian_role_revoked"
-  | "guardian_role_resigned";
+  | "guardian_role_resigned"
+  | "proposal_accepted"
+  | "proposal_rejected"
+  | "proposal_undone";
 
 type FriendStatusColumn = "active" | "revoked";
 
@@ -333,6 +336,48 @@ export type Database = {
             columns: ["category_id"];
             isOneToOne: false;
             referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      proposal_rejections: {
+        Row: {
+          id: string;
+          owner_id: string;
+          document_id: string;
+          kind: string;
+          encrypted_value: string;
+          decided_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          document_id: string;
+          kind: string;
+          encrypted_value: string;
+          decided_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          document_id?: string;
+          kind?: string;
+          encrypted_value?: string;
+          decided_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "proposal_rejections_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "proposal_rejections_document_id_fkey";
+            columns: ["document_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
             referencedColumns: ["id"];
           },
         ];

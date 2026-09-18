@@ -10,6 +10,44 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-18 (7)
+
+### FASE 19 --- Hinthial propone, tu decidi
+
+**Cosa fa:** sulla scheda di un contenuto compare un riquadro **"Hinthial propone"**, con quello che ha capito e che potrebbe scrivere al posto tuo. Per ogni proposta tre risposte: **Accetta**, **Modifica**, **No grazie**.
+
+Carichi `scan_0012.pdf` — un nome che non dice niente, come esce da ogni scanner — e Hinthial propone *Scadenza: 3 giu 2027* e *Categoria: Assicurazioni*. Nessuna delle due viene dal nome del file: vengono da quello che c'è scritto dentro. Accetti, e la scadenza compare in **Scadenze** insieme a tutte le altre.
+
+**Questa fase non porta funzioni: porta il permesso di scrivere.** Fino alla 18 Hinthial ricavava informazioni e si limitava a mostrarle, perché modificare i dati di qualcuno senza avere ancora il modo di disfare sarebbe stato scorretto. Qui nasce quel modo, e con esso la possibilità di dire di sì.
+
+**"Modifica" non è l'opzione di mezzo, è il caso più frequente.** Una proposta è spesso giusta per metà — la data c'è ma è quella sbagliata, la categoria è vicina ma non quella. Senza una terza via dovresti rifiutare e rifare tutto a mano altrove, che è il modo più sicuro per farti smettere di leggere le proposte.
+
+**Quello che rifiuti non ti viene richiesto più.** Il rifiuto sopravvive al ricaricamento: passa dal database, cifrato, e viene riletto e decifrato ogni volta. Ma vale per **quel valore**, non per quel tipo: rifiutare "3 giugno 2027" non significa aver detto che il documento non scade — se una rilettura ne ricava un'altra, quella è una proposta nuova e va fatta.
+
+**Tutto è annullabile e tutto lascia traccia.** Dopo ogni scelta compare una riga con **Annulla** che rimette le cose com'erano, e ogni accettazione, rifiuto e annullamento finisce in *Impostazioni → Attività*.
+
+**Note tecniche:** il vincolo del piano — *il server può proporre, solo il client può scrivere* — è rispettato in modo **strutturale** e non per disciplina: `buildProposals` è una funzione pura che gira nel browser sul testo già decifrato, e il server non vede mai nascere una proposta.
+
+Il valore **rifiutato** è cifrato con la Master Key, e vale la pena spiegare perché non era ovvio: un valore *accettato* finisce comunque in chiaro in `documents.expires_at`, che è già così da sempre. Ma un valore *rifiutato* non esisterebbe da nessuna parte sul server — salvarlo in chiaro introdurrebbe un dato che senza questa fase non ci sarebbe. Il confronto tra una proposta nuova e i rifiuti passati avviene quindi sul client, l'unico posto dove può avvenire.
+
+Tre regole su quando **tacere**, che contano più di quelle su quando proporre:
+
+- **Niente proposte su campi già compilati.** Se la scadenza c'è già, proporne una significa mettere in discussione una tua scelta, non aiutarti. Vale al contrario: se svuoti quel campo, la proposta torna — il documento è tornato incompleto.
+- **Niente proposte già rifiutate** (v. sopra).
+- **Niente proposte senza una fonte da mostrare.** Ogni proposta porta accanto il pezzo di documento da cui nasce: una proposta senza la sua fonte chiede fiducia cieca.
+
+Proponibili oggi solo i due campi che hanno una casa dove essere scritti: scadenza e categoria. Data del documento, importo ed emittente restano visibili in *"Cosa ne ho ricavato"* ma non proponibili — inventare una colonna per avere una proposta in più sarebbe il contrario del lavorare per fasi.
+
+Il categorizzatore euristico ora guarda anche **dentro** il documento, mantenendo la promessa della FASE 17: finché vedeva solo il nome del file, `IMG_4821.jpg` non diceva niente e il suggerimento restava muto per la maggior parte di un archivio reale. Guardando nel testo usa però **solo le parole chiave curate**, non la corrispondenza col nome della categoria: quella regola, ragionevole su un nome di file di tre parole, diventa disastrosa su tremila caratteri — una categoria "Casa" scatterebbe su qualunque documento che nomina una casa.
+
+Ciò che è già una proposta non viene ripetuto in *"Cosa ne ho ricavato"*: sarebbe lo stesso valore due volte a due centimetri di distanza, e la seconda copia — senza i tasti — sembrerebbe pure un'altra cosa.
+
+Verificato: 12 test unitari su `buildProposals` (la funzione che decide quando l'app ti interrompe, quindi testata soprattutto sui casi in cui deve tacere) e 4 e2e sulle due promesse che nessun test unitario può verificare — accettare **scrive davvero** e l'effetto si vede in Scadenze; rifiutare **viene ricordato** e sopravvive al ricaricamento. Più modifica-prima-di-accettare e la traccia in Attività.
+
+**Limite dichiarato:** l'annullamento vale finché resti sulla pagina. Chi se ne accorge dopo corregge dalla scheda, che è dove quel valore vive: un registro di undo persistente sarebbe una macchina molto più grande per un guadagno che il tasto "Modifica" già copre.
+
+---
+
 ## 2026-09-18 (6)
 
 ### FASE 18 --- dal testo ai campi: "cosa ne ho ricavato"

@@ -56,4 +56,41 @@ function suggestCategory(filename: string, categories: Category[]): string | nul
   return null;
 }
 
-export const heuristicCategorizer: Categorizer = { suggestCategory };
+/**
+ * Come suggestCategory, ma potendo leggere anche il testo del documento
+ * (v. domain/extraction, FASE 17).
+ *
+ * Il nome del file ha la precedenza: quando c'è, è il segnale più
+ * pulito --- chi chiama un file "polizza-auto.pdf" sta dichiarando cosa
+ * contiene. Solo se tace si guarda dentro.
+ *
+ * E guardando dentro si usano **soltanto le parole chiave curate**, non
+ * la corrispondenza col nome della categoria. Il motivo è che quella
+ * regola, ragionevole su un nome di file di tre parole, diventa
+ * disastrosa su tremila caratteri di testo: una categoria "Casa"
+ * scatterebbe su qualunque documento che nomina una casa, "Personale"
+ * su qualunque modulo che dice "dati personali". Le parole chiave
+ * curate ("polizza", "referto", "f24", "estratto conto") sono invece
+ * specifiche abbastanza da reggere il testo libero.
+ */
+function suggestCategoryFromContent(
+  filename: string,
+  text: string,
+  categories: Category[],
+): string | null {
+  const fromFilename = suggestCategory(filename, categories);
+  if (fromFilename) return fromFilename;
+
+  if (!text.trim()) return null;
+  const normalizedText = normalize(text);
+
+  for (const [categoryName, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (!keywords.some((keyword) => normalizedText.includes(keyword))) continue;
+    const match = categories.find((c) => normalize(c.name) === normalize(categoryName));
+    if (match) return match.id;
+  }
+
+  return null;
+}
+
+export const heuristicCategorizer: Categorizer = { suggestCategory, suggestCategoryFromContent };

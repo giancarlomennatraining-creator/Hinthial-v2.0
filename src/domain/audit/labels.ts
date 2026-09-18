@@ -42,6 +42,9 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   guardian_role_rejected: "Richiesta di diventare guardiano rifiutata",
   guardian_role_revoked: "Guardiano rimosso",
   guardian_role_resigned: "Dimissioni da guardiano",
+  proposal_accepted: "Proposta accettata",
+  proposal_rejected: "Proposta rifiutata",
+  proposal_undone: "Proposta annullata",
 };
 
 export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
@@ -84,6 +87,9 @@ export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
   guardian_role_rejected: "🙅",
   guardian_role_revoked: "🛡️",
   guardian_role_resigned: "🛡️",
+  proposal_accepted: "✨",
+  proposal_rejected: "🙅",
+  proposal_undone: "↩️",
 };
 
 export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategory> = {
@@ -126,6 +132,9 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
   guardian_role_rejected: "friends",
   guardian_role_revoked: "friends",
   guardian_role_resigned: "friends",
+  proposal_accepted: "content",
+  proposal_rejected: "content",
+  proposal_undone: "content",
 };
 
 export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {

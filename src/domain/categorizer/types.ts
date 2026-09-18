@@ -11,4 +11,15 @@ import type { Category } from "@/domain/categories/types";
 export interface Categorizer {
   /** Restituisce l'id di una categoria tra quelle date, o null se nessuna corrispondenza è abbastanza chiara. */
   suggestCategory(filename: string, categories: Category[]): string | null;
+  /**
+   * FASE 19 --- come sopra, ma guardando anche **dentro** il documento.
+   * Era la promessa della FASE 17: finché si vedeva solo il nome del
+   * file, `IMG_4821.jpg` non diceva niente e il suggerimento restava
+   * muto per la maggior parte dell'archivio reale.
+   */
+  suggestCategoryFromContent(
+    filename: string,
+    text: string,
+    categories: Category[],
+  ): string | null;
 }
