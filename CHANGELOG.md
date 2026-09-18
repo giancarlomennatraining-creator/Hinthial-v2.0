@@ -10,6 +10,23 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-18 (9)
+
+### Ritocchi all'Archivio: il link senza sottolineatura, e la scheda riordinata
+
+**(1) Il nome di un documento non si sottolinea più al passaggio del mouse.** In un elenco di venti righe una sottolineatura che si accende e si spegne è rumore. Il nome passa invece al **blu Hinthial**, lo stesso colore che in tutta l'app segnala ciò su cui si può agire (richiesta utente).
+
+*Nota tecnica:* nel tema scuro si usa un blu più chiaro. Il token `--brand` (`#2b4fc4`) è identico nei due temi, e su fondo quasi nero avrebbe reso il nome **meno** leggibile passandoci sopra --- l'esatto contrario di quello che deve fare uno stato di hover.
+
+**(2) Nel dettaglio di un documento, "Cosa ne ho ricavato" si è spostato sotto "Scheda"**, nella colonna di destra (richiesta utente). Stanno bene insieme perché sono la stessa cosa vista da due parti: quello che il documento **è** e quello che il documento **dice**. *"Cosa ho letto"* resta in fondo a tutta larghezza, e *"Hinthial propone"* pure --- è l'unica parte che chiede una risposta, e una domanda stretta in una colonna è una domanda che nessuno vede.
+
+Affiancando i due riquadri sono saltate all'occhio due ripetizioni che prima, a mezza pagina di distanza, non si notavano. Ora *"Cosa ne ho ricavato"* mostra solo ciò che **non si legge già altrove nella stessa schermata**:
+
+- niente scadenza se è già impostata nella scheda --- una scadenza confermata non è più una notizia, è un dato del documento;
+- niente titolo, che da quella pagina non si può nemmeno applicare: un suggerimento su cui non si può agire è solo un invito a chiedersi "e allora?". Vive dov'è utile, cioè al caricamento.
+
+---
+
 ## 2026-09-18 (8)
 
 ### FASE 19b --- il documento si legge da solo appena lo scegli

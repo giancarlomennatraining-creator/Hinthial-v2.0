@@ -347,13 +347,25 @@ export function ArchiveItemDetail({
   // ciò che l'utente ha già scartato (v. domain/proposals/build.ts).
   const proposals = buildProposals(doc, categories, rejections);
 
-  // Ciò che è già diventato una proposta non si ripete qui sotto come
-  // semplice informazione: sarebbe lo stesso valore due volte, con la
-  // stessa fonte, a distanza di due centimetri --- e la seconda copia,
-  // senza i tasti, sembrerebbe pure un'altra cosa.
-  const structuredFields = extractStructuredFields(doc.extractedText).filter(
-    (field) => !proposals.some((p) => p.kind === field.kind && p.value === field.value),
-  );
+  // "Cosa ne ho ricavato" dice ciò che Hinthial ha capito e che **non si
+  // legge già da un'altra parte della stessa schermata**. Tre esclusioni,
+  // e tutte e tre saltano all'occhio ora che il riquadro sta accanto alla
+  // scheda invece che in fondo alla pagina:
+  //
+  // - ciò che è già una proposta (lo stesso valore, con la stessa fonte,
+  //   a due centimetri di distanza --- e la copia senza tasti sembrerebbe
+  //   pure un'altra cosa);
+  // - ciò che è già nella scheda (una scadenza impostata non è più una
+  //   notizia: è un dato del documento, ed è scritto qui sopra);
+  // - il titolo, che da questa pagina non si può applicare: un
+  //   suggerimento su cui non si può agire è solo un invito a chiedersi
+  //   "e allora?". Vive dov'è utile, cioè al caricamento (v. FASE 19b).
+  const structuredFields = extractStructuredFields(doc.extractedText).filter((field) => {
+    if (field.kind === "title") return false;
+    if (proposals.some((p) => p.kind === field.kind && p.value === field.value)) return false;
+    if (field.kind === "expiry" && doc.expiresAt?.slice(0, 10) === field.value) return false;
+    return true;
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -470,41 +482,52 @@ export function ArchiveItemDetail({
             )}
           </section>
 
-          <section aria-label="Scheda" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 @3xl:col-span-2 dark:border-zinc-800 dark:bg-zinc-950">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Scheda</h2>
-            <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[10rem_1fr]">
-              <Field label="Categoria">
-                {category ? `${category.icon} ${category.name}` : "—"}
-              </Field>
-              <Field label="Bene collegato">{asset ? asset.name : "—"}</Field>
-              <Field label="Scadenza">{doc.expiresAt ? formatDate(doc.expiresAt) : "—"}</Field>
-              <Field label="Tag">
-                {doc.tags.length > 0 ? (
-                  <span className="flex flex-wrap gap-1">
-                    {doc.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </span>
-                ) : (
-                  "—"
-                )}
-              </Field>
-              <Field label="Note">
-                <span className="whitespace-pre-wrap">{doc.notes || "—"}</span>
-              </Field>
-            </dl>
-          </section>
+          {/* Colonna di destra: la scheda e, sotto, ciò che Hinthial ha
+              ricavato (v. richiesta utente). Stanno insieme perché sono
+              la stessa cosa vista da due parti --- quello che il
+              documento è, e quello che il documento dice. */}
+          <div className="flex flex-col gap-6 @3xl:col-span-2">
+            <section aria-label="Scheda" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Scheda</h2>
+              <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[10rem_1fr]">
+                <Field label="Categoria">
+                  {category ? `${category.icon} ${category.name}` : "—"}
+                </Field>
+                <Field label="Bene collegato">{asset ? asset.name : "—"}</Field>
+                <Field label="Scadenza">{doc.expiresAt ? formatDate(doc.expiresAt) : "—"}</Field>
+                <Field label="Tag">
+                  {doc.tags.length > 0 ? (
+                    <span className="flex flex-wrap gap-1">
+                      {doc.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </Field>
+                <Field label="Note">
+                  <span className="whitespace-pre-wrap">{doc.notes || "—"}</span>
+                </Field>
+              </dl>
+            </section>
+
+            {/* FASE 18 --- accanto alla scheda e non sotto al testo grezzo:
+                sono le stesse informazioni della scheda, solo ricavate da
+                Hinthial invece che scritte dall'utente. */}
+            <StructuredFieldsSection fields={structuredFields} />
+          </div>
         </div>
       </div>
 
-      {/* FASE 19 --- in cima a ciò che Hinthial ha capito: è l'unica
-          parte che chiede una risposta, e una domanda in fondo alla
-          pagina è una domanda che nessuno vede. */}
+      {/* FASE 19 --- a tutta larghezza e prima del testo: è l'unica parte
+          che chiede una risposta, e una domanda stretta in una colonna,
+          in fondo alla pagina, è una domanda che nessuno vede. */}
       <ProposalsSection
         proposals={proposals}
         categories={categories}
@@ -513,11 +536,6 @@ export function ArchiveItemDetail({
         onAccept={handleAcceptProposal}
         onReject={handleRejectProposal}
       />
-
-      {/* FASE 18 --- sopra il testo grezzo: quattro righe leggibili
-          valgono più di tremila caratteri, e il testo qui sotto serve
-          semmai a verificarle. */}
-      <StructuredFieldsSection fields={structuredFields} />
 
       {/* A tutta larghezza, sotto: è il testo di un documento, e in una
           colonna stretta si leggerebbe peggio di quanto si legga il

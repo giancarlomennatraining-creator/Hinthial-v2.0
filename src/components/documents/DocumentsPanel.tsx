@@ -592,10 +592,18 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                             <td className="max-w-[16rem] p-3 font-medium text-zinc-900 dark:text-zinc-100">
                               {/* FASE 17e --- il nome porta alla scheda del
                                   contenuto: è l'unico posto dove si vede
-                                  cosa Hinthial ci ha letto dentro. */}
+                                  cosa Hinthial ci ha letto dentro.
+
+                                  Niente sottolineatura al passaggio: in
+                                  un elenco di venti righe è un rumore
+                                  che si accende e si spegne. Il nome
+                                  passa invece al blu Hinthial, lo stesso
+                                  colore che in tutta l'app segnala ciò
+                                  su cui si può agire (v. richiesta
+                                  utente). */}
                               <Link
                                 href={`/archive/${doc.id}`}
-                                className="block truncate underline-offset-2 hover:underline"
+                                className="block truncate transition-colors hover:text-brand dark:hover:text-blue-400"
                               >
                                 {CONTENT_KIND_ICON[kind]} {doc.filename}
                               </Link>
@@ -795,7 +803,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                       <div className="min-w-0">
                         <Link
                           href={`/archive/${doc.id}`}
-                          className="block truncate text-sm font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-100"
+                          className="block truncate text-sm font-medium text-zinc-900 transition-colors hover:text-brand dark:text-zinc-100 dark:hover:text-blue-400"
                         >
                           {CONTENT_KIND_ICON[kind]} {doc.filename}
                         </Link>
