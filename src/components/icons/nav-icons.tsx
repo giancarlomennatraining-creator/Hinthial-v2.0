@@ -89,6 +89,20 @@ export function CapsuleIcon(props: IconProps) {
   );
 }
 
+/**
+ * FASE 20 --- un fascicolo: una cartellina con una piccola linguetta
+ * (il tab che sporge da un raccoglitore vero), a differenza di
+ * AssetIcon (una casa) e CapsuleIcon (un cristallo): un fascicolo non è
+ * una cosa, è un raccoglitore che ne mette insieme più di una.
+ */
+export function DossierIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <path d="M3 8a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z" />
+    </svg>
+  );
+}
+
 export function TimelineIcon(props: IconProps) {
   return (
     <svg {...baseProps(props)}>

@@ -7,7 +7,14 @@
  * interruttore rapido anche in ogni sezione (v. ListViewToggle).
  */
 
-export type ListSection = "archive" | "reminders" | "assets" | "friends" | "capsules" | "timeline";
+export type ListSection =
+  | "archive"
+  | "reminders"
+  | "assets"
+  | "friends"
+  | "capsules"
+  | "timeline"
+  | "dossiers";
 
 export type ListViewMode = "list" | "table";
 
@@ -20,6 +27,7 @@ export const LIST_SECTIONS: ListSection[] = [
   "friends",
   "capsules",
   "timeline",
+  "dossiers",
 ];
 
 export const LIST_SECTION_LABEL: Record<ListSection, string> = {
@@ -29,6 +37,7 @@ export const LIST_SECTION_LABEL: Record<ListSection, string> = {
   friends: "Amici",
   capsules: "Capsule",
   timeline: "Cronologia",
+  dossiers: "Fascicoli",
 };
 
 export const DEFAULT_LIST_VIEW_MODE: ListViewMode = "list";

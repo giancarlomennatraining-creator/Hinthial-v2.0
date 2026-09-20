@@ -45,6 +45,8 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   proposal_accepted: "Proposta accettata",
   proposal_rejected: "Proposta rifiutata",
   proposal_undone: "Proposta annullata",
+  dossier_created: "Fascicolo creato",
+  dossier_deleted: "Fascicolo eliminato",
 };
 
 export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
@@ -90,6 +92,8 @@ export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
   proposal_accepted: "✨",
   proposal_rejected: "🙅",
   proposal_undone: "↩️",
+  dossier_created: "🗂️",
+  dossier_deleted: "🗑️",
 };
 
 export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategory> = {
@@ -135,6 +139,8 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
   proposal_accepted: "content",
   proposal_rejected: "content",
   proposal_undone: "content",
+  dossier_created: "content",
+  dossier_deleted: "content",
 };
 
 export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {

@@ -14,6 +14,8 @@ import {
 } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
+import { listDossiers } from "@/domain/dossiers/repository";
+import type { DossierListItem } from "@/domain/dossiers/types";
 import { readingStateFor } from "@/domain/extraction/reading-state";
 import { extractStructuredFields } from "@/domain/extraction/structured-fields";
 import { buildProposals } from "@/domain/proposals/build";
@@ -75,6 +77,7 @@ export function ArchiveItemDetail({
   const [doc, setDoc] = useState<DocumentListItem | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
+  const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -122,16 +125,19 @@ export function ArchiveItemDetail({
     const requestId = ++latestRequestRef.current;
     setError(null);
     try {
-      const [documents, assetsResult, categoriesResult, rejectionsResult] = await Promise.all([
-        listDocuments(supabase, masterKey),
-        listAssets(supabase, masterKey),
-        listCategories(supabase),
-        listProposalRejections(supabase, masterKey, documentId),
-      ]);
+      const [documents, assetsResult, categoriesResult, dossiersResult, rejectionsResult] =
+        await Promise.all([
+          listDocuments(supabase, masterKey),
+          listAssets(supabase, masterKey),
+          listCategories(supabase),
+          listDossiers(supabase, masterKey),
+          listProposalRejections(supabase, masterKey, documentId),
+        ]);
       if (requestId !== latestRequestRef.current) return;
       setDoc(documents.find((d) => d.id === documentId) ?? null);
       setAssets(assetsResult);
       setCategories(categoriesResult);
+      setDossiers(dossiersResult);
       setRejections(rejectionsResult);
     } catch (err) {
       if (requestId !== latestRequestRef.current) return;
@@ -366,6 +372,7 @@ export function ArchiveItemDetail({
 
   const category = categories.find((c) => c.id === doc.categoryId);
   const asset = assets.find((a) => a.id === doc.relatedAssetId);
+  const dossier = dossiers.find((d) => d.id === doc.dossierId);
   const reading = readingStateFor(doc);
   // FASE 18 --- calcolati al volo dal testo già decifrato in memoria, non
   // salvati: non c'è niente da migrare, valgono da subito su tutto
@@ -531,6 +538,16 @@ export function ArchiveItemDetail({
                   {category ? `${category.icon} ${category.name}` : "—"}
                 </Field>
                 <Field label="Bene collegato">{asset ? asset.name : "—"}</Field>
+                <Field label="Fascicolo">
+                  {dossier ? (
+                    <Link href={`/dossiers/${dossier.id}`} className="text-brand hover:underline">
+                      {dossier.status === "closed" ? "🗂️ " : "📂 "}
+                      {dossier.title}
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
+                </Field>
                 <Field label="Scadenza">{doc.expiresAt ? formatDate(doc.expiresAt) : "—"}</Field>
                 <Field label="Tag">
                   {doc.tags.length > 0 ? (

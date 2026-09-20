@@ -7,6 +7,8 @@ import { createClient } from "@/lib/db/supabase/client";
 import { listDocuments, updateDocumentMetadata } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
+import { listDossiers } from "@/domain/dossiers/repository";
+import type { DossierListItem } from "@/domain/dossiers/types";
 import { contentKindFor, CONTENT_KIND_ICON, CONTENT_KIND_LABEL } from "@/lib/content-kind";
 import {
   DocumentMetadataFields,
@@ -33,6 +35,7 @@ export function EditArchiveItemForm({ masterKey, documentId }: { masterKey: Cryp
   const [doc, setDoc] = useState<DocumentListItem | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
+  const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
   const [fields, setFields] = useState<DocumentMetadataFieldsValue | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,10 +56,11 @@ export function EditArchiveItemForm({ masterKey, documentId }: { masterKey: Cryp
     const requestId = ++latestRequestRef.current;
     setError(null);
     try {
-      const [documents, assetsResult, categoriesResult] = await Promise.all([
+      const [documents, assetsResult, categoriesResult, dossiersResult] = await Promise.all([
         listDocuments(supabase, masterKey),
         listAssets(supabase, masterKey),
         listCategories(supabase),
+        listDossiers(supabase, masterKey),
       ]);
       if (requestId !== latestRequestRef.current) return;
       const found = documents.find((d) => d.id === documentId) ?? null;
@@ -64,6 +68,7 @@ export function EditArchiveItemForm({ masterKey, documentId }: { masterKey: Cryp
       setFields(found ? documentToFields(found) : null);
       setAssets(assetsResult);
       setCategories(categoriesResult);
+      setDossiers(dossiersResult);
     } catch (err) {
       if (requestId !== latestRequestRef.current) return;
       setError(err instanceof Error ? err.message : "Impossibile caricare il contenuto.");
@@ -86,6 +91,7 @@ export function EditArchiveItemForm({ masterKey, documentId }: { masterKey: Cryp
       await updateDocumentMetadata(supabase, masterKey, documentId, {
         categoryId: fields.categoryId || null,
         relatedAssetId: fields.relatedAssetId || null,
+        dossierId: fields.dossierId || null,
         expiresAt: fields.expiresAt || null,
         notes: fields.notes,
         tags: parseTagsInput(fields.tagsInput),
@@ -133,6 +139,7 @@ export function EditArchiveItemForm({ masterKey, documentId }: { masterKey: Cryp
             idPrefix="edit"
             categories={categories}
             assets={assets}
+            dossiers={dossiers}
             value={fields}
             onChange={setFields}
           />

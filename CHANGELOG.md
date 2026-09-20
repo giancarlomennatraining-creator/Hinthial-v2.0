@@ -10,6 +10,27 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-20 (2)
+
+### FASE 20 --- Fascicoli: le vicende che durano nel tempo
+
+**Cosa fa:** un nuovo oggetto in Archivio --- il **Fascicolo** --- per le storie che attraversano più categorie: un problema di salute, l'acquisto di una casa, un incidente. Una categoria è un cassetto; un fascicolo è la vicenda che mette insieme documenti che vivono in cassetti diversi (un referto in *Salute*, una ricevuta in *Fiscale*, entrambi nello stesso fascicolo "Intervento al ginocchio").
+
+Si crea da **Fascicoli** in barra di navigazione: titolo e descrizione, niente altro --- nasce sempre aperto. I documenti si collegano dal loro stesso form, con il nuovo campo **"Fascicolo"** (indipendente da categoria e bene: un documento può avere tutti e tre insieme). La scheda del fascicolo mostra:
+
+- la **cronologia** --- i documenti collegati, ordinati per la data che Hinthial ha letto *dentro* il documento (FASE 18) quando c'è, non per quando li hai caricati: un fascicolo racconta la vicenda nell'ordine in cui è accaduta, non nell'ordine in cui l'hai archiviata;
+- il **totale** --- la somma degli importi che Hinthial ha riconosciuto nei documenti collegati. Mostra "—" e non "€0,00" quando nessun documento ne ha uno: un fascicolo senza importi riconosciuti non è costato zero, è un fascicolo di cui non si sa quanto sia costato --- lo stesso principio già applicato ai campi estratti della FASE 18.
+
+Si **chiude e riapre con un clic** (non un campo da salvare), ed eliminarlo scollega i documenti senza eliminarli --- stessa garanzia già data per beni e categorie.
+
+**Note tecniche:** nessuna IA in questa fase --- creazione e collegamento sono manuali, per scelta del piano. `dossier_id` su `documents` è indipendente da `category_id`/`related_asset_id`, con `ON DELETE SET NULL`. Cronologia e totale sono **funzioni pure calcolate al volo** sul testo già decifrato in memoria (come i campi della FASE 18), non salvate: nessuna migrazione se la logica cambia, valgono da subito su tutto l'archivio esistente. Il totale somma in **centesimi interi**, non in virgola mobile --- un arrotondamento sbaglierebbe il centesimo.
+
+**Bug preesistente scoperto e corretto lungo il percorso, non causato da questa fase:** aggiungere il campo "Fascicolo" al form di caricamento ha fatto ripartire tre test e2e già esistenti (beni, categorie, scadenze) che compilavano un campo (categoria, bene, tag) **prima** di scegliere il file. Causa reale: `handleFileChange` (FASE 19b) azzerava **tutti** i metadati a ogni scelta di file, comprese categoria/bene/tag/note impostati un istante prima --- violava la stessa regola stabilita nella FASE 19b stessa ("non si tocca ciò che è già compilato"). Corretto: ora si azzera solo il segno "suggerito da Hinthial", mai i valori. Un quarto test (scadenze) aveva un'asserzione lasciata indietro dalla FASE 19b stessa (verificava che il campo Scadenza non ci fosse in creazione, quando invece da quella fase c'è): aggiornata.
+
+Verificato: 9 test unitari su cronologia e totale (compreso il caso 0,10 + 0,20 che in virgola mobile darebbe 0,30000000000000004), un e2e che prova il percorso intero --- crea il fascicolo, collega un documento al caricamento, verifica cronologia e totale con dati letti da un PDF vero, chiude/riapre, elimina senza perdere il documento --- più l'intera suite dell'Archivio/Beni/Categorie/Scadenze (oltre 35 e2e) rieseguita in blocco.
+
+---
+
 ## 2026-09-20
 
 ### Miniature: aprire la scheda di un documento non lo riscarica più per intero

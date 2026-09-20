@@ -909,6 +909,22 @@ Non richiede IA: è una struttura che manca già oggi. Categoria = un
 cassetto; fascicolo = una storia che attraversa più cassetti. È anche
 l'unità naturale da lasciare in una capsula.
 
+*Stato: **fatta.*** Nuovo oggetto (`dossiers`), indipendente da
+`category_id`/`related_asset_id` sui documenti: un documento può avere
+categoria, bene e fascicolo insieme. Collegamento manuale dal form del
+documento stesso (campo "Fascicolo"), mai da una UI di gestione sul
+fascicolo --- stesso schema già in uso per beni e categorie. Scheda
+dedicata con cronologia (i documenti collegati, ordinati per la data che
+Hinthial ha letto nel documento se c'è --- FASE 18 --- altrimenti quella
+di caricamento) e totale delle spese (somma degli importi riconosciuti;
+`null`, non "0", quando nessuno ne ha uno). Apertura/chiusura come
+azione a sé, un clic, non un campo del form di modifica.
+
+Non implementata in questa fase: la condivisione in blocco su una
+capsula. È descrittiva nel testo sopra ("è anche l'unità naturale da
+lasciare in una capsula"), non un requisito a sé della fase --- resta un
+naturale sviluppo futuro quando si torna sulle capsule.
+
 ### FASE 21 --- Import massivo e riconoscimento di insiemi
 
 Caricamento di molti file in una volta con riepilogo **per gruppi**

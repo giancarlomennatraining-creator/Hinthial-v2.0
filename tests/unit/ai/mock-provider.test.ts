@@ -34,6 +34,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         extractedText: "",
         extractedAt: null,
         hasThumbnail: false,
+        dossierId: null,
       },
       {
         id: "doc-affitto",
@@ -52,6 +53,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         extractedText: "",
         extractedAt: null,
         hasThumbnail: false,
+        dossierId: null,
       },
     ],
     reminders: [
@@ -111,6 +113,7 @@ describe("mockAIProvider.search", () => {
           extractedText: "",
           extractedAt: null,
           hasThumbnail: false,
+          dossierId: null,
         },
       ],
     });
@@ -138,6 +141,7 @@ describe("mockAIProvider.search", () => {
           extractedText: "Polizza responsabilità civile autoveicoli --- scadenza 3 giugno 2027",
           extractedAt: "2026-01-01",
           hasThumbnail: false,
+          dossierId: null,
         },
       ],
     });
@@ -224,6 +228,7 @@ describe("mockAIProvider.retrieve", () => {
               extractedText: "",
               extractedAt: null,
               hasThumbnail: false,
+              dossierId: null,
             },
           ],
           relatedFriends: [

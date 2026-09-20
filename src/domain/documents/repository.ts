@@ -73,7 +73,7 @@ export interface UploadOptions {
 }
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, dossier_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, created_at";
 
 type DocumentRow = {
   id: string;
@@ -84,6 +84,7 @@ type DocumentRow = {
   size: number;
   category_id: string | null;
   related_asset_id: string | null;
+  dossier_id: string | null;
   expires_at: string | null;
   encrypted_notes: string | null;
   encrypted_tags: string | null;
@@ -143,6 +144,7 @@ async function toDocumentListItem(
     size: row.size,
     categoryId: row.category_id,
     relatedAssetId: row.related_asset_id,
+    dossierId: row.dossier_id,
     createdAt: row.created_at,
     storagePath: row.storage_path,
     wrappedDocumentKey: row.wrapped_document_key,
@@ -313,6 +315,7 @@ export async function uploadDocument(
     size: file.size,
     category_id: metadata.categoryId,
     related_asset_id: metadata.relatedAssetId,
+    dossier_id: metadata.dossierId,
     expires_at: metadata.expiresAt,
     encrypted_notes: encryptedNotes,
     encrypted_tags: encryptedTags,
@@ -376,6 +379,7 @@ export async function createTextNote(
     size: plaintext.byteLength,
     category_id: metadata.categoryId,
     related_asset_id: metadata.relatedAssetId,
+    dossier_id: metadata.dossierId,
     expires_at: metadata.expiresAt,
     encrypted_notes: encryptedNotes,
     encrypted_tags: encryptedTags,
@@ -456,6 +460,7 @@ export async function updateDocumentMetadata(
     .update({
       category_id: metadata.categoryId,
       related_asset_id: metadata.relatedAssetId,
+      dossier_id: metadata.dossierId,
       expires_at: metadata.expiresAt,
       encrypted_notes: encryptedNotes,
       encrypted_tags: encryptedTags,

@@ -47,12 +47,21 @@ export interface DocumentListItem {
    * questa possibilità esistesse.
    */
   hasThumbnail: boolean;
+  /**
+   * FASE 20 --- il fascicolo a cui appartiene, se assegnato manualmente.
+   * Indipendente da `categoryId`/`relatedAssetId`: un fascicolo
+   * attraversa le categorie, non le sostituisce --- un documento può
+   * avere una categoria, un bene e un fascicolo insieme.
+   */
+  dossierId: string | null;
 }
 
 /** Fields collected at upload time, in addition to the file itself. */
 export interface DocumentMetadataInput {
   categoryId: string | null;
   relatedAssetId: string | null;
+  /** FASE 20 --- null se non assegnato a nessun fascicolo. */
+  dossierId: string | null;
   expiresAt: string | null;
   notes: string;
   tags: string[];

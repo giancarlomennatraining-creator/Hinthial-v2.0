@@ -12,6 +12,8 @@ import {
 } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
+import { listDossiers } from "@/domain/dossiers/repository";
+import type { DossierListItem } from "@/domain/dossiers/types";
 import { heuristicCategorizer } from "@/domain/categorizer/heuristic-provider";
 import { canExtractText, extractText } from "@/domain/extraction/extract-text";
 import {
@@ -216,6 +218,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
+  const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -258,12 +261,14 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [categoriesResult, assetsResult] = await Promise.all([
+      const [categoriesResult, assetsResult, dossiersResult] = await Promise.all([
         listCategories(supabase),
         listAssets(supabase, masterKey),
+        listDossiers(supabase, masterKey),
       ]);
       setCategories(categoriesResult);
       setAssets(assetsResult);
+      setDossiers(dossiersResult);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare i dati necessari.");
     } finally {
@@ -295,9 +300,15 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
     setPickedFile(file);
-    setTitle("");
+    // Non si azzerano titolo/categoria/bene/fascicolo/tag/note: vale la
+    // stessa regola della FASE 19b, "non si tocca ciò che è già
+    // compilato". Scegliere una categoria e SOLO DOPO il file --- un
+    // ordine perfettamente naturale --- perderebbe la scelta se qui si
+    // ripartisse da campi vuoti. `applySuggestions` più sotto già si
+    // guarda bene dal sovrascrivere un valore non vuoto (v. il merge con
+    // `prev`): l'unica cosa che qui deve ripartire da capo è il segno
+    // "suggerito da Hinthial", legato al file precedente.
     setSuggested({});
-    setMetadata(EMPTY_METADATA_FIELDS);
     if (file) {
       readingPromiseRef.current = readPickedFile(file);
     } else {
@@ -474,6 +485,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       const metadataInput: DocumentMetadataInput = {
         categoryId: metadata.categoryId || null,
         relatedAssetId: metadata.relatedAssetId || null,
+        dossierId: metadata.dossierId || null,
         expiresAt: metadata.expiresAt || null,
         notes: metadata.notes,
         tags: parseTagsInput(metadata.tagsInput),
@@ -705,6 +717,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
             idPrefix="upload"
             categories={categories}
             assets={assets}
+            dossiers={dossiers}
             value={metadata}
             onChange={setMetadata}
             // La scadenza si chiede solo per i file, ed è nuovo: prima

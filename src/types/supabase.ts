@@ -62,7 +62,9 @@ type AuditEventTypeColumn =
   | "guardian_role_resigned"
   | "proposal_accepted"
   | "proposal_rejected"
-  | "proposal_undone";
+  | "proposal_undone"
+  | "dossier_created"
+  | "dossier_deleted";
 
 type FriendStatusColumn = "active" | "revoked";
 
@@ -340,6 +342,44 @@ export type Database = {
           },
         ];
       };
+      dossiers: {
+        Row: {
+          id: string;
+          owner_id: string;
+          encrypted_title: string;
+          encrypted_description: string | null;
+          status: string;
+          created_at: string;
+          closed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          encrypted_title: string;
+          encrypted_description?: string | null;
+          status?: string;
+          created_at?: string;
+          closed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          encrypted_title?: string;
+          encrypted_description?: string | null;
+          status?: string;
+          created_at?: string;
+          closed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "dossiers_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       proposal_rejections: {
         Row: {
           id: string;
@@ -401,6 +441,7 @@ export type Database = {
           encrypted_extracted_text: string | null;
           extracted_at: string | null;
           has_thumbnail: boolean;
+          dossier_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -422,6 +463,7 @@ export type Database = {
           encrypted_extracted_text?: string | null;
           extracted_at?: string | null;
           has_thumbnail?: boolean;
+          dossier_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -443,6 +485,7 @@ export type Database = {
           encrypted_extracted_text?: string | null;
           extracted_at?: string | null;
           has_thumbnail?: boolean;
+          dossier_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };

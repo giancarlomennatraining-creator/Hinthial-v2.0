@@ -3,11 +3,18 @@
 import { sortAlphabetically } from "@/lib/utils";
 import type { Category } from "@/domain/categories/types";
 import type { AssetListItem } from "@/domain/assets/types";
+import type { DossierListItem } from "@/domain/dossiers/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 
 export interface DocumentMetadataFieldsValue {
   categoryId: string;
   relatedAssetId: string;
+  /**
+   * FASE 20 --- indipendente dalla categoria: un fascicolo attraversa le
+   * categorie, non ne è un sotto-livello (a differenza di
+   * `relatedAssetId`, che la categoria filtra).
+   */
+  dossierId: string;
   /** yyyy-mm-dd, or "" for no expiry. */
   expiresAt: string;
   notes: string;
@@ -18,6 +25,7 @@ export interface DocumentMetadataFieldsValue {
 export const EMPTY_METADATA_FIELDS: DocumentMetadataFieldsValue = {
   categoryId: "",
   relatedAssetId: "",
+  dossierId: "",
   expiresAt: "",
   notes: "",
   tagsInput: "",
@@ -28,6 +36,7 @@ export function documentToFields(doc: DocumentListItem): DocumentMetadataFieldsV
   return {
     categoryId: doc.categoryId ?? "",
     relatedAssetId: doc.relatedAssetId ?? "",
+    dossierId: doc.dossierId ?? "",
     expiresAt: doc.expiresAt ? doc.expiresAt.slice(0, 10) : "",
     notes: doc.notes,
     tagsInput: doc.tags.join(", "),
@@ -45,6 +54,7 @@ export function DocumentMetadataFields({
   idPrefix,
   categories,
   assets,
+  dossiers = [],
   value,
   onChange,
   showExpiry = true,
@@ -53,6 +63,13 @@ export function DocumentMetadataFields({
   idPrefix: string;
   categories: Category[];
   assets: AssetListItem[];
+  /**
+   * FASE 20 --- opzionale e di default vuoto: i chiamanti che non hanno
+   * ancora un elenco di fascicoli a portata di mano (es. un form che non
+   * li carica) semplicemente non mostrano il selettore invece di dover
+   * passare sempre un array.
+   */
+  dossiers?: DossierListItem[];
   value: DocumentMetadataFieldsValue;
   onChange: (next: DocumentMetadataFieldsValue) => void;
   /**
@@ -70,7 +87,7 @@ export function DocumentMetadataFields({
    * documento in cui compare quella data). Sta qui e non nel chiamante
    * perché è questo componente a possedere il layout dei campi.
    */
-  hints?: Partial<Record<"categoryId" | "relatedAssetId" | "expiresAt", React.ReactNode>>;
+  hints?: Partial<Record<"categoryId" | "relatedAssetId" | "dossierId" | "expiresAt", React.ReactNode>>;
 }) {
   // La categoria filtra i beni proposti (es. "Casa" -> solo i beni
   // di categoria "Casa") --- senza categoria selezionata, nessun bene è
@@ -140,6 +157,34 @@ export function DocumentMetadataFields({
             ))}
           </select>
           {hints?.relatedAssetId}
+        </div>
+
+        {/* FASE 20 --- nessun filtro per categoria: un fascicolo
+            attraversa le categorie di proposito ("un problema di
+            salute" può contenere un referto E una ricevuta di farmacia,
+            categorie diverse). */}
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor={`${idPrefix}-dossier`}
+            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
+          >
+            Fascicolo
+          </label>
+          <select
+            id={`${idPrefix}-dossier`}
+            value={value.dossierId}
+            onChange={(e) => onChange({ ...value, dossierId: e.target.value })}
+            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+          >
+            <option value="">Nessun fascicolo</option>
+            {sortAlphabetically(dossiers, (dossier) => dossier.title).map((dossier) => (
+              <option key={dossier.id} value={dossier.id}>
+                {dossier.status === "closed" ? "🗂️ " : "📂 "}
+                {dossier.title}
+              </option>
+            ))}
+          </select>
+          {hints?.dossierId}
         </div>
 
         {showExpiry ? (

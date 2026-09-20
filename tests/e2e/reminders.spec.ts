@@ -73,11 +73,11 @@ test("aggiunge scadenza, tag e note a un documento e li vede in dashboard", asyn
 
   const user = await loginAndSetUpEncryption(page);
 
-  // La scadenza non si inserisce più in creazione (v. DocumentMetadataFields,
-  // showExpiry) --- solo tag e note sono disponibili subito.
+  // Dalla FASE 19b la scadenza si può inserire già in creazione (prima
+  // no --- v. DocumentMetadataFields, showExpiry): qui si esercita solo
+  // tag e note, senza toccarla.
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
-  await expect(page.locator("#upload-expires")).toHaveCount(0);
   await page.locator("#upload-tags").fill("fattura, 2026");
   await page.locator("#upload-notes").fill("Nota di prova");
 
