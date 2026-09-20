@@ -39,6 +39,14 @@ export interface DocumentListItem {
    * dare, come una scansione.
    */
   extractedAt: string | null;
+  /**
+   * Se esiste una miniatura del contenuto (v. lib/thumbnail.ts): quando
+   * true, la scheda può mostrare un'anteprima scaricando qualche decina
+   * di kilobyte invece del file intero. Falso per i tipi che non ne
+   * hanno una (audio, video, note) e per i contenuti caricati prima che
+   * questa possibilità esistesse.
+   */
+  hasThumbnail: boolean;
 }
 
 /** Fields collected at upload time, in addition to the file itself. */

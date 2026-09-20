@@ -33,6 +33,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         transcript: "",
         extractedText: "",
         extractedAt: null,
+        hasThumbnail: false,
       },
       {
         id: "doc-affitto",
@@ -50,6 +51,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         transcript: "",
         extractedText: "",
         extractedAt: null,
+        hasThumbnail: false,
       },
     ],
     reminders: [
@@ -108,6 +110,7 @@ describe("mockAIProvider.search", () => {
           transcript: "la combinazione della cassaforte è 12-34-56",
           extractedText: "",
           extractedAt: null,
+          hasThumbnail: false,
         },
       ],
     });
@@ -134,6 +137,7 @@ describe("mockAIProvider.search", () => {
           transcript: "",
           extractedText: "Polizza responsabilità civile autoveicoli --- scadenza 3 giugno 2027",
           extractedAt: "2026-01-01",
+          hasThumbnail: false,
         },
       ],
     });
@@ -219,6 +223,7 @@ describe("mockAIProvider.retrieve", () => {
               transcript: "",
               extractedText: "",
               extractedAt: null,
+              hasThumbnail: false,
             },
           ],
           relatedFriends: [

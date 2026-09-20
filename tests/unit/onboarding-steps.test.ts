@@ -100,6 +100,7 @@ describe("isOnboardingComplete", () => {
             transcript: "",
             extractedText: "",
             extractedAt: null,
+            hasThumbnail: false,
           },
         ],
         friends: [

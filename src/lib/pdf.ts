@@ -46,7 +46,7 @@ export async function loadPdfjs() {
 }
 
 /** Larghezza a cui si disegna l'anteprima --- abbastanza per leggerla a schermo intero. */
-const PREVIEW_WIDTH = 1200;
+const DEFAULT_PREVIEW_WIDTH = 1200;
 
 export interface PdfFirstPage {
   /** La prima pagina disegnata, pronta da mostrare in un <img>. */
@@ -62,7 +62,10 @@ export interface PdfFirstPage {
  * un browser vero, o se il file non è un PDF valido. L'anteprima è un
  * di più --- chi chiama mostra semplicemente il messaggio di ripiego.
  */
-export async function renderPdfFirstPage(bytes: Uint8Array): Promise<PdfFirstPage | null> {
+export async function renderPdfFirstPage(
+  bytes: Uint8Array,
+  width = DEFAULT_PREVIEW_WIDTH,
+): Promise<PdfFirstPage | null> {
   // Sonda di capacità: v. lo stesso controllo in pdf-extractor.ts ---
   // jsdom un canvas lo crea ma non sa disegnarci.
   if (typeof document === "undefined" || typeof OffscreenCanvas === "undefined") return null;
@@ -77,7 +80,7 @@ export async function renderPdfFirstPage(bytes: Uint8Array): Promise<PdfFirstPag
     const page = await doc.getPage(1);
     try {
       const unscaled = page.getViewport({ scale: 1 });
-      const viewport = page.getViewport({ scale: PREVIEW_WIDTH / unscaled.width });
+      const viewport = page.getViewport({ scale: width / unscaled.width });
 
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");

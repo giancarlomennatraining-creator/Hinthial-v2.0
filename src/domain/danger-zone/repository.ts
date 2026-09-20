@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 import { listDocuments } from "@/domain/documents/repository";
 import { listCapsules } from "@/domain/capsules/repository";
-import { removeEncryptedPayloads } from "@/lib/storage/documents-bucket";
+import { documentThumbnailPath, removeEncryptedPayloads } from "@/lib/storage/documents-bucket";
 import {
   capsuleAttachmentStoragePath,
   removeEncryptedCapsulePayloads,
@@ -42,7 +42,9 @@ export async function wipeVault(
     listCapsules(supabase, masterKey),
   ]);
 
-  const documentPaths = documents.map((d) => d.storagePath);
+  const documentPaths = documents.flatMap((d) =>
+    d.hasThumbnail ? [d.storagePath, documentThumbnailPath(d.storagePath)] : [d.storagePath],
+  );
   const capsuleAttachmentPaths = capsules.flatMap((c) =>
     c.attachments.map((a) => capsuleAttachmentStoragePath(ownerId, c.id, a.id)),
   );

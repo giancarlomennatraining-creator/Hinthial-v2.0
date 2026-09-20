@@ -102,13 +102,18 @@ test("la scheda di un documento mostra il testo che Hinthial ci ha letto dentro"
   // La promessa dichiarata sulla pagina stessa.
   await expect(page.getByText(/non è mai uscito/)).toBeVisible();
 
-  // FASE 17e --- l'anteprima: la prima pagina del PDF disegnata con lo
-  // stesso pdf.js che l'OCR usa per leggerle. Un PDF non si può mostrare
-  // com'è, e il messaggio di ripiego ("usa Scarica") non deve comparire.
+  // FASE 17e --- l'anteprima: la prima pagina del PDF. Un PDF non si può
+  // mostrare com'è, e il messaggio di ripiego ("usa Scarica") non deve
+  // comparire. Dalla miniatura (v. lib/thumbnail.ts): un documento
+  // appena caricato ne ha già una, e la didascalia col numero di pagine
+  // --- che solo il file intero porta con sé --- non compare (v.
+  // archive-thumbnails.spec.ts per il percorso dedicato).
   await expect(page.getByRole("img", { name: /Prima pagina di referto\.pdf/ })).toBeVisible({
     timeout: 30_000,
   });
-  await expect(page.getByText("Pagina unica.")).toBeVisible();
+  await expect(
+    page.getByText("Anteprima. Usa «Scarica» per l'originale, pagina per pagina."),
+  ).toBeVisible();
 });
 
 // FASE 18 --- dal testo ai campi. Il documento è la scansione: nessun

@@ -100,6 +100,15 @@ export async function forceOwnFriendToGuardian(ownerEmail: string): Promise<void
  * il recupero dal banner in Archivio senza avere un archivio storico
  * vero da cui partire. Il testo cifrato viene rimosso, non riscritto:
  * questa funzione non ha la Master Key e non potrebbe comunque.
+ *
+ * Azzera anche `has_thumbnail` per lo stesso motivo (v. lib/thumbnail.ts,
+ * FASE della miniatura): un contenuto caricato prima che l'estrazione
+ * esistesse è anche, per definizione, un contenuto caricato prima che
+ * esistesse la miniatura --- entrambe si recuperano dallo stesso "Leggili
+ * ora"/"Rileggi", che genera la seconda mentre rilegge il testo. Il file
+ * cifrato della miniatura in Storage non viene rimosso (nessuna Master
+ * Key qui per trovarne il percorso, e non serve: `has_thumbnail: false`
+ * basta a far ricadere la scheda sul file intero).
  */
 export async function resetDocumentExtraction(ownerEmail: string): Promise<void> {
   const admin = adminClient();
@@ -117,7 +126,7 @@ export async function resetDocumentExtraction(ownerEmail: string): Promise<void>
 
   const { error } = await admin
     .from("documents")
-    .update({ extracted_at: null, encrypted_extracted_text: null })
+    .update({ extracted_at: null, encrypted_extracted_text: null, has_thumbnail: false })
     .eq("owner_id", ownerId);
   if (error) {
     throw new Error(`Impossibile azzerare l'estrazione: ${error.message}`);

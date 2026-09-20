@@ -400,6 +400,7 @@ export type Database = {
           encrypted_transcript: string | null;
           encrypted_extracted_text: string | null;
           extracted_at: string | null;
+          has_thumbnail: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -420,6 +421,7 @@ export type Database = {
           encrypted_transcript?: string | null;
           encrypted_extracted_text?: string | null;
           extracted_at?: string | null;
+          has_thumbnail?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -440,6 +442,7 @@ export type Database = {
           encrypted_transcript?: string | null;
           encrypted_extracted_text?: string | null;
           extracted_at?: string | null;
+          has_thumbnail?: boolean;
           created_at?: string;
           updated_at?: string;
         };

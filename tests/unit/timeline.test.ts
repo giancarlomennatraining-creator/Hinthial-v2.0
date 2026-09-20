@@ -35,6 +35,7 @@ describe("buildTimeline", () => {
           transcript: "",
           extractedText: "",
           extractedAt: null,
+          hasThumbnail: false,
         },
       ],
       reminders: [

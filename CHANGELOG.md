@@ -10,6 +10,28 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-20
+
+### Miniature: aprire la scheda di un documento non lo riscarica più per intero
+
+**Cosa fa:** ogni PDF e ogni immagine caricati in Archivio ottengono ora una **miniatura** --- una versione piccola della prima pagina (o della foto stessa), cifrata e salvata accanto al documento. Da questo momento **aprire la scheda di un contenuto non ne riscarica più il file intero**: scarica solo la miniatura.
+
+**Perché conta:** in un'architettura zero-knowledge non c'è cache sul dispositivo --- ogni volta che apri la scheda di un documento, il browser lo riscarica da capo, lo decifra, e lo butta via quando cambi pagina. Prima di questa modifica, aprire tre volte la scheda di una scansione da 2 MB significava scaricarne 6. Misurato con un vero browser, intercettando il traffico reale (non stimato): su un'immagine sintetica da 1,4 MB la scheda ora scarica **166 KB invece del file intero --- circa 8,7 volte meno**; su un documento minimo la differenza pesa meno in proporzione, ma resta **una sola richiesta di rete, sempre alla miniatura, mai al file**. Il guadagno cresce con la dimensione del documento: la miniatura ha una dimensione tendenzialmente fissa (900 px al massimo lato), il file no.
+
+**Cosa vede l'utente:** quasi niente, ed è il punto --- la scheda si apre più in fretta, e la didascalia sotto l'anteprima lo dice: *"Anteprima. Usa «Scarica» per l'originale"* (per un PDF, *"…, pagina per pagina"*, perché la miniatura non porta con sé il numero di pagine: quello lo si scopre solo scaricando il documento vero, che è esattamente ciò che si voleva evitare). Chi vuole vedere il file com'è, per intero, ha sempre &laquo;Scarica&raquo;.
+
+**Note tecniche:** la miniatura vive come **oggetto separato** nello stesso bucket cifrato, accanto al file (`<id>-thumb.json`), non come colonna nella tabella `documents` --- l'elenco dell'Archivio legge quella tabella a ogni caricamento della pagina, e mettercela dentro avrebbe reso caro l'unico percorso che oggi è gratis (si scaricano solo metadati cifrati, mai contenuto). Resta solo un booleano (`has_thumbnail`) che dice se esiste, per evitare un tentativo di download a vuoto.
+
+Cifrata **direttamente sotto la Master Key** (come note/tag/trascrizione), non con una chiave documento dedicata come il contenuto principale: è dato derivato e non ha bisogno della stessa infrastruttura di revoca. Generata **al momento del caricamento**, quando il file è già in chiaro in memoria per l'estrazione del testo --- costo aggiuntivo quasi nullo, nessun secondo giro di decifratura. JPEG e non PNG, 900 px al massimo lato, qualità 0,72: pensata per riconoscere il documento, non per leggerlo (per leggerlo c'è "Scarica").
+
+**Bug trovato dal test, non dall'occhio:** il primo tentativo di backfill (per i documenti caricati prima di questa fase) falliva in silenzio con "resource already exists" ogni volta che un caricamento precedente aveva lasciato una miniatura orfana --- perché l'upload della miniatura riusava la stessa funzione del contenuto principale, che usa deliberatamente `upsert: false` (due caricamenti sullo stesso percorso non devono mai sovrascriversi in silenzio). Per la miniatura quella regola è sbagliata: è dato idempotente, riscriverla non rischia nulla, e senza `upsert` un ritentativo dopo un salvataggio andato a metà sarebbe fallito **per sempre**. Nuova funzione dedicata (`uploadEncryptedThumbnail`, `upsert: true`) solo per questo caso. L'ho scoperto perché il terzo test e2e (il backfill) falliva pur essendo il codice "logicamente giusto" --- prova diretta di perché si scrivono i test prima di fidarsi della lettura del codice.
+
+**Backfill senza banner dedicato:** i contenuti già in archivio restano senza miniatura finché non vengono riletti --- si aggancia agli stessi due percorsi che già esistono per il testo estratto ("Leggili ora" sui documenti mai letti, "Rileggi" su qualunque altro): i byte in chiaro sono già lì per leggere il testo, quindi generare la miniatura in quel momento costa quasi zero. Stessa scelta già presa per l'impaginazione del testo in FASE 17e: deliberatamente nessuna migrazione forzata su tutto l'archivio.
+
+Verificato: 11 test unitari su `lib/thumbnail.ts` (quali tipi ne hanno una, e che la generazione non lanci mai quando non può disegnare --- jsdom non sa farlo, come già per l'estrazione dei PDF), e 3 e2e con un browser vero che distinguono i due percorsi dalla didascalia mostrata (solo il file intero conosce il numero di pagine di un PDF): un PDF appena caricato usa la miniatura, una foto appena caricata pure, e un contenuto riportato allo stato "prima di questa fase" la ricava rileggendolo e la usa dalla volta successiva. Più l'intera suite dell'Archivio (23 e2e) rieseguita in blocco, dove un test preesistente ha richiesto un aggiornamento perché aspettava esplicitamente la vecchia didascalia col numero di pagine.
+
+---
+
 ## 2026-09-18 (9)
 
 ### Ritocchi all'Archivio: il link senza sottolineatura, e la scheda riordinata

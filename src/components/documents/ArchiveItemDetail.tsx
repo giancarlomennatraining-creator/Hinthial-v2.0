@@ -8,6 +8,7 @@ import { bytesToUtf8 } from "@/lib/crypto";
 import {
   deleteDocument,
   downloadDocument,
+  downloadThumbnail,
   extractTextForExistingDocument,
   listDocuments,
 } from "@/domain/documents/repository";
@@ -83,10 +84,19 @@ export function ArchiveItemDetail({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [noteBody, setNoteBody] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
-  /** Pagine del PDF, per dire "prima di N" --- null se non è un PDF. */
+  /** Pagine del PDF, per dire "prima di N" --- null se non è un PDF, o se
+   * l'anteprima viene dalla miniatura (che non porta con sé quel dato,
+   * v. sotto). */
   const [pdfPageCount, setPdfPageCount] = useState<number | null>(null);
   /** Un PDF che pdf.js non è riuscito a disegnare: si ripiega sul messaggio. */
   const [previewUnavailable, setPreviewUnavailable] = useState(false);
+  /**
+   * Vero quando `previewUrl` viene dalla miniatura e non dal file
+   * intero --- serve solo a scegliere la didascalia giusta: la
+   * miniatura non porta con sé il numero di pagine di un PDF (è
+   * un'immagine e basta), quindi non si può dire "Prima pagina di N."
+   */
+  const [previewIsThumbnail, setPreviewIsThumbnail] = useState(false);
 
   // Rilettura di questo singolo contenuto (v. handleReread).
   const [rereading, setRereading] = useState<number | null>(null);
@@ -158,12 +168,30 @@ export function ArchiveItemDetail({
     setPreviewLoading(true);
     setError(null);
     try {
-      const { mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
-
-      if (contentKindFor(mimeType) === "note") {
+      if (contentKindFor(doc.mimeType) === "note") {
+        const { bytes } = await downloadDocument(supabase, masterKey, doc);
         setNoteBody(bytesToUtf8(bytes));
         return;
       }
+
+      if (doc.mimeType === "application/pdf" || doc.mimeType.startsWith("image/")) {
+        // La miniatura, quando c'è, evita di scaricare il file intero
+        // solo per mostrarne un'anteprima --- è il motivo per cui esiste
+        // (v. lib/thumbnail.ts): una scansione da 15 MB diventa una
+        // manciata di kilobyte, e l'apertura della scheda non dipende
+        // più dalla dimensione del file.
+        const thumbnail = await downloadThumbnail(supabase, masterKey, doc);
+        if (thumbnail) {
+          setPreviewUrl(URL.createObjectURL(thumbnail));
+          setPreviewIsThumbnail(true);
+          return;
+        }
+      }
+
+      // Nessuna miniatura --- tipo non supportato, caricato prima che
+      // esistesse, o non generata con successo a suo tempo: si scarica
+      // il file intero, come prima di questa fase.
+      const { mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
 
       if (mimeType === "application/pdf") {
         // Un PDF non si può mostrare com'è: se ne disegna la prima
@@ -455,6 +483,15 @@ export function ArchiveItemDetail({
                       ? "Pagina unica."
                       : `Prima pagina di ${pdfPageCount}.`}{" "}
                     Usa &laquo;Scarica&raquo; per sfogliarlo tutto.
+                  </p>
+                ) : previewIsThumbnail ? (
+                  // La miniatura non porta con sé il numero di pagine
+                  // (v. hint sopra su previewIsThumbnail): la didascalia
+                  // resta più generica, ma dice comunque che questa non
+                  // è la qualità piena.
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Anteprima. Usa &laquo;Scarica&raquo; per l&apos;originale
+                    {isPdf ? ", pagina per pagina" : ""}.
                   </p>
                 ) : null}
               </>

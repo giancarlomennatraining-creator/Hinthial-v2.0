@@ -13,13 +13,17 @@ import {
 } from "@/lib/crypto";
 import {
   documentStoragePath,
+  documentThumbnailPath,
   downloadEncryptedPayload,
+  downloadOptionalEncryptedPayload,
   removeEncryptedPayload,
   uploadEncryptedPayload,
+  uploadEncryptedThumbnail,
 } from "@/lib/storage/documents-bucket";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import { NOTE_MIME_TYPE } from "@/lib/content-kind";
 import { canExtractText, extractText } from "@/domain/extraction/extract-text";
+import { canHaveThumbnail, createThumbnail } from "@/lib/thumbnail";
 import type {
   DocumentListItem,
   DocumentMetadataInput,
@@ -69,7 +73,7 @@ export interface UploadOptions {
 }
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, extracted_at, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, created_at";
 
 type DocumentRow = {
   id: string;
@@ -86,6 +90,7 @@ type DocumentRow = {
   encrypted_transcript: string | null;
   encrypted_extracted_text: string | null;
   extracted_at: string | null;
+  has_thumbnail: boolean;
   created_at: string;
 };
 
@@ -147,7 +152,15 @@ async function toDocumentListItem(
     transcript,
     extractedText,
     extractedAt: row.extracted_at,
+    hasThumbnail: row.has_thumbnail,
   };
+}
+
+/** null in -> null out: nessuna miniatura da cifrare. */
+async function encryptThumbnail(masterKey: CryptoKey, thumbnail: Blob | null): Promise<string | null> {
+  if (!thumbnail) return null;
+  const bytes = new Uint8Array(await thumbnail.arrayBuffer());
+  return serializeEnvelope(await encryptBytes(masterKey, bytes));
 }
 
 /**
@@ -240,6 +253,17 @@ export async function uploadDocument(
     );
   }
 
+  // La miniatura si genera QUI per lo stesso motivo del testo estratto:
+  // il contenuto è ancora in chiaro in memoria, e generarla altrove
+  // richiederebbe riscaricare e ridecifrare il file appena caricato.
+  // Costo di banda risolto: senza, aprire la scheda di questo stesso
+  // contenuto riscaricherebbe il file intero solo per mostrarne
+  // un'anteprima --- su una scansione da 15 MB, ogni apertura (v.
+  // lib/thumbnail.ts per i numeri).
+  const thumbnailBlob = canHaveThumbnail(mimeType)
+    ? await createThumbnail(plaintext, mimeType)
+    : null;
+
   onPhase?.("saving", null);
 
   const [
@@ -248,6 +272,7 @@ export async function uploadDocument(
     encryptedNotes,
     encryptedTags,
     encryptedExtractedText,
+    encryptedThumbnail,
   ] = await Promise.all([
     encryptDocument(masterKey, plaintext),
     // Il nome scelto dall'utente se c'è, altrimenti quello del file:
@@ -256,12 +281,27 @@ export async function uploadDocument(
     encryptOptionalText(masterKey, metadata.notes),
     encryptTags(masterKey, metadata.tags),
     encryptOptionalText(masterKey, extractedText ?? ""),
+    encryptThumbnail(masterKey, thumbnailBlob),
   ]);
 
   const documentId = crypto.randomUUID();
   const storagePath = documentStoragePath(ownerId, documentId);
 
   await uploadEncryptedPayload(supabase, storagePath, serializeEnvelope(payload));
+
+  // Best-effort e non nel Promise.all qui sopra: una miniatura che non
+  // si riesce a salvare non deve impedire di salvare il documento ---
+  // è un di più, non il contenuto. `hasThumbnail` riflette se è
+  // *davvero* arrivata a destinazione, non solo se si è tentato.
+  let hasThumbnail = false;
+  if (encryptedThumbnail) {
+    try {
+      await uploadEncryptedThumbnail(supabase, documentThumbnailPath(storagePath), encryptedThumbnail);
+      hasThumbnail = true;
+    } catch (error) {
+      console.warn("[thumbnail] impossibile salvare la miniatura:", error);
+    }
+  }
 
   const { error } = await supabase.from("documents").insert({
     id: documentId,
@@ -282,11 +322,15 @@ export async function uploadDocument(
     // mentre la lettura era ancora in corso --- resta null, così il
     // recupero saprà che quel contenuto è ancora tutto da guardare.
     extracted_at: attempted ? new Date().toISOString() : null,
+    has_thumbnail: hasThumbnail,
   });
 
   if (error) {
     // Best-effort cleanup so a failed insert doesn't leave an orphaned blob.
     await removeEncryptedPayload(supabase, storagePath).catch(() => {});
+    if (hasThumbnail) {
+      await removeEncryptedPayload(supabase, documentThumbnailPath(storagePath)).catch(() => {});
+    }
     throw new Error(`Impossibile salvare il documento: ${error.message}`);
   }
 
@@ -448,6 +492,35 @@ export async function updateDocumentTranscript(
   }
 }
 
+/**
+ * La miniatura di un contenuto, se ne ha una --- v. lib/thumbnail.ts per
+ * il perché esiste. `null` quando non c'è: tipo senza miniatura, un
+ * contenuto caricato prima che questa possibilità esistesse, o una
+ * generazione/upload che a suo tempo non è riuscita. Chi chiama deve
+ * ricadere sul file intero in tutti questi casi, non fallire.
+ */
+export async function downloadThumbnail(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  doc: Pick<DocumentListItem, "storagePath" | "hasThumbnail">,
+): Promise<Blob | null> {
+  if (!doc.hasThumbnail) return null;
+
+  const serialized = await downloadOptionalEncryptedPayload(
+    supabase,
+    documentThumbnailPath(doc.storagePath),
+  );
+  if (!serialized) return null;
+
+  try {
+    const bytes = await decryptBytes(masterKey, parseEnvelope(serialized));
+    return new Blob([bytes], { type: "image/jpeg" });
+  } catch (error) {
+    console.warn("[thumbnail] impossibile decifrare la miniatura:", error);
+    return null;
+  }
+}
+
 /** Downloads and decrypts a document's content client-side. */
 export async function downloadDocument(
   supabase: SupabaseClient<Database>,
@@ -493,13 +566,38 @@ export async function extractTextForExistingDocument(
   const { bytes } = await downloadDocument(supabase, masterKey, doc);
   const text = await extractText(bytes, doc.mimeType, onProgress);
 
-  const { error } = await supabase
-    .from("documents")
-    .update({
-      encrypted_extracted_text: await encryptOptionalText(masterKey, text ?? ""),
-      extracted_at: new Date().toISOString(),
-    })
-    .eq("id", doc.id);
+  const update: { encrypted_extracted_text: string | null; extracted_at: string; has_thumbnail?: boolean } = {
+    encrypted_extracted_text: await encryptOptionalText(masterKey, text ?? ""),
+    extracted_at: new Date().toISOString(),
+  };
+
+  // Backfill della miniatura per i contenuti che ne sono ancora senza:
+  // i byte in chiaro qui sopra ci sono già per leggere il testo, quindi
+  // generarla costa quasi zero. Nessun banner dedicato --- si aggancia
+  // agli stessi due percorsi che già esistono per il testo ("Leggili
+  // ora" sui documenti mai letti, "Rileggi" su qualunque altro): un
+  // contenuto letto prima di questa fase e mai riletto resta senza
+  // miniatura, come già succede oggi per l'impaginazione del testo (v.
+  // FASE 17e) --- stessa scelta, deliberatamente nessuna migrazione
+  // forzata su tutto l'archivio.
+  if (!doc.hasThumbnail && canHaveThumbnail(doc.mimeType)) {
+    const thumbnail = await createThumbnail(bytes, doc.mimeType);
+    if (thumbnail) {
+      try {
+        const encryptedThumbnail = await encryptThumbnail(masterKey, thumbnail);
+        await uploadEncryptedThumbnail(
+          supabase,
+          documentThumbnailPath(doc.storagePath),
+          encryptedThumbnail!,
+        );
+        update.has_thumbnail = true;
+      } catch (error) {
+        console.warn("[thumbnail] impossibile salvare la miniatura:", error);
+      }
+    }
+  }
+
+  const { error } = await supabase.from("documents").update(update).eq("id", doc.id);
 
   if (error) {
     throw new Error(`Impossibile salvare il testo estratto: ${error.message}`);
@@ -511,9 +609,12 @@ export async function extractTextForExistingDocument(
 export async function deleteDocument(
   supabase: SupabaseClient<Database>,
   ownerId: string,
-  doc: Pick<DocumentListItem, "id" | "storagePath">,
+  doc: Pick<DocumentListItem, "id" | "storagePath" | "hasThumbnail">,
 ): Promise<void> {
   await removeEncryptedPayload(supabase, doc.storagePath);
+  if (doc.hasThumbnail) {
+    await removeEncryptedPayload(supabase, documentThumbnailPath(doc.storagePath)).catch(() => {});
+  }
 
   const { error } = await supabase.from("documents").delete().eq("id", doc.id);
   if (error) {
