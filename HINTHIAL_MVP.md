@@ -935,6 +935,26 @@ raggruppamenti evidenti; totali di spesa per anno e categoria.
 Limite deliberato: mostrare andamenti e numeri, **mai interpretarli**.
 Un valore fuori range si segnala solo se è il documento stesso a dirlo.
 
+*Stato: **fatta**, con uno scope deliberatamente più stretto sul
+riconoscimento degli insiemi.* Caricamento multiplo (`/archive/import`)
+con riepilogo per gruppi, non conferma per file. "Rilevamento di serie
+ricorrenti" e "proposta di fascicoli dai raggruppamenti evidenti" sono
+implementati come **un solo meccanismo deterministico**: file con lo
+stesso emittente riconosciuto (v. FASE 18, `findIssuer` --- una forma
+societaria o un'intestazione in maiuscolo, non una somiglianza vaga).
+Un gruppo di almeno due file senza una casa propone un fascicolo nuovo;
+un gruppo che condivide l'emittente con documenti già in un fascicolo
+esistente si aggancia a quello invece di proporne un altro. Totali di
+spesa per anno e categoria in `/archive/totals`, calcolati al volo,
+mai una soglia o un confronto.
+
+Scelta consapevole di scope, non un rinvio: una "somiglianza di
+significato" tra documenti (senza il segnale forte di un emittente
+uguale) richiederebbe un giudizio che questa fase --- e il principio "nel
+dubbio, non si propone nulla" già applicato in tutta la FASE 18-19 ---
+non è disposta a fare senza un modello vero. Arriverà, se servirà,
+insieme all'IA reale del blocco B.
+
 ------------------------------------------------------------------------
 
 ## Blocco B --- l'IA reale (FASI 22-24)
@@ -1217,10 +1237,10 @@ Una fase è completata quando:
 
    HINTHIAL AI --- blocco A: niente esce dal dispositivo
 17 Lettura locale dei contenuti (PDF + OCR) --- chiusa
-18 Estrazione strutturata locale (date, importi, emittente)
-19 Meccanismo delle proposte (accetta/modifica/rifiuta + Attività)
-20 Fascicoli (vicende trasversali alle categorie)
-21 Import massivo e riconoscimento di insiemi
+18 Estrazione strutturata locale (date, importi, emittente) --- fatta
+19 Meccanismo delle proposte (accetta/modifica/rifiuta + Attività) --- fatta
+20 Fascicoli (vicende trasversali alle categorie) --- fatta
+21 Import massivo e riconoscimento di insiemi --- fatta, blocco A chiuso
 
    HINTHIAL AI --- blocco B: l'IA reale (dipende da 15)
 22  Analisi dei contenuti con Claude --- unica fase irreversibile

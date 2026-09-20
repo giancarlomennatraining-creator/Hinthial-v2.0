@@ -432,6 +432,17 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             Documenti, immagini, audio, video e note --- tutto cifrato sul tuo dispositivo prima
             di essere salvato.
           </p>
+          {/* FASE 21 --- due porte secondarie, non due bottoni: caricare
+              un file resta l'azione principale, queste sono per chi ha
+              bisogno di più. */}
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            <Link href="/archive/import" className="text-brand hover:underline">
+              Importa più file insieme
+            </Link>{" "}
+            · <Link href="/archive/totals" className="text-brand hover:underline">
+              Totali di spesa
+            </Link>
+          </p>
         </div>
         <Link
           href="/archive/new"

@@ -10,6 +10,26 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-20 (3)
+
+### FASE 21 --- Import massivo: il Blocco A è chiuso
+
+**Cosa fa:** una nuova pagina, **"Importa più file insieme"** (raggiungibile da un link in Archivio), per caricare molti documenti in una volta senza ripetere venti volte lo stesso form. Scegli tutti i file insieme, Hinthial li legge, e mostra un **riepilogo per gruppi** --- non una conferma per ciascuno.
+
+Se due o più file hanno lo **stesso emittente riconosciuto** (v. FASE 18), Hinthial se ne accorge e propone: *"Questi 3 documenti hanno lo stesso emittente (ENEL ENERGIA S.p.A.) e sembrano la stessa vicenda. Vuoi creare il fascicolo «ENEL ENERGIA S.p.A.»?"* --- già selezionato, perché è un raggruppamento evidente, non un'ipotesi debole. Se invece l'emittente coincide con documenti **già** raccolti in un fascicolo esistente, la proposta è aggiungersi a quello, non crearne un altro. Premi *"Importa tutto"* una volta, e tutti i file vengono salvati, categorizzati e collegati secondo quanto hai confermato.
+
+Una seconda pagina, **"Totali di spesa"**, mostra la somma degli importi che Hinthial ha riconosciuto, per anno e categoria --- una lettura, non un cruscotto: nessun confronto tra anni, nessuna soglia che segnali uno scostamento. Un anno senza importi riconosciuti semplicemente non compare, invece di mostrare uno "€0,00" che sembrerebbe un dato vero.
+
+**Perché lo scope è più stretto del piano originale, e perché è comunque completo:** il piano parlava di "rilevamento di serie ricorrenti" e "proposta di fascicoli dai raggruppamenti evidenti" come se fossero due cose. Sono implementate come **un solo meccanismo deterministico**: lo stesso emittente riconosciuto da FASE 18 (una forma societaria come "S.p.A." o un'intestazione tutta in maiuscolo --- non una somiglianza di significato). Una "somiglianza vaga" tra documenti richiederebbe un giudizio che il principio già seguito in tutta la FASE 18-19 --- **nel dubbio, non si propone nulla** --- non è disposto a fare senza un modello vero. Arriverà, se servirà, con l'IA reale del blocco B.
+
+**Con questa fase si chiude il Blocco A** ("valore senza rischio", FASI 17-21): tutto ciò che Hinthial sa fare oggi gira interamente sul dispositivo, senza che un solo byte di contenuto ne esca.
+
+**Note tecniche:** nuovo modulo `domain/bulk-import/` (distinto da `domain/import/`, che è l'import CSV di beni/amici/scadenze --- feature diversa, stesso nome inglese per coincidenza terminologica). `groupByIssuer` è generica sul tipo di file (`ImportGroup<F>`), per poter portare in giro i campi modificabili del riepilogo (titolo, categoria) senza perderli nel passaggio per la funzione di raggruppamento. Scope deliberatamente più stretto del caricamento singolo (FASE 19b): niente bene collegato né scadenza per file nel riepilogo di massa --- un form con troppi campi per riga tradirebbe il punto stesso della pagina; chi ha bisogno di quel dettaglio lo aggiunge dopo, dalla scheda del documento. Un fascicolo nuovo si crea **una volta per gruppo**, non una volta per file: dieci bollette dello stesso fornitore finiscono in un fascicolo, non in dieci.
+
+Verificato: 15 test unitari (raggruppamento e totali, soprattutto sui casi in cui devono tacere --- un file solo non è "un raggruppamento evidente", un emittente diverso non aggancia il fascicolo sbagliato), e due e2e con browser vero: il percorso completo di import (due bollette con lo stesso emittente + un documento senza, tutti importati insieme, con il fascicolo nato correttamente) e i totali di spesa (prima e dopo aver caricato una fattura). Più l'intera suite Archivio/Beni/Categorie/Scadenze/Fascicoli (39 e2e) rieseguita in blocco.
+
+---
+
 ## 2026-09-20 (2)
 
 ### FASE 20 --- Fascicoli: le vicende che durano nel tempo
