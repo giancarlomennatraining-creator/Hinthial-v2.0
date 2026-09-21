@@ -185,6 +185,19 @@ export function SecurityIcon(props: IconProps) {
   );
 }
 
+/** Sblocco con impronta/Face ID (v. UnlockMasterKeyForm) --- archi concentrici su una base comune, non un'impronta realistica: leggibile a 16px quanto a 40px. */
+export function FingerprintIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <path d="M4 19a8 8 0 0 1 16 0" />
+      <path d="M6 19a6 6 0 0 1 12 0" />
+      <path d="M8 19a4 4 0 0 1 8 0" />
+      <path d="M10 19a2 2 0 0 1 4 0" />
+      <path d="M12 19v2" />
+    </svg>
+  );
+}
+
 /** Bottone "Sblocca" (v. UnlockMasterKeyForm) --- lo stesso lucchetto di SecurityIcon, ma aperto: il gancio si stacca dal corpo invece di richiuderlo. */
 export function UnlockedIcon(props: IconProps) {
   return (

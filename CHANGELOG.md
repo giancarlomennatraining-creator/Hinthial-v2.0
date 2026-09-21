@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-21 (2)
+
+### Restyle della schermata di sblocco, con animazione durante la verifica biometrica
+
+**Cosa fa:** la schermata "Sblocca" (master password, dopo un refresh o un secondo accesso) passa da un elenco di campi senza cornice a una vera card centrata --- un medaglione con un alone morbido dietro al lucchetto, pulsanti a pillola, un solo link discreto per la recovery key e per lo sblocco da un dispositivo già fidato. Quando si sblocca con l'impronta o Face ID, lo stesso medaglione diventa per qualche istante uno scanner: un anello blu ruota attorno all'icona, che pulsa, mentre il testo sotto dice "Verifica in corso…" --- al posto del solo cambio di scritta del bottone in "Sblocco…" di prima.
+
+**Note tecniche:** nasce da tre concept discussi e approvati con l'utente (Aura/Ledger/Halo, v. artifact di revisione); implementato "Halo", il più adatto a raddoppiare come stato di caricamento biometrico. Nuovo `FingerprintIcon` in `nav-icons.tsx` (archi concentrici su una base comune, coerente con lo stile a tratto delle altre icone di sistema). L'anello che ruota e l'impronta che pulsa sono due `@keyframes` in `globals.css` (un conic-gradient mascherato a forma di anello) applicati via due classi (`.unlock-scanner`/`.unlock-scanner-icon`), non utility Tailwind --- rispettano `prefers-reduced-motion`. Nessuno stato "riuscito" da mostrare: se `unlockWithDeviceLock()` risolve, `RequireMasterKey` smonta il form nello stesso istante, prima che un fotogramma di successo abbia modo di essere dipinto --- l'animazione copre solo l'attesa, onestamente, non un fuoco d'artificio finale che il codice non può davvero garantire. Il campo password torna a un markup dedicato invece del `TextField` condiviso (serviva un `rounded-2xl`, non il `rounded-md` usato ovunque altrove): cambiare `TextField` stesso avrebbe toccato ogni form dell'app, fuori scope per un restyle di una sola schermata.
+
+Verificato: l'intera suite `archive.spec.ts` (creazione vault + secondo login con sblocco), `device-lock.spec.ts` (registrazione dispositivo fidato e sblocco reale con l'impronta via WebAuthn) e `device-pairing.spec.ts` (sblocco via QR da un altro dispositivo) rieseguite senza modifiche --- tutte passano contro il nuovo markup. Verificato anche a schermo, chiaro e scuro.
+
+---
+
 ## 2026-09-21
 
 ### FASE 20b --- Fascicolo come seconda scheda, badge in elenco, capsule intere, privacy aggiornata
