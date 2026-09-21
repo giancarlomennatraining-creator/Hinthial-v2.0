@@ -620,7 +620,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                                 href={`/archive/${doc.id}`}
                                 className="flex min-w-0 items-center gap-1 transition-colors hover:text-brand dark:hover:text-blue-400"
                               >
-                                <ContentTypeIcon kind={kind} inDossier={Boolean(doc.dossierId)} />
+                                <ContentTypeIcon kind={kind} inDossier={doc.dossierIds.length > 0} />
                                 <span className="truncate">{doc.filename}</span>
                               </Link>
                               <ContentSnippet doc={doc} query={query} />
@@ -821,7 +821,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           href={`/archive/${doc.id}`}
                           className="flex min-w-0 items-center gap-1 text-sm font-medium text-zinc-900 transition-colors hover:text-brand dark:text-zinc-100 dark:hover:text-blue-400"
                         >
-                          <ContentTypeIcon kind={kind} inDossier={Boolean(doc.dossierId)} />
+                          <ContentTypeIcon kind={kind} inDossier={doc.dossierIds.length > 0} />
                           <span className="truncate">{doc.filename}</span>
                         </Link>
                         <ContentSnippet doc={doc} query={query} />

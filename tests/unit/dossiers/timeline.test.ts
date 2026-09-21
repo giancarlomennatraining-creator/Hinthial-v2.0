@@ -21,7 +21,7 @@ function doc(over: Partial<DocumentListItem> = {}): DocumentListItem {
     size: 1000,
     categoryId: null,
     relatedAssetId: null,
-    dossierId: "dossier-1",
+    dossierIds: ["dossier-1"],
     createdAt: "2026-01-01T10:00:00Z",
     storagePath: "x",
     wrappedDocumentKey: "x",

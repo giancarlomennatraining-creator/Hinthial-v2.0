@@ -21,6 +21,7 @@ import {
   uploadEncryptedThumbnail,
 } from "@/lib/storage/documents-bucket";
 import { logAuditEvent } from "@/lib/audit/log-event";
+import { listDossierIdsForDocuments, replaceDocumentDossierLinks } from "@/domain/dossiers/repository";
 import { NOTE_MIME_TYPE } from "@/lib/content-kind";
 import { canExtractText, extractText } from "@/domain/extraction/extract-text";
 import { canHaveThumbnail, createThumbnail } from "@/lib/thumbnail";
@@ -73,7 +74,7 @@ export interface UploadOptions {
 }
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, dossier_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, created_at";
 
 type DocumentRow = {
   id: string;
@@ -84,7 +85,6 @@ type DocumentRow = {
   size: number;
   category_id: string | null;
   related_asset_id: string | null;
-  dossier_id: string | null;
   expires_at: string | null;
   encrypted_notes: string | null;
   encrypted_tags: string | null;
@@ -128,6 +128,7 @@ async function decryptTags(masterKey: CryptoKey, serialized: string | null): Pro
 async function toDocumentListItem(
   masterKey: CryptoKey,
   row: DocumentRow,
+  dossierIds: string[],
 ): Promise<DocumentListItem> {
   const [filenameBytes, notes, tags, transcript, extractedText] = await Promise.all([
     decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
@@ -144,7 +145,7 @@ async function toDocumentListItem(
     size: row.size,
     categoryId: row.category_id,
     relatedAssetId: row.related_asset_id,
-    dossierId: row.dossier_id,
+    dossierIds,
     createdAt: row.created_at,
     storagePath: row.storage_path,
     wrappedDocumentKey: row.wrapped_document_key,
@@ -184,7 +185,12 @@ export async function listDocuments(
     throw new Error(`Impossibile caricare i documenti: ${error.message}`);
   }
 
-  return Promise.all((data ?? []).map((row) => toDocumentListItem(masterKey, row)));
+  const rows = data ?? [];
+  const dossierIdsByDocument = await listDossierIdsForDocuments(supabase, rows.map((row) => row.id));
+
+  return Promise.all(
+    rows.map((row) => toDocumentListItem(masterKey, row, dossierIdsByDocument.get(row.id) ?? [])),
+  );
 }
 
 /**
@@ -207,7 +213,12 @@ export async function getDocumentsByIds(
     throw new Error(`Impossibile caricare i documenti collegati: ${error.message}`);
   }
 
-  return Promise.all((data ?? []).map((row) => toDocumentListItem(masterKey, row)));
+  const rows = data ?? [];
+  const dossierIdsByDocument = await listDossierIdsForDocuments(supabase, rows.map((row) => row.id));
+
+  return Promise.all(
+    rows.map((row) => toDocumentListItem(masterKey, row, dossierIdsByDocument.get(row.id) ?? [])),
+  );
 }
 
 /**
@@ -315,7 +326,6 @@ export async function uploadDocument(
     size: file.size,
     category_id: metadata.categoryId,
     related_asset_id: metadata.relatedAssetId,
-    dossier_id: metadata.dossierId,
     expires_at: metadata.expiresAt,
     encrypted_notes: encryptedNotes,
     encrypted_tags: encryptedTags,
@@ -338,6 +348,7 @@ export async function uploadDocument(
   }
 
   await logAuditEvent(supabase, ownerId, "document_created");
+  await replaceDocumentDossierLinks(supabase, ownerId, documentId, metadata.dossierIds);
 }
 
 /**
@@ -379,7 +390,6 @@ export async function createTextNote(
     size: plaintext.byteLength,
     category_id: metadata.categoryId,
     related_asset_id: metadata.relatedAssetId,
-    dossier_id: metadata.dossierId,
     expires_at: metadata.expiresAt,
     encrypted_notes: encryptedNotes,
     encrypted_tags: encryptedTags,
@@ -391,6 +401,7 @@ export async function createTextNote(
   }
 
   await logAuditEvent(supabase, ownerId, "document_created");
+  await replaceDocumentDossierLinks(supabase, ownerId, documentId, metadata.dossierIds);
 }
 
 /**
@@ -460,7 +471,6 @@ export async function updateDocumentMetadata(
     .update({
       category_id: metadata.categoryId,
       related_asset_id: metadata.relatedAssetId,
-      dossier_id: metadata.dossierId,
       expires_at: metadata.expiresAt,
       encrypted_notes: encryptedNotes,
       encrypted_tags: encryptedTags,
@@ -470,6 +480,12 @@ export async function updateDocumentMetadata(
   if (error) {
     throw new Error(`Impossibile aggiornare il documento: ${error.message}`);
   }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Devi essere autenticato.");
+  await replaceDocumentDossierLinks(supabase, user.id, documentId, metadata.dossierIds);
 }
 
 /**

@@ -389,7 +389,8 @@ test("allega un intero fascicolo a una capsula in un colpo solo", async ({ page 
       mimeType: "text/plain",
       buffer: Buffer.from(`${name} --- ${Date.now()}`, "utf-8"),
     });
-    await page.getByLabel("Fascicolo").selectOption({ label: "📂 Trasloco" });
+    await page.getByLabel("Fascicoli").selectOption({ label: "📂 Trasloco" });
+    await page.getByRole("button", { name: "+ Aggiungi fascicolo" }).click();
     await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
     await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   }

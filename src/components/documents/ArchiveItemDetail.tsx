@@ -372,7 +372,7 @@ export function ArchiveItemDetail({
 
   const category = categories.find((c) => c.id === doc.categoryId);
   const asset = assets.find((a) => a.id === doc.relatedAssetId);
-  const dossier = dossiers.find((d) => d.id === doc.dossierId);
+  const linkedDossiers = dossiers.filter((d) => doc.dossierIds.includes(d.id));
   const reading = readingStateFor(doc);
   // FASE 18 --- calcolati al volo dal testo già decifrato in memoria, non
   // salvati: non c'è niente da migrare, valgono da subito su tutto
@@ -538,12 +538,20 @@ export function ArchiveItemDetail({
                   {category ? `${category.icon} ${category.name}` : "—"}
                 </Field>
                 <Field label="Bene collegato">{asset ? asset.name : "—"}</Field>
-                <Field label="Fascicolo">
-                  {dossier ? (
-                    <Link href={`/dossiers/${dossier.id}`} className="text-brand hover:underline">
-                      {dossier.status === "closed" ? "🗂️ " : "📂 "}
-                      {dossier.title}
-                    </Link>
+                <Field label="Fascicoli">
+                  {linkedDossiers.length > 0 ? (
+                    <span className="flex flex-wrap gap-x-3 gap-y-1">
+                      {linkedDossiers.map((dossier) => (
+                        <Link
+                          key={dossier.id}
+                          href={`/dossiers/${dossier.id}`}
+                          className="text-brand hover:underline"
+                        >
+                          {dossier.status === "closed" ? "🗂️ " : "📂 "}
+                          {dossier.title}
+                        </Link>
+                      ))}
+                    </span>
                   ) : (
                     "—"
                   )}

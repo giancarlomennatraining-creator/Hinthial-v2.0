@@ -485,7 +485,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       const metadataInput: DocumentMetadataInput = {
         categoryId: metadata.categoryId || null,
         relatedAssetId: metadata.relatedAssetId || null,
-        dossierId: metadata.dossierId || null,
+        dossierIds: metadata.dossierIds,
         expiresAt: metadata.expiresAt || null,
         notes: metadata.notes,
         tags: parseTagsInput(metadata.tagsInput),

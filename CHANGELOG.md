@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-21 (3)
+
+### Un documento in più fascicoli insieme, e il linguaggio "Halo" esteso a login/registrazione/password
+
+**Cosa fa:** due rifiniture distinte.
+
+Un documento può ora appartenere a **più fascicoli insieme**, non a uno solo --- il caso concreto è un codice fiscale o un documento d'identità che serve a più vicende in una volta (una questione di salute E l'acquisto di una casa). Nel form del documento, "Fascicolo" diventa "Fascicoli": si scelgono uno alla volta da un menu e si aggiungono con un bottone, e compaiono come etichette rimovibili --- stesso linguaggio già usato per allegare un documento a una capsula. Ogni fascicolo coinvolto mostra quel documento nella propria cronologia; togliere il documento da uno dei due non tocca l'altro. La funzione "allega un fascicolo intero" di una capsula (FASE 20b) segue automaticamente la stessa logica: un documento condiviso fra più fascicoli entra comunque, correttamente, quando si allega qualsiasi dei due.
+
+Il linguaggio visivo "Halo" nato per lo sblocco (v. voce precedente) si estende a login, registrazione, password dimenticata/reimpostazione e verifica in due passaggi: stessi campi più arrotondati, stesso bottone a pillola. Resta opt-in sul componente condiviso `TextField`, non il nuovo default ovunque nell'app.
+
+**Note tecniche:** `documents.dossier_id` (relazione singola, FASE 20) diventa una tabella ponte `document_dossiers` (documento↔fascicolo, molti-a-molti), con `owner_id` duplicato per le regole di accesso --- stesso schema già in uso per `capsule_share_keys`, nessun join necessario. L'insieme dei fascicoli di un documento si sostituisce cancellando e reinserendo (`replaceDocumentDossierLinks`), non aggiornando riga per riga. `DocumentListItem.dossierId: string | null` diventa `dossierIds: string[]` --- tutti i punti che leggevano/scrivevano quel campo (liste, form, badge, import massivo, allegare un fascicolo a una capsula) sono stati aggiornati di conseguenza. `TextField.tsx` guadagna una `variant?: "default" | "halo"` opzionale (default invariato) invece di un secondo componente duplicato.
+
+Verificato: nuovo test e2e end-to-end (due fascicoli, un documento in entrambi, cronologia di ciascuno, rimozione di uno senza toccare l'altro) più l'intera suite Archivio/Fascicoli/Import/Capsule/Autenticazione/Privacy rieseguita contro il nuovo schema.
+
+---
+
 ## 2026-09-21 (2)
 
 ### Restyle della schermata di sblocco, con animazione durante la verifica biometrica

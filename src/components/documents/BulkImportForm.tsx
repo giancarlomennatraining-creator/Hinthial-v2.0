@@ -175,7 +175,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
           const metadata: DocumentMetadataInput = {
             categoryId: draft.categoryId || null,
             relatedAssetId: null,
-            dossierId,
+            dossierIds: dossierId ? [dossierId] : [],
             expiresAt: null,
             notes: "",
             tags: [],

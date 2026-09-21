@@ -69,10 +69,10 @@ export function groupByIssuer<F extends ReadFile>(
   // gruppo nuovo, è la stessa vicenda.
   const dossierByIssuer = new Map<string, DossierListItem>();
   for (const document of existingDocuments) {
-    if (!document.dossierId) continue;
+    if (document.dossierIds.length === 0) continue;
     const issuer = issuerOf(document.extractedText);
     if (!issuer || dossierByIssuer.has(issuer)) continue;
-    const dossier = existingDossiers.find((d) => d.id === document.dossierId);
+    const dossier = existingDossiers.find((d) => document.dossierIds.includes(d.id));
     if (dossier) dossierByIssuer.set(issuer, dossier);
   }
 

@@ -48,20 +48,22 @@ export interface DocumentListItem {
    */
   hasThumbnail: boolean;
   /**
-   * FASE 20 --- il fascicolo a cui appartiene, se assegnato manualmente.
-   * Indipendente da `categoryId`/`relatedAssetId`: un fascicolo
-   * attraversa le categorie, non le sostituisce --- un documento può
-   * avere una categoria, un bene e un fascicolo insieme.
+   * FASE 20/20c --- i fascicoli a cui appartiene, se assegnato
+   * manualmente. Indipendente da `categoryId`/`relatedAssetId`: un
+   * fascicolo attraversa le categorie, non le sostituisce --- un
+   * documento può avere una categoria, un bene e uno o più fascicoli
+   * insieme (un codice fiscale può servire a più vicende insieme, v.
+   * domain/dossiers/repository.ts, replaceDocumentDossierLinks).
    */
-  dossierId: string | null;
+  dossierIds: string[];
 }
 
 /** Fields collected at upload time, in addition to the file itself. */
 export interface DocumentMetadataInput {
   categoryId: string | null;
   relatedAssetId: string | null;
-  /** FASE 20 --- null se non assegnato a nessun fascicolo. */
-  dossierId: string | null;
+  /** FASE 20c --- [] se non assegnato a nessun fascicolo, uno o più altrimenti. */
+  dossierIds: string[];
   expiresAt: string | null;
   notes: string;
   tags: string[];

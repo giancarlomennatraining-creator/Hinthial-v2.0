@@ -45,6 +45,7 @@ function VerifyCodeForm() {
           inputMode="numeric"
           autoComplete="one-time-code"
           placeholder="123456"
+          variant="halo"
           required
         />
 
@@ -57,7 +58,7 @@ function VerifyCodeForm() {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
+          className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
         >
           {pending ? "Verifica…" : "Verifica codice"}
         </button>

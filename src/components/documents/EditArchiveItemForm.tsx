@@ -91,7 +91,7 @@ export function EditArchiveItemForm({ masterKey, documentId }: { masterKey: Cryp
       await updateDocumentMetadata(supabase, masterKey, documentId, {
         categoryId: fields.categoryId || null,
         relatedAssetId: fields.relatedAssetId || null,
-        dossierId: fields.dossierId || null,
+        dossierIds: fields.dossierIds,
         expiresAt: fields.expiresAt || null,
         notes: fields.notes,
         tags: parseTagsInput(fields.tagsInput),

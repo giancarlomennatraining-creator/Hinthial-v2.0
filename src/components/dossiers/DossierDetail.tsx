@@ -132,7 +132,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
     );
   }
 
-  const linkedDocuments = documents.filter((doc) => doc.dossierId === dossierId);
+  const linkedDocuments = documents.filter((doc) => doc.dossierIds.includes(dossierId));
   const timeline = buildDossierTimeline(linkedDocuments);
   const total = dossierTotalAmount(linkedDocuments);
   const isClosed = dossier.status === "closed";

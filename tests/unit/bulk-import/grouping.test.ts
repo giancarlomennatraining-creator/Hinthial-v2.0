@@ -21,7 +21,7 @@ function doc(over: Partial<DocumentListItem> = {}): DocumentListItem {
     size: 100,
     categoryId: null,
     relatedAssetId: null,
-    dossierId: null,
+    dossierIds: [],
     createdAt: "2026-01-01T00:00:00Z",
     storagePath: "x",
     wrappedDocumentKey: "x",
@@ -90,7 +90,7 @@ describe("propone un fascicolo nuovo", () => {
 describe("si aggancia a un fascicolo esistente invece di proporne uno nuovo", () => {
   it("quando un documento già in un fascicolo condivide l'emittente", () => {
     const casa = dossier({ id: "casa", title: "Bollette di casa" });
-    const existingDoc = doc({ id: "vecchia-bolletta", dossierId: "casa", extractedText: BOLLETTA("40,00") });
+    const existingDoc = doc({ id: "vecchia-bolletta", dossierIds: ["casa"], extractedText: BOLLETTA("40,00") });
 
     const groups = groupByIssuer([file("nuova.pdf", BOLLETTA("60,00"))], [existingDoc], [casa]);
 
@@ -102,7 +102,7 @@ describe("si aggancia a un fascicolo esistente invece di proporne uno nuovo", ()
   });
 
   it("non conta un documento con lo stesso emittente ma senza fascicolo", () => {
-    const existingDoc = doc({ id: "altra-bolletta", dossierId: null, extractedText: BOLLETTA("40,00") });
+    const existingDoc = doc({ id: "altra-bolletta", dossierIds: [], extractedText: BOLLETTA("40,00") });
     const groups = groupByIssuer(
       [file("a.pdf", BOLLETTA("50,00")), file("b.pdf", BOLLETTA("55,00"))],
       [existingDoc],

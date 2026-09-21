@@ -43,7 +43,7 @@ function doc(over: Partial<DocumentListItem> = {}): DocumentListItem {
     extractedText: POLIZZA,
     extractedAt: "2026-09-18T10:00:00Z",
     hasThumbnail: false,
-    dossierId: null,
+    dossierIds: [],
     ...over,
   };
 }

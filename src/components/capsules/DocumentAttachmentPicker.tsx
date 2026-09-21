@@ -71,7 +71,7 @@ export function DocumentAttachmentPicker({
 
   function handleAttachDossier() {
     const dossierDocuments = documents.filter(
-      (d) => d.dossierId === dossierId && !selectedIds.has(d.id),
+      (d) => d.dossierIds.includes(dossierId) && !selectedIds.has(d.id),
     );
     if (dossierDocuments.length === 0) return;
     onChange([...selected, ...dossierDocuments]);

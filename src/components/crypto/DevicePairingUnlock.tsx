@@ -94,7 +94,7 @@ export function DevicePairingUnlock() {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
       {panelState === "loading" ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Generazione del codice…</p>
       ) : null}
@@ -119,7 +119,7 @@ export function DevicePairingUnlock() {
           <button
             type="button"
             onClick={handleOpen}
-            className="self-start rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            className="self-start rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
           >
             Genera un nuovo codice
           </button>

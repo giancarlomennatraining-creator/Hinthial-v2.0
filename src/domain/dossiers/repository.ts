@@ -150,7 +150,8 @@ export async function setDossierStatus(
 
 /**
  * Elimina il fascicolo. I documenti collegati non vengono toccati, solo
- * scollegati (`dossier_id` ON DELETE SET NULL, v. migrazione) --- stessa
+ * scollegati (`document_dossiers` ha `dossier_id` ON DELETE CASCADE ---
+ * sparisce la riga del collegamento, non il documento) --- stessa
  * garanzia già data per beni e categorie.
  */
 export async function deleteDossier(
@@ -165,4 +166,75 @@ export async function deleteDossier(
   }
 
   await logAuditEvent(supabase, ownerId, "dossier_deleted");
+}
+
+/**
+ * FASE 20c --- un documento può stare in più di un fascicolo insieme
+ * (v. domain/dossiers/types.ts). Legge la tabella ponte `document_dossiers`
+ * per un insieme di documenti in un colpo solo, non una query per
+ * documento --- usata da listDocuments/getDocumentsByIds per popolare
+ * `DocumentListItem.dossierIds`. Gli id in gioco non sono contenuto
+ * cifrato: nessuna decifratura necessaria qui.
+ */
+export async function listDossierIdsForDocuments(
+  supabase: SupabaseClient<Database>,
+  documentIds: string[],
+): Promise<Map<string, string[]>> {
+  const map = new Map<string, string[]>();
+  if (documentIds.length === 0) return map;
+
+  const { data, error } = await supabase
+    .from("document_dossiers")
+    .select("document_id, dossier_id")
+    .in("document_id", documentIds);
+
+  if (error) {
+    throw new Error(`Impossibile caricare i collegamenti ai fascicoli: ${error.message}`);
+  }
+
+  for (const row of data ?? []) {
+    const existing = map.get(row.document_id);
+    if (existing) existing.push(row.dossier_id);
+    else map.set(row.document_id, [row.dossier_id]);
+  }
+
+  return map;
+}
+
+/**
+ * Sostituisce l'intero insieme di fascicoli collegati a un documento:
+ * cancella tutte le righe esistenti e reinserisce l'insieme nuovo,
+ * invece di calcolare un diff --- pochi fascicoli per documento, non
+ * vale la complessità di un confronto riga per riga. Usata sia alla
+ * creazione (l'insieme "vecchio" è vuoto, la cancellazione è un no-op)
+ * sia alla modifica dei metadati.
+ */
+export async function replaceDocumentDossierLinks(
+  supabase: SupabaseClient<Database>,
+  ownerId: string,
+  documentId: string,
+  dossierIds: string[],
+): Promise<void> {
+  const { error: deleteError } = await supabase
+    .from("document_dossiers")
+    .delete()
+    .eq("document_id", documentId);
+
+  if (deleteError) {
+    throw new Error(`Impossibile aggiornare i fascicoli collegati: ${deleteError.message}`);
+  }
+
+  if (dossierIds.length === 0) return;
+
+  const { error: insertError } = await supabase.from("document_dossiers").insert(
+    dossierIds.map((dossierId) => ({
+      document_id: documentId,
+      dossier_id: dossierId,
+      owner_id: ownerId,
+    })),
+  );
+
+  if (insertError) {
+    throw new Error(`Impossibile aggiornare i fascicoli collegati: ${insertError.message}`);
+  }
 }

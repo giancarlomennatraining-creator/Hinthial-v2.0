@@ -30,6 +30,7 @@ export default function LoginPage() {
           label="Email"
           type="email"
           autoComplete="email"
+          variant="halo"
           required
         />
         <TextField
@@ -38,6 +39,7 @@ export default function LoginPage() {
           label="Password"
           type="password"
           autoComplete="current-password"
+          variant="halo"
           required
         />
 
@@ -57,7 +59,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
+          className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
         >
           {pending ? "Accesso in corso…" : "Accedi"}
         </button>

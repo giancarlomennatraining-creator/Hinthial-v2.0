@@ -108,7 +108,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   function documentsFor(dossier: DossierListItem): DocumentListItem[] {
-    return documents.filter((doc) => doc.dossierId === dossier.id);
+    return documents.filter((doc) => doc.dossierIds.includes(dossier.id));
   }
 
   function sortValueFor(dossier: DossierListItem, column: SortColumn): string {

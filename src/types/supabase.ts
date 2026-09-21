@@ -441,7 +441,6 @@ export type Database = {
           encrypted_extracted_text: string | null;
           extracted_at: string | null;
           has_thumbnail: boolean;
-          dossier_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -463,7 +462,6 @@ export type Database = {
           encrypted_extracted_text?: string | null;
           extracted_at?: string | null;
           has_thumbnail?: boolean;
-          dossier_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -485,7 +483,6 @@ export type Database = {
           encrypted_extracted_text?: string | null;
           extracted_at?: string | null;
           has_thumbnail?: boolean;
-          dossier_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -509,6 +506,42 @@ export type Database = {
             columns: ["related_asset_id"];
             isOneToOne: false;
             referencedRelation: "assets";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      document_dossiers: {
+        Row: {
+          document_id: string;
+          dossier_id: string;
+          owner_id: string;
+          created_at: string;
+        };
+        Insert: {
+          document_id: string;
+          dossier_id: string;
+          owner_id: string;
+          created_at?: string;
+        };
+        Update: {
+          document_id?: string;
+          dossier_id?: string;
+          owner_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "document_dossiers_document_id_fkey";
+            columns: ["document_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "document_dossiers_dossier_id_fkey";
+            columns: ["dossier_id"];
+            isOneToOne: false;
+            referencedRelation: "dossiers";
             referencedColumns: ["id"];
           },
         ];

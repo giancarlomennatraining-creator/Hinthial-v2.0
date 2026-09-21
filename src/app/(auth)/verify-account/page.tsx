@@ -23,7 +23,7 @@ export default async function VerifyAccountPage({
         </p>
         <Link
           href="/register"
-          className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
         >
           Torna alla registrazione
         </Link>
@@ -44,7 +44,7 @@ export default async function VerifyAccountPage({
       </p>
       <Link
         href="/login"
-        className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+        className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
       >
         Vai al login
       </Link>

@@ -101,7 +101,7 @@ describe("isOnboardingComplete", () => {
             extractedText: "",
             extractedAt: null,
             hasThumbnail: false,
-            dossierId: null,
+            dossierIds: [],
           },
         ],
         friends: [

@@ -34,6 +34,7 @@ export default function RegisterPage() {
               label="Nome"
               type="text"
               autoComplete="given-name"
+              variant="halo"
               required
             />
           </div>
@@ -44,6 +45,7 @@ export default function RegisterPage() {
               label="Cognome"
               type="text"
               autoComplete="family-name"
+              variant="halo"
               required
             />
           </div>
@@ -54,6 +56,7 @@ export default function RegisterPage() {
           label="Email"
           type="email"
           autoComplete="email"
+          variant="halo"
           required
         />
         <TextField
@@ -62,6 +65,7 @@ export default function RegisterPage() {
           label="Data di nascita (facoltativa)"
           type="date"
           autoComplete="bday"
+          variant="halo"
         />
         <div className="flex flex-col gap-2">
           <TextField
@@ -72,6 +76,7 @@ export default function RegisterPage() {
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            variant="halo"
             required
           />
           <PasswordStrengthMeter password={password} />
@@ -82,6 +87,7 @@ export default function RegisterPage() {
           label="Conferma password"
           type="password"
           autoComplete="new-password"
+          variant="halo"
           required
         />
 
@@ -94,7 +100,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
+          className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
         >
           {pending ? "Creazione account…" : "Crea account"}
         </button>
