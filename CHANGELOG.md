@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-21 (4)
+
+### Restyle di "Configura la cifratura", ultimo angolo rimasto prima di Halo
+
+**Cosa fa:** la primissima schermata che si vede prima di poter usare l'Archivio --- creare la master password, poi salvare la recovery key --- passa al linguaggio "Halo" già usato per lo sblocco e per login/registrazione. I due passi sono ora scanditi da un'etichetta "Passo 1 di 2" / "Passo 2 di 2" (lo stesso idioma già usato per la creazione di una capsula), ciascuno con un proprio medaglione: un lucchetto mentre si crea la protezione, una chiave mentre si salva la via di recupero --- un'icona diversa per un momento diverso, non decorazione a caso. Il confronto "password account / master password" diventa una card con un punto colorato sulla riga che conta davvero (master password); i tre bottoni scarica/copia/stampa diventano chip leggere invece di pulsanti bordati uguali al resto.
+
+**Note tecniche:** la nota di confronto è stata riscritta in locale in `SetupMasterKeyForm.tsx` invece di restilizzare il componente condiviso `PasswordComparisonNote` --- quel componente è usato anche da `MasterKeyIntroModal` (il popup una tantum al primo accesso), non toccato da questo restyle. Il bottone "Scarica come .txt" perde il "come" (ora "Scarica .txt"), una semplificazione del testo vista e approvata nel concept, non un effetto collaterale --- l'unico punto dove serviva aggiornare un test e2e che ne controllava la scritta esatta.
+
+Verificato: l'intera suite che passa da questa schermata (ogni test e2e dell'app crea il vault una volta all'inizio) più due verifiche dedicate (`archive.spec.ts` sul flusso di setup completo, `recovery-kit.spec.ts` sul kit stampabile con QR) rieseguite senza altre modifiche. Verificato anche a schermo, chiaro e scuro, e con una recovery key reale (molto più lunga del placeholder nel concept): il testo va a capo correttamente, nulla si rompe sotto contenuto vero.
+
+---
+
 ## 2026-09-21 (3)
 
 ### Un documento in più fascicoli insieme, e il linguaggio "Halo" esteso a login/registrazione/password

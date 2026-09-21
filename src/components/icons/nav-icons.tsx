@@ -185,6 +185,18 @@ export function SecurityIcon(props: IconProps) {
   );
 }
 
+/** Salva la recovery key (v. SetupMasterKeyForm) --- l'impugnatura e il gambo con due tacche, non una chiave realistica: leggibile a piccole dimensioni quanto il lucchetto di SecurityIcon. */
+export function KeyIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <circle cx="8" cy="16" r="3.2" />
+      <path d="M10.3 13.7L19 5" />
+      <path d="M15 9l1.4 1.4" />
+      <path d="M17 7l1.4 1.4" />
+    </svg>
+  );
+}
+
 /** Sblocco con impronta/Face ID (v. UnlockMasterKeyForm) --- archi concentrici su una base comune, non un'impronta realistica: leggibile a 16px quanto a 40px. */
 export function FingerprintIcon(props: IconProps) {
   return (

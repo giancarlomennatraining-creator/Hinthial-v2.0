@@ -48,10 +48,10 @@ test("configura la cifratura, carica, apre e cancella un documento", async ({
   const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
   expect(clipboardText).toBe(recoveryKey);
 
-  // Il tasto "Scarica come .txt" scarica un file di testo con la stessa recovery key.
+  // Il tasto "Scarica .txt" scarica un file di testo con la stessa recovery key.
   const [recoveryKeyDownload] = await Promise.all([
     page.waitForEvent("download"),
-    page.getByRole("button", { name: "⬇️ Scarica come .txt" }).click(),
+    page.getByRole("button", { name: "⬇️ Scarica .txt" }).click(),
   ]);
   expect(recoveryKeyDownload.suggestedFilename()).toBe("hinthial-recovery-key.txt");
   const recoveryKeyDownloadPath = await recoveryKeyDownload.path();
