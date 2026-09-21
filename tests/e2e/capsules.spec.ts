@@ -351,6 +351,73 @@ test("collega un documento già presente in Archivio a una capsula, selezionando
   await expect(page.locator("li", { hasText: "contratto.txt" })).toBeVisible();
 });
 
+test("allega un intero fascicolo a una capsula in un colpo solo", async ({ page }) => {
+  test.slow();
+
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password").fill(user.password);
+  await page.getByRole("button", { name: "Accedi" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+
+  await page.getByRole("link", { name: "Archivio", exact: true }).click();
+  await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
+  await page.getByLabel("Conferma master password").fill("una-master-password-solida");
+  await page.getByRole("button", { name: "Crea" }).click();
+  await expect(page.getByLabel("Ho salvato la recovery key in un posto sicuro.")).toBeVisible({
+    timeout: 45_000,
+  });
+  await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
+  await page.getByRole("button", { name: "Continua" }).click();
+  await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
+
+  // Un fascicolo con dentro due documenti.
+  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "+ Nuovo fascicolo" }).click();
+  await page.getByLabel("Titolo").fill("Trasloco");
+  await page.getByRole("button", { name: "Crea fascicolo" }).click();
+  await expect(page).toHaveURL(/\/dossiers$/, { timeout: 20_000 });
+
+  for (const name of ["contratto-affitto.txt", "verbale-consegna.txt"]) {
+    await page.getByRole("link", { name: "Contenuti", exact: true }).click();
+    await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+    await page.setInputFiles('input[type="file"]', {
+      name,
+      mimeType: "text/plain",
+      buffer: Buffer.from(`${name} --- ${Date.now()}`, "utf-8"),
+    });
+    await page.getByLabel("Fascicolo").selectOption({ label: "📂 Trasloco" });
+    await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+    await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
+  }
+
+  // In creazione capsula: "Oppure allega un fascicolo intero" prende entrambi.
+  await page.getByRole("link", { name: "Capsule" }).click();
+  await goToNewCapsule(page);
+  await page.getByLabel("Titolo").fill("Documenti del trasloco");
+  await page.getByLabel("Data e ora di apertura", { exact: true }).fill("2027-01-01T10:00");
+  await page.getByRole("button", { name: "Avanti" }).click();
+  await expect(page.getByText("Passo 2 di 3")).toBeVisible();
+
+  await page.getByLabel("Oppure allega un fascicolo intero").selectOption({ label: "📂 Trasloco" });
+  await page.getByRole("button", { name: "+ Allega tutto il fascicolo" }).click();
+  await expect(page.getByText("📄 contratto-affitto.txt", { exact: true })).toBeVisible();
+  await expect(page.getByText("📄 verbale-consegna.txt", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Avanti" }).click();
+  await expect(page.getByText("Passo 3 di 3")).toBeVisible();
+  await page.getByRole("button", { name: "Crea capsula" }).click();
+  await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
+  await expect(page.getByText("Capsula creata.")).toBeVisible();
+
+  const row = page.locator("li", { hasText: "Documenti del trasloco" });
+  await expect(row.getByText("📄 contratto-affitto.txt · ")).toBeVisible({ timeout: 15_000 });
+  await expect(row.getByText("📄 verbale-consegna.txt · ")).toBeVisible();
+});
+
 test("chiudere una capsula copia il contenuto collegato al suo interno; l'originale in Archivio resta libero e può essere cancellato", async ({
   page,
 }) => {

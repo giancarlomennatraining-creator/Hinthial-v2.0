@@ -81,9 +81,12 @@ export function PrivacyPanel({
     `${summary.assetCount} ${summary.assetCount === 1 ? "bene" : "beni"}`,
     `${summary.friendCount} amici (${summary.activeFriendCount} attivi, ${summary.guardianCount} guardiani)`,
     `${summary.capsuleCount} capsule (${summary.capsuleStatusCounts.draft} in bozza, ${summary.capsuleStatusCounts.ready} chiuse, ${summary.capsuleStatusCounts.shared} condivise)`,
+    `${summary.reminderCount} promemoria/scadenze (${summary.pendingReminderCount} ancora da completare) --- solo la data e se è stato completato, non il titolo`,
+    `${summary.dossierCount} fascicoli (${summary.dossierStatusCounts.open} aperti, ${summary.dossierStatusCounts.closed} chiusi)`,
     summary.categoryNames.length > 0
       ? `Le tue categorie: ${summary.categoryNames.join(", ")}`
       : "Nessuna categoria configurata",
+    "Per ogni contenuto in archivio: a quale categoria, bene e fascicolo è collegato, e la sua scadenza --- non il nome del file né cosa contiene",
     `Disposizione del menu: ${NAV_ORIENTATION_LABEL[summary.navOrientation]}`,
     summary.onboardingWidgetHidden
       ? "Indicatore di onboarding nella barra: nascosto"

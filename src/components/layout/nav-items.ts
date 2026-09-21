@@ -5,7 +5,6 @@ import {
   AssetIcon,
   CapsuleIcon,
   DashboardIcon,
-  DossierIcon,
   FriendIcon,
   ReminderIcon,
   TimelineIcon,
@@ -31,7 +30,11 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Archivio", href: "/archive", icon: ArchiveIcon, requiresEncryption: true },
   { label: "Scadenze", href: "/reminders", icon: ReminderIcon, requiresEncryption: true },
   { label: "Beni", href: "/assets", icon: AssetIcon, requiresEncryption: true },
-  { label: "Fascicoli", href: "/dossiers", icon: DossierIcon, requiresEncryption: true },
+  // "Fascicoli" non è più qui: dalla FASE 20b vive come seconda scheda
+  // dentro Archivio (v. ArchiveTabs.tsx), non come voce a sé --- un
+  // fascicolo è un modo di guardare l'Archivio, non un oggetto
+  // indipendente come Amici o Capsule. Le route /dossiers/... restano
+  // le stesse: solo la voce di menu dedicata sparisce.
   { label: "Amici", href: "/friends", icon: FriendIcon, requiresEncryption: true },
   { label: "Capsule", href: "/capsules", icon: CapsuleIcon, requiresEncryption: true },
   { label: "Cronologia", href: "/timeline", icon: TimelineIcon, requiresEncryption: true },

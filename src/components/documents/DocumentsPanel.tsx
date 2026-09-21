@@ -17,7 +17,7 @@ import {
 import { findTextSnippet, flattenForSearch } from "@/lib/text-snippet";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
-import { contentKindFor, CONTENT_KIND_ICON, hasInlinePlayer, isTranscribable } from "@/lib/content-kind";
+import { contentKindFor, hasInlinePlayer, isTranscribable } from "@/lib/content-kind";
 import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
@@ -33,6 +33,8 @@ import { Pagination } from "@/components/ui/Pagination";
 import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
 import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
 import { useListViewPreferences } from "@/components/layout/ListViewPreferencesProvider";
+import { ArchiveTabs } from "@/components/documents/ArchiveTabs";
+import { ContentTypeIcon } from "@/components/documents/ContentTypeIcon";
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -423,6 +425,8 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
+      <ArchiveTabs />
+
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="min-w-0 w-full sm:flex-1">
           <h1 className="text-2xl font-semibold tracking-tight text-brand">
@@ -616,7 +620,8 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                                 href={`/archive/${doc.id}`}
                                 className="block truncate transition-colors hover:text-brand dark:hover:text-blue-400"
                               >
-                                {CONTENT_KIND_ICON[kind]} {doc.filename}
+                                <ContentTypeIcon kind={kind} inDossier={Boolean(doc.dossierId)} />{" "}
+                                {doc.filename}
                               </Link>
                               <ContentSnippet doc={doc} query={query} />
                             </td>
@@ -816,7 +821,8 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           href={`/archive/${doc.id}`}
                           className="block truncate text-sm font-medium text-zinc-900 transition-colors hover:text-brand dark:text-zinc-100 dark:hover:text-blue-400"
                         >
-                          {CONTENT_KIND_ICON[kind]} {doc.filename}
+                          <ContentTypeIcon kind={kind} inDossier={Boolean(doc.dossierId)} />{" "}
+                          {doc.filename}
                         </Link>
                         <ContentSnippet doc={doc} query={query} />
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">

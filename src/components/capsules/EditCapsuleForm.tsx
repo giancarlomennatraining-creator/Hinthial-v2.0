@@ -8,6 +8,7 @@ import { listCapsules, updateCapsule } from "@/domain/capsules/repository";
 import { listFriends } from "@/domain/friends/repository";
 import { listDocuments } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
+import { listDossiers } from "@/domain/dossiers/repository";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { FriendPicker } from "@/components/capsules/FriendPicker";
 import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachmentPicker";
@@ -18,6 +19,7 @@ import type { CapsuleAttachment, CapsuleContentStyle, CapsuleListItem } from "@/
 import type { FriendListItem } from "@/domain/friends/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
+import type { DossierListItem } from "@/domain/dossiers/types";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -56,6 +58,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
   const [activeFriends, setActiveFriends] = useState<FriendListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [documents, setDocuments] = useState<DocumentListItem[]>([]);
+  const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -92,18 +95,21 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
     const requestId = ++latestRequestRef.current;
     setError(null);
     try {
-      const [capsules, friends, categoriesResult, documentsResult] = await Promise.all([
-        listCapsules(supabase, masterKey),
-        listFriends(supabase, masterKey),
-        listCategories(supabase),
-        listDocuments(supabase, masterKey),
-      ]);
+      const [capsules, friends, categoriesResult, documentsResult, dossiersResult] =
+        await Promise.all([
+          listCapsules(supabase, masterKey),
+          listFriends(supabase, masterKey),
+          listCategories(supabase),
+          listDocuments(supabase, masterKey),
+          listDossiers(supabase, masterKey),
+        ]);
       if (requestId !== latestRequestRef.current) return;
       const found = capsules.find((c) => c.id === capsuleId) ?? null;
       setCapsule(found);
       setActiveFriends(friends.filter((c) => c.status === "active"));
       setCategories(categoriesResult);
       setDocuments(documentsResult);
+      setDossiers(dossiersResult);
       if (found) {
         setTitle(found.title);
         setContent(found.content);
@@ -281,6 +287,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                 idPrefix="edit"
                 categories={categories}
                 documents={documents}
+                dossiers={dossiers}
                 selected={linkedDocuments}
                 onChange={setLinkedDocuments}
               />

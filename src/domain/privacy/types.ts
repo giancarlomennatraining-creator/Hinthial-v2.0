@@ -1,4 +1,5 @@
 import type { CapsuleStatus } from "@/domain/capsules/types";
+import type { DossierStatus } from "@/domain/dossiers/types";
 import type { NavOrientation } from "@/lib/nav-orientation";
 
 /**
@@ -18,6 +19,11 @@ export interface AccountVisibilitySummary {
   guardianCount: number;
   capsuleCount: number;
   capsuleStatusCounts: Record<CapsuleStatus, number>;
+  reminderCount: number;
+  /** Promemoria non ancora completati --- `completed` è una colonna in chiaro. */
+  pendingReminderCount: number;
+  dossierCount: number;
+  dossierStatusCounts: Record<DossierStatus, number>;
   /** Nomi delle categorie usate --- la tassonomia è in chiaro, non un dato del vault. */
   categoryNames: string[];
   navOrientation: NavOrientation;

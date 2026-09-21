@@ -8,6 +8,7 @@ import { createCapsule } from "@/domain/capsules/repository";
 import { listFriends } from "@/domain/friends/repository";
 import { listDocuments } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
+import { listDossiers } from "@/domain/dossiers/repository";
 import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachmentPicker";
 import { FriendPicker } from "@/components/capsules/FriendPicker";
 import { CapsuleOpenAtField } from "@/components/capsules/CapsuleOpenAtField";
@@ -16,6 +17,7 @@ import { AudioVideoRecorder } from "@/components/media/AudioVideoRecorder";
 import type { FriendListItem } from "@/domain/friends/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
+import type { DossierListItem } from "@/domain/dossiers/types";
 import type { CapsuleContentStyle } from "@/domain/capsules/types";
 
 type Step = 1 | 2 | 3;
@@ -48,6 +50,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const [friends, setFriends] = useState<FriendListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [documents, setDocuments] = useState<DocumentListItem[]>([]);
+  const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -66,14 +69,17 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [friendsResult, categoriesResult, documentsResult] = await Promise.all([
-        listFriends(supabase, masterKey),
-        listCategories(supabase),
-        listDocuments(supabase, masterKey),
-      ]);
+      const [friendsResult, categoriesResult, documentsResult, dossiersResult] =
+        await Promise.all([
+          listFriends(supabase, masterKey),
+          listCategories(supabase),
+          listDocuments(supabase, masterKey),
+          listDossiers(supabase, masterKey),
+        ]);
       setFriends(friendsResult);
       setCategories(categoriesResult);
       setDocuments(documentsResult);
+      setDossiers(dossiersResult);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare i dati necessari.");
     } finally {
@@ -230,6 +236,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
                 idPrefix="create"
                 categories={categories}
                 documents={documents}
+                dossiers={dossiers}
                 selected={pendingLinkedDocuments}
                 onChange={setPendingLinkedDocuments}
               />

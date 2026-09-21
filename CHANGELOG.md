@@ -10,6 +10,23 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-21
+
+### FASE 20b --- Fascicolo come seconda scheda, badge in elenco, capsule intere, privacy aggiornata
+
+**Cosa fa:** quattro rifiniture a FASE 20, nate dal discutere come si integra meglio il Fascicolo nel resto dell'app.
+
+- **Fascicolo è ora una scheda di Archivio**, non più una voce separata in barra di navigazione: in Archivio, in alto, due linguette --- "Contenuti" (l'elenco di sempre) e "Fascicolo" --- portano a `/archive` e `/dossiers` come prima, solo raggiungibili senza uscire dal contesto "sono nell'Archivio".
+- **Un piccolo badge a forma di cartellina**, nell'angolo in basso a destra dell'icona di ogni contenuto in elenco, segnala che quel documento appartiene a un fascicolo --- stessa idea del pallino "H" sull'avatar di un amico che ha un account Hinthial, applicata qui al tipo di contenuto invece che alla persona.
+- **Una capsula può allegare un fascicolo intero** in un colpo solo: nel form di creazione/modifica, oltre ad allegare un documento alla volta, si può scegliere un fascicolo e allegare tutto quello che contiene *in questo momento*. È uno scatto, non un collegamento vivo --- se aggiungi un documento al fascicolo dopo, non entra da solo in una capsula già creata (per una funzione che riguarda l'eredità digitale, un contenuto che compare in silenzio in qualcosa che credevi già definito sarebbe l'ultima cosa desiderabile).
+- **Impostazioni > Privacy** ora elenca anche quanti promemoria/scadenze e quanti fascicoli (aperti/chiusi) il server vede in chiaro, e dichiara esplicitamente che per ogni contenuto in archivio vede a quale categoria, bene e fascicolo è collegato e la sua scadenza --- non solo i conteggi che già mostrava.
+
+**Note tecniche:** `/dossiers` resta una route separata (nessuna migrazione di URL): la "scheda" è puramente visiva, un piccolo componente `ArchiveTabs` con `<Link>` reali e `aria-current="page"` (non `role="tab"`, che implicherebbe pannelli sulla stessa pagina --- qui si naviga davvero altrove). Il badge (`ContentTypeIcon`) è `aria-hidden`: l'appartenenza a un fascicolo si legge già in chiaro nella scheda del documento, non serve ripeterla a voce per ogni riga. L'allegare un fascicolo intero a una capsula non introduce alcun nuovo modello dati: `DocumentAttachmentPicker` filtra semplicemente i documenti già caricati per `dossier_id` e li aggiunge tutti insieme alla stessa lista `selected`/`onChange` di sempre.
+
+Verificato: nuovi test e2e (cambio di scheda con `aria-current`, badge sull'icona, allegare un fascicolo intero a una capsula) più l'intera suite Archivio/Fascicoli/Import/Capsule/Privacy rieseguita. Un test e2e preesistente e non toccato qui ("chiudere una capsula copia il contenuto...") risulta instabile anche sulla base di partenza, prima di queste modifiche --- non è una regressione di questa fase.
+
+---
+
 ## 2026-09-20 (3)
 
 ### FASE 21 --- Import massivo: il Blocco A è chiuso

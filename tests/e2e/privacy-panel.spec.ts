@@ -28,6 +28,11 @@ test("Impostazioni > Privacy mostra dati reali dell'account e non richiede la ma
   await expect(page.getByText("Data di nascita: non impostata")).toBeVisible();
   await expect(page.getByText("0 contenuti in archivio")).toBeVisible();
   await expect(page.getByText("0 beni")).toBeVisible();
+  await expect(page.getByText(/^0 promemoria\/scadenze /)).toBeVisible();
+  await expect(page.getByText("0 fascicoli (0 aperti, 0 chiusi)")).toBeVisible();
+  await expect(
+    page.getByText("Per ogni contenuto in archivio: a quale categoria, bene e fascicolo"),
+  ).toBeVisible();
   await expect(page.getByText(/^Disposizione del menu: /)).toBeVisible();
   await expect(page.getByText(/^Indicatore di onboarding nella barra: /)).toBeVisible();
   await expect(page.getByText("Il contenuto dei tuoi documenti, foto, audio e video")).toBeVisible();

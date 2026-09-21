@@ -73,8 +73,17 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
 
   await signInAndSetUpVault(page);
 
-  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Fascicoli" })).toBeVisible();
+  // La scheda "Fascicolo" è quella attiva adesso, "Contenuti" no.
+  await expect(page.getByRole("link", { name: "Fascicolo", exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(page.getByRole("link", { name: "Contenuti", exact: true })).not.toHaveAttribute(
+    "aria-current",
+    "page",
+  );
   await page.getByRole("link", { name: "+ Nuovo fascicolo" }).click();
   await page.getByLabel("Titolo").fill("Intervento al ginocchio");
   await page.getByLabel("Descrizione").fill("Visita, esami e intervento del 2026.");
@@ -104,6 +113,13 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   await page.getByLabel("Fascicolo").selectOption({ label: "📂 Intervento al ginocchio" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
+
+  // Nell'elenco, l'icona del documento ha il badge "in un fascicolo".
+  await expect(page.getByTitle("In un fascicolo")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Contenuti", exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
 
   // La scheda del documento mostra il fascicolo, con un link.
   await page.getByRole("link", { name: /referto-visita\.pdf/ }).click();
