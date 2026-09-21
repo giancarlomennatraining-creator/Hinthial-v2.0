@@ -618,10 +618,10 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                                   utente). */}
                               <Link
                                 href={`/archive/${doc.id}`}
-                                className="block truncate transition-colors hover:text-brand dark:hover:text-blue-400"
+                                className="flex min-w-0 items-center gap-1 transition-colors hover:text-brand dark:hover:text-blue-400"
                               >
-                                <ContentTypeIcon kind={kind} inDossier={Boolean(doc.dossierId)} />{" "}
-                                {doc.filename}
+                                <ContentTypeIcon kind={kind} inDossier={Boolean(doc.dossierId)} />
+                                <span className="truncate">{doc.filename}</span>
                               </Link>
                               <ContentSnippet doc={doc} query={query} />
                             </td>
@@ -819,10 +819,10 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                       <div className="min-w-0">
                         <Link
                           href={`/archive/${doc.id}`}
-                          className="block truncate text-sm font-medium text-zinc-900 transition-colors hover:text-brand dark:text-zinc-100 dark:hover:text-blue-400"
+                          className="flex min-w-0 items-center gap-1 text-sm font-medium text-zinc-900 transition-colors hover:text-brand dark:text-zinc-100 dark:hover:text-blue-400"
                         >
-                          <ContentTypeIcon kind={kind} inDossier={Boolean(doc.dossierId)} />{" "}
-                          {doc.filename}
+                          <ContentTypeIcon kind={kind} inDossier={Boolean(doc.dossierId)} />
+                          <span className="truncate">{doc.filename}</span>
                         </Link>
                         <ContentSnippet doc={doc} query={query} />
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
