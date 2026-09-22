@@ -1,15 +1,13 @@
 /**
- * FASE 25 --- import da Google Drive. Un elemento scelto nel Picker di
- * Google (v. client.ts): un file da scaricare direttamente, o una
- * cartella di cui elencare il contenuto. `folderHint` --- il nome della
- * cartella di provenienza, se l'elemento arriva da una cartella scelta
- * per intero --- serve solo come suggerimento di categoria (v.
- * BulkImportForm.tsx), non diventa un dato salvato: niente costrutto
- * "cartella" permanente nell'archivio, per una scelta discussa con
- * l'utente (i Fascicoli già coprono, meglio, il bisogno di raggruppare
- * oltre la categoria).
+ * FASE 25 --- import da Google Drive con un file browser proprio
+ * (v. client.ts, GoogleDriveBrowser.tsx). Non più il Picker di Google:
+ * per disegnare noi la navigazione a cartelle serve poter interrogare
+ * l'intero Drive via API (scope drive.readonly), non solo ricevere ciò
+ * che un widget di Google ci consegna già scelto --- scelta discussa
+ * con l'utente, che accetta lo scope più ampio in cambio della grafica
+ * coerente con Hinthial.
  */
-export interface GoogleDrivePickedItem {
+export interface GoogleDriveItem {
   id: string;
   name: string;
   mimeType: string;
@@ -20,6 +18,6 @@ export interface GoogleDriveFileToImport {
   id: string;
   name: string;
   mimeType: string;
-  /** Nome della cartella scelta per intero da cui arriva questo file --- null se il file è stato scelto individualmente. */
+  /** Nome della cartella da cui arriva questo file --- solo un suggerimento di categoria, mai un dato salvato (v. discussione con l'utente: niente costrutto "cartella" permanente). */
   folderHint: string | null;
 }

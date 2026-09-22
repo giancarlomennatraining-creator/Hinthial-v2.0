@@ -11,15 +11,14 @@ import { canExtractText, extractText } from "@/domain/extraction/extract-text";
 import { extractStructuredFields } from "@/domain/extraction/structured-fields";
 import { heuristicCategorizer } from "@/domain/categorizer/heuristic-provider";
 import { groupByIssuer, type ImportGroup } from "@/domain/bulk-import/grouping";
-import { pickGoogleDriveFiles, downloadGoogleDriveFile } from "@/domain/google-drive/client";
+import { GoogleDriveBrowser } from "@/components/documents/GoogleDriveBrowser";
 import { sortAlphabetically } from "@/lib/utils";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { Category } from "@/domain/categories/types";
 import type { DocumentMetadataInput } from "@/domain/documents/types";
 
-/** Pubbliche di natura (v. .env.local) --- undefined se la FASE 25 non è configurata in questo ambiente: in quel caso il bottone sotto non compare, invece di rompersi al clic. */
+/** Pubblica di natura (v. .env.local) --- undefined se la FASE 25 non è configurata in questo ambiente: in quel caso il bottone sotto non compare, invece di rompersi al clic. */
 const GOOGLE_DRIVE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID;
-const GOOGLE_PICKER_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_PICKER_API_KEY;
 
 /**
  * FASE 21 --- import massivo: molti file in una volta, con un
@@ -79,7 +78,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
   const [groupLink, setGroupLink] = useState<boolean[]>([]);
   const [newDossierTitles, setNewDossierTitles] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [driveBusy, setDriveBusy] = useState(false);
+  const [driveOpen, setDriveOpen] = useState(false);
 
   /**
    * Il cuore della pagina, indipendente da dove arrivano i file --- dal
@@ -166,32 +165,16 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   /**
-   * FASE 25 --- import da Google Drive: il Picker gira per intero nel
-   * browser (v. domain/google-drive/client.ts), il nostro server non
-   * vede né il token né i file scelti. Da qui in avanti, ogni file
-   * scaricato è un File come un altro: stessa lettura, stesso
-   * raggruppamento, stessa cifratura all'importazione finale --- nessun
-   * percorso a parte per "i file arrivati da Drive".
+   * FASE 25 --- import da Google Drive: il file browser (v.
+   * GoogleDriveBrowser.tsx) gira per intero nel browser dell'utente, il
+   * nostro server non vede né il token né i file scelti. Restituisce
+   * File già scaricati --- da qui in avanti indistinguibili da uno
+   * scelto dal disco: stessa lettura, stesso raggruppamento, stessa
+   * cifratura all'importazione finale, nessun percorso a parte.
    */
-  async function handleGoogleDriveImport() {
-    if (!GOOGLE_DRIVE_CLIENT_ID || !GOOGLE_PICKER_API_KEY) return;
-    setError(null);
-    setDriveBusy(true);
-    try {
-      const { files, accessToken } = await pickGoogleDriveFiles(GOOGLE_DRIVE_CLIENT_ID, GOOGLE_PICKER_API_KEY);
-      if (files.length === 0) return; // annullato dall'utente, non un errore
-
-      const downloaded: FileToRead[] = [];
-      for (const item of files) {
-        const file = await downloadGoogleDriveFile(accessToken, item);
-        downloaded.push({ file, folderHint: item.folderHint });
-      }
-      await processFiles(downloaded);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile importare da Google Drive.");
-    } finally {
-      setDriveBusy(false);
-    }
+  function handleGoogleDriveImported(downloaded: FileToRead[]) {
+    setDriveOpen(false);
+    void processFiles(downloaded);
   }
 
   function updateDraft(id: string, patch: Partial<Pick<DraftFile, "title" | "categoryId">>) {
@@ -314,16 +297,15 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
               aria-label="Scegli i file da importare"
             />
           </label>
-          {GOOGLE_DRIVE_CLIENT_ID && GOOGLE_PICKER_API_KEY ? (
+          {GOOGLE_DRIVE_CLIENT_ID ? (
             <>
               <span className="text-xs text-zinc-400 dark:text-zinc-600">oppure</span>
               <button
                 type="button"
-                onClick={handleGoogleDriveImport}
-                disabled={driveBusy}
-                className="text-sm font-medium text-brand hover:underline disabled:opacity-50 disabled:no-underline"
+                onClick={() => setDriveOpen(true)}
+                className="text-sm font-medium text-brand hover:underline"
               >
-                {driveBusy ? "Connessione a Google Drive…" : "📁 Importa da Google Drive"}
+                📁 Importa da Google Drive
               </button>
             </>
           ) : null}
@@ -445,6 +427,14 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
           </div>
         </div>
       )}
+
+      {driveOpen && GOOGLE_DRIVE_CLIENT_ID ? (
+        <GoogleDriveBrowser
+          clientId={GOOGLE_DRIVE_CLIENT_ID}
+          onClose={() => setDriveOpen(false)}
+          onConfirm={handleGoogleDriveImported}
+        />
+      ) : null}
     </div>
   );
 }
