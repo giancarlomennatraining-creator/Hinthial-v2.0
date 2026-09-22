@@ -93,11 +93,13 @@ export function AIPanel({
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Segue la conversazione verso il basso man mano che si allunga,
-  // invece di lasciare l'utente sull'inizio di uno scroll interno.
+  // invece di lasciare l'utente sull'inizio di uno scroll interno --- anche
+  // quando compare l'indicatore "sta scrivendo" (asking), non solo a un
+  // messaggio vero e proprio.
   useEffect(() => {
     const container = messagesRef.current;
     if (container) container.scrollTop = container.scrollHeight;
-  }, [messages]);
+  }, [messages, asking]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -197,21 +199,23 @@ export function AIPanel({
         </div>
       ) : (
         <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
-          {messages.length === 0 ? (
+          {messages.length === 0 && !asking ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Prova a chiedere, ad esempio, &quot;quali assicurazioni ho?&quot;
             </p>
           ) : (
             <>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={clear}
-                  className="text-xs font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-                >
-                  Nuova conversazione
-                </button>
-              </div>
+              {messages.length > 0 ? (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={clear}
+                    className="text-xs font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+                  >
+                    Nuova conversazione
+                  </button>
+                </div>
+              ) : null}
               <div ref={messagesRef} className="max-h-[28rem] overflow-y-auto scroll-smooth pr-1">
                 <ul className="flex flex-col gap-4">
                   {groupConsecutiveMessages(messages).map((group, gi) => (
@@ -274,6 +278,25 @@ export function AIPanel({
                       ) : null}
                     </li>
                   ))}
+                  {asking ? (
+                    <li className="flex items-end gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- brand asset, not user content */}
+                      <img
+                        src="/brand/hinthia/hinthia-128.png"
+                        alt=""
+                        className="h-7 w-7 shrink-0 rounded-full"
+                      />
+                      <div
+                        role="status"
+                        aria-label="Hinthia sta scrivendo…"
+                        className="inline-flex items-center gap-1 rounded-2xl rounded-bl-md bg-zinc-100 px-4 py-3 dark:bg-zinc-900"
+                      >
+                        <span className="ai-typing-dot h-1.5 w-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+                        <span className="ai-typing-dot h-1.5 w-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+                        <span className="ai-typing-dot h-1.5 w-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+                      </div>
+                    </li>
+                  ) : null}
                 </ul>
               </div>
             </>

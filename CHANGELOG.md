@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-22 (3)
+
+### Indicatore di caricamento nella chat con Hinthia
+
+**Cosa fa:** mentre aspetti una risposta (soprattutto con le risposte reali attive, dove Claude può metterci un momento), al posto del silenzio compare una bolla con tre puntini animati accanto all'avatar di Hinthia --- lo stesso linguaggio delle chat più comuni, per far capire che la domanda è partita davvero e non che qualcosa si sia bloccato.
+
+**Note tecniche:** l'animazione (`ai-typing-bounce`) vive in `globals.css`, stessa scelta già fatta per l'anello di scansione dello sblocco biometrico (`unlock-scanner`) --- un keyframe non ha un equivalente pratico come utility Tailwind. Rispetta `prefers-reduced-motion` (i puntini restano fermi ma visibili invece di sparire). L'indicatore compare quando `asking` è vero, prima ancora che esista un messaggio dell'assistente da mostrare --- gestito riorganizzando la condizione che decide tra lo stato vuoto ("Prova a chiedere...") e il thread dei messaggi, invece di aggiungere un terzo stato separato.
+
+Verificato: typecheck, lint, e2e (`ai.spec.ts`, `dashboard-layout.spec.ts`) rieseguiti senza modifiche. Verificato a schermo con una route intercettata e ritardata apposta (poi rimossa) per catturare l'indicatore mentre è visibile, non solo lo stato finale.
+
+---
+
 ## 2026-09-22 (2)
 
 ### Restyle della pagina AI: "Parla con Hinthia"
