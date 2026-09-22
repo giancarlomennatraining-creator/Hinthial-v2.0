@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-23 (3)
+
+### Revisione import massivo più ricca, e rilevamento duplicati veri
+
+**Cosa fa:** la schermata "Importa più file insieme" mostra ora, in cima, una barra di riepilogo (quanti file categorizzati, quanti da rivedere, quanti possibili duplicati, e se arrivano da Google Drive o dal dispositivo). Ogni riga distingue una categoria **suggerita dal contenuto** ("✨") da una scelta manuale, e un file senza categoria è evidenziato in ambra con l'invito "⚠️ Scegli categoria" invece di passare inosservato. Novità sostanziale: un file che sembra già presente in Hinthial (stesso nome, stessa dimensione --- con l'archivio esistente o con un altro file dello stesso lotto) viene segnalato in rosa con una nota chiara e un bottone **"Escludi dall'importazione"**, per non doverlo cancellare a mano dopo. Il footer mostra ora quanti file sono pronti e quanti fascicoli verranno creati.
+
+**Note tecniche:** il rilevamento duplicati (`domain/bulk-import/duplicates.ts`, `detectDuplicates`) è una funzione pura sullo stesso modello di `groupByIssuer` --- corrispondenza esatta su nome file e dimensione in byte, mai una somiglianza vaga ("nel dubbio, non si propone nulla"), confrontata sia con l'archivio esistente sia con gli altri file dello stesso lotto. `DraftFile` guadagna `suggestedCategoryId` (fotografia del suggerimento al momento della lettura, usata solo per decidere se mostrare il badge "✨" --- smette di coincidere da sé se l'utente cambia la categoria) e `duplicateOf`. Nuova `excludeDraft()` per togliere un file dal lotto prima di importare, con pulizia coerente di `groupLink`/`newDossierTitles` se un gruppo resta vuoto.
+
+Verificato: typecheck, lint, nuovo test unitario per `detectDuplicates` (7 casi, inclusi i negativi: stesso nome ma dimensione diversa, stessa dimensione ma nome diverso), `bulk-import.spec.ts` rieseguito senza modifiche, nuovo test e2e dedicato (due file identici nello stesso lotto → segnalati, uno escluso, il resto importato correttamente).
+
+---
+
 ## 2026-09-23 (2)
 
 ### Rimossi i totali di spesa

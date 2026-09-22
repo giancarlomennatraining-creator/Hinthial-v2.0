@@ -11,6 +11,7 @@ import { canExtractText, extractText } from "@/domain/extraction/extract-text";
 import { extractStructuredFields } from "@/domain/extraction/structured-fields";
 import { heuristicCategorizer } from "@/domain/categorizer/heuristic-provider";
 import { groupByIssuer, type ImportGroup } from "@/domain/bulk-import/grouping";
+import { detectDuplicates } from "@/domain/bulk-import/duplicates";
 import { GoogleDriveBrowser } from "@/components/documents/GoogleDriveBrowser";
 import { sortAlphabetically } from "@/lib/utils";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -51,6 +52,10 @@ interface DraftFile {
   categoryId: string;
   /** Nome della cartella Google Drive di provenienza (FASE 25), solo come suggerimento di categoria --- null se scelto dal disco o come file singolo. */
   folderHint: string | null;
+  /** Fotografia di categoryId al momento del suggerimento --- se l'utente cambia la select, i due smettono di coincidere e il badge "suggerita" scompare da sé, senza un flag a parte da tenere sincronizzato. */
+  suggestedCategoryId: string;
+  /** Un file già in Archivio (o un altro in questo stesso lotto) con lo stesso nome e la stessa dimensione --- corrispondenza esatta, mai una somiglianza vaga (stessa disciplina di findIssuer). null se nessuna corrispondenza. */
+  duplicateOf: { filename: string; createdAt: string } | null;
 }
 
 /** Un file da leggere, insieme al nome della cartella Google Drive da cui arriva --- se ce n'è una (v. FASE 25). */
@@ -79,6 +84,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
   const [newDossierTitles, setNewDossierTitles] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [driveOpen, setDriveOpen] = useState(false);
+  const [importSource, setImportSource] = useState<"disk" | "drive" | null>(null);
 
   /**
    * Il cuore della pagina, indipendente da dove arrivano i file --- dal
@@ -107,7 +113,16 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
         const bytes = new Uint8Array(await file.arrayBuffer());
         text = await extractText(bytes, mimeType);
       }
-      read.push({ id: crypto.randomUUID(), file, text, title: "", categoryId: "", folderHint });
+      read.push({
+        id: crypto.randomUUID(),
+        file,
+        text,
+        title: "",
+        categoryId: "",
+        folderHint,
+        suggestedCategoryId: "",
+        duplicateOf: null,
+      });
       setPhase({ step: "reading", done: index + 1, total: toRead.length });
     }
 
@@ -143,7 +158,16 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
           const match = categoriesResult.find((c) => c.name.toLowerCase() === folderHint.toLowerCase());
           if (match) draft.categoryId = match.id;
         }
+
+        // Fotografia del suggerimento --- v. commento su DraftFile.suggestedCategoryId.
+        draft.suggestedCategoryId = draft.categoryId;
       }
+
+      // Rilevamento duplicati (FASE 25) --- v. domain/bulk-import/duplicates.ts.
+      const duplicates = detectDuplicates(read, existingDocuments);
+      read.forEach((draft, i) => {
+        draft.duplicateOf = duplicates[i];
+      });
 
       const computedGroups = groupByIssuer(read, existingDocuments, existingDossiers);
       setGroups(computedGroups);
@@ -161,6 +185,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
 
   async function handleFilesPicked(event: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? []);
+    setImportSource("disk");
     await processFiles(files.map((file) => ({ file, folderHint: null })));
   }
 
@@ -174,6 +199,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
    */
   function handleGoogleDriveImported(downloaded: FileToRead[]) {
     setDriveOpen(false);
+    setImportSource("drive");
     void processFiles(downloaded);
   }
 
@@ -184,6 +210,20 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
         files: group.files.map((f) => (f.id === id ? { ...f, ...patch } : f)),
       })),
     );
+  }
+
+  /** Toglie un file dal lotto prima di importare --- pensata per un duplicato che non vale la pena riportare dentro. Se il gruppo resta vuoto, sparisce anche lui (e la sua proposta di fascicolo con lui). */
+  function excludeDraft(id: string) {
+    const groupIndex = groups.findIndex((g) => g.files.some((f) => f.id === id));
+    if (groupIndex === -1) return;
+    const remainingFiles = groups[groupIndex].files.filter((f) => f.id !== id);
+    if (remainingFiles.length > 0) {
+      setGroups((prev) => prev.map((g, i) => (i === groupIndex ? { ...g, files: remainingFiles } : g)));
+    } else {
+      setGroups((prev) => prev.filter((_, i) => i !== groupIndex));
+      setGroupLink((prev) => prev.filter((_, i) => i !== groupIndex));
+      setNewDossierTitles((prev) => prev.filter((_, i) => i !== groupIndex));
+    }
   }
 
   async function handleImportAll() {
@@ -261,6 +301,17 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
 
   const sortedCategories = sortAlphabetically(categories, (c) => c.name);
 
+  // Riepilogo in cima alla revisione --- letto dal vivo da `groups`, non
+  // fotografato una volta: riflette subito ogni categoria che l'utente
+  // cambia o file che esclude.
+  const allDrafts = groups.flatMap((g) => g.files);
+  const categorizedCount = allDrafts.filter((d) => d.categoryId).length;
+  const missingCategoryCount = allDrafts.length - categorizedCount;
+  const duplicateCount = allDrafts.filter((d) => d.duplicateOf).length;
+  const proposedDossierCount = groups.filter(
+    (g, i) => Boolean(g.existingDossier || g.proposedDossierTitle) && groupLink[i],
+  ).length;
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -320,6 +371,27 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
         </p>
       ) : (
         <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap gap-2">
+            {importSource ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand">
+                {importSource === "drive" ? "🗂️ Da Google Drive" : "💻 Dal tuo dispositivo"}
+              </span>
+            ) : null}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-300">
+              ✅ {categorizedCount} {categorizedCount === 1 ? "categorizzato" : "categorizzati"}
+            </span>
+            {missingCategoryCount > 0 ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                ⚠️ {missingCategoryCount} da rivedere
+              </span>
+            ) : null}
+            {duplicateCount > 0 ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+                🔁 {duplicateCount} possibile {duplicateCount === 1 ? "duplicato" : "duplicati"}
+              </span>
+            ) : null}
+          </div>
+
           {groups.map((group, groupIndex) => {
             const hasProposal = Boolean(group.existingDossier || group.proposedDossierTitle);
             return (
@@ -374,56 +446,117 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
                 ) : null}
 
                 <ul className="flex flex-col gap-2">
-                  {group.files.map((draft) => (
-                    <li
-                      key={draft.id}
-                      className="flex flex-wrap items-center gap-2 rounded-md bg-white p-2 text-sm dark:bg-zinc-950"
-                    >
-                      <span className="min-w-0 flex-1 truncate text-zinc-700 dark:text-zinc-300">
-                        📄 {draft.file.name}
-                      </span>
-                      <input
-                        type="text"
-                        value={draft.title}
-                        onChange={(e) => updateDraft(draft.id, { title: e.target.value })}
-                        placeholder="Titolo (facoltativo)"
-                        aria-label={`Titolo per ${draft.file.name}`}
-                        className="w-48 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                      />
-                      <select
-                        value={draft.categoryId}
-                        onChange={(e) => updateDraft(draft.id, { categoryId: e.target.value })}
-                        aria-label={`Categoria per ${draft.file.name}`}
-                        className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                  {group.files.map((draft) => {
+                    const isPdf = draft.file.type === "application/pdf";
+                    const isImage = draft.file.type.startsWith("image/");
+                    const missingCategory = !draft.categoryId;
+                    const wasSuggested = Boolean(draft.categoryId) && draft.categoryId === draft.suggestedCategoryId;
+                    return (
+                      <li
+                        key={draft.id}
+                        className={
+                          draft.duplicateOf
+                            ? "flex flex-col gap-1.5 rounded-md bg-rose-50 p-2 text-sm dark:bg-rose-950/40"
+                            : missingCategory
+                              ? "flex flex-col gap-1.5 rounded-md bg-amber-50 p-2 text-sm dark:bg-amber-950/30"
+                              : "flex flex-col gap-1.5 rounded-md bg-white p-2 text-sm dark:bg-zinc-950"
+                        }
                       >
-                        <option value="">Nessuna categoria</option>
-                        {sortedCategories.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.icon} {category.name}
-                          </option>
-                        ))}
-                      </select>
-                    </li>
-                  ))}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={
+                              isPdf
+                                ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-red-50 text-xs dark:bg-red-950"
+                                : isImage
+                                  ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand/10 text-xs"
+                                  : "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-xs dark:bg-zinc-900"
+                            }
+                            aria-hidden="true"
+                          >
+                            {isImage ? "🖼️" : "📄"}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-zinc-700 dark:text-zinc-300">{draft.file.name}</p>
+                            {wasSuggested ? (
+                              <p className="text-xs text-brand">✨ categoria suggerita dal contenuto</p>
+                            ) : null}
+                          </div>
+                          <input
+                            type="text"
+                            value={draft.title}
+                            onChange={(e) => updateDraft(draft.id, { title: e.target.value })}
+                            placeholder="Titolo (facoltativo)"
+                            aria-label={`Titolo per ${draft.file.name}`}
+                            className="w-48 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                          />
+                          <select
+                            value={draft.categoryId}
+                            onChange={(e) => updateDraft(draft.id, { categoryId: e.target.value })}
+                            aria-label={`Categoria per ${draft.file.name}`}
+                            className={
+                              missingCategory
+                                ? "rounded-md border border-amber-400 bg-white px-2 py-1 text-xs font-medium text-amber-700 dark:border-amber-700 dark:bg-zinc-950 dark:text-amber-300"
+                                : "rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                            }
+                          >
+                            <option value="">⚠️ Scegli categoria</option>
+                            {sortedCategories.map((category) => (
+                              <option key={category.id} value={category.id}>
+                                {category.icon} {category.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        {draft.duplicateOf ? (
+                          <div className="flex flex-wrap items-center justify-between gap-2 pl-9 text-xs text-rose-700 dark:text-rose-300">
+                            <span>
+                              🔁 Sembra già presente in Hinthial come &laquo;{draft.duplicateOf.filename}
+                              &raquo;
+                              {draft.duplicateOf.createdAt
+                                ? `, caricato il ${new Date(draft.duplicateOf.createdAt).toLocaleDateString("it-IT")}`
+                                : " (in questo stesso lotto)"}
+                              --- stesso nome, stessa dimensione.
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => excludeDraft(draft.id)}
+                              className="shrink-0 font-medium underline-offset-2 hover:underline"
+                            >
+                              Escludi dall&apos;importazione
+                            </button>
+                          </div>
+                        ) : null}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             );
           })}
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleImportAll}
-              className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
-            >
-              Importa tutto
-            </button>
-            <Link
-              href="/archive"
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              Annulla
-            </Link>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm text-zinc-500 dark:text-zinc-400">
+              {allDrafts.length} {allDrafts.length === 1 ? "file pronto" : "file pronti"}
+              {proposedDossierCount > 0
+                ? `, ${proposedDossierCount} ${proposedDossierCount === 1 ? "fascicolo" : "fascicoli"} proposto${proposedDossierCount === 1 ? "" : "i"}`
+                : ""}
+            </span>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleImportAll}
+                disabled={allDrafts.length === 0}
+                className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+              >
+                Importa tutto
+              </button>
+              <Link
+                href="/archive"
+                className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              >
+                Annulla
+              </Link>
+            </div>
           </div>
         </div>
       )}
