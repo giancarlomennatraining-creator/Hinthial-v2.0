@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-23 (2)
+
+### Rimossi i totali di spesa
+
+**Cosa fa:** "Totali di spesa" (il link nell'Archivio verso `/archive/totals`, la tabella per anno/categoria) non esiste più, su richiesta esplicita dell'utente --- nessuna sostituzione, la funzione è stata tolta.
+
+**Note tecniche:** rimossi `src/app/(app)/archive/totals/`, `SpendingTotalsPanel.tsx`, `domain/bulk-import/totals.ts` (`totalsByYearAndCategory`) e i relativi test (unitari ed e2e) --- nessun altro punto del codice dipendeva da questa logica, verificato prima di rimuoverla. Il link "Importa più file insieme" in `DocumentsPanel.tsx` resta, non toccato. `HINTHIAL_MVP.md` (FASE 21) aggiornato per non descrivere più una funzione che non c'è.
+
+Verificato: typecheck, lint, unit test rieseguiti senza altre modifiche (425 test, due file di test in meno).
+
+---
+
 ## 2026-09-23
 
 ### Import da Google Drive (FASE 25), con un file browser proprio

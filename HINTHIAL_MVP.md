@@ -930,7 +930,7 @@ naturale sviluppo futuro quando si torna sulle capsule.
 Caricamento di molti file in una volta con riepilogo **per gruppi**
 invece di una conferma per file; rilevamento di serie ricorrenti (lo
 stesso valore misurato nel tempo); proposta di fascicoli dai
-raggruppamenti evidenti; totali di spesa per anno e categoria.
+raggruppamenti evidenti.
 
 Limite deliberato: mostrare andamenti e numeri, **mai interpretarli**.
 Un valore fuori range si segnala solo se è il documento stesso a dirlo.
@@ -944,9 +944,10 @@ stesso emittente riconosciuto (v. FASE 18, `findIssuer` --- una forma
 societaria o un'intestazione in maiuscolo, non una somiglianza vaga).
 Un gruppo di almeno due file senza una casa propone un fascicolo nuovo;
 un gruppo che condivide l'emittente con documenti già in un fascicolo
-esistente si aggancia a quello invece di proporne un altro. Totali di
-spesa per anno e categoria in `/archive/totals`, calcolati al volo,
-mai una soglia o un confronto.
+esistente si aggancia a quello invece di proporne un altro. (I totali
+di spesa per anno e categoria, inizialmente parte di questa fase, sono
+stati costruiti e poi rimossi su richiesta dell'utente --- v.
+CHANGELOG.md.)
 
 Scelta consapevole di scope, non un rinvio: una "somiglianza di
 significato" tra documenti (senza il segnale forte di un emittente
