@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-23
+
+### Import da Google Drive (FASE 25)
+
+**Cosa fa:** in "Importa più file insieme" (`/archive/import`) compare, oltre a "Scegli i file da importare", un secondo bottone: **Importa da Google Drive**. Apre il selettore di file di Google, dove puoi scegliere singoli file o intere cartelle (navigando dentro, con la possibilità di spuntarne solo alcune) --- Hinthial ottiene accesso solo a quello che scegli lì, mai una vista libera sul resto del Drive. Da quel momento i file scelti seguono esattamente lo stesso percorso di quelli scelti dal disco: stessa lettura del contenuto, stesso riconoscimento per emittente, stessa proposta di fascicolo, stessa cifratura all'importazione finale. In più: se importi una cartella intera, il suo nome viene usato come suggerimento di categoria per i file al suo interno (solo se il contenuto del file non ne ha già suggerita una migliore) --- un aiuto in più, non un nuovo modo di organizzare l'archivio: le cartelle di Google restano un dettaglio della provenienza, non diventano un costrutto permanente di Hinthial (i Fascicoli già coprono, meglio, quel bisogno --- v. discussione con l'utente).
+
+**Note tecniche:** `domain/google-drive/client.ts` --- tutto lato client (Google Identity Services per il token OAuth, scope `drive.file` --- mai `drive.readonly`, coerente con lo scope ristretto richiesto dal piano; Google Picker per la scelta; Drive API v3 per lo scaricamento). Il nostro server non vede né il token né i file scelti. `BulkImportForm.tsx` (FASE 21) è stato refattorizzato per separare "come arrivano i file" (dal disco, o ora da Drive) da "cosa se ne fa" (`processFiles`, invariato) --- zero duplicazione tra i due percorsi. I documenti Google nativi (Docs/Sheets/Slides) vengono esportati come PDF, non hanno byte scaricabili direttamente. Una cartella scelta espone solo i file al suo interno, non le sue sottocartelle --- e oltre 300 file in una sola cartella viene rifiutato con un messaggio chiaro, invece di bloccare il browser su un elenco enorme. Il bottone compare solo se `NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID`/`NEXT_PUBLIC_GOOGLE_PICKER_API_KEY` sono configurate (assenti di default in CI/test, presenti solo in `.env.local` --- va aggiunta anche la variabile d'ambiente su Vercel per il deploy pubblico, più l'origine `https://<dominio-vercel>` tra quelle autorizzate in Google Cloud, oggi limitate a `https://localhost:3000`).
+
+**Limiti noti, dichiarati apertamente**: nessun rilevamento di duplicati "vero" (lo stesso file arrivato da più strade) --- resta un lavoro a parte, non ancora fatto. Il flusso OAuth/Picker reale non è testabile in automatico (richiederebbe un account Google vero dentro un test e2e): verificato manualmente, non con un test dedicato.
+
+Verificato: typecheck, lint, unit test rieseguiti senza modifiche, `bulk-import.spec.ts`/`import-export.spec.ts` passati senza modifiche dopo il refactoring, controllo visivo del nuovo bottone (poi rimosso).
+
+---
+
 ## 2026-09-22 (4)
 
 ### Consenso preparatorio per estrazione avanzata, Salute, trascrizione e avvisi proattivi

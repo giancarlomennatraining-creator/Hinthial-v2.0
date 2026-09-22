@@ -11,10 +11,15 @@ import { canExtractText, extractText } from "@/domain/extraction/extract-text";
 import { extractStructuredFields } from "@/domain/extraction/structured-fields";
 import { heuristicCategorizer } from "@/domain/categorizer/heuristic-provider";
 import { groupByIssuer, type ImportGroup } from "@/domain/bulk-import/grouping";
+import { pickGoogleDriveFiles, downloadGoogleDriveFile } from "@/domain/google-drive/client";
 import { sortAlphabetically } from "@/lib/utils";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { Category } from "@/domain/categories/types";
 import type { DocumentMetadataInput } from "@/domain/documents/types";
+
+/** Pubbliche di natura (v. .env.local) --- undefined se la FASE 25 non è configurata in questo ambiente: in quel caso il bottone sotto non compare, invece di rompersi al clic. */
+const GOOGLE_DRIVE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID;
+const GOOGLE_PICKER_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_PICKER_API_KEY;
 
 /**
  * FASE 21 --- import massivo: molti file in una volta, con un
@@ -45,6 +50,14 @@ interface DraftFile {
   title: string;
   /** "" --- nessuna categoria. */
   categoryId: string;
+  /** Nome della cartella Google Drive di provenienza (FASE 25), solo come suggerimento di categoria --- null se scelto dal disco o come file singolo. */
+  folderHint: string | null;
+}
+
+/** Un file da leggere, insieme al nome della cartella Google Drive da cui arriva --- se ce n'è una (v. FASE 25). */
+interface FileToRead {
+  file: File;
+  folderHint: string | null;
 }
 
 type Phase =
@@ -66,13 +79,21 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
   const [groupLink, setGroupLink] = useState<boolean[]>([]);
   const [newDossierTitles, setNewDossierTitles] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [driveBusy, setDriveBusy] = useState(false);
 
-  async function handleFilesPicked(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []);
-    if (files.length === 0) return;
+  /**
+   * Il cuore della pagina, indipendente da dove arrivano i file --- dal
+   * disco (handleFilesPicked) o da Google Drive (handleGoogleDriveImport,
+   * FASE 25). `folderHint`, quando c'è, è solo un suggerimento in più per
+   * la categoria (v. sotto): non diventa un dato salvato, non introduce
+   * un costrutto "cartella" nell'archivio (v. discussione con l'utente
+   * --- i Fascicoli già coprono, meglio, quel bisogno).
+   */
+  async function processFiles(toRead: FileToRead[]) {
+    if (toRead.length === 0) return;
     setError(null);
 
-    setPhase({ step: "reading", done: 0, total: files.length });
+    setPhase({ step: "reading", done: 0, total: toRead.length });
 
     // Uno alla volta, non in parallelo --- ognuno richiede di leggere il
     // file e, per i tipi che lo prevedono, farlo passare per l'OCR: farne
@@ -80,15 +101,15 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
     // (stessa scelta già fatta per il recupero dei contenuti storici, v.
     // FASE 17b).
     const read: DraftFile[] = [];
-    for (const [index, file] of files.entries()) {
+    for (const [index, { file, folderHint }] of toRead.entries()) {
       const mimeType = file.type || "application/octet-stream";
       let text: string | null = null;
       if (canExtractText(mimeType)) {
         const bytes = new Uint8Array(await file.arrayBuffer());
         text = await extractText(bytes, mimeType);
       }
-      read.push({ id: crypto.randomUUID(), file, text, title: "", categoryId: "" });
-      setPhase({ step: "reading", done: index + 1, total: files.length });
+      read.push({ id: crypto.randomUUID(), file, text, title: "", categoryId: "", folderHint });
+      setPhase({ step: "reading", done: index + 1, total: toRead.length });
     }
 
     try {
@@ -103,16 +124,26 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
       // (applySuggestions in CreateArchiveItemForm), ma senza titolo,
       // bene o scadenza: qui contano solo categoria e raggruppamento.
       for (const draft of read) {
-        if (!draft.text) continue;
-        const suggestion = heuristicCategorizer.suggestCategoryFromContent(
-          draft.file.name,
-          draft.text,
-          categoriesResult,
-        );
-        if (suggestion) draft.categoryId = suggestion;
+        if (draft.text) {
+          const suggestion = heuristicCategorizer.suggestCategoryFromContent(
+            draft.file.name,
+            draft.text,
+            categoriesResult,
+          );
+          if (suggestion) draft.categoryId = suggestion;
 
-        const title = extractStructuredFields(draft.text).find((f) => f.kind === "title")?.value;
-        if (title) draft.title = title;
+          const title = extractStructuredFields(draft.text).find((f) => f.kind === "title")?.value;
+          if (title) draft.title = title;
+        }
+
+        // Il nome della cartella conta solo se il contenuto non ha già
+        // suggerito una categoria --- un indizio più debole di quanto
+        // Hinthial ha già letto nel file stesso, non lo sovrascrive.
+        if (!draft.categoryId && draft.folderHint) {
+          const folderHint = draft.folderHint;
+          const match = categoriesResult.find((c) => c.name.toLowerCase() === folderHint.toLowerCase());
+          if (match) draft.categoryId = match.id;
+        }
       }
 
       const computedGroups = groupByIssuer(read, existingDocuments, existingDossiers);
@@ -126,6 +157,40 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile leggere i file scelti.");
       setPhase({ step: "idle" });
+    }
+  }
+
+  async function handleFilesPicked(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    await processFiles(files.map((file) => ({ file, folderHint: null })));
+  }
+
+  /**
+   * FASE 25 --- import da Google Drive: il Picker gira per intero nel
+   * browser (v. domain/google-drive/client.ts), il nostro server non
+   * vede né il token né i file scelti. Da qui in avanti, ogni file
+   * scaricato è un File come un altro: stessa lettura, stesso
+   * raggruppamento, stessa cifratura all'importazione finale --- nessun
+   * percorso a parte per "i file arrivati da Drive".
+   */
+  async function handleGoogleDriveImport() {
+    if (!GOOGLE_DRIVE_CLIENT_ID || !GOOGLE_PICKER_API_KEY) return;
+    setError(null);
+    setDriveBusy(true);
+    try {
+      const { files, accessToken } = await pickGoogleDriveFiles(GOOGLE_DRIVE_CLIENT_ID, GOOGLE_PICKER_API_KEY);
+      if (files.length === 0) return; // annullato dall'utente, non un errore
+
+      const downloaded: FileToRead[] = [];
+      for (const item of files) {
+        const file = await downloadGoogleDriveFile(accessToken, item);
+        downloaded.push({ file, folderHint: item.folderHint });
+      }
+      await processFiles(downloaded);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile importare da Google Drive.");
+    } finally {
+      setDriveBusy(false);
     }
   }
 
@@ -238,7 +303,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
       ) : null}
 
       {phase.step === "idle" ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-950">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-950">
           <label className="cursor-pointer text-sm font-medium text-brand hover:underline">
             Scegli i file da importare
             <input
@@ -249,6 +314,19 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
               aria-label="Scegli i file da importare"
             />
           </label>
+          {GOOGLE_DRIVE_CLIENT_ID && GOOGLE_PICKER_API_KEY ? (
+            <>
+              <span className="text-xs text-zinc-400 dark:text-zinc-600">oppure</span>
+              <button
+                type="button"
+                onClick={handleGoogleDriveImport}
+                disabled={driveBusy}
+                className="text-sm font-medium text-brand hover:underline disabled:opacity-50 disabled:no-underline"
+              >
+                {driveBusy ? "Connessione a Google Drive…" : "📁 Importa da Google Drive"}
+              </button>
+            </>
+          ) : null}
         </div>
       ) : phase.step === "reading" ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
