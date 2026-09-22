@@ -51,6 +51,10 @@ export default async function AppLayout({
       initialMasterKeyIntroSeen={user.masterKeyIntroSeen}
       initialAIMasterEnabled={user.aiMasterEnabled}
       initialAIChatConsent={user.aiChatConsent}
+      initialAIExtractionConsent={user.aiExtractionConsent}
+      initialAIHealthConsent={user.aiHealthConsent}
+      initialAITranscriptionConsent={user.aiTranscriptionConsent}
+      initialAIProactiveAlertsConsent={user.aiProactiveAlertsConsent}
     >
       {children}
     </AppShell>

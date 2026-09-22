@@ -106,6 +106,10 @@ export type Database = {
           master_key_intro_seen: boolean;
           ai_master_enabled: boolean;
           ai_chat_consent: boolean;
+          ai_extraction_consent: boolean;
+          ai_health_consent: boolean;
+          ai_transcription_consent: boolean;
+          ai_proactive_alerts_consent: boolean;
           capsule_countdown_visible: boolean;
           digital_legacy_enabled: boolean;
           digital_legacy_preset: DigitalLegacyPresetColumn;
@@ -138,6 +142,10 @@ export type Database = {
           master_key_intro_seen?: boolean;
           ai_master_enabled?: boolean;
           ai_chat_consent?: boolean;
+          ai_extraction_consent?: boolean;
+          ai_health_consent?: boolean;
+          ai_transcription_consent?: boolean;
+          ai_proactive_alerts_consent?: boolean;
           capsule_countdown_visible?: boolean;
           digital_legacy_enabled?: boolean;
           digital_legacy_preset?: DigitalLegacyPresetColumn;
@@ -170,6 +178,10 @@ export type Database = {
           master_key_intro_seen?: boolean;
           ai_master_enabled?: boolean;
           ai_chat_consent?: boolean;
+          ai_extraction_consent?: boolean;
+          ai_health_consent?: boolean;
+          ai_transcription_consent?: boolean;
+          ai_proactive_alerts_consent?: boolean;
           capsule_countdown_visible?: boolean;
           digital_legacy_enabled?: boolean;
           digital_legacy_preset?: DigitalLegacyPresetColumn;

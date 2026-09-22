@@ -218,7 +218,18 @@ export async function updateAIMasterEnabled(
 ): Promise<void> {
   const { error } = await supabase
     .from("profiles")
-    .update(enabled ? { ai_master_enabled: true } : { ai_master_enabled: false, ai_chat_consent: false })
+    .update(
+      enabled
+        ? { ai_master_enabled: true }
+        : {
+            ai_master_enabled: false,
+            ai_chat_consent: false,
+            ai_extraction_consent: false,
+            ai_health_consent: false,
+            ai_transcription_consent: false,
+            ai_proactive_alerts_consent: false,
+          },
+    )
     .eq("id", userId);
 
   if (error) {
@@ -239,6 +250,92 @@ export async function updateAIChatConsent(
   const { error } = await supabase
     .from("profiles")
     .update({ ai_chat_consent: consent })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare il consenso: ${error.message}`);
+  }
+}
+
+/**
+ * Consenso specifico all'estrazione avanzata dei contenuti (FASE 22,
+ * non ancora costruita) --- imposta già oggi la preferenza per quando
+ * sarà disponibile. Spegnerlo spegne anche ai_health_consent e
+ * ai_proactive_alerts_consent, che dipendono da questo: non esiste un
+ * avviso proattivo o un'eccezione per la Salute senza l'estrazione
+ * stessa attiva. Riaccenderlo non li riaccende da solo.
+ */
+export async function updateAIExtractionConsent(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  consent: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update(
+      consent
+        ? { ai_extraction_consent: true }
+        : { ai_extraction_consent: false, ai_health_consent: false, ai_proactive_alerts_consent: false },
+    )
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare il consenso: ${error.message}`);
+  }
+}
+
+/**
+ * Consenso ulteriore per includere anche la categoria Salute
+ * nell'estrazione avanzata --- ha effetto solo se ai_extraction_consent
+ * è true (v. updateAIExtractionConsent sopra, che lo spegne insieme al
+ * resto se il consenso più generale viene ritirato).
+ */
+export async function updateAIHealthConsent(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  consent: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ ai_health_consent: consent })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare il consenso: ${error.message}`);
+  }
+}
+
+/** Consenso specifico alla trascrizione audio/video reale (FASE 22b, non ancora costruita). */
+export async function updateAITranscriptionConsent(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  consent: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ ai_transcription_consent: consent })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare il consenso: ${error.message}`);
+  }
+}
+
+/**
+ * Consenso specifico agli avvisi proattivi (FASE 24, non ancora
+ * costruita) --- ha effetto solo se ai_extraction_consent è anche true:
+ * non esiste modo di generare un avviso senza aver prima letto i
+ * contenuti (v. updateAIExtractionConsent, che lo spegne insieme al
+ * resto se ritirato).
+ */
+export async function updateAIProactiveAlertsConsent(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  consent: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ ai_proactive_alerts_consent: consent })
     .eq("id", userId);
 
   if (error) {

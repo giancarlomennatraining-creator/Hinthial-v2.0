@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-22 (4)
+
+### Consenso preparatorio per estrazione avanzata, Salute, trascrizione e avvisi proattivi
+
+**Cosa fa:** in Impostazioni → Intelligenza artificiale (e nel pannello ⚙ della pagina AI) compaiono quattro nuove preferenze SI/NO, oltre a quella già esistente per la Chat: **Estrazione avanzata dei contenuti**, **Trascrizione audio/video**, **Generazione di avvisi proattivi**, e una riga in più subordinata alla prima --- **includi anche la categoria Salute** --- visibile e attivabile solo quando l'estrazione avanzata è a sua volta attiva. Nessuna di queste funzioni esiste ancora: attivarle oggi non fa succedere nulla, prepara solo la preferenza per quando la funzione corrispondente (FASI 22, 22b, 24 del piano) sarà davvero costruita. "Generazione di avvisi proattivi" resta disabilitata finché "Estrazione avanzata" non è attiva --- non esiste modo di generare un avviso senza aver prima letto i contenuti.
+
+**Note tecniche:** quattro nuove colonne su `profiles` (`ai_extraction_consent`, `ai_health_consent`, `ai_transcription_consent`, `ai_proactive_alerts_consent`), stesso principio del cancello generale già esistente: spegnere `ai_master_enabled` spegne anche queste, non solo `ai_chat_consent`; spegnere `ai_extraction_consent` spegne a cascata `ai_health_consent` e `ai_proactive_alerts_consent`, che dipendono da essa --- riaccenderla non le riaccende da sola, restano scelte esplicite (v. `updateAIExtractionConsent` in `domain/profile/repository.ts`). `AIProcessingConsentProvider` e `AIConsentSettings` estesi di conseguenza, senza introdurre un modello dati generico "a tre assi" (funzione × categoria × singolo file) discusso e poi scartato in favore di una sequenza piatta di interruttori --- più semplice, e sufficiente per una preferenza che oggi non pilota ancora nulla.
+
+Verificato: typecheck, lint, unit test rieseguiti senza modifiche, nuovo test e2e dedicato alla cascata di dipendenze (spegnimento a cascata in entrambe le direzioni, mancata riaccensione automatica, persistenza dopo un refresh), `ai.spec.ts`/`ai-processing-consent.spec.ts`/`dashboard-layout.spec.ts` rieseguiti senza regressioni. Verificato anche a schermo con uno screenshot temporaneo, poi rimosso.
+
+---
+
 ## 2026-09-22 (3)
 
 ### Indicatore di caricamento nella chat con Hinthia
