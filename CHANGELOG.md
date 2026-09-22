@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-22 (2)
+
+### Restyle della pagina AI: "Parla con Hinthia"
+
+**Cosa fa:** la pagina dell'assistente cambia look e si chiama "Parla con Hinthia" invece di "Assistente AI". Il consenso ("Risposte reali attive"/disattive, il cancello generale e quello specifico della Chat) non occupa più spazio nel corpo della pagina: si apre da un tasto ⚙ in alto, in un pannello laterale, come già succede per il dettaglio di un evento in Impostazioni → Attività. Ogni messaggio ha ora un piccolo avatar (Hinthia per le risposte, le tue iniziali per le domande) e un orario; quando scrivi o Hinthia risponde con più messaggi di seguito, l'avatar compare solo sull'ultimo e le bolle si stringono, come nelle chat più comuni. Il tasto "Chiedi" diventa un'icona di invio circolare. La sezione "Cose da tenere d'occhio" (scadenze scadute, beni senza documenti) è stata rimossa: era già stata tolta dalla Dashboard in passato per lo stesso motivo (ripeteva altre informazioni già visibili), e restava solo qui --- toglierla anche da qui l'ha eliminata come funzione dall'app, non solo da questa pagina.
+
+**Note tecniche:** `AIConsentSettings` (già esistente per Impostazioni → Intelligenza artificiale) è ora riusato pari pari dentro il `SidePanel` della pagina AI, invece di duplicare la logica di consenso in `AIPanel` --- un'unica implementazione, non due copie da tenere sincronizzate. `ChatMessage` (`AIChatProvider.tsx`) guadagna un campo `createdAt` solo per mostrare l'orario, non un log persistito. Rimossi come codice ormai orfano: `SuggestionsList`, `mockAIProvider.suggest()`, il tipo `AISuggestion` (il file `SuggestionsList.tsx` è stato rinominato `SourceList.tsx`, l'unica cosa che restava). `app/(app)/ai/page.tsx` diventa un Server Component che legge il profilo con `getCurrentUser()` per passare nome/avatar a `AIPanel` --- non poteva passare direttamente la render-prop di `RequireMasterKey` (una funzione non è serializzabile da un Server a un Client Component), quindi un piccolo guscio client (`AIPage.tsx`) fa da tramite.
+
+Verificato: typecheck, lint, 427 test unitari rieseguiti senza modifiche (i 6 falliti in `guardian-verification.integration.test.ts` sono un'integrazione preesistente e indipendente da questa modifica, non toccata qui), più `ai.spec.ts`, `ai-processing-consent.spec.ts` (riscritto per il pannello ⚙) e `dashboard-layout.spec.ts` aggiornati e passati contro una build reale. Verificato anche a schermo con uno screenshot temporaneo, poi rimosso.
+
+---
+
 ## 2026-09-22
 
 ### La prova generale dell'eredità digitale, e la scheda d'emergenza stampabile

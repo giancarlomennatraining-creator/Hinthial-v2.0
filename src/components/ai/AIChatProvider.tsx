@@ -7,6 +7,8 @@ export interface ChatMessage {
   role: "user" | "assistant";
   text: string;
   sources?: AISource[];
+  /** Solo per mostrare l'ora nella bolla --- non un vero log, v. nota sotto. */
+  createdAt: number;
 }
 
 interface AIChatContextValue {

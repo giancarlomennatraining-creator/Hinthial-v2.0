@@ -1,10 +1,4 @@
-import type {
-  AIAnswer,
-  AIContext,
-  AIProvider,
-  AISource,
-  AISuggestion,
-} from "@/domain/ai/types";
+import type { AIAnswer, AIContext, AIProvider, AISource } from "@/domain/ai/types";
 import { AI_SOURCE_KIND_LABELS } from "@/domain/ai/labels";
 
 /**
@@ -16,8 +10,6 @@ import { AI_SOURCE_KIND_LABELS } from "@/domain/ai/labels";
  * in vista di un provider reale (FASE 11) --- non finge di capire il
  * linguaggio naturale.
  */
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 function tokenize(query: string): string[] {
   return query
@@ -247,41 +239,4 @@ function answer(query: string, context: AIContext): AIAnswer {
   };
 }
 
-function suggest(context: AIContext): AISuggestion[] {
-  const suggestions: AISuggestion[] = [];
-  const now = Date.now();
-
-  const overdue = context.reminders.filter((r) => !r.completed && new Date(r.dueAt).getTime() < now);
-  if (overdue.length > 0) {
-    suggestions.push({
-      text: `Hai ${overdue.length} ${overdue.length === 1 ? "scadenza scaduta" : "scadenze scadute"}: ${overdue.map((r) => r.title).join(", ")}.`,
-      sources: overdue.map((r) => ({ kind: "reminder", id: r.id, label: r.title, href: "/reminders" })),
-    });
-  }
-
-  const soon = context.reminders.filter((r) => {
-    if (r.completed) return false;
-    const daysLeft = (new Date(r.dueAt).getTime() - now) / DAY_MS;
-    return daysLeft >= 0 && daysLeft <= 7;
-  });
-  if (soon.length > 0) {
-    suggestions.push({
-      text: `${soon.length === 1 ? "Questa scadenza è" : "Queste scadenze sono"} nei prossimi 7 giorni: ${soon.map((r) => r.title).join(", ")}.`,
-      sources: soon.map((r) => ({ kind: "reminder", id: r.id, label: r.title, href: "/reminders" })),
-    });
-  }
-
-  const assetsWithoutDocuments = context.assets.filter(
-    (asset) => !context.documents.some((doc) => doc.relatedAssetId === asset.id),
-  );
-  if (assetsWithoutDocuments.length > 0) {
-    suggestions.push({
-      text: `${assetsWithoutDocuments.length === 1 ? "Questo bene non ha" : "Questi beni non hanno"} ancora documenti collegati: ${assetsWithoutDocuments.map((a) => a.name).join(", ")}.`,
-      sources: assetsWithoutDocuments.map((a) => ({ kind: "asset", id: a.id, label: a.name, href: "/assets" })),
-    });
-  }
-
-  return suggestions;
-}
-
-export const mockAIProvider: AIProvider = { search, retrieve, answer, suggest };
+export const mockAIProvider: AIProvider = { search, retrieve, answer };

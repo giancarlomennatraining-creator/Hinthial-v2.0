@@ -30,9 +30,9 @@ function formatDate(iso: string): string {
  * completezza ("N di M amici non collegati a nessuna capsula") che
  * misurano l'ordine, non un rischio --- una sezione costruita su
  * regole che contano sempre qualcosa ha sempre qualcosa da dire, e
- * così smette di significare qualcosa. I suggerimenti proattivi
- * restano dove sono chiesti esplicitamente, in Assistente AI (v.
- * SuggestionsList).
+ * così smette di significare qualcosa. Restava solo nell'Assistente
+ * AI (v. SourceList), da dove è stata tolta a sua volta nel restyle
+ * della pagina --- la funzione non esiste più, non solo qui.
  *
  * Tutto derivato da un unico AIContext (v. domain/ai/context.ts) ---
  * lo stesso snapshot già decifrato che usano Assistente AI e ricerca

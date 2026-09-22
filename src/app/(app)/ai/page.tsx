@@ -1,8 +1,15 @@
-"use client";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { AIPage } from "@/components/ai/AIPage";
 
-import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
-import { AIPanel } from "@/components/ai/AIPanel";
+export default async function AiPage() {
+  const user = await getCurrentUser();
 
-export default function AiPage() {
-  return <RequireMasterKey>{(masterKey) => <AIPanel masterKey={masterKey} />}</RequireMasterKey>;
+  return (
+    <AIPage
+      userId={user?.id ?? ""}
+      firstName={user?.firstName ?? ""}
+      lastName={user?.lastName ?? ""}
+      avatarUrl={user?.avatarUrl ?? null}
+    />
+  );
 }

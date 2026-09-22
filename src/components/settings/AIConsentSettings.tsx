@@ -7,11 +7,12 @@ import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvi
 /**
  * Impostazioni -> Privacy: il "cancello" generale per l'IA reale (v.
  * HINTHIAL_MVP.md, "Explicit AI processing") più le funzioni specifiche
- * che dipendono da esso --- oggi solo la Chat (v. AIPanel, dove lo
- * stesso stato è visibile/gestibile anche sul posto: sincronizzato,
- * come ListViewToggle/ListViewSettings). Spegnere il cancello spegne
- * anche le funzioni sotto; riaccenderlo non le riaccende da solo --- ogni
- * funzione resta una scelta esplicita a sé.
+ * che dipendono da esso --- oggi solo la Chat. Stesso componente
+ * riusato anche dentro il pannello ⚙ della pagina AI (v. AIPanel):
+ * un'unica implementazione della logica di consenso, non due copie
+ * sincronizzate. Spegnere il cancello spegne anche le funzioni sotto;
+ * riaccenderlo non le riaccende da solo --- ogni funzione resta una
+ * scelta esplicita a sé.
  */
 export function AIConsentSettings() {
   const { masterEnabled, setMasterEnabled, chatConsent, setChatConsent } = useAIProcessingConsent();

@@ -68,8 +68,9 @@ test("la dashboard mostra i contatori per sezione e i tre riquadri anche a vault
 
   // Niente più "Da tenere d'occhio" in dashboard (v. richiesta utente):
   // ripeteva dati già presenti nelle card qui sopra, e per il resto
-  // misurava la completezza invece di segnalare un rischio. I
-  // suggerimenti proattivi restano in Assistente AI, dove si chiedono.
+  // misurava la completezza invece di segnalare un rischio. Non è più
+  // rimasta nemmeno in Assistente AI (v. richiesta utente successiva,
+  // restyle della pagina): la funzione è stata tolta del tutto.
   await expect(page.getByText("Da tenere d'occhio")).not.toBeVisible();
   await expect(page.getByText("Questo bene non ha ancora documenti collegati: Barca.")).not.toBeVisible();
 

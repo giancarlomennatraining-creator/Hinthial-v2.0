@@ -33,11 +33,6 @@ export interface AIAnswer {
   sources: AISource[];
 }
 
-export interface AISuggestion {
-  text: string;
-  sources: AISource[];
-}
-
 /**
  * Interfaccia richiesta da HINTHIAL_MVP.md FASE 10 --- pensata per
  * essere implementata sia da un provider locale (questo file, v.
@@ -52,6 +47,4 @@ export interface AIProvider {
   retrieve(query: string, context: AIContext): AISource[];
   /** Usa retrieve() e produce una risposta testuale, citando le fonti usate. */
   answer(query: string, context: AIContext): AIAnswer;
-  /** Suggerimenti non richiesti, dedotti dallo stato attuale (scadenze scadute, beni senza documenti, ...). */
-  suggest(context: AIContext): AISuggestion[];
 }

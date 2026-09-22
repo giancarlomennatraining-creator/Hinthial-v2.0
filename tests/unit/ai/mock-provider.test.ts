@@ -299,34 +299,3 @@ describe("mockAIProvider.answer", () => {
     expect(result.sources).toEqual([]);
   });
 });
-
-describe("mockAIProvider.suggest", () => {
-  it("flags overdue reminders", () => {
-    const context = buildContext();
-    const suggestions = mockAIProvider.suggest(context);
-    const overdue = suggestions.find((s) => s.text.includes("scaduta"));
-    expect(overdue).toBeDefined();
-    expect(overdue?.sources.map((s) => s.id)).toContain("rem-rinnovo");
-  });
-
-  it("flags an asset with no linked documents", () => {
-    const context = buildContext({
-      assets: [
-        { id: "asset-auto", name: "Auto Panda", categoryId: "cat-assicurazioni", createdAt: "2026-01-01" },
-        { id: "asset-barca", name: "Barca", categoryId: null, createdAt: "2026-01-01" },
-      ],
-    });
-    const suggestions = mockAIProvider.suggest(context);
-    const noDocs = suggestions.find((s) => s.text.includes("Barca"));
-    expect(noDocs).toBeDefined();
-  });
-
-  it("returns nothing when there's nothing to flag", () => {
-    const context = buildContext({
-      reminders: [],
-      assets: [],
-      documents: [],
-    });
-    expect(mockAIProvider.suggest(context)).toEqual([]);
-  });
-});

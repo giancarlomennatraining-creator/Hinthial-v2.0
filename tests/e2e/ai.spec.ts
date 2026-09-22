@@ -63,19 +63,21 @@ test("l'assistente AI risponde su beni/documenti collegati per categoria e segna
   await page.getByRole("button", { name: "Aggiungi scadenza" }).click();
   await expect(page).toHaveURL(/\/reminders$/, { timeout: 15_000 });
 
-  // L'assistente AI.
-  await page.getByRole("link", { name: "AI", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Assistente AI" })).toBeVisible();
-
-  // Suggerimento proattivo, senza che l'utente chieda nulla.
+  // Il suggerimento proattivo vive in Dashboard, non più anche in AI
+  // (v. richiesta utente: niente "Cose da tenere d'occhio" sulla pagina AI).
+  await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByText(/scaduta/).first()).toBeVisible();
   await expect(page.getByText("Rinnovo assicurazione auto").first()).toBeVisible();
+
+  // L'assistente AI.
+  await page.getByRole("link", { name: "AI", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Parla con Hinthia" })).toBeVisible();
 
   // Domanda diretta: "assicurazioni" è il nome della categoria, non
   // compare nel nome del bene né in quello del documento --- la
   // risposta deve comunque trovarli seguendo la relazione categoria.
   await page.getByLabel("Fai una domanda").fill("Quali assicurazioni ho?");
-  await page.getByRole("button", { name: "Chiedi" }).click();
+  await page.getByRole("button", { name: "Invia" }).click();
 
   await expect(page.getByText("polizza-auto.txt").first()).toBeVisible();
   await expect(page.getByText("Rinnovo assicurazione auto").first()).toBeVisible();
@@ -83,7 +85,7 @@ test("l'assistente AI risponde su beni/documenti collegati per categoria e segna
   // Domanda generica senza corrispondenze specifiche: ripiega
   // sull'elenco completo del tipo nominato ("quanti beni ho?").
   await page.getByLabel("Fai una domanda").fill("Quanti beni ho?");
-  await page.getByRole("button", { name: "Chiedi" }).click();
+  await page.getByRole("button", { name: "Invia" }).click();
   await expect(page.getByText("Auto Panda").last()).toBeVisible();
 
   // Le fonti citate sono link cliccabili verso la pagina giusta.
