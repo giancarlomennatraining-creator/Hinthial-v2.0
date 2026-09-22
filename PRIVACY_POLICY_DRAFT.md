@@ -115,14 +115,13 @@ Il consenso funziona su più livelli, tutti gestibili da Impostazioni → Intell
 
 ## 10. Dati relativi alla salute
 
-`[DECISIONE APERTA --- non tecnica, di prodotto/etica]`
+Oggi i contenuti che archivi nella categoria Salute sono trattati come ogni altro contenuto: cifrati, mai letti da noi.
 
-Oggi i contenuti che archivi nella categoria Salute sono trattati come ogni altro contenuto: cifrati, mai letti da noi. La domanda aperta riguarda **il giorno in cui la lettura più approfondita dei contenuti (sezione 9) sarà disponibile**: anche con un consenso specifico ulteriore attivato dall'utente, è ammissibile inviare contenuto sanitario a un fornitore esterno? Due strade oneste:
+**Decisione presa**: quando la lettura più approfondita dei contenuti (sezione 9) sarà disponibile, **i contenuti della categoria Salute ne restano esclusi in ogni caso, indipendentemente da qualunque consenso specifico attivato**. Non è un'eccezione che l'utente può togliere spuntando una casella: date, scadenze e richiami sanitari continueranno a essere individuati come oggi, con la sola lettura locale sul dispositivo --- mai inviati a un fornitore esterno.
 
-- **Sì, con consenso esplicito e separato** (quello che l'interruttore di Impostazioni già prevede) --- coerente con l'impostazione generale del prodotto ("il consenso esplicito è la barriera, non il tipo di dato").
-- **No, mai, indipendentemente dal consenso** --- una scelta più cauta, che tratta i dati sanitari come categoria esclusa a priori dall'invio a terzi, qualunque sia la volontà dell'utente in quel momento.
+Questa scelta è deliberatamente più cauta di quanto il solo consenso richiederebbe: è coerente con come Hinthial tratta altri dati particolarmente delicati altrove nel prodotto (guardiani, eredità digitale), dove si preferisce un limite fisso a un consenso che potrebbe essere dato senza aver pesato davvero la conseguenza. Il costo, dichiarato apertamente: nessuna estrazione automatica di scadenze di vaccini o promemoria di farmaci dal testo di un referto --- quella parte resta manuale.
 
-Questa bozza non prende posizione: è la decisione più importante da chiudere prima che la lettura approfondita dei contenuti venga davvero costruita.
+*Nota tecnica per chi revisiona: questa è una decisione di prodotto, non una conclusione legale --- va comunque confermata da chi si occupa della parte legale prima della pubblicazione, ma non richiede ulteriori informazioni per essere scritta (a differenza delle altre voci `[DA COMPLETARE]` di questo documento).*
 
 ---
 
@@ -156,4 +155,4 @@ Se attivi questa funzione, designi tu stesso uno o più "guardiani" e definisci 
 2. Verifica delle garanzie di trasferimento extra-UE offerte oggi da Supabase, Anthropic, Vercel nei rispettivi termini (sezioni 5, 6) --- e se serve un DPA firmato a parte con Anthropic, non solo i termini standard.
 3. Periodo di conservazione dei dati, con un numero preciso (sezione 7).
 4. Come si esercitano in pratica i diritti dell'interessato (sezione 11).
-5. **La decisione sui dati sanitari** (sezione 10) --- l'unico punto di questa bozza che non è "trovare l'informazione mancante" ma "decidere cosa fare".
+5. Conferma legale della decisione sui dati sanitari (sezione 10) --- la scelta di prodotto è già presa (esclusione sempre, indipendente dal consenso), resta da confermare che il testo la esprima correttamente.
