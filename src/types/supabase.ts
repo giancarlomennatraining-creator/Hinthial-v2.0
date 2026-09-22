@@ -1084,6 +1084,50 @@ export type Database = {
           },
         ];
       };
+      emergency_cards: {
+        Row: {
+          owner_id: string;
+          encrypted_blood_type: string | null;
+          encrypted_allergies: string | null;
+          encrypted_conditions: string | null;
+          encrypted_medications: string | null;
+          encrypted_doctor_name: string | null;
+          encrypted_doctor_phone: string | null;
+          encrypted_contacts: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          owner_id: string;
+          encrypted_blood_type?: string | null;
+          encrypted_allergies?: string | null;
+          encrypted_conditions?: string | null;
+          encrypted_medications?: string | null;
+          encrypted_doctor_name?: string | null;
+          encrypted_doctor_phone?: string | null;
+          encrypted_contacts?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          owner_id?: string;
+          encrypted_blood_type?: string | null;
+          encrypted_allergies?: string | null;
+          encrypted_conditions?: string | null;
+          encrypted_medications?: string | null;
+          encrypted_doctor_name?: string | null;
+          encrypted_doctor_phone?: string | null;
+          encrypted_contacts?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "emergency_cards_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: true;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {

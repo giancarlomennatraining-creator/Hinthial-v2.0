@@ -20,6 +20,8 @@ import {
 } from "@/domain/digital-legacy/types";
 import { useToast } from "@/components/ui/ToastProvider";
 import { DigitalLegacyStatusBanner } from "@/components/digital-legacy/DigitalLegacyStatusBanner";
+import { DigitalLegacyRehearsal } from "@/components/digital-legacy/DigitalLegacyRehearsal";
+import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { cn } from "@/lib/utils";
 
 const GUARDIAN_QUORUM_ORDER: GuardianQuorum[] = ["unanimous", "majority", "single"];
@@ -328,6 +330,12 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
       >
         {saving ? "Salvataggio…" : "Salva"}
       </button>
+
+      <div className="flex flex-col gap-4 border-t border-zinc-200 pt-10 dark:border-zinc-800">
+        <RequireMasterKey>
+          {(masterKey) => <DigitalLegacyRehearsal masterKey={masterKey} settings={settings} />}
+        </RequireMasterKey>
+      </div>
     </div>
   );
 }

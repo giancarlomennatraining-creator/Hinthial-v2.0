@@ -6,6 +6,7 @@ import { useCrossfade } from "@/lib/use-crossfade";
 import { UserInfoPanel } from "@/components/settings/UserInfoPanel";
 import { OnboardingSettingsPanel } from "@/components/settings/OnboardingSettingsPanel";
 import { DigitalLegacySettingsPanel } from "@/components/settings/DigitalLegacySettingsPanel";
+import { EmergencyCardPanel } from "@/components/settings/EmergencyCardPanel";
 import { PrivacyPanel } from "@/components/settings/PrivacyPanel";
 import { MfaSettingsPanel } from "@/components/settings/MfaSettingsPanel";
 import { DeviceLockPanel } from "@/components/settings/DeviceLockPanel";
@@ -31,6 +32,7 @@ import {
   EyeIcon,
   HeartIcon,
   ImportExportIcon,
+  MedicalCardIcon,
   SecurityIcon,
   SlidersIcon,
   UserIcon,
@@ -42,6 +44,7 @@ type Tab =
   | "privacy"
   | "security"
   | "digital-legacy"
+  | "emergency-card"
   | "categories"
   | "appearance"
   | "activity"
@@ -78,6 +81,7 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
     tabs: [
       { id: "security", label: "Sicurezza", icon: SecurityIcon },
       { id: "digital-legacy", label: "Eredità digitale", icon: HeartIcon },
+      { id: "emergency-card", label: "Scheda d'emergenza", icon: MedicalCardIcon },
       { id: "activity", label: "Attività", icon: ActivityIcon },
     ],
   },
@@ -207,6 +211,22 @@ export function SettingsTabs({
       // Solo parametri (v. domain/digital-legacy) --- nessun dato
       // cifrato coinvolto, come Sicurezza: non richiede la master key.
       return <DigitalLegacySettingsPanel userId={userId} />;
+    }
+    if (activeTab === "emergency-card") {
+      // Tutto cifrato (v. domain/emergency-card) --- richiede la master key, a differenza della scheda qui sopra.
+      return (
+        <RequireMasterKey>
+          {(masterKey) => (
+            <EmergencyCardPanel
+              masterKey={masterKey}
+              userId={userId}
+              firstName={firstName}
+              lastName={lastName}
+              birthDate={birthDate}
+            />
+          )}
+        </RequireMasterKey>
+      );
     }
     if (activeTab === "ai") {
       // Una scheda a sé (non più una sottoparte di Privacy, v. richiesta

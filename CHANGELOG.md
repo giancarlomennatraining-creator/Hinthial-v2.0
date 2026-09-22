@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-22
+
+### La prova generale dell'eredità digitale, e la scheda d'emergenza stampabile
+
+**Cosa fa:** due funzioni nuove, entrambe in Impostazioni.
+
+**La prova generale** (scheda "Eredità digitale") --- un pulsante che apre uno scenario completo: se il monitoraggio si attivasse oggi, quando succederebbe cosa, con le date vere calcolate dalle tue impostazioni attuali (inattività, promemoria, periodo di grazia, verifica formale, attesa finale), non un esempio astratto. Mostra anche chi verrebbe interpellato tra i tuoi guardiani veri, con la regola di quorum scelta, e chi riceverebbe cosa tra le tue capsule già condivise --- ognuna mostrata come la stessa "lettera" già usata nell'anteprima di una singola capsula. Senza nessun guardiano collegato, la simulazione si ferma onestamente dopo averli "interpellati", invece di inventare una conferma che non potrebbe mai arrivare da sola. Nessun accesso reale concesso, nessuna email davvero inviata.
+
+**La scheda d'emergenza** (nuova scheda "Scheda d'emergenza") --- pochi campi scritti una volta (gruppo sanguigno, allergie, condizioni rilevanti, farmaci abituali), un **medico di riferimento** a sé stante e uno o più contatti di emergenza, per generare una tessera da stampare e portare nel portafoglio o tenere sul frigorifero. Il medico è staccato dai contatti generici di proposito: chi presta soccorso ha due domande diverse, chi avvisare e chi conosce la storia clinica, non la stessa lista più lunga.
+
+**Note tecniche:** `domain/digital-legacy/rehearsal.ts` --- due funzioni pure (`buildDigitalLegacyRehearsal`, `groupSharedCapsulesByRecipient`), la stessa disciplina di `computeDigitalLegacyTransition` ma proiettata avanti in un colpo invece che "qual è la prossima azione da qui"; riusa `CapsuleListItem.relatedFriends` (già filtrato da `linkedUserId` come fa `shareCapsule`) invece di interrogare `capsule_shares` una seconda volta. Vive dietro il proprio `RequireMasterKey` --- a differenza del resto della scheda Eredità digitale, che non lo richiede, perché guardiani e capsule sono cifrati. Nuova tabella `emergency_cards` (una riga per account, tutta cifrata, stesso principio zero-knowledge di ogni altro contenuto anche se lo scopo finale della scheda è mostrarsi in chiaro una volta stampata) --- riusa il meccanismo di stampa già in produzione per il kit di recovery (`printOnlyMarkedContent()`).
+
+Verificato: 8 test unitari sulla matematica del calendario (incluso il caso "zero guardiani") e sul raggruppamento dei destinatari, più due nuovi test e2e end-to-end (la prova generale con impostazioni predefinite; la scheda d'emergenza compilata, salvata, e verificata dopo un refresh che richiede un nuovo sblocco) --- oltre alla suite Eredità digitale/Archivio/Autenticazione già esistente rieseguita senza modifiche. Un bug di layout reale (il pannello di anteprima, non contenuto dall'altezza, intercettava i click sugli elementi della colonna affianco quando questa cresceva) è stato trovato e corretto durante questa verifica, non dopo.
+
+---
+
 ## 2026-09-21 (4)
 
 ### Restyle di "Configura la cifratura", ultimo angolo rimasto prima di Halo

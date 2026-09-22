@@ -176,6 +176,17 @@ export function HeartIcon(props: IconProps) {
   );
 }
 
+/** Scheda "Scheda d'emergenza" in Impostazioni --- una tessera con una croce, non un'emoji: indicazione di sistema come le altre icone di questa scheda. */
+export function MedicalCardIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M12 9v6" />
+      <path d="M9 12h6" />
+    </svg>
+  );
+}
+
 export function SecurityIcon(props: IconProps) {
   return (
     <svg {...baseProps(props)}>
