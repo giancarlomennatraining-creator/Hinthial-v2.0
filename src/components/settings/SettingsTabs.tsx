@@ -12,6 +12,7 @@ import { MfaSettingsPanel } from "@/components/settings/MfaSettingsPanel";
 import { DeviceLockPanel } from "@/components/settings/DeviceLockPanel";
 import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
+import { TagsSettingsPanel } from "@/components/settings/TagsSettingsPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { NavOrientationSettings } from "@/components/settings/NavOrientationSettings";
 import { BottomNavItemsSettings } from "@/components/settings/BottomNavItemsSettings";
@@ -36,6 +37,7 @@ import {
   MedicalCardIcon,
   SecurityIcon,
   SlidersIcon,
+  TagIcon,
   UserIcon,
 } from "@/components/icons/nav-icons";
 
@@ -47,6 +49,7 @@ type Tab =
   | "digital-legacy"
   | "emergency-card"
   | "categories"
+  | "tags"
   | "appearance"
   | "activity"
   | "import-export"
@@ -92,6 +95,7 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
       { id: "privacy", label: "Privacy", icon: EyeIcon },
       { id: "ai", label: "Intelligenza artificiale", icon: AIIcon },
       { id: "categories", label: "Categorie", icon: CategoryIcon },
+      { id: "tags", label: "Tag", icon: TagIcon },
       { id: "import-export", label: "Importa/Esporta", icon: ImportExportIcon },
     ],
   },
@@ -250,6 +254,11 @@ export function SettingsTabs({
     }
     if (activeTab === "categories") {
       return <CategoriesPanel />;
+    }
+    if (activeTab === "tags") {
+      // A differenza di Categorie qui sopra, i tag sono cifrati (v.
+      // TagsSettingsPanel): richiede la master key sbloccata.
+      return <RequireMasterKey>{(masterKey) => <TagsSettingsPanel masterKey={masterKey} />}</RequireMasterKey>;
     }
     if (activeTab === "appearance") {
       return (

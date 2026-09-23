@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-23 (5)
+
+### Gestione dei tag
+
+**Cosa fa:** in Impostazioni → Privacy e dati → **Tag** trovi l'elenco di tutti i tag usati nell'Archivio, con quanti documenti li portano. Da lì puoi **rinominare** un tag (se il nuovo nome corrisponde a un tag già esistente, i due confluiscono in uno solo, senza duplicati) o **eliminarlo** (tolto da tutti i documenti che lo avevano, senza cancellare i documenti stessi). Un tag nuovo continua a crearsi aggiungendolo a un documento in Archivio, non da questa schermata. In più, cliccando un tag su un documento in Archivio, la lista si filtra mostrando solo i documenti con quel tag (con un tasto ✕ per togliere il filtro).
+
+**Note tecniche:** i tag non sono un'entità a sé nel database (a differenza delle categorie): ogni documento porta il proprio array di tag cifrato in un unico blob (`documents.encrypted_tags`), quindi non esiste query lato server per elencarli o contarli. `domain/documents/tags.ts` (funzioni pure, testate) aggrega i tag scorrendo i documenti già decifrati in memoria (`listDocuments`, lo stesso usato per mostrare l'Archivio), raggruppando case-insensitive: "Casa" e "casa" oggi sono sempre stati due tag distinti in tutto il codice, da qui in avanti si uniscono automaticamente (grafia mostrata: quella più frequente). Rinomina ed eliminazione ripetono `updateDocumentMetadata` una volta per ogni documento interessato (nessun `UPDATE` singolo possibile, essendo tutto cifrato) --- stesso schema già usato dalle azioni in blocco di Archivio. Nuova icona `TagIcon` (v. `components/icons/nav-icons.tsx`).
+
+Verificato: typecheck, lint, nuovo test unitario per `domain/documents/tags.ts` (15 casi: aggiunta senza duplicati, rimozione, rinomina con e senza merge, aggregazione con conteggio e grafia più frequente), nuovo test e2e dedicato (due documenti con "Casa"/"casa" → un solo tag con 2 documenti, rinomina, eliminazione, filtro in Archivio), `categories.spec.ts`/`archive.spec.ts` rieseguiti senza regressioni.
+
+---
+
 ## 2026-09-23 (4)
 
 ### Selezione multipla in Archivio, e il Cestino

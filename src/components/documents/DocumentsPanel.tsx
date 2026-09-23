@@ -16,6 +16,7 @@ import {
   updateTextNoteContent,
 } from "@/domain/documents/repository";
 import { getTrashRetentionDays } from "@/domain/profile/repository";
+import { listIncludesTag } from "@/domain/documents/tags";
 import { findTextSnippet, flattenForSearch } from "@/lib/text-snippet";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
@@ -116,6 +117,11 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [bulkTagInput, setBulkTagInput] = useState("");
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  // Impostato cliccando un tag su un documento (v. rendering dei tag
+  // qui sotto) --- niente menu a tendina, un solo tag alla volta:
+  // sfogliare "cosa ha questo tag" è la controparte naturale di poterli
+  // gestire (v. TagsSettingsPanel), non un filtro complesso a sé.
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "name", direction: "asc" });
   // FASE 17b --- avanzamento della lettura dei documenti già archiviati.
@@ -583,7 +589,8 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   const filteredDocuments = documents
     .filter(matchesQuery)
-    .filter((doc) => !categoryFilter || doc.categoryId === categoryFilter);
+    .filter((doc) => !categoryFilter || doc.categoryId === categoryFilter)
+    .filter((doc) => !tagFilter || listIncludesTag(doc.tags, tagFilter));
 
   // L'ordinamento (solo click su un'intestazione, quindi solo in
   // modalità tabellare) non tocca filteredDocuments stesso: la vista a
@@ -703,6 +710,16 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
               ))}
             </select>
             <ListViewToggle section="archive" hideOnMobile />
+            {tagFilter ? (
+              <button
+                type="button"
+                onClick={() => setTagFilter(null)}
+                className="flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-2 text-sm font-medium text-brand hover:bg-brand/20"
+              >
+                🏷️ {tagFilter}
+                <span aria-hidden="true">✕</span>
+              </button>
+            ) : null}
           </div>
 
           {/* Barra contestuale --- compare solo con almeno un documento
@@ -1160,12 +1177,15 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         {doc.tags.length > 0 ? (
                           <div className="mt-1.5 flex flex-wrap gap-1">
                             {doc.tags.map((tag) => (
-                              <span
+                              <button
                                 key={tag}
-                                className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
+                                type="button"
+                                onClick={() => setTagFilter(tag)}
+                                title={`Filtra per il tag "${tag}"`}
+                                className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 hover:bg-brand/15 hover:text-brand dark:bg-zinc-900 dark:text-zinc-400"
                               >
                                 {tag}
-                              </span>
+                              </button>
                             ))}
                           </div>
                         ) : null}

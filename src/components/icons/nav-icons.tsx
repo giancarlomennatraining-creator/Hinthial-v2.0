@@ -340,3 +340,13 @@ export function TrashIcon(props: IconProps) {
     </svg>
   );
 }
+
+/** Gestione tag (v. Impostazioni --- Privacy e dati). */
+export function TagIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <path d="M11.5 4H6a2 2 0 0 0-2 2v5.5a2 2 0 0 0 .6 1.4l8.5 8.5a2 2 0 0 0 2.8 0l5-5a2 2 0 0 0 0-2.8l-8.5-8.5A2 2 0 0 0 11.5 4z" />
+      <circle cx="7.5" cy="8.5" r="1.4" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
