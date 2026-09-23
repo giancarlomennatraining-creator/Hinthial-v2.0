@@ -6,22 +6,26 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import { bytesToUtf8 } from "@/lib/crypto";
 import {
-  deleteDocument,
   documentsAwaitingExtraction,
   downloadDocument,
   extractTextForExistingDocument,
   listDocuments,
+  moveDocumentsToTrash,
+  updateDocumentMetadata,
   updateDocumentTranscript,
   updateTextNoteContent,
 } from "@/domain/documents/repository";
+import { getTrashRetentionDays } from "@/domain/profile/repository";
 import { findTextSnippet, flattenForSearch } from "@/lib/text-snippet";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
+import { listDossiers, replaceDocumentDossierLinks } from "@/domain/dossiers/repository";
 import { contentKindFor, hasInlinePlayer, isTranscribable } from "@/lib/content-kind";
 import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
+import type { DossierListItem } from "@/domain/dossiers/types";
 import { saveBytesAsFile } from "@/lib/download";
 import { formatDate, formatSize } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
@@ -93,10 +97,23 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
+  const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
   const [documents, setDocuments] = useState<DocumentListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
+
+  // Selezione multipla (v. richiesta utente) --- un Set, non un array:
+  // toggle/verifica per id devono restare O(1) anche con centinaia di
+  // righe. `trashRetentionDays` serve solo per la frase di conferma
+  // dell'eliminazione in blocco/singola ("potrai ripristinarli entro N
+  // giorni") --- letto una volta all'avvio, non un Provider: cambia di
+  // rado e non deve restare sincronizzato in tempo reale con Impostazioni.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [trashRetentionDays, setTrashRetentionDays] = useState(15);
+  const [bulkPopover, setBulkPopover] = useState<"category" | "tag" | "dossier" | null>(null);
+  const [bulkTagInput, setBulkTagInput] = useState("");
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -146,14 +163,21 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [categoriesResult, assetsResult, documentsResult] = await Promise.all([
+      const [categoriesResult, assetsResult, dossiersResult, documentsResult] = await Promise.all([
         listCategories(supabase),
         listAssets(supabase, masterKey),
+        listDossiers(supabase, masterKey),
         listDocuments(supabase, masterKey),
       ]);
       setCategories(categoriesResult);
       setAssets(assetsResult);
+      setDossiers(dossiersResult);
       setDocuments(documentsResult);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) setTrashRetentionDays(await getTrashRetentionDays(supabase, user.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare l'archivio.");
     } finally {
@@ -310,8 +334,21 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
+  /**
+   * L'eliminazione sposta nel Cestino, non elimina più per sempre (v.
+   * richiesta utente dopo la selezione multipla: farlo su più
+   * documenti insieme moltiplica il rischio di un clic distratto).
+   * Stessa funzione per il singolo documento (qui) e per il blocco
+   * (handleBulkDelete sotto) --- moveDocumentsToTrash accetta già un
+   * elenco di id.
+   */
   async function handleDelete(doc: DocumentListItem) {
-    if (!window.confirm(`Eliminare "${doc.filename}"? L'operazione non è reversibile.`)) return;
+    if (
+      !window.confirm(
+        `Spostare "${doc.filename}" nel cestino? Potrai ripristinarlo entro ${trashRetentionDays} giorni, da Archivio → Cestino.`,
+      )
+    )
+      return;
 
     setBusyDocId(doc.id);
     setError(null);
@@ -321,12 +358,151 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
 
-      await deleteDocument(supabase, user.id, doc);
+      await moveDocumentsToTrash(supabase, user.id, [doc.id], trashRetentionDays);
       setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+      setSelectedIds((prev) => {
+        if (!prev.has(doc.id)) return prev;
+        const next = new Set(prev);
+        next.delete(doc.id);
+        return next;
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare il contenuto.");
+      setError(err instanceof Error ? err.message : "Impossibile spostare il contenuto nel cestino.");
     } finally {
       setBusyDocId(null);
+    }
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll(ids: string[]) {
+    setSelectedIds((prev) => {
+      const allSelected = ids.length > 0 && ids.every((id) => prev.has(id));
+      return allSelected ? new Set() : new Set(ids);
+    });
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+    setBulkPopover(null);
+  }
+
+  const selectedDocuments = documents.filter((doc) => selectedIds.has(doc.id));
+
+  async function handleBulkDelete() {
+    const count = selectedDocuments.length;
+    if (count === 0) return;
+    if (
+      !window.confirm(
+        `Spostare ${count} ${count === 1 ? "documento" : "documenti"} nel cestino? Potrai ripristinarli entro ${trashRetentionDays} giorni, da Archivio → Cestino.`,
+      )
+    )
+      return;
+
+    setBulkBusy(true);
+    setError(null);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Devi essere autenticato.");
+
+      const ids = selectedDocuments.map((doc) => doc.id);
+      await moveDocumentsToTrash(supabase, user.id, ids, trashRetentionDays);
+      setDocuments((prev) => prev.filter((d) => !selectedIds.has(d.id)));
+      clearSelection();
+      showToast(`${count} ${count === 1 ? "documento spostato" : "documenti spostati"} nel cestino.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile spostare nel cestino.");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  /**
+   * Categoria/tag/fascicolo in blocco --- non c'è una funzione di
+   * repository che aggiorna solo un campo: updateDocumentMetadata
+   * sovrascrive l'intero DocumentMetadataInput insieme
+   * (v. domain/documents/repository.ts), quindi ogni giro parte dal
+   * documento già in memoria (già decifrato) e ne cambia solo il campo
+   * che conta, preservando gli altri --- niente riletture in più.
+   */
+  async function handleBulkCategory(categoryId: string) {
+    setBulkBusy(true);
+    setError(null);
+    try {
+      for (const doc of selectedDocuments) {
+        await updateDocumentMetadata(supabase, masterKey, doc.id, {
+          categoryId,
+          relatedAssetId: doc.relatedAssetId,
+          dossierIds: doc.dossierIds,
+          expiresAt: doc.expiresAt,
+          notes: doc.notes,
+          tags: doc.tags,
+        });
+      }
+      await refresh();
+      clearSelection();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile aggiornare la categoria.");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function handleBulkTag(tag: string) {
+    const trimmed = tag.trim();
+    if (!trimmed) return;
+    setBulkBusy(true);
+    setError(null);
+    try {
+      for (const doc of selectedDocuments) {
+        if (doc.tags.includes(trimmed)) continue; // già presente --- non doppio
+        await updateDocumentMetadata(supabase, masterKey, doc.id, {
+          categoryId: doc.categoryId,
+          relatedAssetId: doc.relatedAssetId,
+          dossierIds: doc.dossierIds,
+          expiresAt: doc.expiresAt,
+          notes: doc.notes,
+          tags: [...doc.tags, trimmed],
+        });
+      }
+      await refresh();
+      clearSelection();
+      setBulkTagInput("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile aggiungere il tag.");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function handleBulkDossier(dossierId: string) {
+    setBulkBusy(true);
+    setError(null);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Devi essere autenticato.");
+
+      for (const doc of selectedDocuments) {
+        if (doc.dossierIds.includes(dossierId)) continue; // già dentro --- non doppio
+        await replaceDocumentDossierLinks(supabase, user.id, doc.id, [...doc.dossierIds, dossierId]);
+      }
+      await refresh();
+      clearSelection();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile aggiungere al fascicolo.");
+    } finally {
+      setBulkBusy(false);
     }
   }
 
@@ -529,6 +705,116 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             <ListViewToggle section="archive" hideOnMobile />
           </div>
 
+          {/* Barra contestuale --- compare solo con almeno un documento
+              selezionato, discreta (un filo di colore, non un blocco
+              pieno) come nel concept discusso con l'utente. */}
+          {selectedIds.size > 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-brand/10 px-3 py-1.5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-brand">
+                <button
+                  type="button"
+                  onClick={clearSelection}
+                  aria-label="Deseleziona tutto"
+                  className="flex h-5 w-5 items-center justify-center rounded-full text-xs opacity-75 hover:bg-brand/20 hover:opacity-100"
+                >
+                  ✕
+                </button>
+                {selectedIds.size} {selectedIds.size === 1 ? "selezionato" : "selezionati"}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                <div className="relative">
+                  <button
+                    type="button"
+                    disabled={bulkBusy}
+                    onClick={() => setBulkPopover((prev) => (prev === "category" ? null : "category"))}
+                    className="rounded-md px-2 py-1 text-sm font-semibold text-brand hover:bg-brand/20 disabled:opacity-50"
+                  >
+                    🏷️ Categoria
+                  </button>
+                  {bulkPopover === "category" ? (
+                    <div className="absolute left-0 top-full z-20 mt-1 max-h-64 w-56 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-1.5 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+                      {sortAlphabetically(categories, (c) => c.name).map((category) => (
+                        <button
+                          key={category.id}
+                          type="button"
+                          onClick={() => handleBulkCategory(category.id)}
+                          className="block w-full rounded-md px-2.5 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                        >
+                          {category.icon} {category.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    disabled={bulkBusy}
+                    onClick={() => setBulkPopover((prev) => (prev === "tag" ? null : "tag"))}
+                    className="rounded-md px-2 py-1 text-sm font-semibold text-brand hover:bg-brand/20 disabled:opacity-50"
+                  >
+                    🏷️ Tag
+                  </button>
+                  {bulkPopover === "tag" ? (
+                    <div className="absolute left-0 top-full z-20 mt-1 w-56 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+                      <label className="mb-1.5 block text-xs text-zinc-500 dark:text-zinc-400">
+                        Aggiungi un tag a tutti i selezionati
+                      </label>
+                      <input
+                        type="text"
+                        value={bulkTagInput}
+                        onChange={(e) => setBulkTagInput(e.target.value)}
+                        placeholder="es. urgente"
+                        aria-label="Nuovo tag per i documenti selezionati"
+                        className="mb-2 w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                      />
+                      <button
+                        type="button"
+                        disabled={!bulkTagInput.trim()}
+                        onClick={() => handleBulkTag(bulkTagInput)}
+                        className="w-full rounded-md bg-brand px-2 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                      >
+                        Aggiungi
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    disabled={bulkBusy || dossiers.length === 0}
+                    onClick={() => setBulkPopover((prev) => (prev === "dossier" ? null : "dossier"))}
+                    className="rounded-md px-2 py-1 text-sm font-semibold text-brand hover:bg-brand/20 disabled:opacity-50"
+                  >
+                    📁 Fascicolo
+                  </button>
+                  {bulkPopover === "dossier" ? (
+                    <div className="absolute left-0 top-full z-20 mt-1 max-h-64 w-56 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-1.5 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+                      {dossiers.map((dossier) => (
+                        <button
+                          key={dossier.id}
+                          type="button"
+                          onClick={() => handleBulkDossier(dossier.id)}
+                          className="block w-full truncate rounded-md px-2.5 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                        >
+                          {dossier.title}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  disabled={bulkBusy}
+                  onClick={handleBulkDelete}
+                  className="rounded-md px-2 py-1 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                >
+                  🗑️ Elimina
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           {filteredDocuments.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Nessun contenuto corrisponde alla ricerca.
@@ -547,6 +833,17 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                      <th className="w-9 p-3">
+                        <input
+                          type="checkbox"
+                          checked={
+                            pagedDocuments.length > 0 && pagedDocuments.every((d) => selectedIds.has(d.id))
+                          }
+                          onChange={() => toggleSelectAll(pagedDocuments.map((d) => d.id))}
+                          aria-label="Seleziona tutti i documenti in questa pagina"
+                          className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+                        />
+                      </th>
                       <SortableColumnHeader label="Nome" sortKey="name" sort={sort} onSort={handleSort} />
                       <SortableColumnHeader
                         label="Categoria"
@@ -601,6 +898,15 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                       return (
                         <Fragment key={doc.id}>
                           <tr>
+                            <td className="p-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.has(doc.id)}
+                                onChange={() => toggleSelected(doc.id)}
+                                aria-label={`Seleziona ${doc.filename}`}
+                                className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+                              />
+                            </td>
                             <td className="max-w-[16rem] p-3 font-medium text-zinc-900 dark:text-zinc-100">
                               {/* FASE 17e --- il nome porta alla scheda del
                                   contenuto: è l'unico posto dove si vede
@@ -687,7 +993,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           </tr>
                           {isExpanded ? (
                             <tr>
-                              <td colSpan={7} className="p-4">
+                              <td colSpan={8} className="p-4">
                                 {isPlaying ? (
                                   <div className="rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
                                     {playerLoading || !playerUrl ? (
@@ -813,7 +1119,15 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 return (
                   <li key={doc.id} className="flex flex-col gap-3 p-4">
                     <div className="flex items-center justify-between gap-4">
-                      <div className="min-w-0">
+                      <div className="flex min-w-0 items-start gap-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(doc.id)}
+                          onChange={() => toggleSelected(doc.id)}
+                          aria-label={`Seleziona ${doc.filename}`}
+                          className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+                        />
+                        <div className="min-w-0">
                         <Link
                           href={`/archive/${doc.id}`}
                           className="flex min-w-0 items-center gap-1 text-sm font-medium text-zinc-900 transition-colors hover:text-brand dark:text-zinc-100 dark:hover:text-blue-400"
@@ -855,6 +1169,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                             ))}
                           </div>
                         ) : null}
+                      </div>
                       </div>
                       <RowActionsMenu label={`Azioni per ${doc.filename}`}>
                         <RowMenuItem disabled={busy} onClick={() => router.push(`/archive/${doc.id}/edit`)}>

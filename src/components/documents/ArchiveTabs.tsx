@@ -21,16 +21,18 @@ import { cn } from "@/lib/utils";
  */
 export function ArchiveTabs() {
   const pathname = usePathname();
+  const isTrash = pathname?.startsWith("/archive/trash") ?? false;
   const isDossiers = pathname?.startsWith("/dossiers") ?? false;
+  const isContents = !isDossiers && !isTrash;
 
   return (
     <nav aria-label="Sezioni dell'Archivio" className="flex gap-1 border-b border-zinc-200 dark:border-zinc-800">
       <Link
         href="/archive"
-        aria-current={!isDossiers ? "page" : undefined}
+        aria-current={isContents ? "page" : undefined}
         className={cn(
           "-mb-px rounded-t-lg border-b-2 px-3 py-2 text-sm font-medium transition-colors",
-          !isDossiers
+          isContents
             ? "border-brand text-brand"
             : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
         )}
@@ -48,6 +50,21 @@ export function ArchiveTabs() {
         )}
       >
         Fascicolo
+      </Link>
+      {/* Cestino --- v. richiesta utente: un'altra vista sullo stesso
+          Archivio (documenti con deleted_at impostato), non una
+          sezione indipendente --- stesso motivo di Fascicolo sopra. */}
+      <Link
+        href="/archive/trash"
+        aria-current={isTrash ? "page" : undefined}
+        className={cn(
+          "-mb-px rounded-t-lg border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+          isTrash
+            ? "border-brand text-brand"
+            : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
+        )}
+      >
+        🗑️ Cestino
       </Link>
     </nav>
   );

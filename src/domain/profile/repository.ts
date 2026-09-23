@@ -403,3 +403,41 @@ export async function updateCapsuleCountdownVisible(
     throw new Error(`Impossibile salvare la preferenza del countdown: ${error.message}`);
   }
 }
+
+/** Per quanti giorni un documento eliminato resta nel Cestino --- v. TrashRetentionSettings (Impostazioni > Aspetto). */
+export async function getTrashRetentionDays(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<number> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("trash_retention_days")
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    throw new Error(`Impossibile leggere il periodo di conservazione: ${error.message}`);
+  }
+  return data?.trash_retention_days ?? 15;
+}
+
+/**
+ * Persiste il periodo scelto --- ha effetto solo sui prossimi
+ * documenti spostati nel cestino: quelli già lì mantengono la
+ * scadenza già calcolata al momento (v. moveDocumentsToTrash), non
+ * retroattiva.
+ */
+export async function updateTrashRetentionDays(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  days: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ trash_retention_days: days })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare il periodo di conservazione: ${error.message}`);
+  }
+}

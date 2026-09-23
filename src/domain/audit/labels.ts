@@ -47,6 +47,9 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   proposal_undone: "Proposta annullata",
   dossier_created: "Fascicolo creato",
   dossier_deleted: "Fascicolo eliminato",
+  document_trashed: "Contenuto spostato nel cestino",
+  document_restored: "Contenuto ripristinato dal cestino",
+  document_purged: "Contenuto eliminato per sempre",
 };
 
 export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
@@ -94,6 +97,9 @@ export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
   proposal_undone: "↩️",
   dossier_created: "🗂️",
   dossier_deleted: "🗑️",
+  document_trashed: "🗑️",
+  document_restored: "♻️",
+  document_purged: "🔥",
 };
 
 export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategory> = {
@@ -141,6 +147,9 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
   proposal_undone: "content",
   dossier_created: "content",
   dossier_deleted: "content",
+  document_trashed: "content",
+  document_restored: "content",
+  document_purged: "content",
 };
 
 export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {

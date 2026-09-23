@@ -21,6 +21,7 @@ import {
   uploadEncryptedThumbnail,
 } from "@/lib/storage/documents-bucket";
 import { logAuditEvent } from "@/lib/audit/log-event";
+import { computePurgeAt } from "@/domain/documents/trash";
 import { listDossierIdsForDocuments, replaceDocumentDossierLinks } from "@/domain/dossiers/repository";
 import { NOTE_MIME_TYPE } from "@/lib/content-kind";
 import { canExtractText, extractText } from "@/domain/extraction/extract-text";
@@ -74,7 +75,7 @@ export interface UploadOptions {
 }
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, created_at";
 
 type DocumentRow = {
   id: string;
@@ -92,6 +93,8 @@ type DocumentRow = {
   encrypted_extracted_text: string | null;
   extracted_at: string | null;
   has_thumbnail: boolean;
+  deleted_at: string | null;
+  purge_at: string | null;
   created_at: string;
 };
 
@@ -156,6 +159,8 @@ async function toDocumentListItem(
     extractedText,
     extractedAt: row.extracted_at,
     hasThumbnail: row.has_thumbnail,
+    deletedAt: row.deleted_at,
+    purgeAt: row.purge_at,
   };
 }
 
@@ -170,7 +175,9 @@ async function encryptThumbnail(masterKey: CryptoKey, thumbnail: Blob | null): P
  * Lists the current user's documents, decrypting each filename/notes/
  * tags client-side with the (already unlocked) Master Key. The server
  * only ever returns ciphertext; decryption happens here, not on the
- * server.
+ * server. Un documento nel Cestino (v. moveDocumentsToTrash) non
+ * compare qui --- altrimenti "quanti documenti ho" diventerebbe
+ * ambiguo --- ma resta trovabile da listTrashedDocuments qui sotto.
  */
 export async function listDocuments(
   supabase: SupabaseClient<Database>,
@@ -179,10 +186,34 @@ export async function listDocuments(
   const { data, error } = await supabase
     .from("documents")
     .select(DOCUMENT_COLUMNS)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (error) {
     throw new Error(`Impossibile caricare i documenti: ${error.message}`);
+  }
+
+  const rows = data ?? [];
+  const dossierIdsByDocument = await listDossierIdsForDocuments(supabase, rows.map((row) => row.id));
+
+  return Promise.all(
+    rows.map((row) => toDocumentListItem(masterKey, row, dossierIdsByDocument.get(row.id) ?? [])),
+  );
+}
+
+/** Solo i documenti nel Cestino --- v. moveDocumentsToTrash/restoreDocuments. Ordinati dal più recente eliminato, non da quando erano stati creati. */
+export async function listTrashedDocuments(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+): Promise<DocumentListItem[]> {
+  const { data, error } = await supabase
+    .from("documents")
+    .select(DOCUMENT_COLUMNS)
+    .not("deleted_at", "is", null)
+    .order("deleted_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Impossibile caricare il cestino: ${error.message}`);
   }
 
   const rows = data ?? [];
@@ -627,6 +658,15 @@ export async function extractTextForExistingDocument(
   return { foundText: Boolean(text) };
 }
 
+/**
+ * Elimina un documento per sempre --- rimuove il payload cifrato (e la
+ * miniatura) da Storage e la riga dal database, senza possibilità di
+ * ripristino. Da qui in avanti è usata solo per la fine del percorso:
+ * il cron di purga (v. app/api/cron/trash-purge) e "Elimina ora" da
+ * dentro il Cestino --- mai più come reazione diretta a "Elimina" in
+ * Archivio, che ora sposta nel cestino invece (v. moveDocumentsToTrash
+ * sotto).
+ */
 export async function deleteDocument(
   supabase: SupabaseClient<Database>,
   ownerId: string,
@@ -642,5 +682,57 @@ export async function deleteDocument(
     throw new Error(`Impossibile eliminare il documento: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_deleted");
+  await logAuditEvent(supabase, ownerId, "document_purged");
+}
+
+/**
+ * Sposta uno o più documenti nel Cestino --- una sola UPDATE per tutti
+ * gli id insieme, non un giro per documento: nessun file cifrato viene
+ * toccato, resta in Storage fino alla purga vera (v. deleteDocument) o
+ * al ripristino (v. restoreDocuments). `purgeAt` è calcolato UNA VOLTA
+ * qui con il periodo di conservazione passato da chi chiama --- v.
+ * commento sulla colonna nella migrazione 20260923000000 per il
+ * perché non si ricalcola più avanti.
+ */
+export async function moveDocumentsToTrash(
+  supabase: SupabaseClient<Database>,
+  ownerId: string,
+  documentIds: string[],
+  retentionDays: number,
+): Promise<void> {
+  if (documentIds.length === 0) return;
+
+  const deletedAt = new Date();
+  const purgeAt = computePurgeAt(deletedAt, retentionDays);
+
+  const { error } = await supabase
+    .from("documents")
+    .update({ deleted_at: deletedAt.toISOString(), purge_at: purgeAt.toISOString() })
+    .in("id", documentIds);
+
+  if (error) {
+    throw new Error(`Impossibile spostare nel cestino: ${error.message}`);
+  }
+
+  await logAuditEvent(supabase, ownerId, "document_trashed");
+}
+
+/** Ripristina uno o più documenti dal Cestino --- torna come prima, nessun altro campo viene toccato. */
+export async function restoreDocuments(
+  supabase: SupabaseClient<Database>,
+  ownerId: string,
+  documentIds: string[],
+): Promise<void> {
+  if (documentIds.length === 0) return;
+
+  const { error } = await supabase
+    .from("documents")
+    .update({ deleted_at: null, purge_at: null })
+    .in("id", documentIds);
+
+  if (error) {
+    throw new Error(`Impossibile ripristinare: ${error.message}`);
+  }
+
+  await logAuditEvent(supabase, ownerId, "document_restored");
 }

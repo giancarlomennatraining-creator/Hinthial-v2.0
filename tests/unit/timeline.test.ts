@@ -36,6 +36,8 @@ describe("buildTimeline", () => {
           extractedText: "",
           extractedAt: null,
           hasThumbnail: false,
+          deletedAt: null,
+          purgeAt: null,
           dossierIds: [],
         },
       ],

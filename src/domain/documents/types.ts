@@ -56,6 +56,10 @@ export interface DocumentListItem {
    * domain/dossiers/repository.ts, replaceDocumentDossierLinks).
    */
   dossierIds: string[];
+  /** Cestino --- quando è stato spostato lì, null se non è nel cestino. */
+  deletedAt: string | null;
+  /** Cestino --- quando verrà eliminato per sempre, fissato al momento dello spostamento (v. migrazione 20260923000000). null se non è nel cestino. */
+  purgeAt: string | null;
 }
 
 /** Fields collected at upload time, in addition to the file itself. */

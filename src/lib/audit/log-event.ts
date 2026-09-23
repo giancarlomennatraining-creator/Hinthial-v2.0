@@ -50,7 +50,10 @@ export type AuditEventType =
   | "proposal_rejected"
   | "proposal_undone"
   | "dossier_created"
-  | "dossier_deleted";
+  | "dossier_deleted"
+  | "document_trashed"
+  | "document_restored"
+  | "document_purged";
 
 /**
  * Metadati tecnici facoltativi per un evento --- mai contenuti, nomi

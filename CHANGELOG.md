@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-23 (4)
+
+### Selezione multipla in Archivio, e il Cestino
+
+**Cosa fa:** in Archivio ogni documento ha ora una casella di selezione (nella vista tabella e in quella elenco), con una casella "seleziona tutto" in testa. Selezionando uno o più documenti compare una barra contestuale con tre azioni in blocco --- **Categoria**, **Tag**, **Fascicolo** --- oltre a **🗑️ Elimina**. "Elimina" non cancella più subito per sempre: sposta i documenti nel **Cestino**, una nuova scheda dell'Archivio (accanto a "Contenuti" e "Fascicolo"). Da lì un documento può essere ripristinato (torna esattamente com'era) oppure eliminato subito e per sempre con "Elimina ora" --- anche qui con selezione multipla per ripristinare o eliminare più documenti insieme, o "Vuota il cestino" per svuotarlo tutto in un colpo. Ogni documento nel Cestino mostra un conto alla rovescia ("N giorni rimasti") prima dell'eliminazione automatica e definitiva. Il numero di giorni di permanenza nel Cestino (5, 10, 15, 20, 25 o 30) si imposta in Impostazioni.
+
+**Note tecniche:** `documents.deleted_at`/`purge_at` (migrazione `20260923000000_document_trash.sql`); `purge_at` viene calcolato **una sola volta** al momento dello spostamento nel cestino (`computePurgeAt` in `domain/documents/trash.ts`, funzione pura) e non viene mai ricalcolato --- cambiare in seguito il numero di giorni di permanenza non sposta la data di eliminazione di documenti già nel cestino. L'eliminazione definitiva vera e propria (rimozione del file cifrato, della miniatura e della riga a DB) resta un'unica funzione, `deleteDocument`, usata sia da "Elimina ora" sia dal cron di pulizia automatica (`domain/documents/purge.ts`, `runTrashPurge`; nuova rotta `/api/cron/trash-purge`, stesso schema di autenticazione via `CRON_SECRET` del cron `digital-legacy` già esistente, registrata in `vercel.json`). Le operazioni in blocco su categoria/tag/fascicolo non hanno un aggiornamento parziale lato repository: ripetono `updateDocumentMetadata`/`replaceDocumentDossierLinks` una volta per documento selezionato, partendo dai dati già decifrati in memoria. Spostamento nel cestino e ripristino in blocco (`moveDocumentsToTrash`, `restoreDocuments`) sono invece vere operazioni bulk a query singola, non toccando dati cifrati riga per riga.
+
+Verificato: typecheck, lint, unit test (nuovo `domain/documents/trash.test.ts`, 5 casi; adattate le fixture di 8 test esistenti ai due nuovi campi di `DocumentListItem`), nuovo test e2e dedicato (`bulk-select-and-trash.spec.ts`: selezione multipla, tag in blocco, eliminazione in blocco → Cestino, ripristino di un documento, eliminazione definitiva di un altro), oltre a `archive.spec.ts`/`dossiers.spec.ts`/`dashboard-layout.spec.ts` rieseguiti senza regressioni.
+
+---
+
 ## 2026-09-23 (3)
 
 ### Revisione import massivo più ricca, e rilevamento duplicati veri

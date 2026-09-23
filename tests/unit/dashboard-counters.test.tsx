@@ -63,6 +63,8 @@ describe("DashboardCounters", () => {
           extractedText: "",
           extractedAt: null,
           hasThumbnail: false,
+          deletedAt: null,
+          purgeAt: null,
           dossierIds: [],
         },
       ],

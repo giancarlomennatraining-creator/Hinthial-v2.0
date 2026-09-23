@@ -64,7 +64,10 @@ type AuditEventTypeColumn =
   | "proposal_rejected"
   | "proposal_undone"
   | "dossier_created"
-  | "dossier_deleted";
+  | "dossier_deleted"
+  | "document_trashed"
+  | "document_restored"
+  | "document_purged";
 
 type FriendStatusColumn = "active" | "revoked";
 
@@ -111,6 +114,7 @@ export type Database = {
           ai_transcription_consent: boolean;
           ai_proactive_alerts_consent: boolean;
           capsule_countdown_visible: boolean;
+          trash_retention_days: number;
           digital_legacy_enabled: boolean;
           digital_legacy_preset: DigitalLegacyPresetColumn;
           digital_legacy_inactivity_days: number;
@@ -147,6 +151,7 @@ export type Database = {
           ai_transcription_consent?: boolean;
           ai_proactive_alerts_consent?: boolean;
           capsule_countdown_visible?: boolean;
+          trash_retention_days?: number;
           digital_legacy_enabled?: boolean;
           digital_legacy_preset?: DigitalLegacyPresetColumn;
           digital_legacy_inactivity_days?: number;
@@ -183,6 +188,7 @@ export type Database = {
           ai_transcription_consent?: boolean;
           ai_proactive_alerts_consent?: boolean;
           capsule_countdown_visible?: boolean;
+          trash_retention_days?: number;
           digital_legacy_enabled?: boolean;
           digital_legacy_preset?: DigitalLegacyPresetColumn;
           digital_legacy_inactivity_days?: number;
@@ -453,6 +459,8 @@ export type Database = {
           encrypted_extracted_text: string | null;
           extracted_at: string | null;
           has_thumbnail: boolean;
+          deleted_at: string | null;
+          purge_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -474,6 +482,8 @@ export type Database = {
           encrypted_extracted_text?: string | null;
           extracted_at?: string | null;
           has_thumbnail?: boolean;
+          deleted_at?: string | null;
+          purge_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -495,6 +505,8 @@ export type Database = {
           encrypted_extracted_text?: string | null;
           extracted_at?: string | null;
           has_thumbnail?: boolean;
+          deleted_at?: string | null;
+          purge_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
