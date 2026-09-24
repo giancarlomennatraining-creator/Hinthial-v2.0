@@ -4,7 +4,7 @@ import type {
   StructuredField,
   StructuredFieldKind,
 } from "@/domain/extraction/structured-fields";
-import { formatAmount, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 
 /**
  * FASE 18 --- "Cosa ne ho ricavato": i campi che Hinthial ha riconosciuto
@@ -26,7 +26,6 @@ import { formatAmount, formatDate } from "@/lib/format";
 const FIELD_LABEL: Record<StructuredFieldKind, string> = {
   "document-date": "Data del documento",
   expiry: "Scadenza",
-  amount: "Importo",
   issuer: "Emittente",
   title: "Titolo",
 };
@@ -34,7 +33,6 @@ const FIELD_LABEL: Record<StructuredFieldKind, string> = {
 const FIELD_ICON: Record<StructuredFieldKind, string> = {
   "document-date": "📅",
   expiry: "⏳",
-  amount: "💶",
   issuer: "🏛️",
   title: "🔖",
 };
@@ -44,8 +42,6 @@ function displayValue(field: StructuredField): string {
     case "document-date":
     case "expiry":
       return formatDate(field.value);
-    case "amount":
-      return formatAmount(field.value);
     case "issuer":
     case "title":
       return field.value;

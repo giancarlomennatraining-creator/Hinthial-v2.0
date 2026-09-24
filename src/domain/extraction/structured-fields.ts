@@ -1,6 +1,8 @@
 /**
  * FASE 18 --- dal testo ai campi: la data del documento, una scadenza
- * dichiarata, un importo, chi l'ha emesso.
+ * dichiarata, chi l'ha emesso. (L'importo, che viveva qui, è stato
+ * rimosso su richiesta esplicita: non abbastanza utile da meritare un
+ * campo tutto suo --- v. CHANGELOG.md.)
  *
  * Sono **schemi, non ragionamento**: nessun modello, nessun download,
  * nessuna domanda di privacy da porsi. Si guarda il testo che la FASE 17
@@ -10,13 +12,14 @@
  *
  * 1. **Nel dubbio non si dice niente.** Un campo sbagliato costa molto
  *    più di un campo mancante: mina la fiducia in tutto il resto, e la
- *    fiducia è l'unica ragione per cui questa funzione esiste. Da qui i
- *    filtri deliberatamente stretti --- un importo senza simbolo di
- *    valuta né etichetta non è un importo, è un numero.
+ *    fiducia è l'unica ragione per cui questa funzione esiste.
  * 2. **Ogni campo porta con sé da dove viene** (`context`): l'utente
  *    deve poter verificare in un colpo d'occhio, senza fidarsi. È anche
  *    la base della FASE 19, dove una proposta senza la sua fonte non è
- *    accettabile.
+ *    accettabile. Quando una data o un emittente hanno più di un
+ *    candidato plausibile, si restituiscono tutti (v. richiesta utente:
+ *    "smettere di prendere solo il primo risultato") --- indovinare per
+ *    l'utente sarebbe la stessa scommessa che la regola 1 vieta altrove.
  *
  * Questa funzione **non scrive niente**, e non ha modo di farlo: calcola
  * su un testo già in memoria, non conosce Supabase e non restituisce
@@ -26,7 +29,7 @@
  * basta è l'unico comportamento onesto.
  */
 
-export type StructuredFieldKind = "document-date" | "expiry" | "amount" | "issuer" | "title";
+export type StructuredFieldKind = "document-date" | "expiry" | "issuer" | "title";
 
 export interface StructuredField {
   kind: StructuredFieldKind;
@@ -187,27 +190,16 @@ function addInterval(iso: string, amount: number, unit: string): string | null {
 }
 
 /**
- * Importi: solo con simbolo di valuta, o con un'etichetta di totale
- * attaccata al numero.
- *
- * Il motivo è un caso reale e frequente: un referto di analisi del sangue
- * è pieno di numeri con la virgola. "Glicemia 92,50" non è un importo, e
- * se lo diventasse questa funzione smetterebbe di essere utile per
- * l'intera categoria Salute. Da qui le due sole forme ammesse, e
- * l'etichetta che deve stare **attaccata** al numero (solo spazi, due
- * punti o simbolo in mezzo): "TOTALE PROTEINE 7,25" non passa.
+ * Forme societarie e istituzionali: se una riga le contiene, è un
+ * emittente. Oltre alle forme generiche (una S.p.A. qualunque, un
+ * ospedale qualunque), un elenco di marchi/enti specifici molto comuni
+ * su carta intestata italiana --- senza, "Enel Energia" o "TIM" in cima
+ * a un foglio non avrebbero nessun'altra forma societaria a fianco che
+ * li faccia riconoscere. Confine sui nomi corti (`eni`, `tim`) con `\b`
+ * su entrambi i lati: senza, "conveniente" o "vittima" scatterebbero.
  */
-const AMOUNT_WITH_CURRENCY = /(?:€|EUR\b)\s*(\d{1,3}(?:\.\d{3})*|\d+),(\d{2})\b|(\d{1,3}(?:\.\d{3})*|\d+),(\d{2})\s*(?:€|EUR\b)/gi;
-const AMOUNT_WITH_LABEL =
-  /\b(totale|importo|tot\.|da pagare|totale documento|totale dovuto|premio)[\s:€]{0,4}(\d{1,3}(?:\.\d{3})*|\d+),(\d{2})\b/gi;
-
-function parseItalianAmount(whole: string, cents: string): string {
-  return `${whole.replace(/\./g, "")}.${cents}`;
-}
-
-/** Forme societarie e istituzionali: se una riga le contiene, è un emittente. */
 const ISSUER_MARKERS =
-  /(s\.?p\.?a\.?\b|s\.?r\.?l\.?\b|s\.?n\.?c\.?\b|s\.?a\.?s\.?\b|azienda|ospedal|poliambulator|laborator|clinic|comune di|regione|agenzia|banca|assicurazion|studio (?:medico|legale|dentistico|associato)|a\.?s\.?l\.?\b|istituto|universit|ministero)/i;
+  /(s\.?p\.?a\.?\b|s\.?r\.?l\.?\b|s\.?n\.?c\.?\b|s\.?a\.?s\.?\b|azienda|ospedal|poliambulator|laborator|clinic|comune di|regione|agenzia|banca|assicurazion|studio (?:medico|legale|dentistico|associato)|a\.?s\.?l\.?\b|istituto|universit|ministero|\benel\b|\beni\b|\btim\b|vodafone|windtre|wind\s*tre|iliad|\binps\b|\binail\b|poste italiane)/i;
 
 /**
  * Parole con cui inizia il *titolo* di un documento, non chi l'ha
@@ -222,12 +214,22 @@ const DOCUMENT_TITLE_WORDS =
 const ISSUER_LINES = 6;
 const ISSUER_MAX_CHARS = 80;
 
-function findIssuer(text: string): StructuredField | null {
+/**
+ * Ogni riga che sembra un emittente, non solo la prima --- un documento
+ * può nominarne più di uno in cima (es. l'azienda e, sotto, lo studio
+ * che l'ha redatto per suo conto), e scommettere sul primo che si trova
+ * significa perdere gli altri per sempre. Chi chiama (v.
+ * extractStructuredFields) le mostra tutte: chi legge decide qual è
+ * quella giusta, invece di riceverne una sola indovinata da Hinthial.
+ */
+function findIssuers(text: string): StructuredField[] {
   const lines = text
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
     .slice(0, ISSUER_LINES);
+
+  const found: StructuredField[] = [];
 
   for (const line of lines) {
     if (line.length > ISSUER_MAX_CHARS) continue;
@@ -244,11 +246,11 @@ function findIssuer(text: string): StructuredField | null {
     const isShouted = line === line.toUpperCase() && /\p{L}/u.test(line);
 
     if (hasMarker || isShouted) {
-      return { kind: "issuer", value: line, raw: line, context: line };
+      found.push({ kind: "issuer", value: line, raw: line, context: line });
     }
   }
 
-  return null;
+  return found;
 }
 
 /** Quanto può essere lungo un titolo proposto: oltre, in un elenco non si legge. */
@@ -334,10 +336,12 @@ export function extractStructuredFields(text: string): StructuredField[] {
   const fields: StructuredField[] = [];
   const dates = findDates(text);
 
-  // --- Scadenza dichiarata: una data preceduta da una parola che la
-  // qualifica come tale.
-  const expiryDate = dates.find((date) => EXPIRY_TRIGGERS.test(labelBefore(text, date.index)));
-  if (expiryDate) {
+  // --- Scadenza dichiarata: ogni data preceduta da una parola che la
+  // qualifica come tale --- più di una possibile (una polizza può
+  // nominarne due, una scritta e una da ricontrollare a mano): si
+  // mostrano tutte, invece di scommettere su quale sia quella giusta.
+  const expiryMatches = dates.filter((date) => EXPIRY_TRIGGERS.test(labelBefore(text, date.index)));
+  for (const expiryDate of expiryMatches) {
     fields.push({
       kind: "expiry",
       value: expiryDate.iso,
@@ -347,8 +351,8 @@ export function extractStructuredFields(text: string): StructuredField[] {
   }
 
   // --- Data del documento: quella etichettata, altrimenti la prima ---
-  // escludendo quella già presa come scadenza, che è un'altra cosa.
-  const candidates = dates.filter((date) => date !== expiryDate);
+  // escludendo quelle già prese come scadenza, che sono un'altra cosa.
+  const candidates = dates.filter((date) => !expiryMatches.includes(date));
   const documentDate =
     candidates.find((date) => DOCUMENT_DATE_TRIGGERS.test(labelBefore(text, date.index))) ??
     candidates[0];
@@ -363,10 +367,11 @@ export function extractStructuredFields(text: string): StructuredField[] {
   }
 
   // --- Scadenza ricavata da un intervallo ("controllo tra dodici mesi").
-  // Solo se c'è una data del documento da cui contare: contare da oggi
-  // sarebbe sbagliato per qualunque documento archiviato in ritardo, ed
-  // è proprio la maggioranza.
-  if (!expiryDate && documentDate) {
+  // Solo se non c'è già almeno una scadenza scritta esplicitamente, e se
+  // c'è una data del documento da cui contare: contare da oggi sarebbe
+  // sbagliato per qualunque documento archiviato in ritardo, ed è
+  // proprio la maggioranza.
+  if (expiryMatches.length === 0 && documentDate) {
     const relative = RELATIVE_EXPIRY.exec(text);
     if (relative) {
       const amount = WORD_NUMBERS[relative[2].toLowerCase()] ?? Number(relative[2]);
@@ -383,34 +388,10 @@ export function extractStructuredFields(text: string): StructuredField[] {
     }
   }
 
-  // --- Importo: l'etichettato ha la precedenza su quello con la sola
-  // valuta (in una fattura, "TOTALE 122,00" batte un "€ 100,00" di riga).
-  const labelled = [...text.matchAll(AMOUNT_WITH_LABEL)][0];
-  if (labelled) {
-    fields.push({
-      kind: "amount",
-      value: parseItalianAmount(labelled[2], labelled[3]),
-      raw: `${labelled[2]},${labelled[3]}`,
-      context: contextAround(text, labelled.index, labelled[0].length),
-    });
-  } else {
-    const withCurrency = [...text.matchAll(AMOUNT_WITH_CURRENCY)][0];
-    if (withCurrency) {
-      const whole = withCurrency[1] ?? withCurrency[3];
-      const cents = withCurrency[2] ?? withCurrency[4];
-      fields.push({
-        kind: "amount",
-        value: parseItalianAmount(whole, cents),
-        raw: `${whole},${cents}`,
-        context: contextAround(text, withCurrency.index, withCurrency[0].length),
-      });
-    }
-  }
+  const issuers = findIssuers(text);
+  fields.push(...issuers);
 
-  const issuer = findIssuer(text);
-  if (issuer) fields.push(issuer);
-
-  const title = findTitle(text, issuer?.value ?? null);
+  const title = findTitle(text, issuers[0]?.value ?? null);
   if (title) fields.push(title);
 
   return fields;

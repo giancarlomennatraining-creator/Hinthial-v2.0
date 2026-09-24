@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import { deleteDossier, listDossiers, setDossierStatus } from "@/domain/dossiers/repository";
-import { buildDossierTimeline, dossierTotalAmount } from "@/domain/dossiers/timeline";
+import { buildDossierTimeline } from "@/domain/dossiers/timeline";
 import { listDocuments } from "@/domain/documents/repository";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
-import { formatAmount, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import type { DocumentListItem } from "@/domain/documents/types";
@@ -17,8 +17,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
  * FASE 20 --- la scheda di un fascicolo: titolo, descrizione, stato, e
  * la sua **cronologia** --- i documenti collegati, in ordine di data
  * (quella letta da Hinthial nel documento se c'è, v. FASE 18; quella di
- * caricamento altrimenti), con il totale di quanto Hinthial vi ha
- * riconosciuto in importi.
+ * caricamento altrimenti).
  *
  * Chi collega un documento al fascicolo lo fa dal form del documento,
  * non da qui --- stesso schema già in uso per beni e categorie: qui si
@@ -134,7 +133,6 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
 
   const linkedDocuments = documents.filter((doc) => doc.dossierIds.includes(dossierId));
   const timeline = buildDossierTimeline(linkedDocuments);
-  const total = dossierTotalAmount(linkedDocuments);
   const isClosed = dossier.status === "closed";
 
   return (
@@ -198,11 +196,6 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
       >
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Cronologia</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Totale: <span className="font-medium text-zinc-900 dark:text-zinc-100">
-              {total ? formatAmount(total) : "—"}
-            </span>
-          </p>
         </div>
 
         {timeline.length === 0 ? (

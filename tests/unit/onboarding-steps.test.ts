@@ -101,6 +101,7 @@ describe("isOnboardingComplete", () => {
             extractedText: "",
             extractedAt: null,
             hasThumbnail: false,
+            issuer: "",
             deletedAt: null,
             purgeAt: null,
             dossierIds: [],

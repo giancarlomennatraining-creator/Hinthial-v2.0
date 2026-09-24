@@ -30,6 +30,7 @@ function doc(over: Partial<DocumentListItem> = {}): DocumentListItem {
     extractedText: "",
     extractedAt: "2026-01-01T00:00:00Z",
     hasThumbnail: false,
+    issuer: "",
     deletedAt: null,
     purgeAt: null,
     ...over,

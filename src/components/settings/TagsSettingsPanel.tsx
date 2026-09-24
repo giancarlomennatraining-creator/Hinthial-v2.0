@@ -77,6 +77,7 @@ export function TagsSettingsPanel({ masterKey }: { masterKey: CryptoKey }) {
           expiresAt: doc.expiresAt,
           notes: doc.notes,
           tags: renameTagInList(doc.tags, oldName, trimmed),
+          issuer: doc.issuer,
         });
       }
       await refresh();
@@ -106,6 +107,7 @@ export function TagsSettingsPanel({ masterKey }: { masterKey: CryptoKey }) {
           expiresAt: doc.expiresAt,
           notes: doc.notes,
           tags: removeTagFromList(doc.tags, name),
+          issuer: doc.issuer,
         });
       }
       await refresh();

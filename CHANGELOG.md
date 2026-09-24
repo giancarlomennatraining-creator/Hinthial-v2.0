@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-24
+
+### Motore di estrazione locale più forte: più candidati, emittente proponibile, niente più importo
+
+**Cosa fa:** quando un documento nomina più di una possibile scadenza (una polizza con due date che sembrano entrambe una scadenza, per dire), Hinthial ora le mostra **tutte** come proposte separate, invece di scommettere su quale sia quella giusta --- accetti quella corretta e le altre spariscono da sole. Lo stesso vale per **l'emittente**, che diventa un campo vero del documento: proponibile (con accetta/modifica/rifiuta, come scadenza e categoria), modificabile a mano nel form, e riconosciuto anche per marchi/enti comuni senza una forma societaria esplicita (Enel, TIM, Vodafone, WindTre, Iliad, INPS, INAIL, Poste Italiane). Il concetto di **importo** è stato invece rimosso del tutto, su richiesta esplicita: non era mai stato promosso a proposta modificabile, e il "totale delle spese" di un fascicolo che lo sommava non esiste più.
+
+**Note tecniche:** `domain/extraction/structured-fields.ts` --- `expiry` e `issuer` ora possono restituire più candidati (non più `.find()` sul primo trovato), ognuno con la propria fonte; `document-date`/`title` restano a candidato singolo, non essendo proponibili. Nuovo campo `documents.encrypted_issuer` (migrazione `20260924000000_document_issuer.sql`), cifrato come le note --- non un id/una data come scadenza/categoria, perché è testo libero letto da un documento. `domain/proposals/types.ts` guadagna il kind `"issuer"`; `domain/proposals/repository.ts` (`acceptProposal`/`undoAcceptance`) richiede ora la Master Key per poter cifrare/decifrare quel valore, cosa che scadenza/categoria (in chiaro) non richiedevano. `ProposalsSection.tsx`: corretto un bug latente nello stato di "modifica" (era tenuto per *tipo* di proposta, non per singola proposta --- con più candidati dello stesso tipo, modificarne uno li avrebbe messi tutti in modifica insieme). Rimossi `AMOUNT_WITH_CURRENCY`/`AMOUNT_WITH_LABEL`/`parseItalianAmount`, `dossierTotalAmount`, `formatAmount`, e la colonna "Totale" nell'elenco fascicoli.
+
+Verificato: typecheck, lint, unit test aggiornati (structured-fields, proposals/build, dossiers/timeline --- rimossi i test sull'importo, aggiunti quelli su multi-candidato ed emittente), `archive-proposals.spec.ts`/`bulk-import.spec.ts`/`dossiers.spec.ts`/`document-categorization.spec.ts`/`archive-create-reads-file.spec.ts`/`categories.spec.ts` rieseguiti senza regressioni. Individuato e corretto in corso di verifica: la migrazione non era stata applicata al database di sviluppo (`supabase db push`), causando un errore di scrittura silenzioso mascherato da un timeout nei test e2e.
+
+---
+
 ## 2026-09-23 (5)
 
 ### Gestione dei tag

@@ -63,6 +63,7 @@ export async function buildExport(
         expiresAt: doc.expiresAt,
         notes: doc.notes,
         tags: doc.tags,
+        issuer: doc.issuer,
         createdAt: doc.createdAt,
         exportedAs,
       };

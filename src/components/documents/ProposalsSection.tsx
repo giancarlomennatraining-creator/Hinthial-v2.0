@@ -25,12 +25,22 @@ import type { Proposal, ProposalKind } from "@/domain/proposals/types";
 const KIND_LABEL: Record<ProposalKind, string> = {
   expiry: "Scadenza",
   category: "Categoria",
+  issuer: "Emittente",
 };
 
 const KIND_ICON: Record<ProposalKind, string> = {
   expiry: "⏳",
   category: "🏷️",
+  issuer: "🏛️",
 };
+
+/** Identità di una proposta per lo stato di modifica --- non solo il
+ * tipo: con più candidati dello stesso tipo (v. richiesta utente),
+ * "sto modificando la scadenza" da solo non basta più a dire QUALE
+ * delle scadenze proposte. */
+function proposalKey(proposal: Proposal): string {
+  return `${proposal.kind}:${proposal.value}`;
+}
 
 export interface UndoableAction {
   message: string;
@@ -53,18 +63,19 @@ export function ProposalsSection({
   onAccept: (proposal: Proposal, value: string) => void;
   onReject: (proposal: Proposal) => void;
 }) {
-  const [editing, setEditing] = useState<ProposalKind | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
 
   if (proposals.length === 0 && !undoable) return null;
 
   function startEditing(proposal: Proposal) {
-    setEditing(proposal.kind);
+    setEditing(proposalKey(proposal));
     setDraft(proposal.value);
   }
 
   function displayValue(proposal: Proposal): string {
     if (proposal.kind === "expiry") return formatDate(proposal.value);
+    if (proposal.kind === "issuer") return proposal.value;
     return categories.find((c) => c.id === proposal.value)?.name ?? proposal.value;
   }
 
@@ -95,7 +106,7 @@ export function ProposalsSection({
       ) : null}
 
       {proposals.map((proposal) => {
-        const isEditing = editing === proposal.kind;
+        const isEditing = editing === proposalKey(proposal);
 
         return (
           <div
@@ -134,6 +145,14 @@ export function ProposalsSection({
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     aria-label="Scadenza da impostare"
+                    className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                  />
+                ) : proposal.kind === "issuer" ? (
+                  <input
+                    type="text"
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    aria-label="Emittente da impostare"
                     className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
                   />
                 ) : (

@@ -29,14 +29,14 @@
  */
 
 /**
- * I campi per cui oggi esiste una proposta. Sono i due che hanno una
- * casa dove essere scritti: `documents.expires_at` e
- * `documents.category_id`. Data del documento, importo ed emittente
- * (v. FASE 18) restano visibili nella scheda ma non proponibili --- non
- * c'è ancora un campo che li accolga, e inventarne uno per avere una
- * proposta in più sarebbe il contrario del lavorare per fasi.
+ * I campi per cui oggi esiste una proposta: `documents.expires_at`,
+ * `documents.category_id` e (cifrato, come le note) `documents.
+ * encrypted_issuer`. Data del documento (v. FASE 18) resta visibile
+ * nella scheda ma non proponibile --- non c'è ancora un campo che
+ * l'accolga, e inventarne uno per avere una proposta in più sarebbe il
+ * contrario del lavorare per fasi.
  */
-export type ProposalKind = "expiry" | "category";
+export type ProposalKind = "expiry" | "category" | "issuer";
 
 export interface Proposal {
   kind: ProposalKind;

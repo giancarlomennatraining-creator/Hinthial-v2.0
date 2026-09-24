@@ -95,6 +95,7 @@ export function EditArchiveItemForm({ masterKey, documentId }: { masterKey: Cryp
         expiresAt: fields.expiresAt || null,
         notes: fields.notes,
         tags: parseTagsInput(fields.tagsInput),
+        issuer: fields.issuer,
       });
       router.push("/archive?updated=1");
     } catch (err) {

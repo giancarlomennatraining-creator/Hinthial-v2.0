@@ -75,7 +75,7 @@ export interface UploadOptions {
 }
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, created_at";
 
 type DocumentRow = {
   id: string;
@@ -89,6 +89,7 @@ type DocumentRow = {
   expires_at: string | null;
   encrypted_notes: string | null;
   encrypted_tags: string | null;
+  encrypted_issuer: string | null;
   encrypted_transcript: string | null;
   encrypted_extracted_text: string | null;
   extracted_at: string | null;
@@ -133,10 +134,11 @@ async function toDocumentListItem(
   row: DocumentRow,
   dossierIds: string[],
 ): Promise<DocumentListItem> {
-  const [filenameBytes, notes, tags, transcript, extractedText] = await Promise.all([
+  const [filenameBytes, notes, tags, issuer, transcript, extractedText] = await Promise.all([
     decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
     decryptOptionalText(masterKey, row.encrypted_notes),
     decryptTags(masterKey, row.encrypted_tags),
+    decryptOptionalText(masterKey, row.encrypted_issuer),
     decryptOptionalText(masterKey, row.encrypted_transcript),
     decryptOptionalText(masterKey, row.encrypted_extracted_text),
   ]);
@@ -155,6 +157,7 @@ async function toDocumentListItem(
     expiresAt: row.expires_at,
     notes,
     tags,
+    issuer,
     transcript,
     extractedText,
     extractedAt: row.extracted_at,
@@ -315,6 +318,7 @@ export async function uploadDocument(
     encryptedFilename,
     encryptedNotes,
     encryptedTags,
+    encryptedIssuer,
     encryptedExtractedText,
     encryptedThumbnail,
   ] = await Promise.all([
@@ -324,6 +328,7 @@ export async function uploadDocument(
     encryptBytes(masterKey, utf8ToBytes(title?.trim() || file.name)),
     encryptOptionalText(masterKey, metadata.notes),
     encryptTags(masterKey, metadata.tags),
+    encryptOptionalText(masterKey, metadata.issuer),
     encryptOptionalText(masterKey, extractedText ?? ""),
     encryptThumbnail(masterKey, thumbnailBlob),
   ]);
@@ -360,6 +365,7 @@ export async function uploadDocument(
     expires_at: metadata.expiresAt,
     encrypted_notes: encryptedNotes,
     encrypted_tags: encryptedTags,
+    encrypted_issuer: encryptedIssuer,
     encrypted_extracted_text: encryptedExtractedText,
     // Marcato solo se un motore ha davvero provato a leggere: per un
     // tipo non ancora supportato --- o per un salvataggio arrivato
@@ -398,12 +404,13 @@ export async function createTextNote(
   metadata: DocumentMetadataInput,
 ): Promise<void> {
   const plaintext = utf8ToBytes(note.body);
-  const [{ wrappedDocumentKey, payload }, encryptedFilename, encryptedNotes, encryptedTags] =
+  const [{ wrappedDocumentKey, payload }, encryptedFilename, encryptedNotes, encryptedTags, encryptedIssuer] =
     await Promise.all([
       encryptDocument(masterKey, plaintext),
       encryptBytes(masterKey, utf8ToBytes(note.title)),
       encryptOptionalText(masterKey, metadata.notes),
       encryptTags(masterKey, metadata.tags),
+      encryptOptionalText(masterKey, metadata.issuer),
     ]);
 
   const documentId = crypto.randomUUID();
@@ -424,6 +431,7 @@ export async function createTextNote(
     expires_at: metadata.expiresAt,
     encrypted_notes: encryptedNotes,
     encrypted_tags: encryptedTags,
+    encrypted_issuer: encryptedIssuer,
   });
 
   if (error) {
@@ -482,9 +490,9 @@ export async function updateTextNoteContent(
 }
 
 /**
- * Updates a document's metadata (category, expiry, notes, tags) ---
- * never the file content or its name. Re-encrypts notes/tags with the
- * Master Key, same as at upload time.
+ * Updates a document's metadata (category, expiry, notes, tags, issuer)
+ * --- never the file content or its name. Re-encrypts notes/tags/issuer
+ * with the Master Key, same as at upload time.
  */
 export async function updateDocumentMetadata(
   supabase: SupabaseClient<Database>,
@@ -492,9 +500,10 @@ export async function updateDocumentMetadata(
   documentId: string,
   metadata: DocumentMetadataInput,
 ): Promise<void> {
-  const [encryptedNotes, encryptedTags] = await Promise.all([
+  const [encryptedNotes, encryptedTags, encryptedIssuer] = await Promise.all([
     encryptOptionalText(masterKey, metadata.notes),
     encryptTags(masterKey, metadata.tags),
+    encryptOptionalText(masterKey, metadata.issuer),
   ]);
 
   const { error } = await supabase
@@ -505,6 +514,7 @@ export async function updateDocumentMetadata(
       expires_at: metadata.expiresAt,
       encrypted_notes: encryptedNotes,
       encrypted_tags: encryptedTags,
+      encrypted_issuer: encryptedIssuer,
     })
     .eq("id", documentId);
 

@@ -69,7 +69,6 @@ function SuggestedHint({ children }: { children: React.ReactNode }) {
 const REPORTED_FIELDS: { kind: StructuredFieldKind; label: string }[] = [
   { kind: "issuer", label: "Emittente" },
   { kind: "document-date", label: "Data del documento" },
-  { kind: "amount", label: "Importo" },
 ];
 
 /**
@@ -489,6 +488,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         expiresAt: metadata.expiresAt || null,
         notes: metadata.notes,
         tags: parseTagsInput(metadata.tagsInput),
+        issuer: metadata.issuer,
       };
 
       if (mode === "note") {

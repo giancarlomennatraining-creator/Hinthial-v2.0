@@ -46,6 +46,7 @@ function doc(over: Partial<DocumentListItem> = {}): DocumentListItem {
     deletedAt: null,
     purgeAt: null,
     dossierIds: [],
+    issuer: "",
     ...over,
   };
 }
@@ -88,6 +89,19 @@ describe("cosa Hinthial propone", () => {
       (p) => p.kind === "expiry",
     );
     expect(expiry).toMatchObject({ value: "2027-03-14", derived: true });
+  });
+
+  it("propone l'emittente letto nel documento", () => {
+    const issuer = buildProposals(doc(), CATEGORIES, []).find((p) => p.kind === "issuer");
+    expect(issuer?.value).toBe("GENERALI ITALIA S.p.A.");
+  });
+
+  it("propone più scadenze insieme, se il documento ne nomina più di una", () => {
+    const text = "Valida fino al 3 giugno 2027. Rinnovo entro il 10 luglio 2027.";
+    const expiries = buildProposals(doc({ extractedText: text }), CATEGORIES, []).filter(
+      (p) => p.kind === "expiry",
+    );
+    expect(expiries.map((p) => p.value)).toEqual(["2027-06-03", "2027-07-10"]);
   });
 });
 
@@ -140,5 +154,18 @@ describe("quando Hinthial deve tacere", () => {
     const cleared = buildProposals(doc({ expiresAt: null }), CATEGORIES, []);
     expect(withExpiry.some((p) => p.kind === "expiry")).toBe(false);
     expect(cleared.some((p) => p.kind === "expiry")).toBe(true);
+  });
+
+  it("non propone un emittente se il documento ne ha già uno", () => {
+    const proposals = buildProposals(doc({ issuer: "Già impostato" }), CATEGORIES, []);
+    expect(proposals.some((p) => p.kind === "issuer")).toBe(false);
+  });
+
+  it("non ripropone un emittente già rifiutato", () => {
+    const rejections: ProposalRejection[] = [
+      { id: "r1", kind: "issuer", value: "GENERALI ITALIA S.p.A." },
+    ];
+    const proposals = buildProposals(doc(), CATEGORIES, rejections);
+    expect(proposals.some((p) => p.kind === "issuer")).toBe(false);
   });
 });

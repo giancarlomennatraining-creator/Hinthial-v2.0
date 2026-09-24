@@ -60,6 +60,13 @@ export interface DocumentListItem {
   deletedAt: string | null;
   /** Cestino --- quando verrà eliminato per sempre, fissato al momento dello spostamento (v. migrazione 20260923000000). null se non è nel cestino. */
   purgeAt: string | null;
+  /**
+   * Chi ha emesso il documento --- cifrato come le note (v.
+   * repository.ts, `encrypted_issuer`), stringa vuota quando non
+   * impostato. Modificabile a mano nel form, e proponibile da Hinthial
+   * (v. FASE 18/19, domain/proposals) quando lo riconosce nel testo.
+   */
+  issuer: string;
 }
 
 /** Fields collected at upload time, in addition to the file itself. */
@@ -71,6 +78,7 @@ export interface DocumentMetadataInput {
   expiresAt: string | null;
   notes: string;
   tags: string[];
+  issuer: string;
 }
 
 /**

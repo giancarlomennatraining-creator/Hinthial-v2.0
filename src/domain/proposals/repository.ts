@@ -16,9 +16,12 @@ import type { Proposal, ProposalKind, ProposalRejection } from "@/domain/proposa
  * FASE 19 --- le tre risposte a una proposta, e il modo di tornare
  * indietro da ciascuna.
  *
- * Il valore accettato finisce in chiaro nel documento (`expires_at`,
- * `category_id` lo sono già da sempre); il valore **rifiutato** invece
- * viene cifrato con la Master Key, perché altrimenti questa fase
+ * Il valore accettato per scadenza/categoria finisce in chiaro nel
+ * documento (`expires_at`, `category_id` lo sono già da sempre); quello
+ * per l'emittente invece si cifra con la Master Key, come le note
+ * (`encrypted_issuer`) --- è testo libero letto da un documento, non un
+ * id o una data. Il valore **rifiutato**, per ogni tipo, viene sempre
+ * cifrato con la Master Key, perché altrimenti questa fase
  * introdurrebbe sul server un dato che senza di essa non esisterebbe ---
  * v. la migrazione proposal_rejections per il ragionamento completo.
  */
@@ -30,19 +33,36 @@ export interface AcceptedProposal {
   previousValue: string | null;
 }
 
+/** null/vuoto in -> null out, come encryptOptionalText in documents/repository.ts. */
+async function encryptIssuerValue(masterKey: CryptoKey, value: string | null): Promise<string | null> {
+  if (!value?.trim()) return null;
+  return serializeEnvelope(await encryptBytes(masterKey, utf8ToBytes(value)));
+}
+
 /**
- * La colonna che una proposta va a scrivere. Scritta come unione e non
- * come chiave calcolata (`{ [colonna]: valore }`): TypeScript non riesce
- * a verificare una chiave dinamica contro lo schema, e accetterebbe
- * qualunque nome di colonna --- proprio qui, dove un refuso significa
- * scrivere nel campo sbagliato del documento di qualcuno.
+ * La colonna che una proposta va a scrivere (e il valore, già cifrato
+ * se serve). Scritta come unione e non come chiave calcolata
+ * (`{ [colonna]: valore }`): TypeScript non riesce a verificare una
+ * chiave dinamica contro lo schema, e accetterebbe qualunque nome di
+ * colonna --- proprio qui, dove un refuso significa scrivere nel campo
+ * sbagliato del documento di qualcuno.
  */
-function updateFor(kind: ProposalKind, value: string | null) {
-  return kind === "expiry" ? { expires_at: value } : { category_id: value };
+type DocumentsTableUpdate = Database["public"]["Tables"]["documents"]["Update"];
+
+async function updateFor(
+  masterKey: CryptoKey,
+  kind: ProposalKind,
+  value: string | null,
+): Promise<Pick<DocumentsTableUpdate, "expires_at" | "category_id" | "encrypted_issuer">> {
+  if (kind === "expiry") return { expires_at: value };
+  if (kind === "category") return { category_id: value };
+  return { encrypted_issuer: await encryptIssuerValue(masterKey, value) };
 }
 
 function currentValue(doc: DocumentListItem, kind: ProposalKind): string | null {
-  return kind === "expiry" ? doc.expiresAt : doc.categoryId;
+  if (kind === "expiry") return doc.expiresAt;
+  if (kind === "category") return doc.categoryId;
+  return doc.issuer || null;
 }
 
 /**
@@ -55,6 +75,7 @@ function currentValue(doc: DocumentListItem, kind: ProposalKind): string | null 
  */
 export async function acceptProposal(
   supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
   ownerId: string,
   doc: DocumentListItem,
   kind: ProposalKind,
@@ -64,7 +85,7 @@ export async function acceptProposal(
 
   const { error } = await supabase
     .from("documents")
-    .update(updateFor(kind, value))
+    .update(await updateFor(masterKey, kind, value))
     .eq("id", doc.id);
 
   if (error) {
@@ -81,13 +102,14 @@ export async function acceptProposal(
 /** Rimette il campo com'era prima di un'accettazione. */
 export async function undoAcceptance(
   supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
   ownerId: string,
   documentId: string,
   accepted: AcceptedProposal,
 ): Promise<void> {
   const { error } = await supabase
     .from("documents")
-    .update(updateFor(accepted.kind, accepted.previousValue))
+    .update(await updateFor(masterKey, accepted.kind, accepted.previousValue))
     .eq("id", documentId);
 
   if (error) {

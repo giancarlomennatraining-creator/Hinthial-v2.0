@@ -125,5 +125,4 @@ test("due file con lo stesso emittente propongono un fascicolo, importati insiem
   await expect(cronologia.getByRole("link", { name: /Bolletta luce gennaio/ })).toBeVisible();
   await expect(cronologia.getByRole("link", { name: /Bolletta luce febbraio/ })).toBeVisible();
   await expect(cronologia.getByText(/biglietto-treno/)).not.toBeVisible();
-  await expect(cronologia).toContainText("105,00");
 });

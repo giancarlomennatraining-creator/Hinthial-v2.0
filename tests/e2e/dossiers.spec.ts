@@ -4,13 +4,12 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
 // FASE 20 --- Fascicoli: vicende trasversali alle categorie, con una
-// cronologia (i documenti collegati, in ordine di data) e un totale
-// delle spese. Il collegamento si fa dal form del documento ("Fascicolo"),
-// non da una UI di gestione sul fascicolo --- stesso schema di beni e
-// categorie. Qui si prova il percorso vero, da capo a fondo: creare un
-// fascicolo, collegarci un documento al caricamento, vedere la
-// cronologia e il totale, chiudere/riaprire, ed eliminare senza perdere
-// il documento.
+// cronologia (i documenti collegati, in ordine di data). Il collegamento
+// si fa dal form del documento ("Fascicolo"), non da una UI di gestione
+// sul fascicolo --- stesso schema di beni e categorie. Qui si prova il
+// percorso vero, da capo a fondo: creare un fascicolo, collegarci un
+// documento al caricamento, vedere la cronologia, chiudere/riaprire, ed
+// eliminare senza perdere il documento.
 
 const MASTER_PASSWORD = "una-master-password-solida";
 
@@ -66,7 +65,7 @@ async function signInAndSetUpVault(page: import("@playwright/test").Page) {
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 }
 
-test("creare un fascicolo, collegarci un documento al caricamento, e vederne la cronologia e il totale", async ({
+test("creare un fascicolo, collegarci un documento al caricamento, e vederne la cronologia", async ({
   page,
 }) => {
   test.slow();
@@ -98,16 +97,7 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   await page.setInputFiles('input[type="file"]', {
     name: "referto-visita.pdf",
     mimeType: "application/pdf",
-    buffer: buildPdf([
-      "Ospedale San Giovanni",
-      "Referto di visita ortopedica",
-      "Emesso il 14 marzo 2026",
-      // Niente simbolo di valuta: nel content stream di un PDF costruito
-      // a mano un carattere fuori da Latin-1 (come "€") si corromperebbe
-      // alla scrittura dei byte. L'etichetta "Totale" da sola basta a far
-      // scattare AMOUNT_WITH_LABEL (v. structured-fields.ts).
-      "Totale 85,00",
-    ]),
+    buffer: buildPdf(["Ospedale San Giovanni", "Referto di visita ortopedica", "Emesso il 14 marzo 2026"]),
   });
   await page.getByText(/Ho letto il documento/).waitFor({ timeout: 45_000 });
   await page.getByLabel("Fascicoli").selectOption({ label: "📂 Intervento al ginocchio" });
@@ -129,13 +119,11 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   });
   await page.getByRole("link", { name: /Intervento al ginocchio/ }).click();
 
-  // La cronologia del fascicolo: il documento c'è, con la data letta
-  // dentro (14 mar 2026, non la data di caricamento) e il totale.
+  // La cronologia del fascicolo: il documento c'è, con la data letta dentro (14 mar 2026, non la data di caricamento).
   await expect(page.getByRole("heading", { name: /Intervento al ginocchio/ })).toBeVisible();
   const cronologia = page.getByRole("region", { name: "Cronologia" });
   await expect(cronologia.getByRole("link", { name: /referto-visita\.pdf/ })).toBeVisible();
   await expect(cronologia).toContainText("14 mar 2026");
-  await expect(cronologia).toContainText("85,00");
 
   // Chiudere e riaprire: un clic, non un form.
   await page.getByRole("button", { name: "Chiudi fascicolo" }).click();

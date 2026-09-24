@@ -452,6 +452,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
           expiresAt: doc.expiresAt,
           notes: doc.notes,
           tags: doc.tags,
+          issuer: doc.issuer,
         });
       }
       await refresh();
@@ -478,6 +479,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
           expiresAt: doc.expiresAt,
           notes: doc.notes,
           tags: [...doc.tags, trimmed],
+          issuer: doc.issuer,
         });
       }
       await refresh();

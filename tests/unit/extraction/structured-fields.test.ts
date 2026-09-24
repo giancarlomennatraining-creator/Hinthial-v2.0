@@ -133,36 +133,18 @@ describe("la scadenza", () => {
   });
 });
 
-describe("l'importo", () => {
-  it.each([
-    ["Totale € 47,30", "47.30"],
-    ["Totale 47,30 €", "47.30"],
-    ["TOTALE: 1.234,56", "1234.56"],
-    ["Importo 89,00", "89.00"],
-    ["EUR 1.200,00 versati", "1200.00"],
-  ])("riconosce %s", (text, expected) => {
-    expect(field(text, "amount")?.value).toBe(expected);
+describe("più di una scadenza possibile", () => {
+  it("mostra entrambe invece di scommettere su quale sia quella giusta", () => {
+    const text = "Valida fino al 3 giugno 2027. Rinnovo entro il 10 luglio 2027.";
+    const expiries = extractStructuredFields(text).filter((f) => f.kind === "expiry");
+    expect(expiries.map((f) => f.value)).toEqual(["2027-06-03", "2027-07-10"]);
   });
 
-  it("l'etichetta batte la valuta: in una fattura il totale non è la prima riga", () => {
-    const text = "Articolo A € 100,00\nArticolo B € 22,00\nTOTALE 122,00";
-    expect(field(text, "amount")?.value).toBe("122.00");
-  });
-
-  describe("non scambia numeri per soldi", () => {
-    it("un valore di laboratorio non è un importo", () => {
-      // Il caso che rende o rompe l'intera categoria Salute: un referto
-      // di analisi è pieno di numeri con la virgola.
-      expect(field("Glicemia 92,50 mg/dL\nCreatinina 1,05 mg/dL", "amount")).toBeUndefined();
-    });
-
-    it("un'etichetta staccata dal numero non conta", () => {
-      expect(field("TOTALE PROTEINE 7,25 g/dL", "amount")).toBeUndefined();
-    });
-
-    it("senza valuta né etichetta un numero resta un numero", () => {
-      expect(field("La misura era 47,30 centimetri", "amount")).toBeUndefined();
-    });
+  it("con una sola scadenza scritta, resta un solo candidato", () => {
+    const expiries = extractStructuredFields("Scadenza: 3 giugno 2027").filter(
+      (f) => f.kind === "expiry",
+    );
+    expect(expiries).toHaveLength(1);
   });
 });
 
@@ -176,6 +158,17 @@ describe("l'emittente", () => {
     expect(field("Generali Italia S.p.A.\nPolizza n. 123", "issuer")?.value).toBe(
       "Generali Italia S.p.A.",
     );
+  });
+
+  it.each(["Enel Energia", "TIM Business", "Vodafone Italia", "INPS Comunicazione", "Poste Italiane"])(
+    "riconosce il marchio/ente %s, senza bisogno di una forma societaria attaccata",
+    (line) => {
+      expect(field(`${line}\nAltra riga di intestazione`, "issuer")?.value).toBe(line);
+    },
+  );
+
+  it("non scatta su una parola simile ma diversa (confine di parola sui marchi corti)", () => {
+    expect(field("È stato molto conveniente\nSeconda riga qualunque", "issuer")).toBeUndefined();
   });
 
   describe("non scambia il titolo del documento per chi l'ha emesso", () => {
@@ -196,6 +189,17 @@ describe("l'emittente", () => {
 
     it("una parola sola non basta", () => {
       expect(field("OSPEDALE\nreferto", "issuer")).toBeUndefined();
+    });
+  });
+
+  describe("più di un candidato possibile", () => {
+    it("mostra ogni riga che sembra un emittente, non solo la prima", () => {
+      const text = "AZIENDA OSPEDALIERA DI GUBBIO\nStudio medico associato Dott. Ferrari\nReferto";
+      const issuers = extractStructuredFields(text).filter((f) => f.kind === "issuer");
+      expect(issuers.map((f) => f.value)).toEqual([
+        "AZIENDA OSPEDALIERA DI GUBBIO",
+        "Studio medico associato Dott. Ferrari",
+      ]);
     });
   });
 });
@@ -267,12 +271,8 @@ describe("il referto scansionato dei test e2e", () => {
   ].join("\n");
 
   it("ne ricava emittente, data e scadenza da ricontrollo", () => {
-    const fields = extractStructuredFields(REFERTO);
-
     expect(field(REFERTO, "issuer")?.value).toBe("AZIENDA OSPEDALIERA DI GUBBIO");
     expect(field(REFERTO, "document-date")?.value).toBe("2026-03-14");
     expect(field(REFERTO, "expiry")).toMatchObject({ value: "2027-03-14", derived: true });
-    // E non si inventa un importo dove non ce n'è.
-    expect(fields.some((f) => f.kind === "amount")).toBe(false);
   });
 });

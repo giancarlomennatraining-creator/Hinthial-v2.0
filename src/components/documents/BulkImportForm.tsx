@@ -267,6 +267,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
             expiresAt: null,
             notes: "",
             tags: [],
+            issuer: "",
           };
 
           try {

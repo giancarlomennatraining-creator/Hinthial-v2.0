@@ -23,6 +23,8 @@ export interface DocumentMetadataFieldsValue {
   notes: string;
   /** comma-separated, parsed via parseTagsInput. */
   tagsInput: string;
+  /** Chi ha emesso il documento --- "" se non impostato (v. FASE 18/19, campo proponibile). */
+  issuer: string;
 }
 
 export const EMPTY_METADATA_FIELDS: DocumentMetadataFieldsValue = {
@@ -32,6 +34,7 @@ export const EMPTY_METADATA_FIELDS: DocumentMetadataFieldsValue = {
   expiresAt: "",
   notes: "",
   tagsInput: "",
+  issuer: "",
 };
 
 /** Converte un DocumentListItem già decifrato nei valori di partenza del form --- usato sia dall'edit inline (DocumentsPanel) sia dalla pagina di modifica dedicata (EditArchiveItemForm). */
@@ -43,6 +46,7 @@ export function documentToFields(doc: DocumentListItem): DocumentMetadataFieldsV
     expiresAt: doc.expiresAt ? doc.expiresAt.slice(0, 10) : "",
     notes: doc.notes,
     tagsInput: doc.tags.join(", "),
+    issuer: doc.issuer,
   };
 }
 
@@ -269,6 +273,23 @@ export function DocumentMetadataFields({
           </ul>
         ) : null}
         {hints?.dossierIds}
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label
+          htmlFor={`${idPrefix}-issuer`}
+          className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
+        >
+          Emittente
+        </label>
+        <input
+          id={`${idPrefix}-issuer`}
+          type="text"
+          value={value.issuer}
+          onChange={(e) => onChange({ ...value, issuer: e.target.value })}
+          placeholder="es. Generali Italia S.p.A."
+          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+        />
       </div>
 
       <div className="flex flex-col gap-1">

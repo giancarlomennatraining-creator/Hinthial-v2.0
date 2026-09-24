@@ -5,9 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import { deleteDossier, listDossiers } from "@/domain/dossiers/repository";
-import { dossierTotalAmount } from "@/domain/dossiers/timeline";
 import { listDocuments } from "@/domain/documents/repository";
-import { formatAmount, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
@@ -23,7 +22,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import type { DossierListItem, DossierStatus } from "@/domain/dossiers/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 
-type SortColumn = "title" | "status" | "documents" | "total" | "createdAt";
+type SortColumn = "title" | "status" | "documents" | "createdAt";
 
 const STATUS_LABEL: Record<DossierStatus, string> = { open: "Aperto", closed: "Chiuso" };
 const STATUS_ICON: Record<DossierStatus, string> = { open: "📂", closed: "🗂️" };
@@ -119,8 +118,6 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
         return STATUS_LABEL[dossier.status];
       case "documents":
         return String(documentsFor(dossier).length);
-      case "total":
-        return dossierTotalAmount(documentsFor(dossier)) ?? "";
       case "createdAt":
         return formatDate(dossier.createdAt);
     }
@@ -225,13 +222,6 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
                         className="hidden @2xl:table-cell"
                       />
                       <SortableColumnHeader
-                        label="Totale"
-                        sortKey="total"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @3xl:table-cell"
-                      />
-                      <SortableColumnHeader
                         label="Creato il"
                         sortKey="createdAt"
                         sort={sort}
@@ -245,7 +235,6 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
                     {pagedDossiers.map((dossier) => {
                       const busy = busyId === dossier.id;
                       const linked = documentsFor(dossier);
-                      const total = dossierTotalAmount(linked);
 
                       return (
                         <tr key={dossier.id}>
@@ -262,9 +251,6 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
                           </td>
                           <td className="hidden p-3 text-zinc-600 @2xl:table-cell dark:text-zinc-400">
                             {linked.length}
-                          </td>
-                          <td className="hidden p-3 text-zinc-600 @3xl:table-cell dark:text-zinc-400">
-                            {total ? formatAmount(total) : "—"}
                           </td>
                           <td className="hidden p-3 text-zinc-600 @4xl:table-cell dark:text-zinc-400">
                             {formatDate(dossier.createdAt)}
@@ -295,7 +281,6 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
               {filteredDossiers.map((dossier) => {
                 const busy = busyId === dossier.id;
                 const linked = documentsFor(dossier);
-                const total = dossierTotalAmount(linked);
 
                 return (
                   <li key={dossier.id} className="flex flex-col gap-3 p-4">
@@ -309,8 +294,8 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
                         </Link>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
                           {STATUS_LABEL[dossier.status]} · {linked.length}{" "}
-                          {linked.length === 1 ? "documento" : "documenti"}
-                          {total ? ` · ${formatAmount(total)}` : ""} · {formatDate(dossier.createdAt)}
+                          {linked.length === 1 ? "documento" : "documenti"} ·{" "}
+                          {formatDate(dossier.createdAt)}
                         </p>
                       </div>
                       <RowActionsMenu label={`Azioni per ${dossier.title}`}>

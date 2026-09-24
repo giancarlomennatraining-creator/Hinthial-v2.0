@@ -24,6 +24,12 @@ import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
  *    significa rifiutare per sempre l'idea che il documento scada.
  * 3. **Niente proposte senza una fonte da mostrare.** Se non si può
  *    dire da dove viene, non si propone.
+ *
+ * Scadenza ed emittente possono avere più di un candidato (v.
+ * structured-fields.ts, richiesta utente): ognuno diventa una proposta
+ * a sé, con la propria fonte. Appena una viene accettata il campo si
+ * riempie, e il filtro 1 fa sparire da sola ogni altra proposta dello
+ * stesso tipo --- nessuna pulizia manuale da fare qui.
  */
 export function buildProposals(
   doc: DocumentListItem,
@@ -32,10 +38,10 @@ export function buildProposals(
 ): Proposal[] {
   const proposals: Proposal[] = [];
 
-  // --- Scadenza: solo se il documento non ne ha già una.
+  // --- Scadenza: ogni candidato trovato, solo se il documento non ne ha già una.
   if (!doc.expiresAt) {
-    const expiry = extractStructuredFields(doc.extractedText).find((f) => f.kind === "expiry");
-    if (expiry) {
+    const expiries = extractStructuredFields(doc.extractedText).filter((f) => f.kind === "expiry");
+    for (const expiry of expiries) {
       proposals.push({
         kind: "expiry",
         value: expiry.value,
@@ -62,7 +68,23 @@ export function buildProposals(
     }
   }
 
-  return proposals.filter(
+  // --- Emittente: ogni candidato trovato, solo se il documento non ne ha già uno.
+  if (!doc.issuer) {
+    const issuers = extractStructuredFields(doc.extractedText).filter((f) => f.kind === "issuer");
+    for (const issuer of issuers) {
+      proposals.push({ kind: "issuer", value: issuer.value, source: issuer.context });
+    }
+  }
+
+  // Difesa in profondità: due candidati distinti non producono mai lo
+  // stesso valore in pratica, ma se succedesse non deve comparire due
+  // volte la stessa proposta.
+  const deduped = proposals.filter(
+    (proposal, index) =>
+      !proposals.slice(0, index).some((p) => p.kind === proposal.kind && p.value === proposal.value),
+  );
+
+  return deduped.filter(
     (proposal) =>
       !rejections.some((r) => r.kind === proposal.kind && r.value === proposal.value),
   );

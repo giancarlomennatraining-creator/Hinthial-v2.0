@@ -844,9 +844,14 @@ tra i nomi dei file e cerca **dentro**; la categorizzazione euristica
 ### FASE 18 --- Estrazione strutturata locale
 
 Dal testo estratto ai campi: data del documento, scadenze dichiarate
-("ricontrollo tra 6 mesi"), importi, emittente. Sono schemi, non
-ragionamento: nessun modello coinvolto. Alimenta le prime proposte
-(rinomina, data corretta, scadenza).
+("ricontrollo tra 6 mesi"), emittente. Sono schemi, non ragionamento:
+nessun modello coinvolto. Alimenta le prime proposte (rinomina, data
+corretta, scadenza, emittente).
+
+(L'importo, che viveva qui insieme al "totale delle spese" di un
+fascicolo che lo sommava, è stato rimosso il 2026-09-24 su richiesta
+esplicita: mai promosso a proposta, giudicato non abbastanza utile da
+meritare un campo tutto suo --- v. CHANGELOG.md.)
 
 ### FASE 19 --- Meccanismo delle proposte
 
@@ -860,10 +865,14 @@ Vincolo architetturale da rispettare: **il server può proporre, solo il
 client può scrivere** --- gli oggetti vanno cifrati con la Master Key,
 che il server non possiede.
 
-*Stato: **fatta.*** Proposte su scadenza e categoria nella scheda di un
-contenuto, con accetta/modifica/rifiuta, fonte mostrata accanto a ogni
-proposta, memoria dei rifiuti cifrata (`proposal_rejections`),
-annullamento e tre nuovi tipi di evento in Attività.
+*Stato: **fatta**, rafforzata il 2026-09-24.* Proposte su scadenza,
+categoria ed emittente nella scheda di un contenuto, con
+accetta/modifica/rifiuta, fonte mostrata accanto a ogni proposta,
+memoria dei rifiuti cifrata (`proposal_rejections`), annullamento e tre
+nuovi tipi di evento in Attività. Scadenza ed emittente possono avere
+più di un candidato (un contratto con più date, un'intestazione con più
+righe che sembrano un mittente): si mostrano tutti invece di
+scommettere su quale sia quello giusto, ognuno come proposta a sé.
 
 Il vincolo è rispettato in modo **strutturale** e non per disciplina: le
 proposte si calcolano nel browser dal testo già decifrato (v.
@@ -892,18 +901,19 @@ Due regole imparate qui:
   tocca ciò che è già compilato". Un titolo sbagliato messo in silenzio
   cambierebbe l'identità del documento senza che nessuno se ne accorga.
 
-Proponibili oggi solo i due campi che hanno una casa dove essere scritti
-(`expires_at`, `category_id`). Data del documento, importo ed emittente
-(FASE 18) restano visibili ma non proponibili: inventare una colonna per
+Proponibili oggi i tre campi che hanno una casa dove essere scritti
+(`expires_at`, `category_id`, ed --- dal 2026-09-24 --- `encrypted_issuer`
+per l'emittente, cifrato come le note). Solo la data del documento
+(FASE 18) resta visibile ma non proponibile: inventare una colonna per
 avere una proposta in più sarebbe il contrario del lavorare per fasi ---
-troveranno posto quando un oggetto vero le richiederà (v. FASE 20-21).
+troverà posto quando un oggetto vero la richiederà (v. FASE 20-21).
 
 ### FASE 20 --- Fascicoli
 
 Nuovo oggetto **trasversale alle categorie**, per le vicende che si
 sviluppano nel tempo (un problema di salute, l'acquisto di una casa, un
-incidente): cronologia invece di elenco, stato aperto/chiuso, totale
-delle spese, condivisione in blocco. Creazione manuale in questa fase.
+incidente): cronologia invece di elenco, stato aperto/chiuso,
+condivisione in blocco. Creazione manuale in questa fase.
 
 Non richiede IA: è una struttura che manca già oggi. Categoria = un
 cassetto; fascicolo = una storia che attraversa più cassetti. È anche
@@ -916,9 +926,11 @@ documento stesso (campo "Fascicolo"), mai da una UI di gestione sul
 fascicolo --- stesso schema già in uso per beni e categorie. Scheda
 dedicata con cronologia (i documenti collegati, ordinati per la data che
 Hinthial ha letto nel documento se c'è --- FASE 18 --- altrimenti quella
-di caricamento) e totale delle spese (somma degli importi riconosciuti;
-`null`, non "0", quando nessuno ne ha uno). Apertura/chiusura come
-azione a sé, un clic, non un campo del form di modifica.
+di caricamento). Apertura/chiusura come azione a sé, un clic, non un
+campo del form di modifica.
+
+(Il "totale delle spese" che viveva qui, insieme al concetto di importo
+--- v. FASE 18 --- è stato rimosso il 2026-09-24 su richiesta esplicita.)
 
 Non implementata in questa fase: la condivisione in blocco su una
 capsula. È descrittiva nel testo sopra ("è anche l'unità naturale da

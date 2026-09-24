@@ -301,15 +301,17 @@ export function ArchiveItemDetail({
   function handleAcceptProposal(proposal: Proposal, value: string) {
     if (!doc) return;
     void runProposalAction(async (ownerId) => {
-      const accepted = await acceptProposal(supabase, ownerId, doc, proposal.kind, value);
+      const accepted = await acceptProposal(supabase, masterKey, ownerId, doc, proposal.kind, value);
       return {
         message:
           proposal.kind === "expiry"
             ? `Scadenza impostata al ${formatDate(value)}.`
-            : "Categoria impostata.",
+            : proposal.kind === "issuer"
+              ? "Emittente impostato."
+              : "Categoria impostata.",
         onUndo: () =>
           void runProposalAction(async (undoOwnerId) => {
-            await undoAcceptance(supabase, undoOwnerId, doc.id, accepted);
+            await undoAcceptance(supabase, masterKey, undoOwnerId, doc.id, accepted);
             return { message: "Annullato.", onUndo: () => setUndoable(null) };
           }),
       };
@@ -399,6 +401,7 @@ export function ArchiveItemDetail({
     if (field.kind === "title") return false;
     if (proposals.some((p) => p.kind === field.kind && p.value === field.value)) return false;
     if (field.kind === "expiry" && doc.expiresAt?.slice(0, 10) === field.value) return false;
+    if (field.kind === "issuer" && doc.issuer === field.value) return false;
     return true;
   });
 
