@@ -1,17 +1,7 @@
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { FriendListItem } from "@/domain/friends/types";
 
-/**
- * FASE 8: bozza -> chiusa -> condivisa. Chiudere è irreversibile e, da
- * FASE 14, rende la capsula autosufficiente: ogni contenuto d'Archivio
- * referenziato viene copiato al suo interno (v. repository.ts,
- * closeCapsule) --- l'originale in Archivio torna libero non appena la
- * copia è fatta, nessun blocco di sorta. "Condividi" resta solo un
- * cambio di stato registrato (v. HINTHIAL_MVP.md, come per l'amico di
- * FASE 7) --- non concede ancora alcun accesso reale a
- * nessuno. L'apertura vera e propria da parte dei destinatari arriverà
- * con la futura fase Dead Man's Switch (FASE 12-13).
- */
+/** FASE 8: bozza -> chiusa -> condivisa. Chiudere è irreversibile e rende la capsula autosufficiente (v. closeCapsule); "Condividi" resta solo un cambio di stato, l'apertura vera arriva dal Dead Man's Switch (FASE 12-13). */
 export type CapsuleStatus = "draft" | "ready" | "shared";
 
 /** Solo "manuale" per l'MVP --- pensato per essere ampliato quando arriverà il Dead Man's Switch (FASE 13). */
@@ -20,13 +10,7 @@ export type CapsuleAccessCondition = "manual";
 /** Come viene mostrato il testo del messaggio --- una scelta di chi scrive, mai imposta (v. CreateCapsuleForm/EditCapsuleForm/CapsulePreview). */
 export type CapsuleContentStyle = "simple" | "handwritten";
 
-/**
- * A file that belongs to this capsule alone --- own Document Key, own
- * blob in Storage, no dependency on anything else. Either uploaded/
- * recorded fresh at creation time (always audio/video, kept private on
- * purpose --- v. CreateCapsuleForm), or produced by closeCapsule() as a
- * snapshot of a linked Archivio item at closing time.
- */
+/** File proprio della capsula (Document Key/blob propri) --- caricato alla creazione, o prodotto da closeCapsule come copia di un item Archivio. */
 export interface CapsuleAttachment {
   /** Anche il segmento finale del path in Storage (owner/capsule/attachment.json). */
   id: string;
@@ -47,37 +31,13 @@ export interface CapsuleListItem {
   /** "simple" per le capsule create prima che questa scelta esistesse. */
   contentStyle: CapsuleContentStyle;
   attachments: CapsuleAttachment[];
-  /**
-   * Existing Archivio entries referenced by id, only while the capsule
-   * is still a draft --- no copy, no separate encryption: reuses the
-   * item's own Document Key/Storage blob. Closing the capsule
-   * (closeCapsule) turns each of these into its own CapsuleAttachment
-   * and empties this list --- a closed capsule never has any. Ids
-   * whose item was since deleted are silently omitted (shorter list
-   * than what was originally linked).
-   */
+  /** Solo mentre draft, riusa la Document Key dell'item --- closeCapsule le trasforma in CapsuleAttachment propri e svuota la lista. */
   linkedDocuments: DocumentListItem[];
-  /**
-   * One or more friends (FASE 7) --- ids live inside encrypted_payload,
-   * not a plaintext column, so the server can't see which friends a
-   * capsule is meant for either. Ids whose friend was since deleted are
-   * silently omitted, same as linkedDocuments.
-   */
+  /** Id dentro encrypted_payload, non una colonna in chiaro: il server non sa a chi è destinata la capsula. */
   relatedFriends: FriendListItem[];
   status: CapsuleStatus;
   accessCondition: CapsuleAccessCondition;
-  /**
-   * Data E ORA in cui la capsula è pensata per essere aperta ---
-   * obbligatoria per ogni capsula nuova o modificata (Dead Man's Switch
-   * semplificato per le capsule, v. domain/capsules/repository.ts):
-   * raggiunto quel momento, il destinatario può vederne il contenuto, a
-   * prescindere dall'inattività del proprietario. In chiaro lato server
-   * (v. colonna `open_at`, migrazioni 20260905000000 e 20260913010000)
-   * --- necessario perché il server possa saperlo senza decifrare
-   * nulla. ISO datetime completo (UTC), o null solo per le capsule
-   * create prima che diventasse obbligatoria, non ancora sanate (v.
-   * listCapsules).
-   */
+  /** Obbligatoria, in chiaro lato server (colonna `open_at`) --- il server deve saperlo senza decifrare nulla. Null solo per capsule pre-migrazione, non ancora sanate (v. listCapsules). */
   openAt: string | null;
   createdAt: string;
 }
@@ -93,13 +53,7 @@ export interface CapsuleInput {
   openAt: string;
 }
 
-/**
- * Editable while status is "draft" only. `newFiles` are freshly
- * recorded/uploaded audio/video to attach (same idea as
- * CapsuleInput.files) --- which existing attachments to keep vs. remove
- * is passed separately to updateCapsule, not part of this input (see
- * repository.ts).
- */
+/** Editabile solo da "draft". Quali allegati tenere/rimuovere è passato a parte a updateCapsule, non qui. */
 export interface CapsuleEditInput {
   title: string;
   content: string;
@@ -110,14 +64,7 @@ export interface CapsuleEditInput {
   openAt: string;
 }
 
-/**
- * FASE B del piano di condivisione capsule --- una capsula che qualcun
- * altro ha condiviso con l'utente corrente ("Condivise con me"). Solo
- * metadati già in chiaro lato server: il titolo/contenuto restano
- * cifrati con la Master Key del proprietario, illeggibili qui --- lo
- * sblocco vero (v. SharedCapsuleOpenedContent) passa dalla Fase C1
- * (scambio di chiavi, v. openSharedCapsule).
- */
+/** FASE B: capsula condivisa da altri ("Condivise con me") --- solo metadati in chiaro, titolo/contenuto restano cifrati (v. SharedCapsuleOpenedContent). */
 export interface SharedCapsuleListItem {
   /** Id della capsula --- non del collegamento di condivisione. */
   id: string;
@@ -134,14 +81,7 @@ export interface SharedCapsuleListItem {
   dismissedAt: string | null;
 }
 
-/**
- * Un allegato dentro il contenuto sbloccato di una capsula condivisa
- * (v. SharedCapsuleOpenedContent) --- a differenza di CapsuleAttachment,
- * porta la propria Document Key già in chiaro (`documentKeyRaw`) invece
- * che avvolta dalla Master Key del proprietario (il destinatario non
- * la possiede): non serve un secondo involucro, l'intero contenuto è
- * già protetto dalla busta cifrata per lui (v. capsule_share_keys).
- */
+/** A differenza di CapsuleAttachment, porta la Document Key già in chiaro (`documentKeyRaw`) --- il destinatario non ha la Master Key del proprietario. */
 export interface SharedCapsuleAttachment {
   id: string;
   filename: string;
@@ -152,13 +92,7 @@ export interface SharedCapsuleAttachment {
   transcript?: string;
 }
 
-/**
- * FASE C1 --- il contenuto vero e proprio di una capsula condivisa, una
- * volta decifrato con la chiave ricavata dallo scambio ECDH (v.
- * domain/capsules/repository.ts, openSharedCapsule). Ottenibile solo
- * dopo la data di apertura --- prima, il database nega la lettura della
- * riga da cui si ricava (v. migrazione capsule_share_keys).
- */
+/** FASE C1: contenuto decifrato via ECDH (v. openSharedCapsule) --- ottenibile solo dopo la data di apertura, prima il DB nega la lettura. */
 export interface SharedCapsuleOpenedContent {
   title: string;
   content: string;

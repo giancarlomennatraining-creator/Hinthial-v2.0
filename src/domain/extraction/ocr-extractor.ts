@@ -1,25 +1,9 @@
 import type { Worker as TesseractWorker } from "tesseract.js";
 import { normalizeExtractedText, type ExtractionProgress, type TextExtractor } from "@/domain/extraction/types";
 
-/**
- * FASE 17c --- legge il testo scritto **dentro le immagini**: la foto di
- * una ricetta, lo scontrino fotografato al volo, il referto scansionato.
- * È il caso più frequente in assoluto in un archivio personale, e fino a
- * ieri per Hinthial erano file muti, cercabili solo per come si
- * chiamavano.
- *
- * Tutto sul dispositivo, come per i PDF (v. types.ts): l'immagine non
- * viene inviata da nessuna parte. Anche i file del motore arrivano dal
- * nostro dominio invece che da una CDN --- v.
- * scripts/sync-ocr-assets.mjs per il perché non è un dettaglio.
- */
+/** FASE 17c: OCR delle immagini, tutto sul dispositivo --- anche i file del motore arrivano dal nostro dominio, non da una CDN (v. scripts/sync-ocr-assets.mjs). */
 
-/**
- * I formati che il browser sa decodificare da solo e che ha senso
- * passare all'OCR. HEIC (le foto degli iPhone) resta fuori: nessun
- * browser lo decodifica nativamente, e iOS converte comunque in JPEG
- * quando si carica un file da un sito.
- */
+/** HEIC resta fuori: nessun browser lo decodifica nativamente, e iOS lo converte già in JPEG al caricamento. */
 const OCR_MIME_TYPES = new Set([
   "image/jpeg",
   "image/png",
@@ -31,63 +15,40 @@ const OCR_MIME_TYPES = new Set([
 /** Solo italiano --- v. scripts/sync-ocr-assets.mjs per il perché. */
 const OCR_LANGUAGES = "ita";
 
-/**
- * Serviti da noi, non dalla CDN di tesseract.js (che è il default).
- * Copiati in `public/ocr/` prima di dev/build/e2e.
- */
+/** Serviti da noi, non dalla CDN di default di tesseract.js --- copiati in `public/ocr/` prima di dev/build/e2e. */
 const OCR_PATHS = {
   workerPath: "/ocr/worker.min.js",
   corePath: "/ocr/tesseract-core-simd-lstm.wasm.js",
   langPath: "/ocr/lang",
 };
 
-/**
- * Quanto aspettare, finita l'ultima immagine, prima di spegnere il
- * motore. Avviarlo costa: qualche megabyte di WebAssembly da compilare e
- * il modello linguistico da decomprimere. Chi recupera venti foto dal
- * banner in Archivio lo pagherebbe venti volte. Tenerlo acceso un minuto
- * copre sia quel caso sia il caricamento di più file di seguito; oltre,
- * è solo memoria occupata per niente.
- */
+/** Avviare il motore costa (WASM da compilare, modello da decomprimere) --- un minuto acceso copre più file di seguito senza sprecare memoria oltre. */
 const IDLE_SHUTDOWN_MS = 60_000;
 
 let enginePromise: Promise<TesseractWorker> | null = null;
 let idleTimer: ReturnType<typeof setTimeout> | null = null;
 let running = 0;
 
-/**
- * Il logger di tesseract.js si imposta alla nascita del motore, non per
- * singolo lavoro: l'avanzamento passa di qui. In pratica le estrazioni
- * sono sempre sequenziali (un caricamento alla volta, e il recupero dal
- * banner è deliberatamente in fila --- v. DocumentsPanel), quindi c'è un
- * solo destinatario per volta; se mai ne partissero due insieme, il
- * peggio che succede è una percentuale che salta. Non vale un motore in
- * più per immagine.
- */
+/** Il logger di tesseract.js si imposta alla nascita del motore, non per lavoro --- le estrazioni sono comunque sempre sequenziali. */
 let reportProgress: ExtractionProgress | null = null;
 
 async function ocrEngine(): Promise<TesseractWorker> {
   if (enginePromise) return enginePromise;
 
-  // `import()` dinamico: tesseract.js e il suo motore pesano parecchi
-  // megabyte, e non devono toccare chi carica un PDF o scrive una nota
-  // (stessa scelta di pdf-extractor.ts e di `qrcode`).
+  // Import dinamico: tesseract.js pesa parecchio, non deve toccare chi carica un PDF o scrive una nota.
   const started = (async () => {
     const { createWorker, OEM } = await import("tesseract.js");
     return createWorker(OCR_LANGUAGES, OEM.LSTM_ONLY, {
       ...OCR_PATHS,
       logger: (message) => {
-        // Le altre fasi (scaricamento del modello, avvio del motore) non
-        // hanno un avanzamento confrontabile: si riporta solo il
-        // riconoscimento vero e proprio, che è anche la parte lunga.
+        // Solo il riconoscimento vero ha un avanzamento confrontabile (ed è anche la parte lunga).
         if (message.status === "recognizing text") reportProgress?.(message.progress);
       },
     });
   })();
 
   enginePromise = started;
-  // Un avvio fallito non deve restare in cache come promessa rifiutata:
-  // il tentativo successivo deve poter ripartire da zero.
+  // Un avvio fallito non resta in cache come promessa rifiutata --- il prossimo tentativo riparte da zero.
   started.catch(() => {
     if (enginePromise === started) enginePromise = null;
   });
@@ -109,34 +70,14 @@ function scheduleIdleShutdown(): void {
 const MIN_OCR_CONFIDENCE = 55;
 const MIN_OCR_WORDS = 3;
 
-/**
- * Se vale la pena salvare quello che l'OCR ha letto.
- *
- * Un OCR non dice mai "non c'è niente": davanti a una foto sfocata, a un
- * muro o a un timbro restituisce comunque qualcosa, tipicamente una
- * manciata di simboli slegati. Salvarla significherebbe riempire la
- * ricerca di spazzatura e --- peggio --- far comparire un documento tra i
- * risultati per una parola che nessuno ci ha mai scritto.
- *
- * Due condizioni, entrambe necessarie: la confidenza dichiarata dal
- * motore, e un minimo di sostanza (almeno tre gruppi di lettere di
- * lunghezza credibile). La seconda serve perché la confidenza da sola
- * può essere alta su pochissimo testo.
- */
+/** Un OCR non dice mai "non c'è niente" (una foto sfocata dà comunque simboli slegati) --- due condizioni, confidenza e un minimo di sostanza, evitano di riempire la ricerca di spazzatura. */
 export function looksLikeRealText(text: string, confidence: number): boolean {
   if (confidence < MIN_OCR_CONFIDENCE) return false;
   const words = text.match(/[\p{L}\p{N}]{3,}/gu);
   return (words?.length ?? 0) >= MIN_OCR_WORDS;
 }
 
-/**
- * Legge il testo di **una** immagine già pronta --- un Blob, oppure un
- * canvas su cui qualcun altro ha disegnato (è così che si leggono le
- * pagine di un PDF scansionato, v. pdf-extractor.ts).
- *
- * Restituisce null se quello che ha letto non sembra testo (v.
- * looksLikeRealText): meglio niente che spazzatura nella ricerca.
- */
+/** Legge un Blob o un canvas (così si leggono le pagine di un PDF scansionato, v. pdf-extractor.ts); null se non sembra testo vero. */
 export async function recognizeImage(
   image: Blob | HTMLCanvasElement,
   onProgress?: ExtractionProgress,
@@ -174,9 +115,7 @@ export const ocrTextExtractor: TextExtractor = {
     mimeType: string,
     onProgress?: ExtractionProgress,
   ): Promise<string | null> {
-    // Si passa un Blob e non i byte grezzi: la decodifica del JPEG/PNG la
-    // fa il browser, che lo sa fare molto meglio (e molto più in fretta)
-    // del decoder incluso in tesseract.js.
+    // Blob, non byte grezzi: la decodifica JPEG/PNG del browser è molto più rapida di quella di tesseract.js.
     return recognizeImage(new Blob([bytes as BlobPart], { type: mimeType }), onProgress);
   },
 };

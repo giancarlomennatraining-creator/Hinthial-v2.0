@@ -26,26 +26,9 @@ export interface DigitalLegacyCheckSummary {
 }
 
 /**
- * Il giro periodico di "Eredità digitale" (tutte e 7 le fasi:
- * rilevamento inattività, promemoria, periodo di grazia, coinvolgimento
- * guardiani, verifica formale, attesa finale, apertura capsule) ---
- * chiamato una volta al giorno dal cron di Vercel (v.
- * app/api/cron/digital-legacy/route.ts). Ignora completamente chi ha
- * `digital_legacy_enabled` spento (v. richiesta utente: opt-in
- * esplicito, mai attivo di default) e chi non ha mai effettuato un
- * accesso (nessuna base per calcolare l'inattività).
- *
- * "Attività" oggi significa solo "accesso" (`auth.users.last_sign_in_at`,
- * gestito da Supabase stesso --- niente colonna nostra da mantenere in
- * sincrono): la definizione più semplice possibile per queste prime
- * fasi, ampliabile in futuro.
- *
- * `now` è iniettabile (di default l'ora vera) solo per i test: le fasi
- * più lunghe (verifica formale, attesa finale) non si possono simulare
- * aspettando per davvero, né retrodatando `state_entered_at` da solo
- * (finirebbe prima di `last_sign_in_at`, facendo scattare il reset
- * invece della transizione che si vuole osservare) --- v.
- * guardian-verification.integration.test.ts.
+ * Giro periodico di "Eredità digitale", una volta al giorno dal cron di Vercel --- ignora chi ha `digital_legacy_enabled`
+ * spento (opt-in esplicito) o non ha mai effettuato un accesso. "Attività" = solo `auth.users.last_sign_in_at`.
+ * `now` iniettabile solo per i test (le fasi lunghe non si possono simulare aspettando davvero).
  */
 export async function runDigitalLegacyCheck(
   admin: SupabaseClient<Database>,
@@ -152,12 +135,7 @@ async function computeGuardianTallies(
   return tallies;
 }
 
-/**
- * Applica l'azione decisa da computeDigitalLegacyTransition: aggiorna
- * la riga, manda l'email/le email se previste (best-effort: un invio
- * fallito non deve impedire di registrare comunque la transizione),
- * registra l'evento in Attività.
- */
+/** Applica l'azione decisa da computeDigitalLegacyTransition: riga, email (best-effort), evento in Attività. */
 async function applyDigitalLegacyAction(
   admin: SupabaseClient<Database>,
   userId: string,
@@ -178,9 +156,7 @@ async function applyDigitalLegacyAction(
         digital_legacy_last_reminder_at: null,
       })
       .eq("id", userId);
-    // L'episodio è annullato: le richieste ai guardiani (se ce ne
-    // furono) non servono più --- non lasciarle "in sospeso" per
-    // sempre agli occhi di chi le ha ricevute.
+    // Episodio annullato: le richieste ai guardiani non servono più, non restano "in sospeso" per sempre.
     await admin.from("guardian_verification_requests").delete().eq("owner_id", userId);
     await logAuditEvent(admin, userId, action.reason === "login" ? "digital_legacy_reset" : "digital_legacy_reset_by_guardian");
     return;
@@ -239,10 +215,7 @@ async function applyDigitalLegacyAction(
   }
 
   if (action.type === "guardians_confirmed") {
-    // Un avviso al proprietario (potrebbe non poterlo più leggere, ma
-    // è comunque l'ultima rete di sicurezza finché resta qualcuno che
-    // può ancora leggerla) --- poi, senza attesa propria, si passa
-    // subito alla verifica formale (v. computeDigitalLegacyTransition).
+    // Ultimo avviso al proprietario --- poi, senza attesa propria, si passa subito alla verifica formale.
     await admin
       .from("profiles")
       .update({ digital_legacy_state: "guardians_confirmed", digital_legacy_state_entered_at: nowIso })
@@ -261,9 +234,7 @@ async function applyDigitalLegacyAction(
   }
 
   if (action.type === "start_formal_verification") {
-    // Passaggio immediato, senza email propria (l'avviso "guardians_confirmed"
-    // qui sopra ha già detto tutto quello che c'è da dire finché non
-    // comincia l'ultima attesa vera, v. sotto) --- solo bookkeeping e audit.
+    // Passaggio immediato, senza email propria --- "guardians_confirmed" ha già detto tutto.
     await admin
       .from("profiles")
       .update({ digital_legacy_state: "formal_verification", digital_legacy_state_entered_at: nowIso })
@@ -305,18 +276,7 @@ async function applyDigitalLegacyAction(
   await releaseCapsulesToRecipients(admin, userId);
 }
 
-/**
- * Avvisa ogni destinatario di una capsula già condivisa (v.
- * capsule_shares) che può ora aprirla --- l'accesso vero è già concesso
- * da questo momento dalla policy RLS su capsule_share_keys/
- * storage.objects (v. migrazione digital_legacy_release, che controlla
- * `digital_legacy_triggered_at` in OR con la open_at della capsula):
- * questa funzione manda solo l'email, non è lei a concedere l'accesso.
- * Una capsula ancora "draft"/"ready" ma mai condivisa non ha nessuna
- * riga in capsule_shares --- resta semplicemente fuori da qui, come
- * deve: "Eredità digitale" non decide da sola chi riceve cosa, rende
- * solo prima disponibile ciò che il proprietario aveva già condiviso.
- */
+/** Manda solo l'email --- l'accesso vero è già concesso dalla policy RLS (v. migrazione digital_legacy_release). Rende prima disponibile solo ciò che era già condiviso, non decide da sé chi riceve cosa. */
 async function releaseCapsulesToRecipients(admin: SupabaseClient<Database>, ownerId: string): Promise<void> {
   const { data: profile, error: profileError } = await admin
     .from("profiles")
@@ -329,9 +289,7 @@ async function releaseCapsulesToRecipients(admin: SupabaseClient<Database>, owne
   }
   const ownerName = `${profile.first_name} ${profile.last_name}`.trim();
 
-  // Due query batch, mai un join lato server (stesso schema di
-  // listCapsulesSharedWithMe): prima le capsule davvero condivise di
-  // questo proprietario, poi chi le riceve.
+  // Due query batch, mai un join lato server (stesso schema di listCapsulesSharedWithMe).
   const { data: sharedCapsules, error: capsulesError } = await admin
     .from("capsules")
     .select("id")
@@ -371,18 +329,8 @@ async function releaseCapsulesToRecipients(admin: SupabaseClient<Database>, owne
 }
 
 /**
- * Interpella ogni guardiano COLLEGATO del proprietario (v. friends.
- * is_guardian/linked_user_id --- un guardiano senza account non è
- * raggiungibile dal server, v. FriendsPanel.tsx) --- una riga per
- * coppia, azzerata a ogni nuovo episodio (upsert), e un'email a testa.
- * Zero guardiani collegati: nessuna richiesta, nessuna email --- resta
- * semplicemente in "awaiting_guardians" senza modo di avanzare, finché
- * il proprietario non ne collega almeno uno o accede di nuovo.
- *
- * Esportata (non solo chiamata da applyDigitalLegacyAction) apposta per
- * essere testabile da sé, senza dover simulare per davvero i giorni di
- * inattività che portano a "awaiting_guardians" --- v.
- * guardian-verification.integration.test.ts.
+ * Interpella ogni guardiano COLLEGATO (senza account non è raggiungibile). Zero guardiani collegati: resta in
+ * "awaiting_guardians" senza avanzare. Esportata per essere testabile senza simulare i giorni di inattività veri.
  */
 export async function notifyGuardians(admin: SupabaseClient<Database>, ownerId: string): Promise<void> {
   const { data: profile, error: profileError } = await admin

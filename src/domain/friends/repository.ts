@@ -78,10 +78,7 @@ async function toFriendListItem(
   };
 }
 
-/**
- * Lists the current user's friends (most recent first), decrypting
- * name/email client-side with the Master Key.
- */
+/** Amici dell'utente, più recenti prima, nome/email decifrati client-side. */
 export async function listFriends(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -98,13 +95,7 @@ export async function listFriends(
   return Promise.all((data ?? []).map((row) => toFriendListItem(supabase, masterKey, row)));
 }
 
-/**
- * Fetches a specific set of friends by id (e.g. a capsule's recipients,
- * FASE 8), decrypting each client-side. Ids that no longer exist (or
- * belong to someone else, filtered out by RLS) are silently omitted ---
- * callers should treat a shorter result as "some referenced friends are
- * gone", not an error.
- */
+/** Amici per id (es. destinatari di una capsula); id non più esistenti/altrui sono omessi in silenzio. */
 export async function getFriendsByIds(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -156,23 +147,7 @@ export async function createFriend(
   return { id: data.id };
 }
 
-/**
- * Re-encrypts name/email/first/last name and updates the plaintext role
- * --- same fields as createFriend, no status change.
- *
- * `emailChanged` (il chiamante lo sa già, avendo sia l'email decifrata
- * originale sia quella appena scritta): quando true, azzera anche
- * `linked_user_id` --- il collegamento a un account Hinthial è per
- * definizione legato a QUELLA email, e resterebbe altrimenti agganciato
- * per sempre all'account sbagliato (v. richiesta utente: cambiando
- * l'email di un amico già collegato, badge "✓ Su Hinthial" e foto reale
- * restavano quelli di prima). Non tocca invece `avatar_path` --- una
- * foto caricata a mano non ha nulla a che fare con l'email. Il
- * ricollegamento alla nuova email, se corrisponde a un account, avviene
- * da sé al prossimo caricamento di Amici (v. FriendsPanel.tsx,
- * checkLinkedAccounts, che riprova solo per chi non ha già un
- * linked_user_id): nessuna nuova verifica va fatta qui.
- */
+/** Se `emailChanged`, azzera anche `linked_user_id` --- il collegamento è legato a QUELLA email; il ricollegamento avviene da sé al prossimo giro (v. FriendsPanel, checkLinkedAccounts). */
 export async function updateFriend(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -204,12 +179,7 @@ export async function updateFriend(
   }
 }
 
-/**
- * Changes a friend's status --- oggi solo "Revoca" (active -> revoked)
- * lo usa davvero (ogni amico nasce già "active", v. FriendStatus).
- * Doesn't grant/revoke any actual data access: no unlock logic exists
- * yet (FASE 7 is data-structure-only).
- */
+/** Oggi solo "Revoca" (active -> revoked) lo usa --- non concede/revoca alcun accesso reale (FASE 7 è solo struttura dati). */
 export async function setFriendStatus(
   supabase: SupabaseClient<Database>,
   friendId: string,
@@ -230,13 +200,7 @@ export async function deleteFriend(supabase: SupabaseClient<Database>, friendId:
   }
 }
 
-/**
- * Carica/sostituisce la foto di un amico, caricata a mano dal
- * proprietario --- in chiaro, stesso principio già accettato per
- * l'avatar del proprio profilo (v. domain/profile/repository.ts,
- * updateAvatar, stesso schema). Vince sempre sulla foto reale
- * dell'account collegato, quando c'è (v. FriendsPanel.tsx).
- */
+/** Stesso schema di profile/repository.ts updateAvatar --- vince sempre sulla foto reale dell'account collegato, quando c'è. */
 export async function updateFriendAvatar(
   supabase: SupabaseClient<Database>,
   ownerId: string,
@@ -274,14 +238,7 @@ export async function removeFriendAvatar(
   await removeAvatarBlob(supabase, currentPath).catch(() => {});
 }
 
-/**
- * Path Storage della foto profilo reale dell'account Hinthial collegato
- * a un amico (v. migrazione friend_name_avatar, get_linked_friend_avatar_path)
- * --- null se l'amico non è collegato o quell'account non ha una foto.
- * Mai l'intera riga profiles: solo questo, per non sovraesporre
- * preferenze/consensi altrui a chi ha semplicemente salvato un'email
- * come amico.
- */
+/** Solo il path della foto, mai l'intera riga profiles --- per non sovraesporre preferenze/consensi altrui. */
 export async function getLinkedFriendAvatarUrl(
   supabase: SupabaseClient<Database>,
   friendId: string,
@@ -294,14 +251,7 @@ export async function getLinkedFriendAvatarUrl(
   return data ? avatarPublicUrl(supabase, data) : null;
 }
 
-/**
- * FASE C1 del piano di condivisione capsule --- la chiave pubblica ECDH
- * (v. lib/crypto/keypair.ts) dell'account collegato a un amico, o null
- * se non è collegato o non ha ancora una chiave (v. migrazione
- * account_keypair, get_linked_friend_public_key). Serve per cifrare una
- * capsula appositamente per lui al momento della condivisione (v.
- * domain/capsules/repository.ts, shareCapsule).
- */
+/** FASE C1: chiave pubblica ECDH dell'account collegato, o null --- usata per cifrare una capsula per lui (v. shareCapsule). */
 export async function getLinkedFriendPublicKey(
   supabase: SupabaseClient<Database>,
   friendId: string,
@@ -314,16 +264,7 @@ export async function getLinkedFriendPublicKey(
   return data ?? null;
 }
 
-/**
- * FASE A del piano di condivisione capsule --- verifica se una singola
- * email (già decifrata lato client per UN amico) corrisponde a un
- * account Hinthial registrato. Passa dalla funzione Postgres
- * `lookup_friend_account` (v. migrazione friend_account_lookup):
- * l'unica che può confrontarla con `auth.users`, mai raggiungibile
- * direttamente dal client. Nessun elenco, nessun confronto bulk --- una
- * chiamata per amico, con un tetto giornaliero lato server contro
- * l'enumerazione di account.
- */
+/** FASE A: verifica un'email per volta via RPC Postgres (mai `auth.users` diretto), con un tetto giornaliero contro l'enumerazione. */
 export async function lookupFriendAccount(
   supabase: SupabaseClient<Database>,
   email: string,
