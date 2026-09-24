@@ -1,17 +1,6 @@
 /**
- * FASE 12 --- "Eredità digitale" (internamente Dead Man's Switch, mai
- * questo nome in interfaccia: v. richiesta utente). Primo passo:
- * solo i parametri numerici della strategia, discussi a fondo con
- * l'utente prima di scrivere qualunque riga di questo file. Nessuna
- * automazione reale ancora --- rilevamento inattività, promemoria,
- * coinvolgimento guardiani e apertura capsule arriveranno in fasi
- * successive, che leggeranno questi stessi valori (v.
- * domain/digital-legacy/repository.ts).
- *
- * I guardiani (v. friends.is_guardian) verificano soltanto che il
- * proprietario stia bene --- non ereditano automaticamente l'accesso
- * alle capsule, che restano decise capsula per capsula come sempre (v.
- * domain/capsules).
+ * FASE 12: "Eredità digitale" (internamente Dead Man's Switch, mai in interfaccia). I guardiani (v. friends.is_guardian)
+ * verificano solo che il proprietario stia bene --- non ereditano l'accesso alle capsule, deciso capsula per capsula come sempre.
  */
 export type DigitalLegacyPreset = "cautious" | "balanced" | "relaxed" | "custom";
 
@@ -19,13 +8,7 @@ export type DigitalLegacyPreset = "cautious" | "balanced" | "relaxed" | "custom"
 export type GuardianQuorum = "unanimous" | "majority" | "single";
 
 export interface DigitalLegacySettings {
-  /**
-   * Spento di default per ogni account (v. richiesta utente, discussa
-   * esplicitamente prima di costruire l'automazione): finché è spento,
-   * nessuna email parte e nessuno stato cambia da solo, qualunque
-   * preset/valore sia configurato qui sotto --- un preset scelto in
-   * anticipo non ha alcun effetto prima di questo interruttore.
-   */
+  /** Spento di default: finché è spento nessuna email parte e nessuno stato cambia, a prescindere dal preset scelto. */
   enabled: boolean;
   preset: DigitalLegacyPreset;
   /** Giorni di inattività prima di iniziare i promemoria. */
@@ -119,12 +102,7 @@ type NumericFieldKey =
   | "formalVerificationDays"
   | "finalWaitDays";
 
-/**
- * Limiti applicati anche in modalità "custom" (v. richiesta utente):
- * evitano configurazioni assurde --- es. una soglia di inattività di
- * due giorni --- senza dover spiegare perché un numero specifico non è
- * permesso.
- */
+/** Limiti applicati anche in "custom", per evitare configurazioni assurde (es. inattività di due giorni). */
 export const DIGITAL_LEGACY_BOUNDS: Record<NumericFieldKey, { min: number; max: number }> = {
   inactivityDays: { min: 30, max: 730 },
   reminderIntervalDays: { min: 3, max: 60 },
@@ -170,12 +148,7 @@ function formatApprox(days: number): string {
   return rounded <= 1 ? "circa un mese" : `circa ${rounded} mesi`;
 }
 
-/**
- * La frase di riepilogo mostrata sotto lo slider dei preset (v.
- * richiesta utente: "si aggiorna in tempo reale con la scelta
- * corrente") --- linguaggio semplice, mai i 7 valori elencati uno per
- * uno.
- */
+/** Riepilogo sotto lo slider dei preset, in linguaggio semplice --- mai i 7 valori elencati uno per uno. */
 export function describeDigitalLegacySettings(settings: DigitalLegacyPresetValues): string {
   const total = totalWorstCaseDays(settings);
   const reminderTimes = settings.reminderCount === 1 ? "1 volta" : `${settings.reminderCount} volte`;
@@ -191,18 +164,9 @@ export function describeDigitalLegacySettings(settings: DigitalLegacyPresetValue
 }
 
 /**
- * Tutte e 7 le fasi della roadmap (v. HINTHIAL_MVP.md sezione 10):
- * rilevamento inattività, promemoria, periodo di grazia, coinvolgimento
- * guardiani, verifica formale, attesa finale, apertura capsule.
- * "guardians_confirmed" resta comunque solo un istante di passaggio
- * (avanza da sé a "formal_verification" al giro successivo, senza una
- * propria durata): il vero tempo di attesa di quella fase vive nello
- * stato che segue. "triggered" è l'unico stato senza ritorno per
- * l'EFFETTO che produce (v. digital_legacy_triggered_at su profiles,
- * un marcatore permanente separato da questa colonna, mai azzerato da
- * un reset): l'accesso alle capsule già concesso ai destinatari non si
- * può ritirare, anche se lo stato stesso può tornare "normal" con un
- * accesso successivo del proprietario.
+ * Le 7 fasi della roadmap (v. HINTHIAL_MVP.md sezione 10). "guardians_confirmed" è solo un istante di passaggio (avanza
+ * da sé, senza durata propria). "triggered" è irreversibile nell'EFFETTO (v. digital_legacy_triggered_at, marcatore
+ * permanente): l'accesso già concesso non si ritira, anche se lo STATO può tornare "normal" con un accesso successivo.
  */
 export type DigitalLegacyState =
   | "normal"
@@ -224,11 +188,7 @@ export interface GuardianTally {
   confirmedUnreachableCount: number;
 }
 
-/**
- * Se il riscontro dei guardiani raggiunge la soglia richiesta dal
- * quorum scelto (v. Impostazioni > Eredità digitale) --- mai vero con
- * zero guardiani interpellati, qualunque sia il quorum.
- */
+/** Se il riscontro raggiunge la soglia del quorum scelto --- mai vero con zero guardiani interpellati. */
 export function isGuardianQuorumSatisfied(quorum: GuardianQuorum, tally: GuardianTally): boolean {
   if (tally.totalGuardians === 0) return false;
   switch (quorum) {
@@ -252,61 +212,34 @@ export interface DigitalLegacyRuntimeState {
   lastReminderAt: string | null;
 }
 
-/**
- * L'unica azione da compiere per questo account a questo giro di
- * controllo --- "none" nella grande maggioranza dei casi. Il chiamante
- * (v. domain/digital-legacy/automation.ts) applica l'azione: aggiorna
- * la riga, manda l'email se prevista, registra l'evento in Attività.
- */
+/** L'unica azione da compiere a questo giro --- "none" quasi sempre. Applicata dal chiamante (v. automation.ts). */
 export type DigitalLegacyAction =
   | { type: "none" }
-  /**
-   * Un accesso del proprietario DOPO l'inizio dello stato attuale
-   * ("login"), o un guardiano che conferma "sta bene"
-   * ("guardian_confirmed_ok") --- annullano tutto allo stesso modo, si
-   * torna a "normal", ma restano distinti nel registro Attività.
-   */
+  /** Login del proprietario o guardiano che conferma "sta bene" --- annullano tutto uguale, ma restano distinti in Attività. */
   | { type: "reset"; reason: "login" | "guardian_confirmed_ok" }
-  /**
-   * Invia un promemoria --- `enteringReminding: true` per il primo (che
-   * fa anche scattare lo stato "reminding" da "normal", nello stesso
-   * momento: niente attesa aggiuntiva oltre alla soglia di inattività
-   * già trascorsa prima di scrivere per la prima volta).
-   */
+  /** `enteringReminding: true` per il primo, che fa scattare "reminding" da "normal" nello stesso momento. */
   | { type: "send_reminder"; reminderNumber: number; enteringReminding: boolean }
   | { type: "start_grace_period" }
   | { type: "start_awaiting_guardians" }
-  /** Il quorum dei guardiani è stato raggiunto --- v. isGuardianQuorumSatisfied. */
   | { type: "guardians_confirmed" }
-  /** Passaggio immediato, senza attesa propria --- v. doc comment di DigitalLegacyState. */
   | { type: "start_formal_verification" }
   | { type: "start_final_wait" }
-  /** L'azione finale: rende le capsule già condivise leggibili ai destinatari da subito, a prescindere dalla loro open_at --- v. domain/digital-legacy/automation.ts, releaseCapsulesToRecipients. */
+  /** Rende le capsule già condivise leggibili da subito, a prescindere dalla loro open_at (v. releaseCapsulesToRecipients). */
   | { type: "trigger_release" };
 
-/**
- * Il "cervello" dell'automazione --- puro, senza alcun accesso a
- * database o orologio di sistema (li riceve come parametri): interamente
- * testabile con date fisse, senza dover davvero aspettare mesi né poter
- * manipolare `last_sign_in_at` di Supabase (gestito da GoTrue, non
- * scrivibile a piacere). v. domain/digital-legacy/automation.ts per chi
- * lo chiama con i dati veri.
- */
+/** Il "cervello" dell'automazione --- puro, testabile con date fisse (non serve aspettare mesi né scrivere `last_sign_in_at`, gestito da GoTrue). */
 export function computeDigitalLegacyTransition(params: {
   now: Date;
-  /** L'ultimo accesso noto --- oggi la sola definizione di "attività" usata (v. roadmap, "inactivity detection"); fasi future potranno ampliarla. */
+  /** L'ultimo accesso noto --- oggi la sola definizione di "attività" usata. */
   lastSignInAt: Date;
   settings: DigitalLegacyPresetValues;
   runtime: DigitalLegacyRuntimeState;
-  /** Solo significativo in "awaiting_guardians" --- null altrove, o se le richieste non sono ancora state create. */
+  /** Solo significativo in "awaiting_guardians". */
   guardianTally?: GuardianTally | null;
 }): DigitalLegacyAction {
   const { now, lastSignInAt, settings, runtime, guardianTally } = params;
 
-  // Un accesso avvenuto dopo l'inizio dello stato attuale vale più di
-  // qualunque fase in corso, a prescindere da quale sia: annulla tutto,
-  // sempre. Controllato prima di ogni altra cosa, non solo dentro ai
-  // singoli stati.
+  // Un accesso dopo l'inizio dello stato attuale annulla tutto, sempre --- controllato prima di ogni altra cosa.
   if (runtime.state !== "normal" && lastSignInAt.getTime() > new Date(runtime.stateEnteredAt).getTime()) {
     return { type: "reset", reason: "login" };
   }
@@ -348,8 +281,7 @@ export function computeDigitalLegacyTransition(params: {
     return { type: "none" };
   }
 
-  // "guardians_confirmed" non ha una propria durata --- avanza da sé,
-  // subito, al giro successivo (v. doc comment di DigitalLegacyState).
+  // Nessuna durata propria --- avanza subito (v. doc comment di DigitalLegacyState).
   if (runtime.state === "guardians_confirmed") {
     return { type: "start_formal_verification" };
   }
@@ -368,11 +300,7 @@ export function computeDigitalLegacyTransition(params: {
     return { type: "none" };
   }
 
-  // "triggered": l'effetto (l'accesso alle capsule già concesso) resta
-  // per sempre --- v. digital_legacy_triggered_at, un marcatore
-  // separato --- ma lo STATO può comunque tornare "normal" con un vero
-  // accesso successivo del proprietario (controllato più sopra):
-  // qui non c'è altro da fare da soli.
+  // "triggered": l'effetto resta per sempre, ma lo STATO può tornare "normal" con un accesso (controllato più sopra).
   return { type: "none" };
 }
 
@@ -383,7 +311,7 @@ export interface GuardianResponseCounts {
   unreachable: number;
 }
 
-/** Ciò che il proprietario vede di sé stesso in Impostazioni > Eredità digitale --- mai i nomi dei guardiani qui (cifrati, decifrabili solo dalla propria rubrica Amici): solo conteggi, già in chiaro lato server. */
+/** Ciò che il proprietario vede di sé in Impostazioni > Eredità digitale --- solo conteggi in chiaro, mai i nomi dei guardiani (cifrati). */
 export interface DigitalLegacyStatus {
   state: DigitalLegacyState;
   stateEnteredAt: string;
@@ -396,14 +324,7 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 }
 
-/**
- * La frase mostrata al proprietario per il proprio stato attuale ---
- * pura, nessun accesso a database: riceve già tutto ciò che le serve
- * come parametri (v. describeDigitalLegacySettings per lo stesso
- * principio). "normal" non produce un banner in interfaccia (v.
- * DigitalLegacyStatusBanner.tsx) --- questa funzione non è nemmeno
- * chiamata in quel caso.
- */
+/** Frase mostrata al proprietario per il proprio stato --- pura, nessun accesso a database. "normal" non produce banner. */
 export function describeDigitalLegacyStatus(status: DigitalLegacyStatus, reminderCount: number): string {
   switch (status.state) {
     case "normal":
