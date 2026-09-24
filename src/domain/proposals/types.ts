@@ -1,41 +1,10 @@
 /**
- * FASE 19 --- il meccanismo delle proposte.
- *
- * Questa fase non porta funzioni nuove: porta il **permesso di
- * scrivere**. Fino alla 18 Hinthial ricavava informazioni dai documenti
- * e si limitava a mostrarle, perché modificare i dati di qualcuno senza
- * avere ancora il modo di disfare sarebbe stato scorretto. Qui nasce
- * quel modo, e con esso la possibilità di dire di sì.
- *
- * Quattro cose che una proposta deve avere, e che sono il contenuto
- * vero di questa fase:
- *
- * 1. **Cosa propone** --- un campo e un valore, mai un'azione vaga.
- * 2. **Da dove nasce** (`source`) --- il pezzo di documento che l'ha
- *    fatta nascere. Una proposta senza la sua fonte chiede fiducia
- *    cieca, ed è esattamente ciò che questo prodotto non fa.
- * 3. **Tre risposte, non due**: accetta, **modifica**, rifiuta. La
- *    seconda è quella che conta: la maggior parte delle proposte è
- *    giusta per metà --- la data c'è ma è quella sbagliata --- e senza
- *    "modifica" l'utente è costretto a rifiutare e rifare tutto a mano.
- * 4. **Reversibilità** --- un'accettazione si annulla, e un rifiuto si
- *    ricorda (v. proposal_rejections): ciò che hai scartato non ti viene
- *    richiesto.
- *
- * Vincolo architetturale della fase, dal piano: *il server può proporre,
- * solo il client può scrivere*. Qui è rispettato in modo strutturale ---
- * le proposte si calcolano nel browser dal testo già decifrato (v.
- * domain/extraction), e il server non le vede mai nascere.
+ * FASE 19: il permesso di scrivere. Una proposta ha sempre cosa propone (campo+valore), da dove nasce (`source`), tre
+ * risposte (accetta/modifica/rifiuta) e reversibilità (v. proposal_rejections). Vincolo architetturale: il server
+ * propone, solo il client scrive --- le proposte si calcolano nel browser, il server non le vede mai nascere.
  */
 
-/**
- * I campi per cui oggi esiste una proposta: `documents.expires_at`,
- * `documents.category_id` e (cifrato, come le note) `documents.
- * encrypted_issuer`. Data del documento (v. FASE 18) resta visibile
- * nella scheda ma non proponibile --- non c'è ancora un campo che
- * l'accolga, e inventarne uno per avere una proposta in più sarebbe il
- * contrario del lavorare per fasi.
- */
+/** Campi proponibili oggi: expires_at, category_id, e (cifrato come le note) encrypted_issuer. Data del documento resta visibile ma non proponibile, manca un campo che l'accolga. */
 export type ProposalKind = "expiry" | "category" | "issuer";
 
 export interface Proposal {
@@ -44,13 +13,7 @@ export interface Proposal {
   value: string;
   /** Il pezzo di documento da cui nasce, da mostrare accanto alla proposta. */
   source: string;
-  /**
-   * Vero quando il valore è stato **calcolato** e non letto --- una
-   * scadenza ricavata da "controllo tra dodici mesi" più la data del
-   * documento (v. FASE 18). Va detto: chi accetta deve sapere se sta
-   * confermando una data scritta sul foglio o un conto fatto da
-   * Hinthial.
-   */
+  /** Vero se il valore è calcolato e non letto (es. "controllo tra 12 mesi" + data documento) --- chi accetta deve saperlo. */
   derived?: boolean;
 }
 

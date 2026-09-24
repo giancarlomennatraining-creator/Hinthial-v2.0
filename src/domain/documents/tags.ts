@@ -1,20 +1,7 @@
 /**
- * Gestione dei tag --- logica pura, senza I/O (stesso schema di
- * domain/documents/trash.ts e domain/bulk-import/duplicates.ts), per
- * poterla testare senza un database vero.
- *
- * I tag non sono un'entità a sé nel database (a differenza delle
- * categorie): ogni documento porta il proprio array di tag cifrato in
- * un unico blob (v. repository.ts, encryptTags/decryptTags). Non
- * esiste quindi "il tag X" da solo --- esiste solo "i documenti che
- * hanno tra i loro tag qualcosa che corrisponde a X". Rinominare o
- * eliminare un tag vuol dire scorrere i documenti già decifrati in
- * memoria e aggiornare l'array di ognuno.
- *
- * Confronto case-insensitive: senza questo, "Casa" e "casa" sarebbero
- * due tag distinti per sempre (mai stato normalizzato altrove nel
- * codice) --- qui si introduce la normalizzazione alla fonte, sia
- * quando si aggiunge un tag sia quando si aggregano/rinominano.
+ * Gestione dei tag, logica pura (stesso schema di trash.ts/duplicates.ts). Non un'entità a sé nel DB: ogni documento
+ * porta il proprio array cifrato in un unico blob, quindi rinominare/eliminare un tag vuol dire scorrere i documenti
+ * già decifrati in memoria. Confronto case-insensitive alla fonte, altrimenti "Casa"/"casa" resterebbero due tag distinti.
  */
 
 function normalize(raw: string): string {
@@ -25,12 +12,7 @@ function sameTag(a: string, b: string): boolean {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
-/**
- * Aggiunge un tag a una lista esistente, senza creare un duplicato
- * "sotto mentite spoglie" (stessa parola, maiuscole diverse). Se un
- * tag corrispondente esiste già, la lista non cambia --- si mantiene la
- * grafia già presente, non quella appena digitata.
- */
+/** Aggiunge un tag senza duplicati mascherati (stessa parola, maiuscole diverse) --- mantiene la grafia già presente. */
 export function addTagToList(existing: string[], rawTag: string): string[] {
   const trimmed = normalize(rawTag);
   if (!trimmed) return existing;
@@ -48,13 +30,7 @@ export function listIncludesTag(existing: string[], name: string): boolean {
   return existing.some((tag) => sameTag(tag, name));
 }
 
-/**
- * Rinomina un tag all'interno di una lista. Se `newName` corrisponde
- * (case-insensitive) a un tag già presente diverso da quello rinominato,
- * il risultato è un merge: i due confluiscono in una sola voce, quella
- * già presente prevale nella grafia. Nessun effetto se `oldName` non è
- * nella lista.
- */
+/** Se `newName` corrisponde a un tag già presente, il risultato è un merge (prevale la grafia già presente). */
 export function renameTagInList(existing: string[], oldName: string, newName: string): string[] {
   const withoutOld = removeTagFromList(existing, oldName);
   if (withoutOld.length === existing.length) return existing; // oldName non c'era
@@ -67,13 +43,7 @@ export interface TagUsage {
   count: number;
 }
 
-/**
- * Elenca tutti i tag usati in un insieme di documenti, con quante volte
- * ciascuno appare --- raggruppati case-insensitive. La grafia mostrata
- * per ogni gruppo è quella più frequente (a parità, la prima incontrata
- * nell'ordine dato), non necessariamente la prima in ordine alfabetico:
- * se 8 documenti hanno "casa" e 1 ha "Casa", il gruppo si chiama "casa".
- */
+/** Tag usati con quante volte appare ciascuno, raggruppati case-insensitive --- grafia mostrata: la più frequente. */
 export function aggregateTags(documents: { tags: string[] }[]): TagUsage[] {
   const groups = new Map<string, { counts: Map<string, number> }>();
 

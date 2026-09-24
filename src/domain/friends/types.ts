@@ -1,62 +1,27 @@
-/**
- * FASE 7: solo struttura dati e gestione dello stato --- nessuno sblocco
- * automatico dei dati in questa fase (v. HINTHIAL_MVP.md). Ogni amico
- * nasce "active": lo stato intermedio "pending" ("In attesa") è stato
- * eliminato (v. richiesta utente) --- non bloccava nulla di voluto, solo
- * nascondeva l'amico dal selettore dei destinatari delle capsule finché
- * non lo si segnava a mano come attivo, un effetto collaterale confuso.
- */
+/** FASE 7: solo struttura dati e stato, nessuno sblocco automatico. Ogni amico nasce "active" --- lo stato "pending" è stato eliminato, nascondeva l'amico dal selettore capsule in modo confuso. */
 export type FriendStatus = "active" | "revoked";
 
 export interface FriendListItem {
   id: string;
-  /**
-   * "Nome visualizzato" in interfaccia --- non necessariamente "nome
-   * cognome": alla creazione parte come combinazione dei due (v.
-   * Create/EditFriendForm), ma resta un campo a sé, modificabile in
-   * seguito senza che si aggiorni più da solo. Decrypted client-side.
-   */
+  /** "Nome visualizzato" --- parte come nome+cognome ma resta un campo a sé, modificabile senza aggiornarsi da solo. Decrypted client-side. */
   name: string;
   email: string;
-  /** "" se non impostato (amici creati prima che questi campi esistessero) --- mai un errore. Decrypted client-side. */
+  /** "" se non impostato (amici pre-esistenti) --- mai un errore. Decrypted client-side. */
   firstName: string;
   /** V. firstName. */
   lastName: string;
-  /** Path Storage di una foto caricata a mano dal proprietario, o null --- v. avatarUrl. */
+  /** Path Storage di una foto caricata a mano, o null --- v. avatarUrl. */
   avatarPath: string | null;
-  /**
-   * URL pubblico della SOLA foto caricata a mano (da avatarPath) --- la
-   * foto reale di un eventuale account collegato si risolve altrove, di
-   * proposito (v. FriendsPanel.tsx, checkLinkedAccounts): una chiamata a
-   * parte per amico, per non rallentare ogni caricamento dell'elenco.
-   */
+  /** URL della SOLA foto caricata a mano --- quella di un account collegato si risolve altrove (v. FriendsPanel, checkLinkedAccounts). */
   avatarUrl: string | null;
-  /** Free text (es. "Coniuge", "Avvocato", "Fratello") --- non cifrato, etichetta gestionale. */
+  /** Free text (es. "Coniuge", "Avvocato") --- non cifrato, etichetta gestionale. */
   role: string;
   status: FriendStatus;
-  /**
-   * PERSONA (false) vs AMICO (true) --- v. domain/friends/friend-requests.
-   * Diventa true SOLO se una richiesta di amicizia è stata accettata da
-   * entrambe le parti: mai impostabile direttamente, a differenza di
-   * `status`/`isGuardian`. Una PERSONA resta comunque un destinatario
-   * valido di capsule --- solo un AMICO può diventare GUARDIANO.
-   */
+  /** PERSONA (false) vs AMICO (true) --- true solo se una richiesta di amicizia è accettata da entrambi, mai impostabile direttamente. */
   isFriend: boolean;
-  /**
-   * "Guardiano" --- riceve un avviso informale se il proprietario risulta
-   * inattivo a lungo (Dead Man's Switch semplificato per le capsule, v.
-   * domain/capsules). Diventa true solo accettando una richiesta apposita
-   * (v. domain/friends/guardian-requests) --- possibile solo se `isFriend`
-   * è già true. Nessun accesso concesso di per sé: solo un flag.
-   */
+  /** Riceve un avviso se il proprietario è inattivo a lungo (Dead Man's Switch semplificato) --- richiede isFriend true. Nessun accesso concesso, solo un flag. */
   isGuardian: boolean;
-  /**
-   * Se questo amico ha un account Hinthial registrato con la stessa
-   * email, il suo id --- risolto via lookupFriendAccount() e salvato
-   * qui (v. FASE A del piano di condivisione capsule). Null finché non
-   * risolto o se non corrisponde a nessun account: non è un errore, è
-   * lo stato di partenza per ogni amico appena aggiunto.
-   */
+  /** Id dell'account Hinthial con la stessa email, se c'è (v. lookupFriendAccount) --- null è lo stato di partenza normale. */
   linkedUserId: string | null;
   createdAt: string;
 }
