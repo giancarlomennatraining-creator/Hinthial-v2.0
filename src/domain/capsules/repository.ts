@@ -78,7 +78,7 @@ async function backfillOpenAtColumn(
   try {
     await supabase.from("capsules").update({ open_at: openAt }).eq("id", capsuleId);
   } catch {
-    // Riprova al prossimo listCapsules() --- nessun dato perso, solo non ancora sanato.
+    // Riprova al prossimo listCapsules().
   }
 }
 
@@ -96,13 +96,7 @@ async function decryptPayload(masterKey: CryptoKey, row: CapsuleRow): Promise<Ca
   };
 }
 
-/**
- * Lists the current user's capsules (most recent first), decrypting the
- * payload (title/content/attachment metadata) --- any linked Documenti
- * entries and related friends, if any --- client-side with
- * the Master Key. Both are resolved in one batched query each, across
- * every capsule, not one query per capsule.
- */
+/** Capsule dell'utente corrente, più recenti prima; documenti/amici collegati risolti in una query batch ciascuno. */
 export async function listCapsules(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -112,13 +106,7 @@ export async function listCapsules(
   } = await supabase.auth.getUser();
   if (!user) return [];
 
-  // Esplicito, non solo affidato a RLS: da FASE B esiste anche
-  // "capsules_select_shared_recipient", una seconda policy SELECT
-  // permissiva che ammette le capsule condivise CON questo utente (non
-  // sue) --- senza questo filtro, un account che ha ricevuto una
-  // capsula la ritroverebbe anche qui, e decryptPayload la cifrerebbe
-  // con la chiave sbagliata (quella del proprietario, non la propria),
-  // fallendo con "Decryption failed" (v. segnalazione utente).
+  // Filtro esplicito, non solo RLS: esiste anche una policy che ammette le capsule condivise CON questo utente, non sue.
   const { data, error } = await supabase
     .from("capsules")
     .select(CAPSULE_COLUMNS)
@@ -143,9 +131,7 @@ export async function listCapsules(
 
   const items = rows.map((row, i) => {
     const payload = payloads[i];
-    // La colonna in chiaro è la fonte autorevole (v. migrazione
-    // 20260905000000); il payload cifrato resta un fallback per le
-    // capsule create prima che esistesse --- v. sanamento sotto.
+    // La colonna in chiaro è la fonte autorevole; il payload cifrato è solo un fallback pre-migrazione (v. sanamento sotto).
     const openAt = row.open_at ?? payload.openAt;
 
     return {
@@ -168,15 +154,9 @@ export async function listCapsules(
     };
   });
 
-  // Sanamento: una capsula creata prima della migrazione ha open_at
-  // NULL a livello di colonna anche se il payload cifrato ha già una
-  // data --- la si riporta in chiaro qui, alla prima occasione in cui
-  // il proprietario la rivede (unico momento in cui è già decifrata).
-  // Best-effort: un fallimento qui non deve impedire di mostrare la lista.
+  // Sanamento best-effort: riporta in chiaro open_at per le capsule pre-migrazione, alla prima occasione utile.
   for (const [i, row] of rows.entries()) {
     if (row.open_at === null && payloads[i].openAt !== null) {
-      // Non attesa di proposito: un fallimento qui riprova semplicemente
-      // al prossimo caricamento, non deve rallentare né bloccare la lista.
       void backfillOpenAtColumn(supabase, row.id, payloads[i].openAt as string);
     }
   }
@@ -184,11 +164,7 @@ export async function listCapsules(
   return items;
 }
 
-/**
- * Encrypts and uploads one attachment (own Document Key, like FASE 4),
- * returning the metadata that goes inside the capsule's encrypted
- * payload --- the ciphertext itself lives only in Storage.
- */
+/** Cifra e carica un allegato (Document Key propria, come FASE 4); il testo cifrato vive solo in Storage. */
 async function uploadAttachment(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -215,11 +191,7 @@ async function uploadAttachment(
   };
 }
 
-/**
- * Encrypts title/content/attachments/openAt and creates a capsule in
- * "draft" status. Editable (see updateCapsule) only while still a draft
- * --- closing it (draft -> ready, see closeCapsule) is irreversible.
- */
+/** Crea una capsula in stato "draft"; editabile solo finché resta tale, chiuderla (v. closeCapsule) è irreversibile. */
 export async function createCapsule(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -271,18 +243,7 @@ export async function createCapsule(
   await logAuditEvent(supabase, ownerId, "capsule_created");
 }
 
-/**
- * Updates title/content/recipients/attachments while a capsule is still
- * a draft --- re-encrypts the whole payload (same shape as
- * createCapsule). `keptAttachments` are existing attachments left
- * untouched (their ciphertext already lives in Storage, not
- * re-uploaded); `input.newFiles` are freshly recorded/uploaded
- * audio/video, encrypted and uploaded here exactly like createCapsule;
- * `removedAttachments` are existing ones the caller dropped --- their
- * Storage blobs are deleted, but only *after* the new payload is
- * confirmed saved (deleting first and then failing to save would leave
- * the still-current payload pointing at now-missing attachments).
- */
+/** Aggiorna una capsula ancora draft, ricifrando l'intero payload; `removedAttachments` viene rimosso da Storage solo dopo il salvataggio, non prima. */
 export async function updateCapsule(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -332,9 +293,7 @@ export async function updateCapsule(
   }
 
   if (removedAttachments.length > 0) {
-    // Best-effort: il payload nuovo (senza questi allegati) è già
-    // salvato, quindi un fallimento qui lascia solo blob orfani in
-    // Storage --- non un problema di correttezza, nessun riferimento li punta più.
+    // Best-effort: il payload nuovo è già salvato, un fallimento qui lascia solo blob orfani in Storage.
     await removeEncryptedCapsulePayloads(
       supabase,
       removedAttachments.map((a) => capsuleAttachmentStoragePath(ownerId, capsuleId, a.id)),
@@ -342,21 +301,7 @@ export async function updateCapsule(
   }
 }
 
-/**
- * Closes a capsule (draft -> ready) --- the one irreversible step, and
- * from FASE 14 more than a status flip: every Archivio item still
- * linked (capsule.linkedDocuments) is decrypted and re-encrypted with
- * its own fresh Document Key, exactly like a directly-uploaded
- * attachment (see uploadAttachment above). From this point on the
- * capsule owns a private copy of everything inside it --- it no longer
- * depends on those Archivio originals staying untouched, so nothing
- * needs to lock them against deletion/editing anymore.
- *
- * If copying any item fails partway through, the newly-uploaded copies
- * are removed and the capsule is left exactly as it was (still a
- * draft, still referencing the originals) --- an all-or-nothing step,
- * same spirit as createCapsule's own cleanup-on-failure.
- */
+/** Chiude una capsula (draft -> ready, irreversibile): ogni Archivio collegato viene copiato con una Document Key propria, così la capsula non dipende più dagli originali. Tutto o niente: un fallimento a metà rimuove le copie e lascia la capsula com'era. */
 export async function closeCapsule(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -399,7 +344,7 @@ export async function closeCapsule(
     content: capsule.content,
     contentStyle: capsule.contentStyle,
     attachments: [...capsule.attachments, ...newAttachments],
-    // Tutto ciò che era un riferimento è ora una copia propria: la capsula chiusa non ne ha più bisogno.
+    // Tutto ciò che era un riferimento è ora una copia propria.
     linkedDocumentIds: [],
     relatedFriendIds: capsule.relatedFriends.map((c) => c.id),
     openAt: capsule.openAt,
@@ -423,13 +368,7 @@ export async function closeCapsule(
   }
 }
 
-/**
- * Moves a capsule forward in its lifecycle beyond closing (ready ->
- * shared/draft -> ready via closeCapsule instead, which does real work
- * beyond the status itself). Just a recorded status change on its own
- * --- v. shareCapsule per il vero significato di "Condividi", che la
- * usa internamente.
- */
+/** Cambio di stato registrato, nient'altro --- v. shareCapsule per il vero significato di "Condividi", che lo usa internamente. */
 export async function setCapsuleStatus(
   supabase: SupabaseClient<Database>,
   capsuleId: string,
@@ -442,15 +381,7 @@ export async function setCapsuleStatus(
   }
 }
 
-/**
- * Prepara il contenuto di una capsula già chiusa per un destinatario:
- * stesso titolo/contenuto/allegati, ma la Document Key di ogni allegato
- * è qui in chiaro (v. SharedCapsuleAttachment) invece che avvolta dalla
- * Master Key del proprietario --- il destinatario non la possiede, e
- * non gli serve un secondo involucro: l'intero risultato di questa
- * funzione finisce comunque dentro una busta cifrata apposta per lui
- * (v. createOrRefreshShareKey).
- */
+/** Prepara il contenuto per un destinatario: Document Key in chiaro qui (v. SharedCapsuleAttachment), non avvolta --- il destinatario non ha la Master Key del proprietario. */
 async function buildRecipientPayload(
   masterKey: CryptoKey,
   capsule: Pick<CapsuleListItem, "title" | "content" | "contentStyle" | "attachments">,
@@ -473,25 +404,7 @@ async function buildRecipientPayload(
   return { title: capsule.title, content: capsule.content, contentStyle: capsule.contentStyle, attachments };
 }
 
-/**
- * FASE C1 --- crea (o rinnova) la busta cifrata che permette a UN
- * destinatario già collegato a un account Hinthial di decifrare
- * davvero questa capsula, una volta raggiunta la data di apertura (v.
- * migrazione capsule_share_keys, che nega la lettura di questa riga
- * prima di allora). Scambio di chiavi ECDH (v. lib/crypto/keypair.ts):
- * una coppia effimera per questa condivisione, la cui privata non
- * viene mai salvata da nessuna parte --- serve solo qui, un istante,
- * per derivare la chiave condivisa.
- *
- * Best-effort e silenzioso apposta: se il destinatario non ha ancora
- * una chiave pubblica (non ha mai sbloccato il proprio vault dopo
- * questa fase --- v. MasterKeyProvider), la riga "involucro"
- * (capsule_shares) viene comunque creata dal chiamante --- così
- * "Condivise con me" la mostra già --- solo senza possibilità di
- * apertura finché non si riprova. Nessun meccanismo di nuovo tentativo
- * automatico esiste ancora per questo caso specifico: va tenuto a mente
- * come limite noto.
- */
+/** FASE C1: crea/rinnova la busta ECDH che permette a un destinatario collegato di decifrare la capsula dopo l'apertura. Best-effort e silenzioso se il destinatario non ha ancora una chiave pubblica --- nessun retry automatico, limite noto. */
 async function createOrRefreshShareKey(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -529,18 +442,7 @@ async function createOrRefreshShareKey(
   }
 }
 
-/**
- * FASE B/C1 del piano di condivisione capsule --- "Condividi" (ready ->
- * shared) non è più solo un cambio di stato: per ogni destinatario già
- * collegato a un account Hinthial (v. friends.linked_user_id), crea sia
- * la riga che lo lega a questa capsula in "Condivise con me" (v.
- * listCapsulesSharedWithMe) sia la busta cifrata apposta per lui che
- * gli permetterà di apriria davvero, a data di apertura raggiunta (v.
- * createOrRefreshShareKey). Un destinatario non ancora collegato non
- * riceve nulla qui --- verrà agganciato retroattivamente quando si
- * collegherà (v. syncCapsuleSharesForLinkedFriend), esattamente come
- * l'amico dell'esempio che ha ispirato la Fase A.
- */
+/** FASE B/C1: "Condividi" crea sia il legame verso "Condivise con me" sia la busta cifrata (v. createOrRefreshShareKey) per ogni destinatario già collegato; chi non è ancora collegato viene agganciato in seguito (v. syncCapsuleSharesForLinkedFriend). */
 export async function shareCapsule(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -575,17 +477,7 @@ export async function shareCapsule(
   await setCapsuleStatus(supabase, capsule.id, "shared");
 }
 
-/**
- * Retroattivo: quando un amico si collega a un account Hinthial (v.
- * domain/friends, lookupFriendAccount) dopo che una o più capsule erano
- * già state condivise con lui, questa funzione crea le righe di
- * condivisione mancanti E la busta cifrata per aprirle (v.
- * createOrRefreshShareKey) --- così "Condivise con me" le mostra
- * comunque, invece di restare per sempre invisibili (o per sempre non
- * apribili) solo perché il collegamento è arrivato in ritardo.
- * `sharedCapsules` va già filtrata a status "shared" dal chiamante (v.
- * FriendsPanel, che le ha già in memoria, già decifrate).
- */
+/** Retroattivo: quando un amico si collega dopo che una capsula era già condivisa con lui, crea qui il legame e la busta mancanti (v. createOrRefreshShareKey). `sharedCapsules` arriva già filtrata a status "shared" dal chiamante. */
 export async function syncCapsuleSharesForLinkedFriend(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -613,15 +505,7 @@ export async function syncCapsuleSharesForLinkedFriend(
   void notifyCapsuleShared(linkedUserId);
 }
 
-/**
- * FASE B --- capsule condivise con l'utente corrente da altri
- * proprietari ("Condivise con me"). Solo metadati già in chiaro lato
- * server (mittente, data di condivisione, stato, data di apertura): il
- * titolo/contenuto restano cifrati con la Master Key del proprietario,
- * illeggibili qui --- v. SharedCapsuleListItem. Due query batch (mai
- * una per capsula): righe orfane (capsula o proprietario cancellati
- * medio tempore) sono filtrate in silenzio, non un errore.
- */
+/** FASE B: capsule condivise con l'utente da altri --- solo metadati in chiaro (v. SharedCapsuleListItem), titolo/contenuto restano cifrati con la Master Key del proprietario. */
 export async function listCapsulesSharedWithMe(
   supabase: SupabaseClient<Database>,
 ): Promise<SharedCapsuleListItem[]> {
@@ -630,11 +514,7 @@ export async function listCapsulesSharedWithMe(
   } = await supabase.auth.getUser();
   if (!user) return [];
 
-  // Esplicito, non solo affidato a RLS: la riga RLS che permette la
-  // lettura qui ammette SIA il proprietario SIA il destinatario (due
-  // policy separate, v. migrazione capsule_shares), quindi senza questo
-  // filtro chi condivide una capsula la ritroverebbe anche nel proprio
-  // elenco "Condivise con me" (v. segnalazione utente).
+  // Filtro esplicito: la policy RLS ammette sia proprietario sia destinatario, senza questo un condivisore la ritroverebbe qui.
   const { data: shares, error: sharesError } = await supabase
     .from("capsule_shares")
     .select("capsule_id, owner_id, shared_at, dismissed_at")
@@ -683,15 +563,7 @@ export async function listCapsulesSharedWithMe(
     .filter((item): item is SharedCapsuleListItem => item !== null);
 }
 
-/**
- * Chiude "per sempre" il popup di notifica in Dashboard per QUESTA
- * capsula condivisa (v. richiesta utente) --- niente ruolo di
- * sicurezza, solo un promemoria lato server di cosa il destinatario ha
- * già visto, così sopravvive a un refresh o a un altro dispositivo.
- * Manda sempre e solo `dismissed_at` (v. la policy RLS dedicata,
- * capsule_shares_update_recipient): mai altro, per definizione non può
- * riassegnare la condivisione a qualcun altro.
- */
+/** Chiude il popup di notifica per questa capsula condivisa, per sempre --- solo un promemoria lato server, nessun ruolo di sicurezza. */
 export async function dismissCapsuleShareNotification(
   supabase: SupabaseClient<Database>,
   capsuleId: string,
@@ -705,16 +577,7 @@ export async function dismissCapsuleShareNotification(
   }
 }
 
-/**
- * FASE C1 --- apre davvero una capsula condivisa: sblocca la propria
- * chiave privata (con la propria Master Key, appena sbloccata come per
- * qualunque altro contenuto), ridriva la chiave condivisa con la
- * chiave pubblica effimera che il proprietario ha generato per questa
- * condivisione, e decifra il contenuto. La riga da cui parte tutto
- * (capsule_share_keys) è visibile solo dopo la data di apertura --- se
- * questa funzione non la trova, non è ancora il momento (o non è mai
- * stata condivisa una chiave, v. createOrRefreshShareKey).
- */
+/** FASE C1: sblocca la propria chiave privata, ridriva la chiave condivisa ECDH e decifra --- visibile solo dopo la data di apertura. */
 export async function openSharedCapsule(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -752,13 +615,7 @@ export async function openSharedCapsule(
   return JSON.parse(bytesToUtf8(plaintext)) as SharedCapsuleOpenedContent;
 }
 
-/**
- * Scarica e decifra un allegato di una capsula condivisa --- v.
- * openSharedCapsule per il contenuto a cui appartiene. A differenza di
- * downloadCapsuleAttachment (il proprietario), qui la Document Key è
- * già in chiaro dentro l'allegato stesso (v. SharedCapsuleAttachment),
- * non avvolta: non serve la Master Key di nessuno, solo importarla.
- */
+/** A differenza di downloadCapsuleAttachment, qui la Document Key è già in chiaro nell'allegato (v. SharedCapsuleAttachment): basta importarla. */
 export async function downloadSharedCapsuleAttachment(
   supabase: SupabaseClient<Database>,
   ownerId: string,
@@ -774,14 +631,7 @@ export async function downloadSharedCapsuleAttachment(
   return { filename: attachment.filename, mimeType: attachment.mimeType, bytes };
 }
 
-/**
- * Updates one attachment's transcript (audio/video only, written by
- * hand today --- v. domain/transcription). Re-encrypts the whole
- * payload like updateCapsule, but touches only this one attachment's
- * field --- allowed regardless of status: it doesn't change what the
- * capsule actually contains, only a searchable annotation alongside it,
- * so it doesn't compromise "closing is irreversible".
- */
+/** Ricifra l'intero payload come updateCapsule, ma tocca solo il transcript di un allegato --- permesso a prescindere dallo stato, non cambia cosa contiene la capsula. */
 export async function updateCapsuleAttachmentTranscript(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,

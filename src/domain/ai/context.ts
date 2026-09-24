@@ -8,12 +8,7 @@ import { listFriends } from "@/domain/friends/repository";
 import { listCapsules } from "@/domain/capsules/repository";
 import type { AIContext } from "@/domain/ai/types";
 
-/**
- * Costruisce l'AIContext richiamando semplicemente i repository già
- * usati da ogni altra pagina --- nessuna nuova decrittazione, nessuna
- * query nuova: è lo stesso identico dato già mostrato altrove nell'app,
- * solo riunito in un unico oggetto.
- */
+/** Riunisce in un solo oggetto i repository già usati altrove --- nessuna decrittazione o query nuova. */
 export async function buildAIContext(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,

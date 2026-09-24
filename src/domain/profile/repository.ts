@@ -11,11 +11,7 @@ import { type NavOrientation } from "@/lib/nav-orientation";
 import { type BottomNavItems } from "@/lib/bottom-nav";
 import type { ProfileInput } from "@/domain/profile/types";
 
-/**
- * Updates the current user's first/last name. Plaintext (like the
- * categories taxonomy) --- a person's name isn't sensitive the same way
- * document content is, and it's never encrypted client-side.
- */
+/** Nome/cognome in chiaro, mai cifrati --- non sensibili come il contenuto di un documento. */
 export async function updateProfile(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -31,14 +27,7 @@ export async function updateProfile(
   }
 }
 
-/**
- * Uploads a new avatar (already cropped to a square client-side, see
- * AvatarUploadForm) and points the profile at it --- the previous image,
- * if any, is removed afterwards on a best-effort basis (a fresh path is
- * used each time so the old URL never goes stale mid-upload, v.
- * avatars-bucket.ts). Returns the new path (needed for a later removal)
- * and its public URL, to show immediately without a full page reload.
- */
+/** Carica un nuovo avatar (già ritagliato client-side) su un path fresco --- il vecchio viene rimosso dopo, best-effort. */
 export async function updateAvatar(
   supabase: SupabaseClient<Database>,
   ownerId: string,
@@ -77,12 +66,7 @@ export async function removeAvatar(
   await removeAvatarBlob(supabase, currentPath).catch(() => {});
 }
 
-/**
- * Reads the current user's saved list-view preferences (elenco/tabella
- * per sezione) --- a plaintext, non-sensitive display preference, kept
- * server-side (unlike the theme) so it follows the account across
- * devices (v. lib/list-view.ts).
- */
+/** Preferenza elenco/tabella per sezione --- in chiaro, salvata server-side (a differenza del tema) per seguire l'account su ogni dispositivo. */
 export async function fetchListViewPreferences(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -100,11 +84,7 @@ export async function fetchListViewPreferences(
   return parseListViewPreferences(data.list_view_preferences);
 }
 
-/**
- * Persists the full preferences object (read-modify-write done by the
- * caller, see ListViewPreferencesProvider) --- one row update per change,
- * same as any other profile field.
- */
+/** Read-modify-write fatto dal chiamante (v. ListViewPreferencesProvider); qui solo l'update. */
 export async function updateListViewPreferences(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -120,11 +100,7 @@ export async function updateListViewPreferences(
   }
 }
 
-/**
- * Persists the chosen navigation menu layout (v. lib/nav-orientation.ts)
- * --- read server-side on the next full navigation (see getCurrentUser),
- * so it's known before the first paint of the authenticated shell.
- */
+/** Letta server-side alla prossima navigazione (v. getCurrentUser), nota prima del primo paint della shell. */
 export async function updateNavOrientation(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -140,12 +116,7 @@ export async function updateNavOrientation(
   }
 }
 
-/**
- * Persists which nav items appear in the fixed bottom bar on mobile
- * (v. lib/bottom-nav.ts) --- read server-side on the next full
- * navigation (see getCurrentUser), like nav_orientation, to avoid a
- * flash of the wrong icons in persistent shell chrome.
- */
+/** Come nav_orientation: letta al login per evitare un lampo delle icone sbagliate nella barra fissa mobile. */
 export async function updateBottomNavItems(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -161,13 +132,7 @@ export async function updateBottomNavItems(
   }
 }
 
-/**
- * Persists which nav items appear in the general navigation bar
- * (sidebar/topbar, v. lib/main-nav.ts), and in what order --- read
- * server-side on the next full navigation (see getCurrentUser), like
- * bottom_nav_items, to avoid a flash of the wrong/full set of icons in
- * persistent shell chrome.
- */
+/** Voci e ordine della barra di navigazione principale --- stesso motivo di updateBottomNavItems. */
 export async function updateMainNavItems(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -180,12 +145,7 @@ export async function updateMainNavItems(
   }
 }
 
-/**
- * Persists whether the "Onboarding" nav-bar gadget is hidden (v.
- * OnboardingWidgetVisibilityProvider) --- sincronizzato sul server, come
- * nav_orientation, così "Nascondi" vale per davvero anche a un login
- * successivo (anche su un altro dispositivo), non solo su questo browser.
- */
+/** "Nascondi" il gadget onboarding vale su ogni dispositivo, non solo questo browser (v. OnboardingWidgetVisibilityProvider). */
 export async function updateOnboardingWidgetHidden(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -201,16 +161,7 @@ export async function updateOnboardingWidgetHidden(
   }
 }
 
-/**
- * Persiste il "cancello" generale per l'IA reale (v. HINTHIAL_MVP.md
- * sezione 8, "Explicit AI processing") --- sincronizzato sul server come
- * nav_orientation, così vale su tutti i dispositivi dell'utente.
- * Spegnerlo spegne anche ogni consenso specifico (oggi solo
- * ai_chat_consent, in futuro altri) nella stessa richiesta: un
- * interruttore generale spento non deve lasciarne acceso uno specifico
- * "per dimenticanza". Riaccenderlo NON li riaccende da solo --- restano
- * a scelta esplicita, funzione per funzione (v. AIProcessingConsentProvider).
- */
+/** Cancello generale IA (v. HINTHIAL_MVP.md, "Explicit AI processing"): spegnerlo spegne anche ogni consenso specifico nella stessa richiesta; riaccenderlo NON li riaccende da solo. */
 export async function updateAIMasterEnabled(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -237,11 +188,7 @@ export async function updateAIMasterEnabled(
   }
 }
 
-/**
- * Persiste il consenso specifico alla Chat reale --- ha effetto solo se
- * ai_master_enabled è true (v. updateAIMasterEnabled sopra e la
- * riverifica lato server in src/app/api/ai/chat/route.ts).
- */
+/** Effetto solo se ai_master_enabled è true (riverificato lato server in api/ai/chat/route.ts). */
 export async function updateAIChatConsent(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -257,14 +204,7 @@ export async function updateAIChatConsent(
   }
 }
 
-/**
- * Consenso specifico all'estrazione avanzata dei contenuti (FASE 22,
- * non ancora costruita) --- imposta già oggi la preferenza per quando
- * sarà disponibile. Spegnerlo spegne anche ai_health_consent e
- * ai_proactive_alerts_consent, che dipendono da questo: non esiste un
- * avviso proattivo o un'eccezione per la Salute senza l'estrazione
- * stessa attiva. Riaccenderlo non li riaccende da solo.
- */
+/** FASE 22, non ancora costruita --- imposta già la preferenza. Spegnerlo spegne anche health/proactive-alerts, che ne dipendono; riaccenderlo non li riaccende. */
 export async function updateAIExtractionConsent(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -284,12 +224,7 @@ export async function updateAIExtractionConsent(
   }
 }
 
-/**
- * Consenso ulteriore per includere anche la categoria Salute
- * nell'estrazione avanzata --- ha effetto solo se ai_extraction_consent
- * è true (v. updateAIExtractionConsent sopra, che lo spegne insieme al
- * resto se il consenso più generale viene ritirato).
- */
+/** Effetto solo se ai_extraction_consent è true (spento insieme al resto se quello viene ritirato). */
 export async function updateAIHealthConsent(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -321,13 +256,7 @@ export async function updateAITranscriptionConsent(
   }
 }
 
-/**
- * Consenso specifico agli avvisi proattivi (FASE 24, non ancora
- * costruita) --- ha effetto solo se ai_extraction_consent è anche true:
- * non esiste modo di generare un avviso senza aver prima letto i
- * contenuti (v. updateAIExtractionConsent, che lo spegne insieme al
- * resto se ritirato).
- */
+/** FASE 24, non ancora costruita --- effetto solo se ai_extraction_consent è anche true. */
 export async function updateAIProactiveAlertsConsent(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -343,13 +272,7 @@ export async function updateAIProactiveAlertsConsent(
   }
 }
 
-/**
- * Segna come chiuso il popup "Crea la tua master key" (v.
- * MasterKeyIntroModal) --- una tantum: qualunque interazione che lo
- * chiude (tasto "Più tardi", ✕, o il tasto che porta alla creazione)
- * chiama questa funzione, così non ricompare più né in questa sessione
- * né in una futura (sincronizzato sul server, come onboarding_widget_hidden).
- */
+/** Una tantum, sincronizzato sul server: il popup "Crea la tua master key" non ricompare più dopo. */
 export async function markMasterKeyIntroSeen(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -364,14 +287,7 @@ export async function markMasterKeyIntroSeen(
   }
 }
 
-/**
- * Legge se il countdown a cartellini delle capsule (v.
- * components/capsules/CapsuleCountdown.tsx) è visibile --- letta lato
- * client da CapsulesPanel/CapsuleCountdownSettings, non al login come
- * nav_orientation: qui un breve stato di caricamento (default true
- * mentre si attende la risposta) non crea alcun lampo percepibile,
- * a differenza della disposizione del menu.
- */
+/** Letta lato client (non al login come nav_orientation) --- un breve caricamento qui non crea lampi percepibili. */
 export async function getCapsuleCountdownVisible(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -421,12 +337,7 @@ export async function getTrashRetentionDays(
   return data?.trash_retention_days ?? 15;
 }
 
-/**
- * Persiste il periodo scelto --- ha effetto solo sui prossimi
- * documenti spostati nel cestino: quelli già lì mantengono la
- * scadenza già calcolata al momento (v. moveDocumentsToTrash), non
- * retroattiva.
- */
+/** Vale solo per i prossimi spostamenti nel cestino --- non retroattiva sui documenti già lì (v. moveDocumentsToTrash). */
 export async function updateTrashRetentionDays(
   supabase: SupabaseClient<Database>,
   userId: string,

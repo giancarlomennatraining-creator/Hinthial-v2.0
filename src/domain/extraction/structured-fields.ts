@@ -1,32 +1,8 @@
 /**
- * FASE 18 --- dal testo ai campi: la data del documento, una scadenza
- * dichiarata, chi l'ha emesso. (L'importo, che viveva qui, è stato
- * rimosso su richiesta esplicita: non abbastanza utile da meritare un
- * campo tutto suo --- v. CHANGELOG.md.)
- *
- * Sono **schemi, non ragionamento**: nessun modello, nessun download,
- * nessuna domanda di privacy da porsi. Si guarda il testo che la FASE 17
- * ha già ricavato sul dispositivo, e si riconoscono forme note.
- *
- * Due regole che governano tutto il file:
- *
- * 1. **Nel dubbio non si dice niente.** Un campo sbagliato costa molto
- *    più di un campo mancante: mina la fiducia in tutto il resto, e la
- *    fiducia è l'unica ragione per cui questa funzione esiste.
- * 2. **Ogni campo porta con sé da dove viene** (`context`): l'utente
- *    deve poter verificare in un colpo d'occhio, senza fidarsi. È anche
- *    la base della FASE 19, dove una proposta senza la sua fonte non è
- *    accettabile. Quando una data o un emittente hanno più di un
- *    candidato plausibile, si restituiscono tutti (v. richiesta utente:
- *    "smettere di prendere solo il primo risultato") --- indovinare per
- *    l'utente sarebbe la stessa scommessa che la regola 1 vieta altrove.
- *
- * Questa funzione **non scrive niente**, e non ha modo di farlo: calcola
- * su un testo già in memoria, non conosce Supabase e non restituisce
- * nulla che assomigli a un aggiornamento. È voluto --- la scrittura
- * automatica arriva con la FASE 19, che porta accetta/modifica/rifiuta,
- * la memoria dei rifiuti e l'annullamento. Prima di quella, proporre e
- * basta è l'unico comportamento onesto.
+ * FASE 18: dal testo (già estratto dalla FASE 17) ai campi --- schemi, non ragionamento, nessun modello.
+ * Due regole: (1) nel dubbio non si dice niente, un campo sbagliato costa più di uno mancante; (2) ogni
+ * campo porta la sua fonte (`context`), e quando ci sono più candidati plausibili si restituiscono tutti
+ * invece di indovinare. Non scrive niente: la scrittura vera arriva con la FASE 19 (accetta/modifica/rifiuta).
  */
 
 export type StructuredFieldKind = "document-date" | "expiry" | "issuer" | "title";
@@ -134,12 +110,7 @@ function contextAround(text: string, index: number, length: number): string {
   return `${start > 0 ? "…" : ""}${slice}${end < text.length ? "…" : ""}`;
 }
 
-/**
- * Le parole che, subito prima di una data, la qualificano come scadenza.
- * Senza una di queste una data resta solo una data: in una polizza ce ne
- * sono cinque, e indovinare quale sia la scadenza è esattamente il tipo
- * di scommessa che questo file non fa.
- */
+/** Senza una di queste parole prima, una data resta solo una data --- in una polizza ce ne sono cinque. */
 const EXPIRY_TRIGGERS =
   /(scade il|scadenza|data di scadenza|valid[oaie]\s+fino al|validità fino al|in scadenza il|rinnovo entro|entro il)\s*[:\s]*$/i;
 
@@ -163,13 +134,7 @@ const WORD_NUMBERS: Record<string, number> = {
 
 const WORD_NUMBER_NAMES = Object.keys(WORD_NUMBERS).join("|");
 
-/**
- * "controllo tra dodici mesi", "da ripetere fra 6 mesi".
- *
- * La parola che apre (controllo, rinnovo, ...) è obbligatoria: senza,
- * qualunque "fra due settimane" dentro una frase qualsiasi diventerebbe
- * una scadenza.
- */
+/** "controllo tra dodici mesi": la parola che apre è obbligatoria, senza ogni "fra due settimane" diventerebbe una scadenza. */
 const RELATIVE_EXPIRY = new RegExp(
   `(ricontroll[oa]|controll[oa]|rivalutazione|ripetere|ripetizione|rinnov[oa]|revisione|verifica|visita)` +
     `[^.\\n]{0,40}?\\b(?:tra|fra|dopo)\\s+(\\d{1,3}|${WORD_NUMBER_NAMES})\\s+(giorn[oi]|settiman[ae]|mes[ei]|ann[oi])\\b`,
@@ -189,24 +154,11 @@ function addInterval(iso: string, amount: number, unit: string): string | null {
   return date.toISOString().slice(0, 10);
 }
 
-/**
- * Forme societarie e istituzionali: se una riga le contiene, è un
- * emittente. Oltre alle forme generiche (una S.p.A. qualunque, un
- * ospedale qualunque), un elenco di marchi/enti specifici molto comuni
- * su carta intestata italiana --- senza, "Enel Energia" o "TIM" in cima
- * a un foglio non avrebbero nessun'altra forma societaria a fianco che
- * li faccia riconoscere. Confine sui nomi corti (`eni`, `tim`) con `\b`
- * su entrambi i lati: senza, "conveniente" o "vittima" scatterebbero.
- */
+/** Forme societarie generiche + marchi/enti comuni senza forma societaria propria (Enel, TIM...); `\b` sui nomi corti per non scattare dentro "conveniente"/"vittima". */
 const ISSUER_MARKERS =
   /(s\.?p\.?a\.?\b|s\.?r\.?l\.?\b|s\.?n\.?c\.?\b|s\.?a\.?s\.?\b|azienda|ospedal|poliambulator|laborator|clinic|comune di|regione|agenzia|banca|assicurazion|studio (?:medico|legale|dentistico|associato)|a\.?s\.?l\.?\b|istituto|universit|ministero|\benel\b|\beni\b|\btim\b|vodafone|windtre|wind\s*tre|iliad|\binps\b|\binail\b|poste italiane)/i;
 
-/**
- * Parole con cui inizia il *titolo* di un documento, non chi l'ha
- * emesso. Senza questa lista, "CERTIFICATO DI RESIDENZA" in cima a un
- * foglio diventerebbe l'emittente --- ed è in maiuscolo esattamente come
- * lo sarebbe un'intestazione vera.
- */
+/** Parole che aprono un *titolo*, non un emittente --- senza, "CERTIFICATO DI RESIDENZA" in cima sarebbe scambiato per un'intestazione. */
 const DOCUMENT_TITLE_WORDS =
   /^(referto|certificat|fattura|ricevuta|polizza|contratto|dichiarazione|verbale|attestat|estratto|bolletta|preventivo|nota|scontrino|documento|modulo|domanda|richiesta|comunicazione|avviso)/i;
 
@@ -214,14 +166,7 @@ const DOCUMENT_TITLE_WORDS =
 const ISSUER_LINES = 6;
 const ISSUER_MAX_CHARS = 80;
 
-/**
- * Ogni riga che sembra un emittente, non solo la prima --- un documento
- * può nominarne più di uno in cima (es. l'azienda e, sotto, lo studio
- * che l'ha redatto per suo conto), e scommettere sul primo che si trova
- * significa perdere gli altri per sempre. Chi chiama (v.
- * extractStructuredFields) le mostra tutte: chi legge decide qual è
- * quella giusta, invece di riceverne una sola indovinata da Hinthial.
- */
+/** Ogni riga che sembra un emittente, non solo la prima --- un documento può nominarne più di uno in cima. */
 function findIssuers(text: string): StructuredField[] {
   const lines = text
     .split("\n")
@@ -256,23 +201,7 @@ function findIssuers(text: string): StructuredField[] {
 /** Quanto può essere lungo un titolo proposto: oltre, in un elenco non si legge. */
 const MAX_TITLE_CHARS = 70;
 
-/**
- * FASE 19b --- un nome per il documento.
- *
- * È la proposta più utile di tutte, perché `IMG_4821.jpg` e
- * `scan_0012.pdf` sono la gran parte di un archivio vero e sono il
- * motivo per cui poi non si ritrova niente.
- *
- * Si costruisce da due pezzi che già sappiamo riconoscere: la riga che
- * **descrive** il documento (quella che findIssuer scarta di proposito,
- * perché è un titolo e non un'intestazione) e chi l'ha emesso. Insieme
- * dicono cosa e di chi in una riga sola --- che è esattamente quello che
- * si cerca scorrendo un elenco.
- *
- * È anche il posto dove l'emittente diventa finalmente utile: un campo
- * "Emittente" per conto suo non lo filtrerebbe mai nessuno, dentro il
- * nome invece si legge ogni volta.
- */
+/** FASE 19b: un nome leggibile al posto di `scan_0012.pdf` --- unisce la riga che descrive il documento (scartata da findIssuers) con chi l'ha emesso. */
 function findTitle(text: string, issuer: string | null): StructuredField | null {
   const lines = text
     .split("\n")
@@ -285,12 +214,7 @@ function findTitle(text: string, issuer: string | null): StructuredField | null 
   );
   if (!described) return null;
 
-  // Il titolo di un documento è spesso tutto maiuscolo sulla carta
-  // stampata ("CERTIFICATO DI RESIDENZA"): in un elenco grida, e in
-  // mezzo ad altri nomi si legge peggio. Si ammorbidisce solo lui:
-  // l'emittente resta com'è, perché è un nome proprio e "GENERALI
-  // ITALIA S.p.A." ridotto a "Generali italia s.p.a." si legge peggio,
-  // non meglio.
+  // Solo il titolo si ammorbidisce da tutto maiuscolo; l'emittente resta com'è, è un nome proprio.
   const label = toSentenceCase(described);
   const full = issuer ? `${label} --- ${issuer}` : label;
 
@@ -308,22 +232,7 @@ function toSentenceCase(text: string): string {
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
-/**
- * FASE 19b --- la frase del documento in cui compare questa data.
- *
- * Serve quando l'utente **corregge** una data proposta: se quella nuova
- * è scritta nel documento, gliela si mostra nel suo contesto --- prova
- * che la correzione corrisponde a qualcosa di scritto davvero, e non a
- * un ricordo.
- *
- * Il confronto è tra **date**, non tra stringhe: chi corregge sceglie da
- * un calendario e ottiene `2027-06-03`, mentre il documento dice "3
- * giugno 2027". Cercare il testo non troverebbe mai niente.
- *
- * null quando quella data nel documento non c'è: succede spesso e per
- * buoni motivi (l'OCR l'ha storpiata, oppure è una scadenza calcolata,
- * oppure la sa l'utente da fuori), e va detto invece che nascosto.
- */
+/** FASE 19b: la frase da cui viene questa data, per mostrarla quando l'utente corregge una proposta. Confronto tra date normalizzate, non stringhe --- cercare il testo letterale non troverebbe mai niente. `null` se quella data non è scritta nel documento (succede spesso, non è un errore). */
 export function findDateContext(text: string, iso: string): string | null {
   const match = findDates(text).find((date) => date.iso === iso);
   if (!match) return null;

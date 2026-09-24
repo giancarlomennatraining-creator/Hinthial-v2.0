@@ -137,7 +137,7 @@ src/
                      # richiede una sessione Supabase valida
     auth/confirm/   # Route Handler per il link di conferma email
   components/     # componenti UI, per feature (a specchio di domain/)
-    ui/             # TextField, PasswordStrengthMeter, PlaceholderSection, ...
+    ui/             # TextField, PasswordStrengthMeter, ...
     layout/         # AppShell, MainNav, UserMenu, nav-items
     crypto/         # sessione Master Key: provider, form di setup/sblocco (FASE 4)
     documents/      # pannello lista/upload/apri/elimina/modifica (FASE 4-5)

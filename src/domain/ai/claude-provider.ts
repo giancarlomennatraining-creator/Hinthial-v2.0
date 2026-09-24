@@ -1,21 +1,7 @@
 import type { AIAnswer, AIContext, AISource } from "@/domain/ai/types";
 import { mockAIProvider } from "@/domain/ai/mock-provider";
 
-/**
- * FASE 11 --- "Explicit AI processing" (v. HINTHIAL_MVP.md sezione 8):
- * a differenza di mockAIProvider, answerWithClaude() lascia il
- * dispositivo --- solo dopo il consenso esplicito dell'utente (v.
- * AIProcessingConsentProvider) e solo per questa singola domanda.
- *
- * Il retrieval resta locale e gratuito (mockAIProvider.retrieve(), già
- * corretto per la ricerca strutturata/testuale, v. HINTHIAL_MVP.md
- * FASE 11 "Retrieval"): decide QUALI elementi sono pertinenti prima che
- * un byte parta dal dispositivo. Solo quegli elementi --- non l'intero
- * vault --- vengono proiettati su pochi campi essenziali (v.
- * projectSource sotto) e inviati al provider esterno insieme alla
- * domanda, tramite src/app/api/ai/chat/route.ts (mai direttamente dal
- * browser: la chiave Anthropic resta lato server).
- */
+/** FASE 11: a differenza di mockAIProvider, lascia il dispositivo --- solo col consenso e solo gli elementi già filtrati in locale (mai l'intero vault, v. projectSource), via la route server-side. */
 
 /** Un elemento pertinente ridotto ai soli campi utili a rispondere --- mai l'intero oggetto del vault. */
 export interface MinimalItem {
@@ -29,13 +15,7 @@ function categoryNameFor(categoryId: string | null, context: AIContext): string 
   return context.categories.find((c) => c.id === categoryId)?.name ?? null;
 }
 
-/**
- * Riduce una fonte già trovata localmente al minimo che serve per
- * rispondere --- niente id interni, niente storage path, e per le
- * capsule mai il testo del messaggio (resta privato anche in questa
- * modalità: solo titolo/stato/data contano per rispondere a "quali
- * capsule ho" o "quando si apre").
- */
+/** Riduce una fonte al minimo utile a rispondere: niente id interni, e per le capsule mai il testo del messaggio. */
 function projectSource(source: AISource, context: AIContext): MinimalItem | null {
   switch (source.kind) {
     case "asset": {
@@ -81,12 +61,7 @@ function projectSource(source: AISource, context: AIContext): MinimalItem | null
   }
 }
 
-/**
- * Chiede una risposta reale a Claude, tramite la nostra route server-side
- * (mai una chiamata diretta dal browser). Lancia un errore --- gestito
- * dal chiamante --- se il consenso non è ancora stato dato lì, se la
- * chiave non è configurata, o se la richiesta di rete fallisce.
- */
+/** Chiede una risposta a Claude via la route server-side, mai dal browser. Lancia se manca consenso, chiave o la rete fallisce. */
 export async function answerWithClaude(query: string, context: AIContext): Promise<AIAnswer> {
   const sources = mockAIProvider.retrieve(query, context);
 

@@ -32,35 +32,13 @@ import type {
   TextNoteInput,
 } from "@/domain/documents/types";
 
-/**
- * Le fasi visibili di un caricamento --- v. uploadDocument, `onPhase`.
- * "reading" può durare qualche secondo su un PDF lungo, e parecchi di
- * più sull'OCR di una foto: dirlo è l'unica differenza tra un'attesa
- * spiegata e una inspiegata.
- */
+/** V. uploadDocument, `onPhase` --- "reading" può durare da secondi a decine su OCR di una foto. */
 export type UploadPhase = "reading" | "saving";
 
-/**
- * Notifica di avanzamento: la fase in corso e, quando il motore sa
- * stimarlo, quanto manca (0-1). `null` significa "non stimabile", non
- * "zero" --- chi lo riceve deve mostrare un'attesa senza percentuale,
- * non una percentuale ferma a 0 (v. FASE 17c).
- */
+/** `null` = non stimabile (mostra attesa senza percentuale), non "zero" (v. FASE 17c). */
 export type UploadPhaseListener = (phase: UploadPhase, progress: number | null) => void;
 
-/**
- * FASE 19b --- il risultato di una lettura già fatta altrove.
- *
- * Dal momento in cui il form legge il documento appena lo scegli (per
- * poter proporre titolo, categoria e scadenza *prima* di salvare),
- * rileggerlo al salvataggio sarebbe lavoro rifatto due volte --- su una
- * scansione significa mezzo minuto buttato.
- *
- * `attempted: false` è il caso in cui l'utente ha premuto Salva mentre
- * la lettura era ancora in corso: si salva subito e `extracted_at`
- * resta nullo, così il documento finisce tra quelli che l'avviso
- * "Leggili ora" recupera (v. FASE 17b). Salvare non deve mai aspettare.
- */
+/** FASE 19b: una lettura già fatta al momento della scelta del file, per non rileggere al salvataggio. `attempted: false` = si è salvato mentre leggeva ancora, `extracted_at` resta nullo (recuperato da "Leggili ora", FASE 17b). */
 export interface PriorExtraction {
   text: string | null;
   attempted: boolean;
@@ -174,14 +152,7 @@ async function encryptThumbnail(masterKey: CryptoKey, thumbnail: Blob | null): P
   return serializeEnvelope(await encryptBytes(masterKey, bytes));
 }
 
-/**
- * Lists the current user's documents, decrypting each filename/notes/
- * tags client-side with the (already unlocked) Master Key. The server
- * only ever returns ciphertext; decryption happens here, not on the
- * server. Un documento nel Cestino (v. moveDocumentsToTrash) non
- * compare qui --- altrimenti "quanti documenti ho" diventerebbe
- * ambiguo --- ma resta trovabile da listTrashedDocuments qui sotto.
- */
+/** Documenti dell'utente, decifrati client-side; un documento nel Cestino non compare qui (v. listTrashedDocuments). */
 export async function listDocuments(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -227,13 +198,7 @@ export async function listTrashedDocuments(
   );
 }
 
-/**
- * Fetches a specific set of documents by id (e.g. capsule attachments
- * linking to existing vault documents, FASE 8), decrypting each client-
- * side. Ids that no longer exist (or belong to someone else, filtered
- * out by RLS) are silently omitted --- callers should treat a shorter
- * result as "some referenced documents are gone", not an error.
- */
+/** Documenti per id (es. allegati di una capsula, FASE 8); id non più esistenti/altrui sono omessi in silenzio. */
 export async function getDocumentsByIds(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -255,13 +220,7 @@ export async function getDocumentsByIds(
   );
 }
 
-/**
- * Encrypts `file` client-side (content under a fresh Document Key,
- * filename/notes/tags under the Master Key directly) and uploads only
- * ciphertext: the payload to Storage, everything else to the
- * `documents` row. The server never sees the plaintext file or any of
- * this metadata.
- */
+/** Cifra il file client-side e carica solo cifrato: il payload in Storage, tutto il resto sulla riga `documents`. */
 export async function uploadDocument(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -274,19 +233,7 @@ export async function uploadDocument(
   const plaintext = new Uint8Array(await file.arrayBuffer());
   const mimeType = file.type || "application/octet-stream";
 
-  // FASE 17 --- il testo si ricava QUI, dove il contenuto è ancora in
-  // chiaro in memoria: nessun download né decifratura in più, e nulla
-  // lascia il dispositivo (v. domain/extraction). Best-effort: se
-  // l'estrazione non riesce si salva il documento lo stesso, si perde
-  // solo la possibilità di cercarci dentro.
-  //
-  // `onPhase` esiste perché leggere un PDF lungo richiede qualche
-  // secondo: senza, l'interfaccia direbbe "Salvataggio…" mentre in
-  // realtà sta leggendo (v. FASE 17b, richiesta utente). L'OCR di una
-  // foto ne richiede molti di più, e per quello riporta anche una
-  // percentuale (v. FASE 17c).
-  // Se il form ha già letto il documento (v. PriorExtraction) si usa
-  // quel risultato: rileggere sarebbe lo stesso lavoro due volte.
+  // FASE 17: testo estratto qui, mentre il contenuto è ancora in chiaro in memoria --- best-effort, un fallimento non blocca il salvataggio. `onPhase` riporta l'avanzamento (utile sull'OCR); se il form l'ha già letto (PriorExtraction) si riusa quel risultato.
   let extractedText: string | null;
   let attempted: boolean;
   if (extraction) {
@@ -300,13 +247,7 @@ export async function uploadDocument(
     );
   }
 
-  // La miniatura si genera QUI per lo stesso motivo del testo estratto:
-  // il contenuto è ancora in chiaro in memoria, e generarla altrove
-  // richiederebbe riscaricare e ridecifrare il file appena caricato.
-  // Costo di banda risolto: senza, aprire la scheda di questo stesso
-  // contenuto riscaricherebbe il file intero solo per mostrarne
-  // un'anteprima --- su una scansione da 15 MB, ogni apertura (v.
-  // lib/thumbnail.ts per i numeri).
+  // Stesso motivo del testo: il contenuto è ancora in chiaro qui, generarla dopo richiederebbe riscaricare il file intero.
   const thumbnailBlob = canHaveThumbnail(mimeType)
     ? await createThumbnail(plaintext, mimeType)
     : null;
@@ -323,8 +264,7 @@ export async function uploadDocument(
     encryptedThumbnail,
   ] = await Promise.all([
     encryptDocument(masterKey, plaintext),
-    // Il nome scelto dall'utente se c'è, altrimenti quello del file:
-    // "scan_0012.pdf" diventa "Polizza RC auto --- Generali" (FASE 19b).
+    // Il nome scelto dall'utente se c'è, altrimenti quello del file (FASE 19b lo sovrascrive col titolo ricavato).
     encryptBytes(masterKey, utf8ToBytes(title?.trim() || file.name)),
     encryptOptionalText(masterKey, metadata.notes),
     encryptTags(masterKey, metadata.tags),
@@ -338,10 +278,7 @@ export async function uploadDocument(
 
   await uploadEncryptedPayload(supabase, storagePath, serializeEnvelope(payload));
 
-  // Best-effort e non nel Promise.all qui sopra: una miniatura che non
-  // si riesce a salvare non deve impedire di salvare il documento ---
-  // è un di più, non il contenuto. `hasThumbnail` riflette se è
-  // *davvero* arrivata a destinazione, non solo se si è tentato.
+  // Best-effort, fuori dal Promise.all: una miniatura non riuscita non deve bloccare il documento.
   let hasThumbnail = false;
   if (encryptedThumbnail) {
     try {
@@ -367,10 +304,7 @@ export async function uploadDocument(
     encrypted_tags: encryptedTags,
     encrypted_issuer: encryptedIssuer,
     encrypted_extracted_text: encryptedExtractedText,
-    // Marcato solo se un motore ha davvero provato a leggere: per un
-    // tipo non ancora supportato --- o per un salvataggio arrivato
-    // mentre la lettura era ancora in corso --- resta null, così il
-    // recupero saprà che quel contenuto è ancora tutto da guardare.
+    // null solo se nessun motore ha provato a leggere --- così "Leggili ora" lo ritrova.
     extracted_at: attempted ? new Date().toISOString() : null,
     has_thumbnail: hasThumbnail,
   });
@@ -388,14 +322,7 @@ export async function uploadDocument(
   await replaceDocumentDossierLinks(supabase, ownerId, documentId, metadata.dossierIds);
 }
 
-/**
- * Creates a text note: same table, same encryption as any other
- * archive item --- the note's body is encrypted as if it were a file's
- * bytes, its title as if it were a filename. Distinguished from a
- * regular uploaded file only by mime_type (NOTE_MIME_TYPE), which is
- * what lets the UI show it as an editable note instead of a download
- * (v. lib/content-kind.ts).
- */
+/** Nota di testo: stessa tabella/cifratura di un file --- distinta solo dal mime_type (NOTE_MIME_TYPE), che fa mostrare la UI come nota editabile invece di download. */
 export async function createTextNote(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -443,18 +370,7 @@ export async function createTextNote(
   await replaceDocumentDossierLinks(supabase, ownerId, documentId, metadata.dossierIds);
 }
 
-/**
- * Updates a text note's own title/body --- the one kind of archive item
- * whose content is meant to be edited in place, rather than replaced by
- * re-uploading. Re-encrypts with a fresh Document Key (same as any
- * fresh encryptDocument call) and uploads to a *new* storage path
- * rather than overwriting the old one --- same reason avatars get a
- * fresh path on every re-upload (v. lib/storage/avatars-bucket.ts):
- * Storage reads can otherwise be served briefly stale, which here would
- * mean ciphertext encrypted under the *old* key paired with the row's
- * *new* wrapped key --- decryption fails outright rather than just
- * showing old content, so it isn't a corner case worth risking.
- */
+/** Ricifra con una Document Key fresca e carica su un path NUOVO (mai sovrascrivendo) --- una lettura Storage stale altrimenti pairerebbe cifrato-vecchio con chiave-nuova, e la decifratura fallirebbe. */
 export async function updateTextNoteContent(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -489,11 +405,7 @@ export async function updateTextNoteContent(
   await removeEncryptedPayload(supabase, doc.storagePath).catch(() => {});
 }
 
-/**
- * Updates a document's metadata (category, expiry, notes, tags, issuer)
- * --- never the file content or its name. Re-encrypts notes/tags/issuer
- * with the Master Key, same as at upload time.
- */
+/** Aggiorna categoria/scadenza/note/tag/emittente --- mai il file o il nome. Ricifra notes/tags/issuer con la Master Key. */
 export async function updateDocumentMetadata(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -529,13 +441,7 @@ export async function updateDocumentMetadata(
   await replaceDocumentDossierLinks(supabase, user.id, documentId, metadata.dossierIds);
 }
 
-/**
- * Updates an audio/video item's transcript --- a separate action from
- * updateDocumentMetadata (it's shown only for that content kind, not
- * part of the generic metadata form). Written by hand today (v.
- * domain/transcription): swapping in a real engine later only changes
- * what fills the textarea, not this function.
- */
+/** Scritto a mano oggi (v. domain/transcription); un motore reale in futuro cambierebbe solo cosa riempie il campo, non questa funzione. */
 export async function updateDocumentTranscript(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -554,13 +460,7 @@ export async function updateDocumentTranscript(
   }
 }
 
-/**
- * La miniatura di un contenuto, se ne ha una --- v. lib/thumbnail.ts per
- * il perché esiste. `null` quando non c'è: tipo senza miniatura, un
- * contenuto caricato prima che questa possibilità esistesse, o una
- * generazione/upload che a suo tempo non è riuscita. Chi chiama deve
- * ricadere sul file intero in tutti questi casi, non fallire.
- */
+/** `null` se il tipo non ha miniatura, il documento è pre-esistente, o l'upload a suo tempo è fallito --- chi chiama ricade sul file intero. */
 export async function downloadThumbnail(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -600,25 +500,12 @@ export async function downloadDocument(
   return { filename: doc.filename, mimeType: doc.mimeType, bytes };
 }
 
-/**
- * FASE 17b --- i contenuti già in archivio da prima che l'estrazione
- * esistesse: `extractedAt` null e un tipo che oggi sappiamo leggere.
- * Sono gli unici per cui la ricerca dentro il file non funziona ancora.
- */
+/** FASE 17b: contenuti pre-estrazione (extractedAt null, tipo leggibile) --- gli unici senza ricerca dentro il file. */
 export function documentsAwaitingExtraction(documents: DocumentListItem[]): DocumentListItem[] {
   return documents.filter((doc) => doc.extractedAt === null && canExtractText(doc.mimeType));
 }
 
-/**
- * Legge un contenuto già archiviato e ne salva il testo --- l'unico
- * caso in cui serve scaricare e decifrare il file, non avendolo più in
- * chiaro come al momento del caricamento.
- *
- * Marca `extracted_at` **anche quando non trova nulla**: è ciò che
- * distingue "già guardato, non aveva testo" (una scansione, in attesa
- * dell'OCR) da "mai guardato", evitando di riprovare all'infinito sugli
- * stessi file.
- */
+/** Rilegge un contenuto già archiviato. Marca `extracted_at` anche a vuoto, per distinguere "letto, senza testo" da "mai letto". */
 export async function extractTextForExistingDocument(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -633,15 +520,7 @@ export async function extractTextForExistingDocument(
     extracted_at: new Date().toISOString(),
   };
 
-  // Backfill della miniatura per i contenuti che ne sono ancora senza:
-  // i byte in chiaro qui sopra ci sono già per leggere il testo, quindi
-  // generarla costa quasi zero. Nessun banner dedicato --- si aggancia
-  // agli stessi due percorsi che già esistono per il testo ("Leggili
-  // ora" sui documenti mai letti, "Rileggi" su qualunque altro): un
-  // contenuto letto prima di questa fase e mai riletto resta senza
-  // miniatura, come già succede oggi per l'impaginazione del testo (v.
-  // FASE 17e) --- stessa scelta, deliberatamente nessuna migrazione
-  // forzata su tutto l'archivio.
+  // Backfill della miniatura, quasi a costo zero qui: i byte in chiaro servono già per il testo. Nessuna migrazione forzata su tutto l'archivio, si aggancia solo a "Leggili ora"/"Rileggi".
   if (!doc.hasThumbnail && canHaveThumbnail(doc.mimeType)) {
     const thumbnail = await createThumbnail(bytes, doc.mimeType);
     if (thumbnail) {
@@ -668,15 +547,7 @@ export async function extractTextForExistingDocument(
   return { foundText: Boolean(text) };
 }
 
-/**
- * Elimina un documento per sempre --- rimuove il payload cifrato (e la
- * miniatura) da Storage e la riga dal database, senza possibilità di
- * ripristino. Da qui in avanti è usata solo per la fine del percorso:
- * il cron di purga (v. app/api/cron/trash-purge) e "Elimina ora" da
- * dentro il Cestino --- mai più come reazione diretta a "Elimina" in
- * Archivio, che ora sposta nel cestino invece (v. moveDocumentsToTrash
- * sotto).
- */
+/** Elimina per sempre (Storage + riga), senza ripristino --- solo dal cron di purga o "Elimina ora" nel Cestino, mai da "Elimina" in Archivio (che sposta nel cestino, v. sotto). */
 export async function deleteDocument(
   supabase: SupabaseClient<Database>,
   ownerId: string,
@@ -695,15 +566,7 @@ export async function deleteDocument(
   await logAuditEvent(supabase, ownerId, "document_purged");
 }
 
-/**
- * Sposta uno o più documenti nel Cestino --- una sola UPDATE per tutti
- * gli id insieme, non un giro per documento: nessun file cifrato viene
- * toccato, resta in Storage fino alla purga vera (v. deleteDocument) o
- * al ripristino (v. restoreDocuments). `purgeAt` è calcolato UNA VOLTA
- * qui con il periodo di conservazione passato da chi chiama --- v.
- * commento sulla colonna nella migrazione 20260923000000 per il
- * perché non si ricalcola più avanti.
- */
+/** Una sola UPDATE per tutti gli id, nessun file toccato. `purgeAt` si calcola UNA VOLTA qui (v. migrazione 20260923000000: non si ricalcola più avanti). */
 export async function moveDocumentsToTrash(
   supabase: SupabaseClient<Database>,
   ownerId: string,
