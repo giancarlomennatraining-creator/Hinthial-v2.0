@@ -2,17 +2,7 @@ import { GUARDIAN_QUORUM_LABEL, type DigitalLegacyPresetValues } from "@/domain/
 import type { CapsuleListItem } from "@/domain/capsules/types";
 import type { FriendListItem } from "@/domain/friends/types";
 
-/**
- * "Prova generale" (Impostazioni > Eredità digitale) --- non "qual è la
- * prossima azione da qui" (v. computeDigitalLegacyTransition, che legge
- * lo stato vero dell'account), ma "se cominciasse oggi, quando
- * succederebbe cosa": la stessa identica matematica dei giorni, solo
- * proiettata avanti in un colpo solo invece che un passo alla volta.
- *
- * Pura per lo stesso motivo di computeDigitalLegacyTransition: nessun
- * accesso a database o all'orologio di sistema, tutto arriva come
- * parametro --- verificabile con date fisse.
- */
+/** "Prova generale": non "qual è la prossima azione" (v. computeDigitalLegacyTransition) ma "se cominciasse oggi, quando succederebbe cosa" --- stessa matematica, proiettata in un colpo solo. Pura, stesso motivo. */
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -32,26 +22,10 @@ export interface RehearsalEvent {
   detail: string;
 }
 
-/**
- * Giorni usati per illustrare QUANDO un guardiano potrebbe rispondere
- * --- a differenza di ogni altra fase, questa non ha una durata
- * configurabile: dipende da quando risponde davvero (v. UI, sempre
- * marcata come esempio). Un numero qualunque, breve e credibile.
- */
+/** Solo per illustrare QUANDO un guardiano potrebbe rispondere --- non configurabile, dipende da quando risponde davvero. */
 const EXAMPLE_GUARDIAN_RESPONSE_DAYS = 5;
 
-/**
- * Il calendario completo, dall'ultimo accesso (qui: `now`, non il vero
- * `last_sign_in_at` --- la prova generale risponde a "se cominciasse
- * OGGI", non racconta un episodio già in corso, quello lo dice già
- * DigitalLegacyStatusBanner) fino all'apertura delle capsule.
- *
- * `guardianNames` vuoto è un caso reale, non un errore (v.
- * automation.ts, notifyGuardians): senza nessun guardiano collegato,
- * "awaiting_guardians" non può avanzare da sola --- il calendario si
- * ferma lì, onestamente, invece di inventare una conferma che non può
- * arrivare.
- */
+/** Calendario completo da `now` (non il vero last_sign_in_at: risponde a "se cominciasse OGGI") fino all'apertura. `guardianNames` vuoto è un caso reale: il calendario si ferma onestamente lì. */
 export function buildDigitalLegacyRehearsal(
   settings: DigitalLegacyPresetValues,
   now: Date,
@@ -102,9 +76,7 @@ export function buildDigitalLegacyRehearsal(
       : "Nessun guardiano collegato oggi: senza nemmeno uno, questa fase non può avanzare da sola. Accedere di nuovo resta comunque sempre possibile, e collegare un guardiano da Amici farebbe proseguire la simulazione.",
   });
 
-  // Senza guardiani, il calendario si ferma qui --- onestamente, non
-  // per un limite di questa funzione ma perché è ciò che accadrebbe
-  // davvero (v. doc comment sopra).
+  // Senza guardiani, il calendario si ferma qui --- è ciò che accadrebbe davvero, non un limite della funzione.
   if (!guardianList) return events;
 
   const guardianConfirmedAt = addDays(graceEnd, EXAMPLE_GUARDIAN_RESPONSE_DAYS);
@@ -153,15 +125,7 @@ export interface RecipientGroup {
   capsules: CapsuleListItem[];
 }
 
-/**
- * Chi riceverebbe cosa se le capsule già condivise si aprissero oggi
- * --- stesso filtro di shareCapsule() (v. domain/capsules/repository.ts):
- * solo le capsule "shared", e solo i destinatari con un account
- * collegato (`linkedUserId`), perché solo a loro shareCapsule crea
- * davvero una riga in capsule_shares. Un destinatario senza account
- * collegato è un destinatario scelto ma irraggiungibile lato server,
- * quindi non riceverebbe nulla da solo.
- */
+/** Stesso filtro di shareCapsule: solo capsule "shared" e destinatari con account collegato (solo a loro crea davvero una riga in capsule_shares). */
 export function groupSharedCapsulesByRecipient(capsules: CapsuleListItem[]): RecipientGroup[] {
   const groups = new Map<string, RecipientGroup>();
 

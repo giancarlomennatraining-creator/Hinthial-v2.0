@@ -13,17 +13,9 @@ import type { DocumentListItem } from "@/domain/documents/types";
 import type { Proposal, ProposalKind, ProposalRejection } from "@/domain/proposals/types";
 
 /**
- * FASE 19 --- le tre risposte a una proposta, e il modo di tornare
- * indietro da ciascuna.
- *
- * Il valore accettato per scadenza/categoria finisce in chiaro nel
- * documento (`expires_at`, `category_id` lo sono già da sempre); quello
- * per l'emittente invece si cifra con la Master Key, come le note
- * (`encrypted_issuer`) --- è testo libero letto da un documento, non un
- * id o una data. Il valore **rifiutato**, per ogni tipo, viene sempre
- * cifrato con la Master Key, perché altrimenti questa fase
- * introdurrebbe sul server un dato che senza di essa non esisterebbe ---
- * v. la migrazione proposal_rejections per il ragionamento completo.
+ * FASE 19: le tre risposte a una proposta. Scadenza/categoria accettate finiscono in chiaro (lo erano già); l'emittente
+ * si cifra come le note (testo libero, non un id/data). Il valore rifiutato è sempre cifrato, altrimenti il server
+ * vedrebbe un dato che senza questa fase non esisterebbe.
  */
 
 /** Ciò che serve per rimettere le cose com'erano --- v. undoAcceptance. */
@@ -39,14 +31,7 @@ async function encryptIssuerValue(masterKey: CryptoKey, value: string | null): P
   return serializeEnvelope(await encryptBytes(masterKey, utf8ToBytes(value)));
 }
 
-/**
- * La colonna che una proposta va a scrivere (e il valore, già cifrato
- * se serve). Scritta come unione e non come chiave calcolata
- * (`{ [colonna]: valore }`): TypeScript non riesce a verificare una
- * chiave dinamica contro lo schema, e accetterebbe qualunque nome di
- * colonna --- proprio qui, dove un refuso significa scrivere nel campo
- * sbagliato del documento di qualcuno.
- */
+/** Unione esplicita, non chiave calcolata --- TypeScript non verificherebbe una chiave dinamica, e qui un refuso scriverebbe nel campo sbagliato. */
 type DocumentsTableUpdate = Database["public"]["Tables"]["documents"]["Update"];
 
 async function updateFor(
@@ -65,14 +50,7 @@ function currentValue(doc: DocumentListItem, kind: ProposalKind): string | null 
   return doc.issuer || null;
 }
 
-/**
- * Accetta una proposta: scrive il valore nel documento.
- *
- * `value` è passato a parte e non preso dalla proposta perché è lo
- * stesso percorso usato da "modifica": accettare una proposta corretta e
- * accettarne una corretta a mano sono la stessa operazione, e tenerle
- * separate vorrebbe dire due strade da mantenere allineate.
- */
+/** `value` è a parte, non preso dalla proposta: è lo stesso percorso di "modifica", accettare tal quale o corretto è la stessa operazione. */
 export async function acceptProposal(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -92,8 +70,7 @@ export async function acceptProposal(
     throw new Error(`Impossibile applicare la proposta: ${error.message}`);
   }
 
-  // In Attività resta traccia del *tipo* di proposta, mai del valore:
-  // gli audit non devono contenere contenuti (v. lib/audit/log-event.ts).
+  // In Attività resta traccia del *tipo*, mai del valore: gli audit non devono contenere contenuti.
   await logAuditEvent(supabase, ownerId, "proposal_accepted");
 
   return { kind, previousValue };
@@ -168,11 +145,7 @@ export async function undoRejection(
   await logAuditEvent(supabase, ownerId, "proposal_undone");
 }
 
-/**
- * I rifiuti già espressi su un documento, decifrati. Il confronto con le
- * proposte nuove avviene sul client --- è l'unico posto dove può
- * avvenire, visto che il server non ha la Master Key.
- */
+/** Rifiuti già espressi, decifrati --- il confronto con le proposte nuove avviene sul client, unico posto possibile. */
 export async function listProposalRejections(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,

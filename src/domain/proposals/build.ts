@@ -5,31 +5,9 @@ import type { DocumentListItem } from "@/domain/documents/types";
 import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
 
 /**
- * FASE 19 --- che cosa Hinthial ha da proporre su questo documento.
- *
- * Funzione pura: stesso documento, stessi rifiuti, stesse proposte. È
- * deliberato --- è la funzione che decide quando l'app chiede qualcosa
- * all'utente, e una cosa del genere deve essere verificabile riga per
- * riga invece che osservata a occhio.
- *
- * Tre filtri, in quest'ordine, e ognuno esiste per un motivo preciso:
- *
- * 1. **Niente proposte su campi già compilati.** Se la scadenza c'è già,
- *    proporne una significa mettere in discussione una scelta
- *    dell'utente, non aiutarlo. Vale anche al contrario: se svuota quel
- *    campo, la proposta torna --- il documento è tornato incompleto.
- * 2. **Niente proposte già rifiutate.** Il confronto è sul *valore*, non
- *    sul tipo: se una rilettura ricava una scadenza diversa, quella è
- *    una proposta nuova e va fatta. Rifiutare "3 giugno 2027" non
- *    significa rifiutare per sempre l'idea che il documento scada.
- * 3. **Niente proposte senza una fonte da mostrare.** Se non si può
- *    dire da dove viene, non si propone.
- *
- * Scadenza ed emittente possono avere più di un candidato (v.
- * structured-fields.ts, richiesta utente): ognuno diventa una proposta
- * a sé, con la propria fonte. Appena una viene accettata il campo si
- * riempie, e il filtro 1 fa sparire da sola ogni altra proposta dello
- * stesso tipo --- nessuna pulizia manuale da fare qui.
+ * FASE 19: che cosa proporre su questo documento --- pura (stesso input, stesso output), verificabile riga per riga.
+ * Tre filtri: niente proposte su campi già compilati (torna se il campo si svuota), niente già rifiutate (confronto
+ * sul valore, non sul tipo), niente senza una fonte. Scadenza/emittente possono avere più candidati, uno a proposta.
  */
 export function buildProposals(
   doc: DocumentListItem,
@@ -76,9 +54,7 @@ export function buildProposals(
     }
   }
 
-  // Difesa in profondità: due candidati distinti non producono mai lo
-  // stesso valore in pratica, ma se succedesse non deve comparire due
-  // volte la stessa proposta.
+  // Difesa in profondità: due candidati distinti non dovrebbero mai coincidere, ma se succede non va duplicata.
   const deduped = proposals.filter(
     (proposal, index) =>
       !proposals.slice(0, index).some((p) => p.kind === proposal.kind && p.value === proposal.value),
@@ -90,13 +66,7 @@ export function buildProposals(
   );
 }
 
-/**
- * Perché questa categoria. Non si prova a indovinare quale parola chiave
- * abbia fatto scattare la corrispondenza --- si dice dove si è guardato,
- * che è l'informazione che serve a capire se fidarsi: un suggerimento
- * ricavato dal nome del file è verificabile a colpo d'occhio, uno
- * ricavato dal testo richiede di leggere il testo.
- */
+/** Dice dove si è guardato, non quale parola chiave --- un suggerimento dal nome file è verificabile a colpo d'occhio. */
 function sourceForCategory(doc: DocumentListItem, category: Category): string {
   const fromFilename = heuristicCategorizer.suggestCategory(doc.filename, [category]);
   return fromFilename

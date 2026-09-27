@@ -3,14 +3,7 @@ import type { Database } from "@/types/supabase";
 import { generateBackupCodes, hashBackupCode } from "@/domain/mfa/backup-codes";
 import type { MfaFactor, TotpEnrollment } from "@/domain/mfa/types";
 
-/**
- * Thin wrapper over Supabase Auth's built-in MFA (TOTP) --- no custom
- * crypto here: the TOTP secret is generated and verified entirely by
- * Supabase's server, the same identity layer that already handles
- * login. Completely separate from the vault's master key/encryption
- * layer (v. HINTHIAL_MVP.md sezione 4): a factor here only gates
- * whether a session can reach `aal2`, it never touches anything cifrato.
- */
+/** Thin wrapper sull'MFA (TOTP) nativo di Supabase Auth --- nessuna crypto custom, e separato dal master key/cifratura del vault (gate solo su `aal2`). */
 export async function enrollTotpFactor(
   supabase: SupabaseClient<Database>,
   friendlyName: string,
@@ -28,27 +21,12 @@ export async function enrollTotpFactor(
   return { factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret };
 }
 
-/**
- * Il campo `qr_code` restituito da Supabase è già una data URI completa
- * (`data:image/svg+xml;utf-8,<svg...>`), nonostante il commento nei
- * tipi del SDK suggerisca di doverla costruire a mano prependendo
- * quel prefisso --- verificato contro il progetto reale: farlo
- * comunque produce una data URI il cui "contenuto" è essa stessa
- * codificata come URL, non SVG valido (immagine rotta). Qui solo per
- * gestire con grazia un'eventuale versione futura dell'SDK che
- * tornasse a restituire l'SVG grezzo, come descritto nei tipi.
- */
+/** `qr_code` è già una data URI completa nonostante i tipi SDK suggeriscano il contrario (verificato) --- il ramo else resta solo per una futura versione dell'SDK che tornasse a dare SVG grezzo. */
 export function totpQrCodeToImageSrc(qrCode: string): string {
   return qrCode.startsWith("data:") ? qrCode : `data:image/svg+xml;utf8,${encodeURIComponent(qrCode)}`;
 }
 
-/**
- * Verifica un codice a 6 cifre per un fattore --- usata sia per
- * confermare un'attivazione appena fatta, sia (altrove, v.
- * lib/auth/actions.ts) per completare il login di chi ha già l'MFA
- * attivo. `challengeAndVerify` crea e verifica la sfida in un solo
- * passaggio: non serve gestire un `challengeId` a parte.
- */
+/** Usata sia per confermare un'attivazione sia per completare il login (v. lib/auth/actions.ts) --- un solo passaggio, niente `challengeId` a parte. */
 export async function verifyTotpCode(
   supabase: SupabaseClient<Database>,
   factorId: string,
@@ -86,14 +64,7 @@ export async function unenrollFactor(
   }
 }
 
-/**
- * Genera un nuovo set di codici di backup, sostituendo quelli
- * eventuali già esistenti (rigenerare invalida i precedenti --- non
- * possono coesistere due set validi). Restituisce i codici in chiaro,
- * l'unica volta in cui esistono al di fuori di questa funzione: il
- * chiamante li mostra e poi li scarta, mai persistiti da nessuna parte
- * se non come hash (v. domain/mfa/backup-codes.ts).
- */
+/** Sostituisce i codici esistenti (non possono coesistere due set); restituisce il chiaro solo qui --- persistito solo come hash. */
 export async function regenerateBackupCodes(
   supabase: SupabaseClient<Database>,
   userId: string,
