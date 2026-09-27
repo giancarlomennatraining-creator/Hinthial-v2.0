@@ -7,20 +7,10 @@ import type {
 import { formatDate } from "@/lib/format";
 
 /**
- * FASE 18 --- "Cosa ne ho ricavato": i campi che Hinthial ha riconosciuto
- * dentro il testo di un documento.
- *
- * Sta **sopra** "Cosa ho letto" di proposito: quattro righe leggibili
- * valgono più di tremila caratteri di testo grezzo, e il testo integrale
- * qui sotto serve semmai a verificarle. Per lo stesso motivo ogni campo
- * mostra il pezzo di documento da cui viene: l'utente deve poter dare
- * ragione o torto a Hinthial in un colpo d'occhio, senza fidarsi.
- *
- * Non c'è nessun tasto per accettare, e non è una dimenticanza: la
- * scrittura automatica ha bisogno di accetta/modifica/rifiuta, della
- * memoria dei rifiuti e dell'annullamento --- cioè della FASE 19. Finché
- * quella non c'è, mostrare e basta è l'unico comportamento onesto, e la
- * riga in fondo lo dice all'utente invece di lasciarglielo intuire.
+ * "Cosa ne ho ricavato": i campi che Hinthial ha riconosciuto nel testo di un documento. Sta sopra "Cosa ho letto"
+ * di proposito: quattro righe leggibili valgono più di tremila caratteri di testo grezzo, e ogni campo mostra il
+ * pezzo di documento da cui viene, per poter dare ragione o torto a Hinthial senza fidarsi. Nessun tasto per
+ * accettare (v. ProposalsSection per quello): mostrare e basta è l'unico comportamento onesto finché non c'è.
  */
 
 const FIELD_LABEL: Record<StructuredFieldKind, string> = {
@@ -74,9 +64,7 @@ export function StructuredFieldsSection({ fields }: { fields: StructuredField[] 
                 <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   {displayValue(field)}
                 </span>
-                {/* Una scadenza calcolata da "controllo tra dodici mesi"
-                    non è scritta da nessuna parte sul foglio: dirlo è la
-                    differenza tra una proposta e un'affermazione. */}
+                {/* Una scadenza calcolata (es. "tra dodici mesi") non è scritta sul foglio: dirlo è la differenza tra proposta e affermazione. */}
                 {field.derived ? (
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
                     calcolata da Hinthial

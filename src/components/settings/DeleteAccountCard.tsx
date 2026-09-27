@@ -8,19 +8,10 @@ import { deleteAccount } from "@/lib/account/actions";
 const CONFIRM_PHRASE = "CANCELLA ACCOUNT";
 
 /**
- * Cancellazione definitiva dell'account --- a differenza di
- * ResetAccountCard (che svuota il vault mantenendo l'account attivo),
- * qui sparisce anche l'account stesso: non si può più accedere con
- * queste credenziali. V. lib/account/actions.ts per cosa viene
- * esattamente eliminato (tutto: cascata da auth.users) e perché non
- * naviga da sé dopo il successo.
- *
- * Richiede di reinserire la master password prima di procedere (oltre
- * alla frase di conferma testuale) --- verificata riprovando a sbloccare
- * con `useMasterKey().unlockWithPassword`, l'unico modo per verificarla
- * davvero: zero-knowledge, il server non la vede mai. Non serve la
- * Master Key stessa (nessun dato da decifrare qui: Storage viene ripulito
- * per prefisso lato server, non per path scoperti decifrando).
+ * Cancellazione definitiva dell'account: a differenza di ResetAccountCard, qui sparisce anche l'account stesso
+ * (v. lib/account/actions.ts per cosa viene eliminato, tutto in cascata da auth.users). Richiede di reinserire la
+ * master password, verificata riprovando a sbloccare con `useMasterKey().unlockWithPassword`: zero-knowledge, il
+ * server non la vede mai. Non serve la Master Key stessa: Storage viene ripulito per prefisso lato server.
  */
 export function DeleteAccountCard() {
   const router = useRouter();

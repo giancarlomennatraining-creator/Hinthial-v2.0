@@ -7,14 +7,9 @@ import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 
 /**
- * The user's avatar + display name, opening a small menu with
- * "Impostazioni" e "Esci". `collapsed` --- v. Sidebar: nasconde solo il
- * nome (resta letto dagli screen reader) e la freccetta, l'avatar resta
- * sempre visibile. `menuPosition` --- v. TopNav: nella barra laterale il
- * pulsante è in fondo allo schermo, quindi il menu si apre verso l'alto
- * (default "up"); nella barra orizzontale è in cima, quindi va aperto
- * verso il basso ("down"), allineato al bordo destro per non uscire
- * dallo schermo essendo di solito l'elemento più a destra.
+ * Avatar + nome utente, apre un menu con "Impostazioni" e "Esci". `collapsed`: nasconde nome e freccetta, l'avatar
+ * resta visibile. `menuPosition`: nella barra laterale il pulsante è in fondo, il menu si apre verso l'alto
+ * (default "up"); nella barra orizzontale è in cima, va aperto verso il basso ("down").
  */
 export function UserMenu({
   userId,
@@ -54,12 +49,7 @@ export function UserMenu({
         aria-expanded={open}
         title={collapsed ? displayName : undefined}
         className={cn(
-          // Padding scritto per intero in ciascun ramo, mai come base +
-          // override parziale (v. Sidebar.tsx per il perché: cn() qui non
-          // è tailwind-merge, non fonde classi in conflitto --- con
-          // "px-3" e "px-2" insieme nella stringa, chi vince dipende
-          // dall'ordine con cui Tailwind genera il CSS, non da quello nel
-          // className: era questo a far traboccare/tagliare l'avatar).
+          // Padding scritto per intero in ciascun ramo, mai base + override parziale (v. Sidebar.tsx: cn() non è tailwind-merge).
           "flex w-full items-center gap-2 rounded-md py-2 text-left text-xs text-zinc-500 hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-900",
           collapsed ? "justify-center px-2" : "justify-between px-3",
         )}

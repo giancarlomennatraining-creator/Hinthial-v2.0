@@ -5,19 +5,10 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 /**
- * FASE 20b --- il fascicolo non è più una voce di menu a sé (v.
- * components/layout/nav-items.ts): è un modo diverso di guardare
- * l'Archivio, non un oggetto indipendente come Amici o Capsule. Qui
- * diventa una seconda scheda della stessa sezione.
- *
- * Sono link veri a due pagine distinte (/archive e /dossiers), non due
- * pannelli di uno stesso componente scambiati via stato --- un fascicolo
- * ha una sua lista, una sua creazione, una sua scheda: fonderlo in un
- * solo componente sarebbe più complicato, non più semplice. Per questo
- * non usa `role="tab"` (che implica restare sulla stessa pagina, un
- * pannello mostrato/nascosto via JS): sono link di navigazione vera, e
- * `aria-current="page"` è lo stesso modo in cui MainNav segna già la
- * voce attiva.
+ * Il fascicolo non è una voce di menu a sé: è un modo diverso di guardare l'Archivio, qui una seconda scheda della
+ * stessa sezione. Sono link veri a due pagine distinte (/archive e /dossiers), non pannelli scambiati via stato: un
+ * fascicolo ha una sua lista, creazione, scheda. Niente `role="tab"` (che implica restare sulla stessa pagina):
+ * sono link di navigazione vera, `aria-current="page"` come in MainNav.
  */
 export function ArchiveTabs() {
   const pathname = usePathname();
@@ -51,9 +42,7 @@ export function ArchiveTabs() {
       >
         Fascicolo
       </Link>
-      {/* Cestino --- v. richiesta utente: un'altra vista sullo stesso
-          Archivio (documenti con deleted_at impostato), non una
-          sezione indipendente --- stesso motivo di Fascicolo sopra. */}
+      {/* Cestino: un'altra vista sullo stesso Archivio (documenti con deleted_at impostato), non una sezione indipendente. */}
       <Link
         href="/archive/trash"
         aria-current={isTrash ? "page" : undefined}

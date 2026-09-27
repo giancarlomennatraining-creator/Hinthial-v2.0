@@ -12,16 +12,10 @@ function emptyContact(): EmergencyContact {
 }
 
 /**
- * La scheda d'emergenza --- pensata per il portafoglio o il frigorifero,
- * non per lo schermo: pochi campi scritti una volta (gruppo sanguigno,
- * allergie, condizioni, farmaci), un medico di riferimento a sé
- * (staccato dai contatti generici: chi presta soccorso ha due domande
- * diverse, chi avvisare e chi conosce la storia clinica), e contatti di
- * emergenza. L'anteprima qui sotto è la stessa cosa che finisce sulla
- * tessera stampata --- non un'approssimazione.
- *
- * Tutto cifrato (v. domain/emergency-card/repository.ts): richiede la
- * master key, come ogni altro contenuto dell'utente.
+ * La scheda d'emergenza, pensata per il portafoglio o il frigorifero, non per lo schermo: pochi campi scritti una
+ * volta, un medico di riferimento staccato dai contatti generici (chi presta soccorso ha due domande diverse: chi
+ * avvisare e chi conosce la storia clinica). L'anteprima è la stessa cosa che finisce sulla tessera stampata.
+ * Tutto cifrato: richiede la master key.
  */
 export function EmergencyCardPanel({
   masterKey,
@@ -110,14 +104,7 @@ export function EmergencyCardPanel({
         </p>
       </div>
 
-      {/*
-        items-start: senza, il pannello di destra (anteprima+stampa) si
-        estende per default all'altezza della colonna sinistra --- più
-        alta appena si aggiunge un contatto --- e quello spazio vuoto ma
-        presente intercetta i click sugli elementi della colonna
-        sinistra che finiscono alla stessa altezza (v. segnalazione
-        utente: "Rimuovi il contatto" non risponde al click).
-      */}
+      {/* items-start: senza, il pannello destro si estende all'altezza della colonna sinistra e intercetta i click sugli elementi che finiscono alla stessa altezza. */}
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,28rem)_1fr]">
         <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
           <div className="flex gap-3">
@@ -186,8 +173,7 @@ export function EmergencyCardPanel({
           <div className="flex flex-col gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">🩺 Medico di riferimento</h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              A parte dai contatti qui sotto --- chi presta soccorso vuole sapere subito chi
-              avvisare, e separatamente chi conosce la tua storia clinica.
+              A parte dai contatti qui sotto: chi presta soccorso vuole sapere chi avvisare, e separatamente chi conosce la tua storia clinica.
             </p>
             <div className="flex gap-2">
               <input
@@ -211,14 +197,7 @@ export function EmergencyCardPanel({
 
           <div className="flex flex-col gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Contatti di emergenza</h3>
-            {/*
-              Due righe per contatto, non quattro campi in fila: con
-              solo due elementi flessibili a riga il layout resta solido
-              anche in una colonna stretta (v. segnalazione utente sul
-              layout a due colonne qui sopra) o su schermi di telefono,
-              invece di dover spartire lo spazio tra quattro elementi
-              alla volta.
-            */}
+            {/* Due righe per contatto, non quattro campi in fila: il layout resta solido anche in una colonna stretta o su telefono. */}
             {card.contacts.map((contact, index) => (
               <div
                 key={index}
@@ -310,13 +289,7 @@ export function EmergencyCardPanel({
         </div>
       </div>
 
-      {/*
-        Fuori vista sullo schermo, mostrato solo nella finestra di
-        stampa (v. lib/print.ts + la regola @media print in
-        globals.css) --- stesso schema del kit di recovery in
-        SetupMasterKeyForm. Stesso contenuto dell'anteprima qui sopra,
-        solo il layout adattato al foglio.
-      */}
+      {/* Fuori vista sullo schermo, mostrato solo in stampa (v. lib/print.ts), stesso schema del kit di recovery in SetupMasterKeyForm. */}
       <div className="print-only hidden flex-col items-center gap-6 p-12 print:flex">
         <EmergencyCardPreview fullName={fullName} birthDate={birthDate} card={card} contacts={visibleContacts} />
       </div>

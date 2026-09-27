@@ -13,13 +13,7 @@ function avatarSeedFor(firstName: string, lastName: string): string {
   return `${firstName}-${lastName}` || "new-friend";
 }
 
-/**
- * Pagina dedicata alla creazione di un amico (estratta da FriendsPanel).
- * Stesso pattern usato per capsule/beni/scadenze: alla creazione riuscita
- * torna a /friends con un messaggio di conferma passato come flag
- * nell'URL (`?created=1`), mai il nome --- finirebbe in chiaro nella
- * cronologia del browser.
- */
+/** Pagina di creazione di un amico. Alla creazione torna a /friends con `?created=1`, mai il nome (finirebbe in chiaro nella cronologia del browser). */
 export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
@@ -28,10 +22,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
   const [creating, setCreating] = useState(false);
   const [invite, setInvite] = useState(false);
 
-  // "Nome visualizzato" parte come "Nome Cognome" e resta in sincronia
-  // finché non viene toccato direttamente (v. richiesta utente) --- da
-  // quel momento in poi resta un campo a sé, anche continuando a
-  // modificare nome/cognome.
+  // "Nome visualizzato" parte come "Nome Cognome" e resta in sincronia finché non viene toccato direttamente.
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -93,9 +84,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
         role,
       });
 
-      // Una foto scelta ma non ancora salvata non deve impedire di
-      // salvare l'amico: come per l'invito qui sotto, un fallimento qui
-      // si segnala a parte, mai un errore che fa perdere tutto il resto.
+      // Una foto scelta ma non salvata non deve impedire di salvare l'amico: un fallimento si segnala a parte.
       let avatarFailed = false;
       if (avatarBlob) {
         try {
@@ -105,8 +94,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
         }
       }
 
-      // Un invito non riuscito non deve impedire di aver salvato
-      // l'amico: si segnala con un parametro a parte, non un errore.
+      // Un invito non riuscito non deve impedire il salvataggio: si segnala con un parametro a parte.
       let inviteFailed = false;
       if (invite) {
         try {

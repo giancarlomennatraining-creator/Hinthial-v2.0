@@ -10,17 +10,10 @@ import { CheckCircleIcon } from "@/components/icons/nav-icons";
 const CONFIRM_PHRASE = "REIMPOSTA TUTTO";
 
 /**
- * "Reimposta l'account" (prima "Cancella tutto") --- irreversibile: v.
- * domain/danger-zone/repository.ts per cosa viene esattamente eliminato.
- * A differenza di DeleteAccountCard, qui l'account resta attivo: solo il
- * suo contenuto viene svuotato.
- *
- * Richiede di reinserire la master password prima di procedere (oltre
- * alla frase di conferma testuale) --- verificata riprovando a sbloccare
- * con `useMasterKey().unlockWithPassword`, l'unico modo per verificarla
- * davvero: zero-knowledge, il server non la vede mai. La Master Key già
- * sbloccata (prop `masterKey`, fornita da RequireMasterKey) serve invece
- * per scoprire i path in Storage da rimuovere durante `wipeVault`.
+ * "Reimposta l'account", irreversibile (v. domain/danger-zone/repository.ts per cosa viene eliminato). A differenza
+ * di DeleteAccountCard, l'account resta attivo: solo il suo contenuto viene svuotato. Richiede di reinserire la
+ * master password, verificata riprovando a sbloccare con `useMasterKey().unlockWithPassword`: zero-knowledge, il
+ * server non la vede mai. La Master Key già sbloccata serve invece a scoprire i path in Storage per `wipeVault`.
  */
 export function ResetAccountCard({ userId, masterKey }: { userId: string; masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
@@ -59,8 +52,7 @@ export function ResetAccountCard({ userId, masterKey }: { userId: string; master
       setOpen(false);
       setDone(true);
 
-      // Migliore sforzo: l'operazione è già avvenuta, un'email non
-      // riuscita non deve farla sembrare fallita.
+      // Best-effort: l'operazione è già avvenuta, un'email non riuscita non deve farla sembrare fallita.
       await sendAccountResetConfirmationEmail().catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile completare l'operazione.");

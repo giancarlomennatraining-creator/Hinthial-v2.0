@@ -7,18 +7,10 @@ import { aggregateTags, listIncludesTag, removeTagFromList, renameTagInList } fr
 import type { DocumentListItem } from "@/domain/documents/types";
 
 /**
- * A differenza di CategoriesPanel, qui non c'è nulla da creare: un tag
- * non è una riga a sé in un database, è solo "qualcosa che uno o più
- * documenti hanno tra i loro tag" (v. domain/documents/tags.ts). Si
- * crea aggiungendolo a un documento in Archivio, non da qui --- questa
- * scheda serve solo a rinominare (con merge automatico se il nuovo nome
- * corrisponde a un tag già esistente) o eliminare un tag ovunque sia
- * usato.
- *
- * Richiede la master key sbloccata (v. SettingsTabs.tsx): a differenza
- * delle categorie, i tag sono cifrati --- l'unico modo di sapere quali
- * esistono è decifrare i documenti che li portano, esattamente come fa
- * già DocumentsPanel per mostrare l'Archivio.
+ * A differenza di CategoriesPanel, qui non c'è nulla da creare: un tag è solo "qualcosa che uno o più documenti
+ * hanno tra i loro tag" (v. domain/documents/tags.ts), creato aggiungendolo a un documento in Archivio. Questa
+ * scheda serve solo a rinominare (con merge automatico su collisione) o eliminare un tag ovunque sia usato.
+ * Richiede la master key sbloccata: a differenza delle categorie, i tag sono cifrati.
  */
 export function TagsSettingsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;

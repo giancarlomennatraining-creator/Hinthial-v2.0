@@ -11,14 +11,9 @@ import { useToast } from "@/components/ui/ToastProvider";
 import type { DocumentListItem } from "@/domain/documents/types";
 
 /**
- * Cestino --- v. richiesta utente dopo la selezione multipla in
- * Archivio: eliminare più documenti insieme moltiplica il rischio di
- * un clic distratto, quindi l'eliminazione diventa reversibile per un
- * periodo di grazia (v. TrashRetentionSettings, Impostazioni ->
- * Aspetto) invece di immediata e definitiva. Un documento eliminato
- * per sempre da qui, o dal cron di purga (v.
- * app/api/cron/trash-purge), non torna più --- questa pagina è
- * l'ultima occasione di cambiare idea.
+ * Cestino: eliminare più documenti insieme moltiplica il rischio di un clic distratto, quindi l'eliminazione
+ * diventa reversibile per un periodo di grazia (v. TrashRetentionSettings) invece di immediata e definitiva. Un
+ * documento eliminato per sempre da qui, o dal cron di purga (v. app/api/cron/trash-purge), non torna più.
  */
 export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
@@ -152,9 +147,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
 
-      // Nessuna variante "in blocco" a livello di database qui, a
-      // differenza dello spostamento nel cestino: ogni file cifrato va
-      // rimosso singolarmente da Storage, non basta una sola UPDATE.
+      // Nessuna variante "in blocco" qui: ogni file cifrato va rimosso singolarmente da Storage, non basta una UPDATE.
       for (const doc of selectedDocuments) {
         await deleteDocument(supabase, user.id, doc);
       }
