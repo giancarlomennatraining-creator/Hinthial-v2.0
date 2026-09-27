@@ -64,12 +64,9 @@ const NUMERIC_FIELDS: {
 ];
 
 /**
- * Impostazioni > Eredità digitale (FASE 12, internamente Dead Man's
- * Switch --- mai questo nome qui, v. richiesta utente). Solo i
- * parametri della strategia: nessuna automazione reale li legge ancora
- * (arriverà in fasi successive). Tre preset (Prudente/Normale/
- * Rilassato) più "Personalizza i valori", che li rende modificabili a
- * mano --- toccarne anche uno solo passa la scelta a "Personalizzato".
+ * Impostazioni > Eredità digitale (internamente Dead Man's Switch, mai questo nome qui). Solo i parametri della
+ * strategia. Tre preset (Prudente/Normale/Rilassato) più "Personalizza i valori": toccarne anche uno solo passa
+ * la scelta a "Personalizzato".
  */
 export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
   const [supabase] = useState(() => createClient());
@@ -167,12 +164,8 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
   }
 
   return (
-    // Niente max-w qui: come nel resto di Impostazioni (v. Aspetto), il
-    // contenuto usa tutta la larghezza disponibile --- v. richiesta
-    // utente. Solo il testo discorsivo (paragrafi) resta limitato a una
-    // lunghezza di riga leggibile con un max-w-2xl sul singolo elemento,
-    // non sul contenitore: il resto (interruttore, preset, valori
-    // personalizzati) si allarga per davvero, non solo di nome.
+    // Niente max-w qui, come nel resto di Impostazioni: il contenuto usa tutta la larghezza disponibile. Solo il
+    // testo discorsivo resta limitato con un max-w-2xl sul singolo elemento, non sul contenitore.
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Eredità digitale</h2>
@@ -259,10 +252,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
         </button>
 
         {customOpen ? (
-          // Griglia responsiva, non più una colonna sola --- v. richiesta
-          // utente: usa per davvero la larghezza disponibile invece di
-          // impilare 7 campi corti uno sotto l'altro con tutto quello
-          // spazio vuoto ai lati sugli schermi larghi.
+          // Griglia responsiva invece di impilare 7 campi corti uno sotto l'altro su schermi larghi.
           <div className="grid gap-4 rounded-xl border border-zinc-200 p-4 sm:grid-cols-2 lg:grid-cols-3 dark:border-zinc-800">
             {NUMERIC_FIELDS.map((field) => (
               <div key={field.key} className="flex flex-col gap-1">

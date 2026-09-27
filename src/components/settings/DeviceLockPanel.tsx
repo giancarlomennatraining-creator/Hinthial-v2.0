@@ -44,16 +44,10 @@ function formatDate(iso: string): string {
 }
 
 /**
- * FASE 13, primo e ultimo passo insieme --- "rendere fidato" QUESTO
- * dispositivo (v. lib/crypto/device-lock.ts) più l'elenco di TUTTI i
- * dispositivi fidati dell'account, visibile e gestibile da qualunque
- * dispositivo tu stia guardando in questo momento, con la revoca da
- * remoto: se revochi un dispositivo diverso da questo, quello smette
- * di poter sbloccare al prossimo tentativo (v. MasterKeyProvider.tsx,
- * unlockWithDeviceLock/findActiveTrustedDevice) --- non c'è modo di
- * cancellarne subito la copia locale del Master Key da qui (vive nel
- * suo browser, irraggiungibile da altrove), ma da sola non basta più a
- * nulla una volta che il server non lo riconosce più come fidato.
+ * "Rendere fidato" QUESTO dispositivo (v. lib/crypto/device-lock.ts) più l'elenco di TUTTI i dispositivi fidati
+ * dell'account, con revoca da remoto: se revochi un dispositivo diverso da questo, smette di poter sbloccare al
+ * prossimo tentativo. Non c'è modo di cancellarne subito la copia locale del Master Key (vive nel suo browser),
+ * ma da sola non basta più a nulla una volta che il server non lo riconosce più come fidato.
  */
 export function DeviceLockPanel({ userId }: { userId: string }) {
   const supabase = useRef(createClient()).current;
@@ -135,10 +129,7 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
     try {
       const localRecord = getDeviceLockRecord(userId);
       if (localRecord?.deviceId === device.id) {
-        // È questo stesso dispositivo --- passa dal metodo del
-        // contesto, così svuota anche la copia locale (v.
-        // MasterKeyProvider.tsx, forgetDeviceLock), non solo la riga
-        // sul server.
+        // È questo stesso dispositivo: passa dal metodo del contesto per svuotare anche la copia locale.
         await forgetDeviceLock();
       } else {
         await forgetTrustedDevice(supabase, device.id);
@@ -193,10 +184,7 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
           </p>
 
           <div className="flex flex-col gap-1">
-            {/* "Nome del dispositivo fidato", non solo "Nome del dispositivo" ---
-                l'MFA qui sopra (v. MfaSettingsPanel) ha già un campo identico per
-                un dispositivo authenticator: due etichette uguali sulla stessa
-                pagina, per due cose diverse, sarebbero ambigue. */}
+            {/* "Nome del dispositivo fidato", non solo "Nome del dispositivo": MfaSettingsPanel ha già un campo identico per un dispositivo authenticator, ambiguo altrimenti. */}
             <label htmlFor="deviceLockLabel" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Nome del dispositivo fidato
             </label>

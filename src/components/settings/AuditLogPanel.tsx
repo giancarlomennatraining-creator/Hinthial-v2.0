@@ -39,17 +39,10 @@ function toggleInSet<T>(set: Set<T>, value: T): Set<T> {
 }
 
 /**
- * Impostazioni -> Attività: il registro tecnico scritto ad ogni
- * accesso/tentativo fallito/attivazione o rimozione dell'MFA/contenuto
- * creato o eliminato (v. lib/audit/log-event.ts), interrogabile invece
- * che caricato tutto insieme --- data inizio, data fine e categoria
- * (scelta multipla), poi "Trova". Un click su una riga apre il dettaglio
- * (metodo di login, IP, dispositivo/browser, quando presenti) in un
- * pannello laterale. Solo il tipo di evento e metadati tecnici --- mai un
- * nome file o di contatto: restano privati anche da questa vista, come
- * richiede lo zero-knowledge (v. AUDIT_EVENT_TYPE_LABEL). Non richiede la
- * master key sbloccata: è un log puramente tecnico, in chiaro come le
- * altre preferenze di profilo.
+ * Impostazioni -> Attività: il registro tecnico (v. lib/audit/log-event.ts), interrogabile invece che caricato
+ * tutto insieme --- data inizio, data fine e categoria, poi "Trova". Un click su una riga apre il dettaglio in un
+ * pannello laterale. Solo il tipo di evento e metadati tecnici, mai un nome file o di contatto: restano privati
+ * come richiede lo zero-knowledge. Non richiede la master key sbloccata: è un log puramente tecnico, in chiaro.
  */
 export function AuditLogPanel() {
   const supabase = useRef(createClient()).current;
@@ -62,11 +55,7 @@ export function AuditLogPanel() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  // `selected` non torna mai a null da sola (v. sotto) --- solo `panelOpen`
-  // decide se il pannello è aperto, così il contenuto resta quello
-  // dell'ultimo evento scelto per tutta la durata dell'animazione di
-  // uscita (v. richiesta utente), invece di sparire di scatto insieme
-  // allo stato che chiude il pannello.
+  // `selected` non torna mai a null da sola: solo `panelOpen` decide se il pannello è aperto, così il contenuto resta quello dell'ultimo evento durante l'animazione di uscita.
   const [selected, setSelected] = useState<AuditEventListItem | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
 

@@ -54,18 +54,10 @@ function FactorList({
 }
 
 /**
- * Impostazioni -> Sicurezza: gestisce solo il layer di identità
- * (login), mai la master key/cifratura del vault --- i due restano
- * completamente separati (v. HINTHIAL_MVP.md sezione 4). Due pezzi:
- * TOTP (Google Authenticator/1Password) e codici di backup monouso per
- * chi perde l'accesso al proprio dispositivo. Supporta più di un
- * dispositivo TOTP --- consigliato registrarne più di uno.
- *
- * Una passkey (WebAuthn) come fattore alternativo è stata valutata ed
- * esplorata (v. CHANGELOG.md), ma non implementata: il progetto
- * Supabase usato oggi non espone un modo per attivarla per questo
- * scopo, solo per il login primario (funzionalità diversa) --- da
- * rivalutare quando la situazione lato Supabase sarà più chiara.
+ * Impostazioni -> Sicurezza: gestisce solo il layer di identità (login), mai la master key/cifratura del vault
+ * (v. HINTHIAL_MVP.md sezione 4). Due pezzi: TOTP e codici di backup monouso. Supporta più dispositivi TOTP.
+ * Una passkey (WebAuthn) come fattore alternativo è stata esplorata ma non implementata: Supabase non espone un
+ * modo per attivarla per questo scopo, solo per il login primario.
  */
 export function MfaSettingsPanel({ userId }: { userId: string }) {
   const supabase = useRef(createClient()).current;
@@ -124,8 +116,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
     try {
       await unenrollFactor(supabase, enrollment.factorId);
     } catch {
-      // Il fattore non confermato scade comunque da sé lato Supabase:
-      // nessun blocco dell'interfaccia se la pulizia esplicita fallisce.
+      // Il fattore non confermato scade comunque da sé lato Supabase.
     } finally {
       setEnrollment(null);
       setCode("");
