@@ -17,13 +17,9 @@ function formatDateTime(iso: string): string {
 }
 
 /**
- * Avvisa in Dashboard di una capsula appena condivisa con l'utente ---
- * v. richiesta utente: resta visibile finché non la chiude, poi mai più
- * per QUELLA capsula (v. dismissCapsuleShareNotification, un campo
- * server-side, non solo un dismiss locale --- sopravvive a un refresh
- * o a un altro dispositivo). Più di una capsula non ancora vista si
- * mostra una alla volta, in coda: chiudere la prima fa comparire la
- * successiva, non tutte insieme.
+ * Avvisa in Dashboard di una capsula appena condivisa con l'utente: resta visibile finché non la chiude, poi mai
+ * più per QUELLA capsula (v. dismissCapsuleShareNotification, un campo server-side, sopravvive a refresh o altro
+ * dispositivo). Più capsule non ancora viste si mostrano una alla volta, in coda.
  */
 export function SharedCapsuleNotificationPopup() {
   const [supabase] = useState(() => createClient());
@@ -38,8 +34,7 @@ export function SharedCapsuleNotificationPopup() {
         const undismissed = shared.filter((s) => s.dismissedAt === null);
         if (!cancelled) setQueue(undismissed);
       } catch {
-        // Silenzioso --- un popup di cortesia non deve mai bloccare la
-        // dashboard se il caricamento fallisce.
+        // Silenzioso: un popup di cortesia non deve mai bloccare la dashboard se il caricamento fallisce.
         if (!cancelled) setQueue([]);
       }
     })();
@@ -57,8 +52,7 @@ export function SharedCapsuleNotificationPopup() {
     try {
       await dismissCapsuleShareNotification(supabase, currentShare.id);
     } catch {
-      // Anche se la scrittura fallisce, non blocchiamo l'utente qui ---
-      // ricomparirà al prossimo caricamento della dashboard, non è grave.
+      // Se la scrittura fallisce, ricomparirà al prossimo caricamento della dashboard: non è grave.
     } finally {
       setQueue((prev) => (prev ? prev.slice(1) : prev));
       setDismissing(false);

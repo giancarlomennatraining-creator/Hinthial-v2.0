@@ -12,19 +12,9 @@ export function UnlockMasterKeyForm() {
   const [useRecoveryKey, setUseRecoveryKey] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // FASE 13: tentato una volta sola, all'apertura di questa schermata,
-  // non a ogni render --- se l'utente annulla la cerimonia biometrica
-  // (o sceglie "usa la password" prima che il browser gliela mostri),
-  // il campo password resta comunque la via di sempre.
+  // Tentato una volta sola, all'apertura, non a ogni render: se l'utente annulla la cerimonia biometrica, il campo password resta comunque la via di sempre.
   const [deviceLockAttempted, setDeviceLockAttempted] = useState(false);
-  // Vero solo mentre aspettiamo la cerimonia WebAuthn --- accende
-  // l'anello che ruota attorno al medaglione (v. globals.css,
-  // .unlock-scanner). Distinto da `busy`, che resta condiviso con
-  // l'invio della password: qui l'animazione ha senso solo per
-  // l'attesa biometrica, non per un submit qualunque. Non esiste uno
-  // stato "riuscito" da mostrare: se unlockWithDeviceLock() risolve,
-  // RequireMasterKey smonta questo form nello stesso istante, prima
-  // che un fotogramma di successo abbia modo di essere dipinto.
+  // Vero solo durante la cerimonia WebAuthn: accende l'anello attorno al medaglione (v. globals.css, .unlock-scanner). Distinto da `busy`, condiviso con l'invio password.
   const [scanning, setScanning] = useState(false);
 
   async function handleDeviceLockUnlock() {
@@ -171,14 +161,7 @@ export function UnlockMasterKeyForm() {
           {useRecoveryKey ? "Usa invece la master password" : "Hai perso la password? Usa la recovery key"}
         </button>
 
-        {/* FASE 13, terzo passo --- sbloccare QUESTO dispositivo (non
-            ancora fidato) facendolo approvare da uno che lo è già, via QR
-            code: v. DevicePairingUnlock.tsx. Indipendente dall'opzione
-            "impronta/Face ID" qui sopra, che riguarda invece QUESTO
-            stesso dispositivo se era GIÀ fidato in precedenza. Resta un
-            blocco a parte (non in riga con il link sopra): da aperto
-            mostra un QR code intero, che romperebbe una riga di link
-            compatta. */}
+        {/* Sbloccare QUESTO dispositivo (non ancora fidato) facendolo approvare via QR da uno già fidato, v. DevicePairingUnlock.tsx. Blocco a parte: da aperto mostra un QR intero. */}
         <DevicePairingUnlock />
       </div>
     </div>

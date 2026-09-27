@@ -18,17 +18,10 @@ import {
 import { TextField } from "@/components/ui/TextField";
 
 /**
- * FASE 13, secondo passo --- lato dispositivo già fidato (lo smartphone,
- * dopo aver scansionato il QR mostrato dal PC): questa pagina cifra il
- * Master Key apposta per QUEL dispositivo nuovo, senza che il server
- * veda mai né l'uno né l'altro in chiaro (v.
- * domain/device-pairing/repository.ts).
- *
- * Richiede di nuovo la master password, anche se il vault è già
- * sbloccato in questa sessione --- stessa scelta di DeviceLockPanel
- * (v. MasterKeyProvider.tsx, registerDeviceLock): è l'unico modo di
- * ottenere una copia esportabile del Master Key, mai altrimenti
- * concessa.
+ * Lato dispositivo già fidato, dopo aver scansionato il QR mostrato dal dispositivo nuovo: cifra il Master Key
+ * apposta per quel dispositivo, senza che il server veda mai né l'uno né l'altro in chiaro (v.
+ * domain/device-pairing/repository.ts). Richiede di nuovo la master password, come DeviceLockPanel: l'unico modo
+ * di ottenere una copia esportabile del Master Key, mai altrimenti concessa.
  */
 export function PairingApprovalPanel({ requestId }: { requestId: string }) {
   const [request, setRequest] = useState<PairingRequest | null | "loading">("loading");

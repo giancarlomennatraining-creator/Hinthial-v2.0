@@ -46,12 +46,8 @@ const SLIDES: Slide[] = [
 const AUTOPLAY_INTERVAL_MS = 6000;
 
 /**
- * Carosello di presentazione nella home page pubblica --- avanza da
- * solo ogni 6 secondi, in pausa al passaggio del mouse (per poter
- * leggere con calma) e disattivato del tutto per chi preferisce
- * meno animazioni (`prefers-reduced-motion`). Le frecce e i pallini
- * restano sempre disponibili per la navigazione manuale, che riparte
- * l'attesa dei 6 secondi da capo.
+ * Carosello di presentazione nella home page pubblica: avanza da solo ogni 6 secondi, in pausa al passaggio del
+ * mouse e disattivato per `prefers-reduced-motion`. Frecce e pallini restano sempre disponibili, e riavviano l'attesa.
  */
 export function LandingCarousel() {
   const [index, setIndex] = useState(0);
@@ -60,8 +56,7 @@ export function LandingCarousel() {
   const slide = SLIDES[index];
 
   useEffect(() => {
-    // Legge una preferenza di sistema che non esiste ancora durante il
-    // render lato server --- stesso pattern di lib/sidebar.ts.
+    // Legge una preferenza di sistema che non esiste ancora durante il render lato server.
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setReducedMotion(query.matches);
@@ -78,8 +73,7 @@ export function LandingCarousel() {
       setIndex((prev) => (prev + 1) % SLIDES.length);
     }, AUTOPLAY_INTERVAL_MS);
     return () => window.clearInterval(timer);
-    // Ricreato ad ogni cambio di slide (anche manuale): l'attesa
-    // riparte da capo invece di avanzare subito dopo un click.
+    // Ricreato ad ogni cambio di slide: l'attesa riparte da capo invece di avanzare subito dopo un click.
   }, [index, paused, reducedMotion]);
 
   function goTo(next: number) {
