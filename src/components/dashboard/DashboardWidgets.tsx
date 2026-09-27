@@ -17,27 +17,10 @@ function formatDate(iso: string): string {
 }
 
 /**
- * Il corpo della dashboard: contatori per sezione, prossime scadenze,
- * aggiunti di recente ed elementi da completare. Niente checklist
- * "Onboarding" qui (v. richiesta utente) --- resta comunque
- * consultabile dal gadget persistente nella barra laterale (v.
- * OnboardingStatus).
- *
- * Niente più "Da tenere d'occhio" (v. richiesta utente): due delle sue
- * tre righe ripetevano dati già mostrati nelle card qui sopra
- * (scadenze scadute = "Elementi da completare", scadenze entro 7
- * giorni = "Prossime scadenze"), e il resto erano metriche di
- * completezza ("N di M amici non collegati a nessuna capsula") che
- * misurano l'ordine, non un rischio --- una sezione costruita su
- * regole che contano sempre qualcosa ha sempre qualcosa da dire, e
- * così smette di significare qualcosa. Restava solo nell'Assistente
- * AI (v. SourceList), da dove è stata tolta a sua volta nel restyle
- * della pagina --- la funzione non esiste più, non solo qui.
- *
- * Tutto derivato da un unico AIContext (v. domain/ai/context.ts) ---
- * lo stesso snapshot già decifrato che usano Assistente AI e ricerca
- * globale, costruito una sola volta qui invece che con una query per
- * widget.
+ * Il corpo della dashboard: contatori per sezione, prossime scadenze, aggiunti di recente ed elementi da completare.
+ * Niente checklist "Onboarding" qui: resta consultabile dal gadget persistente in barra laterale (v.
+ * OnboardingStatus). Tutto derivato da un unico AIContext (v. domain/ai/context.ts), lo stesso snapshot già
+ * decifrato di Assistente AI e ricerca globale, costruito una sola volta invece che con una query per widget.
  */
 export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
@@ -64,8 +47,7 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
     refresh();
   }, [refresh]);
 
-  // Read once at mount (lazy initializer), rather than calling the
-  // impure Date.now() directly during render.
+  // Letto una volta al mount (lazy initializer), non chiamando l'impuro Date.now() direttamente durante il render.
   const [now] = useState(() => Date.now());
 
   const documents = context?.documents ?? [];
@@ -92,9 +74,7 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   return (
-    // min-w-0 --- altrimenti un elemento a larghezza intrinseca (es. un
-    // nome file lungo senza spazi) può forzare la colonna, e con essa la
-    // pagina, oltre la larghezza dello schermo su mobile.
+    // min-w-0: altrimenti un elemento a larghezza intrinseca può forzare la colonna oltre lo schermo su mobile.
     <div className="flex min-w-0 flex-col gap-6">
       <DashboardCounters context={context} />
 

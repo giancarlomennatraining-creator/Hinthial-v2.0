@@ -40,15 +40,9 @@ const FACE_CLASS =
   "absolute inset-0 flex items-center justify-center border border-zinc-200 bg-white font-extrabold tabular-nums text-zinc-900 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50";
 
 /**
- * Un "cartellino" che scatta (flip meccanico) invece di limitarsi a
- * cambiare il numero --- ma solo per giorni/ore/minuti: sui secondi il
- * flip risulterebbe frenetico invece che piacevole, dato che scattano
- * ogni singolo secondo (v. discussione con l'utente sul prototipo
- * Claude Design) --- lì (canFlip=false) il numero si limita a cambiare.
- * Scrive il testo direttamente sul DOM via ref invece di affidarsi al
- * solo stato React, per controllare con precisione l'istante in cui il
- * valore passa dal vecchio al nuovo rispetto alla transizione CSS (v.
- * onEnd sotto) --- lo stesso schema già validato nel prototipo.
+ * Un "cartellino" a flip meccanico, ma solo per giorni/ore/minuti: sui secondi (canFlip=false) risulterebbe
+ * frenetico, e il numero si limita a cambiare. Scrive il testo direttamente sul DOM via ref, non solo stato React,
+ * per controllare con precisione l'istante in cui il valore passa dal vecchio al nuovo rispetto alla transizione CSS.
  */
 function FlipUnit({ value, label, size, canFlip }: { value: number; label: string; size: Size; canFlip: boolean }) {
   const innerRef = useRef<HTMLDivElement>(null);
@@ -112,7 +106,7 @@ function FlipUnit({ value, label, size, canFlip }: { value: number; label: strin
             style={{ backfaceVisibility: "hidden", transform: "rotateX(180deg)" }}
           />
         </div>
-        {/* Riga centrale, solo decorativa --- richiama il cartellino meccanico del prototipo. */}
+        {/* Riga centrale, solo decorativa: richiama il cartellino meccanico. */}
         <span
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-1 top-1/2 h-px -translate-y-px bg-black/10 dark:bg-white/10"
@@ -128,16 +122,10 @@ function FlipUnit({ value, label, size, canFlip }: { value: number; label: strin
 }
 
 /**
- * Countdown visivo verso l'apertura di una capsula --- cartellini a
- * flip invece di testo/barra (v. prototipo Claude Design concordato con
- * l'utente). Mostrato solo per le capsule non più in bozza (v.
- * CapsulesPanel.tsx) --- su una bozza openAt può ancora cambiare, un
- * conto alla rovescia non avrebbe senso.
- *
- * L'etichetta di accessibilità (aria-label) resta quella "arrotondata"
- * di computeCountdown, non ricalcolata al secondo come i cartellini
- * stessi --- annunciarla di nuovo a ogni tick sarebbe fastidioso per chi
- * usa uno screen reader; i cartellini sono marcati aria-hidden, decorativi.
+ * Countdown visivo verso l'apertura di una capsula, cartellini a flip invece di testo/barra. Mostrato solo per le
+ * capsule non più in bozza: su una bozza openAt può ancora cambiare, un conto alla rovescia non avrebbe senso.
+ * L'aria-label resta quella "arrotondata" di computeCountdown, non ricalcolata al secondo: annunciarla ad ogni tick
+ * sarebbe fastidioso per chi usa uno screen reader.
  */
 export function CapsuleCountdown({
   createdAt,
@@ -153,9 +141,7 @@ export function CapsuleCountdown({
   const prefersReducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const parts = computeCountdownParts(openAt);
   const { label, progressPercent } = computeCountdown(createdAt, openAt);
-  // Il tick condiviso forza solo un ri-render al secondo --- i valori
-  // sopra vengono comunque ricalcolati leggendo l'orologio reale a ogni
-  // render, mai letti dal tick stesso (v. use-countdown-tick.ts).
+  // Il tick condiviso forza solo un ri-render al secondo: i valori sopra sono ricalcolati leggendo l'orologio reale, mai letti dal tick stesso.
   useCountdownTick(!parts.isPast);
 
   if (parts.isPast) {
@@ -166,9 +152,7 @@ export function CapsuleCountdown({
     );
   }
 
-  // Oltre i 100 giorni un cartellino a 2 cifre non basta --- un numero
-  // secco è più leggibile di quattro cartellini quasi sempre fermi (v.
-  // prototipo Claude Design, "casi limite").
+  // Oltre i 100 giorni un cartellino a 2 cifre non basta: un numero secco è più leggibile di quattro cartellini quasi sempre fermi.
   if (parts.days >= 100) {
     return (
       <span
