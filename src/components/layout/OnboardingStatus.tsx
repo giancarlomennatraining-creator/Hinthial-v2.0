@@ -14,35 +14,13 @@ import {
 import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 
 /**
- * Indicatore persistente di avanzamento "Onboarding",
- * sempre visibile nella barra laterale (non solo in dashboard) --- una
- * grafica a torta col solo colore del brand per la quota completata,
- * che al click apre la stessa checklist già vista in dashboard (v.
- * domain/onboarding/steps.ts, condivisa per non avere due liste che
- * possono disallinearsi).
- *
- * Visibile anche prima dello sblocco --- mostra solo i primi due passi
- * (account + cifratura, v. computeBasicOnboardingSteps), il cui stato è
- * già noto da useMasterKey().status senza dover decifrare nulla: un
- * utente nuovo vede così subito un punto di partenza, invece di
- * scoprire il gadget solo dopo aver già configurato la cifratura da
- * sé. La checklist completa (8 passi) prende il suo posto non appena la
- * Master Key è sbloccata. Caricato all'apertura della barra (come
- * DashboardWidgets, non pigro come GlobalSearch: qui il punto è proprio
- * vedere la percentuale senza dover cliccare), e ricaricato ad ogni
- * apertura del pannello per riflettere cambiamenti fatti altrove.
- *
- * Il click apre un pannello laterale a tutto schermo (stesso pattern del
- * dettaglio attività in Impostazioni > Attività, v. AuditLogPanel) invece
- * di un piccolo riquadro ancorato al pulsante: da quando ogni passo non
- * fatto mostra anche una breve descrizione (v. OnboardingChecklist), il
- * contenuto è diventato troppo alto per un riquadro flottante --- niente
- * più calcolo di posizione/spazio disponibile.
- *
- * Nascondibile dal pannello stesso ("Nascondi") --- una preferenza
- * sincronizzata sul server (v. OnboardingWidgetVisibilityProvider), non un
- * completamento vero e proprio: l'avanzamento resta comunque
- * consultabile (e il gadget riattivabile) da Impostazioni > Onboarding.
+ * Indicatore persistente di avanzamento "Onboarding" nella barra laterale: una torta col colore del brand per la
+ * quota completata, che al click apre la stessa checklist di dashboard (v. domain/onboarding/steps.ts, condivisa per
+ * non avere due liste disallineate). Visibile anche prima dello sblocco con solo i primi due passi (v.
+ * computeBasicOnboardingSteps), noti senza decifrare nulla; la checklist completa (8 passi) prende il posto una volta
+ * sbloccata la Master Key. Il pannello è a tutto schermo (non un riquadro ancorato) perché ogni passo mostra anche
+ * una breve descrizione. Nascondibile dal pannello stesso, una preferenza sincronizzata sul server (v.
+ * OnboardingWidgetVisibilityProvider): l'avanzamento resta comunque consultabile da Impostazioni > Onboarding.
  */
 export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean }) {
   const supabase = useRef(createClient()).current;
@@ -72,8 +50,7 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
         }),
       );
     } catch {
-      // Nessun blocco dell'interfaccia per questo indicatore secondario:
-      // se il caricamento fallisce, resta semplicemente non mostrato.
+      // Indicatore secondario: se il caricamento fallisce, resta semplicemente non mostrato.
     }
   }, [supabase, masterKey]);
 
@@ -86,8 +63,7 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
     setOpen((v) => !v);
   }
 
-  // Prima dello sblocco, solo i primi due passi (v. doc comment sopra) ---
-  // "checking" (stato non ancora noto) resta senza indicatore, come prima.
+  // Prima dello sblocco, solo i primi due passi; "checking" resta senza indicatore.
   const displaySteps = masterKey
     ? steps
     : status.kind === "checking"
@@ -112,10 +88,7 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
           aria-hidden="true"
           className="h-8 w-8 shrink-0 rounded-full ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700"
           style={{
-            // A onboarding completato (100%) il colore diventa verde,
-            // come le altre conferme di stato positivo nell'app (es. il
-            // badge "Master password creata" in dashboard) --- sotto al
-            // 100% resta il colore del brand.
+            // A onboarding completato (100%) il colore diventa verde, come le altre conferme di stato positivo nell'app.
             background: `conic-gradient(${percent === 100 ? "#22c55e" : "var(--color-brand)"} ${percent}%, rgba(161, 161, 170, 0.35) ${percent}%)`,
           }}
         />
@@ -128,11 +101,7 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
       </button>
 
       <SidePanel open={open} onClose={() => setOpen(false)} label="Onboarding">
-        {/*
-          Niente titolo qui: OnboardingChecklist ha già la sua
-          intestazione "Onboarding X/Y" --- ripeterlo sopra sarebbe
-          ridondante. Solo il tasto per chiudere.
-        */}
+        {/* Niente titolo qui: OnboardingChecklist ha già la sua intestazione "Onboarding X/Y". */}
         <div className="flex justify-end">
           <button
             type="button"

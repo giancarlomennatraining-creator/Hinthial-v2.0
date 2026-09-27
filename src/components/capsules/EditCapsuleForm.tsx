@@ -36,19 +36,9 @@ const STEP_LABEL: Record<Step, string> = {
 };
 
 /**
- * Pagina dedicata alla modifica di una capsula --- prima era un form
- * inline nella riga di CapsulesPanel, ora una pagina a sé come la
- * creazione, con gli stessi tre passi di CreateCapsuleForm (chi e
- * quando -> contenuti dall'archivio -> audio, video e testo), non un
- * unico form lungo. Solo le capsule ancora in Bozza sono modificabili
- * (v. updateCapsule): chiudere una capsula la rende autosufficiente,
- * non più legata agli originali --- una volta chiusa non ha più senso
- * "modificarla" qui. Titolo, data e ora di apertura, destinatari, contenuto
- * testuale, contenuti collegati dall'Archivio E allegati audio/video
- * diretti (registrati o caricati) sono tutti modificabili --- questi
- * ultimi con lo stesso registratore/upload della creazione (passo 3):
- * si può rimuovere un allegato esistente e/o aggiungerne di nuovi nello
- * stesso salvataggio.
+ * Pagina di modifica di una capsula, con gli stessi tre passi di CreateCapsuleForm. Solo le capsule ancora in Bozza
+ * sono modificabili (v. updateCapsule): chiuderla la rende autosufficiente, non più legata agli originali. Allegati
+ * audio/video esistenti sono rimovibili e nuovi aggiungibili nello stesso salvataggio.
  */
 export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey; capsuleId: string }) {
   const supabase = useRef(createClient()).current;
@@ -71,24 +61,13 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
   const [showAttachmentTools, setShowAttachmentTools] = useState(false);
   const [relatedFriends, setRelatedFriends] = useState<FriendListItem[]>([]);
   const [linkedDocuments, setLinkedDocuments] = useState<DocumentListItem[]>([]);
-  // Allegati diretti (audio/video) --- keptAttachments parte dagli
-  // esistenti, "Rimuovi" li sposta in removedAttachments (cancellati da
-  // Storage solo dopo il salvataggio riuscito, v. updateCapsule).
-  // newFiles sono quelli aggiunti ora, registrati o caricati.
+  // Allegati diretti: keptAttachments parte dagli esistenti, "Rimuovi" li sposta in removedAttachments (cancellati da Storage solo dopo il salvataggio, v. updateCapsule). newFiles sono quelli aggiunti ora.
   const [keptAttachments, setKeptAttachments] = useState<CapsuleAttachment[]>([]);
   const [removedAttachments, setRemovedAttachments] = useState<CapsuleAttachment[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
 
-  // Contatore di richieste, non un semplice booleano "cancelled": in
-  // sviluppo React (StrictMode) invoca due volte l'effetto qui sotto al
-  // mount --- senza questa guardia, se la PRIMA fetch (superata) risolve
-  // dopo la seconda, il suo risultato sovrascriverebbe silenziosamente
-  // titolo/data/ecc. anche quando l'utente li ha già modificati nel
-  // frattempo (il form compare solo a `loading` false, cioè dopo la
-  // prima risoluzione --- la seconda fetch "fantasma" è l'unico modo in
-  // cui questo può succedere). Stesso principio del flag `cancelled` in
-  // MasterKeyProvider, adattato a un useCallback invece di una IIFE
-  // dentro l'effetto.
+  // Contatore di richieste, non un booleano "cancelled": StrictMode invoca due volte l'effetto al mount, senza
+  // questa guardia la prima fetch, se risolve dopo la seconda, sovrascriverebbe titolo/data già modificati.
   const latestRequestRef = useRef(0);
 
   const refresh = useCallback(async () => {
@@ -139,8 +118,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
       return;
     }
     if (!openAt) {
-      // Obbligatoria (Dead Man's Switch semplificato per le capsule) ---
-      // anche una capsula creata prima che lo diventasse va sanata qui.
+      // Obbligatoria (Dead Man's Switch semplificato): anche una capsula creata prima va sanata qui.
       setError("Scegli data e ora di apertura.");
       return;
     }
@@ -154,9 +132,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
   }
 
   function handleMediaFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    // "accept" guida la scelta, ma non la impone davvero --- si scartano
-    // in silenzio i file che non sono audio/video (stesso pattern di
-    // CreateCapsuleForm).
+    // "accept" non impone davvero la scelta: si scartano in silenzio i file che non sono audio/video.
     const picked = Array.from(event.target.files ?? []).filter(
       (file) => file.type.startsWith("audio/") || file.type.startsWith("video/"),
     );
@@ -172,8 +148,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
       return;
     }
     if (!openAt) {
-      // Obbligatoria (Dead Man's Switch semplificato per le capsule) ---
-      // anche una capsula creata prima che lo diventasse va sanata qui.
+      // Obbligatoria (Dead Man's Switch semplificato): anche una capsula creata prima va sanata qui.
       setError("Scegli data e ora di apertura.");
       setStep(1);
       return;
@@ -331,10 +306,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                 onContentStyleChange={setContentStyle}
               />
 
-              {/* Allegati audio/video --- esistenti (rimovibili) + nuovi
-                  (registrati o caricati ora), un'aggiunta secondaria e
-                  discreta, non un passo alla pari con scrivere il
-                  messaggio (v. richiesta utente, "capsule come lettere"). */}
+              {/* Allegati audio/video: esistenti (rimovibili) + nuovi, un'aggiunta secondaria e discreta, non un passo alla pari con scrivere il messaggio. */}
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"

@@ -10,16 +10,9 @@ import { getStoredSidebarCollapsed, storeSidebarCollapsed } from "@/lib/sidebar"
 import { cn } from "@/lib/utils";
 
 /**
- * La barra laterale --- estratta da AppShell per poter tenere lo stato
- * di compressione (v. lib/sidebar.ts, solo su questo dispositivo, come
- * il tema). Compressa: solo icone nel menu e nell'avatar (nome ed
- * etichette restano comunque letti dagli screen reader, v. sr-only in
- * MainNav/UserMenu), logo al posto del lockup logo+scritta.
- *
- * `side` --- v. AppShell/NavOrientationProvider: quale lato dello schermo,
- * per scegliere su quale bordo disegnare il confine con il contenuto
- * (l'ordine visivo vero e proprio, a sinistra o a destra, lo decide
- * AppShell riordinando gli elementi flex, non questo componente).
+ * La barra laterale, con stato di compressione persistito solo su questo dispositivo (v. lib/sidebar.ts). Compressa:
+ * solo icone (nome ed etichette restano letti dagli screen reader, v. sr-only in MainNav/UserMenu), logo senza scritta.
+ * `side`: solo per scegliere il bordo di confine col contenuto --- l'ordine visivo lo decide AppShell.
  */
 export function Sidebar({
   userId,
@@ -40,8 +33,7 @@ export function Sidebar({
   const navItems = useOrderedNavItems();
 
   useEffect(() => {
-    // Legge una preferenza già decisa altrove (localStorage), non deriva
-    // stato da props/state React.
+    // Legge una preferenza già decisa altrove (localStorage), non deriva stato da props/state React.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCollapsed(getStoredSidebarCollapsed());
   }, []);
@@ -55,37 +47,11 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        // Sotto md la sostituisce MobileNavBar (v. AppShell) --- questa
-        // resta montata, solo nascosta, per non perdere lo stato di
-        // compressione attraversando la soglia md.
-        // transition-[width,padding] --- il passaggio piena/compatta (v.
-        // richiesta utente) diventa un movimento fluido invece di un
-        // cambio di scatto: stessa proprietà anche in senso inverso
-        // (espandendo), nessuna classe separata serve per le due direzioni.
-        // md:sticky md:top-0 md:h-screen --- senza, l'altezza di <aside>
-        // seguiva quella di <main> (allineamento flex di default), quindi
-        // su qualunque pagina più alta di uno schermo (praticamente
-        // sempre, con dati reali) l'avatar in fondo alla barra finiva ben
-        // sotto la parte visibile, irraggiungibile senza scorrere tutta
-        // la pagina --- specie evidente in orizzontale su smartphone, dove
-        // la finestra è bassa (v. segnalazione utente). overflow-x-hidden
-        // resta per la transizione di larghezza qui sopra; overflow-y-auto
-        // (invece di overflow-hidden su entrambi gli assi) è la rete di
-        // sicurezza se il proprio contenuto della barra superasse
-        // comunque l'altezza della finestra.
+        // Sotto md la sostituisce MobileNavBar (v. AppShell): resta montata, solo nascosta, per non perdere lo stato di compressione attraversando la soglia md.
+        // md:sticky md:top-0 md:h-screen: senza, <aside> seguiva l'altezza di <main> e l'avatar in fondo finiva irraggiungibile su pagine lunghe.
         "hidden flex-col gap-6 overflow-x-hidden overflow-y-auto border-b border-zinc-200 bg-white transition-[width,padding] duration-300 ease-in-out md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:border-b-0 dark:border-zinc-800 dark:bg-zinc-950",
-        // Bordo di confine col contenuto e ordine visivo sul lato
-        // corretto --- v. doc comment sopra. L'ordine resta quello del
-        // markup su mobile (flex-col): solo da md in su, dove il
-        // contenitore diventa flex-row, la barra passa a destra.
         side === "right" ? "md:order-2 md:border-l" : "md:border-r",
-        // cn() qui non fonde classi in conflitto (v. lib/utils.ts, non è
-        // tailwind-merge): il padding va scritto per intero in ciascun
-        // ramo, mai come base + override parziale, altrimenti entrambi i
-        // valori finiscono nella stringa e quale vince dipende dall'ordine
-        // con cui Tailwind genera il CSS, non da quello nel className.
-        // Compressa, meno padding: altrimenti a w-20 (80px) resta troppo
-        // poco spazio e l'avatar (24px) trabocca invece di stare al centro.
+        // cn() non fonde classi in conflitto (v. lib/utils.ts): il padding va scritto per intero in ciascun ramo, mai base + override parziale.
         collapsed ? "p-3 md:w-20" : "p-4 md:w-56 md:p-6",
       )}
     >

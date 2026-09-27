@@ -16,27 +16,11 @@ import { SlidersIcon, ArrowRightIcon } from "@/components/icons/nav-icons";
 import type { AIContext } from "@/domain/ai/types";
 
 /**
- * FASE 10/11 --- interfaccia AIProvider, retrieval locale, provider mock
- * (v. domain/ai/mock-provider.ts) e --- con il consenso esplicito
- * dell'utente (v. AIProcessingConsentProvider, ora gestito dal pannello
- * ⚙ qui sotto, non più inline nel corpo pagina) --- un vero provider
- * esterno (v. domain/ai/claude-provider.ts, "Explicit AI processing",
- * HINTHIAL_MVP.md sezione "HINTHIAL AI --- vincolo privacy"). Senza
- * consenso, tutto gira sul dispositivo: l'AIContext viene costruito
- * decifrando i dati con la Master Key già sbloccata, e mockAIProvider
- * non fa nessuna chiamata di rete --- nessun dato lascia il browser. Con
- * il consenso, solo la domanda e i pochi elementi pertinenti trovati
- * localmente (mai l'intero vault) vengono inviati a Claude tramite la
- * nostra route server-side.
- *
- * Restyle (v. richiesta utente): il consenso vive ora in AIConsentSettings
- * dentro un SidePanel, stesso pattern del dettaglio evento in Impostazioni
- * > Attività --- niente più duplicazione della logica di consenso qui
- * dentro. "Cose da tenere d'occhio" (v. mockAIProvider.suggest(), ormai
- * rimosso) non appare più da nessuna parte: era già stata tolta dalla
- * Dashboard perché ripeteva le card sopra (v. DashboardWidgets), e
- * restava solo qui --- toglierla anche da qui l'ha eliminata come
- * funzione, scelta esplicita dell'utente, non un effetto collaterale.
+ * Retrieval locale + provider mock (v. domain/ai/mock-provider.ts) o, col consenso esplicito (v.
+ * AIProcessingConsentProvider), un vero provider esterno (v. domain/ai/claude-provider.ts, "Explicit AI processing",
+ * HINTHIAL_MVP.md). Senza consenso tutto gira sul dispositivo, nessun dato lascia il browser; con il consenso solo
+ * la domanda e i pochi elementi pertinenti trovati localmente (mai l'intero vault) vengono inviati a Claude.
+ * Il consenso vive in AIConsentSettings dentro un SidePanel, non più inline qui.
  */
 function initialsSeedFallback(firstName: string, lastName: string): string {
   return `${firstName} ${lastName}`.trim() || "utente";
@@ -92,10 +76,7 @@ export function AIPanel({
   const [question, setQuestion] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Segue la conversazione verso il basso man mano che si allunga,
-  // invece di lasciare l'utente sull'inizio di uno scroll interno --- anche
-  // quando compare l'indicatore "sta scrivendo" (asking), non solo a un
-  // messaggio vero e proprio.
+  // Segue la conversazione verso il basso man mano che si allunga, anche quando compare l'indicatore "sta scrivendo".
   useEffect(() => {
     const container = messagesRef.current;
     if (container) container.scrollTop = container.scrollHeight;
@@ -157,11 +138,7 @@ export function AIPanel({
           <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle,rgba(43,79,196,0.14),transparent_72%)]">
             {/* eslint-disable-next-line @next/next/no-img-element -- brand asset, not user content */}
             <img
-              // Copia ridotta dell'avatar HINTHIA (v. public/brand/README.md):
-              // l'originale è un PNG da 1312x1199 dentro un guscio SVG, 1,3 MB
-              // --- qui ne bastano 8 KB. `alt` vuoto di proposito: è il titolo
-              // accanto a dire cos'è questa pagina, ripeterlo a chi usa uno
-              // screen reader aggiungerebbe rumore, non informazione.
+              // Copia ridotta dell'avatar HINTHIA (v. public/brand/README.md). `alt` vuoto: il titolo accanto già dice cos'è la pagina.
               src="/brand/hinthia/hinthia-128.png"
               alt=""
               className="h-12 w-12 rounded-full"
