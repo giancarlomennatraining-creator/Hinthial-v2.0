@@ -37,11 +37,7 @@ import type { DocumentMetadataInput } from "@/domain/documents/types";
 
 type CreationMode = "upload" | "record" | "note";
 
-/**
- * FASE 19b --- lo stato della lettura del file appena scelto.
- * "skipped" è un tipo che Hinthial non sa ancora leggere (un audio):
- * diverso da "done" senza risultato, e va detto in modo diverso.
- */
+/** FASE 19b: stato della lettura --- "skipped" (tipo non leggibile) è diverso da "done" senza risultato. */
 type ReadingState =
   | { status: "idle" }
   | { status: "reading"; progress: number | null }
@@ -71,13 +67,7 @@ const REPORTED_FIELDS: { kind: StructuredFieldKind; label: string }[] = [
   { kind: "document-date", label: "Data del documento" },
 ];
 
-/**
- * FASE 19b --- "ho letto il documento", nel form di caricamento.
- *
- * Mostra solo le voci che **non** hanno già un campo proprio qui sotto:
- * titolo, categoria e scadenza sono già precompilati, e ripeterli
- * sarebbe lo stesso valore due volte a due centimetri di distanza.
- */
+/** FASE 19b: "ho letto il documento" --- mostra solo le voci senza già un campo proprio (titolo/categoria/scadenza sono già precompilati). */
 function ReadingReport({ reading }: { reading: ReadingState }) {
   if (reading.status === "idle") return null;
 
@@ -139,22 +129,8 @@ function ReadingReport({ reading }: { reading: ReadingState }) {
 }
 
 /**
- * FASE 19b --- da dove viene la scadenza che c'è nel campo, **qualunque
- * essa sia**.
- *
- * È il pezzo richiesto esplicitamente dall'utente, e il suo valore sta
- * nel caso più frequente: non che Hinthial non trovi la data, ma che ne
- * trovi cinque e scelga quella sbagliata (una polizza ha emissione,
- * decorrenza, scadenza, stampa). Correggi, e lei ritrova nel documento
- * la frase che contiene la data giusta --- prova che la tua correzione
- * corrisponde a qualcosa di scritto davvero.
- *
- * Il confronto è tra **date**, non tra stringhe: dal calendario arriva
- * `2027-06-03`, il documento dice "3 giugno 2027" (v. findDateContext).
- *
- * E deve saper dire "non l'ho trovata", che succede spesso e per buoni
- * motivi: l'OCR l'ha storpiata, la scadenza è calcolata e sul foglio non
- * c'è, oppure la sai tu da fuori.
+ * FASE 19b: da dove viene la scadenza nel campo, qualunque essa sia --- se corretta a mano, ritrova nel documento la
+ * frase con quella data (confronto tra date, non stringhe, v. findDateContext), o dice onestamente "non l'ho trovata".
  */
 function ExpiryHint({
   metadata,
@@ -167,9 +143,7 @@ function ExpiryHint({
 }) {
   if (!metadata.expiresAt || reading.status !== "done" || !reading.text) return null;
 
-  // Valore ancora quello proposto: si riusa ciò che l'estrazione sapeva
-  // già, compreso il fatto che potrebbe essere stata *calcolata* e
-  // quindi giustamente introvabile nel testo.
+  // Valore ancora quello proposto: si riusa ciò che l'estrazione sapeva già, anche se calcolata e non nel testo.
   if (suggested.expiresAt && metadata.expiresAt === suggested.expiresAt) {
     const field = reading.fields.find((f) => f.kind === "expiry");
     if (field?.derived) {
@@ -201,15 +175,8 @@ const MODE_LABEL: Record<CreationMode, string> = {
 };
 
 /**
- * Pagina dedicata alla creazione di un elemento d'Archivio (estratta da
- * DocumentsPanel, che ora mostra solo l'elenco più un tasto "+ Aggiungi
- * contenuto") --- un unico form per i tre modi di aggiungere qualcosa:
- * caricare un file già pronto, registrarne uno sul momento, o scrivere
- * una nota testuale (v. domain/documents/repository.ts, createTextNote).
- * Categoria/bene/scadenza/tag/note restano gli stessi a prescindere dal
- * tipo. Stesso pattern usato per capsule/beni/scadenze/contatti: alla
- * creazione riuscita torna a /archive con un messaggio di conferma
- * passato come flag nell'URL (`?created=1`).
+ * Pagina di creazione di un elemento d'Archivio --- un unico form per i tre modi (file, registrazione, nota), stessi
+ * campi a prescindere dal tipo. Alla creazione torna a /archive con `?created=1`, come capsule/beni/scadenze.
  */
 export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
@@ -221,11 +188,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  // FASE 17b --- leggere un PDF lungo richiede qualche secondo: dirlo
-  // evita che il pulsante annunci "Salvataggio…" mentre in realtà sta
-  // ancora leggendo il documento (v. richiesta utente). FASE 17c: l'OCR
-  // di una foto può richiederne venti, e allora la percentuale non è un
-  // vezzo --- è ciò che distingue un'attesa lunga da un blocco.
+  // FASE 17b/17c: dice "sto leggendo" invece di "Salvataggio…" mentre legge; la percentuale distingue un'attesa lunga da un blocco.
   const [phase, setPhase] = useState<UploadPhase>("saving");
   const [readProgress, setReadProgress] = useState<number | null>(null);
 
@@ -234,24 +197,14 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pickedFile, setPickedFile] = useState<File | null>(null);
 
-  // FASE 19b --- la lettura parte appena scegli il file, non quando
-  // premi Salva: così avviene mentre compili tag e note, e quando arrivi
-  // in fondo al form ha già finito. Stesso lavoro, ma dentro il tempo
-  // che stavi già spendendo.
+  // FASE 19b: la lettura parte appena scegli il file, non a Salva --- avviene dentro il tempo che stavi già spendendo.
   const [reading, setReading] = useState<ReadingState>({ status: "idle" });
   const [title, setTitle] = useState("");
-  /**
-   * Cosa ha messo Hinthial, per poterlo dire accanto al campo. Il segno
-   * sparisce appena l'utente tocca quel campo: da quel momento il valore
-   * è suo, e continuare a chiamarlo "suggerito" sarebbe falso.
-   */
+  /** Cosa ha messo Hinthial --- sparisce appena l'utente tocca il campo, da quel momento il valore è suo. */
   const [suggested, setSuggested] = useState<Suggested>({});
-  // Identifica il file per cui è in corso la lettura: se ne scegli un
-  // altro mentre la prima non è finita, il risultato vecchio non deve
-  // arrivare dopo e sovrascrivere quello nuovo.
+  // Identifica il file in lettura: se ne scegli un altro prima che finisca, il risultato vecchio non deve sovrascrivere.
   const readingTokenRef = useRef(0);
-  // La lettura in corso, per poterla aspettare al salvataggio se non ha
-  // ancora finito (v. extractionForSave).
+  // La lettura in corso, per poterla aspettare al salvataggio se non ha ancora finito (v. extractionForSave).
   const readingPromiseRef = useRef<Promise<PriorExtraction> | null>(null);
   const [recordedFile, setRecordedFile] = useState<File | null>(null);
   const [noteTitle, setNoteTitle] = useState("");
@@ -286,9 +239,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     setPickedFile(null);
     setRecordedFile(null);
     setError(null);
-    // Cambiare modo azzera anche ciò che Hinthial aveva ricavato dal
-    // file precedente: una lettura in corso non deve arrivare dopo e
-    // riempire i campi di una nota scritta a mano.
+    // Azzera anche ciò che Hinthial aveva ricavato: una lettura in corso non deve riempire i campi di una nota scritta a mano.
     readingTokenRef.current++;
     setReading({ status: "idle" });
     setTitle("");
@@ -299,14 +250,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
     setPickedFile(file);
-    // Non si azzerano titolo/categoria/bene/fascicolo/tag/note: vale la
-    // stessa regola della FASE 19b, "non si tocca ciò che è già
-    // compilato". Scegliere una categoria e SOLO DOPO il file --- un
-    // ordine perfettamente naturale --- perderebbe la scelta se qui si
-    // ripartisse da campi vuoti. `applySuggestions` più sotto già si
-    // guarda bene dal sovrascrivere un valore non vuoto (v. il merge con
-    // `prev`): l'unica cosa che qui deve ripartire da capo è il segno
-    // "suggerito da Hinthial", legato al file precedente.
+    // Non si azzerano titolo/categoria/bene/fascicolo/tag/note ("non si tocca ciò che è già compilato") --- solo il segno "suggerito", legato al file precedente.
     setSuggested({});
     if (file) {
       readingPromiseRef.current = readPickedFile(file);
@@ -316,24 +260,14 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  /**
-   * FASE 19b --- legge il file appena scelto e ne precompila il form.
-   *
-   * Precompila invece di chiedere (come fa invece la scheda di un
-   * contenuto già archiviato, v. ProposalsSection): qui non c'è ancora
-   * niente di tuo da sovrascrivere, e stai già rivedendo un form riga
-   * per riga --- vedere il valore e premere Salva **è** il consenso. Su
-   * un documento già in archivio invece la categoria potresti averla
-   * scelta tu mesi fa, e cambiarla senza chiedere sarebbe scorretto.
-   */
+  /** FASE 19b: legge il file e precompila --- niente di tuo da sovrascrivere ancora, vedere il valore e premere Salva È il consenso (diverso da ProposalsSection, dove il campo può essere già tuo). */
   async function readPickedFile(file: File): Promise<PriorExtraction> {
     const token = ++readingTokenRef.current;
     const mimeType = file.type || "application/octet-stream";
 
     if (!canExtractText(mimeType)) {
       setReading({ status: "skipped" });
-      // Niente testo da leggere: resta il nome del file, che è l'unico
-      // indizio disponibile (ed è come funzionava prima della FASE 17).
+      // Niente testo da leggere: resta il nome del file, l'unico indizio disponibile.
       const fromFilename = heuristicCategorizer.suggestCategory(file.name, categories);
       if (fromFilename) {
         setMetadata((prev) => ({ ...prev, categoryId: fromFilename }));
@@ -351,9 +285,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         setReadProgress(progress);
       });
 
-      // Un altro file è stato scelto nel frattempo: questo risultato è
-      // vecchio e non deve toccare niente. Si restituisce lo stesso ---
-      // nessuno aspetta più questa promessa (v. readingPromiseRef).
+      // Un altro file è stato scelto nel frattempo: risultato vecchio, non tocca niente (v. readingPromiseRef).
       if (token === readingTokenRef.current) {
         const fields = text ? extractStructuredFields(text) : [];
         setReading({ status: "done", text, fields });
@@ -362,8 +294,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
 
       return { text, attempted: true };
     } catch {
-      // Leggere è un di più: un file illeggibile non deve impedire di
-      // salvarlo (v. domain/extraction/extract-text.ts).
+      // Leggere è un di più: un file illeggibile non deve impedire di salvarlo.
       if (token === readingTokenRef.current) setReading({ status: "done", text: null, fields: [] });
       return { text: null, attempted: false };
     }
@@ -373,26 +304,15 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   function applySuggestions(file: File, text: string, fields: StructuredField[]) {
     const next: Suggested = {};
 
-    // Il titolo si **propone**, non si precompila --- unica eccezione tra
-    // i campi qui sotto, e per una ragione precisa: categoria, bene e
-    // scadenza sono vuoti, e riempirli non toglie niente a nessuno. Un
-    // nome invece c'è sempre, ed è quello che il file si porta dietro:
-    // sostituirlo d'ufficio violerebbe la stessa regola che governa le
-    // proposte sulla scheda --- non si tocca ciò che è già compilato. In
-    // più il nome è l'identità del documento, e un titolo sbagliato
-    // messo in silenzio si nota molto dopo.
+    // Il titolo si PROPONE, non si precompila --- unico campo che ha già sempre un valore (il nome del file), sostituirlo d'ufficio sarebbe scorretto.
     const proposedTitle = fields.find((f) => f.kind === "title")?.value;
     if (proposedTitle) {
-      // L'estensione si conserva: il titolo diventa il nome con cui il
-      // file verrà scaricato, e senza estensione il sistema operativo
-      // non saprebbe più con cosa aprirlo.
+      // L'estensione si conserva, altrimenti il sistema operativo non saprebbe più con cosa aprirlo.
       const extension = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
       next.title = `${proposedTitle}${extension}`;
     }
 
-    // Il bene ha la precedenza sulle parole chiave: se il documento cita
-    // una targa o un numero di polizza, quello non è un indizio, è una
-    // certezza --- e porta con sé anche la categoria giusta.
+    // Il bene ha la precedenza sulle parole chiave: una targa o polizza non è un indizio, è una certezza.
     const asset = suggestAssetFromText(text, assets);
     const categoryId = asset?.categoryId
       ? asset.categoryId
@@ -415,13 +335,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     }));
   }
 
-  // "📷 Scatta foto" apre la stessa (unica) casella di scelta file, ma
-  // con `capture` impostato un istante prima --- sui dispositivi che lo
-  // supportano (smartphone) questo apre direttamente la fotocamera
-  // invece della libreria file; sugli altri l'attributo è ignorato e si
-  // apre la normale finestra di scelta, senza effetti negativi. Un solo
-  // <input type="file"> nel DOM (non uno in più accanto) --- così gli
-  // e2e che lo trovano con il selettore generico non ne trovano due.
+  // "📷 Scatta foto" riusa la stessa casella file con `capture` impostato un istante prima (ignorato sui dispositivi che non lo supportano) --- un solo <input type="file"> nel DOM.
   function handleCameraClick() {
     const input = fileInputRef.current;
     if (!input) return;
@@ -430,26 +344,13 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     input.click();
   }
 
-  // Ripristina la casella al comportamento normale una volta chiusa la
-  // finestra di scelta (con o senza foto scattata) --- altrimenti un
-  // click successivo sulla casella stessa (non sul tasto qui sopra)
-  // continuerebbe ad aprire la sola fotocamera.
+  // Ripristina la casella al comportamento normale --- altrimenti un click diretto continuerebbe ad aprire solo la fotocamera.
   function handleFileInputBlur(event: React.FocusEvent<HTMLInputElement>) {
     event.target.removeAttribute("accept");
     event.target.removeAttribute("capture");
   }
 
-  /**
-   * Il risultato della lettura da consegnare al salvataggio.
-   *
-   * Se non ha ancora finito **si aspetta**, e vale la pena dire perché
-   * non è in contraddizione con "caricare non deve rallentare". La
-   * lettura è cominciata quando hai scelto il file, non adesso: l'attesa
-   * qui è al massimo quella che c'era prima della FASE 19b, e quasi
-   * sempre è già finita mentre compilavi il resto. Salvare senza
-   * aspettare, invece, farebbe nascere il documento non cercabile per il
-   * suo contenuto --- un peggioramento vero, in cambio di un secondo.
-   */
+  /** Il risultato della lettura per il salvataggio --- se non ha ancora finito si aspetta (era già in corso dalla scelta del file), altrimenti il documento nascerebbe non cercabile. */
   async function extractionForSave(): Promise<PriorExtraction> {
     const pending = readingPromiseRef.current;
     if (!pending) return { text: null, attempted: false };
@@ -503,8 +404,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         const file = mode === "record" ? recordedFile! : pickedFile!;
         await uploadDocument(supabase, masterKey, user.id, file, metadataInput, {
           title: mode === "upload" ? title : undefined,
-          // Il file registrato al momento non passa dalla lettura del
-          // form: lo legge uploadDocument come ha sempre fatto.
+          // Il file registrato non passa dalla lettura del form: lo legge uploadDocument come sempre.
           extraction: mode === "upload" ? await extractionForSave() : undefined,
           onPhase: (nextPhase, progress) => {
             setPhase(nextPhase);
@@ -520,9 +420,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  // Il file in gioco, qualunque sia il modo con cui è arrivato --- serve
-  // solo per parlare all'utente del contenuto giusto ("l'immagine" e non
-  // "il documento", v. sotto).
+  // Il file in gioco, qualunque sia il modo --- serve a parlare del contenuto giusto ("l'immagine", non "il documento").
   const fileInHand = mode === "record" ? recordedFile : pickedFile;
   const isImage = fileInHand?.type.startsWith("image/") ?? false;
 
@@ -595,9 +493,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                   onBlur={handleFileInputBlur}
                   className="text-sm text-zinc-700 dark:text-zinc-300"
                 />
-                {/* Solo su smartphone --- su desktop l'attributo capture
-                    non ha effetto, e il tasto sarebbe solo un secondo
-                    modo ridondante di aprire lo stesso file picker. */}
+                {/* Solo su smartphone --- su desktop capture non ha effetto e sarebbe ridondante. */}
                 <button
                   type="button"
                   onClick={handleCameraClick}
@@ -607,12 +503,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                 </button>
               </div>
 
-              {/* FASE 19b --- l'esito della lettura, appena scelto il
-                  file. In creazione basta un riassunto: il testo per
-                  intero vive sulla scheda del contenuto, dove si va
-                  quando si vuole verificare davvero. Qui un muro di
-                  ottomila caratteri renderebbe pesante il gesto più
-                  frequente dell'app. */}
+              {/* FASE 19b: solo un riassunto --- il testo per intero vive sulla scheda del contenuto. */}
               {pickedFile ? <ReadingReport reading={reading} /> : null}
             </div>
           ) : mode === "record" ? (
@@ -664,10 +555,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           ) : null}
 
-          {/* FASE 17c --- l'OCR di una foto richiede qualche decina di
-              secondi, e la prima volta scarica anche il motore: detto
-              prima è un'attesa annunciata, scoperto dopo è un'app
-              lenta. */}
+          {/* FASE 17c: detto prima è un'attesa annunciata, scoperto dopo è un'app lenta. */}
           {isImage && !creating ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Hinthial leggerà il testo scritto dentro l&apos;immagine, sul tuo dispositivo, per
@@ -675,10 +563,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           ) : null}
 
-          {/* FASE 19b --- il nome con cui il contenuto vivrà in archivio.
-              "scan_0012.pdf" e "IMG_4821.jpg" sono la gran parte di un
-              archivio vero, e sono il motivo per cui poi non si ritrova
-              niente. */}
+          {/* FASE 19b: "scan_0012.pdf" e "IMG_4821.jpg" sono il motivo per cui poi non si ritrova niente. */}
           {mode === "upload" && pickedFile ? (
             <div className="flex flex-col gap-1">
               <label
@@ -720,9 +605,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
             dossiers={dossiers}
             value={metadata}
             onChange={setMetadata}
-            // La scadenza si chiede solo per i file, ed è nuovo: prima
-            // era nascosta perché in creazione non la si conosceva quasi
-            // mai. Ora Hinthial la trova dentro il documento.
+            // La scadenza si chiede solo per i file --- prima era nascosta, ora Hinthial la trova nel documento.
             showExpiry={mode === "upload"}
             hints={{
               categoryId:
