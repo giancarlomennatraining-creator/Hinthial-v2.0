@@ -3,12 +3,7 @@ import type { Database } from "@/types/supabase";
 import { encryptBytes, serializeEnvelope, utf8ToBytes } from "@/lib/crypto";
 import { logAuditEvent } from "@/lib/audit/log-event";
 
-/**
- * Richiesta di amicizia in arrivo --- v. migrazione friend_requests. Il
- * nome del mittente è in chiaro (letto da profiles, v. policy
- * profiles_select_by_friend_request_sender): non è un dato del vault, è
- * il display name pubblico del suo account.
- */
+/** Nome del mittente in chiaro (letto da profiles) --- non è un dato del vault, è il display name pubblico dell'account. */
 export interface IncomingFriendRequest {
   id: string;
   senderId: string;
@@ -23,12 +18,7 @@ export interface OutgoingFriendRequest {
   createdAt: string;
 }
 
-/**
- * Le richieste in arrivo per l'utente corrente --- RLS limita già la
- * select a `recipient_id = auth.uid()`, ma lo ripetiamo esplicitamente
- * (v. lezione imparata con le capsule condivise: più policy permissive
- * si combinano in OR, mai fidarsi della sola RLS per il filtro giusto).
- */
+/** RLS limita già a `recipient_id = auth.uid()`, ma lo ripetiamo esplicitamente --- lezione delle capsule condivise: mai fidarsi della sola RLS. */
 export async function listIncomingFriendRequests(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -83,13 +73,7 @@ export async function listOutgoingPendingFriendRequests(
   return (data ?? []).map((row) => ({ recipientId: row.recipient_id, createdAt: row.created_at }));
 }
 
-/**
- * Invia una richiesta di amicizia --- solo per una PERSONA già collegata
- * a un account Hinthial (v. FriendsPanel, tasto "Richiedi amicizia").
- * `senderEmail` è quella della SESSIONE corrente (mai quella cifrata
- * della PERSONA nella rubrica): serve al destinatario, se accetta, per
- * creare la propria riga cifrata di questo amico (v. acceptFriendRequest).
- */
+/** `senderEmail` è quella della SESSIONE, mai quella cifrata nella rubrica --- serve al destinatario per creare la sua riga (v. acceptFriendRequest). */
 export async function sendFriendRequest(
   supabase: SupabaseClient<Database>,
   senderId: string,
@@ -109,15 +93,7 @@ export async function sendFriendRequest(
   await logAuditEvent(supabase, senderId, "friend_request_sent");
 }
 
-/**
- * Accetta una richiesta --- la funzione Postgres si occupa già di
- * marcare `is_friend = true` su ENTRAMBE le righe "amico" che esistono
- * già (v. migrazione friend_requests, accept_friend_request); qui, in
- * più, ci si assicura che il DESTINATARIO abbia una propria riga cifrata
- * per il mittente, creandola se non esisteva ancora --- serve la master
- * key perché nome/email dell'amico restano cifrati per-proprietario,
- * come ogni altra riga di friends.
- */
+/** La RPC marca is_friend su entrambe le righe già esistenti; qui in più si crea la riga cifrata del destinatario se mancava. */
 export async function acceptFriendRequest(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,

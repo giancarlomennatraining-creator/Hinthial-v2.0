@@ -11,26 +11,9 @@ import { resetCategoriesToDefault } from "@/domain/categories/repository";
 import { logAuditEvent } from "@/lib/audit/log-event";
 
 /**
- * "Cancella tutto" (Impostazioni > Zona pericolosa) --- irreversibile:
- * svuota Archivio, Beni, Amici e Capsule (con tutti i
- * relativi blob cifrati in Storage), poi ripristina le categorie
- * predefinite al posto di quelle personalizzate dell'utente.
- *
- * Le Scadenze non vengono toccate --- solo scollegate dai documenti/
- * beni appena cancellati (related_document_id/related_asset_id sono
- * ON DELETE SET NULL, v. migrations), esattamente come già succede
- * eliminando un singolo bene/documento oggi. Il Master Key/la
- * configurazione di cifratura non vengono toccati: l'utente resta
- * autenticato e può continuare a usare Hinthial da capo.
- *
- * I documenti/le capsule vanno decifrati (serve masterKey) solo per
- * scoprire i path da rimuovere in Storage: per i documenti la colonna
- * storage_path è già in chiaro, ma per gli allegati delle capsule il
- * loro id --- da cui il path è derivato --- vive dentro encrypted_payload.
- *
- * Un fallimento a metà strada lascia il vault in uno stato parziale
- * (nessun rollback complessivo, non diversamente da closeCapsule) --- lo
- * si segnala chiaramente, non lo si nasconde.
+ * "Cancella tutto": irreversibile, svuota Archivio/Beni/Amici/Capsule (con i blob in Storage) e ripristina le categorie
+ * default. Le Scadenze restano, solo scollegate (ON DELETE SET NULL). Master Key non toccato. Nessun rollback su
+ * fallimento a metà, come closeCapsule --- si segnala, non si nasconde.
  */
 export async function wipeVault(
   supabase: SupabaseClient<Database>,

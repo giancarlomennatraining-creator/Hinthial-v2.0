@@ -1,12 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 
-/**
- * FASE 13 --- registro dei dispositivi "fidati" (v.
- * lib/crypto/device-lock.ts per la cifratura vera e propria, mai
- * toccata qui): questa tabella sa solo QUALI dispositivi esistono,
- * mai il Master Key né alcun segreto che permetta di derivarlo.
- */
+/** FASE 13: registro dei dispositivi "fidati" --- sa solo QUALI esistono, mai il Master Key (v. lib/crypto/device-lock.ts). */
 export interface TrustedDeviceListItem {
   id: string;
   credentialId: string;
@@ -15,13 +10,7 @@ export interface TrustedDeviceListItem {
   lastActiveAt: string;
 }
 
-/**
- * Elenco di tutti i dispositivi fidati dell'account, da qualunque
- * dispositivo tu stia guardando --- FASE 13, ultimo passo. Solo quelli
- * ancora attivi (non revocati): uno revocato è già equivalente,
- * lato sicurezza, a non esistere più (v. findActiveTrustedDevice), non
- * ha senso continuare a mostrarlo.
- */
+/** Solo i dispositivi ancora attivi --- uno revocato equivale già a non esistere più (v. findActiveTrustedDevice). */
 export async function listTrustedDevices(
   supabase: SupabaseClient<Database>,
   ownerId: string,
@@ -61,14 +50,7 @@ export async function registerTrustedDevice(
   return { id: data.id };
 }
 
-/**
- * Verifica che questo dispositivo (identificato dalla sua credenziale
- * WebAuthn) sia ancora un dispositivo fidato valido per l'account ---
- * non basta che esista una copia locale del Master Key: potrebbe
- * essere stata revocata da un'altra sessione nel frattempo (v. fasi
- * successive per la revoca vera e propria). `null` se non trovato o
- * revocato.
- */
+/** Non basta una copia locale del Master Key: potrebbe essere stata revocata da un'altra sessione. `null` se non trovato/revocato. */
 export async function findActiveTrustedDevice(
   supabase: SupabaseClient<Database>,
   ownerId: string,
@@ -95,12 +77,7 @@ export async function touchTrustedDeviceLastActive(
   await supabase.from("trusted_devices").update({ last_active_at: new Date().toISOString() }).eq("id", deviceId);
 }
 
-/**
- * "Dimentica questo dispositivo" --- rimuove la registrazione dal
- * server. Chi chiama è responsabile di svuotare anche la copia locale
- * (v. lib/device-lock-storage.ts): questa funzione da sola non la
- * tocca, non può farlo (vive nel browser, non sul server).
- */
+/** Rimuove la registrazione dal server --- chi chiama deve svuotare anche la copia locale (v. lib/device-lock-storage.ts). */
 export async function forgetTrustedDevice(
   supabase: SupabaseClient<Database>,
   deviceId: string,

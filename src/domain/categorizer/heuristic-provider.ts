@@ -1,13 +1,7 @@
 import type { Category } from "@/domain/categories/types";
 import type { Categorizer } from "@/domain/categorizer/types";
 
-/**
- * Parole chiave associate al nome delle categorie seminate di default
- * (v. supabase/migrations/20260828020000_documents_vault.sql,
- * seed_default_categories) --- usate solo se l'utente ha ancora una
- * categoria con quel nome: se l'ha rinominata o cancellata, questa
- * corrispondenza semplicemente non scatta più.
- */
+/** Parole chiave delle categorie seminate di default --- usate solo se l'utente ne ha ancora una con quel nome. */
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   Assicurazioni: ["assicurazion", "polizza"],
   Veicoli: ["veicol", "auto", "moto", "patente", "libretto", "tagliando", "revisione", "bollo"],
@@ -24,10 +18,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
 const COMBINING_DIACRITICS = /[̀-ͯ]/g;
 
 function normalize(text: string): string {
-  // Un nome file usa trattini/underscore/punti al posto degli spazi
-  // ("estratto-conto-marzo.pdf") --- normalizzati a spazi così le
-  // parole chiave multi-parola (es. "estratto conto") continuano a
-  // corrispondere per substring invece di richiedere una parola sola.
+  // Trattini/underscore/punti normalizzati a spazi, così le parole chiave multi-parola ("estratto conto") corrispondono comunque.
   return text
     .toLowerCase()
     .normalize("NFD")
@@ -38,8 +29,7 @@ function normalize(text: string): string {
 function suggestCategory(filename: string, categories: Category[]): string | null {
   const normalizedFilename = normalize(filename);
 
-  // 1) corrispondenza diretta col nome di una categoria dell'utente ---
-  // copre anche le categorie personalizzate, non solo quelle di default.
+  // 1) corrispondenza diretta col nome di una categoria (anche personalizzata).
   for (const category of categories) {
     const name = normalize(category.name);
     if (name.length >= 3 && normalizedFilename.includes(name)) return category.id;
@@ -57,21 +47,8 @@ function suggestCategory(filename: string, categories: Category[]): string | nul
 }
 
 /**
- * Come suggestCategory, ma potendo leggere anche il testo del documento
- * (v. domain/extraction, FASE 17).
- *
- * Il nome del file ha la precedenza: quando c'è, è il segnale più
- * pulito --- chi chiama un file "polizza-auto.pdf" sta dichiarando cosa
- * contiene. Solo se tace si guarda dentro.
- *
- * E guardando dentro si usano **soltanto le parole chiave curate**, non
- * la corrispondenza col nome della categoria. Il motivo è che quella
- * regola, ragionevole su un nome di file di tre parole, diventa
- * disastrosa su tremila caratteri di testo: una categoria "Casa"
- * scatterebbe su qualunque documento che nomina una casa, "Personale"
- * su qualunque modulo che dice "dati personali". Le parole chiave
- * curate ("polizza", "referto", "f24", "estratto conto") sono invece
- * specifiche abbastanza da reggere il testo libero.
+ * Come suggestCategory, ma legge anche il testo (FASE 17) se il nome file tace. Guardando dentro si usano SOLO le
+ * parole chiave curate, non il nome categoria: su tremila caratteri "Casa" scatterebbe su qualunque testo che la nomina.
  */
 function suggestCategoryFromContent(
   filename: string,
