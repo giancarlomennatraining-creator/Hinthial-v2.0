@@ -14,14 +14,9 @@ import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 
 /**
- * Su schermi piccoli (sotto md) sostituisce sia la barra laterale (v.
- * Sidebar) sia quella orizzontale (v. TopNav) --- qualunque disposizione
- * sia scelta in Impostazioni > Aspetto, sotto md non c'è spazio per
- * tenerla sempre visibile: solo logo + tasto menu, che apre lo stesso
- * contenuto (ricerca, navigazione, onboarding, utente) in sovraimpressione.
- * Sidebar/TopNav restano montate (nascoste con `hidden md:flex`, v.
- * AppShell) invece di scegliere qui: così lo stato di compressione della
- * barra laterale non si perde passando sopra/sotto la soglia md.
+ * Su schermi piccoli sostituisce sia Sidebar sia TopNav con solo logo + tasto menu, che apre lo stesso contenuto in
+ * sovraimpressione. Sidebar/TopNav restano montate (nascoste con `hidden md:flex`, v. AppShell): così lo stato di
+ * compressione della barra laterale non si perde passando sopra/sotto la soglia md.
  */
 export function MobileNavBar({
   userId,
@@ -41,30 +36,13 @@ export function MobileNavBar({
   const { mounted, entered } = useMountedTransition(open, 300);
   const { items: bottomNavItems } = useBottomNavItems();
 
-  // Le voci già raggiungibili dalla barra fissa in basso (v. BottomNavBar)
-  // non vanno ripetute qui --- solo il resto, come chiesto dall'utente.
+  // Le voci già raggiungibili dalla barra fissa in basso non vanno ripetute qui.
   const navItems = useOrderedNavItems();
   const drawerItems = navItems.filter((item) => !bottomNavItems.includes(item.href));
 
-  // Una navigazione riuscita chiude il menu --- altrimenti resterebbe
-  // aperto sopra la nuova pagina. `skipFirstRun` --- ogni useEffect
-  // scatta comunque una prima volta dopo il commit iniziale, non solo
-  // ai cambi successivi di pathname: su questo primissimo giro è per
-  // definizione un no-op (open è già false)... a meno che quel giro,
-  // asincrono e ritardato dopo il commit, non arrivi DOPO un tocco
-  // sul tasto (setOpen(true)) capitato nel frattempo --- più
-  // probabile su una pagina che al primo montaggio ha molto da fare
-  // (es. Dashboard con molti dati reali da decifrare, che tiene
-  // occupato il thread principale un momento più a lungo). In quel
-  // caso non è più un no-op: richiude il cassetto appena apparso,
-  // percepito come "il tasto non fa nulla" (v. segnalazione utente).
-  // Saltare quel primo giro --- l'unico per cui è garantito essere un
-  // no-op quando tutto va normale --- rimuove il rischio senza
-  // cambiare il resto del comportamento (che resta un useEffect vero,
-  // non un aggiustamento di stato durante il render: la stessa
-  // indagine ha in realtà scoperto la causa vera altrove, in
-  // useMountedTransition --- v. quel file --- e l'ha corretta lì;
-  // questo resta comunque un miglioramento a sé, indipendente).
+  // Una navigazione riuscita chiude il menu. `skipFirstRun`: il primo giro dell'effetto, asincrono dopo il commit
+  // iniziale, potrebbe arrivare DOPO un tocco sul tasto capitato nel frattempo (pagine lente al primo montaggio) e
+  // richiudere il cassetto appena aperto --- saltarlo rimuove il rischio senza cambiare il resto del comportamento.
   const skipFirstRun = useRef(true);
   useEffect(() => {
     if (skipFirstRun.current) {
@@ -85,21 +63,8 @@ export function MobileNavBar({
 
   return (
     <>
-      {/*
-        Un <div>, non <header>: nella disposizione orizzontale c'è già un
-        <header> vero e proprio (v. TopNav), il landmark "banner" della
-        pagina --- un secondo <header> qui (anche se nascosto via CSS sopra
-        md) lo duplicherebbe, rendendo ambiguo cosa sia "il" banner.
-      */}
-      {/*
-        sticky top-0 --- senza, questa barra (col tasto ☰) scorreva via
-        con il resto della pagina come qualunque altro contenuto: su una
-        pagina più lunga di una schermata, bastava scorrere un po' perché
-        il tasto per aprire il menu finisse fuori vista, toccando "il
-        vuoto" a quel punto della pagina invece del tasto vero (v.
-        segnalazione utente). z-30, sotto i z-40/z-50 di barra in basso e
-        finestre di sovraimpressione, così non le copre mai.
-      */}
+      {/* Un <div>, non <header>: TopNav ha già il vero landmark "banner" della pagina, un secondo lo duplicherebbe. */}
+      {/* sticky top-0: senza, il tasto ☰ scorreva via con la pagina, irraggiungibile su pagine lunghe. z-30, sotto i z-40/z-50 di barra in basso e finestre di sovraimpressione. */}
       <div className="sticky top-0 z-30 flex items-center justify-between border-b border-zinc-200 bg-white p-3 md:hidden dark:border-zinc-800 dark:bg-zinc-950">
         <Link href="/dashboard" className="shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}

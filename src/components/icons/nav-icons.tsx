@@ -1,14 +1,7 @@
 /**
- * Icone di sistema, in linea con la direzione visiva "Fresh Clarity" (v.
- * mockup condiviso con l'utente) --- SVG a tratto, non emoji: usate per
- * la barra di navigazione, i contatori in dashboard e i badge di stato
- * (fatto/da fare, ok/attenzione). Le emoji restano invece dove sono una
- * scelta dell'utente (icona di una categoria, v. IconPicker) o un
- * ornamento nel testo (es. "🎥 Registra video"): non sono in scope qui.
- *
- * Tutte 24x24, stroke="currentColor" (eredita il colore del testo del
- * chiamante, incluso lo stato attivo/hover della nav) --- mai un colore
- * fisso incollato dentro l'icona.
+ * Icone di sistema (SVG a tratto, non emoji): navigazione, contatori in dashboard, badge di stato. Le emoji restano
+ * dove sono una scelta dell'utente (v. IconPicker) o un ornamento nel testo. Tutte 24x24, stroke="currentColor"
+ * (eredita il colore del testo del chiamante, incluso lo stato attivo/hover), mai un colore fisso.
  */
 import type { SVGProps } from "react";
 
@@ -89,12 +82,7 @@ export function CapsuleIcon(props: IconProps) {
   );
 }
 
-/**
- * FASE 20 --- un fascicolo: una cartellina con una piccola linguetta
- * (il tab che sporge da un raccoglitore vero), a differenza di
- * AssetIcon (una casa) e CapsuleIcon (un cristallo): un fascicolo non è
- * una cosa, è un raccoglitore che ne mette insieme più di una.
- */
+/** Un fascicolo: cartellina con una piccola linguetta, a differenza di AssetIcon/CapsuleIcon --- non è una cosa, è un raccoglitore. */
 export function DossierIcon(props: IconProps) {
   return (
     <svg {...baseProps(props)}>
@@ -123,19 +111,9 @@ export function UpdatesIcon(props: IconProps) {
 }
 
 /**
- * La faccia di HINTHIA (v. public/brand/hinthia-avatar.svg) ridotta a
- * glifo --- al posto delle due stelline, il cliché con cui ogni
- * prodotto segna l'IA (v. richiesta utente). Non l'avatar a colori:
- * qui l'icona è alta 19px, a quella misura una PNG a colori non si
- * leggerebbe e per giunta ignorerebbe lo stato attivo/hover, che ogni
- * icona di questo file eredita da `currentColor`.
- *
- * Gli occhi sono curvati DI PIÙ di quanto sembri giusto guardando il
- * glifo in grande: a 19px un arco poco profondo si appiattisce in un
- * trattino e la faccia diventa assonnata invece che sorridente ---
- * verificato sui pixel reali, ingranditi. Niente germoglio: a questa
- * misura si riduce a una macchiolina e ruba spazio agli occhi, che
- * sono la vera identità del personaggio.
+ * La faccia di HINTHIA ridotta a glifo, al posto delle due stelline cliché dell'IA. Non l'avatar a colori: a 19px
+ * una PNG non si leggerebbe e ignorerebbe lo stato attivo/hover. Occhi curvati più del previsto: a questa misura un
+ * arco poco profondo si appiattisce e la faccia sembra assonnata invece che sorridente.
  */
 export function AIIcon(props: IconProps) {
   return (
@@ -166,7 +144,6 @@ export function UserIcon(props: IconProps) {
   );
 }
 
-/** Scheda "Sicurezza" in Impostazioni (stesso lucchetto del badge "zero-knowledge" nella hero). */
 /** Impostazioni > Eredità digitale --- cura/custodia nel tempo, non il lucchetto di SecurityIcon (quella è "chi entra", questa è "quando qualcosa si attiva da solo"). */
 export function HeartIcon(props: IconProps) {
   return (
@@ -187,6 +164,7 @@ export function MedicalCardIcon(props: IconProps) {
   );
 }
 
+/** Scheda "Sicurezza" in Impostazioni (stesso lucchetto del badge "zero-knowledge" nella hero). */
 export function SecurityIcon(props: IconProps) {
   return (
     <svg {...baseProps(props)}>

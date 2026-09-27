@@ -9,14 +9,7 @@ import { inviteFriendToHinthial } from "@/lib/friends/actions";
 import { AvatarPickerCrop } from "@/components/ui/AvatarPickerCrop";
 import type { FriendListItem } from "@/domain/friends/types";
 
-/**
- * Pagina dedicata alla modifica di un amico --- prima era un form
- * inline nella riga di FriendsPanel, ora una pagina a sé come la
- * creazione (stesso pattern di conferma via `?updated=1` nell'URL, mai
- * il nome in chiaro). Nessun elenco per id già pronto lato repository
- * (come per beni/capsule): si carica l'intero elenco già decifrato e si
- * cerca l'id, esattamente come faceva il pannello prima.
- */
+/** Pagina di modifica di un amico. Conferma via `?updated=1` nell'URL, mai il nome in chiaro. Nessun elenco per id lato repository: si carica l'intero elenco già decifrato e si cerca l'id. */
 export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; friendId: string }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
@@ -27,9 +20,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
   const [saving, setSaving] = useState(false);
   const [invite, setInvite] = useState(false);
 
-  // Campi controllati (per l'auto-sincronizzazione di "Nome visualizzato",
-  // v. sotto) --- seminati una sola volta al primo caricamento di
-  // `friend` (v. effetto sotto), non ad ogni refresh.
+  // Campi controllati, seminati una sola volta al primo caricamento di `friend`, non ad ogni refresh.
   const [hydrated, setHydrated] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -59,19 +50,12 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
 
   useEffect(() => {
     if (hydrated || !friend) return;
-    // Idratazione una tantum dal dato appena arrivato da refresh() (fetch
-    // asincrono, non uno stato derivato da altre props/state React) ---
-    // stesso caso già accettato altrove (v. useMediaQuery.ts).
+    // Idratazione una tantum dal dato appena arrivato da refresh() (fetch asincrono, non stato derivato da props/state).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFirstName(friend.firstName);
     setLastName(friend.lastName);
     setDisplayName(friend.name);
-    // Se il nome visualizzato attuale coincide già con "nome cognome"
-    // (o l'amico non ha ancora nome/cognome impostati), lo si considera
-    // ancora "automatico" --- continuerà a seguirli finché non viene
-    // toccato direttamente. Altrimenti (già personalizzato, o un amico
-    // creato prima che nome/cognome esistessero) resta quello scelto,
-    // senza sovrascriverlo modificando nome/cognome.
+    // Se il nome visualizzato coincide già con "nome cognome", resta "automatico" finché non viene toccato direttamente.
     setDisplayNameEdited(friend.name !== `${friend.firstName} ${friend.lastName}`.trim());
     setAvatarPath(friend.avatarPath);
     setAvatarUrl(friend.avatarUrl);
@@ -125,8 +109,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    // Il form è renderizzato solo quando `friend` non è null (v. sotto) ---
-    // questo handler può quindi scattare solo a quel punto.
+    // Il form è renderizzato solo quando `friend` non è null: questo handler scatta solo a quel punto.
     if (!friend) return;
 
     const form = event.currentTarget;
@@ -140,18 +123,14 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
       return;
     }
 
-    // Il collegamento a un account Hinthial (v. domain/friends/repository.ts,
-    // updateFriend) è legato a QUESTA email --- se cambia, va azzerato,
-    // altrimenti badge "✓ Su Hinthial" e foto reale resterebbero
-    // agganciati per sempre all'account sbagliato.
+    // Il collegamento a un account Hinthial è legato a QUESTA email: se cambia va azzerato, altrimenti badge e foto reale resterebbero agganciati all'account sbagliato.
     const emailChanged = email.toLowerCase() !== friend.email.trim().toLowerCase();
 
     setSaving(true);
     try {
       await updateFriend(supabase, masterKey, friendId, { name, email, firstName, lastName, role }, emailChanged);
 
-      // Un invito non riuscito non deve impedire di aver salvato le
-      // modifiche: si segnala con un parametro a parte, non un errore.
+      // Un invito non riuscito non deve impedire il salvataggio: si segnala con un parametro a parte, non un errore.
       let inviteFailed = false;
       if (invite) {
         try {

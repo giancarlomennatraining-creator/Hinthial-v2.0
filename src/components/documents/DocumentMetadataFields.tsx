@@ -10,13 +10,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
 export interface DocumentMetadataFieldsValue {
   categoryId: string;
   relatedAssetId: string;
-  /**
-   * FASE 20/20c --- indipendente dalla categoria: un fascicolo
-   * attraversa le categorie, non ne è un sotto-livello (a differenza di
-   * `relatedAssetId`, che la categoria filtra). Un documento può stare
-   * in più di un fascicolo insieme (un codice fiscale può servire a più
-   * vicende), quindi un insieme e non un singolo valore.
-   */
+  /** Indipendente dalla categoria: un fascicolo attraversa le categorie. Un documento può stare in più fascicoli insieme, quindi un insieme e non un singolo valore. */
   dossierIds: string[];
   /** yyyy-mm-dd, or "" for no expiry. */
   expiresAt: string;
@@ -70,41 +64,19 @@ export function DocumentMetadataFields({
   idPrefix: string;
   categories: Category[];
   assets: AssetListItem[];
-  /**
-   * FASE 20 --- opzionale e di default vuoto: i chiamanti che non hanno
-   * ancora un elenco di fascicoli a portata di mano (es. un form che non
-   * li carica) semplicemente non mostrano il selettore invece di dover
-   * passare sempre un array.
-   */
+  /** Opzionale e di default vuoto: i chiamanti senza un elenco di fascicoli a portata di mano non mostrano il selettore. */
   dossiers?: DossierListItem[];
   value: DocumentMetadataFieldsValue;
   onChange: (next: DocumentMetadataFieldsValue) => void;
-  /**
-   * Il campo scadenza era nascosto in creazione perché "raramente si
-   * conosce già la scadenza esatta --- la si aggiunge dopo, a mano o in
-   * futuro suggerita dall'AI che legge il contenuto". Quel futuro è
-   * arrivato (FASE 19b): il documento viene letto appena lo scegli, e
-   * se una scadenza c'è dentro la trova. Resta il parametro perché
-   * altrove (audio, video, note) chiederla non ha ancora senso.
-   */
+  /** Nascosto in creazione dove chiederla non ha ancora senso (audio, video, note): il documento viene letto appena scelto, e se una scadenza c'è dentro la trova da sé. */
   showExpiry?: boolean;
-  /**
-   * FASE 19b --- una riga sotto a un campo, per dire chi ce l'ha messo e
-   * da dove viene ("suggerita da Hinthial", oppure la frase del
-   * documento in cui compare quella data). Sta qui e non nel chiamante
-   * perché è questo componente a possedere il layout dei campi.
-   */
+  /** Una riga sotto a un campo per dire chi ce l'ha messo e da dove viene. Sta qui perché è questo componente a possedere il layout dei campi. */
   hints?: Partial<Record<"categoryId" | "relatedAssetId" | "dossierIds" | "expiresAt", React.ReactNode>>;
 }) {
-  // Fascicolo da aggiungere, scelto nel select ma non ancora confermato
-  // col bottone "+ Aggiungi fascicolo" --- stesso schema a due passi già
-  // in uso in DocumentAttachmentPicker.tsx per allegare un documento a
-  // una capsula.
+  // Fascicolo da aggiungere, scelto nel select ma non ancora confermato col bottone "+ Aggiungi fascicolo".
   const [dossierToAdd, setDossierToAdd] = useState("");
 
-  // La categoria filtra i beni proposti (es. "Casa" -> solo i beni
-  // di categoria "Casa") --- senza categoria selezionata, nessun bene è
-  // proponibile: la scelta della categoria viene prima.
+  // La categoria filtra i beni proposti: senza categoria selezionata, nessun bene è proponibile.
   const filteredAssets = value.categoryId
     ? sortAlphabetically(
         assets.filter((asset) => asset.categoryId === value.categoryId),
@@ -128,8 +100,7 @@ export function DocumentMetadataFields({
   }
 
   function handleCategoryChange(categoryId: string) {
-    // Se il bene già selezionato non appartiene alla nuova categoria,
-    // deseleziona: l'elenco che sta per essere mostrato non lo conterrebbe.
+    // Se il bene già selezionato non appartiene alla nuova categoria, deseleziona.
     const nextAssets = categoryId ? assets.filter((asset) => asset.categoryId === categoryId) : [];
     const relatedAssetId = nextAssets.some((asset) => asset.id === value.relatedAssetId)
       ? value.relatedAssetId
@@ -207,14 +178,7 @@ export function DocumentMetadataFields({
         ) : null}
       </div>
 
-      {/* FASE 20c --- nessun filtro per categoria: un fascicolo
-          attraversa le categorie di proposito ("un problema di salute"
-          può contenere un referto E una ricevuta di farmacia, categorie
-          diverse). Più di un fascicolo alla volta (un codice fiscale
-          può servire a più vicende insieme): scegli-e-aggiungi, come
-          già in DocumentAttachmentPicker.tsx per allegare un documento
-          a una capsula, non un <select multiple> (poco leggibile senza
-          Ctrl/Cmd-click). */}
+      {/* Nessun filtro per categoria: un fascicolo attraversa le categorie di proposito. Scegli-e-aggiungi invece di <select multiple>, poco leggibile senza Ctrl/Cmd-click. */}
       <div className="flex flex-col gap-1">
         <label
           htmlFor={`${idPrefix}-dossier`}
