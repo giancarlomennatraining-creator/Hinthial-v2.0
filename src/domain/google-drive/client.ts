@@ -1,21 +1,9 @@
 import type { GoogleDriveFileToImport, GoogleDriveItem } from "@/domain/google-drive/types";
 
 /**
- * FASE 25 --- import da Google Drive, tutto lato client (v.
- * GoogleDriveBrowser.tsx, BulkImportForm.tsx). Nessun dato del Drive
- * dell'utente passa dal nostro server: il token OAuth (Google Identity
- * Services) e ogni chiamata alla Drive API restano nel browser, che poi
- * cifra ogni file con la Master Key esattamente come un file scelto dal
- * disco --- stesso percorso, stessa disciplina zero-knowledge.
- *
- * Scope: "drive.readonly" --- non "drive.file". Serviva poter
- * interrogare l'intero Drive per disegnare una navigazione a cartelle
- * nostra (v. richiesta utente); il compromesso, dichiarato apertamente
- * (v. PRIVACY_POLICY_DRAFT.md), è che questo scope richiede la verifica
- * standard di Google prima che chiunque fuori dagli utenti di test
- * possa usarlo --- non l'audit di sicurezza annuale a pagamento
- * riservato agli scope "restricted" come Gmail (FASE 26), ma comunque
- * una verifica reale.
+ * FASE 25: import da Google Drive tutto lato client --- token OAuth e chiamate Drive API restano nel browser, poi
+ * cifrato con la Master Key come un file dal disco. Scope "drive.readonly" (non "drive.file", serve per la
+ * navigazione a cartelle nostra) richiede la verifica standard di Google, non l'audit a pagamento di Gmail (FASE 26).
  */
 
 const FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
@@ -70,11 +58,7 @@ function loadGoogleApis(): Promise<void> {
   return apisReady;
 }
 
-// In memoria, non in storage --- come la Master Key, un token vero non
-// va persistito da nessuna parte. Scompare a un refresh vero (si
-// richiede di nuovo, va bene così) e comunque non oltre la sua reale
-// scadenza: qui teniamo un margine di sicurezza di 5 minuti prima di
-// considerarlo scaduto.
+// In memoria, non in storage --- come la Master Key, non va persistito. Margine di sicurezza di 5 minuti prima di considerarlo scaduto.
 let cachedToken: { accessToken: string; expiresAtMs: number } | null = null;
 const TOKEN_EXPIRY_SAFETY_MARGIN_MS = 5 * 60 * 1000;
 
@@ -99,10 +83,7 @@ function requestAccessToken(clientId: string): Promise<string> {
         resolve(response.access_token);
       },
     });
-    // "prompt: ''" tenta un consenso silenzioso quando la sessione
-    // Google del browser lo rende superfluo --- un solo consenso per
-    // sessione (finché il token resta valido), non uno a ogni apertura
-    // del file browser (v. richiesta utente).
+    // "prompt: ''" tenta un consenso silenzioso: un solo consenso per sessione, non uno a ogni apertura.
     tokenClient.requestAccessToken({ prompt: "" });
   });
 }
@@ -113,12 +94,7 @@ export async function ensureDriveAccessToken(clientId: string): Promise<string> 
   return requestAccessToken(clientId);
 }
 
-/**
- * Il contenuto diretto di una cartella (non i suoi discendenti) --- una
- * pagina alla volta, mai tutto insieme: è la funzione dietro la
- * navigazione del file browser. `folderId` accetta anche la parola
- * speciale "root" per Il mio Drive, come previsto dalla Drive API.
- */
+/** Contenuto diretto di una cartella (non i discendenti), una pagina alla volta --- `folderId` accetta "root" per Il mio Drive. */
 export async function listDriveFolder(
   accessToken: string,
   folderId: string,
@@ -180,11 +156,7 @@ async function listFolderFilesRecursive(
   return files;
 }
 
-/**
- * Trasforma la selezione fatta nel file browser (cartelle scelte per
- * intero + file singoli) nell'elenco vero da scaricare --- espandendo
- * ogni cartella a tutti i suoi file, a qualunque profondità.
- */
+/** Espande la selezione (cartelle intere + file singoli) nell'elenco vero da scaricare, a qualunque profondità. */
 export async function resolveDriveSelection(
   accessToken: string,
   selection: {
@@ -235,9 +207,6 @@ export async function downloadGoogleDriveFile(
   item: GoogleDriveFileToImport,
 ): Promise<File> {
   const { bytes, mimeType, name } = await downloadBytes(accessToken, item);
-  // `bytes` è un Uint8Array<ArrayBufferLike> per come lo tipizza il DOM
-  // più recente --- BlobPart vuole specificamente ArrayBuffer, mai
-  // SharedArrayBuffer: qui è sempre il primo (arriva da arrayBuffer()),
-  // il cast serve solo a dirlo a TypeScript.
+  // BlobPart vuole ArrayBuffer, mai SharedArrayBuffer --- qui è sempre il primo (da arrayBuffer()), il cast lo dice a TypeScript.
   return new File([bytes as BlobPart], name, { type: mimeType });
 }

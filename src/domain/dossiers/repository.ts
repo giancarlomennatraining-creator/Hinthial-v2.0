@@ -45,10 +45,7 @@ async function toDossierListItem(masterKey: CryptoKey, row: DossierRow): Promise
     id: row.id,
     title: bytesToUtf8(titleBytes),
     description,
-    // La colonna è un `text` con check a livello di database (v.
-    // migrazione), non un enum Postgres --- il cast qui è sicuro perché
-    // il vincolo lo garantisce lato server; non c'è un terzo valore da
-    // gestire.
+    // Colonna `text` con check lato DB, non un enum Postgres --- il cast è sicuro, il vincolo lo garantisce.
     status: row.status as DossierStatus,
     createdAt: row.created_at,
     closedAt: row.closed_at,
@@ -126,13 +123,7 @@ export async function updateDossier(
   }
 }
 
-/**
- * Apre o chiude un fascicolo --- un'azione a sé e non parte del form di
- * modifica (stesso schema di setReminderCompleted): un solo clic, non
- * "modifica, cambia lo stato, salva". `closed_at` si azzera riaprendo,
- * così una riapertura non lascia una data di chiusura vecchia e
- * fuorviante appesa a un fascicolo di nuovo aperto.
- */
+/** Azione a sé, un solo clic (stesso schema di setReminderCompleted) --- `closed_at` si azzera riaprendo. */
 export async function setDossierStatus(
   supabase: SupabaseClient<Database>,
   dossierId: string,
@@ -148,12 +139,7 @@ export async function setDossierStatus(
   }
 }
 
-/**
- * Elimina il fascicolo. I documenti collegati non vengono toccati, solo
- * scollegati (`document_dossiers` ha `dossier_id` ON DELETE CASCADE ---
- * sparisce la riga del collegamento, non il documento) --- stessa
- * garanzia già data per beni e categorie.
- */
+/** I documenti collegati non vengono toccati, solo scollegati (ON DELETE CASCADE sulla riga di collegamento) --- come beni e categorie. */
 export async function deleteDossier(
   supabase: SupabaseClient<Database>,
   ownerId: string,
@@ -168,14 +154,7 @@ export async function deleteDossier(
   await logAuditEvent(supabase, ownerId, "dossier_deleted");
 }
 
-/**
- * FASE 20c --- un documento può stare in più di un fascicolo insieme
- * (v. domain/dossiers/types.ts). Legge la tabella ponte `document_dossiers`
- * per un insieme di documenti in un colpo solo, non una query per
- * documento --- usata da listDocuments/getDocumentsByIds per popolare
- * `DocumentListItem.dossierIds`. Gli id in gioco non sono contenuto
- * cifrato: nessuna decifratura necessaria qui.
- */
+/** FASE 20c: tabella ponte `document_dossiers` letta in un colpo solo per un insieme di documenti, non una query a testa. Id in chiaro, nessuna decifratura. */
 export async function listDossierIdsForDocuments(
   supabase: SupabaseClient<Database>,
   documentIds: string[],
@@ -201,14 +180,7 @@ export async function listDossierIdsForDocuments(
   return map;
 }
 
-/**
- * Sostituisce l'intero insieme di fascicoli collegati a un documento:
- * cancella tutte le righe esistenti e reinserisce l'insieme nuovo,
- * invece di calcolare un diff --- pochi fascicoli per documento, non
- * vale la complessità di un confronto riga per riga. Usata sia alla
- * creazione (l'insieme "vecchio" è vuoto, la cancellazione è un no-op)
- * sia alla modifica dei metadati.
- */
+/** Cancella e reinserisce l'intero insieme invece di calcolare un diff --- pochi fascicoli a documento, non vale la complessità. */
 export async function replaceDocumentDossierLinks(
   supabase: SupabaseClient<Database>,
   ownerId: string,

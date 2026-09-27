@@ -11,12 +11,7 @@ export interface OnboardingSourceData {
   capsules: CapsuleListItem[];
 }
 
-/**
- * I primi due passi --- unica definizione condivisa anche da
- * computeBasicOnboardingSteps qui sotto, usata prima ancora che la
- * Master Key sia sbloccata (v. OnboardingStatus/DashboardPanel): mai due
- * liste che possono andare fuori sincrono su etichetta/descrizione/href.
- */
+/** Condivisa con computeBasicOnboardingSteps, usata anche prima dello sblocco --- mai due liste che vanno fuori sincrono. */
 const ACCOUNT_STEP: OnboardingStep = {
   key: "account",
   label: "Crea un account",
@@ -36,24 +31,9 @@ function securityStep(done: boolean): OnboardingStep {
 }
 
 /**
- * "Onboarding", estratta qui perché serve sia alla dashboard (v.
- * DashboardWidgets) sia all'indicatore persistente nel menu laterale
- * (v. components/layout/OnboardingStatus) --- una sola definizione, mai
- * due liste che possono andare fuori sincrono.
- *
- * Account e cifratura sono per definizione già fatti se questo viene
- * chiamato con un AIContext già costruito (richiede la Master Key
- * sbloccata) --- v. computeBasicOnboardingSteps per i due passi da soli,
- * mostrabili anche prima. Nessun passo è opzionale: contano tutti nel
- * conteggio (v. isOnboardingComplete/onboardingCompletionPercent sotto).
- * "Guardiano" è un prerequisito reale: senza almeno un guardiano non si
- * può attivare il Dead Man's Switch semplificato per le capsule (v.
- * domain/friends, isGuardian) --- messo dopo bene/capsula apposta,
- * insieme al collegamento capsula-amico che lo richiede: i passi che
- * presuppongono un concetto nuovo vengono dopo quelli concreti e
- * immediati, non mescolati. "Imposta una scadenza" non è più un passo:
- * è un'attività passiva rispetto al contribuire un contenuto vero e
- * proprio.
+ * Estratta qui perché serve sia alla dashboard sia all'indicatore nel menu laterale --- una sola definizione. Nessun
+ * passo è opzionale, contano tutti nel conteggio; "Guardiano" è messo dopo bene/capsula apposta, i passi che
+ * presuppongono un concetto nuovo vengono dopo quelli concreti.
  */
 export function computeOnboardingSteps(data: OnboardingSourceData): OnboardingStep[] {
   const { documents, assets, friends, capsules } = data;
@@ -107,14 +87,7 @@ export function computeOnboardingSteps(data: OnboardingSourceData): OnboardingSt
   ];
 }
 
-/**
- * Solo i primi due passi (account + cifratura), mostrabili anche senza
- * Master Key sbloccata --- a differenza degli altri, il loro stato non
- * richiede di decifrare nulla: "fatto" o no è già noto da
- * useMasterKey().status. Usata da OnboardingStatus/DashboardPanel finché
- * la cifratura non è pronta, così l'indicatore non è semplicemente
- * assente in quella fase (v. doc comment lì per il motivo).
- */
+/** Solo account+cifratura, mostrabili senza Master Key sbloccata --- il loro stato non richiede di decifrare nulla. */
 export function computeBasicOnboardingSteps(encryptionConfigured: boolean): OnboardingStep[] {
   return [ACCOUNT_STEP, securityStep(encryptionConfigured)];
 }
