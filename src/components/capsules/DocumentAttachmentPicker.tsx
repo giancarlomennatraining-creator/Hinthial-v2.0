@@ -8,22 +8,10 @@ import type { DocumentListItem } from "@/domain/documents/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
 
 /**
- * Lets the user attach one or more already-existing Archivio entries to
- * a capsule --- filter by category, then pick an item, "+ Allega" to
- * add it to the running list. No copy/re-encryption happens: this just
- * accumulates the ids the caller will pass along (see
- * CapsuleInput.linkedDocumentIds / CapsuleEditInput.linkedDocumentIds).
- * Works for any content kind (documento/immagine/audio/video/nota) ---
- * they're all rows of the same table (v. lib/content-kind.ts).
- *
- * FASE 20b --- "allega un fascicolo intero" aggiunge in un colpo tutti i
- * documenti che quel fascicolo contiene **in questo momento**: uno
- * scatto, non un collegamento vivo. Se dopo aggiungi un documento al
- * fascicolo, non entra da solo in una capsula già chiusa o condivisa ---
- * per una funzione che riguarda l'eredità digitale, un contenuto che
- * compare in silenzio in qualcosa che credevi già sigillato sarebbe
- * l'ultima cosa desiderabile. La capsula resta esattamente quello che è
- * sempre stata: un elenco di documenti, scelto qui.
+ * Attacca uno o più elementi già esistenti in Archivio a una capsula: filtra per categoria, scegli un elemento,
+ * "+ Allega". Nessuna copia/ricifratura: si accumulano solo gli id (v. CapsuleInput.linkedDocumentIds). "Allega un
+ * fascicolo intero" aggiunge in un colpo i documenti che il fascicolo contiene **in questo momento**, uno scatto e
+ * non un collegamento vivo: un documento aggiunto dopo non entra da solo in una capsula già chiusa o condivisa.
  */
 export function DocumentAttachmentPicker({
   idPrefix,

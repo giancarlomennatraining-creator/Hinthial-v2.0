@@ -20,14 +20,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
 
-/**
- * Pagina dedicata alla modifica dei metadati di un contenuto d'Archivio
- * --- prima era un form inline nella riga di DocumentsPanel, ora una
- * pagina a sé come la creazione. Solo i metadati sono modificabili qui
- * (categoria, bene, scadenza, tag, note): il file/contenuto originale
- * no, esattamente come già era per l'edit inline --- nome e tipo restano
- * mostrati sola lettura per dare contesto.
- */
+/** Pagina di modifica dei metadati di un contenuto d'Archivio. Solo i metadati sono modificabili (non il file); nome e tipo restano sola lettura per dare contesto. */
 export function EditArchiveItemForm({ masterKey, documentId }: { masterKey: CryptoKey; documentId: string }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
@@ -41,15 +34,8 @@ export function EditArchiveItemForm({ masterKey, documentId }: { masterKey: Cryp
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Contatore di richieste, non un semplice booleano "cancelled": in
-  // sviluppo React (StrictMode) invoca due volte l'effetto qui sotto al
-  // mount --- senza questa guardia, se la PRIMA fetch (superata) risolve
-  // dopo la seconda, il suo risultato sovrascriverebbe silenziosamente
-  // i campi (categoria/bene/scadenza/tag/note) anche quando l'utente li
-  // ha già modificati nel frattempo (v. stesso bug corretto in
-  // EditCapsuleForm.tsx). Stesso principio del flag `cancelled` in
-  // MasterKeyProvider, adattato a un useCallback invece di una IIFE
-  // dentro l'effetto.
+  // Contatore di richieste, non un booleano "cancelled": StrictMode invoca due volte l'effetto al mount, senza
+  // questa guardia la prima fetch, se risolve dopo la seconda, sovrascriverebbe campi già modificati (v. EditCapsuleForm.tsx).
   const latestRequestRef = useRef(0);
 
   const refresh = useCallback(async () => {

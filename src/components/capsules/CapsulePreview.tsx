@@ -35,13 +35,9 @@ type PreviewItem =
   | { source: "linked"; id: string; filename: string; mimeType: string; size: number };
 
 /**
- * "Così la vedrà chi la riceve" --- un'anteprima di sola lettura di
- * cosa contiene una capsula oggi, prima ancora che venga chiusa:
- * titolo, contenuto scritto, e ogni allegato/contenuto collegato, con
- * lo stesso player inline usato altrove (v. DocumentsPanel). Non è la
- * vera esperienza di apertura da parte del destinatario --- quella
- * arriverà con una fase futura (v. HINTHIAL_MVP.md, Dead Man's
- * Switch) --- solo una simulazione sullo schermo di chi sta scrivendo.
+ * "Così la vedrà chi la riceve": anteprima di sola lettura di cosa contiene una capsula oggi, prima ancora che venga
+ * chiusa, con lo stesso player inline di DocumentsPanel. Non è la vera esperienza di apertura del destinatario
+ * (v. HINTHIAL_MVP.md, Dead Man's Switch), solo una simulazione sullo schermo di chi sta scrivendo.
  */
 export function CapsulePreview({
   masterKey,
@@ -50,9 +46,9 @@ export function CapsulePreview({
   onClose,
 }: {
   masterKey: CryptoKey;
-  /** null --- niente da mostrare (v. richiesta utente, dissolvenza in-out): il componente resta comunque montato, per animare l'uscita invece di sparire di scatto. */
+  /** null: niente da mostrare, ma il componente resta montato per animare l'uscita invece di sparire di scatto. */
   capsule: CapsuleListItem | null;
-  /** Impostazioni > Aspetto --- v. CapsulesPanel.tsx, CapsuleCountdownSettings. */
+  /** Impostazioni > Aspetto (v. CapsuleCountdownSettings). */
   showCountdown?: boolean;
   onClose: () => void;
 }) {
@@ -60,9 +56,7 @@ export function CapsulePreview({
   const open = capsule !== null;
   const { mounted, entered } = useMountedTransition(open, 150);
 
-  // L'ultima capsula non nulla ricevuta --- il contenuto mostrato resta
-  // quello anche durante la dissolvenza in uscita, quando `capsule` è
-  // già tornato a null ma il pannello è ancora visibile (v. mounted sopra).
+  // L'ultima capsula non nulla ricevuta: il contenuto resta quello durante la dissolvenza in uscita.
   const [displayCapsule, setDisplayCapsule] = useState(capsule);
   if (capsule !== null && capsule !== displayCapsule) {
     setDisplayCapsule(capsule);
@@ -92,10 +86,7 @@ export function CapsulePreview({
     };
   }, [playerUrl]);
 
-  // Dopo tutti gli hook (v. regole degli hook) --- da qui in poi
-  // shownCapsule è tipizzato non nullo (TypeScript non lo dedurrebbe da
-  // solo dentro le funzioni più sotto, definite nello stesso render ma
-  // chiuse sul valore di displayCapsule).
+  // Dopo tutti gli hook: da qui shownCapsule è tipizzato non nullo, TypeScript non lo dedurrebbe da solo nelle funzioni più sotto.
   if (!mounted || !displayCapsule) return null;
   const shownCapsule: CapsuleListItem = displayCapsule;
 
@@ -218,10 +209,7 @@ export function CapsulePreview({
           </p>
         ) : null}
 
-        {/* La "carta" della lettera --- stesso fondo caldo dello scrivere
-            (v. CapsuleLetterEditor), stesso font se chi scrive ha scelto
-            "A mano" (v. CapsuleContentStyle): così la vedrà davvero chi
-            la riceve. */}
+        {/* La "carta" della lettera: stesso fondo caldo dello scrivere (v. CapsuleLetterEditor), stesso font se "A mano" (v. CapsuleContentStyle). */}
         <div className="rounded-2xl border border-[#EDE1C4] bg-[#FBF6EA] px-6 py-5">
           {shownCapsule.openAt ? (
             <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#6B5730]">
