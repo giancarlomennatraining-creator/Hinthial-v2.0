@@ -26,11 +26,7 @@ function translateEmailChangeError(message: string): string {
   return "Si è verificato un errore. Riprova.";
 }
 
-/**
- * Two independent sections, per design: rename (writes directly to
- * `profiles`, covered by RLS) and email change (a Supabase Auth
- * operation --- requires confirmation, doesn't take effect immediately).
- */
+/** Due sezioni indipendenti: rinomina (scrive direttamente su `profiles`) e cambio email (operazione Supabase Auth, richiede conferma, non ha effetto immediato). */
 export function UserInfoPanel({
   userId,
   firstName: initialFirstName,
@@ -83,8 +79,7 @@ export function UserInfoPanel({
         birthDate: birthDate || null,
       });
       setNameSaved(true);
-      // Il nome mostrato in sidebar/saluto viene da un Server Component
-      // (getCurrentUser, letto in (app)/layout.tsx): va rinfrescato.
+      // Il nome in sidebar/saluto viene da un Server Component (getCurrentUser): va rinfrescato.
       router.refresh();
     } catch (err) {
       setNameError(err instanceof Error ? err.message : "Impossibile aggiornare il profilo.");
@@ -127,12 +122,7 @@ export function UserInfoPanel({
   }
 
   return (
-    // @container: i tre campi qui sotto si affiancano in base allo spazio
-    // VERO disponibile per questo pannello, non alla larghezza della
-    // finestra --- altrimenti a schermi medi, dove la barra laterale e
-    // l'elenco delle schede (v. SettingsTabs) occupano già buona parte
-    // della larghezza, si affiancherebbero comunque lasciando pochissimo
-    // spazio per scrivere in ognuno.
+    // @container: i tre campi si affiancano in base allo spazio vero del pannello, non della finestra.
     <div className="@container flex flex-col gap-8">
       <div className="max-w-md">
         <AvatarUploadForm
@@ -155,12 +145,7 @@ export function UserInfoPanel({
         </div>
 
         <form onSubmit={handleSaveName} className="flex flex-col gap-4">
-          {/* Tre campi affiancati quando il pannello ha spazio a
-              sufficienza (v. @container sopra), uno sotto l'altro quando
-              si restringe --- a differenza delle altre sezioni qui sotto
-              (un solo campo ciascuna), questa è l'unica a poter sfruttare
-              la larghezza piena del pannello (non più limitato a
-              max-w-md, v. sopra/sotto). */}
+          {/* Tre campi affiancati quando il pannello ha spazio, uno sotto l'altro quando si restringe. */}
           <div className="grid gap-4 @xl:grid-cols-3">
             <TextField
               id="firstName"

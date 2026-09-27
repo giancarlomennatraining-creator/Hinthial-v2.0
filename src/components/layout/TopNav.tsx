@@ -8,14 +8,9 @@ import { OnboardingStatus } from "@/components/layout/OnboardingStatus";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 
 /**
- * Barra di navigazione orizzontale, alternativa alla barra laterale (v.
- * Sidebar) quando l'utente sceglie la disposizione "Orizzontale (in
- * alto)" in Impostazioni > Aspetto (v. NavOrientationProvider). A
- * differenza della barra laterale non si comprime/espande mai: logo
- * completo, voci con etichetta e ricerca per esteso restano sempre
- * visibili (va a capo su schermi stretti, v. flex-wrap sotto, invece di
- * comprimersi). Solo l'indicatore Onboarding resta ridotto alla sola
- * icona, per non affollare la barra.
+ * Barra di navigazione orizzontale, alternativa a Sidebar quando l'utente sceglie "Orizzontale (in alto)" in
+ * Impostazioni > Aspetto. A differenza della barra laterale non si comprime/espande mai: va a capo su schermi
+ * stretti invece di comprimersi. Solo l'indicatore Onboarding resta ridotto alla sola icona.
  */
 export function TopNav({
   userId,
@@ -33,9 +28,7 @@ export function TopNav({
   const navItems = useOrderedNavItems();
 
   return (
-    // Sotto md la sostituisce MobileNavBar (v. AppShell). sticky top-0 ---
-    // stesso motivo della barra mobile (v. MobileNavBar.tsx): senza,
-    // scorreva via con la pagina, portandosi dietro anche il menu utente.
+    // Sotto md la sostituisce MobileNavBar. sticky top-0: senza, scorreva via con la pagina insieme al menu utente.
     <header className="sticky top-0 z-30 hidden flex-wrap items-center gap-4 border-b border-zinc-200 bg-white p-4 md:flex dark:border-zinc-800 dark:bg-zinc-950">
       <Link href="/dashboard" className="shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}

@@ -20,27 +20,17 @@ export interface NavItem {
   requiresEncryption: boolean;
 }
 
-/**
- * Main app navigation, per HINTHIAL_MVP.md sezione "FASE 1 --- Shell
- * dell'app". "Impostazioni" non è qui: vive nel menu a comparsa sul
- * nome utente (src/components/layout/UserMenu.tsx), insieme a "Esci".
- */
+/** Navigazione principale dell'app. "Impostazioni" non è qui: vive nel menu a comparsa sul nome utente (UserMenu.tsx), insieme a "Esci". */
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: DashboardIcon, requiresEncryption: false },
   { label: "Archivio", href: "/archive", icon: ArchiveIcon, requiresEncryption: true },
   { label: "Scadenze", href: "/reminders", icon: ReminderIcon, requiresEncryption: true },
   { label: "Beni", href: "/assets", icon: AssetIcon, requiresEncryption: true },
-  // "Fascicoli" non è più qui: dalla FASE 20b vive come seconda scheda
-  // dentro Archivio (v. ArchiveTabs.tsx), non come voce a sé --- un
-  // fascicolo è un modo di guardare l'Archivio, non un oggetto
-  // indipendente come Amici o Capsule. Le route /dossiers/... restano
-  // le stesse: solo la voce di menu dedicata sparisce.
+  // "Fascicoli" non è più qui: vive come seconda scheda dentro Archivio (v. ArchiveTabs.tsx). Le route /dossiers/... restano le stesse.
   { label: "Amici", href: "/friends", icon: FriendIcon, requiresEncryption: true },
   { label: "Capsule", href: "/capsules", icon: CapsuleIcon, requiresEncryption: true },
   { label: "Cronologia", href: "/timeline", icon: TimelineIcon, requiresEncryption: true },
   { label: "AI", href: "/ai", icon: AIIcon, requiresEncryption: true },
-  // Contenuto globale, non cifrato (v. domain/product-updates) --- non
-  // richiede la master key, a differenza di ogni altra voce qui sopra
-  // tranne Dashboard.
+  // Contenuto globale, non cifrato: non richiede la master key, a differenza di ogni altra voce sopra tranne Dashboard.
   { label: "Novità", href: "/updates", icon: UpdatesIcon, requiresEncryption: false },
 ];
