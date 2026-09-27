@@ -95,18 +95,11 @@ function RecipientBlock({ group }: { group: RecipientGroup }) {
 }
 
 /**
- * "Prova generale": estende l'anteprima già esistente per una singola
- * capsula (v. CapsulePreview.tsx, "Così la vedrà chi la riceve") a uno
- * scenario intero --- se "Eredità digitale" si attivasse oggi, quando
- * succederebbe cosa, chi verrebbe interpellato e chi riceverebbe cosa.
- * Nessun accesso reale concesso, nessuna email davvero inviata: pura
- * lettura di dati già esistenti (v. domain/digital-legacy/rehearsal.ts).
- *
- * Richiede la master key (guardiani/capsule sono cifrati) --- a
- * differenza del resto della scheda Eredità digitale, che non la
- * richiede (v. SettingsTabs.tsx): per questo vive in un componente a
- * parte, dietro il proprio RequireMasterKey, invece di forzare uno
- * sblocco solo per vedere i parametri numerici della strategia.
+ * "Prova generale": estende l'anteprima di CapsulePreview.tsx a uno scenario intero --- se "Eredità digitale" si
+ * attivasse oggi, quando succederebbe cosa, chi verrebbe interpellato e chi riceverebbe cosa. Nessun accesso reale
+ * concesso, pura lettura di dati già esistenti (v. domain/digital-legacy/rehearsal.ts). Richiede la master key
+ * (guardiani/capsule sono cifrati), a differenza del resto della scheda: vive in un componente a parte dietro il
+ * proprio RequireMasterKey, invece di forzare uno sblocco solo per i parametri numerici.
  */
 export function DigitalLegacyRehearsal({
   masterKey,

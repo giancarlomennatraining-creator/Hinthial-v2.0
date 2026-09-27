@@ -89,9 +89,7 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
 
   const allEntries = context ? buildTimeline(context) : [];
 
-  // Data inizio/fine confrontate come giorni di calendario (locali), non
-  // istanti --- "fino al 3 settembre" deve includere l'intero 3
-  // settembre, non fermarsi alla sua mezzanotte.
+  // Confrontate come giorni di calendario, non istanti: "fino al 3 settembre" include l'intero giorno.
   const startBoundary = startDate ? new Date(`${startDate}T00:00:00`).getTime() : null;
   const endBoundary = endDate ? new Date(`${endDate}T23:59:59.999`).getTime() : null;
 
@@ -107,9 +105,7 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
   // Solo la vista a tabella si ordina --- i gruppi per mese restano cronologici.
   const sortedEntries = applySort(entries, sort, sortValueFor);
 
-  // Si riclampa invece di resettare con un effect: se il numero di
-  // elementi cambia (es. dopo un refresh), la pagina torna da sola entro
-  // il range valido.
+  // Si riclampa invece di resettare con un effect: se il numero di elementi cambia, la pagina torna da sola nel range.
   const pageCount = Math.max(1, Math.ceil(entries.length / TABLE_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const pagedEntries = sortedEntries.slice(

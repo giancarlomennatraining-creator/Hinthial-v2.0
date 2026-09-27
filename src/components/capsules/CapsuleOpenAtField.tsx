@@ -1,19 +1,9 @@
 "use client";
 
 /**
- * La data e ora di apertura come una frase ("Si aprirà il ...") invece
- * di un campo anonimo in un riquadro --- v. richiesta utente, "capsule
- * come lettere". Un vero <input type="datetime-local"> (stesso
- * calendario+orologio nativo, stesso nome accessibile "Data e ora di
- * apertura" per chi usa uno screen reader o naviga da tastiera), solo
- * senza il riquadro grigio attorno: un sottolineato che si accende al
- * focus.
- *
- * `value`/`onChange` restano un ISO datetime (UTC) verso l'esterno,
- * come per ogni altra data dell'app --- la conversione da/verso il
- * formato locale "YYYY-MM-DDTHH:mm" richiesto da datetime-local resta
- * un dettaglio interno di questo componente, così i form che lo usano
- * non devono saperne nulla.
+ * La data e ora di apertura come una frase ("Si aprirà il ...") invece di un campo anonimo in un riquadro. Un vero
+ * <input type="datetime-local"> senza il riquadro grigio attorno. `value`/`onChange` restano un ISO datetime (UTC)
+ * verso l'esterno: la conversione da/verso il formato locale richiesto da datetime-local resta interna qui.
  */
 
 /** ISO (UTC) -> "YYYY-MM-DDTHH:mm" in ora locale, il solo formato che datetime-local accetta come value. */

@@ -14,15 +14,9 @@ import type { DossierListItem } from "@/domain/dossiers/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 
 /**
- * FASE 20 --- la scheda di un fascicolo: titolo, descrizione, stato, e
- * la sua **cronologia** --- i documenti collegati, in ordine di data
- * (quella letta da Hinthial nel documento se c'è, v. FASE 18; quella di
- * caricamento altrimenti).
- *
- * Chi collega un documento al fascicolo lo fa dal form del documento,
- * non da qui --- stesso schema già in uso per beni e categorie: qui si
- * legge e si gestisce l'oggetto (rinomina, apri/chiudi, elimina), il
- * collegamento vive dall'altra parte.
+ * La scheda di un fascicolo: titolo, descrizione, stato, e la sua cronologia (i documenti collegati, in ordine di
+ * data letta da Hinthial nel documento se c'è, altrimenti di caricamento). Chi collega un documento al fascicolo lo
+ * fa dal form del documento, non da qui: qui si gestisce solo l'oggetto (rinomina, apri/chiudi, elimina).
  */
 export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; dossierId: string }) {
   const supabase = useRef(createClient()).current;

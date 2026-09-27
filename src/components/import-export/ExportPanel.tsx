@@ -13,18 +13,9 @@ function formatSize(bytes: number): string {
 }
 
 /**
- * FASE 9 --- Export e recovery: un unico archivio .zip con tutto quello
- * che HINTHIAL sa dell'utente --- profilo, categorie, asset, documenti
- * (file compresi), scadenze, contatti fiduciari e capsule (allegati
- * compresi) --- decifrato interamente lato client con la Master Key già
- * sbloccata (passata dalla pagina). Il server non vede mai il contenuto
- * in chiaro, nemmeno durante l'export: legge solo lo stesso ciphertext
- * che ogni altra schermata già legge.
- *
- * "Recovery workflow" e "verifica recovery key" (le altre due voci della
- * FASE 9) esistono già dalla FASE 3: la recovery key si genera e si
- * conferma in fase di creazione della Master Key, e sblocca l'accesso da
- * UnlockMasterKeyForm se la master password viene dimenticata.
+ * Un unico archivio .zip con tutto quello che HINTHIAL sa dell'utente, decifrato interamente lato client con la
+ * Master Key già sbloccata. Il server non vede mai il contenuto in chiaro, nemmeno durante l'export: legge solo lo
+ * stesso ciphertext che ogni altra schermata già legge.
  */
 export function ExportPanel({
   masterKey,
