@@ -1,12 +1,6 @@
 import type { DocumentListItem } from "@/domain/documents/types";
 
-/**
- * FASE 25 --- rilevamento duplicati durante un import massivo (in
- * particolare da Google Drive, dove lo stesso file può arrivare da più
- * strade). Stessa disciplina di findIssuer/groupByIssuer: una
- * corrispondenza esatta (nome file e dimensione in byte identici),
- * mai una somiglianza vaga --- nel dubbio, nessun avviso.
- */
+/** FASE 25: rilevamento duplicati in import massivo --- stessa disciplina di groupByIssuer, corrispondenza esatta (nome+dimensione), mai vaga. */
 
 export interface DuplicateMatch {
   /** Il nome del documento già presente (o dell'altro file di questo stesso lotto) con cui coincide. */
@@ -15,14 +9,7 @@ export interface DuplicateMatch {
   createdAt: string;
 }
 
-/**
- * Un elemento per posizione in `files`: la corrispondenza trovata (con
- * l'Archivio già esistente, o con un file precedente nello stesso
- * lotto), o `null` se nessuna. Confronta ogni file sia con l'archivio
- * sia con quelli che lo precedono nello stesso lotto --- due file
- * arrivati insieme con lo stesso nome e la stessa dimensione sono lo
- * stesso file arrivato da due strade, non una coincidenza.
- */
+/** Un elemento per posizione in `files`, o `null`. Confronta con l'archivio esistente e con i file precedenti nello stesso lotto. */
 export function detectDuplicates<F extends { file: File }>(
   files: F[],
   existingDocuments: DocumentListItem[],

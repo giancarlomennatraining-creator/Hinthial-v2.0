@@ -11,19 +11,8 @@ import { downloadCapsuleAttachment, listCapsules } from "@/domain/capsules/repos
 import type { ExportFile, ExportManifest, ExportResult } from "@/domain/export/types";
 
 /**
- * Builds a full export of the current user's data: a `manifest.json`
- * with every entity's already-decrypted metadata, plus the decrypted
- * bytes of every document and capsule attachment --- everything the app
- * knows about the account, in one portable bundle (v. HINTHIAL_MVP.md,
- * FASE 9: "HINTHIAL non deve diventare una prigione dei dati
- * dell'utente"). Decryption happens entirely client-side with the
- * already-unlocked Master Key; nothing here touches the server beyond
- * reading the same ciphertext every other screen already reads.
- *
- * A document/attachment whose ciphertext can't be fetched (e.g. a
- * transient network error) is listed in the manifest with
- * `exportedAs: null` rather than failing the whole export --- the user
- * still gets everything else.
+ * FASE 9: export completo, decifrato client-side --- `manifest.json` + bytes di ogni documento/allegato. Un file non
+ * scaricabile finisce con `exportedAs: null` invece di far fallire tutto l'export.
  */
 export async function buildExport(
   supabase: SupabaseClient<Database>,

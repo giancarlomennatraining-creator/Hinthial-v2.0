@@ -1,25 +1,11 @@
 import { extractStructuredFields } from "@/domain/extraction/structured-fields";
 import type { DocumentListItem } from "@/domain/documents/types";
 
-/**
- * FASE 20 --- la "cronologia" di un fascicolo: calcolata al volo sul
- * testo già decifrato in memoria (come i campi estratti della FASE 18),
- * non salvata. Nessuna migrazione quando cambia la logica, vale da
- * subito su tutto l'archivio esistente.
- *
- * (Il "totale delle spese", che viveva qui, è stato rimosso su
- * richiesta esplicita insieme al concetto di importo --- v.
- * CHANGELOG.md e domain/extraction/structured-fields.ts.)
- */
+/** FASE 20: la cronologia, calcolata al volo sul testo già decifrato --- nessuna migrazione quando cambia la logica. */
 
 export interface DossierTimelineEntry {
   document: DocumentListItem;
-  /**
-   * La data usata per ordinare: quella che Hinthial ha letto nel
-   * documento (FASE 18) se c'è, altrimenti quella di caricamento. Un
-   * fascicolo è una storia raccontata nel tempo --- ordinarla per data di
-   * caricamento va bene solo quando non si sa altro.
-   */
+  /** Data letta nel documento (FASE 18) se c'è, altrimenti quella di caricamento --- solo come ripiego. */
   date: string;
   /** Se `date` viene dal documento (vera) o dal caricamento (di ripiego). */
   dateIsFromDocument: boolean;

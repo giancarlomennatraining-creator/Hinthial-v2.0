@@ -11,14 +11,7 @@ export interface GuardianVerificationRequestView {
   createdAt: string;
 }
 
-/**
- * Legge una richiesta di verifica per il guardiano che la sta guardando
- * (v. app/(app)/guardian-check/[requestId]) --- RLS (v. migrazione
- * guardian_verification_requests) garantisce già che solo il guardiano
- * interpellato possa leggere QUESTA riga; il nome del proprietario è
- * una query separata (v. migrazione guardian_profile_visibility: stesso
- * schema di "Condivise con me"), mai un join lato server su dati cifrati.
- */
+/** RLS garantisce che solo il guardiano interpellato legga questa riga; il nome proprietario è una query separata, mai un join. */
 export async function getGuardianVerificationRequest(
   supabase: SupabaseClient<Database>,
   requestId: string,
@@ -51,16 +44,7 @@ export async function getGuardianVerificationRequest(
   };
 }
 
-/**
- * Registra la risposta del guardiano --- passa da una funzione
- * Postgres SECURITY DEFINER (v. migrazione guardian_response_audit)
- * invece di un update diretto: serve anche a registrare l'evento nel
- * registro Attività DEL PROPRIETARIO (owner_id diverso da auth.uid(),
- * impossibile con un insert diretto sotto RLS). La funzione ripete a
- * mano lo stesso controllo che l'RLS farebbe (guardian_user_id =
- * auth.uid()): se la riga non è la propria, non succede nulla, senza
- * errore.
- */
+/** RPC SECURITY DEFINER, non un update diretto: serve anche a loggare in Attività DEL PROPRIETARIO, impossibile sotto RLS diretta. */
 export async function respondToGuardianVerificationRequest(
   supabase: SupabaseClient<Database>,
   requestId: string,

@@ -1,15 +1,6 @@
 /**
- * Minimal RFC4180-ish CSV reader/writer --- no dependency, because the
- * templates this app generates/reads are always a handful of flat
- * columns (see templates.ts), not a general spreadsheet.
- *
- * Tolerant of what a real user's Excel is likely to produce:
- * - both `,` and `;` as the delimiter (Excel in an Italian locale saves
- *   CSV with `;`, since `,` is the decimal separator there);
- * - a leading UTF-8 BOM (Windows Excel writes one; without stripping it
- *   the very first header cell would silently fail to match);
- * - quoted fields containing the delimiter, a quote (escaped as `""`),
- *   or a newline.
+ * Minimal RFC4180-ish CSV reader/writer, no dependency --- tollerante a `,`/`;` (Excel IT usa `;`), BOM UTF-8 (Windows
+ * Excel lo scrive), e campi quotati con delimitatore/virgolette/a capo dentro.
  */
 
 const BOM = "﻿";
@@ -84,13 +75,7 @@ function escapeCell(value: string, delimiter: string): string {
   return value;
 }
 
-/**
- * Serializes rows back to CSV text (CRLF line endings, UTF-8 BOM
- * prefixed for Excel). `delimiter` defaults to `,`; the templates this
- * app generates use `;` instead (see templates.ts), since that's what
- * Excel in an Italian locale expects by default --- parseCsv above
- * reads both either way.
- */
+/** CRLF + BOM UTF-8 per Excel. `delimiter` default `,`; i template generati usano `;` (v. templates.ts), parseCsv legge entrambi. */
 export function serializeCsv(rows: string[][], delimiter: "," | ";" = ","): string {
   const body = rows.map((row) => row.map((cell) => escapeCell(cell, delimiter)).join(delimiter)).join("\r\n");
   return BOM + body + "\r\n";

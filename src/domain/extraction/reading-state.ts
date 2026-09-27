@@ -3,21 +3,9 @@ import { contentKindFor } from "@/lib/content-kind";
 import type { DocumentListItem } from "@/domain/documents/types";
 
 /**
- * FASE 17e --- in che rapporto sta Hinthial con il contenuto di un
- * elemento d'Archivio. Sono quattro stati che fino alla pagina di
- * dettaglio non avevano modo di essere raccontati: dal di fuori erano
- * tutti indistinguibili, perché in tre casi su quattro il testo
- * risultava semplicemente vuoto.
- *
- * - `own-text`  il contenuto **è** testo (una nota): non c'è niente da
- *               estrarre, si legge direttamente.
- * - `cannot`    Hinthial non sa ancora leggere questo tipo (audio,
- *               video): aspetta la trascrizione.
- * - `never`     saprebbe leggerlo, ma non ci ha mai provato --- caricato
- *               prima che l'estrazione esistesse (v. `extractedAt`).
- * - `nothing`   ci ha provato e non ha trovato niente. Con l'OCR è
- *               diventato raro: di solito è una foto senza testo.
- * - `text`      ci ha provato e ha trovato del testo.
+ * FASE 17e: in che rapporto sta Hinthial col contenuto --- `own-text` è già testo (nota); `cannot` non sa ancora
+ * leggere il tipo; `never` saprebbe ma non ci ha mai provato (pre-FASE 17); `nothing` ci ha provato senza trovare
+ * nulla; `text` ci ha provato e trovato.
  */
 export type ReadingState = "own-text" | "cannot" | "never" | "nothing" | "text";
 

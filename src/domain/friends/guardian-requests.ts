@@ -2,14 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 import { logAuditEvent } from "@/lib/audit/log-event";
 
-/**
- * Richiesta di diventare guardiano, in arrivo --- v. migrazione
- * guardian_role_requests. Distinta da guardian_verification_requests
- * (domain/digital-legacy/guardians.ts): questa è il consenso
- * PRELIMINARE per assumere il ruolo, non la verifica reale di
- * un'inattività, che arriva solo più avanti e solo se il ruolo è già
- * stato accettato.
- */
+/** Distinta da guardian_verification_requests: questa è il consenso PRELIMINARE al ruolo, non la verifica reale di un'inattività. */
 export interface IncomingGuardianRoleRequest {
   id: string;
   ownerId: string;
@@ -109,13 +102,7 @@ export async function listOutgoingPendingGuardianRoleRequests(
   return (data ?? []).map((row) => row.guardian_user_id);
 }
 
-/**
- * Chiede a un AMICO di diventare guardiano --- solo un AMICO può
- * diventarlo (v. policy guardian_role_requests_insert_owner, che
- * verifica `is_friend = true` lato database). Mai un flag impostato
- * direttamente: da qui in poi serve sempre l'accettazione esplicita di
- * chi lo riceve (v. richiesta utente).
- */
+/** Solo un AMICO può diventare guardiano (verificato lato DB) --- mai un flag diretto, serve sempre l'accettazione esplicita. */
 export async function requestGuardianRole(
   supabase: SupabaseClient<Database>,
   ownerId: string,

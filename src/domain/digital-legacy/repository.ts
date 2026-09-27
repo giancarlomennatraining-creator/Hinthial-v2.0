@@ -9,14 +9,7 @@ import {
 const COLUMNS =
   "digital_legacy_enabled, digital_legacy_preset, digital_legacy_inactivity_days, digital_legacy_reminder_interval_days, digital_legacy_reminder_count, digital_legacy_grace_period_days, digital_legacy_guardian_quorum, digital_legacy_formal_verification_days, digital_legacy_final_wait_days";
 
-/**
- * Legge i parametri di "Eredità digitale" (v. domain/digital-legacy/types.ts)
- * --- colonne su profiles, come nav_orientation e le altre preferenze
- * semplici. Ogni riga profiles esiste già per definizione (creata al
- * login, v. current-user.ts) e porta sempre questi valori con un
- * default a livello di colonna ("balanced"): il fallback qui sotto
- * copre solo l'improbabile caso in cui la riga non sia ancora leggibile.
- */
+/** Colonne su profiles, come nav_orientation --- il fallback sotto copre solo il caso improbabile che la riga non sia leggibile. */
 export async function getDigitalLegacySettings(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -67,14 +60,7 @@ export async function updateDigitalLegacySettings(
   }
 }
 
-/**
- * Cosa vede il proprietario di se stesso --- niente nomi di guardiani
- * qui (cifrati, decifrabili solo dalla propria rubrica Amici): solo
- * conteggi, già in chiaro lato server (v. domain/digital-legacy/types.ts,
- * DigitalLegacyStatus). `guardianResponseCounts` è null finché nessuna
- * richiesta esiste per l'episodio in corso (mai stato coinvolto un
- * guardiano, o l'episodio è già stato annullato).
- */
+/** Niente nomi di guardiani (cifrati), solo conteggi in chiaro. `guardianResponseCounts` è null finché nessuna richiesta esiste. */
 export async function getDigitalLegacyStatus(
   supabase: SupabaseClient<Database>,
   userId: string,
