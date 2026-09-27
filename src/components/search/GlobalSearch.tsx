@@ -12,14 +12,11 @@ import { AI_SOURCE_KIND_LABELS } from "@/domain/ai/labels";
 import type { AIContext, AISource } from "@/domain/ai/types";
 
 /**
- * Ricerca globale (Ctrl/Cmd+K): cerca per nome/etichetta su tutto ciò
- * che è già decifrato in memoria (v. domain/ai/context.ts, la stessa
- * base dati dell'Assistente AI) --- nessuna nuova query, nessun dato
- * lascia il browser. Usa mockAIProvider.search() (corrispondenza
- * diretta, non l'espansione relazionale di retrieve()): qui l'utente
- * sta cercando un elemento per nome, non facendo una domanda.
+ * Ricerca globale (Ctrl/Cmd+K): cerca per nome/etichetta su tutto ciò che è già decifrato in memoria (v.
+ * domain/ai/context.ts, la stessa base dati dell'Assistente AI), nessuna nuova query. Usa mockAIProvider.search()
+ * (corrispondenza diretta, non l'espansione relazionale di retrieve()): qui si cerca un elemento per nome.
  */
-/** `collapsed` --- v. Sidebar: mostra solo l'icona, senza etichetta/scorciatoia (Ctrl/Cmd+K resta comunque attivo). */
+/** `collapsed`: mostra solo l'icona, senza etichetta/scorciatoia (Ctrl/Cmd+K resta comunque attivo). */
 export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
   const router = useRouter();
   const { status } = useMasterKey();
@@ -53,8 +50,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
     }
   }, [supabase, status]);
 
-  // Il contesto viene caricato solo alla prima apertura (non ad ogni
-  // digitazione): stesso pattern fetch-on-mount di AIPanel/DashboardWidgets.
+  // Il contesto viene caricato solo alla prima apertura, non ad ogni digitazione.
   useEffect(() => {
     if (!open || context) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -65,8 +61,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  // Ctrl/Cmd+K apre/chiude da qualunque pagina --- preventDefault per
-  // evitare che il browser intercetti la scorciatoia (barra indirizzi).
+  // Ctrl/Cmd+K apre/chiude da qualunque pagina; preventDefault evita che il browser intercetti la scorciatoia.
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -82,10 +77,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
 
   const results = context && query.trim() ? mockAIProvider.search(query, context) : [];
 
-  // Riporta l'evidenziazione al primo risultato ogni volta che cambia la
-  // query --- aggiustamento di stato durante il render (pattern
-  // consigliato da React al posto di un useEffect dedicato solo a
-  // resettare uno stato derivato).
+  // Riporta l'evidenziazione al primo risultato al cambio query: aggiustamento di stato durante il render, non un useEffect dedicato.
   const [queryForActiveIndex, setQueryForActiveIndex] = useState(query);
   if (query !== queryForActiveIndex) {
     setQueryForActiveIndex(query);

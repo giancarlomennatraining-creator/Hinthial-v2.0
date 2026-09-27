@@ -12,24 +12,24 @@ import {
 } from "@/domain/profile/repository";
 
 interface AIProcessingConsentContextValue {
-  /** "Cancello" generale --- deve essere true perché un qualunque consenso specifico abbia effetto (v. HINTHIAL_MVP.md, "Explicit AI processing"). */
+  /** "Cancello" generale: deve essere true perché un qualunque consenso specifico abbia effetto. */
   masterEnabled: boolean;
-  /** Spegnerlo spegne anche ogni consenso specifico nella stessa richiesta (v. domain/profile/repository.ts, updateAIMasterEnabled) --- riaccenderlo non li riaccende da solo. */
+  /** Spegnerlo spegne anche ogni consenso specifico nella stessa richiesta; riaccenderlo non li riaccende da solo. */
   setMasterEnabled: (next: boolean) => Promise<void>;
-  /** Consenso specifico alla Chat reale --- ha effetto solo se masterEnabled è true. */
+  /** Consenso alla Chat reale: effetto solo se masterEnabled è true. */
   chatConsent: boolean;
   setChatConsent: (next: boolean) => Promise<void>;
-  /** Consenso specifico all'estrazione avanzata dei contenuti (FASE 22, non ancora costruita) --- imposta già oggi la preferenza. */
+  /** Consenso all'estrazione avanzata (non ancora costruita): imposta già oggi la preferenza. */
   extractionConsent: boolean;
   /** Spegnerlo spegne anche healthConsent e proactiveAlertsConsent, che dipendono da questo. */
   setExtractionConsent: (next: boolean) => Promise<void>;
-  /** Eccezione per la categoria Salute dentro l'estrazione avanzata --- ha effetto solo se extractionConsent è true. */
+  /** Eccezione per la categoria Salute dentro l'estrazione avanzata: effetto solo se extractionConsent è true. */
   healthConsent: boolean;
   setHealthConsent: (next: boolean) => Promise<void>;
-  /** Consenso specifico alla trascrizione audio/video reale (FASE 22b, non ancora costruita). */
+  /** Consenso alla trascrizione audio/video reale (non ancora costruita). */
   transcriptionConsent: boolean;
   setTranscriptionConsent: (next: boolean) => Promise<void>;
-  /** Consenso specifico agli avvisi proattivi (FASE 24, non ancora costruita) --- ha effetto solo se extractionConsent è anche true. */
+  /** Consenso agli avvisi proattivi (non ancora costruita): effetto solo se extractionConsent è anche true. */
   proactiveAlertsConsent: boolean;
   setProactiveAlertsConsent: (next: boolean) => Promise<void>;
 }
@@ -37,19 +37,10 @@ interface AIProcessingConsentContextValue {
 const AIProcessingConsentContext = createContext<AIProcessingConsentContextValue | null>(null);
 
 /**
- * Consenso esplicito all'elaborazione AI reale (v. HINTHIAL_MVP.md
- * sezione 8, "Explicit AI processing"): un "cancello" generale
- * (masterEnabled) sopra consensi specifici per singola funzione ---
- * oggi solo chatConsent ha una funzione reale dietro (la Chat, v.
- * AIPanel); extractionConsent/healthConsent/transcriptionConsent/
- * proactiveAlertsConsent sono preferenze impostabili già ora per
- * funzioni del piano (FASI 22/22b/24) non ancora costruite --- nessuna
- * di queste ha oggi alcun effetto reale, tranne prepararsi. Sincronizzato
- * sul server (profiles.ai_*), come NavOrientationProvider: il valore
- * iniziale arriva già letto lato server, per evitare che le pagine che
- * dipendono da questo stato (pagina AI, Impostazioni > Intelligenza
- * artificiale) mostrino per un istante lo stato sbagliato al primo
- * render.
+ * Consenso esplicito all'elaborazione AI reale: un "cancello" generale (masterEnabled) sopra consensi specifici per
+ * singola funzione. Oggi solo chatConsent ha una funzione reale dietro (la Chat, v. AIPanel); gli altri sono
+ * preferenze già impostabili per funzioni non ancora costruite. Sincronizzato sul server (profiles.ai_*): il valore
+ * iniziale arriva già letto lato server per evitare uno stato sbagliato al primo render.
  */
 export function AIProcessingConsentProvider({
   userId,

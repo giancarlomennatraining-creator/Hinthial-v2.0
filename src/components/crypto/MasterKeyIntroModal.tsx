@@ -9,19 +9,10 @@ import { PasswordComparisonNote } from "@/components/crypto/PasswordComparisonNo
 import { markMasterKeyIntroSeen } from "@/domain/profile/repository";
 
 /**
- * Popup mostrato una sola volta, subito dopo il login, a chi non ha
- * ancora configurato la cifratura --- invita a farlo subito invece di
- * scoprirlo solo cliccando in giro (v. anche il pallino "richiede setup"
- * sulla navigazione e il checklist in Dashboard, entrambi persistenti:
- * questo popup è solo un'introduzione una tantum, non li sostituisce).
- *
- * "Una tantum" --- qualunque modo di chiuderlo (✕, "Più tardi", sfondo,
- * o il tasto che porta alla creazione) lo segna come visto per sempre
- * (profiles.master_key_intro_seen, sincronizzato sul server come
- * onboarding_widget_hidden): niente casella "non mostrare più" a parte,
- * sarebbe ridondante dato che non si ripresenta comunque. Chi ha già
- * configurato la cifratura (status "locked"/"unlocked") non lo vede mai,
- * a prescindere dal flag --- diventato irrilevante a quel punto.
+ * Popup mostrato una sola volta, subito dopo il login, a chi non ha ancora configurato la cifratura; non sostituisce
+ * il pallino "richiede setup" in navigazione né il checklist in Dashboard, entrambi persistenti. Qualunque modo di
+ * chiuderlo lo segna come visto per sempre (profiles.master_key_intro_seen). Chi ha già configurato la cifratura
+ * non lo vede mai, a prescindere dal flag.
  */
 export function MasterKeyIntroModal({
   userId,
@@ -38,8 +29,7 @@ export function MasterKeyIntroModal({
     setSeen(true);
     const supabase = createClient();
     markMasterKeyIntroSeen(supabase, userId).catch(() => {
-      // Nessun blocco dell'interfaccia: se il salvataggio fallisce,
-      // ricomparirà al prossimo login --- non grave per un'introduzione.
+      // Se il salvataggio fallisce, ricomparirà al prossimo login: non grave per un'introduzione.
     });
   }
 
