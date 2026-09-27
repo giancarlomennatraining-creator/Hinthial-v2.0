@@ -4,36 +4,19 @@ import { CheckCircleIcon, CircleIcon } from "@/components/icons/nav-icons";
 export interface OnboardingStep {
   key: string;
   label: string;
-  /** Breve descrizione dell'attività --- mostrata qui sotto l'etichetta per i passi non ancora fatti (v. sotto), oltre che in Impostazioni > Onboarding (v. OnboardingSettingsPanel). */
+  /** Breve descrizione, mostrata sotto l'etichetta per i passi non ancora fatti, oltre che in Impostazioni > Onboarding. */
   description: string;
   done: boolean;
   href: string;
 }
 
 /**
- * "Prima esperienza" (v. HINTHIAL_MVP.md, sezione UI/UX): crea account ->
- * configura sicurezza -> primo documento -> categoria -> bene -> capsula
- * -> amico -> collegamento capsula-contatto. I due passi che presuppongono
- * un concetto nuovo (amico/Dead Man's Switch, il collegamento che lo usa)
- * vengono dopo quelli concreti apposta, non mescolati (v.
- * domain/onboarding/steps.ts). Nessun passo è più opzionale (erano
- * rimasti "bene"/"capsula"/"collegamento" facoltativi in una versione
- * precedente, insieme a "imposta una scadenza" --- rimosso perché
- * passivo rispetto al contribuire un contenuto): tutti contano nel
- * conteggio e nessuno è considerato "extra". Calcolata dal vivo dai dati
- * già caricati dal chiamante --- nessuno stato "onboarding completato"
- * persistito da nessuna parte: le voci già fatte restano comunque
- * elencate qui, senza barrato --- un promemoria di percorso, non
- * qualcosa da nascondere.
- *
- * La descrizione compare solo sotto i passi non ancora fatti --- una
- * volta completato un passo non serve più rispiegarlo, e i passi che
- * introducono un concetto nuovo (es. "Aggiungi un guardiano", legato al Dead
- * Man's Switch) restano altrimenti solo un'etichetta senza contesto.
- *
- * Nessun riquadro attorno alla lista: chi la mostra (il pannello laterale
- * del gadget in barra laterale, v. OnboardingStatus) fornisce già il
- * proprio contenitore.
+ * "Prima esperienza" (v. domain/onboarding/steps.ts): crea account -> configura sicurezza -> primo documento ->
+ * categoria -> bene -> capsula -> amico -> collegamento capsula-contatto. Nessun passo è opzionale: tutti contano
+ * nel conteggio. Calcolata dal vivo dai dati già caricati dal chiamante, nessuno stato persistito da nessuna parte:
+ * le voci già fatte restano elencate qui, senza barrato, come promemoria di percorso. La descrizione compare solo
+ * sotto i passi non ancora fatti. Nessun riquadro attorno alla lista: chi la mostra fornisce già il proprio
+ * contenitore.
  */
 export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
   const doneCount = steps.filter((s) => s.done).length;

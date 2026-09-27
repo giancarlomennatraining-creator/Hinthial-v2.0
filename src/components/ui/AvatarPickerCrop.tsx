@@ -9,24 +9,11 @@ const OUTPUT_SIZE = 256;
 const MAX_ZOOM = 3;
 
 /**
- * Il ritaglio a quadrato di una foto --- estratto da AvatarUploadForm
- * (Impostazioni > Informazioni utente) per essere riusato anche per la
- * foto di un amico (v. Create/EditFriendForm): stesso ritaglio via
- * `<canvas>` lato client, un solo file già pronto in uscita (mai un
- * zoom/posizione da riapplicare altrove).
- *
- * "Carica foto"/"Scatta foto" sono DUE `<input type="file">` distinti,
- * non uno solo con `capture` attivato/disattivato al volo (v. richiesta
- * utente: su smartphone i due tasti aprivano sempre la fotocamera) ---
- * quel trucco (ancora usato in CreateArchiveItemForm) dipende dal
- * ripristino dell'attributo `capture` al blur, che su alcuni
- * browser/OS mobile non scatta mai quando si annulla la fotocamera,
- * lasciandolo attivo per il tasto successivo. Con due input separati,
- * "Carica" non ha mai `capture` e "Scatta" ce l'ha sempre: nessuno stato
- * da ripristinare. Su schermi larghi (desktop, senza fotocamera
- * "capture" del sistema operativo) "Scatta foto" apre invece la
- * webcam direttamente nel browser (`getUserMedia`), con un fotogramma
- * catturato su un `<canvas>` --- v. handleWebcamCapture.
+ * Il ritaglio a quadrato di una foto, riusato sia per l'utente sia per la foto di un amico: ritaglio via `<canvas>`
+ * lato client, un solo file pronto in uscita. "Carica foto"/"Scatta foto" sono DUE `<input type="file">` distinti,
+ * non uno con `capture` attivato/disattivato al volo: quel trucco dipende dal ripristino dell'attributo al blur, che
+ * su alcuni browser/OS mobile non scatta mai annullando la fotocamera, lasciandolo attivo per il tasto successivo.
+ * Su desktop "Scatta foto" apre invece la webcam nel browser (`getUserMedia`), v. handleWebcamCapture.
  */
 export function AvatarPickerCrop({
   currentAvatarUrl,
@@ -61,15 +48,13 @@ export function AvatarPickerCrop({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Webcam (desktop) --- v. handleStartWebcam/handleWebcamCapture/handleStopWebcam.
   const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null);
 
   const scale = naturalSize ? coverScale(naturalSize.width, naturalSize.height, CONTAINER_SIZE) * zoom : 1;
   const displayedWidth = naturalSize ? naturalSize.width * scale : 0;
   const displayedHeight = naturalSize ? naturalSize.height * scale : 0;
 
-  // Ferma sempre la webcam allo smontaggio --- altrimenti la spia della
-  // fotocamera del dispositivo resterebbe accesa a componente sparito.
+  // Ferma sempre la webcam allo smontaggio, altrimenti la spia della fotocamera resterebbe accesa.
   useEffect(() => {
     return () => {
       webcamStream?.getTracks().forEach((track) => track.stop());
@@ -342,10 +327,7 @@ export function AvatarPickerCrop({
                 {currentAvatarUrl ? "Cambia foto" : "Carica foto"}
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
               </label>
-              {/* Su smartphone/tablet (md:hidden): apre la fotocamera nativa
-                  del dispositivo --- `capture` è impostato una volta per
-                  tutte in JSX, mai attivato/disattivato al volo (v. doc
-                  comment in cima al file). */}
+              {/* Su smartphone/tablet: apre la fotocamera nativa, `capture` impostato una volta per tutte in JSX. */}
               <label className="w-fit cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 md:hidden dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900">
                 📷 Scatta foto
                 <input
@@ -356,9 +338,7 @@ export function AvatarPickerCrop({
                   onChange={handleFileChange}
                 />
               </label>
-              {/* Su desktop (hidden md:inline-flex): niente fotocamera di
-                  sistema da aprire via input file --- si usa direttamente
-                  la webcam del dispositivo nel browser. */}
+              {/* Su desktop: niente fotocamera di sistema, si usa direttamente la webcam nel browser. */}
               <button
                 type="button"
                 onClick={handleStartWebcam}

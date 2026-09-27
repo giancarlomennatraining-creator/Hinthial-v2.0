@@ -29,19 +29,10 @@ const STEP_LABEL: Record<Step, string> = {
 };
 
 /**
- * Pagina dedicata alla creazione di una capsula (estratta da
- * CapsulesPanel, che ora mostra solo l'elenco più un tasto "Crea
- * capsula"). Wizard a tre passi (FASE 14): passo 1 chi/quando (titolo,
- * data e ora di apertura, destinatari), passo 2 elementi già presenti in
- * Archivio da collegare, passo 3 contenuto scritto e audio/video
- * registrati o caricati sul momento --- questi ultimi restano privati
- * della capsula, mai copiati in Archivio: sono pensati come un
- * messaggio personale per quel destinatario, non un contenuto
- * d'archivio generale. Alla creazione riuscita torna a /capsules con
- * un messaggio di conferma --- passato come semplice flag nell'URL
- * (`?created=1`), mai il titolo o altro contenuto della capsula:
- * finirebbe in chiaro nella cronologia del browser, in contrasto con
- * lo zero-knowledge.
+ * Wizard a tre passi: chi/quando (titolo, data e ora di apertura, destinatari), elementi già in Archivio da
+ * collegare, contenuto scritto e audio/video registrati o caricati sul momento --- questi ultimi restano privati
+ * della capsula, mai copiati in Archivio. Alla creazione torna a /capsules con `?created=1`, mai il titolo o altro
+ * contenuto della capsula, che finirebbe in chiaro nella cronologia del browser.
  */
 export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
@@ -99,8 +90,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
       return;
     }
     if (!openAt) {
-      // Obbligatoria (Dead Man's Switch semplificato per le capsule):
-      // raggiunta questa data, il destinatario può vederne il contenuto.
+      // Obbligatoria: raggiunta questa data, il destinatario può vederne il contenuto.
       setError("Scegli data e ora di apertura.");
       return;
     }
@@ -109,9 +99,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   function handleMediaFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    // "accept" guida la scelta, ma non la impone davvero (drag&drop,
-    // selezione manuale, ...) --- si scartano in silenzio i file che
-    // non sono audio/video, coerentemente con l'intento del campo.
+    // "accept" non impone davvero la scelta: si scartano in silenzio i file che non sono audio/video.
     const picked = Array.from(event.target.files ?? []).filter(
       (file) => file.type.startsWith("audio/") || file.type.startsWith("video/"),
     );
@@ -281,9 +269,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
                 placeholder="Cosa vuoi lasciare scritto..."
               />
 
-              {/* Allegati audio/video --- un'aggiunta secondaria e discreta,
-                  non un passo alla pari con scrivere il messaggio (v.
-                  richiesta utente, "capsule come lettere"). */}
+              {/* Allegati audio/video: un'aggiunta secondaria e discreta, non un passo alla pari con scrivere il messaggio. */}
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
