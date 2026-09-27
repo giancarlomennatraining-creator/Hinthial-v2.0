@@ -8,20 +8,11 @@ import { cn } from "@/lib/utils";
 const MIN_SPACE_BELOW = 220;
 
 /**
- * Menu "⋮" per le azioni di una riga di lista (Modifica/Elimina/...) ---
- * stesso pattern a tendina di UserMenu (bottone + pannello, chiusura al
- * click fuori). Il pannello si chiude anche a un click al suo interno:
- * ogni azione (v. RowMenuItem) è un'operazione singola, non serve
- * tenerlo aperto dopo averla scelta.
- *
- * Il pannello va in un portal su document.body, posizionato in
- * `fixed` dalle coordinate reali del bottone --- non più un discendente
- * assoluto della riga: una tabella con `overflow-x-auto` (v. i pannelli
- * di lista) tronca verticalmente anche i discendenti assoluti che
- * escono dal proprio bordo (effetto collaterale di CSS: impostare
- * overflow-x forza anche overflow-y a "auto"), il che troncava il menu
- * sulle ultime righe. Si riposiziona solo all'apertura; se la pagina
- * scorre mentre è aperto si chiude (più semplice che inseguirla).
+ * Menu "⋮" per le azioni di una riga di lista, stesso pattern a tendina di UserMenu. Il pannello si chiude anche a
+ * un click al suo interno: ogni azione è un'operazione singola. Va in un portal su document.body, posizionato
+ * `fixed` dalle coordinate reali del bottone (non più discendente assoluto della riga): una tabella con
+ * `overflow-x-auto` tronca verticalmente anche i discendenti assoluti che escono dal proprio bordo, troncando il
+ * menu sulle ultime righe. Si riposiziona solo all'apertura; se la pagina scorre mentre è aperto si chiude.
  */
 export function RowActionsMenu({ label = "Azioni", children }: { label?: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -44,11 +35,7 @@ export function RowActionsMenu({ label = "Azioni", children }: { label?: string;
 
   useEffect(() => {
     if (!open) return;
-    // La posizione è calcolata una volta sola all'apertura (v. sopra):
-    // se la pagina (o un contenitore con lo scroll proprio, es. la
-    // tabella) scorre mentre il menu è aperto, si chiude invece di
-    // restare disallineato dal bottone. `true` = cattura anche lo
-    // scroll di un contenitore interno, non solo della finestra.
+    // Se la pagina (o un contenitore con scroll proprio) scorre mentre il menu è aperto, si chiude invece di restare disallineato. `true` cattura anche lo scroll di un contenitore interno.
     function handleScroll() {
       setOpen(false);
     }

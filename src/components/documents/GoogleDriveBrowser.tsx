@@ -10,19 +10,11 @@ import {
 import type { GoogleDriveItem } from "@/domain/google-drive/types";
 
 /**
- * FASE 25 --- file browser di Google Drive con la grafica di Hinthial
- * (v. richiesta utente, dopo aver visto il Picker di Google: "voglio la
- * navigazione a cartelle con la nostra grafica"). Un solo livello di
- * cartella caricato alla volta (mai tutto il Drive insieme), selezione
- * di file singoli o di cartelle intere --- una cartella selezionata
- * viene espansa a tutti i suoi file, a qualunque profondità, solo al
- * momento dell'importazione (resolveDriveSelection), non mentre si
- * naviga: nessuna richiesta in più per ogni riga mostrata.
- *
- * Semplificazione dichiarata: niente conteggio "N elementi" su una
- * cartella non ancora aperta (richiederebbe una richiesta per riga,
- * costosa su un Drive con molte cartelle) e niente indicatore "parziale"
- * sulle cartelle --- una cartella è scelta per intero o non lo è.
+ * File browser di Google Drive con la grafica di Hinthial. Un solo livello di cartella caricato alla volta,
+ * selezione di file singoli o di cartelle intere --- una cartella selezionata viene espansa a tutti i suoi file,
+ * a qualunque profondità, solo al momento dell'importazione (resolveDriveSelection), non mentre si naviga.
+ * Niente conteggio "N elementi" su una cartella non ancora aperta né indicatore "parziale": una cartella è scelta
+ * per intero o non lo è.
  */
 
 interface BreadcrumbEntry {
@@ -37,7 +29,7 @@ export function GoogleDriveBrowser({
 }: {
   clientId: string;
   onClose: () => void;
-  /** Già scaricati --- indistinguibili, da qui, da un file scelto dal disco. */
+  /** Già scaricati, indistinguibili da un file scelto dal disco. */
   onConfirm: (files: { file: File; folderHint: string | null }[]) => void;
 }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -86,9 +78,7 @@ export function GoogleDriveBrowser({
   );
 
   useEffect(() => {
-    // Stesso pattern di loadContext in GlobalSearch.tsx --- lo setState
-    // vero avviene dentro loadFolder, chiamata da qui a ogni cambio di
-    // cartella (non solo al montaggio).
+    // Stesso pattern di loadContext in GlobalSearch.tsx: lo setState vero avviene dentro loadFolder.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadFolder(currentFolder.id);
   }, [currentFolder.id, loadFolder]);
@@ -120,8 +110,7 @@ export function GoogleDriveBrowser({
       if (next.has(item.id)) {
         next.delete(item.id);
       } else {
-        // "Il mio Drive" non è una vera cartella con un nome utile come
-        // suggerimento di categoria --- solo una cartella vera lo è.
+        // "Il mio Drive" non è una vera cartella con un nome utile come suggerimento di categoria.
         const folderHint = currentFolder.id === "root" ? null : currentFolder.name;
         next.set(item.id, { name: item.name, mimeType: item.mimeType, folderHint });
       }

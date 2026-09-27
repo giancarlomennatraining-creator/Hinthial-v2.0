@@ -5,24 +5,11 @@ import { cn } from "@/lib/utils";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 
 /**
- * Impostazioni -> Intelligenza artificiale: il "cancello" generale per
- * l'IA reale (v. HINTHIAL_MVP.md, "Explicit AI processing") più le
- * funzioni specifiche che dipendono da esso. Stesso componente riusato
- * anche dentro il pannello ⚙ della pagina AI (v. AIPanel): un'unica
- * implementazione della logica di consenso, non due copie sincronizzate.
- * Spegnere il cancello spegne anche le funzioni sotto; riaccenderlo non
- * le riaccende da solo --- ogni funzione resta una scelta esplicita a sé.
- *
- * Solo "Chat" ha oggi una funzione reale dietro. Le altre quattro
- * (Estrazione avanzata, Salute, Trascrizione, Avvisi proattivi)
- * corrispondono a fasi del piano (FASI 22/22b/24) non ancora costruite:
- * attivarle oggi non ha alcun effetto reale, salvo impostare già la
- * preferenza per quando quella funzione esisterà --- v. richiesta utente
- * di preparare il consenso in anticipo, in forma il più possibile
- * semplice (una riga SI/NO per funzione, non un elenco di categorie).
- * "Avvisi proattivi" resta disabilitato finché "Estrazione avanzata" non
- * è attiva: non esiste modo di generare un avviso senza aver prima letto
- * i contenuti (v. HINTHIAL_MVP.md, FASE 24, "non esiste una terza via").
+ * Impostazioni -> Intelligenza artificiale: il "cancello" generale per l'IA reale più le funzioni specifiche che ne
+ * dipendono, riusato anche nel pannello ⚙ della pagina AI. Spegnere il cancello spegne anche le funzioni sotto;
+ * riaccenderlo non le riaccende da solo. Solo "Chat" ha oggi una funzione reale dietro: le altre quattro non sono
+ * ancora costruite, attivarle imposta solo già la preferenza. "Avvisi proattivi" resta disabilitato finché
+ * "Estrazione avanzata" non è attiva: non esiste modo di generare un avviso senza aver prima letto i contenuti.
  */
 export function AIConsentSettings() {
   const {
