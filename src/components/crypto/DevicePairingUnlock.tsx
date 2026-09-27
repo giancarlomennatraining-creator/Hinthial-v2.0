@@ -10,13 +10,9 @@ const EXPIRY_MS = 5 * 60 * 1000;
 type PanelState = "closed" | "loading" | "waiting" | "expired" | "error";
 
 /**
- * FASE 13, terzo passo --- lato dispositivo nuovo (non ancora fidato):
- * mostra un QR code che un dispositivo già fidato (lo smartphone) può
- * scansionare per sbloccare qui il vault, senza mai digitare la master
- * password su QUESTO dispositivo (v. MasterKeyProvider.tsx,
- * startDevicePairing/tryCompleteDevicePairing --- entrambi
- * documentano perché il server non vede mai né il Master Key né una
- * chiave capace di derivarlo).
+ * Lato dispositivo nuovo (non ancora fidato): mostra un QR code che un dispositivo già fidato può scansionare per
+ * sbloccare qui il vault, senza mai digitare la master password su QUESTO dispositivo (v. MasterKeyProvider.tsx,
+ * startDevicePairing/tryCompleteDevicePairing).
  */
 export function DevicePairingUnlock() {
   const { startDevicePairing, tryCompleteDevicePairing, cancelDevicePairing } = useMasterKey();
@@ -34,9 +30,7 @@ export function DevicePairingUnlock() {
       const { requestId, pairingUrl, privateKey } = await startDevicePairing();
       pairingRef.current = { requestId, privateKey, startedAt: Date.now() };
 
-      // Import dinamico apposta --- v. SetupMasterKeyForm.tsx per lo
-      // stesso motivo: "qrcode" serve solo in questo istante, non deve
-      // finire nel bundle di ogni pagina protetta.
+      // Import dinamico apposta, v. SetupMasterKeyForm.tsx per lo stesso motivo.
       const { default: QRCode } = await import("qrcode");
       const dataUrl = await QRCode.toDataURL(pairingUrl, { margin: 1, width: 280 });
       setQrDataUrl(dataUrl);
@@ -67,14 +61,10 @@ export function DevicePairingUnlock() {
         return;
       }
       try {
-        // Se true, il contesto è già passato a "unlocked" --- questo
-        // pannello smette semplicemente di interessare (v.
-        // UnlockMasterKeyForm, che smonta tutto non appena lo stato
-        // cambia).
+        // Se true, il contesto è già passato a "unlocked": questo pannello smette di interessare.
         await tryCompleteDevicePairing(pairing.requestId, pairing.privateKey);
       } catch {
-        // Riprova al giro successivo --- un errore isolato (rete...)
-        // non deve far sparire il QR ancora valido.
+        // Riprova al giro successivo: un errore isolato non deve far sparire il QR ancora valido.
       }
     }, POLL_INTERVAL_MS);
 

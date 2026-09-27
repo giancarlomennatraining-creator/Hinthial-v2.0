@@ -7,19 +7,9 @@ import type { Category } from "@/domain/categories/types";
 import type { Proposal, ProposalKind } from "@/domain/proposals/types";
 
 /**
- * FASE 19 --- le proposte di Hinthial su un contenuto, con le tre
- * risposte possibili.
- *
- * "Modifica" non è un ornamento tra accetta e rifiuta: è il caso più
- * frequente. Una proposta è spesso giusta per metà --- la data c'è ma è
- * quella sbagliata, la categoria è vicina ma non quella --- e senza una
- * terza via l'utente dovrebbe rifiutare e poi rifare tutto a mano
- * altrove, che è il modo più sicuro per fargli smettere di leggere le
- * proposte.
- *
- * L'annullamento vive qui e non in un popup: una riga che resta finché
- * l'utente non fa altro. Un avviso che sparisce da solo dopo tre secondi
- * non è un annullamento, è una cortesia.
+ * Le proposte di Hinthial su un contenuto, con tre risposte possibili. "Modifica" non è un ornamento tra accetta e
+ * rifiuta: una proposta è spesso giusta per metà, e senza una terza via l'utente rifiuterebbe e rifarebbe tutto a
+ * mano. L'annullamento vive qui, non in un popup: una riga che resta finché l'utente non fa altro.
  */
 
 const KIND_LABEL: Record<ProposalKind, string> = {
@@ -34,10 +24,7 @@ const KIND_ICON: Record<ProposalKind, string> = {
   issuer: "🏛️",
 };
 
-/** Identità di una proposta per lo stato di modifica --- non solo il
- * tipo: con più candidati dello stesso tipo (v. richiesta utente),
- * "sto modificando la scadenza" da solo non basta più a dire QUALE
- * delle scadenze proposte. */
+/** Identità di una proposta per lo stato di modifica, non solo il tipo: con più candidati dello stesso tipo, "sto modificando la scadenza" da solo non dice QUALE. */
 function proposalKey(proposal: Proposal): string {
   return `${proposal.kind}:${proposal.value}`;
 }

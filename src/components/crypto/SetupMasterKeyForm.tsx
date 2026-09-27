@@ -10,11 +10,7 @@ import type { MasterKeySetup } from "@/lib/crypto";
 
 type PendingSetup = { setup: MasterKeySetup; masterKey: CryptoKey };
 
-/**
- * "Passo X di 2" --- lo stesso idioma già usato per la creazione di una
- * capsula (wizard a due passi), qui applicato alla creazione del vault:
- * crea la password, salva la recovery key.
- */
+/** "Passo X di 2": crea la password, salva la recovery key. */
 function StepStepper({ step }: { step: 1 | 2 }) {
   return (
     <div className="flex items-center justify-center gap-2 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
@@ -31,7 +27,7 @@ function StepStepper({ step }: { step: 1 | 2 }) {
   );
 }
 
-/** Il medaglione con l'icona --- stesso linguaggio di UnlockMasterKeyForm, un'icona diversa per passo (lucchetto mentre proteggi, chiave mentre conservi la via d'emergenza). */
+/** Il medaglione con l'icona, un'icona diversa per passo (lucchetto mentre proteggi, chiave mentre conservi la via d'emergenza). */
 function Medallion({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-16 w-16 items-center justify-center self-center rounded-full bg-[radial-gradient(circle,rgba(43,79,196,0.14),transparent_72%)]">
@@ -47,21 +43,13 @@ export function SetupMasterKeyForm() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
-  // Generato non appena la recovery key è pronta (non c'è bisogno di
-  // aspettare un click: è quasi istantaneo) --- se fallisce, il kit
-  // stampabile resta comunque completo, solo senza QR: la chiave in
-  // chiaro nel testo basta da sola a recuperare l'accesso.
+  // Generato non appena la recovery key è pronta: se fallisce, il kit stampabile resta comunque completo, solo senza QR.
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!pending) return;
     let cancelled = false;
-    // Import dinamico apposta: "qrcode" serve solo in questo istante,
-    // una volta sola per account (la primissima configurazione della
-    // cifratura) --- caricarla staticamente in cima al file la
-    // spedirebbe invece con ogni pagina protetta da RequireMasterKey,
-    // dato che quel gate importa questo form anche per chi ha già
-    // configurato la cifratura da tempo e non lo vedrà mai renderizzato.
+    // Import dinamico apposta: caricarla staticamente la spedirebbe con ogni pagina protetta da RequireMasterKey, non solo alla primissima configurazione.
     import("qrcode")
       .then(({ default: QRCode }) =>
         QRCode.toDataURL(pending.setup.recoveryKey.formatted, { margin: 1, width: 320 }),
@@ -197,13 +185,7 @@ export function SetupMasterKeyForm() {
             </button>
           </div>
 
-          {/*
-            Fuori vista sullo schermo, mostrato solo nella finestra di
-            stampa (v. lib/print.ts + la regola @media print in
-            globals.css): un unico foglio pensato per essere conservato
-            fisicamente, con la chiave anche come QR --- più comodo da
-            reinserire su un dispositivo nuovo che ricopiarla a mano.
-          */}
+          {/* Fuori vista sullo schermo, mostrato solo in stampa (v. lib/print.ts): un foglio da conservare fisicamente, con la chiave anche come QR. */}
           <div className="print-only hidden flex-col items-center gap-6 p-12 text-center print:flex">
             {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
             <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-12 w-auto" />
@@ -278,13 +260,7 @@ export function SetupMasterKeyForm() {
           </p>
         </div>
 
-        {/*
-          Stessa nota di sempre (v. PasswordComparisonNote, condivisa
-          anche con MasterKeyIntroModal), qui riscritta in locale con un
-          punto colorato sulla riga che conta davvero --- restilizzare
-          il componente condiviso avrebbe cambiato anche quel popup, non
-          richiesto da questo restyle.
-        */}
+        {/* Stessa nota di PasswordComparisonNote (condivisa con MasterKeyIntroModal), riscritta in locale per non toccare quel componente. */}
         <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-3.5 text-xs dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-start gap-2 text-zinc-600 dark:text-zinc-400">
             <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-300 dark:bg-zinc-700" />

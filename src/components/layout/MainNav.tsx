@@ -6,13 +6,7 @@ import { cn } from "@/lib/utils";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { NAV_ITEMS, type NavItem } from "@/components/layout/nav-items";
 
-/**
- * `collapsed` --- v. Sidebar: nasconde le etichette (restano lette dagli
- * screen reader) e centra le sole icone. `horizontal` --- v. TopNav: solo
- * cambia la direzione (righe che vanno a capo invece di una colonna),
- * le etichette restano visibili accanto all'icona come nella barra
- * laterale espansa.
- */
+/** `collapsed` (v. Sidebar): nasconde le etichette (lette dagli screen reader) e centra le icone. `horizontal` (v. TopNav): righe che vanno a capo invece di una colonna, etichette visibili come nella barra espansa. */
 export function MainNav({
   collapsed = false,
   horizontal = false,
@@ -20,24 +14,16 @@ export function MainNav({
 }: {
   collapsed?: boolean;
   horizontal?: boolean;
-  /** Sottoinsieme di NAV_ITEMS da mostrare --- usato dal cassetto mobile (v. MobileNavBar) per escludere le voci già nella barra fissa in basso. Sidebar/TopNav non lo passano: mostrano sempre l'elenco completo. */
+  /** Sottoinsieme di NAV_ITEMS da mostrare, usato dal cassetto mobile per escludere le voci già nella barra fissa in basso. */
   items?: NavItem[];
 }) {
   const pathname = usePathname();
   const { status } = useMasterKey();
   const iconOnly = collapsed;
 
-  // Prima ancora di cliccarci sopra, un pallino segnala le voci che
-  // presentano comunque il modulo "Configura la cifratura" --- altrimenti
-  // lo si scopre solo cliccando, identico e senza preavviso su ognuna. Solo
-  // per "not-set-up" (mai configurata): una volta configurata, "locked"
-  // chiede solo di re-inserire la master password ad ogni sessione, un
-  // attrito atteso che non ha bisogno dello stesso avviso. Il pallino è
-  // solo descrittivo (aria-describedby su uno span a parte, mai dentro
-  // l'etichetta): il nome accessibile del link resta "Archivio" e non
-  // "Archivio (richiede...)", altrimenti ogni test/screen reader che cerca
-  // il link per nome esatto smetterebbe di trovarlo appena prima di aver
-  // configurato la cifratura.
+  // Un pallino segnala le voci che presentano il modulo "Configura la cifratura", solo per "not-set-up" (mai
+  // configurata): "locked" chiede solo di re-inserire la password, un attrito atteso senza bisogno dell'avviso.
+  // Il pallino è solo descrittivo (aria-describedby a parte): il nome accessibile del link resta "Archivio".
   const needsSetup = status.kind === "not-set-up";
 
   return (
@@ -72,9 +58,7 @@ export function MainNav({
               )}
             >
               <span className="relative" aria-hidden="true">
-                {/* Sempre blu (colore del logo), a prescindere dallo stato
-                    attivo/hover --- solo l'etichetta di testo segue lo
-                    stato (v. className del Link qui sopra). */}
+                {/* Sempre blu a prescindere dallo stato attivo/hover: solo l'etichetta di testo lo segue. */}
                 <item.icon width={19} height={19} className="text-brand" />
                 {showSetupHint ? (
                   <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-orange-500" />
