@@ -56,12 +56,7 @@ function expiryStatus(expiresAt: string | null): "none" | "overdue" | "soon" | "
 
 type SortColumn = "name" | "category" | "asset" | "size" | "createdAt" | "expiresAt";
 
-/**
- * FASE 17b --- perché questo documento è comparso tra i risultati. Si
- * mostra solo quando la parola cercata sta DENTRO il file e non nel
- * nome: negli altri casi il motivo è già sotto gli occhi, e una riga in
- * più sarebbe solo rumore (v. richiesta utente).
- */
+/** Perché questo documento è comparso tra i risultati: solo se la parola cercata sta dentro il file e non nel nome (altrimenti il motivo è già sotto gli occhi). */
 function ContentSnippet({ doc, query }: { doc: DocumentListItem; query: string }) {
   const normalized = query.trim();
   if (!normalized) return null;
@@ -83,13 +78,7 @@ function ContentSnippet({ doc, query }: { doc: DocumentListItem; query: string }
   );
 }
 
-/**
- * FASE 14 --- "Archivio": documenti, immagini, audio, video e note
- * testuali, tutti nella stessa lista con gli stessi attributi
- * (categoria, bene, scadenza, tag, note). Immagini/audio/video hanno
- * un player inline (v. lib/content-kind.ts); una nota si apre e si
- * modifica qui stesso, senza scaricare nulla.
- */
+/** "Archivio": documenti, immagini, audio, video e note testuali nella stessa lista con gli stessi attributi. Immagini/audio/video hanno un player inline (v. lib/content-kind.ts); una nota si apre e si modifica qui stesso. */
 export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
@@ -104,12 +93,8 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [error, setError] = useState<string | null>(null);
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
 
-  // Selezione multipla (v. richiesta utente) --- un Set, non un array:
-  // toggle/verifica per id devono restare O(1) anche con centinaia di
-  // righe. `trashRetentionDays` serve solo per la frase di conferma
-  // dell'eliminazione in blocco/singola ("potrai ripristinarli entro N
-  // giorni") --- letto una volta all'avvio, non un Provider: cambia di
-  // rado e non deve restare sincronizzato in tempo reale con Impostazioni.
+  // Set (non array): toggle/verifica per id restano O(1) con centinaia di righe.
+  // trashRetentionDays è letto una volta all'avvio (non un Provider): cambia di rado.
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [trashRetentionDays, setTrashRetentionDays] = useState(15);
@@ -117,17 +102,12 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [bulkTagInput, setBulkTagInput] = useState("");
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  // Impostato cliccando un tag su un documento (v. rendering dei tag
-  // qui sotto) --- niente menu a tendina, un solo tag alla volta:
-  // sfogliare "cosa ha questo tag" è la controparte naturale di poterli
-  // gestire (v. TagsSettingsPanel), non un filtro complesso a sé.
+  // Impostato cliccando un tag sul documento --- un solo tag alla volta, niente menu a tendina.
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "name", direction: "asc" });
-  // FASE 17b --- avanzamento della lettura dei documenti già archiviati.
-  // `fraction` (FASE 17c) è l'avanzamento **dentro** il file corrente:
-  // con l'OCR un singolo contenuto può occupare mezzo minuto, e senza
-  // "3 di 7" resterebbe immobile per tutto quel tempo.
+  // Avanzamento della lettura dei documenti già archiviati; `fraction` è il progresso dentro il file corrente
+  // (con l'OCR un singolo contenuto può occupare mezzo minuto, senza "3 di 7" resterebbe immobile).
   const [extractionProgress, setExtractionProgress] = useState<{
     done: number;
     total: number;
@@ -155,9 +135,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [transcriptAutoBusy, setTranscriptAutoBusy] = useState(false);
   const [transcriptSaving, setTranscriptSaving] = useState(false);
 
-  // "?created=1"/"?updated=1" arrivano da /archive/new e da
-  // /archive/[id]/edit dopo un salvataggio riuscito --- v.
-  // CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
+  // "?created=1"/"?updated=1" arrivano da /archive/new e da /archive/[id]/edit dopo un salvataggio riuscito.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
   const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
   useEffect(() => {
@@ -192,10 +170,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   }, [supabase, masterKey]);
 
   useEffect(() => {
-    // Fetching + client-side decryption on mount is legitimate here (not
-    // the "derive state from props" anti-pattern this rule targets):
-    // the data can only be read/decrypted with the in-memory masterKey,
-    // so it can't come from a Server Component.
+    // Legittimo qui: i dati si decifrano solo con la masterKey in memoria, non possono venire da un Server Component.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
@@ -328,9 +303,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     setError(null);
     try {
       await updateDocumentTranscript(supabase, masterKey, doc.id, transcriptDraft);
-      // refresh() prima di chiudere il pannello: se lo si riapre subito
-      // dopo, deve già trovare il testo appena salvato, non quello di
-      // prima (v. lo stesso ordine in saveAttachmentTranscript, CapsulesPanel.tsx).
+      // refresh() prima di chiudere il pannello: se riaperto subito deve trovare il testo appena salvato.
       await refresh();
       setTranscribingId(null);
     } catch (err) {
@@ -340,14 +313,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  /**
-   * L'eliminazione sposta nel Cestino, non elimina più per sempre (v.
-   * richiesta utente dopo la selezione multipla: farlo su più
-   * documenti insieme moltiplica il rischio di un clic distratto).
-   * Stessa funzione per il singolo documento (qui) e per il blocco
-   * (handleBulkDelete sotto) --- moveDocumentsToTrash accetta già un
-   * elenco di id.
-   */
+  /** L'eliminazione sposta nel Cestino, non elimina più per sempre: farlo su più documenti insieme moltiplica il rischio di un clic distratto. */
   async function handleDelete(doc: DocumentListItem) {
     if (
       !window.confirm(
@@ -432,14 +398,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  /**
-   * Categoria/tag/fascicolo in blocco --- non c'è una funzione di
-   * repository che aggiorna solo un campo: updateDocumentMetadata
-   * sovrascrive l'intero DocumentMetadataInput insieme
-   * (v. domain/documents/repository.ts), quindi ogni giro parte dal
-   * documento già in memoria (già decifrato) e ne cambia solo il campo
-   * che conta, preservando gli altri --- niente riletture in più.
-   */
+  /** updateDocumentMetadata sovrascrive l'intero input insieme (v. domain/documents/repository.ts): si parte dal documento già in memoria e se ne cambia solo il campo che conta. */
   async function handleBulkCategory(categoryId: string) {
     setBulkBusy(true);
     setError(null);
@@ -543,10 +502,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     setSort((prev) => toggleSort(prev, column));
   }
 
-  // FASE 17b --- il recupero dei contenuti già in archivio. Uno alla
-  // volta e non in parallelo: ognuno richiede di scaricare, decifrare e
-  // leggere il file, e lanciarne dieci insieme su un telefono significa
-  // solo farlo arrancare. L'avanzamento è mostrato nel banner.
+  // Uno alla volta e non in parallelo: dieci letture insieme su un telefono lo farebbero solo arrancare.
   const pendingExtraction = documentsAwaitingExtraction(documents);
 
   async function handleExtractPending() {
@@ -561,8 +517,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
           setExtractionProgress({ done: index, total: queue.length, fraction }),
         );
       } catch {
-        // Un documento illeggibile non deve fermare gli altri: si conta
-        // e si prosegue (v. estrazione best-effort in domain/extraction).
+        // Un documento illeggibile non deve fermare gli altri: si conta e si prosegue.
         failures++;
       }
       setExtractionProgress({ done: index + 1, total: queue.length, fraction: null });
@@ -580,9 +535,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   function matchesQuery(doc: DocumentListItem): boolean {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return true;
-    // flattenForSearch: dalla FASE 17e il testo estratto conserva gli a
-    // capo, e senza appiattirlo una frase a cavallo di due righe non si
-    // troverebbe più.
+    // flattenForSearch: il testo estratto conserva gli a capo, senza appiattirlo una frase a cavallo di due righe non si troverebbe.
     const haystack = flattenForSearch(
       [doc.filename, doc.notes, doc.transcript, doc.extractedText, ...doc.tags].join(" "),
     ).toLowerCase();
@@ -594,13 +547,10 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     .filter((doc) => !categoryFilter || doc.categoryId === categoryFilter)
     .filter((doc) => !tagFilter || listIncludesTag(doc.tags, tagFilter));
 
-  // L'ordinamento (solo click su un'intestazione, quindi solo in
-  // modalità tabellare) non tocca filteredDocuments stesso: la vista a
-  // elenco resta nel suo ordine cronologico abituale.
+  // L'ordinamento non tocca filteredDocuments: la vista a elenco resta nel suo ordine cronologico.
   const sortedDocuments = applySort(filteredDocuments, sort, sortValueFor);
 
-  // Si riclampa invece di resettare con un effect: se un filtro riduce i
-  // risultati, la pagina torna da sola entro il range valido.
+  // Si riclampa invece di resettare con un effect: se un filtro riduce i risultati, la pagina torna da sola nel range.
   const pageCount = Math.max(1, Math.ceil(filteredDocuments.length / TABLE_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const pagedDocuments = sortedDocuments.slice(
@@ -621,9 +571,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             Documenti, immagini, audio, video e note --- tutto cifrato sul tuo dispositivo prima
             di essere salvato.
           </p>
-          {/* FASE 21 --- una porta secondaria, non un bottone: caricare
-              un file resta l'azione principale, questa è per chi ha
-              bisogno di più. */}
+          {/* Una porta secondaria, non un bottone: caricare un file resta l'azione principale. */}
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             <Link href="/archive/import" className="text-brand hover:underline">
               Importa più file insieme
@@ -656,11 +604,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
       ) : (
         <>
-          {/* FASE 17b --- i contenuti caricati prima che l'estrazione
-              esistesse non sono cercabili per contenuto, e senza questo
-              avviso l'utente non avrebbe modo di saperlo né di
-              rimediare (v. richiesta utente). Compare solo se ce ne
-              sono davvero, e sparisce da sé quando finisce. */}
+          {/* Contenuti caricati prima che l'estrazione esistesse: non cercabili finché non letti. Compare solo se ce ne sono. */}
           {pendingExtraction.length > 0 ? (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/30 bg-brand/5 p-4">
               <p className="min-w-0 text-sm text-zinc-700 dark:text-zinc-300">
@@ -724,9 +668,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             ) : null}
           </div>
 
-          {/* Barra contestuale --- compare solo con almeno un documento
-              selezionato, discreta (un filo di colore, non un blocco
-              pieno) come nel concept discusso con l'utente. */}
+          {/* Barra contestuale: compare solo con almeno un documento selezionato. */}
           {selectedIds.size > 0 ? (
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-brand/10 px-3 py-1.5">
               <div className="flex items-center gap-2 text-sm font-semibold text-brand">
@@ -840,14 +782,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">
-              {/* @container: le colonne secondarie si nascondono in base
-                  allo spazio VERO di questo riquadro (v. le classi
-                  "hidden @...:table-cell" sotto), non alla larghezza
-                  della finestra --- così tiene conto anche della barra
-                  laterale aperta o chiusa. Nome e Azioni non spariscono
-                  mai: il menu di ogni riga deve restare raggiungibile
-                  (v. richiesta utente). overflow-x-auto resta solo come
-                  rete di sicurezza. */}
+              {/* @container: le colonne secondarie si nascondono in base allo spazio vero del riquadro, non della finestra. Nome e Azioni non spariscono mai. */}
               <div className="@container overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
                 <table className="w-full text-sm">
                   <thead>
@@ -927,17 +862,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                               />
                             </td>
                             <td className="max-w-[16rem] p-3 font-medium text-zinc-900 dark:text-zinc-100">
-                              {/* FASE 17e --- il nome porta alla scheda del
-                                  contenuto: è l'unico posto dove si vede
-                                  cosa Hinthial ci ha letto dentro.
-
-                                  Niente sottolineatura al passaggio: in
-                                  un elenco di venti righe è un rumore
-                                  che si accende e si spegne. Il nome
-                                  passa invece al blu Hinthial, lo stesso
-                                  colore che in tutta l'app segnala ciò
-                                  su cui si può agire (v. richiesta
-                                  utente). */}
+                              {/* Il nome porta alla scheda del contenuto. Niente sottolineatura: solo il colore Hinthial, coerente con il resto dell'app. */}
                               <Link
                                 href={`/archive/${doc.id}`}
                                 className="flex min-w-0 items-center gap-1 transition-colors hover:text-brand dark:hover:text-blue-400"

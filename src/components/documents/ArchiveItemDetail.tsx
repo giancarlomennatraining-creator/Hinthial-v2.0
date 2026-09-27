@@ -46,23 +46,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
 
-/**
- * FASE 17e --- la scheda di un contenuto d'Archivio: la sua casa.
- *
- * Nasce per rispondere a una domanda che fino a ieri non aveva uno
- * schermo dove essere posta: **cosa ha letto Hinthial dentro questo
- * file?** L'estrazione esiste dalla FASE 17, ma la sua unica traccia
- * visibile era uno spezzone di una riga nei risultati di ricerca, e solo
- * se si indovinava la parola giusta. In un prodotto che promette "niente
- * esce dal tuo dispositivo", far vedere esattamente cosa si è letto non
- * è un di più: è la dimostrazione della promessa.
- *
- * È anche il pavimento delle fasi successive --- i campi estratti (18),
- * le proposte (19), il fascicolo (20), il consenso per singolo contenuto
- * (22) atterrano tutti qui. Di proposito **non** ci sono sezioni vuote
- * in attesa di quelle fasi: una pagina piena di riquadri "in arrivo"
- * sembra quasi finita e non lo è.
- */
+/** Scheda di un contenuto d'Archivio: mostra anche cosa Hinthial ha estratto dal file, a dimostrazione che resta sul dispositivo. Niente sezioni vuote per fasi future --- sembrerebbero quasi finite e non lo sono. */
 export function ArchiveItemDetail({
   masterKey,
   documentId,
@@ -82,43 +66,28 @@ export function ArchiveItemDetail({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Anteprima: object URL per immagini/audio/video e per la prima pagina
-  // disegnata di un PDF, testo per le note.
+  // Anteprima: object URL per immagini/audio/video e per la prima pagina disegnata di un PDF, testo per le note.
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [noteBody, setNoteBody] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
-  /** Pagine del PDF, per dire "prima di N" --- null se non è un PDF, o se
-   * l'anteprima viene dalla miniatura (che non porta con sé quel dato,
-   * v. sotto). */
+  /** Pagine del PDF per "prima di N" --- null se non è un PDF o se l'anteprima viene dalla miniatura. */
   const [pdfPageCount, setPdfPageCount] = useState<number | null>(null);
   /** Un PDF che pdf.js non è riuscito a disegnare: si ripiega sul messaggio. */
   const [previewUnavailable, setPreviewUnavailable] = useState(false);
-  /**
-   * Vero quando `previewUrl` viene dalla miniatura e non dal file
-   * intero --- serve solo a scegliere la didascalia giusta: la
-   * miniatura non porta con sé il numero di pagine di un PDF (è
-   * un'immagine e basta), quindi non si può dire "Prima pagina di N."
-   */
+  /** Vero quando `previewUrl` viene dalla miniatura: non porta il numero di pagine, quindi niente "Prima pagina di N". */
   const [previewIsThumbnail, setPreviewIsThumbnail] = useState(false);
 
-  // Rilettura di questo singolo contenuto (v. handleReread).
   const [rereading, setRereading] = useState<number | null>(null);
 
-  // FASE 19 --- proposte, rifiuti già espressi e l'ultima azione
-  // annullabile. L'annullamento vale per la permanenza sulla pagina: chi
-  // se ne accorge dopo può sempre correggere dalla scheda, che è dove
-  // quel valore vive.
+  // Proposte, rifiuti già espressi e ultima azione annullabile.
   const [rejections, setRejections] = useState<ProposalRejection[]>([]);
   const [undoable, setUndoable] = useState<UndoableAction | null>(null);
   const [proposalBusy, setProposalBusy] = useState(false);
 
-  // Il testo letto può essere lungo: se ne mostra un pezzo e si apre a
-  // richiesta. Aprirlo tutto sempre farebbe scorrere la pagina per
-  // minuti su un contratto di trenta pagine.
+  // Testo letto potenzialmente lungo: se ne mostra un pezzo, il resto solo a richiesta.
   const [fullText, setFullText] = useState(false);
 
-  // Stesso contatore di richieste di EditArchiveItemForm --- v. lì il
-  // perché (StrictMode invoca l'effetto due volte al mount).
+  // Contatore di richieste --- v. EditArchiveItemForm (StrictMode invoca l'effetto due volte al mount).
   const latestRequestRef = useRef(0);
 
   const refresh = useCallback(async () => {
@@ -163,10 +132,7 @@ export function ArchiveItemDetail({
 
   const isPdf = doc?.mimeType === "application/pdf";
 
-  // Immagine, nota e PDF si aprono da soli: sono il contenuto stesso, ed
-  // è il motivo per cui si è arrivati qui. Audio e video no --- possono
-  // pesare decine di megabyte, e si scaricano solo se li si vuole
-  // davvero sentire.
+  // Immagine, nota e PDF si aprono da soli: audio e video no, possono pesare decine di megabyte.
   const autoPreview = kind === "image" || kind === "note" || isPdf;
 
   const loadPreview = useCallback(async () => {
@@ -181,11 +147,7 @@ export function ArchiveItemDetail({
       }
 
       if (doc.mimeType === "application/pdf" || doc.mimeType.startsWith("image/")) {
-        // La miniatura, quando c'è, evita di scaricare il file intero
-        // solo per mostrarne un'anteprima --- è il motivo per cui esiste
-        // (v. lib/thumbnail.ts): una scansione da 15 MB diventa una
-        // manciata di kilobyte, e l'apertura della scheda non dipende
-        // più dalla dimensione del file.
+        // La miniatura evita di scaricare il file intero solo per l'anteprima (v. lib/thumbnail.ts).
         const thumbnail = await downloadThumbnail(supabase, masterKey, doc);
         if (thumbnail) {
           setPreviewUrl(URL.createObjectURL(thumbnail));
@@ -194,15 +156,11 @@ export function ArchiveItemDetail({
         }
       }
 
-      // Nessuna miniatura --- tipo non supportato, caricato prima che
-      // esistesse, o non generata con successo a suo tempo: si scarica
-      // il file intero, come prima di questa fase.
+      // Nessuna miniatura (tipo non supportato o non generata a suo tempo): si scarica il file intero.
       const { mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
 
       if (mimeType === "application/pdf") {
-        // Un PDF non si può mostrare com'è: se ne disegna la prima
-        // pagina, con lo stesso pdf.js che l'OCR usa per leggerle (v.
-        // lib/pdf.ts). Vale sia per i PDF nativi sia per le scansioni.
+        // Se ne disegna la prima pagina con lo stesso pdf.js che l'OCR usa per leggerle (v. lib/pdf.ts).
         const rendered = await renderPdfFirstPage(bytes);
         if (!rendered) {
           setPreviewUnavailable(true);
@@ -243,13 +201,7 @@ export function ArchiveItemDetail({
     }
   }
 
-  /**
-   * Rilegge questo contenuto da zero. Serve in tre casi reali: l'OCR ha
-   * sbagliato e si vuole riprovare; il contenuto è stato caricato prima
-   * che Hinthial sapesse leggerlo; è stato letto da una versione
-   * precedente (quelli letti prima della FASE 17e, per esempio, non
-   * conservavano l'impaginazione --- rileggerli la recupera).
-   */
+  /** Rilegge da zero: l'OCR ha sbagliato, il contenuto è stato caricato prima che si sapesse leggerlo, o è stato letto da una versione precedente che non conservava l'impaginazione. */
   async function handleReread() {
     if (!doc) return;
     setRereading(0);
@@ -272,11 +224,7 @@ export function ArchiveItemDetail({
     }
   }
 
-  /**
-   * FASE 19 --- ogni azione su una proposta passa di qui: esegue,
-   * ricarica, e lascia pronta la strada per tornare indietro. Il
-   * `currentUserId()` serve perché l'audit registra a nome di chi.
-   */
+  /** Ogni azione su una proposta passa di qui: esegue, ricarica, lascia pronto l'annullamento. L'id utente serve perché l'audit registra a nome di chi. */
   async function runProposalAction(
     action: (ownerId: string) => Promise<UndoableAction>,
   ): Promise<void> {
@@ -376,27 +324,12 @@ export function ArchiveItemDetail({
   const asset = assets.find((a) => a.id === doc.relatedAssetId);
   const linkedDossiers = dossiers.filter((d) => doc.dossierIds.includes(d.id));
   const reading = readingStateFor(doc);
-  // FASE 18 --- calcolati al volo dal testo già decifrato in memoria, non
-  // salvati: non c'è niente da migrare, valgono da subito su tutto
-  // l'archivio esistente, e non esiste proprio il modo di scrivere per
-  // sbaglio qualcosa che l'utente non ha accettato (v. FASE 19).
-  // FASE 19 --- che cosa c'è da proporre, tolto ciò che è già impostato e
-  // ciò che l'utente ha già scartato (v. domain/proposals/build.ts).
+  // Calcolati al volo dal testo già decifrato, non salvati: niente da migrare, valgono su tutto l'archivio esistente.
+  // Che cosa c'è da proporre, tolto ciò che è già impostato e ciò che l'utente ha già scartato (v. domain/proposals/build.ts).
   const proposals = buildProposals(doc, categories, rejections);
 
-  // "Cosa ne ho ricavato" dice ciò che Hinthial ha capito e che **non si
-  // legge già da un'altra parte della stessa schermata**. Tre esclusioni,
-  // e tutte e tre saltano all'occhio ora che il riquadro sta accanto alla
-  // scheda invece che in fondo alla pagina:
-  //
-  // - ciò che è già una proposta (lo stesso valore, con la stessa fonte,
-  //   a due centimetri di distanza --- e la copia senza tasti sembrerebbe
-  //   pure un'altra cosa);
-  // - ciò che è già nella scheda (una scadenza impostata non è più una
-  //   notizia: è un dato del documento, ed è scritto qui sopra);
-  // - il titolo, che da questa pagina non si può applicare: un
-  //   suggerimento su cui non si può agire è solo un invito a chiedersi
-  //   "e allora?". Vive dov'è utile, cioè al caricamento (v. FASE 19b).
+  // "Cosa ne ho ricavato" esclude: ciò che è già una proposta identica, ciò che è già nella scheda (non più una
+  // notizia), e il titolo (non applicabile da questa pagina --- vive al caricamento, v. FASE 19b).
   const structuredFields = extractStructuredFields(doc.extractedText).filter((field) => {
     if (field.kind === "title") return false;
     if (proposals.some((p) => p.kind === field.kind && p.value === field.value)) return false;
@@ -457,17 +390,10 @@ export function ArchiveItemDetail({
         </button>
       </div>
 
-      {/* Anteprima e scheda affiancate, un terzo e due terzi (v. richiesta
-          utente). Container query e non breakpoint di viewport: la
-          larghezza vera qui dipende anche dalla barra laterale, aperta o
-          chiusa --- stesso motivo per cui le tabelle nascondono le colonne
-          a container query. Sotto i ~768px di spazio reale si impilano,
-          perché un terzo di poco è una colonna illeggibile. */}
+      {/* Anteprima e scheda affiancate, un terzo e due terzi. Container query (non breakpoint di viewport)
+          perché la larghezza reale dipende anche dalla barra laterale, aperta o chiusa. */}
       <div className="@container">
-        {/* items-start: senza, la griglia allunga la scheda fino
-            all'altezza dell'anteprima, e per un contenuto senza categoria
-            né tag resterebbe mezzo riquadro vuoto. Ogni blocco è alto
-            quanto ciò che contiene. */}
+        {/* items-start: senza, la griglia allungherebbe la scheda fino all'altezza dell'anteprima. */}
         <div className="grid items-start gap-6 @3xl:grid-cols-3">
           <section aria-label="Anteprima" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 @3xl:col-span-1 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Anteprima</h2>
@@ -495,10 +421,7 @@ export function ArchiveItemDetail({
                     Usa &laquo;Scarica&raquo; per sfogliarlo tutto.
                   </p>
                 ) : previewIsThumbnail ? (
-                  // La miniatura non porta con sé il numero di pagine
-                  // (v. hint sopra su previewIsThumbnail): la didascalia
-                  // resta più generica, ma dice comunque che questa non
-                  // è la qualità piena.
+                  // La miniatura non porta il numero di pagine: didascalia più generica.
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     Anteprima. Usa &laquo;Scarica&raquo; per l&apos;originale
                     {isPdf ? ", pagina per pagina" : ""}.
@@ -529,10 +452,7 @@ export function ArchiveItemDetail({
             )}
           </section>
 
-          {/* Colonna di destra: la scheda e, sotto, ciò che Hinthial ha
-              ricavato (v. richiesta utente). Stanno insieme perché sono
-              la stessa cosa vista da due parti --- quello che il
-              documento è, e quello che il documento dice. */}
+          {/* Colonna di destra: la scheda e, sotto, ciò che Hinthial ha ricavato dal testo. */}
           <div className="flex flex-col gap-6 @3xl:col-span-2">
             <section aria-label="Scheda" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
               <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Scheda</h2>
@@ -582,17 +502,12 @@ export function ArchiveItemDetail({
               </dl>
             </section>
 
-            {/* FASE 18 --- accanto alla scheda e non sotto al testo grezzo:
-                sono le stesse informazioni della scheda, solo ricavate da
-                Hinthial invece che scritte dall'utente. */}
             <StructuredFieldsSection fields={structuredFields} />
           </div>
         </div>
       </div>
 
-      {/* FASE 19 --- a tutta larghezza e prima del testo: è l'unica parte
-          che chiede una risposta, e una domanda stretta in una colonna,
-          in fondo alla pagina, è una domanda che nessuno vede. */}
+      {/* A tutta larghezza e prima del testo: è l'unica parte che chiede una risposta. */}
       <ProposalsSection
         proposals={proposals}
         categories={categories}
@@ -602,9 +517,7 @@ export function ArchiveItemDetail({
         onReject={handleRejectProposal}
       />
 
-      {/* A tutta larghezza, sotto: è il testo di un documento, e in una
-          colonna stretta si leggerebbe peggio di quanto si legga il
-          documento stesso. */}
+      {/* A tutta larghezza, sotto: in una colonna stretta si leggerebbe peggio del documento stesso. */}
       <ReadingSection
         doc={doc}
         reading={reading}
@@ -629,16 +542,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 /** Quanti caratteri del testo letto si mostrano prima di "Mostra tutto". */
 const TEXT_PREVIEW_CHARS = 1200;
 
-/**
- * "Cosa ho letto" --- il cuore della pagina, e l'unico posto in cui i
- * quattro stati di lettura (v. domain/extraction/reading-state.ts)
- * diventano qualcosa che si può leggere invece che dedurre.
- *
- * È anche dove trova finalmente casa l'avviso che nella FASE 17b avevo
- * deliberatamente **non** messo nell'elenco: là sarebbe stato un cartello
- * addosso a documenti di cui nessuno aveva chiesto niente, qui è la
- * risposta a una domanda che l'utente ha appena fatto aprendo la scheda.
- */
+/** "Cosa ho letto" --- unico posto dove i quattro stati di lettura (v. domain/extraction/reading-state.ts) diventano leggibili invece che dedotti. */
 function ReadingSection({
   doc,
   reading,
@@ -654,8 +558,7 @@ function ReadingSection({
   onToggleFullText: () => void;
   onReread: () => void;
 }) {
-  // Per una nota il testo È il contenuto: l'anteprima qui sopra lo mostra
-  // già per intero, e una seconda copia sarebbe solo una ripetizione.
+  // Per una nota il testo È il contenuto: l'anteprima lo mostra già per intero.
   if (reading === "own-text") return null;
 
   const busy = rereading !== null;

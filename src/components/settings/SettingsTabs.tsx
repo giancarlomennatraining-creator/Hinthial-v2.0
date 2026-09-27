@@ -62,22 +62,7 @@ interface TabDef {
   icon: ComponentType<SVGProps<SVGSVGElement>>;
 }
 
-/**
- * Raggruppate in macro-aree (v. richiesta utente: 11 voci piatte erano
- * diventate difficili da scorrere) --- un gruppo con `label: null` non
- * mostra intestazione, per le due voci pensate per restare da sole,
- * fuori da qualunque cartella: "Informazioni utente" in cima (la più
- * visitata, niente da cercare) e "Zona pericolosa" in fondo (l'unica
- * che segnala un rischio, non deve confondersi con una cartella
- * qualunque). Due spostamenti concettuali rispetto a prima:
- * "Intelligenza artificiale" (un consenso al trattamento dati, non
- * un'impostazione a sé) e "Categorie" (tassonomia dei propri contenuti)
- * ora vivono sotto "Privacy e dati" invece che da sole; "Onboarding"
- * (oggi quasi solo un interruttore mostra/nascondi per il gadget in
- * barra laterale) sotto "Personalizzazione", la stessa famiglia di
- * "Aspetto". "Attività" (il registro) sotto "Sicurezza": il suo uso
- * principale è accorgersi di qualcosa di sospetto sul proprio account.
- */
+/** Raggruppate in macro-aree (11 voci piatte erano difficili da scorrere); `label: null` per le due voci pensate per restare da sole, fuori da ogni cartella: "Informazioni utente" in cima, "Zona pericolosa" in fondo. */
 const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
   { label: null, tabs: [{ id: "user-info", label: "Informazioni utente", icon: UserIcon }] },
   {
@@ -106,10 +91,7 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
       { id: "onboarding", label: "Onboarding", icon: ChecklistIcon },
     ],
   },
-  // Sola eccezione di colore: resta nel proprio rosso/arancio di avviso
-  // invece del blu del logo (v. sotto) --- è l'unica voce che segnala
-  // un rischio, non solo una sezione, e perderebbe il senso diventando
-  // blu come le altre.
+  // Sola eccezione di colore: resta nel proprio rosso/arancio di avviso invece del blu del logo, essendo l'unica voce di rischio.
   { label: null, tabs: [{ id: "danger-zone", label: "Zona pericolosa", icon: AlertTriangleIcon }] },
 ];
 
@@ -133,20 +115,10 @@ export function SettingsTabs({
   birthDate: string | null;
 }) {
   const [tab, setTab] = useState<Tab>("user-info");
-  // Il contenuto mostrato dissolve verso la scheda scelta invece di
-  // sostituirsi di scatto (v. richiesta utente) --- il tasto della
-  // scheda risponde comunque subito al click (usa `tab`, non
-  // `displayedTab`): solo il contenuto sotto ha il ritardo della
-  // dissolvenza.
+  // Il contenuto dissolve verso la scheda scelta invece di sostituirsi di scatto; il tasto (che usa `tab`, non `displayedTab`) risponde subito al click.
   const { displayed: displayedTab, visible: tabContentVisible } = useCrossfade(tab, 150);
 
-  // Navigazione mobile: elenco delle voci -> dettaglio di una sola,
-  // invece della fila di schede orizzontali (v. richiesta utente: "può
-  // vivere parallelamente a quello che accade nella versione desktop?")
-  // --- sì, i due layout sono indipendenti: qui sotto md, la fila di
-  // schede sopra invariata da md in su (due blocchi separati con
-  // `md:hidden`/`hidden md:flex`, non un solo layout responsive). `null`
-  // = mostra l'elenco.
+  // Mobile: elenco delle voci -> dettaglio di una sola, indipendente dal layout desktop (`md:hidden`/`hidden md:flex`). `null` = mostra l'elenco.
   const [mobileSection, setMobileSection] = useState<Tab | null>(null);
   const mobileView: Tab | "list" = mobileSection ?? "list";
   const { displayed: displayedMobileView, visible: mobileViewVisible } = useCrossfade(mobileView, 150);
@@ -167,16 +139,13 @@ export function SettingsTabs({
       );
     }
     if (activeTab === "onboarding") {
-      // Serve i dati decifrati (documenti/beni/contatti/capsule) per
-      // calcolare l'avanzamento --- unica scheda oltre a Importa/Esporta
-      // e Zona pericolosa a richiedere la master key sbloccata.
+      // Serve i dati decifrati per calcolare l'avanzamento --- richiede la master key sbloccata.
       return (
         <RequireMasterKey>{(masterKey) => <OnboardingSettingsPanel masterKey={masterKey} />}</RequireMasterKey>
       );
     }
     if (activeTab === "privacy") {
-      // Solo conteggi e colonne mai cifrate (v. domain/privacy/repository.ts)
-      // --- non richiede la master key, a differenza di Onboarding qui sopra.
+      // Solo conteggi e colonne mai cifrate: non richiede la master key.
       return (
         <PrivacyPanel
           userId={userId}
@@ -188,12 +157,7 @@ export function SettingsTabs({
       );
     }
     if (activeTab === "security") {
-      // Layer di identità (login), non di cifratura --- non richiede
-      // la master key (v. domain/mfa/repository.ts). "Dispositivi
-      // fidati" (FASE 13) invece la sblocca da sé, chiedendo di nuovo
-      // la master password nel proprio modulo (v. DeviceLockPanel):
-      // niente RequireMasterKey qui, per non forzare uno sblocco solo
-      // per vedere lo stato dell'MFA.
+      // Layer di identità (login), non di cifratura: non richiede la master key. "Dispositivi fidati" la sblocca da sé nel proprio modulo, per non forzare uno sblocco solo per vedere lo stato dell'MFA.
       return (
         <div className="flex flex-col gap-10">
           <MfaSettingsPanel userId={userId} />
@@ -213,12 +177,11 @@ export function SettingsTabs({
       );
     }
     if (activeTab === "digital-legacy") {
-      // Solo parametri (v. domain/digital-legacy) --- nessun dato
-      // cifrato coinvolto, come Sicurezza: non richiede la master key.
+      // Solo parametri, nessun dato cifrato coinvolto: non richiede la master key.
       return <DigitalLegacySettingsPanel userId={userId} />;
     }
     if (activeTab === "emergency-card") {
-      // Tutto cifrato (v. domain/emergency-card) --- richiede la master key, a differenza della scheda qui sopra.
+      // Tutto cifrato: richiede la master key, a differenza della scheda qui sopra.
       return (
         <RequireMasterKey>
           {(masterKey) => (
@@ -234,9 +197,7 @@ export function SettingsTabs({
       );
     }
     if (activeTab === "ai") {
-      // Una scheda a sé (non più una sottoparte di Privacy, v. richiesta
-      // utente) --- non richiede la master key, il consenso riguarda
-      // solo dati già decifrati e mostrati altrove (v. AIPanel).
+      // Non richiede la master key: il consenso riguarda solo dati già decifrati e mostrati altrove (v. AIPanel).
       return (
         <div className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -256,16 +217,12 @@ export function SettingsTabs({
       return <CategoriesPanel />;
     }
     if (activeTab === "tags") {
-      // A differenza di Categorie qui sopra, i tag sono cifrati (v.
-      // TagsSettingsPanel): richiede la master key sbloccata.
+      // A differenza di Categorie, i tag sono cifrati: richiede la master key sbloccata.
       return <RequireMasterKey>{(masterKey) => <TagsSettingsPanel masterKey={masterKey} />}</RequireMasterKey>;
     }
     if (activeTab === "appearance") {
       return (
-        // A due colonne da lg in su (v. richiesta utente) --- una sola
-        // sotto, dove non ci sarebbe spazio per restare leggibili
-        // affiancate. Niente più max-w: qui come nel resto di
-        // Impostazioni il contenuto usa tutta la larghezza disponibile.
+        // A due colonne da lg in su, una sola sotto dove non ci sarebbe spazio per restare leggibili affiancate.
         <div className="grid gap-8 lg:grid-cols-2">
           <div className="flex flex-col gap-4">
             <div>
@@ -354,19 +311,14 @@ export function SettingsTabs({
       );
     }
     if (activeTab === "activity") {
-      // Registro tecnico in chiaro (v. lib/audit/log-event.ts): non
-      // richiede la master key, come Aspetto.
+      // Registro tecnico in chiaro: non richiede la master key.
       return <AuditLogPanel />;
     }
     if (activeTab === "import-export") {
-      // ImportExportTabs gestisce da sé le proprie sotto-schede
-      // (Importa/Esporta) e il proprio RequireMasterKey --- prima
-      // viveva in una pagina a sé (/import-export), ora è qui.
+      // ImportExportTabs gestisce da sé le proprie sotto-schede e il proprio RequireMasterKey.
       return <ImportExportTabs firstName={firstName} lastName={lastName} email={email} />;
     }
-    // "Cancella tutto" ha bisogno della master key sbloccata (per
-    // scoprire i path da rimuovere in Storage) --- come Onboarding e
-    // Importa/Esporta; le altre schede non toccano nulla di cifrato.
+    // "Cancella tutto" ha bisogno della master key sbloccata per scoprire i path da rimuovere in Storage.
     return (
       <RequireMasterKey>{(masterKey) => <DangerZonePanel userId={userId} masterKey={masterKey} />}</RequireMasterKey>
     );
@@ -374,9 +326,7 @@ export function SettingsTabs({
 
   return (
     <>
-      {/* Mobile: elenco delle voci -> dettaglio di una sola, con un
-          tasto per tornare indietro --- v. commento su mobileSection
-          sopra. */}
+      {/* Mobile: elenco delle voci -> dettaglio di una sola, con un tasto per tornare indietro. */}
       <div className="md:hidden">
         <div
           className={cn(
@@ -385,9 +335,7 @@ export function SettingsTabs({
           )}
         >
           {displayedMobileView === "list" ? (
-            // Un blocco per gruppo, non un unico elenco continuo (v.
-            // richiesta utente) --- il nome del gruppo vive sopra e fuori
-            // dal proprio blocco, non più incollato dentro come prima riga.
+            // Un blocco per gruppo: il nome del gruppo vive sopra e fuori dal proprio blocco.
             <div className="flex flex-col gap-6">
               {TAB_GROUPS.map((group, groupIndex) => (
                 <div key={group.label ?? `group-${groupIndex}`} className="flex flex-col gap-2">
@@ -448,8 +396,7 @@ export function SettingsTabs({
         </div>
       </div>
 
-      {/* Desktop: schede laterali + contenuto, sempre visibili insieme
-          --- comportamento invariato rispetto a prima di questa funzione. */}
+      {/* Desktop: schede laterali + contenuto, sempre visibili insieme. */}
       <div className="hidden md:flex md:gap-10">
         <div
           role="tablist"
@@ -484,10 +431,7 @@ export function SettingsTabs({
                       : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
                   )}
                 >
-                  {/* Icona sempre blu (colore del logo), a prescindere dallo
-                      stato attivo/inattivo della scheda --- eccetto "Zona
-                      pericolosa" (v. sopra), che resta nel proprio colore di
-                      avviso. */}
+                  {/* Icona sempre blu a prescindere dallo stato attivo/inattivo, eccetto "Zona pericolosa" nel proprio colore di avviso. */}
                   <t.icon
                     width={20}
                     height={20}

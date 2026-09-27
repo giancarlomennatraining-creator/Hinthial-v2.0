@@ -174,19 +174,7 @@ function IncomingRequestsBanner({
   );
 }
 
-/**
- * FASE 7 --- Amico: solo struttura dati e gestione dello stato, nessuno
- * sblocco automatico dei dati (v. HINTHIAL_MVP.md).
- *
- * Modello v2 (v. richiesta utente): ogni riga qui è per default una
- * PERSONA, un contatto privato nella propria rubrica. Diventa un AMICO
- * (`isFriend`) solo se una richiesta di amicizia reciproca viene
- * accettata da entrambe le parti (v. domain/friends/friend-requests) ---
- * mai un flag impostato unilateralmente. Solo un AMICO può diventare
- * GUARDIANO (`isGuardian`), e anche questo richiede una richiesta
- * apposita accettata (v. domain/friends/guardian-requests): chi viene
- * indicato deve sapere di esserlo, non è più solo un flag silenzioso.
- */
+/** Ogni riga è per default una PERSONA (contatto privato). Diventa AMICO solo con richiesta reciproca accettata (v. domain/friends/friend-requests); solo un AMICO può diventare GUARDIANO, anch'esso su richiesta accettata --- mai flag impostati unilateralmente. */
 export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
@@ -202,30 +190,21 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [statusFilter, setStatusFilter] = useState<FriendStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "name", direction: "asc" });
-  // Foto reale di un account collegato, quando l'amico non ne ha una
-  // caricata a mano --- risolta a parte per non rallentare/appesantire
-  // ogni caricamento dell'elenco (v. resolveLinkedAvatar sotto).
+  // Foto reale di un account collegato, quando l'amico non ne ha una caricata a mano --- risolta a parte (v. resolveLinkedAvatar).
   const [linkedAvatarUrls, setLinkedAvatarUrls] = useState<Record<string, string>>({});
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string } | null>(null);
   const [incomingRequests, setIncomingRequests] = useState<IncomingFriendRequest[]>([]);
-  // recipientId (amicizia) / guardianUserId (guardiano) con una richiesta
-  // già inviata e ancora in sospeso --- per mostrare "in attesa" invece
-  // del tasto, evitando doppie richieste dalla stessa riga.
+  // id con una richiesta già inviata e in sospeso: mostra "in attesa" invece del tasto, evita doppie richieste.
   const [pendingFriendRequestTo, setPendingFriendRequestTo] = useState<Set<string>>(new Set());
   const [pendingGuardianRequestTo, setPendingGuardianRequestTo] = useState<Set<string>>(new Set());
 
   const { modeFor } = useListViewPreferences();
   const viewMode = modeFor("friends");
 
-  // "?created=1"/"?updated=1" arrivano da /friends/new e da
-  // /friends/[id]/edit dopo un salvataggio riuscito --- v.
-  // CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
+  // "?created=1"/"?updated=1" arrivano da /friends/new e /friends/[id]/edit dopo un salvataggio riuscito.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
   const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
-  // "&inviteFailed=1" si aggiunge agli stessi redirect quando la
-  // checkbox "Invita ... su Hinthial" era spuntata ma l'invio dell'email
-  // non è riuscito --- l'amico è comunque salvato, non è un errore che
-  // blocca il salvataggio, solo un avviso a parte.
+  // "&inviteFailed=1": l'invio dell'email di invito non è riuscito, ma l'amico è comunque salvato.
   const [showInviteFailedMessage] = useState(() => searchParams.get("inviteFailed") === "1");
   useEffect(() => {
     if (showCreatedMessage) showToast("Amico aggiunto.");
@@ -233,14 +212,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
     if (showCreatedMessage || showUpdatedMessage) router.replace("/friends");
   }, [showCreatedMessage, showUpdatedMessage, router, showToast]);
 
-  /**
-   * Foto reale di un amico collegato a un account Hinthial, quando non
-   * ne ha caricata una a mano (quella vince sempre, v.
-   * domain/friends/types, FriendListItem.avatarPath) --- una chiamata a
-   * parte per amico (v. get_linked_friend_avatar_path), best-effort e
-   * silenziosa come checkLinkedAccounts qui sotto: un fallimento lascia
-   * semplicemente le iniziali colorate al posto della foto.
-   */
+  /** Foto reale di un amico collegato, quando non ne ha caricata una a mano. Best-effort e silenziosa: un fallimento lascia le iniziali colorate. */
   const resolveLinkedAvatar = useCallback(
     async (friend: FriendListItem) => {
       if (friend.avatarUrl || !friend.linkedUserId) return;
@@ -255,25 +227,10 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   );
 
   /**
-   * FASE A del piano di condivisione capsule: per ogni amico non ancora
-   * collegato a un account (`linkedUserId` nullo), verifica se la sua
-   * email corrisponde a un account Hinthial registrato --- così se un
-   * amico si registra dopo essere stato aggiunto, ce ne si accorge al
-   * prossimo caricamento della pagina, senza dover fare nulla apposta.
-   * Best-effort e silenzioso: un fallimento (rete, tetto giornaliero di
-   * verifiche) non deve disturbare la pagina, si riprova al prossimo
-   * refresh. Sequenziale, non in parallelo, per restare gentile col
-   * tetto giornaliero lato server.
-   *
-   * Trovato un collegamento, sincronizza anche retroattivamente (FASE B)
-   * le capsule già condivise con questo amico prima che avesse un
-   * account --- altrimenti resterebbero per sempre invisibili in
-   * "Condivise con me" solo perché il collegamento è arrivato in
-   * ritardo (esattamente il caso che ha motivato la Fase A). `capsules`
-   * è già in memoria da refresh(), nessuna nuova decrittazione. Anche la
-   * foto reale (v. resolveLinkedAvatar) si risolve qui: subito per chi
-   * era già collegato, appena dopo per chi si collega ora per la prima
-   * volta.
+   * Per ogni amico non ancora collegato, verifica se la sua email corrisponde a un account Hinthial registrato ---
+   * best-effort e sequenziale (per restare gentile col tetto giornaliero lato server), un fallimento non disturba
+   * la pagina. Trovato un collegamento, sincronizza retroattivamente le capsule già condivise prima che l'amico
+   * avesse un account, altrimenti resterebbero invisibili in "Condivise con me".
    */
   const checkLinkedAccounts = useCallback(
     async (list: FriendListItem[], ownedCapsules: CapsuleListItem[], ownerId: string) => {
@@ -405,12 +362,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  /**
-   * "Chiedi di diventare guardiano" (isGuardian passa a true solo dopo
-   * l'accettazione, v. domain/friends/guardian-requests) oppure "Rimuovi
-   * dai guardiani" (nessun consenso richiesto per togliere, v.
-   * revokeGuardianRole) --- solo un AMICO può ricevere la prima.
-   */
+  /** "Chiedi di diventare guardiano" (isGuardian passa a true solo dopo accettazione) oppure "Rimuovi dai guardiani" (nessun consenso richiesto per togliere). */
   async function handleToggleGuardian(friend: FriendListItem) {
     if (!currentUser) return;
     setBusyId(friend.id);
@@ -493,8 +445,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   // Solo la vista a tabella si ordina --- l'elenco resta cronologico.
   const sortedFriends = applySort(filteredFriends, sort, sortValueFor);
 
-  // Si riclampa invece di resettare con un effect: se un filtro riduce i
-  // risultati, la pagina torna da sola entro il range valido.
+  // Si riclampa invece di resettare con un effect: un filtro che riduce i risultati torna da solo nel range.
   const pageCount = Math.max(1, Math.ceil(filteredFriends.length / TABLE_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const pagedFriends = sortedFriends.slice(
