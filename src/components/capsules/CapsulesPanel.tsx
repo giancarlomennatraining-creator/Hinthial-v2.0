@@ -75,18 +75,10 @@ const STATUS_BADGE_CLASS: Record<CapsuleStatus, string> = {
 type SortColumn = "title" | "status" | "recipients" | "openAt" | "contents";
 
 /**
- * FASE 8 --- Capsule digitali v1: titolo, contenuto, allegati, data di
- * apertura obbligatoria (in chiaro, unica eccezione allo zero-knowledge
- * in questa tabella --- v. domain/capsules/repository.ts, Dead Man's
- * Switch semplificato per le capsule) e uno o più destinatari; stato
- * manuale bozza -> chiusa -> condivisa. Chiudere è l'unico passaggio
- * irreversibile: da FASE 14, chiudere copia ogni contenuto d'Archivio
- * ancora collegato dentro la capsula stessa (v. domain/capsules/
- * repository.ts, closeCapsule) --- da quel momento la capsula non
- * dipende più dagli originali, che restano liberi di essere modificati
- * o cancellati. Nessun Dead Man's Switch --- chiudere rende la capsula
- * autosufficiente ma non concede ancora alcun accesso ai destinatari
- * (v. HINTHIAL_MVP.md).
+ * Capsule digitali: titolo, contenuto, allegati, data di apertura (in chiaro, unica eccezione allo zero-knowledge in
+ * questa tabella) e destinatari; stato manuale bozza -> chiusa -> condivisa. Chiudere è irreversibile: copia ogni
+ * contenuto d'Archivio ancora collegato dentro la capsula (v. closeCapsule), che da quel momento non dipende più
+ * dagli originali. Non concede ancora alcun accesso ai destinatari (v. HINTHIAL_MVP.md).
  */
 export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
@@ -106,18 +98,12 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [previewCapsule, setPreviewCapsule] = useState<CapsuleListItem | null>(null);
   const [openingShared, setOpeningShared] = useState<SharedCapsuleListItem | null>(null);
 
-  // FASE B del piano di condivisione capsule --- "Condivise con me" è
-  // una scheda a sé qui dentro, non una voce di menu a parte: stesso
-  // tipo di contenuto, solo guardato dal verso opposto (v. richiesta
-  // utente). Caricata insieme alle proprie capsule, non solo al primo
-  // click sulla scheda, così passare da una vista all'altra è istantaneo.
+  // "Condivise con me" è una scheda qui dentro, non una voce di menu a parte. Caricata insieme alle proprie capsule, così passare da una vista all'altra è istantaneo.
   const [activeTab, setActiveTab] = useState<"mine" | "shared">("mine");
   const [sharedCapsules, setSharedCapsules] = useState<SharedCapsuleListItem[]>([]);
   const [sharedError, setSharedError] = useState<string | null>(null);
 
-  // Impostazioni > Aspetto --- v. CapsuleCountdownSettings. Default true
-  // mentre si attende la risposta: qui un lampo non è percepibile come
-  // lo sarebbe per la disposizione del menu (v. getCapsuleCountdownVisible).
+  // Impostazioni > Aspetto (v. CapsuleCountdownSettings). Default true mentre si attende la risposta.
   const [showCountdown, setShowCountdown] = useState(true);
 
   // Trascrizione di un allegato audio/video (v. domain/transcription) --- uno alla volta.
@@ -130,12 +116,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const { modeFor } = useListViewPreferences();
   const viewMode = modeFor("capsules");
 
-  // "?created=1"/"?updated=1" arrivano dalla pagina di creazione dedicata
-  // (/capsules/new) e da quella di modifica (/capsules/[id]/edit) dopo un
-  // salvataggio riuscito --- solo un flag, mai il titolo o altro contenuto
-  // della capsula (finirebbe in chiaro nell'URL/cronologia). Letti una
-  // sola volta all'avvio (stato pigro): il messaggio non deve sparire
-  // quando subito dopo ripuliamo l'URL con router.replace.
+  // "?created=1"/"?updated=1": solo un flag, mai il titolo o contenuto (finirebbe in chiaro nell'URL). Stato pigro: il messaggio non deve sparire quando ripuliamo l'URL con router.replace.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
   const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
   useEffect(() => {
@@ -155,9 +136,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       setLoading(false);
     }
 
-    // Best-effort e separato dal resto: nessuna decrittazione qui (solo
-    // metadati già in chiaro), quindi un fallimento non deve impedire di
-    // vedere le proprie capsule --- v. listCapsulesSharedWithMe.
+    // Best-effort e separato: nessuna decrittazione qui, un fallimento non deve impedire di vedere le proprie capsule.
     setSharedError(null);
     try {
       setSharedCapsules(await listCapsulesSharedWithMe(supabase));
@@ -165,8 +144,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       setSharedError(err instanceof Error ? err.message : "Impossibile caricare le capsule condivise con te.");
     }
 
-    // Anche questa best-effort: se fallisce si resta sul default (true),
-    // non deve impedire di vedere le proprie capsule.
+    // Best-effort: se fallisce si resta sul default (true).
     try {
       const {
         data: { user },
@@ -335,10 +313,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     setError(null);
     try {
       await updateCapsuleAttachmentTranscript(supabase, masterKey, capsule, attachment.id, transcriptDraft);
-      // refresh() prima di chiudere il pannello: se lo si riapre subito
-      // dopo, deve già trovare il testo appena salvato, non quello di
-      // prima (attachment.transcript è letto una volta sola al click, non
-      // si aggiorna da solo quando refresh() finisce più tardi).
+      // refresh() prima di chiudere il pannello: se riaperto subito deve trovare il testo appena salvato.
       await refresh();
       setTranscribingAttachmentId(null);
     } catch (err) {
@@ -381,8 +356,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   // Solo la vista a tabella si ordina --- l'elenco resta cronologico.
   const sortedCapsules = applySort(filteredCapsules, sort, sortValueFor);
 
-  // Si riclampa invece di resettare con un effect: se un filtro riduce i
-  // risultati, la pagina torna da sola entro il range valido.
+  // Si riclampa invece di resettare con un effect: un filtro che riduce i risultati torna da solo nel range.
   const pageCount = Math.max(1, Math.ceil(filteredCapsules.length / TABLE_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const pagedCapsules = sortedCapsules.slice(
@@ -400,12 +374,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Contenuti cifrati da lasciare a chi vuoi tu, in condizioni definite da te.
           </p>
-          {/* Il dettaglio sull'irreversibilità resta comunque ripetuto al
-              momento di chiudere davvero una capsula (v. handleClose,
-              window.confirm) --- qui è solo per chi lo vuole leggere
-              prima, non un secondo avviso obbligato: niente <p> lungo
-              fisso in cima, specie su smartphone dove "mangiava" la
-              maggior parte dello schermo (v. richiesta utente). */}
+          {/* Il dettaglio sull'irreversibilità è ripetuto al momento di chiudere (v. handleClose): qui solo per chi lo vuole leggere prima, non un <p> fisso che "mangia" lo schermo su smartphone. */}
           <details className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             <summary className="cursor-pointer font-medium text-brand">Come funziona chiudere una capsula</summary>
             <p className="mt-1">
@@ -426,9 +395,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       <MobileAddFab href="/capsules/new" label="Aggiungi capsula" />
 
-      {/* "Condivise con me" (FASE B) è una scheda qui dentro, non una voce
-          di menu a parte --- stesso tipo di contenuto, solo guardato dal
-          verso opposto (v. richiesta utente). */}
+      {/* "Condivise con me" è una scheda qui dentro, non una voce di menu a parte. */}
       <div className="flex w-fit gap-1 rounded-lg border border-zinc-200 p-1 dark:border-zinc-800">
         <button
           type="button"
@@ -476,11 +443,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         ) : (
           <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
             {sharedCapsules.map((shared) => {
-              // FASE C1 --- il vero sblocco: prima di questa data, il
-              // database nega comunque la lettura della busta cifrata
-              // (v. migrazione capsule_share_keys), qui il controllo è
-              // solo per decidere se mostrare il tasto "Apri" o il
-              // countdown.
+              // Il vero sblocco è lato database (nega la lettura prima della data): qui si decide solo se mostrare "Apri" o il countdown.
               const canOpen = shared.openAt !== null && new Date(shared.openAt) <= new Date();
 
               return (
@@ -556,9 +519,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">
-              {/* @container --- v. DocumentsPanel per il ragionamento: le
-                  colonne secondarie si nascondono in base allo spazio
-                  vero del riquadro, Titolo e Azioni mai. */}
+              {/* @container: le colonne secondarie si nascondono in base allo spazio vero del riquadro, Titolo e Azioni mai. */}
               <div className="@container overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
                 <table className="w-full text-sm">
                   <thead>
@@ -586,8 +547,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                         className="hidden @xl:table-cell"
                       />
                       {showCountdown ? (
-                        // Non ordinabile --- stesso ordine di "Apertura", da cui deriva
-                        // (v. richiesta utente: colonna propria, non integrata lì dentro).
+                        // Non ordinabile: stesso ordine di "Apertura", da cui deriva.
                         <th className="hidden p-3 @3xl:table-cell">
                           Tra quanto
                           <span className="mt-0.5 block text-[9px] font-semibold tracking-wide text-zinc-400 normal-case dark:text-zinc-500">
@@ -844,10 +804,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         </>
       )}
 
-      {/* Sempre montato (non condizionato a previewCapsule) --- gestisce da
-          sé mount/unmount per animare la dissolvenza in uscita (v.
-          richiesta utente), altrimenti sparirebbe di scatto insieme a
-          previewCapsule prima di poter animare nulla. */}
+      {/* Sempre montato (non condizionato a previewCapsule): gestisce da sé mount/unmount per animare la dissolvenza in uscita. */}
       <CapsulePreview
         masterKey={masterKey}
         capsule={previewCapsule}
@@ -855,7 +812,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         onClose={() => setPreviewCapsule(null)}
       />
 
-      {/* FASE C1 --- sempre montato per lo stesso motivo di CapsulePreview qui sopra. */}
+      {/* Sempre montato per lo stesso motivo di CapsulePreview qui sopra. */}
       <SharedCapsuleViewer
         masterKey={masterKey}
         capsuleId={openingShared?.id ?? null}

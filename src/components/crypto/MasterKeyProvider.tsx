@@ -46,39 +46,25 @@ export type MasterKeyStatus =
 
 interface MasterKeyContextValue {
   status: MasterKeyStatus;
-  /**
-   * Generates a new Master Key setup for the current user (does NOT
-   * persist it yet). The caller is responsible for showing the recovery
-   * key to the user and calling `confirmSetup` only once they've
-   * confirmed saving it --- see SetupMasterKeyForm.
-   */
+  /** Generates a new setup (does NOT persist it) --- caller shows the recovery key and calls `confirmSetup` only after it's saved (see SetupMasterKeyForm). */
   setup: (password: string) => Promise<{ setup: MasterKeySetup; masterKey: CryptoKey }>;
   /** Persists a setup produced by `setup()` and unlocks it. */
   confirmSetup: (setup: MasterKeySetup, masterKey: CryptoKey) => Promise<void>;
   unlockWithPassword: (password: string) => Promise<void>;
   unlockWithRecoveryKey: (formattedRecoveryKey: string) => Promise<void>;
   lock: () => void;
-  // FASE 13 --- dispositivi fidati (v. lib/crypto/device-lock.ts).
+  // Dispositivi fidati (v. lib/crypto/device-lock.ts).
   /** `null` finché non ancora verificato --- evita un lampo "non disponibile" mentre il controllo è in corso. */
   deviceLockSupported: boolean | null;
   /** true se questo browser ha già una registrazione locale per l'utente corrente. */
   deviceLockAvailable: boolean;
   /** Sblocca usando la copia locale del Master Key, protetta da WebAuthn --- mai chiamata se `deviceLockAvailable` è false. */
   unlockWithDeviceLock: () => Promise<void>;
-  /**
-   * Registra questo dispositivo come fidato --- richiede di nuovo la
-   * master password (anche se il vault è già sbloccato in questa
-   * sessione): l'unico modo di ottenere una copia esportabile del
-   * Master Key, l'unica concessione a questa garanzia in tutta l'app
-   * (v. lib/crypto/master-key.ts).
-   */
+  /** Registra questo dispositivo come fidato --- richiede di nuovo la master password: l'unico modo di ottenere una copia esportabile del Master Key in tutta l'app. */
   registerDeviceLock: (password: string, label: string) => Promise<void>;
   /** "Dimentica questo dispositivo": rimuove la registrazione qui e sul server. */
   forgetDeviceLock: () => Promise<void>;
-  // FASE 13, terzo passo --- pairing tra dispositivi via QR (v.
-  // domain/device-pairing/repository.ts): questo dispositivo (nuovo,
-  // non ancora fidato) genera una richiesta e la mostra come QR code;
-  // un dispositivo già fidato la approva scansionandola.
+  // Pairing tra dispositivi via QR (v. domain/device-pairing/repository.ts): il dispositivo nuovo genera una richiesta come QR, un dispositivo già fidato la approva scansionandola.
   /** Apre una nuova richiesta di pairing --- v. DevicePairingUnlock.tsx per l'uso (QR + attesa). */
   startDevicePairing: () => Promise<{ requestId: string; pairingUrl: string; privateKey: CryptoKey }>;
   /** Un giro di controllo: `true` se approvata (e il vault è già sbloccato a questo punto), `false` se non ancora. */
@@ -131,8 +117,7 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
       }
     })();
 
-    // Indipendente dallo stato di cifratura --- solo una domanda al
-    // browser, non tocca l'account.
+    // Indipendente dallo stato di cifratura: solo una domanda al browser, non tocca l'account.
     isDeviceLockSupported().then((supported) => {
       if (!cancelled) setDeviceLockSupported(supported);
     });
@@ -155,10 +140,7 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
   const confirmSetup = useCallback(async (result: MasterKeySetup, masterKey: CryptoKey) => {
     const { supabase, userId } = await requireUserId();
 
-    // FASE C1: ogni account guadagna qui la propria coppia di chiavi
-    // ECDH (v. lib/crypto/keypair.ts) --- così è garantita presente fin
-    // dal primo momento, per quando qualcuno vorrà condividere una
-    // capsula con questo account.
+    // Ogni account guadagna qui la propria coppia di chiavi ECDH (v. lib/crypto/keypair.ts), garantita presente fin dal primo momento per una futura condivisione di capsule.
     const keyPair = await setupKeyPair(masterKey);
 
     const { error } = await supabase.from("encryption_setup").insert({
@@ -176,14 +158,7 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
     setStatus({ kind: "unlocked", masterKey });
   }, []);
 
-  /**
-   * FASE C1, sanamento pigro: un account creato prima di questa fase
-   * non ha ancora una coppia di chiavi --- gliene viene generata una qui,
-   * al primo sblocco successivo, così diventa comunque raggiungibile da
-   * chi in futuro vorrà condividere una capsula con lui. Best-effort:
-   * un fallimento non deve impedire lo sblocco stesso, si riprova al
-   * prossimo (v. backfillOpenAtColumn per lo stesso principio altrove).
-   */
+  /** Sanamento pigro: un account creato prima delle coppie di chiavi ne riceve una qui, al primo sblocco. Best-effort: un fallimento non impedisce lo sblocco, si riprova al prossimo. */
   const ensureKeyPair = useCallback(
     async (
       supabase: ReturnType<typeof createClient>,
@@ -255,14 +230,7 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
     [ensureKeyPair],
   );
 
-  /**
-   * FASE 13 --- sblocco via la copia locale del Master Key, cifrata con
-   * una chiave derivata da WebAuthn (v. lib/crypto/device-lock.ts). La
-   * verifica lato server (findActiveTrustedDevice) non è lì per
-   * "autenticare" --- l'account è già autenticato come sempre --- ma per
-   * accorgersi se questo dispositivo è stato revocato da un'altra
-   * sessione nel frattempo: senza, la revoca sarebbe solo cosmetica.
-   */
+  /** Sblocco via la copia locale del Master Key, cifrata con una chiave WebAuthn (v. lib/crypto/device-lock.ts). La verifica server (findActiveTrustedDevice) serve solo ad accorgersi se il dispositivo è stato revocato altrove: senza, la revoca sarebbe cosmetica. */
   const unlockWithDeviceLock = useCallback(async () => {
     const { supabase, userId } = await requireUserId();
 
@@ -285,13 +253,7 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
     setStatus({ kind: "unlocked", masterKey });
   }, []);
 
-  /**
-   * Registra questo dispositivo come fidato. Richiede di nuovo la
-   * master password anche se il vault è già sbloccato in questa
-   * sessione --- v. il commento su `registerDeviceLock` nel tipo del
-   * contesto: è l'unico modo di ottenere una copia esportabile del
-   * Master Key, mai altrimenti concessa (v. lib/crypto/master-key.ts).
-   */
+  /** Registra questo dispositivo come fidato: richiede di nuovo la master password, unico modo di ottenere una copia esportabile del Master Key (v. lib/crypto/master-key.ts). */
   const registerDeviceLock = useCallback(async (password: string, label: string) => {
     const { supabase, userId, userEmail } = await requireUserId();
 
@@ -335,14 +297,7 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
     setDeviceLockAvailable(false);
   }, []);
 
-  /**
-   * FASE 13, terzo passo --- lato dispositivo nuovo (non ancora fidato).
-   * La chiave privata effimera resta qui, in memoria, chiamante per
-   * chiamante --- mai salvata da nessuna parte: se la pagina si
-   * chiude prima che qualcuno approvi, la richiesta resta semplicemente
-   * inutilizzabile (nessuno può derivare il segreto senza di lei) finché
-   * non scade da sé.
-   */
+  /** Lato dispositivo nuovo: la chiave privata effimera resta solo in memoria, mai salvata --- se la pagina si chiude prima dell'approvazione, la richiesta resta inutilizzabile finché non scade. */
   const startDevicePairing = useCallback(async () => {
     const { supabase, userId } = await requireUserId();
     const { privateKey, publicKeyJwk } = await generateEphemeralKeyPair();
@@ -358,12 +313,7 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
 
     const sharedKey = await deriveSharedKeyAsRecipient(privateKey, approved.approverPublicKey);
     const masterKey = await unwrapKey(sharedKey, parseEnvelope(approved.encryptedMasterKey));
-    // Nessun ensureKeyPair qui --- a differenza di unlockWithPassword/
-    // unlockWithRecoveryKey, non abbiamo già in mano public_key da
-    // controllare senza un giro in più sul database, e la coppia di
-    // chiavi dell'account (v. FASE C1) è quasi certamente già presente
-    // da un sblocco precedente altrove: se davvero mancasse, verrà
-    // comunque creata al prossimo sblocco con password o impronta.
+    // Nessun ensureKeyPair qui: la coppia di chiavi è quasi certamente già presente da uno sblocco precedente altrove; se mancasse, verrà creata al prossimo sblocco con password o impronta.
     void deletePairingRequest(supabase, requestId);
     setStatus({ kind: "unlocked", masterKey });
     return true;

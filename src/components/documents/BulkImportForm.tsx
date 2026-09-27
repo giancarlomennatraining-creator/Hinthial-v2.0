@@ -22,24 +22,10 @@ import type { DocumentMetadataInput } from "@/domain/documents/types";
 const GOOGLE_DRIVE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID;
 
 /**
- * FASE 21 --- import massivo: molti file in una volta, con un
- * **riepilogo per gruppi** invece di una conferma per file (dal piano).
- * Chi carica venti bollette non vuole ripetere venti volte lo stesso
- * form --- vuole vedere in un colpo d'occhio cosa Hinthial ha capito e
- * dire un solo sì.
- *
- * "Riconoscimento di insiemi" e "proposta di fascicoli dai
- * raggruppamenti evidenti" sono la stessa cosa qui: file con lo stesso
- * emittente (v. domain/bulk-import/grouping.ts) --- deterministico, mai
- * una somiglianza vaga. Un fascicolo esistente con lo stesso emittente
- * si aggancia; un gruppo di almeno due file senza un fascicolo propone
- * di crearne uno.
- *
- * Scope deliberatamente più stretto del caricamento singolo (v.
- * CreateArchiveItemForm, FASE 19b): niente bene collegato, niente
- * scadenza per singolo file --- un riepilogo con troppi campi per riga
- * tradirebbe il punto stesso di questa pagina. Chi ha bisogno di quel
- * livello di dettaglio lo aggiunge dopo, dalla scheda del documento.
+ * Import massivo: molti file in una volta, con un riepilogo per gruppi invece di una conferma per file. I gruppi sono
+ * file con lo stesso emittente (v. domain/bulk-import/grouping.ts) --- deterministico, mai una somiglianza vaga. Scope
+ * deliberatamente più stretto del caricamento singolo (v. CreateArchiveItemForm): niente bene collegato né scadenza
+ * per singolo file, aggiungibili dopo dalla scheda del documento.
  */
 
 interface DraftFile {
@@ -50,7 +36,7 @@ interface DraftFile {
   title: string;
   /** "" --- nessuna categoria. */
   categoryId: string;
-  /** Nome della cartella Google Drive di provenienza (FASE 25), solo come suggerimento di categoria --- null se scelto dal disco o come file singolo. */
+  /** Nome della cartella Google Drive di provenienza, solo come suggerimento di categoria --- null se scelto dal disco. */
   folderHint: string | null;
   /** Fotografia di categoryId al momento del suggerimento --- se l'utente cambia la select, i due smettono di coincidere e il badge "suggerita" scompare da sé, senza un flag a parte da tenere sincronizzato. */
   suggestedCategoryId: string;
@@ -58,7 +44,7 @@ interface DraftFile {
   duplicateOf: { filename: string; createdAt: string } | null;
 }
 
-/** Un file da leggere, insieme al nome della cartella Google Drive da cui arriva --- se ce n'è una (v. FASE 25). */
+/** Un file da leggere, insieme al nome della cartella Google Drive da cui arriva, se ce n'è una. */
 interface FileToRead {
   file: File;
   folderHint: string | null;
@@ -78,33 +64,21 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
   const [phase, setPhase] = useState<Phase>({ step: "idle" });
   const [error, setError] = useState<string | null>(null);
   const [groups, setGroups] = useState<ImportGroup<DraftFile>[]>([]);
-  // Per gruppo (indice in `groups`): se collegarlo a un fascicolo, e con
-  // che titolo se è un fascicolo nuovo da creare.
+  // Per gruppo (indice in `groups`): se collegarlo a un fascicolo, e con che titolo se nuovo.
   const [groupLink, setGroupLink] = useState<boolean[]>([]);
   const [newDossierTitles, setNewDossierTitles] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [driveOpen, setDriveOpen] = useState(false);
   const [importSource, setImportSource] = useState<"disk" | "drive" | null>(null);
 
-  /**
-   * Il cuore della pagina, indipendente da dove arrivano i file --- dal
-   * disco (handleFilesPicked) o da Google Drive (handleGoogleDriveImport,
-   * FASE 25). `folderHint`, quando c'è, è solo un suggerimento in più per
-   * la categoria (v. sotto): non diventa un dato salvato, non introduce
-   * un costrutto "cartella" nell'archivio (v. discussione con l'utente
-   * --- i Fascicoli già coprono, meglio, quel bisogno).
-   */
+  /** Il cuore della pagina, indipendente da dove arrivano i file (disco o Google Drive). `folderHint` è solo un suggerimento per la categoria: non diventa un dato salvato, non introduce un costrutto "cartella" (i Fascicoli già coprono quel bisogno). */
   async function processFiles(toRead: FileToRead[]) {
     if (toRead.length === 0) return;
     setError(null);
 
     setPhase({ step: "reading", done: 0, total: toRead.length });
 
-    // Uno alla volta, non in parallelo --- ognuno richiede di leggere il
-    // file e, per i tipi che lo prevedono, farlo passare per l'OCR: farne
-    // partire dieci insieme su un telefono lo farebbe solo arrancare
-    // (stessa scelta già fatta per il recupero dei contenuti storici, v.
-    // FASE 17b).
+    // Uno alla volta, non in parallelo: dieci file insieme su un telefono, alcuni con OCR, lo farebbero solo arrancare.
     const read: DraftFile[] = [];
     for (const [index, { file, folderHint }] of toRead.entries()) {
       const mimeType = file.type || "application/octet-stream";
@@ -134,9 +108,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
       ]);
       setCategories(categoriesResult);
 
-      // Suggerimenti per file --- stessa logica della FASE 19b
-      // (applySuggestions in CreateArchiveItemForm), ma senza titolo,
-      // bene o scadenza: qui contano solo categoria e raggruppamento.
+      // Suggerimenti per file, stessa logica di applySuggestions in CreateArchiveItemForm, ma qui contano solo categoria e raggruppamento.
       for (const draft of read) {
         if (draft.text) {
           const suggestion = heuristicCategorizer.suggestCategoryFromContent(
@@ -150,20 +122,16 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
           if (title) draft.title = title;
         }
 
-        // Il nome della cartella conta solo se il contenuto non ha già
-        // suggerito una categoria --- un indizio più debole di quanto
-        // Hinthial ha già letto nel file stesso, non lo sovrascrive.
+        // Il nome della cartella conta solo se il contenuto non ha già suggerito una categoria (indizio più debole).
         if (!draft.categoryId && draft.folderHint) {
           const folderHint = draft.folderHint;
           const match = categoriesResult.find((c) => c.name.toLowerCase() === folderHint.toLowerCase());
           if (match) draft.categoryId = match.id;
         }
 
-        // Fotografia del suggerimento --- v. commento su DraftFile.suggestedCategoryId.
         draft.suggestedCategoryId = draft.categoryId;
       }
 
-      // Rilevamento duplicati (FASE 25) --- v. domain/bulk-import/duplicates.ts.
       const duplicates = detectDuplicates(read, existingDocuments);
       read.forEach((draft, i) => {
         draft.duplicateOf = duplicates[i];
@@ -171,9 +139,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
 
       const computedGroups = groupByIssuer(read, existingDocuments, existingDossiers);
       setGroups(computedGroups);
-      // Le proposte (fascicolo esistente o nuovo) partono selezionate:
-      // sono raggruppamenti evidenti, non un'ipotesi debole --- l'utente
-      // le disattiva se non le vuole, non il contrario.
+      // Le proposte partono selezionate: sono raggruppamenti evidenti, l'utente le disattiva se non le vuole.
       setGroupLink(computedGroups.map((g) => Boolean(g.existingDossier || g.proposedDossierTitle)));
       setNewDossierTitles(computedGroups.map((g) => g.proposedDossierTitle ?? ""));
       setPhase({ step: "reviewing" });
@@ -189,14 +155,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
     await processFiles(files.map((file) => ({ file, folderHint: null })));
   }
 
-  /**
-   * FASE 25 --- import da Google Drive: il file browser (v.
-   * GoogleDriveBrowser.tsx) gira per intero nel browser dell'utente, il
-   * nostro server non vede né il token né i file scelti. Restituisce
-   * File già scaricati --- da qui in avanti indistinguibili da uno
-   * scelto dal disco: stessa lettura, stesso raggruppamento, stessa
-   * cifratura all'importazione finale, nessun percorso a parte.
-   */
+  /** Import da Google Drive: il file browser (v. GoogleDriveBrowser.tsx) gira nel browser dell'utente, il server non vede token né file scelti. Restituisce File già scaricati, indistinguibili da qui in poi da uno scelto dal disco. */
   function handleGoogleDriveImported(downloaded: FileToRead[]) {
     setDriveOpen(false);
     setImportSource("drive");
@@ -243,9 +202,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
       let dossiersCreated = 0;
 
       for (const [groupIndex, group] of groups.entries()) {
-        // Un fascicolo nuovo si crea una volta per gruppo, non una volta
-        // per file --- altrimenti dieci bollette dello stesso fornitore
-        // finirebbero in dieci fascicoli diversi.
+        // Un fascicolo nuovo si crea una volta per gruppo, non per file, altrimenti dieci bollette finirebbero in dieci fascicoli diversi.
         let dossierId: string | null = group.existingDossier?.id ?? null;
         if (!dossierId && groupLink[groupIndex] && group.proposedDossierTitle) {
           const title = newDossierTitles[groupIndex]?.trim() || group.proposedDossierTitle;
@@ -277,9 +234,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
             });
             imported++;
           } catch {
-            // Un file che non si riesce a salvare non deve fermare gli
-            // altri --- si conta e si prosegue (stessa scelta del
-            // recupero testi in FASE 17b).
+            // Un file che non si riesce a salvare non deve fermare gli altri: si conta e si prosegue.
             failures++;
           }
           setPhase({ step: "importing", done: imported + failures, total: totalFiles });
@@ -302,9 +257,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
 
   const sortedCategories = sortAlphabetically(categories, (c) => c.name);
 
-  // Riepilogo in cima alla revisione --- letto dal vivo da `groups`, non
-  // fotografato una volta: riflette subito ogni categoria che l'utente
-  // cambia o file che esclude.
+  // Letto dal vivo da `groups`, non fotografato: riflette subito ogni categoria cambiata o file escluso.
   const allDrafts = groups.flatMap((g) => g.files);
   const categorizedCount = allDrafts.filter((d) => d.categoryId).length;
   const missingCategoryCount = allDrafts.length - categorizedCount;
