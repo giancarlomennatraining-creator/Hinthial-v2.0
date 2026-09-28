@@ -15,12 +15,14 @@ import { parseClaudeJson } from "@/lib/ai/parse-claude-json";
 
 const SYSTEM_PROMPT = `Sei il motore di lettura di Hinthial, un'app personale di gestione della vita digitale.
 Leggi il testo di UN documento dell'utente e restituisci SOLO un oggetto JSON, senza testo attorno né blocchi markdown, con questa forma esatta:
-{"expiry": [{"value": "YYYY-MM-DD", "source": "citazione verbatim dal testo"}], "issuer": [{"value": "nome di chi ha emesso il documento", "source": "citazione verbatim"}], "category": {"id": "uno degli id di categoria forniti", "source": "citazione verbatim"} | null}
+{"expiry": [{"value": "YYYY-MM-DD", "source": "citazione verbatim dal testo"}], "issuer": [{"value": "nome di chi ha emesso il documento", "source": "citazione verbatim"}], "category": {"id": "uno degli id di categoria forniti", "source": "citazione verbatim"} | null, "fields": [{"key": "numero_polizza", "label": "Numero polizza", "value": "...", "source": "citazione verbatim"}], "synthesis": "..." | null}
 Regole non negoziabili:
-- Ogni "source" deve essere una citazione ESATTA, copiata parola per parola dal testo fornito --- non riassumere, non parafrasare. Se non trovi una citazione esatta per un campo, omettilo.
+- Ogni "source" (in expiry/issuer/category/fields) deve essere una citazione ESATTA, copiata parola per parola dal testo fornito --- non riassumere, non parafrasare. Se non trovi una citazione esatta per un campo, omettilo.
 - "category.id" deve essere uno degli id nell'elenco categorie fornito, mai un id inventato o un nome.
+- "fields" sono fatti puntuali che scadenza/emittente/categoria non coprono (numero di polizza, targa, luogo di nascita, ...). Preferisci sempre una chiave già presente nel "vocabolario noto" fornito, quando il campo trovato corrisponde davvero a quel significato; proponi una chiave nuova solo se nessuna di quelle note si adatta. "key" in snake_case, "label" leggibile in italiano.
+- "synthesis" è una sintesi in prosa di 2-4 frasi su cosa dice il documento nel suo insieme --- qualitativa: non deve ripetere uno per uno i valori già in expiry/issuer/category/fields.
 - Nel dubbio, ometti il campo: un campo mancante costa meno di uno sbagliato.
-- Se il documento non contiene nulla di utile, rispondi {"expiry": [], "issuer": [], "category": null}.`;
+- Se il documento non contiene nulla di utile, rispondi {"expiry": [], "issuer": [], "category": null, "fields": [], "synthesis": null}.`;
 
 interface CategoryOption {
   id: string;
@@ -127,18 +129,30 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Vocabolario noto dell'utente, come suggerimento --- governa la scrittura (accettare registra una chiave nuova,
+  // v. domain/proposals/repository.ts), non il ragionamento: Claude può sempre proporne una diversa se serve.
+  const { data: vocabularyRows } = await supabase
+    .from("structured_field_vocabulary")
+    .select("field_key, label")
+    .order("label");
+  const vocabulary = vocabularyRows ?? [];
+
   try {
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
+      max_tokens: 2048,
       system: SYSTEM_PROMPT,
       messages: [
         {
           role: "user",
           content: `Categorie disponibili (usa solo questi id):\n${categories
             .map((c) => `- ${c.id}: ${c.name}`)
-            .join("\n")}\n\nTesto del documento:\n${text.slice(0, 200_000)}`,
+            .join("\n")}\n\nVocabolario noto per i campi (preferiscilo quando puoi):\n${
+            vocabulary.length > 0
+              ? vocabulary.map((v) => `- ${v.field_key}: ${v.label}`).join("\n")
+              : "(vuoto, nessun campo registrato finora)"
+          }\n\nTesto del documento:\n${text.slice(0, 200_000)}`,
         },
       ],
     });

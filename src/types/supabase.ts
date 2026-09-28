@@ -322,6 +322,38 @@ export type Database = {
           },
         ];
       };
+      structured_field_vocabulary: {
+        Row: {
+          id: string;
+          owner_id: string;
+          field_key: string;
+          label: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          field_key: string;
+          label: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          field_key?: string;
+          label?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "structured_field_vocabulary_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       assets: {
         Row: {
           id: string;
@@ -408,6 +440,7 @@ export type Database = {
           owner_id: string;
           document_id: string;
           kind: string;
+          field_key: string | null;
           encrypted_value: string;
           decided_at: string;
         };
@@ -416,6 +449,7 @@ export type Database = {
           owner_id: string;
           document_id: string;
           kind: string;
+          field_key?: string | null;
           encrypted_value: string;
           decided_at?: string;
         };
@@ -424,6 +458,7 @@ export type Database = {
           owner_id?: string;
           document_id?: string;
           kind?: string;
+          field_key?: string | null;
           encrypted_value?: string;
           decided_at?: string;
         };
@@ -467,6 +502,9 @@ export type Database = {
           deleted_at: string | null;
           purge_at: string | null;
           ai_extraction_excluded: boolean;
+          encrypted_structured_fields: string | null;
+          encrypted_ai_synthesis: string | null;
+          ai_synthesis_generated_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -492,6 +530,9 @@ export type Database = {
           deleted_at?: string | null;
           purge_at?: string | null;
           ai_extraction_excluded?: boolean;
+          encrypted_structured_fields?: string | null;
+          encrypted_ai_synthesis?: string | null;
+          ai_synthesis_generated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -517,6 +558,9 @@ export type Database = {
           deleted_at?: string | null;
           purge_at?: string | null;
           ai_extraction_excluded?: boolean;
+          encrypted_structured_fields?: string | null;
+          encrypted_ai_synthesis?: string | null;
+          ai_synthesis_generated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

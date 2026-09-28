@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-28 (2)
+
+### Campi eterogenei per documento: vocabolario personale e sintesi di Claude
+
+**Cosa fa:** la Scheda di un documento non è più limitata a categoria/bene/scadenza/emittente/tag/note: quando Claude legge un documento (v. FASE 22) e trova un fatto puntuale che non rientra in nessuno di questi (un numero di polizza, una targa, un luogo di nascita, ...), lo propone come un campo nuovo --- accettato, compare in Scheda con la sua etichetta, come tutti gli altri. La prima volta che accetti una chiave nuova, Hinthial se la ricorda: sui prossimi documenti dello stesso tipo la ritroverai con lo stesso nome, non uno leggermente diverso ogni volta. In più, oltre ai campi puntuali, Claude scrive ora anche una breve **sintesi** in prosa di cosa dice il documento nel suo insieme --- non è una proposta da accettare, è solo una lettura d'insieme che si aggiorna da sola a ogni rilettura.
+
+**Note tecniche:** nuova tabella `structured_field_vocabulary` (owner_id, field_key, label), plaintext come le categorie --- cresce alla prima accettazione di una chiave, mai forzata a priori. I valori vivono in `documents.encrypted_structured_fields`, un oggetto `{chiave: valore}` cifrato come `encrypted_tags` (un oggetto invece di un array); la sintesi in `encrypted_ai_synthesis`/`ai_synthesis_generated_at`, stesso schema di `extractedText`/`extractedAt` --- un solo valore, sostituito a ogni lettura, mai accumulato. Scadenza/categoria/emittente non sono stati toccati: il nuovo contenitore è additivo, solo per i campi che quelle colonne non coprono.
+
+`Proposal`/`ProposalKind` guadagnano il kind `"field"` (con `fieldKey`/`fieldLabel`); `acceptProposal`/`undoAcceptance` per questo kind leggono lo stato più recente del blob direttamente dal database prima di scrivere (`mergeStructuredField`), non un `doc` potenzialmente stantio chiuso nella closure di "Annulla" --- altrimenti un campo accettato nel frattempo da un'altra proposta andrebbe perso. Una nuova `normalizeFieldKey` (minuscolo, snake_case, senza accenti) tiene "Numero Polizza" e "numero_polizza" sulla stessa chiave --- usata sia lato client sia nel prompt a Claude, a cui viene passato il vocabolario noto come suggerimento (preferirlo, non un vincolo: può sempre proporne uno nuovo).
+
+**Bug preesistente trovato e corretto lungo il percorso:** `proposal_rejections.kind` non era mai stato allargato a `'issuer'` dalla FASE 24 --- rifiutare una proposta di emittente falliva silenziosamente contro il vincolo del database. Scoperto scrivendo il test di integrazione per questa stessa migrazione, corretto nella stessa migrazione.
+
+Verificato: typecheck, lint, build di produzione, nuovo test di integrazione contro il database reale (`repository.integration.test.ts`, 4 casi: accetta e registra il vocabolario, annulla senza perdere un campo accettato nel frattempo, rifiuta con la chiave giusta, il bug dell'emittente è risolto) più 12 nuovi unit test (`normalizeFieldKey`, `buildAIProposals` sul kind `"field"`, validazione delle citazioni) e l'intera suite (481 test) senza regressioni. La UI (Scheda + blocco sintesi) vive per ora nel posto più semplice disponibile, non uno dei tre concept di redesign discussi con l'utente --- verrà spostata quando ne sceglierà uno.
+
+---
+
 ## 2026-09-28
 
 ### FASE 22 --- Analisi dei contenuti con Claude, con consenso a tre assi

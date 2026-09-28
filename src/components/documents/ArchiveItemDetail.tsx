@@ -11,11 +11,13 @@ import {
   downloadThumbnail,
   extractTextForExistingDocument,
   listDocuments,
+  saveAISynthesis,
   updateDocumentAIExtractionExclusion,
 } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories, grantCategoryAIExtractionTemporarily } from "@/domain/categories/repository";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
+import { listFieldVocabulary, type FieldVocabularyEntry } from "@/domain/structured-fields/vocabulary";
 import { listDossiers } from "@/domain/dossiers/repository";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import { readingStateFor } from "@/domain/extraction/reading-state";
@@ -99,6 +101,8 @@ export function ArchiveItemDetail({
   // locali (v. buildAIProposals), così accettare/rifiutare le filtra allo stesso modo, automaticamente.
   const [aiFields, setAiFields] = useState<AIExtractedFields | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
+  // Etichette dei campi eterogenei già registrati (v. domain/structured-fields) --- per mostrare "Numero polizza" e non la chiave grezza in Scheda.
+  const [fieldVocabulary, setFieldVocabulary] = useState<FieldVocabularyEntry[]>([]);
 
   // Testo letto potenzialmente lungo: se ne mostra un pezzo, il resto solo a richiesta.
   const [fullText, setFullText] = useState(false);
@@ -110,13 +114,14 @@ export function ArchiveItemDetail({
     const requestId = ++latestRequestRef.current;
     setError(null);
     try {
-      const [documents, assetsResult, categoriesResult, dossiersResult, rejectionsResult] =
+      const [documents, assetsResult, categoriesResult, dossiersResult, rejectionsResult, vocabularyResult] =
         await Promise.all([
           listDocuments(supabase, masterKey),
           listAssets(supabase, masterKey),
           listCategories(supabase),
           listDossiers(supabase, masterKey),
           listProposalRejections(supabase, masterKey, documentId),
+          listFieldVocabulary(supabase),
         ]);
       if (requestId !== latestRequestRef.current) return;
       setDoc(documents.find((d) => d.id === documentId) ?? null);
@@ -124,6 +129,7 @@ export function ArchiveItemDetail({
       setCategories(categoriesResult);
       setDossiers(dossiersResult);
       setRejections(rejectionsResult);
+      setFieldVocabulary(vocabularyResult);
     } catch (err) {
       if (requestId !== latestRequestRef.current) return;
       setError(err instanceof Error ? err.message : "Impossibile caricare il contenuto.");
@@ -265,14 +271,16 @@ export function ArchiveItemDetail({
   function handleAcceptProposal(proposal: Proposal, value: string) {
     if (!doc) return;
     void runProposalAction(async (ownerId) => {
-      const accepted = await acceptProposal(supabase, masterKey, ownerId, doc, proposal.kind, value);
+      const accepted = await acceptProposal(supabase, masterKey, ownerId, doc, proposal, value);
       return {
         message:
           proposal.kind === "expiry"
             ? `Scadenza impostata al ${formatDate(value)}.`
             : proposal.kind === "issuer"
               ? "Emittente impostato."
-              : "Categoria impostata.",
+              : proposal.kind === "field"
+                ? `${proposal.fieldLabel ?? "Campo"} impostato.`
+                : "Categoria impostata.",
         onUndo: () =>
           void runProposalAction(async (undoOwnerId) => {
             await undoAcceptance(supabase, masterKey, undoOwnerId, doc.id, accepted);
@@ -313,6 +321,11 @@ export function ArchiveItemDetail({
       }
       const fields = await analyzeDocumentWithClaude(doc, categories, scope);
       setAiFields(fields);
+      if (fields.synthesis) {
+        // Non è una proposta: sostituisce sempre l'ultima lettura, come extractedText/Rileggi per il testo locale.
+        await saveAISynthesis(supabase, masterKey, doc.id, fields.synthesis);
+        await refresh();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Claude.");
     } finally {
@@ -535,6 +548,14 @@ export function ArchiveItemDetail({
                 </Field>
                 <Field label="Scadenza">{doc.expiresAt ? formatDate(doc.expiresAt) : "—"}</Field>
                 <Field label="Emittente">{doc.issuer || "—"}</Field>
+                {Object.entries(doc.structuredFields).map(([key, value]) => (
+                  <Field
+                    key={key}
+                    label={fieldVocabulary.find((v) => v.fieldKey === key)?.label ?? key}
+                  >
+                    {value}
+                  </Field>
+                ))}
                 <Field label="Tag">
                   {doc.tags.length > 0 ? (
                     <span className="flex flex-wrap gap-1">
@@ -573,6 +594,22 @@ export function ArchiveItemDetail({
         onAnalyze={handleAnalyzeWithClaude}
         onToggleExcluded={handleToggleAIExclusion}
       />
+
+      {/* Posto provvisorio, non il layout finale (v. concept pubblicati) --- una sintesi non è una proposta: si sostituisce da sola, non si accetta. */}
+      {doc.aiSynthesis ? (
+        <section
+          aria-label="Analisi di Claude"
+          className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
+        >
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">🔒 Analisi di Claude</h2>
+          <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">{doc.aiSynthesis}</p>
+          {doc.aiSynthesisGeneratedAt ? (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Letta il {formatDate(doc.aiSynthesisGeneratedAt)}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       {/* A tutta larghezza e prima del testo: è l'unica parte che chiede una risposta. */}
       <ProposalsSection

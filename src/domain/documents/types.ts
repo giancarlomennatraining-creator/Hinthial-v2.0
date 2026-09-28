@@ -33,6 +33,12 @@ export interface DocumentListItem {
   issuer: string;
   /** FASE 22: esclusione permanente di questo documento dall'analisi Claude, anche con la categoria abilitata --- vince sempre. */
   aiExtractionExcluded: boolean;
+  /** Campi eterogenei aperti (numero polizza, targa, ...) --- {} se nessuno. Le chiavi vivono nel vocabolario personale, v. domain/structured-fields. */
+  structuredFields: Record<string, string>;
+  /** Sintesi/descrizione/analisi in prosa dell'ultima lettura Claude riuscita --- "" se non ancora letto. Sostituita, mai una proposta. */
+  aiSynthesis: string;
+  /** Quando aiSynthesis è stata generata --- null se il documento non è mai stato letto da Claude. */
+  aiSynthesisGeneratedAt: string | null;
 }
 
 /** Fields collected at upload time, in addition to the file itself. */

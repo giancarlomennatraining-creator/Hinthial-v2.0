@@ -53,7 +53,7 @@ export interface UploadOptions {
 }
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, encrypted_ai_synthesis, ai_synthesis_generated_at, created_at";
 
 type DocumentRow = {
   id: string;
@@ -75,6 +75,9 @@ type DocumentRow = {
   deleted_at: string | null;
   purge_at: string | null;
   ai_extraction_excluded: boolean;
+  encrypted_structured_fields: string | null;
+  encrypted_ai_synthesis: string | null;
+  ai_synthesis_generated_at: string | null;
   created_at: string;
 };
 
@@ -108,19 +111,46 @@ async function decryptTags(masterKey: CryptoKey, serialized: string | null): Pro
   return Array.isArray(parsed) ? parsed.filter((t): t is string => typeof t === "string") : [];
 }
 
+/** Come encryptTags/decryptTags, ma per un oggetto {chiave: valore} invece di un array --- i campi eterogenei aperti (v. domain/proposals, kind "field"), mai le tre colonne dedicate esistenti. */
+export async function encryptStructuredFields(
+  masterKey: CryptoKey,
+  fields: Record<string, string>,
+): Promise<string | null> {
+  if (Object.keys(fields).length === 0) return null;
+  return serializeEnvelope(await encryptBytes(masterKey, utf8ToBytes(JSON.stringify(fields))));
+}
+
+export async function decryptStructuredFields(
+  masterKey: CryptoKey,
+  serialized: string | null,
+): Promise<Record<string, string>> {
+  if (!serialized) return {};
+  const bytes = await decryptBytes(masterKey, parseEnvelope(serialized));
+  const parsed: unknown = JSON.parse(bytesToUtf8(bytes));
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+    if (typeof value === "string") result[key] = value;
+  }
+  return result;
+}
+
 async function toDocumentListItem(
   masterKey: CryptoKey,
   row: DocumentRow,
   dossierIds: string[],
 ): Promise<DocumentListItem> {
-  const [filenameBytes, notes, tags, issuer, transcript, extractedText] = await Promise.all([
-    decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
-    decryptOptionalText(masterKey, row.encrypted_notes),
-    decryptTags(masterKey, row.encrypted_tags),
-    decryptOptionalText(masterKey, row.encrypted_issuer),
-    decryptOptionalText(masterKey, row.encrypted_transcript),
-    decryptOptionalText(masterKey, row.encrypted_extracted_text),
-  ]);
+  const [filenameBytes, notes, tags, issuer, transcript, extractedText, structuredFields, aiSynthesis] =
+    await Promise.all([
+      decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
+      decryptOptionalText(masterKey, row.encrypted_notes),
+      decryptTags(masterKey, row.encrypted_tags),
+      decryptOptionalText(masterKey, row.encrypted_issuer),
+      decryptOptionalText(masterKey, row.encrypted_transcript),
+      decryptOptionalText(masterKey, row.encrypted_extracted_text),
+      decryptStructuredFields(masterKey, row.encrypted_structured_fields),
+      decryptOptionalText(masterKey, row.encrypted_ai_synthesis),
+    ]);
 
   return {
     id: row.id,
@@ -144,6 +174,9 @@ async function toDocumentListItem(
     deletedAt: row.deleted_at,
     purgeAt: row.purge_at,
     aiExtractionExcluded: row.ai_extraction_excluded,
+    structuredFields,
+    aiSynthesis,
+    aiSynthesisGeneratedAt: row.ai_synthesis_generated_at,
   };
 }
 
@@ -459,6 +492,26 @@ export async function updateDocumentTranscript(
 
   if (error) {
     throw new Error(`Impossibile salvare la trascrizione: ${error.message}`);
+  }
+}
+
+/** Sostituisce sempre il valore precedente --- non è una proposta (nessun accetta/modifica/rifiuta), solo l'ultima lettura d'insieme di Claude, come extractedText/extractedAt per il testo locale. */
+export async function saveAISynthesis(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  documentId: string,
+  synthesis: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("documents")
+    .update({
+      encrypted_ai_synthesis: await encryptOptionalText(masterKey, synthesis),
+      ai_synthesis_generated_at: new Date().toISOString(),
+    })
+    .eq("id", documentId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare la sintesi: ${error.message}`);
   }
 }
 

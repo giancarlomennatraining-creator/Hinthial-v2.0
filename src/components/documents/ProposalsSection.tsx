@@ -16,17 +16,25 @@ const KIND_LABEL: Record<ProposalKind, string> = {
   expiry: "Scadenza",
   category: "Categoria",
   issuer: "Emittente",
+  field: "Campo",
 };
 
 const KIND_ICON: Record<ProposalKind, string> = {
   expiry: "⏳",
   category: "🏷️",
   issuer: "🏛️",
+  field: "🧩",
 };
 
-/** Identità di una proposta per lo stato di modifica, non solo il tipo: con più candidati dello stesso tipo, "sto modificando la scadenza" da solo non dice QUALE. */
+/** Per "field" l'etichetta viene dal vocabolario (es. "Numero polizza"), non dal generico "Campo" --- più informativa. */
+function kindLabel(proposal: Proposal): string {
+  if (proposal.kind === "field") return proposal.fieldLabel ?? KIND_LABEL.field;
+  return KIND_LABEL[proposal.kind];
+}
+
+/** Identità di una proposta per lo stato di modifica, non solo il tipo: con più candidati dello stesso tipo, "sto modificando la scadenza" da solo non dice QUALE. Per "field" anche la chiave, altrimenti due campi diversi con lo stesso valore collisionerebbero. */
 function proposalKey(proposal: Proposal): string {
-  return `${proposal.kind}:${proposal.value}`;
+  return `${proposal.kind}:${proposal.fieldKey ?? ""}:${proposal.value}`;
 }
 
 export interface UndoableAction {
@@ -62,7 +70,7 @@ export function ProposalsSection({
 
   function displayValue(proposal: Proposal): string {
     if (proposal.kind === "expiry") return formatDate(proposal.value);
-    if (proposal.kind === "issuer") return proposal.value;
+    if (proposal.kind === "issuer" || proposal.kind === "field") return proposal.value;
     return categories.find((c) => c.id === proposal.value)?.name ?? proposal.value;
   }
 
@@ -97,7 +105,7 @@ export function ProposalsSection({
 
         return (
           <div
-            key={`${proposal.kind}-${proposal.value}`}
+            key={proposalKey(proposal)}
             className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950"
           >
             <div className="flex gap-3">
@@ -107,7 +115,7 @@ export function ProposalsSection({
               <div className="min-w-0">
                 <p className="flex flex-wrap items-baseline gap-2">
                   <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {KIND_LABEL[proposal.kind]}
+                    {kindLabel(proposal)}
                   </span>
                   <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     {displayValue(proposal)}
@@ -139,12 +147,12 @@ export function ProposalsSection({
                     aria-label="Scadenza da impostare"
                     className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
                   />
-                ) : proposal.kind === "issuer" ? (
+                ) : proposal.kind === "issuer" || proposal.kind === "field" ? (
                   <input
                     type="text"
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
-                    aria-label="Emittente da impostare"
+                    aria-label={`${kindLabel(proposal)} da impostare`}
                     className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
                   />
                 ) : (

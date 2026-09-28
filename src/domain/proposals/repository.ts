@@ -9,6 +9,8 @@ import {
   utf8ToBytes,
 } from "@/lib/crypto";
 import { logAuditEvent } from "@/lib/audit/log-event";
+import { decryptStructuredFields, encryptStructuredFields } from "@/domain/documents/repository";
+import { registerFieldVocabulary } from "@/domain/structured-fields/vocabulary";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { Proposal, ProposalKind, ProposalRejection } from "@/domain/proposals/types";
 
@@ -16,11 +18,18 @@ import type { Proposal, ProposalKind, ProposalRejection } from "@/domain/proposa
  * FASE 19: le tre risposte a una proposta. Scadenza/categoria accettate finiscono in chiaro (lo erano già); l'emittente
  * si cifra come le note (testo libero, non un id/data). Il valore rifiutato è sempre cifrato, altrimenti il server
  * vedrebbe un dato che senza questa fase non esisterebbe.
+ *
+ * Il kind "field" (campi eterogenei aperti) condivide un unico blob cifrato con altri campi dello stesso documento
+ * --- a differenza degli altri tre kind, non basta un overwrite diretto: serve leggere lo stato più recente dal
+ * database prima di scrivere, altrimenti un campo aggiunto nel frattempo (es. da un'altra proposta accettata poco
+ * prima) andrebbe perso. V. mergeStructuredField.
  */
 
 /** Ciò che serve per rimettere le cose com'erano --- v. undoAcceptance. */
 export interface AcceptedProposal {
   kind: ProposalKind;
+  /** Solo per kind "field". */
+  fieldKey?: string;
   /** Il valore che il campo aveva **prima**: null se era vuoto. */
   previousValue: string | null;
 }
@@ -34,9 +43,10 @@ async function encryptIssuerValue(masterKey: CryptoKey, value: string | null): P
 /** Unione esplicita, non chiave calcolata --- TypeScript non verificherebbe una chiave dinamica, e qui un refuso scriverebbe nel campo sbagliato. */
 type DocumentsTableUpdate = Database["public"]["Tables"]["documents"]["Update"];
 
+/** Solo per i tre kind a colonna dedicata --- "field" ha il proprio percorso, v. mergeStructuredField. */
 async function updateFor(
   masterKey: CryptoKey,
-  kind: ProposalKind,
+  kind: "expiry" | "category" | "issuer",
   value: string | null,
 ): Promise<Pick<DocumentsTableUpdate, "expires_at" | "category_id" | "encrypted_issuer">> {
   if (kind === "expiry") return { expires_at: value };
@@ -44,10 +54,51 @@ async function updateFor(
   return { encrypted_issuer: await encryptIssuerValue(masterKey, value) };
 }
 
-function currentValue(doc: DocumentListItem, kind: ProposalKind): string | null {
+function currentValue(doc: DocumentListItem, kind: "expiry" | "category" | "issuer"): string | null {
   if (kind === "expiry") return doc.expiresAt;
   if (kind === "category") return doc.categoryId;
   return doc.issuer || null;
+}
+
+/**
+ * Legge lo stato più recente di encrypted_structured_fields dal database (non un `doc` eventualmente stantio
+ * chiuso in una closure di "Annulla"), applica una sola modifica alla chiave data, e ritorna sia l'update pronto
+ * sia il valore che quella chiave aveva prima --- letto fresco per lo stesso motivo.
+ */
+async function mergeStructuredField(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  documentId: string,
+  fieldKey: string,
+  value: string | null,
+): Promise<{
+  update: Pick<DocumentsTableUpdate, "encrypted_structured_fields">;
+  previousValue: string | null;
+}> {
+  const { data, error } = await supabase
+    .from("documents")
+    .select("encrypted_structured_fields")
+    .eq("id", documentId)
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Impossibile leggere i campi del documento: ${error?.message}`);
+  }
+
+  const current = await decryptStructuredFields(masterKey, data.encrypted_structured_fields);
+  const previousValue = current[fieldKey] ?? null;
+
+  const next = { ...current };
+  if (value === null || !value.trim()) {
+    delete next[fieldKey];
+  } else {
+    next[fieldKey] = value;
+  }
+
+  return {
+    update: { encrypted_structured_fields: await encryptStructuredFields(masterKey, next) },
+    previousValue,
+  };
 }
 
 /** `value` è a parte, non preso dalla proposta: è lo stesso percorso di "modifica", accettare tal quale o corretto è la stessa operazione. */
@@ -56,14 +107,34 @@ export async function acceptProposal(
   masterKey: CryptoKey,
   ownerId: string,
   doc: DocumentListItem,
-  kind: ProposalKind,
+  proposal: Proposal,
   value: string,
 ): Promise<AcceptedProposal> {
-  const previousValue = currentValue(doc, kind);
+  if (proposal.kind === "field") {
+    const fieldKey = proposal.fieldKey;
+    if (!fieldKey) throw new Error("Proposta di campo senza chiave.");
+
+    const { update, previousValue } = await mergeStructuredField(supabase, masterKey, doc.id, fieldKey, value);
+    const { error } = await supabase.from("documents").update(update).eq("id", doc.id);
+    if (error) {
+      throw new Error(`Impossibile applicare la proposta: ${error.message}`);
+    }
+
+    // Prima accettazione di questa chiave: la registra nel vocabolario, così i prossimi documenti dello stesso
+    // tipo la ritroveranno invece di una leggermente diversa (idempotente se già registrata).
+    if (proposal.fieldLabel) {
+      await registerFieldVocabulary(supabase, ownerId, fieldKey, proposal.fieldLabel);
+    }
+
+    await logAuditEvent(supabase, ownerId, "proposal_accepted");
+    return { kind: "field", fieldKey, previousValue };
+  }
+
+  const previousValue = currentValue(doc, proposal.kind);
 
   const { error } = await supabase
     .from("documents")
-    .update(await updateFor(masterKey, kind, value))
+    .update(await updateFor(masterKey, proposal.kind, value))
     .eq("id", doc.id);
 
   if (error) {
@@ -73,7 +144,7 @@ export async function acceptProposal(
   // In Attività resta traccia del *tipo*, mai del valore: gli audit non devono contenere contenuti.
   await logAuditEvent(supabase, ownerId, "proposal_accepted");
 
-  return { kind, previousValue };
+  return { kind: proposal.kind, previousValue };
 }
 
 /** Rimette il campo com'era prima di un'accettazione. */
@@ -84,6 +155,19 @@ export async function undoAcceptance(
   documentId: string,
   accepted: AcceptedProposal,
 ): Promise<void> {
+  if (accepted.kind === "field") {
+    const fieldKey = accepted.fieldKey;
+    if (!fieldKey) throw new Error("Annullamento di un campo senza chiave.");
+
+    const { update } = await mergeStructuredField(supabase, masterKey, documentId, fieldKey, accepted.previousValue);
+    const { error } = await supabase.from("documents").update(update).eq("id", documentId);
+    if (error) {
+      throw new Error(`Impossibile annullare: ${error.message}`);
+    }
+    await logAuditEvent(supabase, ownerId, "proposal_undone");
+    return;
+  }
+
   const { error } = await supabase
     .from("documents")
     .update(await updateFor(masterKey, accepted.kind, accepted.previousValue))
@@ -117,6 +201,7 @@ export async function rejectProposal(
       owner_id: ownerId,
       document_id: documentId,
       kind: proposal.kind,
+      field_key: proposal.fieldKey ?? null,
       encrypted_value: encryptedValue,
     })
     .select("id")
@@ -153,7 +238,7 @@ export async function listProposalRejections(
 ): Promise<ProposalRejection[]> {
   const { data, error } = await supabase
     .from("proposal_rejections")
-    .select("id, kind, encrypted_value")
+    .select("id, kind, field_key, encrypted_value")
     .eq("document_id", documentId);
 
   if (error) {
@@ -164,6 +249,7 @@ export async function listProposalRejections(
     (data ?? []).map(async (row) => ({
       id: row.id,
       kind: row.kind as ProposalKind,
+      fieldKey: row.field_key ?? undefined,
       value: bytesToUtf8(await decryptBytes(masterKey, parseEnvelope(row.encrypted_value))),
     })),
   );
