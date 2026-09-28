@@ -10,12 +10,7 @@ import {
 import { wipe } from "@/lib/crypto/memory";
 import type { EncryptedEnvelope } from "@/lib/crypto/envelope";
 
-/**
- * Everything produced when setting up encryption for a new account.
- * `recoveryKey.formatted` must be shown to the user exactly once ---
- * HINTHIAL never stores it. The two wrapped copies are what gets
- * persisted (as opaque ciphertext) alongside `pbkdf2Params`.
- */
+/** Everything produced when setting up encryption for a new account. `recoveryKey.formatted` must be shown once: HINTHIAL never stores it. The two wrapped copies are what gets persisted alongside `pbkdf2Params`. */
 export interface MasterKeySetup {
   masterKeyWrappedByPassword: EncryptedEnvelope;
   masterKeyWrappedByRecoveryKey: EncryptedEnvelope;
@@ -24,14 +19,9 @@ export interface MasterKeySetup {
 }
 
 /**
- * Generates a new Master Key and wraps it two independent ways: with a
- * key derived from the master password, and with a key derived from a
- * freshly generated recovery key. Either wrapped copy can later unlock
- * the same Master Key --- see PROTOCOL.md.
- *
- * `pbkdf2Params` defaults to fresh, production-strength parameters
- * (`generatePbkdf2Params()`, see constants.ts); tests pass a
- * low-iteration override to stay fast.
+ * Generates a new Master Key and wraps it two independent ways: with a key derived from the master password, and
+ * one from a freshly generated recovery key. `pbkdf2Params` defaults to production-strength parameters; tests pass
+ * a low-iteration override to stay fast.
  */
 export async function setupMasterKey(
   password: string,
@@ -57,17 +47,10 @@ export async function setupMasterKey(
 }
 
 /**
- * Unlocks (unwraps) the Master Key using the master password.
- * Throws `DecryptionError` if the password is wrong.
- *
- * `extractable` --- sempre `false` (il normale sblocco della sessione:
- * la chiave vive solo in memoria, mai esportabile) tranne per un solo
- * caso, FASE 13 (v. MasterKeyProvider.tsx, registerDeviceLock): per
- * cifrare il Master Key per un nuovo dispositivo fidato serve poterlo
- * esportare almeno per l'istante necessario a farlo --- la decisione
- * architetturale che HINTHIAL_MVP.md segnala esplicitamente di
- * sciogliere consapevolmente, non un rilassamento generale della
- * garanzia per lo sblocco di tutti i giorni.
+ * Unlocks (unwraps) the Master Key using the master password. Throws `DecryptionError` if the password is wrong.
+ * `extractable` is always `false` except for registerDeviceLock (v. MasterKeyProvider.tsx): cifrare il Master Key
+ * per un nuovo dispositivo fidato richiede di poterlo esportare per l'istante necessario, un'eccezione consapevole
+ * e non un rilassamento generale della garanzia per lo sblocco quotidiano.
  */
 export async function unlockMasterKeyWithPassword(
   password: string,

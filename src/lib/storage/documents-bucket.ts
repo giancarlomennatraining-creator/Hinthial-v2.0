@@ -1,12 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 
-/**
- * Private Storage bucket holding encrypted document payloads (see
- * supabase/migrations, FASE 4). The server only ever sees ciphertext:
- * every object here is a serialized EncryptedEnvelope
- * (src/lib/crypto/envelope.ts), produced client-side before upload.
- */
+/** Private Storage bucket holding encrypted document payloads. The server only ever sees ciphertext: every object here is a serialized EncryptedEnvelope, produced client-side before upload. */
 export const ENCRYPTED_DOCUMENTS_BUCKET = "encrypted-documents";
 
 /** RLS on storage.objects requires the first path segment to be the owner's user id. */
@@ -14,13 +9,7 @@ export function documentStoragePath(ownerId: string, documentId: string): string
   return `${ownerId}/${documentId}.json`;
 }
 
-/**
- * La miniatura del contenuto (v. lib/thumbnail.ts), accanto al file a
- * cui appartiene e cifrata come lui. Si deriva dal percorso del file
- * invece di essere una colonna a sé: così resta valida anche per le note
- * che cambiano percorso a ogni modifica, e non c'è niente da tenere
- * allineato.
- */
+/** La miniatura del contenuto, accanto al file a cui appartiene. Si deriva dal percorso del file invece di essere una colonna a sé: resta valida anche per le note che cambiano percorso ad ogni modifica. */
 export function documentThumbnailPath(storagePath: string): string {
   return storagePath.replace(/\.json$/, "-thumb.json");
 }
@@ -42,19 +31,11 @@ export async function uploadEncryptedPayload(
 }
 
 /**
- * Come uploadEncryptedPayload, ma con `upsert: true` --- pensata per la
- * miniatura (v. lib/thumbnail.ts), non per il contenuto principale.
- *
- * Il contenuto principale usa `upsert: false` di proposito: due
- * caricamenti sullo stesso percorso non devono mai silenziosamente
- * sovrascriversi. La miniatura è diversa --- è dato **derivato e
- * idempotente**, non wrappato da nessuna chiave documento (solo cifrato
- * sotto la Master Key, v. domain/documents/repository.ts), quindi
- * riscriverla non rischia mai di accoppiare byte vecchi a una chiave
- * nuova. Senza `upsert`, un tentativo di backfill dopo un salvataggio
- * andato a metà (upload della miniatura riuscito, riga non aggiornata)
- * fallirebbe per sempre con "resource already exists" --- ed è esattamente
- * il caso che il ritentativo dovrebbe correggere, non incontrare di nuovo.
+ * Come uploadEncryptedPayload, ma con `upsert: true`, pensata per la miniatura non per il contenuto principale.
+ * Il contenuto principale usa `upsert: false` di proposito: due caricamenti sullo stesso percorso non devono mai
+ * sovrascriversi. La miniatura è dato derivato e idempotente (solo cifrato sotto la Master Key, mai wrappato da
+ * una chiave documento), quindi riscriverla non rischia di accoppiare byte vecchi a una chiave nuova; senza
+ * `upsert`, un backfill dopo un salvataggio andato a metà fallirebbe per sempre con "resource already exists".
  */
 export async function uploadEncryptedThumbnail(
   supabase: SupabaseClient<Database>,
@@ -85,13 +66,7 @@ export async function downloadEncryptedPayload(
   return data.text();
 }
 
-/**
- * Come downloadEncryptedPayload, ma restituisce null invece di lanciare
- * se l'oggetto non c'è o il download fallisce --- pensata per la
- * miniatura (v. lib/thumbnail.ts), che è un di più: un contenuto senza
- * miniatura, o con una che per qualche motivo non si riesce a
- * scaricare, deve ricadere sul file intero, non rompere la pagina.
- */
+/** Come downloadEncryptedPayload, ma restituisce null invece di lanciare se l'oggetto non c'è: un contenuto senza miniatura deve ricadere sul file intero, non rompere la pagina. */
 export async function downloadOptionalEncryptedPayload(
   supabase: SupabaseClient<Database>,
   path: string,

@@ -72,15 +72,11 @@ export async function signUp(
   }
 
   if (!data.session) {
-    // Email confirmation is enabled on this project: there is no active
-    // session yet, so redirecting to the dashboard would just bounce
-    // straight back to /login. Send the user to a dedicated page
-    // instead of showing an inline message on the register form.
+    // Conferma email attiva: niente sessione ancora, si manda a una pagina dedicata invece di rimbalzare su /login.
     redirect(`/check-email?email=${encodeURIComponent(email)}`);
   }
 
-  // Email confirmation disabled --- signUp already returned an active
-  // session: treat it as an implicit first login.
+  // Conferma email disattivata: signUp ha già restituito una sessione attiva, trattato come primo login implicito.
   const signUpContext = await getRequestContext();
   await logAuditEvent(supabase, data.user.id, "login", { method: "password", ...signUpContext });
 
@@ -106,24 +102,15 @@ export async function signIn(
   });
 
   if (error) {
-    // Nessuna sessione ancora (auth.uid() è null): non si può inserire
-    // direttamente in audit_events (RLS richiede auth.uid() = owner_id),
-    // quindi passa da una funzione dedicata --- v. logFailedLoginAttempt.
+    // Nessuna sessione ancora: RLS richiede auth.uid() = owner_id, quindi passa da una funzione dedicata.
     await logFailedLoginAttempt(supabase, email);
     return { error: translateAuthError(error.message) };
   }
 
-  // Un cookie di una sessione precedente (v. lib/auth/mfa-bypass.ts) non
-  // deve valere per questa, appena creata e ancora aal1: altrimenti un
-  // solo codice di backup usato una volta disattiverebbe l'MFA per
-  // sempre su questo browser, non solo per quella sessione.
+  // Un cookie di una sessione precedente non deve valere per questa: altrimenti un solo codice di backup disattiverebbe l'MFA per sempre su questo browser.
   await clearMfaVerifiedViaBackupCode();
 
-  // Chi ha l'autenticazione a due fattori attiva non è ancora "dentro"
-  // per davvero: la sessione è solo aal1 (password verificata), serve
-  // ancora il codice del secondo fattore prima di registrare il login
-  // e concedere l'accesso (v. (app)/layout.tsx per la stessa verifica
-  // sulle richieste dirette, e /login/mfa per dove si completa).
+  // Chi ha l'MFA attiva non è ancora "dentro": la sessione è solo aal1, serve il secondo fattore prima di registrare il login (v. /login/mfa).
   const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
     redirect("/login/mfa");
@@ -156,9 +143,7 @@ export async function verifyMfaCode(
 
   const mfaContext = await getRequestContext();
 
-  // Un codice di backup ha un formato ben distinto da un codice TOTP a 6
-  // cifre (v. domain/mfa/backup-codes.ts): un controllo veloce prima di
-  // provare gli altri fattori, non un'alternativa esplicita da scegliere.
+  // Un codice di backup ha un formato ben distinto da un codice TOTP: un controllo veloce prima di provare gli altri fattori.
   if (await verifyAndConsumeBackupCode(supabase, user.id, code)) {
     await markMfaVerifiedViaBackupCode();
     await logAuditEvent(supabase, user.id, "login", { method: "backup_code", ...mfaContext });
@@ -171,9 +156,7 @@ export async function verifyMfaCode(
     return { error: "Codice non valido. Riprova." };
   }
 
-  // Un codice non dichiara per quale dispositivo è stato generato: si
-  // prova su ognuno dei fattori verificati finché uno accetta ---
-  // realisticamente uno o due, mai un elenco lungo.
+  // Un codice non dichiara per quale dispositivo è stato generato: si prova su ognuno dei fattori finché uno accetta.
   for (const factor of factorsData.totp) {
     const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
     if (!error) {
@@ -198,10 +181,7 @@ export async function requestPasswordReset(
 
   const supabase = await createClient();
 
-  // Supabase non rivela se l'indirizzo corrisponde a un account esistente:
-  // si ignora deliberatamente un eventuale errore e si prosegue comunque
-  // al passo successivo, per non permettere di scoprire quali email sono
-  // registrate.
+  // Si ignora deliberatamente un eventuale errore e si prosegue comunque, per non rivelare quali email sono registrate.
   await supabase.auth.resetPasswordForEmail(email);
 
   redirect(`/forgot-password/verify?email=${encodeURIComponent(email)}`);
@@ -256,8 +236,7 @@ export async function resetPassword(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    // Nessuna sessione di recupero attiva (es. pagina raggiunta
-    // direttamente, senza aver verificato un codice OTP prima).
+    // Nessuna sessione di recupero attiva (es. pagina raggiunta direttamente, senza aver verificato un OTP prima).
     return { error: "Sessione di recupero scaduta. Ricomincia la procedura." };
   }
 
@@ -266,8 +245,7 @@ export async function resetPassword(
     return { error: translateAuthError(error.message) };
   }
 
-  // Non lasciare attiva la sessione di recupero: l'utente rientra con le
-  // nuove credenziali dal login, come dopo una registrazione.
+  // Non lasciare attiva la sessione di recupero: l'utente rientra con le nuove credenziali dal login.
   await supabase.auth.signOut();
 
   redirect("/login");
@@ -281,14 +259,12 @@ export async function signOut(): Promise<void> {
   } = await supabase.auth.getUser();
 
   if (user) {
-    // Logged while the session is still valid --- signOut() below
-    // invalidates it, and RLS requires auth.uid() = owner_id to insert.
+    // Loggato mentre la sessione è ancora valida: signOut() sotto la invalida, e RLS richiede auth.uid() = owner_id.
     await logAuditEvent(supabase, user.id, "logout");
   }
 
   await supabase.auth.signOut();
-  // Ridondante con la stessa pulizia in signIn() --- ma corretto anche
-  // qui, per lo stesso motivo (v. lib/auth/mfa-bypass.ts).
+  // Ridondante con la stessa pulizia in signIn(), ma corretto anche qui per lo stesso motivo.
   await clearMfaVerifiedViaBackupCode();
 
   redirect("/");
