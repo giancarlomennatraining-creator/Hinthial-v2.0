@@ -3,18 +3,12 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// FASE 19b --- il documento viene letto appena lo scegli, non quando
-// premi Salva, e il form si precompila da solo.
-//
-// È il percorso che porta il valore di tutte le fasi precedenti nel
-// punto in cui l'utente passa davvero: fino a ieri tutto ciò che
-// Hinthial capiva viveva su una scheda che si apriva solo andandola a
-// cercare. Qui si verifica la catena intera --- lettura, campi ricavati,
-// riconoscimento del bene, salvataggio --- in una sola schermata.
+// Il documento viene letto appena lo scegli, non quando premi Salva, e il form si precompila da solo. Si verifica
+// la catena intera: lettura, campi ricavati, riconoscimento del bene, salvataggio, in una sola schermata.
 
 const MASTER_PASSWORD = "una-master-password-solida";
 
-/** PDF minimo valido con più righe di testo --- v. archive-item-detail. */
+/** PDF minimo valido con più righe di testo, v. archive-item-detail. */
 function buildPdf(lines: string[]): Buffer {
   const stream = lines
     .map((line, i) => `BT /F1 12 Tf 72 ${720 - i * 20} Td (${line}) Tj ET`)
@@ -81,8 +75,7 @@ test("scegliendo il file, Hinthial lo legge e precompila il form", async ({ page
 
   await signInAndUnlock(page);
 
-  // Un bene con la targa nel nome: è l'aggancio più forte che esista,
-  // perché una targa è unica (v. domain/proposals/asset-match.ts).
+  // Un bene con la targa nel nome: è l'aggancio più forte che esista, perché una targa è unica.
   await page.getByRole("link", { name: "Beni", exact: true }).click();
   await page.getByRole("link", { name: "+ Crea bene" }).click();
   await page.getByLabel("Nome").fill("Fiat Panda AB123CD");
@@ -106,9 +99,7 @@ test("scegliendo il file, Hinthial lo legge e precompila il form", async ({ page
   // exact: l'emittente compare anche dentro al titolo proposto qui sotto.
   await expect(page.getByText("GENERALI ITALIA S.p.A.", { exact: true })).toBeVisible();
 
-  // 2. Il titolo è **proposto**, non imposto: il nome del file è l'unico
-  // campo che arriva già compilato, e sostituirlo d'ufficio violerebbe
-  // la stessa regola delle proposte sulla scheda. Serve un clic.
+  // 2. Il titolo è proposto, non imposto: sostituirlo d'ufficio violerebbe la stessa regola delle proposte sulla scheda.
   await expect(page.getByLabel("Titolo")).toHaveValue("");
   await page.getByRole("button", { name: /Usa il titolo che ho ricavato/ }).click();
   await expect(page.getByLabel("Titolo")).toHaveValue(
@@ -145,14 +136,8 @@ test("correggendo la scadenza, Hinthial ritrova la frase da cui viene", async ({
   });
   await expect(page.getByText(/Ho letto il documento/)).toBeVisible({ timeout: 45_000 });
 
-  // Il caso più frequente non è che non trovi la data: è che ne trovi
-  // cinque e scelga quella sbagliata. Si corregge con l'ALTRA data del
-  // documento, e Hinthial deve ritrovarne la frase --- pur avendola
-  // ricevuta nel formato del calendario ("2026-03-14") mentre nel
-  // documento è scritta "14 marzo 2026".
-  // Si punta il suggerimento sotto al campo Scadenza e non la frase in
-  // sé: quella stessa riga compare anche nel riquadro "Ho letto il
-  // documento", come contesto della data del documento.
+  // Il caso più frequente è che trovi cinque date e scelga quella sbagliata. Si corregge con l'ALTRA data del
+  // documento, e Hinthial deve ritrovarne la frase pur avendola ricevuta in formato calendario.
   await page.getByLabel("Scadenza").fill("2026-03-14");
   await expect(page.getByText(/^Nel documento:/)).toContainText("Emessa il 14 marzo 2026");
 
@@ -178,8 +163,7 @@ test("il segno «suggerito» sparisce appena l'utente tocca il campo", async ({ 
     .click({ timeout: 45_000 });
   await expect(page.getByText("Titolo suggerito da Hinthial")).toBeVisible();
 
-  // Da quando ci metti mano il valore è tuo, e continuare a chiamarlo
-  // "suggerito" sarebbe falso.
+  // Da quando ci metti mano il valore è tuo, continuare a chiamarlo "suggerito" sarebbe falso.
   await page.getByLabel("Titolo").fill("Polizza auto 2027");
   await expect(page.getByText("Titolo suggerito da Hinthial")).not.toBeVisible();
 });

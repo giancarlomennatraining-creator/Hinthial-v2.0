@@ -3,19 +3,13 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// FASE 19 --- il meccanismo delle proposte. Quello che va provato qui non
-// è il disegno della sezione, sono le due promesse che la fase fa
-// all'utente e che nessun test unitario può verificare:
-//
-//   1. accettare **scrive davvero**, e l'effetto si vede altrove
-//      (una scadenza accettata compare in Scadenze);
-//   2. rifiutare **viene ricordato**, cioè sopravvive a un ricaricamento
-//      --- il rifiuto passa per il database, cifrato, e va riletto e
-//      decifrato perché la proposta resti sparita.
+// Il meccanismo delle proposte: le due promesse che nessun test unitario può verificare sono che accettare scrive
+// davvero (l'effetto si vede altrove) e che rifiutare viene ricordato (il rifiuto passa per il database, cifrato,
+// e va riletto e decifrato perché la proposta resti sparita).
 
 const MASTER_PASSWORD = "una-master-password-solida";
 
-/** PDF minimo valido con più righe di testo --- v. archive-item-detail. */
+/** PDF minimo valido con più righe di testo, v. archive-item-detail. */
 function buildPdf(lines: string[]): Buffer {
   const stream = lines
     .map((line, i) => `BT /F1 12 Tf 72 ${720 - i * 20} Td (${line}) Tj ET`)
@@ -73,8 +67,7 @@ async function setUpWithPolizza(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  // Il nome del file non dice niente: categoria e scadenza possono
-  // venire solo da dentro il documento.
+  // Il nome del file non dice niente: categoria e scadenza possono venire solo da dentro il documento.
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "scan_0012.pdf",
@@ -104,20 +97,16 @@ test("accettare una proposta scrive davvero, e si può annullare", async ({ page
 
   await proposte.getByRole("button", { name: "Accetta" }).first().click();
 
-  // La scheda si aggiorna, e la proposta sparisce: ciò che è impostato
-  // non si ripropone.
+  // La scheda si aggiorna, e la proposta sparisce: ciò che è impostato non si ripropone.
   await expect(scheda).toContainText("3 giu 2027", { timeout: 20_000 });
   await expect(proposte).toContainText("Scadenza impostata");
 
-  // Annullamento, subito e senza lasciare la pagina --- che è il momento
-  // in cui serve. Rimette il campo com'era, e la proposta torna a
-  // comparire: il documento è di nuovo senza scadenza.
+  // Annullamento, subito e senza lasciare la pagina: rimette il campo com'era, e la proposta torna a comparire.
   await proposte.getByRole("button", { name: "Annulla" }).click();
   await expect(scheda).not.toContainText("3 giu 2027", { timeout: 20_000 });
   await expect(proposte).toContainText("3 giu 2027");
 
-  // Si riaccetta, e stavolta si va a vedere l'effetto fuori
-  // dall'Archivio: è quello il punto di accettare una scadenza.
+  // Si riaccetta, e stavolta si va a vedere l'effetto fuori dall'Archivio.
   await proposte.getByRole("button", { name: "Accetta" }).first().click();
   await expect(scheda).toContainText("3 giu 2027", { timeout: 20_000 });
 
@@ -137,14 +126,12 @@ test("un rifiuto viene ricordato e sopravvive al ricaricamento", async ({ page }
   await expect(proposte).toContainText("Non te lo richiederò più");
   await expect(proposte).not.toContainText("3 giu 2027");
 
-  // La prova vera: il rifiuto è cifrato nel database, e per restare
-  // valido dev'essere riletto e decifrato al caricamento successivo.
+  // La prova vera: il rifiuto è cifrato nel database, e per restare valido dev'essere riletto e decifrato al caricamento successivo.
   await page.reload();
   await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
 
-  // La proposta di categoria resta (rifiutarne una non è rifiutarle
-  // tutte), ma la scadenza rifiutata non deve tornare.
+  // La proposta di categoria resta (rifiutarne una non è rifiutarle tutte), ma la scadenza rifiutata non deve tornare.
   await expect(page.getByRole("region", { name: "Proposte" })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("region", { name: "Proposte" })).not.toContainText("3 giu 2027");
 });
@@ -180,9 +167,7 @@ test("le scelte sulle proposte restano in Attività", async ({ page }) => {
     timeout: 20_000,
   });
 
-  // Ogni scrittura automatica deve lasciare traccia: è metà del motivo
-  // per cui la FASE 19 esiste (v. tests/e2e/audit-log.spec.ts per il
-  // percorso fino al registro).
+  // Ogni scrittura automatica deve lasciare traccia.
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await page.getByRole("tab", { name: "Attività" }).click();
