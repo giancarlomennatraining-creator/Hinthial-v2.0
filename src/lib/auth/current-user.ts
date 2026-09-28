@@ -33,10 +33,8 @@ export interface CurrentUser {
   aiMasterEnabled: boolean;
   /** Consenso specifico alla Chat reale --- ha effetto solo se aiMasterEnabled è true. */
   aiChatConsent: boolean;
-  /** Consenso specifico all'estrazione avanzata dei contenuti (FASE 22, non ancora costruita) --- preferenza impostabile già oggi. */
+  /** Consenso specifico all'estrazione avanzata dei contenuti (FASE 22) --- il consenso per singola categoria (Salute inclusa) vive su categories.ai_extraction_enabled, non qui. */
   aiExtractionConsent: boolean;
-  /** Eccezione per la categoria Salute dentro l'estrazione avanzata --- ha effetto solo se aiExtractionConsent è true. */
-  aiHealthConsent: boolean;
   /** Consenso specifico alla trascrizione audio/video reale (FASE 22b, non ancora costruita). */
   aiTranscriptionConsent: boolean;
   /** Consenso specifico agli avvisi proattivi (FASE 24, non ancora costruita) --- ha effetto solo se aiExtractionConsent è anche true. */
@@ -63,7 +61,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "first_name, last_name, avatar_path, birth_date, nav_orientation, bottom_nav_items, main_nav_items, onboarding_widget_hidden, master_key_intro_seen, ai_master_enabled, ai_chat_consent, ai_extraction_consent, ai_health_consent, ai_transcription_consent, ai_proactive_alerts_consent",
+      "first_name, last_name, avatar_path, birth_date, nav_orientation, bottom_nav_items, main_nav_items, onboarding_widget_hidden, master_key_intro_seen, ai_master_enabled, ai_chat_consent, ai_extraction_consent, ai_transcription_consent, ai_proactive_alerts_consent",
     )
     .eq("id", user.id)
     .single();
@@ -92,7 +90,6 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     aiMasterEnabled: profile?.ai_master_enabled ?? false,
     aiChatConsent: profile?.ai_chat_consent ?? false,
     aiExtractionConsent: profile?.ai_extraction_consent ?? false,
-    aiHealthConsent: profile?.ai_health_consent ?? false,
     aiTranscriptionConsent: profile?.ai_transcription_consent ?? false,
     aiProactiveAlertsConsent: profile?.ai_proactive_alerts_consent ?? false,
   };

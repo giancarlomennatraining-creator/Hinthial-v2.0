@@ -10,13 +10,19 @@ import type { Category, CategoryInput } from "@/domain/categories/types";
 export async function listCategories(supabase: SupabaseClient<Database>): Promise<Category[]> {
   const { data, error } = await supabase
     .from("categories")
-    .select("id, name, icon")
+    .select("id, name, icon, ai_extraction_enabled, ai_extraction_enabled_until")
     .order("name");
 
   if (error) {
     throw new Error(`Impossibile caricare le categorie: ${error.message}`);
   }
-  return data ?? [];
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    icon: row.icon,
+    aiExtractionEnabled: row.ai_extraction_enabled,
+    aiExtractionEnabledUntil: row.ai_extraction_enabled_until,
+  }));
 }
 
 /** Returns the new category's id --- e.g. useful right after creation to link it to something else in the same flow (see domain/import). */
@@ -54,6 +60,39 @@ export async function updateCategory(
 
   if (error) {
     throw new Error(`Impossibile aggiornare la categoria: ${error.message}`);
+  }
+}
+
+/** Impostazioni > Intelligenza artificiale: consenso permanente per categoria (FASE 22). */
+export async function setCategoryAIExtractionEnabled(
+  supabase: SupabaseClient<Database>,
+  categoryId: string,
+  enabled: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("categories")
+    .update({ ai_extraction_enabled: enabled })
+    .eq("id", categoryId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare il consenso della categoria: ${error.message}`);
+  }
+}
+
+/** "Abilita per 30 giorni" dalla scheda di un documento --- non tocca il consenso permanente, scade da solo. */
+export async function grantCategoryAIExtractionTemporarily(
+  supabase: SupabaseClient<Database>,
+  categoryId: string,
+  days: number,
+): Promise<void> {
+  const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await supabase
+    .from("categories")
+    .update({ ai_extraction_enabled_until: until })
+    .eq("id", categoryId);
+
+  if (error) {
+    throw new Error(`Impossibile abilitare temporaneamente la categoria: ${error.message}`);
   }
 }
 

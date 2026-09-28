@@ -176,7 +176,6 @@ export async function updateAIMasterEnabled(
             ai_master_enabled: false,
             ai_chat_consent: false,
             ai_extraction_consent: false,
-            ai_health_consent: false,
             ai_transcription_consent: false,
             ai_proactive_alerts_consent: false,
           },
@@ -204,7 +203,7 @@ export async function updateAIChatConsent(
   }
 }
 
-/** FASE 22, non ancora costruita --- imposta già la preferenza. Spegnerlo spegne anche health/proactive-alerts, che ne dipendono; riaccenderlo non li riaccende. */
+/** FASE 22: il "leggere contenuti" resta un consenso a due livelli --- questo generale, poi per categoria (v. domain/categories/repository.ts, setCategoryAIExtractionEnabled). Spegnerlo spegne anche proactive-alerts, che ne dipende. */
 export async function updateAIExtractionConsent(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -215,24 +214,8 @@ export async function updateAIExtractionConsent(
     .update(
       consent
         ? { ai_extraction_consent: true }
-        : { ai_extraction_consent: false, ai_health_consent: false, ai_proactive_alerts_consent: false },
+        : { ai_extraction_consent: false, ai_proactive_alerts_consent: false },
     )
-    .eq("id", userId);
-
-  if (error) {
-    throw new Error(`Impossibile salvare il consenso: ${error.message}`);
-  }
-}
-
-/** Effetto solo se ai_extraction_consent è true (spento insieme al resto se quello viene ritirato). */
-export async function updateAIHealthConsent(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  consent: boolean,
-): Promise<void> {
-  const { error } = await supabase
-    .from("profiles")
-    .update({ ai_health_consent: consent })
     .eq("id", userId);
 
   if (error) {

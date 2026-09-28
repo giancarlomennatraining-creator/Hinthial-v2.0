@@ -11,9 +11,11 @@ import {
   downloadThumbnail,
   extractTextForExistingDocument,
   listDocuments,
+  updateDocumentAIExtractionExclusion,
 } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
-import { listCategories } from "@/domain/categories/repository";
+import { listCategories, grantCategoryAIExtractionTemporarily } from "@/domain/categories/repository";
+import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
 import { listDossiers } from "@/domain/dossiers/repository";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import { readingStateFor } from "@/domain/extraction/reading-state";
@@ -26,11 +28,19 @@ import {
   undoAcceptance,
   undoRejection,
 } from "@/domain/proposals/repository";
+import {
+  analyzeDocumentWithClaude,
+  buildAIProposals,
+  type AIAnalysisScope,
+  type AIExtractedFields,
+} from "@/domain/ai/analyze-document";
+import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { StructuredFieldsSection } from "@/components/documents/StructuredFieldsSection";
 import {
   ProposalsSection,
   type UndoableAction,
 } from "@/components/documents/ProposalsSection";
+import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
 import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
 import {
   contentKindFor,
@@ -57,6 +67,7 @@ export function ArchiveItemDetail({
   const supabase = useRef(createClient()).current;
   const router = useRouter();
   const showToast = useToast();
+  const { masterEnabled, extractionConsent } = useAIProcessingConsent();
 
   const [doc, setDoc] = useState<DocumentListItem | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -83,6 +94,11 @@ export function ArchiveItemDetail({
   const [rejections, setRejections] = useState<ProposalRejection[]>([]);
   const [undoable, setUndoable] = useState<UndoableAction | null>(null);
   const [proposalBusy, setProposalBusy] = useState(false);
+
+  // FASE 22: quello che Claude ha letto in questa sessione --- ricalcolato in proposte a ogni render come le
+  // locali (v. buildAIProposals), così accettare/rifiutare le filtra allo stesso modo, automaticamente.
+  const [aiFields, setAiFields] = useState<AIExtractedFields | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
 
   // Testo letto potenzialmente lungo: se ne mostra un pezzo, il resto solo a richiesta.
   const [fullText, setFullText] = useState(false);
@@ -281,6 +297,40 @@ export function ArchiveItemDetail({
     });
   }
 
+  /** FASE 22: unica fase irreversibile del piano --- un contenuto uscito è uscito, quindi un window.confirm prima di ogni invio, qualunque sia lo scope scelto. */
+  async function handleAnalyzeWithClaude(scope: AIAnalysisScope) {
+    if (!doc) return;
+    if (!window.confirm("Il testo di questo documento verrà inviato a Claude (Anthropic). Continuare?")) {
+      return;
+    }
+
+    setAiBusy(true);
+    setError(null);
+    try {
+      if (scope === "temporary" && doc.categoryId) {
+        await grantCategoryAIExtractionTemporarily(supabase, doc.categoryId, 30);
+        await refresh();
+      }
+      const fields = await analyzeDocumentWithClaude(doc, categories, scope);
+      setAiFields(fields);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Claude.");
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function handleToggleAIExclusion(next: boolean) {
+    if (!doc) return;
+    setError(null);
+    try {
+      await updateDocumentAIExtractionExclusion(supabase, doc.id, next);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile salvare l'esclusione.");
+    }
+  }
+
   async function handleDelete() {
     if (!doc) return;
     if (!window.confirm(`Eliminare "${doc.filename}"? L'operazione non è reversibile.`)) return;
@@ -326,7 +376,11 @@ export function ArchiveItemDetail({
   const reading = readingStateFor(doc);
   // Calcolati al volo dal testo già decifrato, non salvati: niente da migrare, valgono su tutto l'archivio esistente.
   // Che cosa c'è da proporre, tolto ciò che è già impostato e ciò che l'utente ha già scartato (v. domain/proposals/build.ts).
-  const proposals = buildProposals(doc, categories, rejections);
+  const localProposals = buildProposals(doc, categories, rejections);
+  // FASE 22: ricalcolate a ogni render come le locali, così accettare/rifiutare le filtra automaticamente allo stesso modo.
+  const aiProposals = aiFields ? buildAIProposals(doc, aiFields, rejections) : [];
+  const proposals = [...localProposals, ...aiProposals];
+  const categoryEnabledForAI = category ? isCategoryEnabledForExtraction(category) : false;
 
   // "Cosa ne ho ricavato" esclude: ciò che è già una proposta identica, ciò che è già nella scheda (non più una
   // notizia), e il titolo (non applicabile da questa pagina --- vive al caricamento, v. FASE 19b).
@@ -506,6 +560,18 @@ export function ArchiveItemDetail({
           </div>
         </div>
       </div>
+
+      {/* FASE 22: sopra le proposte --- il bottone che le può alimentare con una lettura vera, non solo locale. */}
+      <AIAnalysisTrigger
+        masterEnabled={masterEnabled}
+        extractionConsent={extractionConsent}
+        hasCategory={doc.categoryId !== null}
+        categoryEnabled={categoryEnabledForAI}
+        excluded={doc.aiExtractionExcluded}
+        busy={aiBusy}
+        onAnalyze={handleAnalyzeWithClaude}
+        onToggleExcluded={handleToggleAIExclusion}
+      />
 
       {/* A tutta larghezza e prima del testo: è l'unica parte che chiede una risposta. */}
       <ProposalsSection

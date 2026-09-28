@@ -117,6 +117,11 @@ export function ProposalsSection({
                       calcolata da Hinthial
                     </span>
                   ) : null}
+                  {proposal.aiGenerated ? (
+                    <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs text-brand">
+                      🔒 letto da Claude
+                    </span>
+                  ) : null}
                 </p>
                 <p className="mt-0.5 text-xs text-zinc-500 italic dark:text-zinc-400">
                   {proposal.source}

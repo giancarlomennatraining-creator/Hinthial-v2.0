@@ -39,6 +39,7 @@ type AuditEventTypeColumn =
   | "friend_added"
   | "vault_wiped"
   | "ai_chat_used"
+  | "ai_extraction_used"
   | "trusted_device_registered"
   | "trusted_device_revoked"
   | "digital_legacy_reminder_sent"
@@ -110,7 +111,6 @@ export type Database = {
           ai_master_enabled: boolean;
           ai_chat_consent: boolean;
           ai_extraction_consent: boolean;
-          ai_health_consent: boolean;
           ai_transcription_consent: boolean;
           ai_proactive_alerts_consent: boolean;
           capsule_countdown_visible: boolean;
@@ -147,7 +147,6 @@ export type Database = {
           ai_master_enabled?: boolean;
           ai_chat_consent?: boolean;
           ai_extraction_consent?: boolean;
-          ai_health_consent?: boolean;
           ai_transcription_consent?: boolean;
           ai_proactive_alerts_consent?: boolean;
           capsule_countdown_visible?: boolean;
@@ -184,7 +183,6 @@ export type Database = {
           ai_master_enabled?: boolean;
           ai_chat_consent?: boolean;
           ai_extraction_consent?: boolean;
-          ai_health_consent?: boolean;
           ai_transcription_consent?: boolean;
           ai_proactive_alerts_consent?: boolean;
           capsule_countdown_visible?: boolean;
@@ -292,6 +290,8 @@ export type Database = {
           owner_id: string;
           name: string;
           icon: string;
+          ai_extraction_enabled: boolean;
+          ai_extraction_enabled_until: string | null;
           created_at: string;
         };
         Insert: {
@@ -299,6 +299,8 @@ export type Database = {
           owner_id: string;
           name: string;
           icon: string;
+          ai_extraction_enabled?: boolean;
+          ai_extraction_enabled_until?: string | null;
           created_at?: string;
         };
         Update: {
@@ -306,6 +308,8 @@ export type Database = {
           owner_id?: string;
           name?: string;
           icon?: string;
+          ai_extraction_enabled?: boolean;
+          ai_extraction_enabled_until?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -462,6 +466,7 @@ export type Database = {
           has_thumbnail: boolean;
           deleted_at: string | null;
           purge_at: string | null;
+          ai_extraction_excluded: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -486,6 +491,7 @@ export type Database = {
           has_thumbnail?: boolean;
           deleted_at?: string | null;
           purge_at?: string | null;
+          ai_extraction_excluded?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -510,6 +516,7 @@ export type Database = {
           has_thumbnail?: boolean;
           deleted_at?: string | null;
           purge_at?: string | null;
+          ai_extraction_excluded?: boolean;
           created_at?: string;
           updated_at?: string;
         };

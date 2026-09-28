@@ -9,8 +9,8 @@ function daysFromNow(days: number): string {
 function buildContext(overrides: Partial<AIContext> = {}): AIContext {
   return {
     categories: [
-      { id: "cat-assicurazioni", name: "Assicurazioni", icon: "🛡️" },
-      { id: "cat-casa", name: "Casa", icon: "🏠" },
+      { id: "cat-assicurazioni", name: "Assicurazioni", icon: "🛡️", aiExtractionEnabled: false, aiExtractionEnabledUntil: null },
+      { id: "cat-casa", name: "Casa", icon: "🏠", aiExtractionEnabled: false, aiExtractionEnabledUntil: null },
     ],
     assets: [
       { id: "asset-auto", name: "Auto Panda", categoryId: "cat-assicurazioni", createdAt: "2026-01-01" },
@@ -34,6 +34,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         extractedText: "",
         extractedAt: null,
         hasThumbnail: false,
+        aiExtractionExcluded: false,
         issuer: "",
         deletedAt: null,
         purgeAt: null,
@@ -56,6 +57,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         extractedText: "",
         extractedAt: null,
         hasThumbnail: false,
+        aiExtractionExcluded: false,
         issuer: "",
         deletedAt: null,
         purgeAt: null,
@@ -119,6 +121,7 @@ describe("mockAIProvider.search", () => {
           extractedText: "",
           extractedAt: null,
           hasThumbnail: false,
+          aiExtractionExcluded: false,
           issuer: "",
           deletedAt: null,
           purgeAt: null,
@@ -150,6 +153,7 @@ describe("mockAIProvider.search", () => {
           extractedText: "Polizza responsabilità civile autoveicoli --- scadenza 3 giugno 2027",
           extractedAt: "2026-01-01",
           hasThumbnail: false,
+          aiExtractionExcluded: false,
           issuer: "",
           deletedAt: null,
           purgeAt: null,
@@ -240,6 +244,7 @@ describe("mockAIProvider.retrieve", () => {
               extractedText: "",
               extractedAt: null,
               hasThumbnail: false,
+              aiExtractionExcluded: false,
               issuer: "",
               deletedAt: null,
               purgeAt: null,

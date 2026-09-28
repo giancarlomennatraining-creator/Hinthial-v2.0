@@ -1,15 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createClient } from "@/lib/db/supabase/client";
 import { cn } from "@/lib/utils";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
+import { listCategories, setCategoryAIExtractionEnabled } from "@/domain/categories/repository";
+import { sortAlphabetically } from "@/lib/utils";
+import type { Category } from "@/domain/categories/types";
 
 /**
  * Impostazioni -> Intelligenza artificiale: il "cancello" generale per l'IA reale più le funzioni specifiche che ne
  * dipendono, riusato anche nel pannello ⚙ della pagina AI. Spegnere il cancello spegne anche le funzioni sotto;
- * riaccenderlo non le riaccende da solo. Solo "Chat" ha oggi una funzione reale dietro: le altre quattro non sono
- * ancora costruite, attivarle imposta solo già la preferenza. "Avvisi proattivi" resta disabilitato finché
- * "Estrazione avanzata" non è attiva: non esiste modo di generare un avviso senza aver prima letto i contenuti.
+ * riaccenderlo non le riaccende da solo. Chat ed Estrazione avanzata hanno oggi una funzione reale dietro
+ * (rispettivamente FASE 11 e FASE 22); le altre due non sono ancora costruite, attivarle imposta solo già la
+ * preferenza. "Avvisi proattivi" resta disabilitato finché "Estrazione avanzata" non è attiva: non esiste modo di
+ * generare un avviso senza aver prima letto i contenuti.
+ *
+ * FASE 22: il consenso all'estrazione avanzata è a due livelli --- questo generale, poi per categoria (elenco sotto,
+ * Salute inclusa come una categoria come le altre, non più un'eccezione a parte).
  */
 export function AIConsentSettings() {
   const {
@@ -19,13 +27,16 @@ export function AIConsentSettings() {
     setChatConsent,
     extractionConsent,
     setExtractionConsent,
-    healthConsent,
-    setHealthConsent,
     transcriptionConsent,
     setTranscriptionConsent,
     proactiveAlertsConsent,
     setProactiveAlertsConsent,
   } = useAIProcessingConsent();
+
+  const supabase = useRef(createClient()).current;
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesError, setCategoriesError] = useState(false);
+  const [busyCategoryId, setBusyCategoryId] = useState<string | null>(null);
 
   const [masterBusy, setMasterBusy] = useState(false);
   const [masterError, setMasterError] = useState(false);
@@ -33,12 +44,25 @@ export function AIConsentSettings() {
   const [chatError, setChatError] = useState(false);
   const [extractionBusy, setExtractionBusy] = useState(false);
   const [extractionError, setExtractionError] = useState(false);
-  const [healthBusy, setHealthBusy] = useState(false);
-  const [healthError, setHealthError] = useState(false);
   const [transcriptionBusy, setTranscriptionBusy] = useState(false);
   const [transcriptionError, setTranscriptionError] = useState(false);
   const [alertsBusy, setAlertsBusy] = useState(false);
   const [alertsError, setAlertsError] = useState(false);
+
+  const refreshCategories = useCallback(async () => {
+    setCategoriesError(false);
+    try {
+      setCategories(await listCategories(supabase));
+    } catch {
+      setCategoriesError(true);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    // Vedi DocumentsPanel.tsx per il motivo per cui fetch-on-mount è legittimo qui.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refreshCategories();
+  }, [refreshCategories]);
 
   async function handleMasterChange(next: boolean) {
     setMasterError(false);
@@ -76,15 +100,18 @@ export function AIConsentSettings() {
     }
   }
 
-  async function handleHealthChange(next: boolean) {
-    setHealthError(false);
-    setHealthBusy(true);
+  async function handleCategoryToggle(category: Category, next: boolean) {
+    setBusyCategoryId(category.id);
+    setCategoriesError(false);
     try {
-      await setHealthConsent(next);
+      await setCategoryAIExtractionEnabled(supabase, category.id, next);
+      setCategories((prev) =>
+        prev.map((c) => (c.id === category.id ? { ...c, aiExtractionEnabled: next } : c)),
+      );
     } catch {
-      setHealthError(true);
+      setCategoriesError(true);
     } finally {
-      setHealthBusy(false);
+      setBusyCategoryId(null);
     }
   }
 
@@ -188,30 +215,51 @@ export function AIConsentSettings() {
                 onChange={() => handleExtractionChange(!extractionConsent)}
                 className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
               />
-              Estrazione avanzata dei contenuti --- non ancora disponibile, imposta già la
-              preferenza
+              🔒 Estrazione avanzata dei contenuti --- Claude legge il testo dei documenti delle
+              categorie che abiliti qui sotto
             </label>
           </li>
 
-          <li className="ml-4 border-l-2 border-amber-200 pl-2 dark:border-amber-900">
-            <label
+          <li className="ml-4 flex flex-col gap-1 border-l-2 border-zinc-200 pl-2 dark:border-zinc-800">
+            <p
               className={cn(
-                "flex items-center gap-2 rounded px-3 py-1.5 text-sm font-medium",
+                "text-xs",
                 masterEnabled && extractionConsent
-                  ? "cursor-pointer text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/40"
-                  : "cursor-not-allowed text-zinc-400 dark:text-zinc-600",
+                  ? "text-zinc-500 dark:text-zinc-400"
+                  : "text-zinc-400 dark:text-zinc-600",
               )}
             >
-              <input
-                type="checkbox"
-                checked={healthConsent}
-                disabled={!masterEnabled || !extractionConsent || healthBusy}
-                onChange={() => handleHealthChange(!healthConsent)}
-                className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
-              />
-              🔒 Includi anche la categoria Salute --- consenso ulteriore, richiede l&apos;estrazione
-              avanzata attiva
-            </label>
+              Categorie abilitate all&apos;estrazione avanzata --- spento di default per ognuna,
+              anche Salute:
+            </p>
+            {categoriesError ? (
+              <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+                Impossibile caricare o salvare le categorie.
+              </p>
+            ) : null}
+            <ul className="flex flex-col gap-0.5">
+              {sortAlphabetically(categories, (c) => c.name).map((category) => (
+                <li key={category.id}>
+                  <label
+                    className={cn(
+                      "flex items-center gap-2 rounded px-3 py-1 text-sm",
+                      masterEnabled && extractionConsent
+                        ? "cursor-pointer text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
+                        : "cursor-not-allowed text-zinc-400 dark:text-zinc-600",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={category.aiExtractionEnabled}
+                      disabled={!masterEnabled || !extractionConsent || busyCategoryId === category.id}
+                      onChange={() => handleCategoryToggle(category, !category.aiExtractionEnabled)}
+                      className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+                    />
+                    {category.icon} {category.name}
+                  </label>
+                </li>
+              ))}
+            </ul>
           </li>
 
           <li>
@@ -254,7 +302,7 @@ export function AIConsentSettings() {
             </label>
           </li>
         </ul>
-        {chatError || extractionError || healthError || transcriptionError || alertsError ? (
+        {chatError || extractionError || transcriptionError || alertsError ? (
           <p role="alert" className="text-xs text-red-600 dark:text-red-400">
             Preferenza non salvata.
           </p>

@@ -4,7 +4,9 @@ import type { AIContext } from "@/domain/ai/types";
 
 function buildContext(overrides: Partial<AIContext> = {}): AIContext {
   return {
-    categories: [{ id: "cat-assicurazioni", name: "Assicurazioni", icon: "🛡️" }],
+    categories: [
+      { id: "cat-assicurazioni", name: "Assicurazioni", icon: "🛡️", aiExtractionEnabled: false, aiExtractionEnabledUntil: null },
+    ],
     assets: [
       { id: "asset-auto", name: "Auto Panda", categoryId: "cat-assicurazioni", createdAt: "2026-01-01" },
     ],

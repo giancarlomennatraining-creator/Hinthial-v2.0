@@ -2,17 +2,21 @@ import { describe, expect, it } from "vitest";
 import { heuristicCategorizer } from "@/domain/categorizer/heuristic-provider";
 import type { Category } from "@/domain/categories/types";
 
+function cat(id: string, name: string, icon: string): Category {
+  return { id, name, icon, aiExtractionEnabled: false, aiExtractionEnabledUntil: null };
+}
+
 const DEFAULT_CATEGORIES: Category[] = [
-  { id: "cat-personale", name: "Personale", icon: "👤" },
-  { id: "cat-casa", name: "Casa", icon: "🏠" },
-  { id: "cat-veicoli", name: "Veicoli", icon: "🚗" },
-  { id: "cat-assicurazioni", name: "Assicurazioni", icon: "🛡️" },
-  { id: "cat-contratti", name: "Contratti", icon: "📄" },
-  { id: "cat-fiscale", name: "Fiscale", icon: "💰" },
-  { id: "cat-salute", name: "Salute", icon: "❤️" },
-  { id: "cat-finanze", name: "Finanze", icon: "📊" },
-  { id: "cat-account", name: "Account", icon: "🔑" },
-  { id: "cat-altro", name: "Altro", icon: "📦" },
+  cat("cat-personale", "Personale", "👤"),
+  cat("cat-casa", "Casa", "🏠"),
+  cat("cat-veicoli", "Veicoli", "🚗"),
+  cat("cat-assicurazioni", "Assicurazioni", "🛡️"),
+  cat("cat-contratti", "Contratti", "📄"),
+  cat("cat-fiscale", "Fiscale", "💰"),
+  cat("cat-salute", "Salute", "❤️"),
+  cat("cat-finanze", "Finanze", "📊"),
+  cat("cat-account", "Account", "🔑"),
+  cat("cat-altro", "Altro", "📦"),
 ];
 
 describe("heuristicCategorizer.suggestCategory", () => {
@@ -32,7 +36,7 @@ describe("heuristicCategorizer.suggestCategory", () => {
   });
 
   it("matches directly on a category's own name, covering custom categories", () => {
-    const categories: Category[] = [{ id: "cat-hobby", name: "Hobby", icon: "🎨" }];
+    const categories: Category[] = [cat("cat-hobby", "Hobby", "🎨")];
     expect(heuristicCategorizer.suggestCategory("hobby-modellismo.pdf", categories)).toBe("cat-hobby");
   });
 

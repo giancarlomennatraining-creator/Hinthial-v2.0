@@ -36,6 +36,7 @@ describe("buildTimeline", () => {
           extractedText: "",
           extractedAt: null,
           hasThumbnail: false,
+          aiExtractionExcluded: false,
           issuer: "",
           deletedAt: null,
           purgeAt: null,

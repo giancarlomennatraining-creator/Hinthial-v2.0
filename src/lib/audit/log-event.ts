@@ -21,6 +21,7 @@ export type AuditEventType =
   | "friend_added"
   | "vault_wiped"
   | "ai_chat_used"
+  | "ai_extraction_used"
   | "trusted_device_registered"
   | "trusted_device_revoked"
   | "digital_legacy_reminder_sent"
@@ -57,6 +58,10 @@ export interface AuditEventMetadata {
   method?: "password" | "totp" | "backup_code";
   ip?: string | null;
   userAgent?: string | null;
+  /** FASE 22 (ai_extraction_used): nome della categoria del documento analizzato --- già in chiaro sul server, mai il file o il testo. */
+  category?: string | null;
+  /** FASE 22 (ai_extraction_used): con quale permesso la chiamata è stata autorizzata --- "cosa è uscito, quando e perché" della spec. */
+  scope?: "category" | "temporary" | "once";
 }
 
 /**

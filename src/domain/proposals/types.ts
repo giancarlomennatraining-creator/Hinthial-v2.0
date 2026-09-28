@@ -15,6 +15,8 @@ export interface Proposal {
   source: string;
   /** Vero se il valore è calcolato e non letto (es. "controllo tra 12 mesi" + data documento) --- chi accetta deve saperlo. */
   derived?: boolean;
+  /** FASE 22: vero se il candidato viene da Claude (analisi esplicita, consenso a parte) e non dalle regole locali di FASE 18. */
+  aiGenerated?: boolean;
 }
 
 /** Un rifiuto già espresso, letto e decifrato --- v. proposal_rejections. */

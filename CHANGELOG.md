@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-28
+
+### FASE 22 --- Analisi dei contenuti con Claude, con consenso a tre assi
+
+**Cosa fa:** sulla scheda di un documento compare ora **"🔒 Chiedi a Claude di leggere questo documento"** --- a differenza della lettura locale (FASI 17-19b), qui il testo lascia davvero il dispositivo, quindi niente di automatico: un clic esplicito per documento, con conferma prima dell'invio. Il permesso è a tre assi: **funzione** (il cancello generale e "Estrazione avanzata" già esistenti), **categoria** (in Impostazioni → Intelligenza artificiale, ogni categoria ha ora il proprio consenso permanente --- Salute compresa, non più un'eccezione a parte con un checkbox suo) e **singolo documento** (un'esclusione permanente che vince su tutto, e un permesso "solo questa volta" che non tocca nessun consenso salvato). Se la categoria di un documento non è ancora abilitata, compare la scelta tra "Solo questa volta", "Abilita questa categoria per 30 giorni" o andare direttamente alle Impostazioni. Ogni lettura vera finisce in Attività, con la categoria e il permesso usato --- mai il contenuto.
+
+Quello che Claude propone (scadenza, categoria, emittente) passa dallo stesso meccanismo di accetta/modifica/rifiuta della FASE 19, con una badge "🔒 letto da Claude" per distinguerlo da una proposta locale.
+
+**Note tecniche:** ritirata `profiles.ai_health_consent` (FASE 22-prep, 2026-09-22): il consenso per la categoria "Salute" vive ora in `categories.ai_extraction_enabled`, come per qualunque altra categoria, invece di un caso speciale a parte --- generalizzazione, non una funzione nuova. Nuove colonne `categories.ai_extraction_enabled`/`ai_extraction_enabled_until` (il secondo per il consenso a scadenza) e `documents.ai_extraction_excluded`. Nuova route `app/api/ai/analyze/route.ts` (parallela a `api/ai/chat`, stessa disciplina: chiave solo server-side, consenso riverificato sul database non sul client) --- tre controlli in cascata: funzione, categoria (salvo scope "once"), esclusione del documento (vince sempre, anche su "once"). Il prompt richiede a Claude una citazione verbatim per ogni campo restituito; `domain/ai/analyze-document.ts` la verifica di nuovo lato client (stessa tolleranza di normalizzazione di `flattenForSearch`) e scarta in silenzio ciò che non torna --- stessa disciplina anti-hallucination già in `buildProposals`. Nuova `buildAIProposals`, parallela a `buildProposals` (non toccata): stessi filtri (niente su campi già compilati, niente già rifiutato, dedup) ma sui candidati AI, marcati `aiGenerated: true`. Nuovo evento Attività `ai_extraction_used`, con `{ category, scope }` in metadata.
+
+Verificato: typecheck, lint, build di produzione, 16 nuovi unit test (validazione delle citazioni, filtri di `buildAIProposals`, consenso di categoria con scadenza) più l'intera suite (463 test) senza regressioni. Riscritto `ai-extraction-consent.spec.ts` (non più valido dopo il ritiro del checkbox Salute) e aggiunto `ai-content-analysis.spec.ts`, non eseguiti in questa sessione: `.env.local` contiene una `ANTHROPIC_API_KEY` reale, ed entrambi presuppongono che manchi per verificare il messaggio di errore senza spendere una vera chiamata --- da eseguire con la chiave temporaneamente rimossa.
+
+---
+
 ## 2026-09-24
 
 ### Motore di estrazione locale più forte: più candidati, emittente proponibile, niente più importo

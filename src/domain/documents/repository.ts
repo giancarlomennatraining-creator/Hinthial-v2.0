@@ -53,7 +53,7 @@ export interface UploadOptions {
 }
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, created_at";
 
 type DocumentRow = {
   id: string;
@@ -74,6 +74,7 @@ type DocumentRow = {
   has_thumbnail: boolean;
   deleted_at: string | null;
   purge_at: string | null;
+  ai_extraction_excluded: boolean;
   created_at: string;
 };
 
@@ -142,6 +143,7 @@ async function toDocumentListItem(
     hasThumbnail: row.has_thumbnail,
     deletedAt: row.deleted_at,
     purgeAt: row.purge_at,
+    aiExtractionExcluded: row.ai_extraction_excluded,
   };
 }
 
@@ -457,6 +459,22 @@ export async function updateDocumentTranscript(
 
   if (error) {
     throw new Error(`Impossibile salvare la trascrizione: ${error.message}`);
+  }
+}
+
+/** FASE 22: esclude/riammette un documento dall'analisi Claude --- vince sempre su qualunque consenso di categoria. */
+export async function updateDocumentAIExtractionExclusion(
+  supabase: SupabaseClient<Database>,
+  documentId: string,
+  excluded: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("documents")
+    .update({ ai_extraction_excluded: excluded })
+    .eq("id", documentId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare l'esclusione: ${error.message}`);
   }
 }
 

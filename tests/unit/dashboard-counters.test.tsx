@@ -44,7 +44,7 @@ describe("DashboardCounters", () => {
 
   it("reflects the actual count per section", () => {
     const context = buildContext({
-      categories: [{ id: "c1", name: "Casa", icon: "🏠" }],
+      categories: [{ id: "c1", name: "Casa", icon: "🏠", aiExtractionEnabled: false, aiExtractionEnabledUntil: null }],
       documents: [
         {
           id: "d1",
@@ -63,6 +63,7 @@ describe("DashboardCounters", () => {
           extractedText: "",
           extractedAt: null,
           hasThumbnail: false,
+          aiExtractionExcluded: false,
           issuer: "",
           deletedAt: null,
           purgeAt: null,

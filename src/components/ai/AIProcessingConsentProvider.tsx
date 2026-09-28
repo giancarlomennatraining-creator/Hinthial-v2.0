@@ -5,7 +5,6 @@ import { createClient } from "@/lib/db/supabase/client";
 import {
   updateAIChatConsent,
   updateAIExtractionConsent,
-  updateAIHealthConsent,
   updateAIMasterEnabled,
   updateAIProactiveAlertsConsent,
   updateAITranscriptionConsent,
@@ -19,13 +18,10 @@ interface AIProcessingConsentContextValue {
   /** Consenso alla Chat reale: effetto solo se masterEnabled è true. */
   chatConsent: boolean;
   setChatConsent: (next: boolean) => Promise<void>;
-  /** Consenso all'estrazione avanzata (non ancora costruita): imposta già oggi la preferenza. */
+  /** Consenso generale all'estrazione avanzata (FASE 22) --- il consenso vero e proprio è per categoria, v. domain/categories. */
   extractionConsent: boolean;
-  /** Spegnerlo spegne anche healthConsent e proactiveAlertsConsent, che dipendono da questo. */
+  /** Spegnerlo spegne anche proactiveAlertsConsent, che dipende da questo. */
   setExtractionConsent: (next: boolean) => Promise<void>;
-  /** Eccezione per la categoria Salute dentro l'estrazione avanzata: effetto solo se extractionConsent è true. */
-  healthConsent: boolean;
-  setHealthConsent: (next: boolean) => Promise<void>;
   /** Consenso alla trascrizione audio/video reale (non ancora costruita). */
   transcriptionConsent: boolean;
   setTranscriptionConsent: (next: boolean) => Promise<void>;
@@ -38,16 +34,17 @@ const AIProcessingConsentContext = createContext<AIProcessingConsentContextValue
 
 /**
  * Consenso esplicito all'elaborazione AI reale: un "cancello" generale (masterEnabled) sopra consensi specifici per
- * singola funzione. Oggi solo chatConsent ha una funzione reale dietro (la Chat, v. AIPanel); gli altri sono
- * preferenze già impostabili per funzioni non ancora costruite. Sincronizzato sul server (profiles.ai_*): il valore
- * iniziale arriva già letto lato server per evitare uno stato sbagliato al primo render.
+ * singola funzione. Chat (FASE 11) ed estrazione avanzata (FASE 22) hanno una funzione reale dietro; il consenso
+ * per categoria dell'estrazione avanzata vive però su categories.ai_extraction_enabled (v.
+ * domain/categories/repository.ts), non qui --- questo resta solo il cancello generale della funzione. Gli altri
+ * sono preferenze già impostabili per funzioni non ancora costruite. Sincronizzato sul server (profiles.ai_*): il
+ * valore iniziale arriva già letto lato server per evitare uno stato sbagliato al primo render.
  */
 export function AIProcessingConsentProvider({
   userId,
   initialMasterEnabled,
   initialChatConsent,
   initialExtractionConsent,
-  initialHealthConsent,
   initialTranscriptionConsent,
   initialProactiveAlertsConsent,
   children,
@@ -56,7 +53,6 @@ export function AIProcessingConsentProvider({
   initialMasterEnabled: boolean;
   initialChatConsent: boolean;
   initialExtractionConsent: boolean;
-  initialHealthConsent: boolean;
   initialTranscriptionConsent: boolean;
   initialProactiveAlertsConsent: boolean;
   children: React.ReactNode;
@@ -64,7 +60,6 @@ export function AIProcessingConsentProvider({
   const [masterEnabled, setMasterEnabledState] = useState(initialMasterEnabled);
   const [chatConsent, setChatConsentState] = useState(initialChatConsent);
   const [extractionConsent, setExtractionConsentState] = useState(initialExtractionConsent);
-  const [healthConsent, setHealthConsentState] = useState(initialHealthConsent);
   const [transcriptionConsent, setTranscriptionConsentState] = useState(initialTranscriptionConsent);
   const [proactiveAlertsConsent, setProactiveAlertsConsentState] = useState(initialProactiveAlertsConsent);
 
@@ -74,7 +69,6 @@ export function AIProcessingConsentProvider({
         master: masterEnabled,
         chat: chatConsent,
         extraction: extractionConsent,
-        health: healthConsent,
         transcription: transcriptionConsent,
         alerts: proactiveAlertsConsent,
       };
@@ -83,7 +77,6 @@ export function AIProcessingConsentProvider({
         // spegnere il cancello spegne anche ogni consenso specifico
         setChatConsentState(false);
         setExtractionConsentState(false);
-        setHealthConsentState(false);
         setTranscriptionConsentState(false);
         setProactiveAlertsConsentState(false);
       }
@@ -95,13 +88,12 @@ export function AIProcessingConsentProvider({
         setMasterEnabledState(previous.master); // il server non ha salvato: si torna indietro
         setChatConsentState(previous.chat);
         setExtractionConsentState(previous.extraction);
-        setHealthConsentState(previous.health);
         setTranscriptionConsentState(previous.transcription);
         setProactiveAlertsConsentState(previous.alerts);
         throw err;
       }
     },
-    [masterEnabled, chatConsent, extractionConsent, healthConsent, transcriptionConsent, proactiveAlertsConsent, userId],
+    [masterEnabled, chatConsent, extractionConsent, transcriptionConsent, proactiveAlertsConsent, userId],
   );
 
   const setChatConsent = useCallback(
@@ -123,12 +115,10 @@ export function AIProcessingConsentProvider({
   const setExtractionConsent = useCallback(
     async (next: boolean) => {
       const previousExtraction = extractionConsent;
-      const previousHealth = healthConsent;
       const previousAlerts = proactiveAlertsConsent;
       setExtractionConsentState(next);
       if (!next) {
         // spegnere l'estrazione avanzata spegne anche ciò che dipende da essa
-        setHealthConsentState(false);
         setProactiveAlertsConsentState(false);
       }
 
@@ -137,28 +127,11 @@ export function AIProcessingConsentProvider({
         await updateAIExtractionConsent(supabase, userId, next);
       } catch (err) {
         setExtractionConsentState(previousExtraction);
-        setHealthConsentState(previousHealth);
         setProactiveAlertsConsentState(previousAlerts);
         throw err;
       }
     },
-    [extractionConsent, healthConsent, proactiveAlertsConsent, userId],
-  );
-
-  const setHealthConsent = useCallback(
-    async (next: boolean) => {
-      const previous = healthConsent;
-      setHealthConsentState(next);
-
-      try {
-        const supabase = createClient();
-        await updateAIHealthConsent(supabase, userId, next);
-      } catch (err) {
-        setHealthConsentState(previous);
-        throw err;
-      }
-    },
-    [healthConsent, userId],
+    [extractionConsent, proactiveAlertsConsent, userId],
   );
 
   const setTranscriptionConsent = useCallback(
@@ -201,8 +174,6 @@ export function AIProcessingConsentProvider({
       setChatConsent,
       extractionConsent,
       setExtractionConsent,
-      healthConsent,
-      setHealthConsent,
       transcriptionConsent,
       setTranscriptionConsent,
       proactiveAlertsConsent,
@@ -215,8 +186,6 @@ export function AIProcessingConsentProvider({
       setChatConsent,
       extractionConsent,
       setExtractionConsent,
-      healthConsent,
-      setHealthConsent,
       transcriptionConsent,
       setTranscriptionConsent,
       proactiveAlertsConsent,

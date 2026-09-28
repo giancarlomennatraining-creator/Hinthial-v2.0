@@ -31,6 +31,8 @@ export interface DocumentListItem {
   purgeAt: string | null;
   /** Cifrato come le note; modificabile a mano o proponibile da Hinthial (v. domain/proposals) quando lo riconosce nel testo. */
   issuer: string;
+  /** FASE 22: esclusione permanente di questo documento dall'analisi Claude, anche con la categoria abilitata --- vince sempre. */
+  aiExtractionExcluded: boolean;
 }
 
 /** Fields collected at upload time, in addition to the file itself. */
