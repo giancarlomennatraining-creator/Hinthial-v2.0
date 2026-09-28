@@ -4,21 +4,10 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
 /**
- * La barra di navigazione (laterale sopra md, il tasto ☰ sotto md)
- * seguiva il flusso della pagina invece di restare fissa alla finestra:
- * su qualunque pagina più lunga di una schermata --- praticamente
- * sempre, con dati reali --- il tasto per l'avatar o per il menu finiva
- * fuori vista scorrendo, irraggiungibile senza tornare su (v.
- * segnalazione utente: "il menu non si apre più", poi "lo vedo un layer
- * sotto rispetto al corpo della pagina" --- in realtà semplicemente
- * scorso via, non un problema di sovrapposizione). Due cause insieme:
- * mancava `sticky`/un'altezza fissa sulla barra (Sidebar/TopNav/
- * MobileNavBar), e anche aggiungendolo da solo non sarebbe bastato ---
- * `overflow-x: hidden` duplicato su <html> E <body> (globals.css) fa sì
- * che la regola CSS che accoppia gli assi trasformi anche `overflow-y`
- * in "auto" su entrambi, creando due contenitori di scroll ambigui: un
- * elemento `sticky` finiva ancorato a quello sbagliato (v. commento in
- * globals.css).
+ * La barra di navigazione seguiva il flusso della pagina invece di restare fissa: su una pagina più lunga di una
+ * schermata il tasto per l'avatar/menu finiva fuori vista, irraggiungibile senza tornare su. Due cause insieme:
+ * mancava `sticky`/un'altezza fissa sulla barra, e `overflow-x: hidden` duplicato su <html> E <body> (globals.css)
+ * trasformava anche `overflow-y` in "auto" su entrambi, creando due contenitori di scroll ambigui.
  */
 test("la barra laterale resta fissa alla finestra scorrendo una pagina lunga, l'avatar sempre raggiungibile", async ({
   page,
@@ -34,8 +23,7 @@ test("la barra laterale resta fissa alla finestra scorrendo una pagina lunga, l'
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  // Impostazioni è naturalmente più alta di una schermata --- non serve
-  // popolare dati apposta.
+  // Impostazioni è naturalmente più alta di una schermata: non serve popolare dati apposta.
   await page.goto("/settings");
   await expect(page.getByRole("heading", { name: "Impostazioni" })).toBeVisible();
 
@@ -46,14 +34,12 @@ test("la barra laterale resta fissa alla finestra scorrendo una pagina lunga, l'
   await page.mouse.wheel(0, 3000);
   await page.waitForTimeout(200);
 
-  // L'altezza/posizione della barra non cambia scorrendo --- resta
-  // ancorata alla finestra, non al flusso della pagina.
+  // L'altezza/posizione della barra non cambia scorrendo: resta ancorata alla finestra.
   const asideBoxAfter = await aside.boundingBox();
   expect(asideBoxAfter!.y).toBe(asideBoxBefore!.y);
   expect(asideBoxAfter!.height).toBeLessThanOrEqual(await page.evaluate(() => window.innerHeight));
 
-  // L'avatar, in fondo alla barra, resta visibile e cliccabile senza
-  // dover tornare su.
+  // L'avatar, in fondo alla barra, resta visibile e cliccabile senza dover tornare su.
   const userMenuTrigger = aside.locator("button", { hasText: fullName(user) });
   await expect(userMenuTrigger).toBeVisible();
   await userMenuTrigger.click();
@@ -77,13 +63,7 @@ test.describe("sotto md", () => {
     await page.getByRole("button", { name: "Accedi" }).click();
     await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-    // Master key configurata subito via "Archivio" (già visibile nella
-    // barra in basso di default, v. DEFAULT_BOTTOM_NAV_ITEMS) --- un solo
-    // click immediatamente dopo il login, come nel resto della suite:
-    // aprire prima il cassetto avrebbe dato tempo al popup "Crea la tua
-    // master key" di comparire (v. MasterKeyIntroModal), che l'handler
-    // automatico di fixtures.ts avrebbe chiuso da sé con "Più tardi"
-    // prima che il click su "Amici" dentro il cassetto potesse arrivare.
+    // Master key configurata subito via "Archivio": aprire prima il cassetto darebbe tempo al popup "Crea la tua master key" di comparire e venire chiuso dall'handler automatico prima del click su "Amici".
     await page.getByRole("link", { name: "Archivio", exact: true }).click();
     await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
     await page.getByLabel("Conferma master password").fill("una-master-password-solida");
@@ -95,15 +75,12 @@ test.describe("sotto md", () => {
     await page.getByRole("button", { name: "Continua" }).click();
     await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-    // "Amici" non è tra le voci della barra in basso di default: sotto
-    // md si raggiunge solo apriendo prima il cassetto col tasto ☰.
+    // "Amici" non è tra le voci della barra in basso di default: sotto md si raggiunge solo aprendo prima il cassetto col tasto ☰.
     await page.getByRole("button", { name: "Apri il menu" }).click();
     await page.getByRole("dialog", { name: "Menu di navigazione" }).getByRole("link", { name: "Amici" }).click();
     await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
 
-    // Sotto sm il tasto normale d'intestazione è nascosto, sostituito
-    // dal FAB "+" in sovraimpressione (v. MobileAddFab) --- stessa
-    // etichetta accessibile, "Aggiungi amico".
+    // Sotto sm il tasto normale d'intestazione è nascosto, sostituito dal FAB "+" con la stessa etichetta accessibile.
     for (let i = 0; i < 8; i++) {
       await page.getByRole("link", { name: "Aggiungi amico" }).click();
       await expect(page.getByRole("heading", { name: "Nuovo amico" })).toBeVisible();
