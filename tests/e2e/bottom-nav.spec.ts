@@ -28,8 +28,7 @@ test("la barra fissa in basso mostra le voci di default, si personalizza da Impo
   await expect(bottomBar.getByRole("link", { name: "Capsule" })).toBeVisible();
   await expect(bottomBar.getByRole("link", { name: "Beni" })).toHaveCount(0);
 
-  // Quelle voci non sono ripetute nel menu con le 3 lineette --- il
-  // resto (es. "Beni") sì.
+  // Quelle voci non sono ripetute nel menu con le 3 lineette, il resto (es. "Beni") sì.
   const menuButton = page.getByRole("button", { name: "Apri il menu" });
   await menuButton.click();
   const drawer = page.getByRole("dialog", { name: "Menu di navigazione" });
@@ -39,10 +38,7 @@ test("la barra fissa in basso mostra le voci di default, si personalizza da Impo
   await page.keyboard.press("Escape");
   await expect(drawer).not.toBeVisible();
 
-  // In Impostazioni > Aspetto si toglie "Archivio" (dall'elenco "Nella
-  // barra") e si aggiunge "Beni" (dall'elenco "Altre voci"). Viewport
-  // da smartphone: Impostazioni è a elenco -> dettaglio (v.
-  // mobile-settings-nav.spec.ts), non a schede come da desktop.
+  // Si toglie "Archivio" dall'elenco "Nella barra" e si aggiunge "Beni" da "Altre voci". Viewport da smartphone: Impostazioni è a elenco -> dettaglio.
   await page.goto("/settings");
   await page.getByRole("button", { name: "Aspetto" }).click();
   await expect(
@@ -53,11 +49,7 @@ test("la barra fissa in basso mostra le voci di default, si personalizza da Impo
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     page.getByRole("button", { name: "Togli Archivio dalla barra" }).click(),
   ]);
-  // .click(), non .check(): appena spuntata, "Beni" lascia del tutto
-  // l'elenco "Altre voci" (con la sua checkbox) per entrare in "Nella
-  // barra" (dove diventa una riga con tasto ✕, non più una checkbox)
-  // --- .check() invece atterrebbe la conferma sulla stessa checkbox,
-  // ormai sparita.
+  // .click(), non .check(): appena spuntata, "Beni" lascia "Altre voci" per entrare in "Nella barra" come riga con tasto ✕, non più una checkbox.
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     page.getByRole("checkbox", { name: "Beni" }).click(),
@@ -67,15 +59,13 @@ test("la barra fissa in basso mostra le voci di default, si personalizza da Impo
   await expect(bottomBar.getByRole("link", { name: "Archivio" })).toHaveCount(0);
   await expect(bottomBar.getByRole("link", { name: "Beni" })).toBeVisible();
 
-  // ...e resta impostata dopo un refresh vero (sincronizzata sul server,
-  // letta prima ancora del primo render della shell, come nav_orientation).
+  // ...e resta impostata dopo un refresh vero (sincronizzata sul server, letta prima del primo render della shell).
   await page.goto("/dashboard");
   await page.reload();
   await expect(bottomBar.getByRole("link", { name: "Archivio" })).toHaveCount(0);
   await expect(bottomBar.getByRole("link", { name: "Beni" })).toBeVisible();
 
-  // Il menu con le 3 lineette ora mostra di nuovo "Archivio" (non più
-  // duplicato in basso) e non più "Beni" (ora in basso).
+  // Il menu con le 3 lineette ora mostra di nuovo "Archivio" e non più "Beni" (ora in basso).
   await menuButton.click();
   await expect(drawer.getByRole("link", { name: "Archivio" })).toBeVisible();
   await expect(drawer.getByRole("link", { name: "Beni" })).toHaveCount(0);
@@ -91,13 +81,11 @@ test("oltre 5 voci scelte, le altre caselle si disabilitano", async ({ page }) =
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  // Viewport da smartphone: Impostazioni è a elenco -> dettaglio (v.
-  // mobile-settings-nav.spec.ts), non a schede come da desktop.
+  // Viewport da smartphone: Impostazioni è a elenco -> dettaglio.
   await page.goto("/settings");
   await page.getByRole("button", { name: "Aspetto" }).click();
 
-  // Le 4 di default sono già selezionate --- se ne aggiunge una quinta
-  // (il massimo, v. MAX_BOTTOM_NAV_ITEMS) e una sesta resta disabilitata.
+  // Le 4 di default sono già selezionate: se ne aggiunge una quinta (il massimo) e una sesta resta disabilitata.
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     page.getByRole("checkbox", { name: "Beni" }).click(),
@@ -119,8 +107,7 @@ test("le frecce riordinano le voci nella barra, e l'ordine resta dopo un refresh
   await page.goto("/settings");
   await page.getByRole("button", { name: "Aspetto" }).click();
 
-  // Ordine di partenza: Dashboard, Archivio, Scadenze, Capsule. Si
-  // sposta "Archivio" in cima con la freccia ▲.
+  // Ordine di partenza: Dashboard, Archivio, Scadenze, Capsule. Si sposta "Archivio" in cima con la freccia ▲.
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     page.getByRole("button", { name: "Sposta Archivio in alto nella barra" }).click(),

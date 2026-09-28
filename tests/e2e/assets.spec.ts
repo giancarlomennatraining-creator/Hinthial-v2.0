@@ -4,11 +4,7 @@ import { openRowMenu } from "./row-actions";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-/**
- * La creazione vive in una pagina dedicata (/assets/new, v. CapsulesPanel
- * per lo stesso pattern): apre quella pagina dall'elenco, compila e
- * sottomette, poi verifica il ritorno a /assets col messaggio di conferma.
- */
+/** La creazione vive in una pagina dedicata (/assets/new): apre, compila, sottomette, verifica il ritorno con messaggio di conferma. */
 async function createAsset(page: Page, name: string, categoryLabel?: string) {
   await page.getByRole("link", { name: "+ Crea bene" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo bene" })).toBeVisible();
@@ -33,9 +29,7 @@ async function loginAndSetUpEncryption(page: import("@playwright/test").Page) {
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
-  // PBKDF2 at 600,000 iterations (x2: setup + immediate unlock) can
-  // genuinely take a while in-browser under load --- give it room before
-  // the recovery-key screen appears.
+  // PBKDF2 at 600,000 iterations (x2) can genuinely take a while in-browser under load.
   await expect(
     page.getByRole("heading", { name: "Salva la tua recovery key" }),
   ).toBeVisible({ timeout: 45_000 });

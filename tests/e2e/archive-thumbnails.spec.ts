@@ -3,18 +3,13 @@ import { createConfirmedTestUser, resetDocumentExtraction, uniqueTestUser } from
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// Miniature delle anteprime --- nascono per un motivo di banda: senza,
-// aprire la scheda di un contenuto ne riscaricava il file **intero**
-// solo per costruirne l'anteprima --- su una scansione da 15 MB, ogni
-// apertura. Quello che conta qui non è che l'anteprima compaia (già
-// provato in archive-item-detail.spec.ts), ma **da dove viene**: questi
-// test distinguono i due percorsi dalla didascalia che la scheda
-// mostra, perché solo il file intero porta con sé il numero di pagine
-// di un PDF (v. ArchiveItemDetail.tsx, `previewIsThumbnail`).
+// Miniature delle anteprime, nate per banda: senza, aprire la scheda riscaricava il file intero solo per
+// l'anteprima. Quello che conta qui non è che l'anteprima compaia, ma da dove viene: questi test distinguono i due
+// percorsi dalla didascalia, perché solo il file intero porta il numero di pagine di un PDF.
 
 const MASTER_PASSWORD = "una-master-password-solida";
 
-/** PDF minimo valido con due righe di testo --- v. archive-item-detail. */
+/** PDF minimo valido con due righe di testo, v. archive-item-detail. */
 function buildPdf(lines: string[]): Buffer {
   const stream = lines
     .map((line, i) => `BT /F1 12 Tf 72 ${720 - i * 20} Td (${line}) Tj ET`)
@@ -84,8 +79,7 @@ test("l'anteprima di un PDF appena caricato viene dalla miniatura, non dal file 
   await page.getByRole("link", { name: /referto\.pdf/ }).click();
   await expect(page.getByRole("heading", { name: /referto\.pdf/ })).toBeVisible({ timeout: 15_000 });
 
-  // Solo il percorso "file intero" conosce il numero di pagine: se la
-  // didascalia lo riporta, la miniatura non è stata usata.
+  // Solo il percorso "file intero" conosce il numero di pagine: se la didascalia lo riporta, la miniatura non è stata usata.
   await expect(
     page.getByText("Anteprima. Usa «Scarica» per l'originale, pagina per pagina."),
   ).toBeVisible({ timeout: 20_000 });
@@ -110,8 +104,7 @@ test("l'anteprima di una foto appena caricata viene dalla miniatura", async ({ p
     timeout: 15_000,
   });
 
-  // Per un'immagine la didascalia non parla di pagine --- è la stessa
-  // usata per un PDF, meno il pezzo che non le riguarda.
+  // Per un'immagine la didascalia non parla di pagine: è la stessa usata per un PDF, meno il pezzo che non le riguarda.
   await expect(page.getByText("Anteprima. Usa «Scarica» per l'originale.", { exact: true })).toBeVisible(
     { timeout: 20_000 },
   );
@@ -135,9 +128,7 @@ test("un contenuto caricato prima delle miniature la ricava rileggendolo, e la v
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
-  // Si riporta il documento allo stato precedente a questa fase: niente
-  // testo estratto, e --- da qui in avanti --- niente miniatura (v.
-  // test-users.ts, resetDocumentExtraction).
+  // Si riporta il documento a prima dell'estrazione: niente testo, niente miniatura.
   await resetDocumentExtraction(user.email);
   await page.reload();
   await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
@@ -147,20 +138,16 @@ test("un contenuto caricato prima delle miniature la ricava rileggendolo, e la v
   await page.getByRole("link", { name: /vecchio\.pdf/ }).click();
   await expect(page.getByRole("heading", { name: /vecchio\.pdf/ })).toBeVisible({ timeout: 15_000 });
 
-  // Prima del recupero: nessuna miniatura, quindi l'anteprima viene dal
-  // file intero --- lo prova la didascalia col numero di pagine.
+  // Prima del recupero: nessuna miniatura, l'anteprima viene dal file intero, lo prova la didascalia col numero di pagine.
   await expect(page.getByText(/Pagina unica\./)).toBeVisible({ timeout: 20_000 });
 
-  // "Leggilo ora" rilegge il testo e, con gli stessi byte già in
-  // chiaro, genera anche la miniatura che a suo tempo non c'era.
+  // "Leggilo ora" rilegge il testo e, con gli stessi byte già in chiaro, genera anche la miniatura che non c'era.
   await page.getByRole("button", { name: "Leggilo ora" }).click();
   await expect(page.getByTestId("extracted-text")).toContainText("via Manzoni 4 Milano", {
     timeout: 60_000,
   });
 
-  // La volta successiva --- qui simulata da un ricaricamento della
-  // pagina --- la scheda trova la miniatura e non riscarica più il file
-  // intero solo per l'anteprima.
+  // La volta successiva (qui un ricaricamento) la scheda trova la miniatura e non riscarica più il file intero.
   await page.reload();
   await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
