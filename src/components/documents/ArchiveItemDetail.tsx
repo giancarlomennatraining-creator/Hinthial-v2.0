@@ -534,6 +534,7 @@ export function ArchiveItemDetail({
                   )}
                 </Field>
                 <Field label="Scadenza">{doc.expiresAt ? formatDate(doc.expiresAt) : "—"}</Field>
+                <Field label="Emittente">{doc.issuer || "—"}</Field>
                 <Field label="Tag">
                   {doc.tags.length > 0 ? (
                     <span className="flex flex-wrap gap-1">
