@@ -17,23 +17,13 @@ export function uniqueTestUser(): TestUser {
   return {
     firstName: "Ada",
     lastName: "Lovelace",
-    // Supabase's signUp() rejects reserved placeholder domains like
-    // example.com as "invalid" --- mailinator.com is a real, existing
-    // domain, so it passes validation (delivery doesn't matter: "Confirm
-    // email" is disabled, see README).
+    // Supabase's signUp() rejects reserved placeholder domains like example.com; mailinator.com is real so it passes validation (delivery doesn't matter, "Confirm email" is disabled).
     email: `hinthial-e2e-${id}@mailinator.com`,
     password: "password123",
   };
 }
 
-/**
- * Creates a confirmed user directly via the Supabase admin API, bypassing
- * signUp() and its confirmation email entirely. Supabase's default
- * (shared) mailer caps email-triggering auth calls at just 2/hour, so
- * only the dedicated registration test should go through the real
- * signUp() flow --- every other test that just needs "a logged-in user"
- * pre-creates one this way and signs in through the real login form.
- */
+/** Creates a confirmed user directly via the Supabase admin API, bypassing signUp() and its confirmation email: Supabase's shared mailer caps email-triggering calls at 2/hour, so only the dedicated registration test uses real signUp(). */
 export async function createConfirmedTestUser(user: TestUser): Promise<void> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -60,15 +50,10 @@ export async function createConfirmedTestUser(user: TestUser): Promise<void> {
 }
 
 /**
- * Forza `is_friend`/`is_guardian` direttamente via il client admin,
- * bypassando la vera doppia richiesta di consenso (v.
- * domain/friends/friend-requests.ts, guardian-requests.ts) --- SOLO per
- * i test che hanno bisogno di "un amico guardiano" come dato di
- * partenza per verificare qualcos'altro (contatori, onboarding), non
- * per chi verifica il flusso di consenso in sé (v. friends.spec.ts).
- * Paginata come deleteUserByEmail sotto: con centinaia di utenti di test
- * accumulati nel progetto dev, un `perPage` singolo potrebbe non
- * bastare.
+ * Forza `is_friend`/`is_guardian` via il client admin, bypassando la vera doppia richiesta di consenso: SOLO per i
+ * test che hanno bisogno di "un amico guardiano" come dato di partenza per verificare qualcos'altro, non per chi
+ * verifica il flusso di consenso in sé (v. friends.spec.ts). Paginata: con centinaia di utenti di test accumulati
+ * nel progetto dev, un `perPage` singolo potrebbe non bastare.
  */
 export async function forceOwnFriendToGuardian(ownerEmail: string): Promise<void> {
   const admin = adminClient();
@@ -94,21 +79,10 @@ export async function forceOwnFriendToGuardian(ownerEmail: string): Promise<void
 }
 
 /**
- * FASE 17b --- riporta i documenti di un account allo stato "mai letto"
- * (`extracted_at` nullo, testo estratto assente): è com'erano i
- * contenuti caricati prima che l'estrazione esistesse. Serve a provare
- * il recupero dal banner in Archivio senza avere un archivio storico
- * vero da cui partire. Il testo cifrato viene rimosso, non riscritto:
- * questa funzione non ha la Master Key e non potrebbe comunque.
- *
- * Azzera anche `has_thumbnail` per lo stesso motivo (v. lib/thumbnail.ts,
- * FASE della miniatura): un contenuto caricato prima che l'estrazione
- * esistesse è anche, per definizione, un contenuto caricato prima che
- * esistesse la miniatura --- entrambe si recuperano dallo stesso "Leggili
- * ora"/"Rileggi", che genera la seconda mentre rilegge il testo. Il file
- * cifrato della miniatura in Storage non viene rimosso (nessuna Master
- * Key qui per trovarne il percorso, e non serve: `has_thumbnail: false`
- * basta a far ricadere la scheda sul file intero).
+ * Riporta i documenti di un account allo stato "mai letto": serve a provare il recupero dal banner in Archivio
+ * senza avere un archivio storico vero. Il testo cifrato viene rimosso, non riscritto: questa funzione non ha la
+ * Master Key. Azzera anche `has_thumbnail`: entrambe si recuperano dallo stesso "Leggili ora"/"Rileggi". Il file
+ * cifrato della miniatura in Storage non viene rimosso: `has_thumbnail: false` basta a far ricadere sul file intero.
  */
 export async function resetDocumentExtraction(ownerEmail: string): Promise<void> {
   const admin = adminClient();
@@ -146,13 +120,7 @@ function adminClient() {
   });
 }
 
-/**
- * Generates a valid recovery OTP for an existing user via the admin API,
- * without actually sending an email --- lets the password-reset e2e tests
- * exercise the real verifyOtp()/updateUser() flow without depending on
- * inbox delivery (same reason signUp() below needs a real address it can
- * reach).
- */
+/** Generates a valid recovery OTP via the admin API without sending an email: lets the password-reset e2e tests exercise the real verifyOtp()/updateUser() flow without depending on inbox delivery. */
 export async function generateRecoveryOtp(email: string): Promise<string> {
   const admin = adminClient();
 
@@ -168,14 +136,7 @@ export async function generateRecoveryOtp(email: string): Promise<string> {
   return data.properties.email_otp;
 }
 
-/**
- * Deletes any existing auth user with the given email, if one exists.
- * Used to make the real signUp() e2e test repeatable when it must use a
- * fixed, real email address (see E2E_REGISTRATION_TEST_EMAIL in
- * README.md --- a dedicated test address, not anyone's personal one:
- * this wipes and recreates whatever account sits at that address on
- * every run).
- */
+/** Deletes any existing auth user with the given email. Makes the real signUp() e2e test repeatable when it uses a fixed address (see E2E_REGISTRATION_TEST_EMAIL in README.md, a dedicated test address, not anyone's personal one). */
 export async function deleteUserByEmail(email: string): Promise<void> {
   const admin = adminClient();
 

@@ -1,26 +1,9 @@
 /**
- * Integration test for the guardian phase of "Eredità digitale" (FASE 12,
- * coinvolgimento guardiani) --- a real owner + a real linked guardian
- * account, against the real database, verifying the whole path end to
- * end: notifyGuardians creates a request, the guardian can read it (and
- * the owner's name) under RLS, responding "unreachable" reaches quorum
- * (a single guardian already satisfies "majority") and moves the owner
- * to "guardians_confirmed" once runDigitalLegacyCheck notices, and the
- * response gets logged under the OWNER's audit trail (not the
- * guardian's) via the SECURITY DEFINER RPC.
- *
- * Cannot simulate real day-scale inactivity (v. digital-legacy.integration.
- * test.ts) to reach "awaiting_guardians" the normal way --- a real
- * sign-in always has last_sign_in_at = now, which would always be AFTER
- * any backdated `digital_legacy_state_entered_at`, triggering the
- * (correct) reset-on-recent-login rule instead of the transition being
- * tested. Sidesteps this by setting the owner's state to
- * "awaiting_guardians" directly and calling notifyGuardians() on its
- * own (exported for exactly this) --- the day-scale gate into that
- * state is already covered by the pure-function unit tests instead.
- *
- * Skips automatically (rather than failing) when the required env vars
- * aren't configured, like the other integration tests. Only throwaway
+ * Integration test for the guardian phase of "Eredità digitale": a real owner + a real linked guardian account,
+ * against the real database, verifying the whole path end to end. Cannot simulate real day-scale inactivity to
+ * reach "awaiting_guardians" the normal way (a real sign-in always sets last_sign_in_at = now, which would trigger
+ * the reset-on-recent-login rule instead) — sidesteps this by setting the state directly and calling
+ * notifyGuardians() on its own. Skips automatically when the required env vars aren't configured. Only throwaway
  * accounts, deleted at the end.
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -81,7 +64,7 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
     }
     guardianId = createdGuardian.data.user.id;
 
-    // Un vero accesso per entrambi --- last_sign_in_at diventa "ora" per il proprietario.
+    // Un vero accesso per entrambi: last_sign_in_at diventa "ora" per il proprietario.
     const ownerAnon = createClient(SUPABASE_URL!, ANON_KEY!, noSession);
     const ownerSignIn = await ownerAnon.auth.signInWithPassword(owner);
     if (ownerSignIn.error) throw new Error(`Login proprietario fallito: ${ownerSignIn.error.message}`);
@@ -90,8 +73,7 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
     const guardianSignIn = await guardianClient.auth.signInWithPassword(guardian);
     if (guardianSignIn.error) throw new Error(`Login guardiano fallito: ${guardianSignIn.error.message}`);
 
-    // Il guardiano è un amico COLLEGATO del proprietario (v. FriendsPanel.tsx: solo un
-    // guardiano collegato è raggiungibile dal server).
+    // Il guardiano è un amico COLLEGATO del proprietario: solo un guardiano collegato è raggiungibile dal server.
     const { error: friendError } = await admin.from("friends").insert({
       owner_id: ownerId,
       encrypted_name: "test-encrypted-name",
@@ -105,11 +87,7 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
       throw new Error(`Impossibile creare il collegamento amico/guardiano: ${friendError.message}`);
     }
 
-    // Direttamente in "awaiting_guardians" --- v. doc comment del file
-    // per il perché non si può arrivarci simulando davvero i giorni di
-    // inattività in questo test. state_entered_at "ora" (dopo i login
-    // veri qui sopra): evita di far scattare per errore il reset
-    // "accesso dopo l'inizio dello stato".
+    // Direttamente in "awaiting_guardians" (v. doc comment del file). state_entered_at "ora": evita il reset "accesso dopo l'inizio dello stato".
     const { error: profileError } = await admin
       .from("profiles")
       .update({
@@ -188,13 +166,7 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
     expect(eventTypes).toContain("digital_legacy_guardians_confirmed");
   });
 
-  // Fasi 5-7 (verifica formale, attesa finale, apertura capsule) da qui
-  // in poi --- lo stesso proprietario/guardiano di sopra, già in
-  // "guardians_confirmed". `now` iniettato in runDigitalLegacyCheck (v.
-  // doc comment della funzione) per avanzare i giorni senza doverli
-  // aspettare per davvero, senza toccare last_sign_in_at/state_entered_at
-  // reali --- l'unico modo di testare fasi con una vera durata senza
-  // incappare di nuovo nel problema del reset-su-login descritto sopra.
+  // Fasi 5-7 da qui in poi: `now` iniettato in runDigitalLegacyCheck per avanzare i giorni senza aspettare per davvero, senza toccare last_sign_in_at/state_entered_at reali.
   let capsuleId = "";
 
   it("shares a capsule whose open_at is far in the future --- not readable by the recipient yet", async () => {
@@ -296,9 +268,7 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
     const { data: events } = await admin.from("audit_events").select("event_type").eq("owner_id", ownerId);
     expect((events ?? []).map((e) => e.event_type)).toContain("digital_legacy_triggered");
 
-    // Il cuore della fase 7: la capsula, con open_at ancora a 1000 giorni
-    // nel futuro, è ora leggibile dal destinatario --- l'irraggiungibilità
-    // confermata ha fatto scattare l'accesso indipendentemente dalla data.
+    // Il cuore della fase 7: con open_at ancora a 1000 giorni nel futuro, la capsula è ora leggibile: l'irraggiungibilità confermata fa scattare l'accesso indipendentemente dalla data.
     const { data: readAfter, error: readAfterError } = await guardianClient
       .from("capsule_share_keys")
       .select("id, encrypted_payload_for_recipient")
@@ -309,14 +279,7 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
   });
 
   it("still resets to normal on a genuine later login, without undoing the already-granted capsule access", async () => {
-    // digital_legacy_state_entered_at è rimasto molto avanti nel "futuro
-    // finto" per via delle chiamate con `now` iniettato qui sopra --- un
-    // vero accesso adesso sarebbe comunque cronologicamente PRIMA di
-    // quel valore, e non farebbe scattare il reset per errore di
-    // impostazione del test, non del codice. Lo si riporta a un istante
-    // reale nel passato apposta per questo test: "triggered" è uno
-    // stato terminale (v. computeDigitalLegacyTransition), retrodatarlo
-    // non rischia di fargli saltare qualche altra transizione.
+    // digital_legacy_state_entered_at è rimasto avanti nel "futuro finto" per le chiamate con `now` iniettato: lo si riporta a un istante reale nel passato, apposta per questo test. "triggered" è uno stato terminale, retrodatarlo è sicuro.
     await admin
       .from("profiles")
       .update({ digital_legacy_state_entered_at: new Date(Date.now() - 60 * 60 * 1000).toISOString() })
