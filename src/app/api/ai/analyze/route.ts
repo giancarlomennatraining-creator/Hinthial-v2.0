@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/db/supabase/server";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
+import { parseClaudeJson } from "@/lib/ai/parse-claude-json";
 
 /**
  * FASE 22: unico punto di contatto tra Hinthial e Anthropic per l'analisi vera di un documento (non solo la Chat,
@@ -147,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     let parsed: unknown;
     try {
-      parsed = JSON.parse(raw);
+      parsed = parseClaudeJson(raw);
     } catch {
       return NextResponse.json({ error: "Risposta di Claude non interpretabile." }, { status: 502 });
     }
