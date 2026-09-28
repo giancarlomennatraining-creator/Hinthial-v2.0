@@ -28,9 +28,7 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  // La checklist non vive più nel corpo della Dashboard (v. richiesta
-  // utente): si verifica lo stesso avanzamento dal pannello
-  // dell'indicatore persistente nella barra laterale (v. OnboardingStatus).
+  // La checklist non vive nel corpo della Dashboard: si verifica lo stesso avanzamento dal pannello dell'indicatore persistente in barra laterale.
   const statusButton = page.getByRole("button", { name: /Onboarding/ });
   const panel = page.getByRole("dialog", { name: "Onboarding" });
 
@@ -43,8 +41,7 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
     await expect(panel).not.toBeVisible();
   }
 
-  // Account e cifratura già fatti, nient'altro: 2/8. Nessuna voce è
-  // marcata "(opzionale)" --- non esiste più questa distinzione.
+  // Account e cifratura già fatti, nient'altro: 2/8. Nessuna voce marcata "(opzionale)": non esiste questa distinzione.
   await openPanel();
   await expect(panel.getByText("2/8")).toBeVisible();
   await expect(panel.getByText("(opzionale)")).toHaveCount(0);
@@ -90,8 +87,7 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await expect(panel.getByText("5/8")).toBeVisible();
   await closePanel();
 
-  // Un amico, attivo (per poter poi ricevere una capsula) e guardiano
-  // (completa il passo "guardian"): 6/8.
+  // Un amico, attivo e guardiano (completa il passo "guardian"): 6/8.
   await page.getByRole("link", { name: "Amici", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await page.getByLabel("Nome visualizzato").fill("Maria Rossi");
@@ -101,10 +97,7 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
   const friendRow = page.locator("li", { hasText: "Maria Rossi" });
   await expect(friendRow).toBeVisible({ timeout: 10_000 });
-  // Amico + guardiano richiederebbe ora una doppia richiesta di consenso
-  // reale tra due account (v. friends.spec.ts per quel flusso) --- qui
-  // serve solo come dato di partenza per il passo "guardian", quindi si
-  // forza direttamente via il client admin (v. test-users.ts).
+  // Amico + guardiano richiederebbe una doppia richiesta reale tra due account (v. friends.spec.ts): qui serve solo come dato di partenza, si forza via il client admin.
   await forceOwnFriendToGuardian(user.email);
   await page.reload();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
@@ -116,8 +109,7 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await expect(panel.getByText("6/8")).toBeVisible();
   await closePanel();
 
-  // Una capsula con quell'amico come destinatario completa insieme
-  // "capsula" e "collegamento capsula-amico": 8/8, checklist sparita.
+  // Una capsula con quell'amico come destinatario completa insieme "capsula" e "collegamento capsula-amico": 8/8.
   await page.getByRole("link", { name: "Capsule", exact: true }).click();
   await page.getByRole("link", { name: "+ Crea capsula" }).click();
   await expect(page.getByRole("heading", { name: "Nuova capsula" })).toBeVisible();
@@ -135,25 +127,19 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
   await expect(page.getByText("Capsula creata.")).toBeVisible();
 
-  // 8/8: la checklist, nel pannello, mostra il rapporto completo ---
-  // resta comunque elencata (v. OnboardingChecklist), solo l'indicatore
-  // che la apre passa a mostrare una percentuale invece che un rapporto.
+  // 8/8: la checklist resta elencata, solo l'indicatore che la apre passa a mostrare una percentuale.
   await page.getByRole("link", { name: "Dashboard" }).click();
   await openPanel();
   await expect(panel.getByText("8/8")).toBeVisible();
   await closePanel();
 
-  // L'indicatore nella barra laterale si ricarica solo all'apertura del
-  // pannello (v. OnboardingStatus): un click lo forza ad aggiornarsi al
-  // nuovo 100%.
+  // L'indicatore si ricarica solo all'apertura del pannello: un click lo forza ad aggiornarsi al nuovo 100%.
   await statusButton.click();
   await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 100% completato", {
     timeout: 10_000,
   });
 
-  // A 100% l'anello dell'indicatore diventa verde (era il colore del
-  // brand) --- è un conic-gradient (background-image), non un colore
-  // pieno, quindi si verifica lì il valore rgb del verde usato.
+  // A 100% l'anello diventa verde: è un conic-gradient (background-image), non un colore pieno.
   const ring = statusButton.locator("span").first();
   await expect(ring).toHaveCSS("background-image", /34, 197, 94/);
 });

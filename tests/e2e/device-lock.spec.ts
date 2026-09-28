@@ -3,12 +3,9 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// Il vero autenticatore biometrico non è testabile in automatico ---
-// usa l'autenticatore virtuale di Chrome DevTools Protocol (con
-// `hasPrf: true`, l'estensione WebAuthn che rende possibile derivare
-// davvero una chiave di cifratura, non solo "provare la presenza
-// dell'utente") al posto dell'impronta/Face ID reale: stessa API del
-// browser, stesso codice applicativo, solo la parte hardware è simulata.
+// Il vero autenticatore biometrico non è testabile in automatico: usa l'autenticatore virtuale di Chrome DevTools
+// Protocol (con `hasPrf: true`, l'estensione WebAuthn che rende possibile derivare davvero una chiave) al posto
+// dell'impronta reale, stessa API del browser, solo la parte hardware è simulata.
 
 async function addVirtualAuthenticator(page: import("@playwright/test").Page) {
   const client = await page.context().newCDPSession(page);
@@ -52,18 +49,12 @@ test("registra questo dispositivo come fidato e lo sblocca di nuovo con l'impron
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  // Registra questo dispositivo --- richiede di nuovo la master
-  // password (v. MasterKeyProvider.tsx, registerDeviceLock): è la sola
-  // occasione in cui il Master Key diventa temporaneamente esportabile,
-  // per poterlo cifrare per questo dispositivo.
+  // Registra questo dispositivo: richiede di nuovo la master password, la sola occasione in cui il Master Key diventa temporaneamente esportabile.
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await page.getByRole("tab", { name: "Sicurezza" }).click();
   await expect(page.getByRole("heading", { name: "Dispositivi fidati", exact: true })).toBeVisible();
-  // Il controllo di supporto (WebAuthn + PRF) è asincrono --- v.
-  // MasterKeyProvider.tsx, isDeviceLockSupported --- attende che si
-  // risolva prima di interagire con un modulo che potrebbe non esserci
-  // ancora.
+  // Il controllo di supporto (WebAuthn + PRF) è asincrono: attende che si risolva prima di interagire col modulo.
   await expect(page.getByText("Verifica del dispositivo in corso…")).not.toBeVisible({ timeout: 15_000 });
 
   await page.getByLabel("Nome del dispositivo fidato").fill("Dispositivo di test");
@@ -74,8 +65,7 @@ test("registra questo dispositivo come fidato e lo sblocca di nuovo con l'impron
   await page.getByRole("button", { name: "Rendi fidato questo dispositivo" }).click();
   await expect(page.getByText("✓ Questo dispositivo è fidato")).toBeVisible({ timeout: 15_000 });
 
-  // Una pagina intera da capo (come una nuova sessione: il Master Key
-  // vive solo in memoria, mai persistito) --- il vault torna "locked".
+  // Una pagina intera da capo (come una nuova sessione: il Master Key vive solo in memoria): il vault torna "locked".
   await page.reload();
   await expect(page.getByRole("tab", { name: "Sicurezza" })).toBeVisible();
 
@@ -85,8 +75,7 @@ test("registra questo dispositivo come fidato e lo sblocca di nuovo con l'impron
   await expect(deviceLockButton).toBeVisible({ timeout: 10_000 });
   await deviceLockButton.click();
 
-  // Sbloccato senza aver mai (in questo giro) digitato la master
-  // password --- solo l'autenticatore virtuale.
+  // Sbloccato senza aver mai digitato la master password: solo l'autenticatore virtuale.
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible({ timeout: 15_000 });
 });
 
