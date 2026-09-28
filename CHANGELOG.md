@@ -1001,79 +1001,67 @@ Verificando con l'intera suite e2e sono emersi due problemi, corretti: 21 asserz
 
 ### Email inviate da Hinthial: invito contatto, cancellazione/reset account
 
-**Cosa fa:** tre funzionalità che inviano email vere, la prima volta che Hinthial lo fa da sé (finora solo Supabase Auth inviava email, per conferma registrazione e reset password):
-- **Invita un contatto**: nel form di creazione/modifica di un contatto fiduciario, una checkbox "Invita questo contatto su Hinthial" --- se spuntata, all'salvataggio parte un'email all'indirizzo del contatto con un link a Hinthial e uno diretto alla registrazione. Un invio non riuscito non impedisce di salvare il contatto, solo un avviso a parte.
-- **Cancella il tuo account** (nuova sezione in Impostazioni > Zona pericolosa): cancella per sempre l'account e ogni dato collegato --- non solo il vault come "Reimposta l'account" qui sotto, ma l'account stesso: non è più possibile accedere con quelle credenziali. Richiede di reinserire la master password, oltre a una frase di conferma testuale. Un'email di conferma arriva all'indirizzo dell'account.
-- **Reimposta l'account** (prima "Cancella tutto", rinominata): stesso svuotamento di sempre (Archivio, Asset, Contatti fiduciari, Capsule, categorie ripristinate ai valori predefiniti), ma ora richiede anche la master password prima di procedere, e invia un'email di conferma a operazione completata.
+**Cosa fa:** tre funzionalità inviano email vere, la prima volta che Hinthial lo fa da sé: **invita un contatto** (checkbox nel form, un invio non riuscito non impedisce di salvare); **cancella il tuo account** (nuova sezione in Zona pericolosa, cancella per sempre account e dati, richiede master password e frase di conferma); **reimposta l'account** (prima "Cancella tutto", ora richiede anche la master password).
 
-**Note tecniche:** email inviate via l'API REST di Resend (`src/lib/email/send-email.ts`, una chiamata fetch diretta, nessuna dipendenza in più), da Server Actions (`src/lib/contacts/actions.ts`, `src/lib/account/actions.ts`) --- mai dal browser: `RESEND_API_KEY` non deve mai lasciarlo. La cancellazione account usa `auth.admin.deleteUser` (richiede la service role key, prima usata solo dai test): ogni riga collegata all'account ha già `ON DELETE CASCADE` da `auth.users` nelle migrazioni esistenti, quindi sparisce da sé --- solo gli oggetti di Storage (non dati di Postgres) vengono ripuliti a mano, enumerati per prefisso (`src/lib/storage/wipe-owner-storage.ts`). La master password, in entrambe le sezioni di Zona pericolosa, viene verificata riprovando a sbloccare (`useMasterKey().unlockWithPassword`) --- l'unico modo per verificarla davvero, dato lo zero-knowledge: il server non la vede mai.
+**Note tecniche:** email inviate via l'API REST di Resend, da Server Actions, mai dal browser (`RESEND_API_KEY` non lo lascia mai). La cancellazione account usa `auth.admin.deleteUser`: ogni riga collegata ha già `ON DELETE CASCADE`, solo gli oggetti di Storage vengono ripuliti a mano. La master password si verifica riprovando a sbloccare (`unlockWithPassword`) --- l'unico modo, dato lo zero-knowledge.
 
 ### Popup "Crea la tua master key" al primo accesso
 
-**Cosa fa:** subito dopo il login, chi non ha ancora configurato la cifratura vede un popup che spiega la differenza tra password dell'account e master password, con un tasto "Crea la tua master key" che porta dritto al modulo di creazione. Compare una sola volta: qualunque modo di chiuderlo (✕, "Più tardi", sfondo, o il tasto stesso) lo segna come visto per sempre, e comunque smette di avere senso non appena la cifratura è configurata. Resta comunque, come sempre, anche una voce a sé nel checklist di onboarding.
+**Cosa fa:** subito dopo il login, chi non ha configurato la cifratura vede un popup che spiega la differenza tra password dell'account e master password, con un tasto che porta al modulo di creazione. Compare una sola volta.
 
-**Note tecniche:** `profiles.master_key_intro_seen` (sincronizzato sul server, come `onboarding_widget_hidden`). Il confronto a due righe tra le due password è stato estratto in `PasswordComparisonNote`, condiviso con il modulo di creazione stesso (`SetupMasterKeyForm`) per non avere due copie dello stesso testo. Nei test e2e, un `page.addLocatorHandler()` (`tests/e2e/fixtures.ts`) lo chiude automaticamente per ogni test che non lo riguarda esplicitamente --- altrimenti, essendo un overlay a tutto schermo, avrebbe bloccato il primo click di quasi tutta la suite.
+**Note tecniche:** `profiles.master_key_intro_seen` sincronizzato sul server. Nei test e2e, un `page.addLocatorHandler()` lo chiude automaticamente per ogni test che non lo riguarda esplicitamente.
 
 ### Onboarding: meno "scatola", più spiegazione
 
-**Cosa fa:** il checklist "Onboarding" (nel pannello laterale del gadget e in Dashboard) non ha più il riquadro attorno alla lista, e sotto il titolo spiega in una riga di cosa si tratta.
+**Cosa fa:** il checklist "Onboarding" non ha più il riquadro attorno alla lista, e sotto il titolo spiega in una riga di cosa si tratta.
 
 ### Onboarding: pannello laterale invece del riquadro flottante
 
-**Cosa fa:** il click sul gadget "Onboarding" nella barra di navigazione apre ora un pannello laterale a tutto schermo (lo stesso pattern del dettaglio attività in Impostazioni > Attività), invece di un piccolo riquadro ancorato al pulsante --- da quando ogni passo mostra anche una breve descrizione, il contenuto era diventato troppo alto per il vecchio riquadro flottante.
-
-**Note tecniche:** rimosso tutto il calcolo di posizione/spazio disponibile (coordinate del pulsante, margine minimo, lato di apertura) --- un pannello ancorato al bordo destro dello schermo non ne ha più bisogno.
+**Cosa fa:** il gadget "Onboarding" apre ora un pannello laterale a tutto schermo, invece di un piccolo riquadro ancorato al pulsante --- da quando ogni passo mostra anche una descrizione, il contenuto era diventato troppo alto per il vecchio riquadro.
 
 ### Prima esperienza: meno disorientamento al primo accesso
 
-**Cosa fa:** cinque correzioni mirate al percorso di chi usa Hinthial per la prima volta, prima ancora di aver configurato la cifratura:
-- Il modulo "Configura la cifratura" spiega ora esplicitamente la differenza tra password dell'account e master password (un confronto a due righe), e anticipa cosa aspettarsi ("un minuto: password, chiave di recupero, poi sei dentro").
-- L'indicatore "Onboarding" nella barra di navigazione e la card in Dashboard mostrano già i primi due passi (account creato, cifratura da configurare) **prima** di aver sbloccato il vault, invece di restare del tutto assenti fino ad allora --- un punto di partenza esplicito appena si atterra in dashboard.
-- Il checklist "Onboarding" completo (8 passi) mostra ora una breve spiegazione sotto ogni passo non ancora fatto, non solo l'etichetta --- utile soprattutto per passi che introducono un concetto nuovo (es. "Aggiungi un amico", legato al Dead Man's Switch delle capsule).
-- L'ordine dei passi mette prima quelli concreti (contenuto, categoria, asset, capsula) e per ultimi quelli che presuppongono un concetto nuovo (amico/Dead Man's Switch, collegamento capsula-contatto).
-- Le voci della barra di navigazione che richiedono la cifratura (tutte tranne Dashboard) mostrano un piccolo pallino finché non è stata configurata --- prima ancora di cliccarci sopra, invece di scoprire lo stesso modulo di setup separatamente su ognuna.
+**Cosa fa:** cinque correzioni al percorso di chi usa Hinthial per la prima volta: il modulo "Configura la cifratura" spiega ora la differenza password/master password; l'indicatore Onboarding mostra i primi due passi anche prima di sbloccare il vault; il checklist completo mostra una breve spiegazione sotto ogni passo; l'ordine mette prima i passi concreti; le voci di nav che richiedono la cifratura mostrano un pallino finché non è configurata.
 
-**Note tecniche:** il pallino è espresso via `aria-describedby` su uno `<span>` a parte, mai testo dentro l'etichetta del link: il nome accessibile resta invariato ("Archivio", non "Archivio (richiede...)"), altrimenti ogni ricerca per nome esatto (screen reader o test) smetterebbe di trovare il link finché la cifratura non è configurata.
-
-**Note tecniche:** nuova `computeBasicOnboardingSteps()` in `domain/onboarding/steps.ts` --- gli stessi due oggetti-passo (`account`/`security`) usati anche dalla checklist completa, mai due definizioni separate che potrebbero disallinearsi. Il loro stato non richiede la Master Key (letto da `useMasterKey().status`), a differenza degli altri 6 passi che restano dietro sblocco perché richiedono dati decifrati.
+**Note tecniche:** il pallino è espresso via `aria-describedby` su uno `<span>` a parte, mai testo dentro l'etichetta del link, per non rompere la ricerca per nome esatto. Nuova `computeBasicOnboardingSteps()`, gli stessi due oggetti-passo usati anche dalla checklist completa.
 
 ### Data di nascita nel profilo
 
-**Cosa fa:** in Impostazioni > Informazioni utente e nella schermata di registrazione, un nuovo campo facoltativo "Data di nascita", accanto a nome e cognome.
+**Cosa fa:** un nuovo campo facoltativo "Data di nascita" in Informazioni utente e in registrazione.
 
-**Note tecniche:** `profiles.birth_date` (date, nullable), in chiaro come nome/cognome --- un dato anagrafico, non del vault. Passata a `signUp()` come `options.data.birth_date`, letta da `handle_new_user()` allo stesso modo di nome/cognome.
+**Note tecniche:** `profiles.birth_date`, in chiaro come nome/cognome --- un dato anagrafico, non del vault.
 
 ### Impostazioni: schede riorganizzate e in verticale
 
-**Cosa fa:** le schede di Impostazioni (Informazioni utente, Sicurezza, Privacy, Categorie, Importa/Esporta, Onboarding, Attività, Aspetto, Zona pericolosa) sono ora una barra verticale a sinistra su schermi larghi (resta una barra orizzontale scorrevole su mobile), in un nuovo ordine.
+**Cosa fa:** le schede di Impostazioni sono ora una barra verticale a sinistra su schermi larghi, in un nuovo ordine.
 
 ### Correzione: il gadget "Onboarding" nascosto poteva ricomparire
 
-**Cosa fa:** "Nascondi" nel pannello del gadget Onboarding nella barra di navigazione ora vale per davvero, anche a un login successivo (o su un altro dispositivo) --- non solo per il browser in cui è stato cliccato. Resta comunque riattivabile da Impostazioni > Onboarding.
+**Cosa fa:** "Nascondi" ora vale per davvero anche a un login successivo o su un altro dispositivo, non solo per il browser in cui è stato cliccato.
 
-**Note tecniche:** la preferenza (`profiles.onboarding_widget_hidden`) è passata da solo-`localStorage` a sincronizzata sul server, con lo stesso pattern già usato per `nav_orientation` (letta lato server in `getCurrentUser()`, aggiornamento ottimistico lato client con rollback se il salvataggio fallisce). `lib/onboarding-widget.ts` (il vecchio helper `localStorage`) è stato rimosso.
+**Note tecniche:** la preferenza passa da solo-`localStorage` a sincronizzata sul server, stesso pattern di `nav_orientation`.
 
 ### Impostazioni > Privacy: lista aggiornata
 
-**Cosa fa:** la lista di "Quello che vediamo" ora riflette anche la data di nascita (se impostata), la visibilità del gadget di onboarding, e segnala che IP/dispositivo/browser di ogni accesso ed eventuali tentativi falliti sono registrati in Impostazioni > Attività.
+**Cosa fa:** "Quello che vediamo" riflette ora anche la data di nascita, la visibilità del gadget onboarding, e segnala che IP/dispositivo/browser di ogni accesso sono registrati in Attività.
 
 ### Impostazioni > Attività: registro interrogabile, con molti più eventi
 
-**Cosa fa:** invece di caricare sempre tutto il registro, ora si interroga: data inizio, data fine e categoria (scelta multipla), poi "Trova" mostra i risultati in una tabella; un click su una riga apre un pannello laterale con i dettagli (metodo di login, indirizzo IP, dispositivo/browser, quando presenti). Nuovi eventi registrati: tentativi di login falliti, verifiche MFA fallite, attivazione/rimozione dell'autenticazione a due fattori, generazione di codici di backup, distinzione tra login con password/TOTP/codice di backup, IP e dispositivo/browser di ogni login riuscito, e creazione/eliminazione di asset, capsule e categorie (oltre a documenti/contatti, già presenti).
+**Cosa fa:** invece di caricare sempre tutto il registro, ora si interroga per data e categoria; un click su una riga apre un pannello con i dettagli. Nuovi eventi: tentativi di login falliti, verifiche MFA fallite, attivazione/rimozione 2FA, distinzione tra login con password/TOTP/codice di backup, IP e dispositivo di ogni login riuscito.
 
-**Note tecniche:** `audit_events` ha una nuova colonna `metadata jsonb` (mai contenuti o identificatori, solo dettagli tecnici) invece di continuare a esplodere l'enum `event_type` per ogni sfumatura. Un tentativo di login con password errata non ha ancora una sessione autenticata (`auth.uid()` è null, le RLS richiederebbero `auth.uid() = owner_id`): registrato tramite una funzione Postgres dedicata (`log_failed_login_attempt`, `SECURITY DEFINER`) che non rivela mai se l'email corrisponde a un account esistente, per non permettere l'enumerazione degli account. IP/user agent letti da `next/headers` lato server action (`lib/http/request-context.ts`). Il raggruppamento per giorno (`domain/audit/group.ts`) è stato rimosso: la vista è ora tabellare, non più a elenco raggruppato.
+**Note tecniche:** `audit_events` guadagna una colonna `metadata jsonb` invece di continuare a esplodere l'enum `event_type`. Un tentativo di login errato non ha sessione autenticata: registrato tramite `log_failed_login_attempt` (SECURITY DEFINER) che non rivela mai se l'email corrisponde a un account esistente.
 
-**Bug noto, scoperto ma non risolto (pre-esistente, non introdotto da queste modifiche):** in `/login`, dopo un primo tentativo con credenziali sbagliate, un secondo submit del form (anche con la password corretta) non naviga alla dashboard --- riproducibile anche disabilitando del tutto la nuova registrazione dei tentativi falliti, quindi non è la causa. Verosimilmente un'interazione tra `useActionState`/Server Actions e i cookie di sessione scritti dal primo tentativo. Da investigare a parte: nel frattempo un refresh della pagina prima di riprovare aggira il problema.
+**Bug noto, scoperto ma non risolto (pre-esistente):** in `/login`, dopo un primo tentativo con credenziali sbagliate, un secondo submit (anche con la password corretta) non naviga alla dashboard --- verosimilmente un'interazione tra `useActionState`/Server Actions e i cookie di sessione. Un refresh prima di riprovare aggira il problema.
 
 ### Menu di navigazione responsive
 
-**Cosa fa:** su schermi piccoli, la barra laterale (o quella orizzontale) è sostituita da un tasto menu (☰) che apre la stessa navigazione in sovraimpressione, invece di restare sempre visibile occupando spazio.
+**Cosa fa:** su schermi piccoli, la barra laterale è sostituita da un tasto menu (☰) che apre la stessa navigazione in sovraimpressione.
 
-**Note tecniche:** nuovo `MobileNavBar`, montato sempre da `AppShell` accanto a `Sidebar`/`TopNav` (nascosti sotto la soglia `md` via CSS, non smontati: così la barra laterale non perde il proprio stato di compressione attraversando la soglia).
+**Note tecniche:** nuovo `MobileNavBar`, montato sempre accanto a `Sidebar`/`TopNav` (nascosti via CSS sotto la soglia `md`, non smontati, per non perdere lo stato di compressione).
 
 ### Cronologia: filtri per data e sezione
 
-**Cosa fa:** in Cronologia, un nuovo filtro iniziale per data inizio, data fine e sezione (Archivio/Asset/Scadenza/Contatto/Capsula), applicato subito senza bisogno di un tasto "Cerca" --- i dati sono già tutti decifrati in memoria.
+**Cosa fa:** un filtro per data inizio, data fine e sezione, applicato subito senza un tasto "Cerca".
 
 ---
 
@@ -1081,83 +1069,79 @@ Verificando con l'intera suite e2e sono emersi due problemi, corretti: 21 asserz
 
 ### MFA: codici di backup
 
-**Cosa fa:** in Impostazioni > Sicurezza, oltre all'app authenticator (TOTP) è ora possibile generare **10 codici di backup monouso**, da usare se si perde l'accesso al proprio dispositivo: uno vale al posto del codice, e viene consumato subito dopo l'uso. Compaiono solo se hai già l'app authenticator attiva.
+**Cosa fa:** in Impostazioni > Sicurezza è ora possibile generare **10 codici di backup monouso**, da usare se si perde l'accesso al dispositivo con l'app authenticator.
 
-**Note tecniche:** i codici di backup sono interamente nostri (Supabase non li supporta nativamente): salvati come hash SHA-256 (Web Crypto API) in una nuova tabella `mfa_backup_codes`, mai in chiaro se non per l'istante in cui vengono mostrati. Un dettaglio non ovvio emerso testando: verificare un codice di backup non è una vera verifica MFA per Supabase, quindi non alza da sé il livello di sicurezza (AAL) della sessione --- un cookie dedicato (`lib/auth/mfa-bypass.ts`) segna esplicitamente "secondo fattore verificato con un codice di backup" per i controlli d'accesso, cancellato ad ogni nuovo login perché non deve valere oltre la sessione in cui è stato ottenuto.
+**Note tecniche:** salvati come hash SHA-256 in `mfa_backup_codes`, mai in chiaro se non all'istante della generazione. Verificare un codice di backup non alza da sé il livello AAL della sessione per Supabase: un cookie dedicato (`lib/auth/mfa-bypass.ts`) segna "secondo fattore verificato con un codice di backup", cancellato a ogni nuovo login.
 
-**Esplorato ma non implementato: passkey (WebAuthn) come fattore alternativo.** L'idea era di poter verificare con impronta digitale/Face ID/Windows Hello/chiave fisica invece di un codice, usando l'MFA WebAuthn nativo di Supabase (`factorType: "webauthn"`, orchestrato a mano in tre passi dato che l'SDK non espone un metodo di comodo completo per questo). Il codice è stato scritto e verificato fino al punto in cui il server Supabase lo permetteva, ma il dashboard Authentication di questo progetto non espone alcun modo per attivare "WebAuthn come fattore MFA" --- solo per il login primario con passkey ("Passkeys" BETA), una funzionalità diversa pensata per sostituire la password, non per affiancarla. Rimosso dal codice in attesa che Supabase chiarisca/rilasci un percorso stabile per questo caso d'uso specifico.
+**Esplorato ma non implementato: passkey (WebAuthn) come fattore alternativo.** Il codice è stato scritto e verificato fino al punto in cui Supabase lo permetteva, ma il dashboard Authentication non espone alcun modo per attivare "WebAuthn come fattore MFA" (solo per il login primario con passkey, funzionalità diversa). Rimosso in attesa di un percorso stabile.
 
 ### Autenticazione a due fattori (TOTP)
 
-**Cosa fa:** nuova scheda "Sicurezza" in Impostazioni per attivare l'autenticazione a due fattori con un'app come Google Authenticator o 1Password. Una volta attiva, dopo email e password il login chiede anche un codice a 6 cifre prima di entrare. Si possono registrare più dispositivi (consigliato farlo, per non restare esclusi dall'account perdendo l'unico con l'app authenticator), ognuno rimovibile singolarmente.
+**Cosa fa:** nuova scheda "Sicurezza" per attivare l'autenticazione a due fattori con un'app come Google Authenticator. Si possono registrare più dispositivi, ognuno rimovibile.
 
-**Note tecniche:** interamente basata sull'MFA nativo di Supabase Auth (TOTP) --- nessuna crypto custom. Riguarda solo il layer di identità/login: non tocca mai la master key né la cifratura del vault, che restano protette solo dalla master password, del tutto separate (v. HINTHIAL_MVP.md, sezione 4). `signIn()` reindirizza a `/login/mfa` invece che alla dashboard quando la sessione è solo `aal1` e può salire ad `aal2`; lo stesso controllo vive anche in `(app)/layout.tsx`, per un URL diretto raggiunto senza passare dal login. Un codice non dichiara per quale dispositivo è stato generato: viene provato su ogni fattore registrato finché uno lo accetta. Richiede TOTP abilitato sul progetto Supabase (`supabase/config.toml`, `[auth.mfa.totp]`).
+**Note tecniche:** interamente basata sull'MFA nativo di Supabase Auth --- nessuna crypto custom, non tocca mai la master key. `signIn()` reindirizza a `/login/mfa` quando la sessione è solo `aal1` e può salire ad `aal2`. Un codice non dichiara per quale dispositivo è stato generato: viene provato su ogni fattore registrato.
 
 ### Impostazioni > Privacy: "Cosa sa Hinthial di te"
 
-**Cosa fa:** nuova scheda che mette a confronto, con dati reali e attuali dell'account (non un testo generico), cosa il server vede in chiaro --- email, conteggi per sezione, categorie, disposizione del menu --- con cosa non vedrà mai: nomi dei file, contenuti, contatti fiduciari, capsule, master password. Pensata per chi vuole verificare di persona la promessa zero-knowledge, non solo leggerla dichiarata.
+**Cosa fa:** una scheda che confronta, con dati reali dell'account, cosa il server vede in chiaro con cosa non vedrà mai.
 
-**Note tecniche:** ogni query legge solo colonne mai cifrate (conteggi, `status`/`is_friend` di trusted_contacts, `status` delle capsule, la tassonomia delle categorie), quindi non serve la master key sbloccata.
+**Note tecniche:** ogni query legge solo colonne mai cifrate, quindi non serve la master key sbloccata.
 
 ### Impostazioni > Attività: registro degli eventi dell'account
 
-**Cosa fa:** nuova scheda che mostra il registro tecnico già scritto ad ogni login/logout, contenuto aggiunto o eliminato, contatto fiduciario aggiunto, vault svuotato --- raggruppato per giorno (Oggi/Ieri/data) e filtrabile per categoria. Mai nomi di file o di contatti, solo il tipo di evento: restano privati anche qui.
-
-**Note tecniche:** log puramente tecnico e in chiaro (v. `lib/audit/log-event.ts`), non serve la master key.
+**Cosa fa:** una scheda che mostra il registro tecnico già scritto ad ogni login/logout o contenuto aggiunto/eliminato, raggruppato per giorno e filtrabile per categoria. Mai nomi di file o contatti, solo il tipo di evento.
 
 ### Kit di recovery stampabile con QR
 
-**Cosa fa:** alla creazione della master password, una terza opzione ("Stampa kit di recovery") accanto a copia/download .txt: un foglio pensato per essere stampato e conservato fisicamente, con la recovery key in grande e un QR code --- comodo per reinserirla su un dispositivo nuovo senza ricopiare a mano una chiave a 384 bit.
+**Cosa fa:** alla creazione della master password, "Stampa kit di recovery" accanto a copia/download .txt --- un foglio con la recovery key in grande e un QR code.
 
-**Note tecniche:** il QR è generato interamente lato client (libreria `qrcode`); la chiave non lascia mai il browser, nessuna chiamata di rete. Il foglio stampabile vive fuori vista nel DOM e diventa visibile solo nella finestra di stampa (pattern CSS "stampa solo questo elemento", v. `lib/print.ts`).
+**Note tecniche:** il QR è generato interamente lato client, la chiave non lascia mai il browser.
 
 ### Modifica di una capsula: stessi tre passi della creazione
 
-**Cosa fa:** la pagina di modifica di una capsula è ora organizzata negli stessi tre passi della creazione (chi e quando -> contenuti dall'archivio -> audio, video e testo), invece di un unico form con tutti i campi insieme --- stessa intestazione "Passo X di 3" e gli stessi pulsanti Avanti/Indietro.
-
-**Note tecniche:** `EditCapsuleForm` riusa `STEP_LABEL` e la stessa struttura a passi di `CreateCapsuleForm`; nessun cambiamento ai dati salvati o a `updateCapsule`.
+**Cosa fa:** la modifica di una capsula è ora organizzata negli stessi tre passi della creazione, invece di un unico form.
 
 ### Onboarding: nascondibile dalla barra, e una pagina dedicata in Impostazioni
 
-**Cosa fa:** il pannello che si apre dall'indicatore "Onboarding" nella barra di navigazione ha ora un pulsante "Nascondi", che lo fa sparire dalla barra da quel momento in poi (su questo dispositivo). L'avanzamento resta comunque consultabile in una nuova voce "Onboarding" tra le schede di Impostazioni: una percentuale in grande con un messaggio accanto (di apprezzamento quando l'onboarding è avanti, di incoraggiamento quando è indietro), e sotto la lista di tutte le attività con una breve descrizione e lo stato ("✅ Fatto" o un pulsante "Da fare" che porta dove completarla). Da lì è anche possibile far ricomparire l'indicatore nella barra.
+**Cosa fa:** il pannello Onboarding ha ora un pulsante "Nascondi" per questo dispositivo. L'avanzamento resta consultabile in una nuova voce "Onboarding" tra le schede di Impostazioni, con lista completa dei passi e stato di ciascuno.
 
-**Note tecniche:** la preferenza "nascosto" vive solo in localStorage (come il tema), non sul server. Condivisa tra l'indicatore nella barra e la nuova pagina di Impostazioni tramite un nuovo `OnboardingWidgetVisibilityProvider` (Context React) --- necessario perché la barra di navigazione resta montata attraversando le pagine dell'app: senza uno stato condiviso, nasconderla da Impostazioni non si sarebbe riflesso lì finché non si fosse ricaricata la pagina per intero. `OnboardingStep` (in `domain/onboarding/steps.ts`) guadagna un campo `description`, riusato sia qui sia potenzialmente altrove, per restare l'unica fonte dei passi.
+**Note tecniche:** la preferenza "nascosto" vive solo in localStorage, condivisa tramite un nuovo `OnboardingWidgetVisibilityProvider` (necessario perché la barra di navigazione resta montata attraversando le pagine).
 
 ### Rifiniture: logo e colore dell'indicatore Onboarding
 
-**Cosa fa:** il logo nella barra orizzontale dopo il login è ora della stessa dimensione di quello nella home page pubblica. L'anello dell'indicatore "Onboarding" diventa verde quando l'avanzamento raggiunge il 100% (prima restava sempre del colore del brand).
+**Cosa fa:** il logo nella barra orizzontale è ora della stessa dimensione della home page pubblica. L'anello dell'indicatore diventa verde al 100%.
 
 ### Disposizione del menu di navigazione
 
-**Cosa fa:** in Impostazioni > Aspetto è ora possibile scegliere come disporre il menu di navigazione: barra laterale a sinistra (come finora), barra laterale a destra, oppure barra orizzontale in alto. La scelta si applica subito a tutta l'app e resta impostata su tutti i dispositivi dell'utente, esattamente come la visualizzazione delle liste. Nella barra orizzontale il logo mostra anche il nome (non solo l'icona), le voci di navigazione mostrano l'etichetta accanto all'icona (non solo l'icona), e il campo di ricerca è per esteso, non compresso.
+**Cosa fa:** in Impostazioni > Aspetto si sceglie ora come disporre il menu: barra laterale a sinistra/destra, o orizzontale in alto --- sincronizzato su tutti i dispositivi.
 
-**Note tecniche:** nuova colonna `profiles.nav_orientation` (`sidebar-left` di default, `sidebar-right`, `topbar`), letta lato server in `getCurrentUser()` e passata come prop iniziale ad `AppShell` --- a differenza della visualizzazione delle liste, qui il valore dev'essere noto *prima* del primo render per evitare un lampo del layout sbagliato, dato che decide la struttura dell'intera shell, non un dettaglio interno a una sezione. `AppShell` sceglie tra `Sidebar` (a sinistra o a destra, riordinata via classi `md:order-*`, non riordinando il markup: su mobile il menu resta sempre in cima) e il nuovo `TopNav`. `MainNav` guadagna una variante orizzontale (icone soltanto, come la barra laterale compressa) e `UserMenu` un verso di apertura del popover verso il basso, allineato a destra, per quando vive in cima allo schermo invece che in fondo a una barra laterale. Corretto anche un effetto collaterale: il popover dell'indicatore "Onboarding" si apriva sempre verso destra, uscendo dallo schermo quando la barra laterale sta a destra --- ora si ancora al bordo opposto se non c'è spazio.
+**Note tecniche:** nuova colonna `profiles.nav_orientation`, letta lato server e passata come prop iniziale ad `AppShell` (deve essere nota prima del primo render, decidendo la struttura dell'intera shell). Corretto anche un effetto collaterale: il popover dell'indicatore Onboarding si apriva sempre verso destra, uscendo dallo schermo con la barra a destra.
 
 ### Onboarding, home page pubblica e rifiniture
 
-**Cosa fa:** l'indicatore nella barra laterale si chiama ora "Onboarding" (era "Primi passi"). La nuvola dei passi non depenna più le voci completate (restano scritte normalmente) e non parla più di passi "opzionali": tutti gli 8 passi contano allo stesso modo verso la percentuale mostrata. Il passo "Imposta una scadenza" è stato rimosso, essendo un'attività passiva rispetto al contribuire contenuti. In Impostazioni > Aspetto > Visualizzazione delle liste, "Contatti fiduciari" è stato rinominato in "Contatti". Il carosello della home page pubblica ora avanza da solo ogni 6 secondi (in pausa al passaggio del mouse, disattivato con `prefers-reduced-motion`), e sotto di esso la pagina è stata ampliata in stile brochure responsive: una sezione "Perché Hinthial" con i punti di forza (zero-knowledge, archivio unico, assistente locale, capsule, personalizzazione, sviluppo incrementale) e una sezione "Come funziona" in tre passi.
+**Cosa fa:** l'indicatore si chiama ora "Onboarding" (era "Primi passi"), senza più passi "opzionali" (tutti gli 8 contano allo stesso modo). Il carosello della home page avanza da solo ogni 6 secondi (pausa al passaggio del mouse, disattivato con `prefers-reduced-motion`); sotto di esso, sezioni "Perché Hinthial" e "Come funziona".
 
-**Note tecniche:** `domain/onboarding/steps.ts` non ha più il concetto di passo opzionale; la percentuale è ora calcolata su tutti gli 8 passi. Individuato e corretto un bug nel carosello: il mouse resta fermo sopra il componente dopo un click (come farebbe un utente reale), quindi una pausa-al-focus in più lo avrebbe bloccato per sempre --- risolto tenendo solo la pausa al passaggio del mouse (`onMouseEnter`/`onMouseLeave`), senza equivalenti per la tastiera.
+**Note tecniche:** corretto un bug nel carosello: il mouse resta fermo sopra il componente dopo un click, quindi una pausa-al-focus in più lo avrebbe bloccato per sempre --- risolto tenendo solo la pausa al passaggio del mouse.
 
 ### Dead Man's Switch semplificato per le capsule (fase 1 di 3)
 
-**Cosa fa:** ogni capsula richiede ora una data di apertura obbligatoria (prima era facoltativa) --- raggiunta quella data, il destinatario potrà vederne il contenuto. Ogni utente deve avere almeno un contatto fiduciario marcato come "amico" (nuova azione nel menu di un contatto, badge "🤝 Amico"): è un prerequisito reale, diventato un passo obbligatorio nell'onboarding ("Aggiungi un amico"). In modifica di una capsula è ora possibile anche gestire gli allegati audio/video: rimuovere quelli esistenti e registrarne/caricarne di nuovi, esattamente come in creazione.
+**Cosa fa:** ogni capsula richiede ora una data di apertura obbligatoria. Ogni utente deve avere almeno un contatto marcato come "amico" (🤝), prerequisito diventato un passo obbligatorio nell'onboarding.
 
-**Note tecniche:** `capsules.open_at` è diventata una colonna in chiaro (era solo dentro il payload cifrato) --- unica eccezione consapevole allo zero-knowledge in questa tabella, necessaria perché in una fase successiva il server possa sapere *quando* una capsula è pronta senza dover decifrare nulla. Le capsule create prima della migrazione si "sanano" da sole (il valore torna in chiaro) la prima volta che il proprietario le rivede. `trusted_contacts.is_friend` è un nuovo flag, indipendente da `status`. Questa è solo la prima di tre sotto-fasi pianificate: mancano ancora la soglia di inattività con promemoria via email (Resend) e, soprattutto, lo scambio di chiavi che permetterà a un destinatario di decifrare davvero una capsula (richiede che ogni "amico" diventi un utente Hinthial con una propria coppia di chiavi).
+**Note tecniche:** `capsules.open_at` diventa una colonna in chiaro (era solo nel payload cifrato) --- unica eccezione consapevole allo zero-knowledge in questa tabella, necessaria perché una fase successiva possa sapere *quando* una capsula è pronta senza decifrare nulla. Prima di tre sotto-fasi: mancano ancora la soglia di inattività con promemoria e lo scambio di chiavi che permetterà a un destinatario di decifrare davvero.
 
 ### Dashboard: contatori e indicatore di avanzamento
 
-**Cosa fa:** i contatori per sezione in dashboard sono ora centrati, con un'icona più grande. Il contatore "Contatti" mostra due conteggi distinti sotto al totale: quanti sono attivi e, separatamente, quanti sono amici. Nuovo indicatore "Primi passi" sempre visibile nella barra laterale (non solo in dashboard): una grafica a torta con la percentuale di completamento dei passi obbligatori, che al click apre la lista di cosa è stato fatto e cosa manca.
+**Cosa fa:** i contatori sono ora centrati, con icona più grande. Nuovo indicatore "Primi passi" sempre visibile nella barra laterale.
 
-**Note tecniche:** la logica dei passi di onboarding è stata estratta in `domain/onboarding/steps.ts`, condivisa tra la card in dashboard e il nuovo indicatore nella barra laterale, per evitare due liste che potessero disallinearsi.
+**Note tecniche:** la logica dei passi è stata estratta in `domain/onboarding/steps.ts`, condivisa tra dashboard e indicatore, per evitare due liste disallineate.
 
 ### Home page pubblica
 
-**Cosa fa:** la pagina che si vede visitando Hinthial da sconnessi ha ora una barra in alto (logo a sinistra, Accedi/Registrati o "Vai alla dashboard" a destra) e un corpo da vera landing page, con un carosello di 5 schermate che spiega cosa fa Hinthial (cifratura zero-knowledge, archivio multi-tipo, asset e scadenze, capsule, assistente AI locale).
+**Cosa fa:** la pagina pubblica ha ora una barra in alto e un corpo da vera landing page, con un carosello di 5 schermate.
 
 ### Documentazione
 
-- Allineata la "Roadmap sintetica" di `HINTHIAL_MVP.md` alle fasi già scritte in dettaglio (mancava la FASE 14, ed erano segnate come due fasi separate "AI real" e "Proactive AI" che invece la spec descrive come un'unica FASE 11).
+- Allineata la "Roadmap sintetica" di `HINTHIAL_MVP.md` alle fasi già scritte in dettaglio.
 - Aggiunto questo changelog.
 
 ---
