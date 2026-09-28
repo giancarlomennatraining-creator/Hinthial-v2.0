@@ -3,13 +3,10 @@ import { createConfirmedTestUser, resetDocumentExtraction, uniqueTestUser } from
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// FASE 17 --- la prova che conta: un PDF caricato dall'interfaccia vera,
-// con pdf.js che gira nel browser (worker incluso, percorso che i test
-// unitari non possono esercitare), e una parola che esiste SOLO dentro
-// il file. Se la ricerca la trova, l'estrazione ha funzionato, il testo
-// è stato cifrato, salvato, riletto e decifrato.
+// La prova che conta: un PDF caricato dall'interfaccia vera, con pdf.js che gira nel browser, e una parola che
+// esiste SOLO dentro il file. Se la ricerca la trova, l'intera catena ha funzionato.
 
-/** PDF minimo valido con una riga di testo --- v. tests/unit/extraction. */
+/** PDF minimo valido con una riga di testo, v. tests/unit/extraction. */
 function buildPdf(text: string): Buffer {
   const stream = `BT /F1 12 Tf 72 720 Td (${text}) Tj ET`;
   const objects = [
@@ -62,8 +59,7 @@ test("la ricerca in Archivio trova un PDF per una parola scritta solo dentro il 
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  // Il nome del file non contiene "cardiologia": quella parola vive solo
-  // dentro il PDF.
+  // Il nome del file non contiene "cardiologia": quella parola vive solo dentro il PDF.
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "scan_0012.pdf",
@@ -74,18 +70,14 @@ test("la ricerca in Archivio trova un PDF per una parola scritta solo dentro il 
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
   await expect(page.getByText("scan_0012.pdf")).toBeVisible({ timeout: 20_000 });
 
-  // Prima della FASE 17 questa ricerca non avrebbe trovato nulla:
-  // guardava solo nome, tag, note e trascrizione.
   await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("cardiologia");
   await expect(page.getByText("scan_0012.pdf")).toBeVisible();
 
-  // Una parola che non compare da nessuna parte non deve trovare nulla:
-  // altrimenti il test passerebbe anche con una ricerca rotta.
+  // Una parola che non compare da nessuna parte non deve trovare nulla: altrimenti il test passerebbe anche con una ricerca rotta.
   await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("ortopedia");
   await expect(page.getByText("scan_0012.pdf")).not.toBeVisible();
 
-  // FASE 17b --- il risultato spiega PERCHÉ è comparso: lo spezzone di
-  // testo attorno alla parola trovata, che nel nome del file non c'è.
+  // Il risultato spiega PERCHÉ è comparso: lo spezzone di testo attorno alla parola trovata.
   await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("cardiologia");
   await expect(page.locator("mark").first()).toHaveText("cardiologia");
   await expect(page.getByText(/Referto visita/)).toBeVisible();
@@ -140,9 +132,7 @@ test("i documenti caricati prima della FASE 17 si recuperano dal banner in Archi
   // Appena caricato è già stato letto, quindi nessun banner da mostrare.
   await expect(page.getByRole("button", { name: "Leggili ora" })).not.toBeVisible();
 
-  // Si riporta il documento nello stato "mai letto", come lo sarebbe se
-  // fosse stato caricato prima che l'estrazione esistesse --- l'unico
-  // modo di ricreare quella situazione senza un archivio storico vero.
+  // Si riporta il documento nello stato "mai letto", come se fosse stato caricato prima che l'estrazione esistesse.
   await resetDocumentExtraction(user.email);
   await page.reload();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");

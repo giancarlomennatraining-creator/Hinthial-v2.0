@@ -1,22 +1,14 @@
 /**
- * FASE 17 --- l'estrazione del testo da un PDF, verificata su un PDF
- * vero costruito qui (non un mock del motore): è l'unico modo di sapere
- * se pdf.js viene invocato come si deve e se il testo torna leggibile.
- *
- * Il PDF è scritto a mano in byte perché basta un file minimo e valido:
- * una pagina, un font standard, una stringa. Una libreria per generarlo
- * sarebbe una dipendenza in più per un unico test.
+ * L'estrazione del testo da un PDF, verificata su un PDF vero costruito qui (non un mock del motore): è l'unico
+ * modo di sapere se pdf.js viene invocato come si deve. Scritto a mano in byte: basta un file minimo e valido,
+ * una libreria per generarlo sarebbe una dipendenza in più per un unico test.
  */
 import { pathToFileURL } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
 import { extractText, canExtractText } from "@/domain/extraction/extract-text";
 import { normalizeExtractedText, MAX_EXTRACTED_CHARS } from "@/domain/extraction/types";
 
-// Qui i test girano in jsdom: `window` esiste, ma il loader ESM di Node
-// accetta solo file:/data:, quindi l'URL che il bundler userebbe nel
-// browser (http://) non è caricabile. Si indica il worker come file
-// locale --- l'estrattore rispetta una configurazione già presente
-// (v. domain/extraction/pdf-extractor.ts).
+// Qui i test girano in jsdom: il loader ESM di Node accetta solo file:/data:, non l'URL http:// che userebbe il browser. Si indica il worker come file locale: l'estrattore rispetta una configurazione già presente.
 beforeAll(async () => {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(
@@ -77,9 +69,7 @@ describe("estrazione testo (FASE 17)", () => {
 
     await extractText(pdf, "application/pdf");
 
-    // pdf.js prende possesso del buffer che riceve: se non gliene
-    // passassimo una copia, qui i byte risulterebbero svuotati e il
-    // documento verrebbe salvato vuoto.
+    // pdf.js prende possesso del buffer che riceve: senza una copia, i byte risulterebbero svuotati.
     expect(pdf.byteLength).toBe(copy.byteLength);
     expect(Array.from(pdf.slice(0, 8))).toEqual(Array.from(copy.slice(0, 8)));
   }, 30_000);
