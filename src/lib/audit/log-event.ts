@@ -1,11 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/types/supabase";
 
-/**
- * Event types recordable so far. Extended by later phases (each adding
- * its own migration to widen the `audit_events.event_type` check
- * constraint) --- see supabase/migrations and HINTHIAL_MVP.md sezione 5.
- */
+/** Event types recordable so far. Extended by later phases, each adding its own migration to widen the `audit_events.event_type` check constraint. */
 export type AuditEventType =
   | "login"
   | "logout"
@@ -55,11 +51,7 @@ export type AuditEventType =
   | "document_restored"
   | "document_purged";
 
-/**
- * Metadati tecnici facoltativi per un evento --- mai contenuti, nomi
- * file/amico o altro dato del vault, solo dettagli sul "come" (es. il
- * metodo di login, IP e user agent, il motivo di un fallimento).
- */
+/** Metadati tecnici facoltativi per un evento: mai contenuti, nomi file/amico o altro dato del vault, solo dettagli sul "come". */
 export interface AuditEventMetadata {
   /** Come è avvenuto il login: "password" (poi eventualmente completato da MFA), "totp", "backup_code". */
   method?: "password" | "totp" | "backup_code";
@@ -83,9 +75,7 @@ export async function logAuditEvent(
   const { error } = await supabase.from("audit_events").insert({
     owner_id: ownerId,
     event_type: eventType,
-    // AuditEventMetadata is a plain flat record of strings/nulls: a
-    // structurally valid Json, just not nominally --- the interface (for
-    // named, documented fields) doesn't satisfy Json's index signature.
+    // AuditEventMetadata is structurally valid Json but not nominally: the interface doesn't satisfy Json's index signature.
     metadata: (metadata ?? null) as Json | null,
   });
 
@@ -95,13 +85,9 @@ export async function logAuditEvent(
 }
 
 /**
- * Registra un tentativo di login con password errata --- a differenza di
- * logAuditEvent, chi chiama non ha ancora una sessione autenticata (RLS
- * richiederebbe auth.uid() = owner_id, che qui non esiste), quindi passa
- * da una funzione Postgres SECURITY DEFINER (v. la migrazione
- * audit_events_expansion) invece di un insert diretto. Non rivela mai se
- * l'email corrisponde a un account esistente: stessa chiamata, stesso
- * esito silenzioso, in entrambi i casi --- niente enumerazione account.
+ * Registra un tentativo di login con password errata: chi chiama non ha ancora una sessione autenticata (RLS
+ * richiederebbe auth.uid() = owner_id), quindi passa da una funzione Postgres SECURITY DEFINER invece di un insert
+ * diretto. Non rivela mai se l'email corrisponde a un account esistente: stesso esito silenzioso in entrambi i casi.
  */
 export async function logFailedLoginAttempt(
   supabase: SupabaseClient<Database>,
