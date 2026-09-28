@@ -5,15 +5,7 @@ import { createAdminClient } from "@/lib/db/supabase/admin";
 import { sendEmail } from "@/lib/email/send-email";
 import { friendInviteEmail, friendRequestEmail, guardianRoleRequestEmail } from "@/lib/email/templates";
 
-/**
- * Invia l'email di invito a registrarsi su Hinthial --- v.
- * components/friends/CreateFriendForm.tsx e EditFriendForm.tsx,
- * checkbox "Invita ... su Hinthial". Il nome/l'email dell'amico restano
- * cifrati lato client: qui arriva solo l'indirizzo a cui inviare, mai
- * salvato né altrimenti usato. Il nome di chi invita è letto qui,
- * server-side, dalla sessione autenticata --- mai fidarsi di un valore
- * passato dal client per il contenuto di un'email.
- */
+/** Invia l'email di invito a registrarsi. Il nome/l'email dell'amico restano cifrati lato client: qui arriva solo l'indirizzo a cui inviare. Il nome di chi invita è letto server-side dalla sessione autenticata. */
 export async function inviteFriendToHinthial(friendEmail: string): Promise<void> {
   const user = await getCurrentUser();
   if (!user) {
@@ -24,13 +16,7 @@ export async function inviteFriendToHinthial(friendEmail: string): Promise<void>
   await sendEmail({ to: friendEmail, subject, html });
 }
 
-/**
- * Invia l'email di una richiesta di amicizia --- v.
- * domain/friends/friend-requests.ts, sendFriendRequest, che scrive la
- * riga; questa è solo la notifica, best-effort come inviteFriendToHinthial
- * (una richiesta salvata ma senza email non blocca comunque nulla: resta
- * comunque visibile nella scheda Amici del destinatario).
- */
+/** Invia l'email di una richiesta di amicizia: solo la notifica, best-effort come inviteFriendToHinthial (senza email la richiesta resta comunque visibile nella scheda Amici). */
 export async function sendFriendRequestEmail(recipientEmail: string): Promise<void> {
   const user = await getCurrentUser();
   if (!user) {
@@ -41,14 +27,7 @@ export async function sendFriendRequestEmail(recipientEmail: string): Promise<vo
   await sendEmail({ to: recipientEmail, subject, html });
 }
 
-/**
- * Invia l'email di una richiesta di diventare guardiano --- l'indirizzo
- * del destinatario non è mai leggibile dal client (è il suo vero account
- * Hinthial, non un dato cifrato nella rubrica di chi lo richiede): si usa
- * il client admin, l'unico che può risalire dall'id utente alla sua email
- * reale (v. lib/db/supabase/admin.ts), esattamente come già fa
- * automation.ts per le email di "Eredità digitale".
- */
+/** Invia l'email di una richiesta di diventare guardiano: l'indirizzo del destinatario non è leggibile dal client, si usa il client admin per risalire dall'id utente alla sua email reale (v. lib/db/supabase/admin.ts). */
 export async function sendGuardianRoleRequestEmail(guardianUserId: string): Promise<void> {
   const user = await getCurrentUser();
   if (!user) {

@@ -1,13 +1,4 @@
-/**
- * Pure countdown math for a capsule con-una data di apertura (v.
- * components/capsules/CapsuleCountdown.tsx) --- kept separate so it's
- * testable without a clock mock inside a React component. Purely
- * informational: no automatic opening happens at openAt (v.
- * domain/capsules/types.ts, CapsuleListItem.openAt). Mostrato solo per
- * le capsule non più in bozza (v. CapsulesPanel.tsx) --- su una bozza
- * openAt può ancora cambiare, quindi un conto alla rovescia non avrebbe
- * senso.
- */
+/** Pure countdown math for a capsule with an opening date, kept separate so it's testable without a clock mock inside a React component. Purely informational: no automatic opening happens at openAt. */
 
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -21,7 +12,7 @@ export interface CountdownInfo {
   label: string;
 }
 
-/** Midnight (local time) of the given date --- usato solo per capire se openAt cade "oggi"/"domani" a fini di etichetta; il calcolo delle ore/minuti restanti (sotto la soglia di 1 giorno) usa invece la differenza esatta in millisecondi, non le date di calendario. */
+/** Midnight (local time) of the given date, usato solo per l'etichetta "oggi"/"domani"; ore/minuti restanti usano la differenza esatta in millisecondi. */
 function dateOnly(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
@@ -69,14 +60,9 @@ export interface CountdownParts {
 }
 
 /**
- * Scomposizione grezza (sempre per difetto, mai arrotondata) di quanto
- * manca a openAt --- per i "cartellini" del countdown visivo (v.
- * components/capsules/CapsuleCountdown.tsx), non per l'etichetta
- * testuale/di accessibilità qui sopra: quella resta deliberatamente più
- * "arrotondata" e non pensata per aggiornarsi al secondo (v. commento su
- * computeCountdown). Un vero cartellino meccanico non arrotonda mai per
- * eccesso --- passa da 15 a 16 ore solo al minuto esatto in cui scattano,
- * mai un minuto prima.
+ * Scomposizione grezza (sempre per difetto, mai arrotondata) di quanto manca a openAt, per i "cartellini" del
+ * countdown visivo, non per l'etichetta testuale/di accessibilità di computeCountdown. Un vero cartellino
+ * meccanico non arrotonda mai per eccesso: passa da 15 a 16 ore solo al minuto esatto.
  */
 export function computeCountdownParts(openAt: string, now: Date = new Date()): CountdownParts {
   const msUntil = new Date(openAt).getTime() - now.getTime();
