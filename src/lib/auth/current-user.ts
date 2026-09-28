@@ -44,20 +44,11 @@ export interface CurrentUser {
 }
 
 /**
- * Reads the current authenticated user + profile (server-side only), or
- * null if signed out. Wrapped in React's `cache()` so multiple calls
- * within the same request (layout + page) only hit Supabase once.
- *
- * Uses `getSession()` (reads the JWT already in cookies, no network
- * call) instead of the usually-recommended `getUser()` (which re-checks
- * with the Supabase Auth server every time) --- safe here specifically
- * because src/proxy.ts already called `getUser()` for this exact
- * request a moment ago (its matcher covers every route rendered by this
- * function, v. proxy.ts), refreshing/validating the session and writing
- * the up-to-date cookies this call then reads. Re-verifying a second
- * time, request after request, only pays for the same guarantee twice.
- * Anywhere NOT covered by that guarantee (a Server Action, an API route
- * doing something sensitive on its own) should keep using `getUser()`.
+ * Reads the current authenticated user + profile (server-side only), or null if signed out. Wrapped in `cache()`
+ * so multiple calls per request only hit Supabase once. Uses `getSession()` (no network call) instead of
+ * `getUser()` because proxy.ts already called `getUser()` for this exact request, refreshing the cookies this call
+ * then reads — re-verifying again would pay for the same guarantee twice. Anywhere NOT covered by that (a Server
+ * Action, an API route) should keep using `getUser()`.
  */
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const supabase = await createClient();

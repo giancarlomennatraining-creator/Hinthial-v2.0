@@ -4,13 +4,7 @@ import { ENCRYPTED_DOCUMENTS_BUCKET } from "@/lib/storage/documents-bucket";
 import { ENCRYPTED_CAPSULES_BUCKET } from "@/lib/storage/capsules-bucket";
 import { AVATARS_BUCKET } from "@/lib/storage/avatars-bucket";
 
-/**
- * Elenca ricorsivamente ogni file (mai una "cartella", riconoscibile da
- * `id === null` nella risposta di Storage) sotto un prefisso --- serve
- * perché i path delle capsule sono a due livelli
- * (`{ownerId}/{capsuleId}/{attachmentId}.json`, v. capsules-bucket.ts),
- * non uno solo come documenti/avatar.
- */
+/** Elenca ricorsivamente ogni file (mai una "cartella", riconoscibile da `id === null`) sotto un prefisso: serve perché i path delle capsule sono a due livelli, non uno solo come documenti/avatar. */
 async function listAllFilePaths(
   admin: SupabaseClient<Database>,
   bucket: string,
@@ -32,14 +26,9 @@ async function listAllFilePaths(
 }
 
 /**
- * Rimuove ogni oggetto di Storage collegato a un account, in ogni bucket
- * usato da Hinthial --- usata solo dalla cancellazione definitiva
- * dell'account (v. lib/account/actions.ts), con un client admin (service
- * role): a differenza di "Reimposta l'account" (v.
- * domain/danger-zone/repository.ts), qui si enumera l'intera cartella
- * `{ownerId}/` invece di rimuovere solo i path già noti --- corretto qui
- * perché l'account intero sta per sparire, quindi non resta nulla da
- * poter ancora referenziare correttamente.
+ * Rimuove ogni oggetto di Storage collegato a un account, in ogni bucket usato da Hinthial: usata solo dalla
+ * cancellazione definitiva dell'account. A differenza di "Reimposta l'account", qui si enumera l'intera cartella
+ * `{ownerId}/` invece di rimuovere solo i path già noti, corretto perché l'account intero sta per sparire.
  */
 export async function wipeOwnerStorage(
   admin: SupabaseClient<Database>,

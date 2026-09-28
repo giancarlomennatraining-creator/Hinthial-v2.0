@@ -6,22 +6,9 @@ import { sendEmail } from "@/lib/email/send-email";
 import { capsuleSharedEmail } from "@/lib/email/templates";
 
 /**
- * Avvisa via email il destinatario di una capsula appena condivisa con
- * lui (v. domain/capsules/repository.ts, shareCapsule/
- * syncCapsuleSharesForLinkedFriend) --- chiamata da un componente
- * client come una qualunque Server Action.
- *
- * L'indirizzo del destinatario non arriva mai dal chiamante (che non lo
- * conosce in chiaro a questo punto: è solo un id account collegato,
- * v. friends.linked_user_id) --- viene letto qui, server-side, tramite
- * l'API admin, a partire dal solo id. Il nome di chi condivide viene
- * letto dalla sessione autenticata, mai fidandosi di un valore passato
- * dal client per il contenuto dell'email.
- *
- * Best-effort e silenzioso: un'email non inviata (Resend non
- * configurato, un problema di rete...) non deve mai far fallire la
- * condivisione della capsula in sé, di cui è solo un effetto
- * collaterale.
+ * Avvisa via email il destinatario di una capsula appena condivisa. L'indirizzo non arriva mai dal chiamante (solo
+ * un id account collegato): viene letto qui, server-side, tramite l'API admin. Best-effort e silenzioso: un'email
+ * non inviata non deve mai far fallire la condivisione in sé.
  */
 export async function notifyCapsuleShared(recipientUserId: string): Promise<void> {
   try {

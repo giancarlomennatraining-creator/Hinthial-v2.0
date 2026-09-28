@@ -1,31 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 
-/**
- * Public Storage bucket for profile pictures --- plaintext, unlike
- * encrypted-documents/encrypted-capsules (v. the migration for why:
- * treated like first_name/last_name, already plaintext).
- */
+/** Public Storage bucket for profile pictures, plaintext unlike encrypted-documents/encrypted-capsules: treated like first_name/last_name, already plaintext. */
 export const AVATARS_BUCKET = "avatars";
 
-/**
- * A fresh, unique path every time (not a fixed `{owner}/avatar.jpg`
- * overwritten in place): browsers cache images by URL, so reusing the
- * same path would keep showing the old picture after a re-upload until
- * a hard refresh. The old object is removed separately once the new one
- * is live (see domain/profile/repository.ts, updateAvatar).
- */
+/** A fresh, unique path every time: browsers cache images by URL, reusing the same path would keep showing the old picture until a hard refresh. The old object is removed separately once the new one is live. */
 export function avatarStoragePath(ownerId: string): string {
   return `${ownerId}/avatar-${Date.now()}.jpg`;
 }
 
-/**
- * Come avatarStoragePath, ma per la foto di un amico caricata a mano dal
- * proprietario (v. domain/friends/repository.ts) --- resta comunque
- * nella cartella `{ownerId}/...` di chi la carica: stessa policy di
- * Storage di sopra, nessuna nuova regola necessaria. `friendId` nel nome
- * serve solo a riconoscere il file a colpo d'occhio, non a niente altro.
- */
+/** Come avatarStoragePath, ma per la foto di un amico caricata dal proprietario: resta nella cartella `{ownerId}/...`, nessuna nuova regola necessaria. `friendId` nel nome è solo per riconoscere il file a colpo d'occhio. */
 export function friendAvatarStoragePath(ownerId: string, friendId: string): string {
   return `${ownerId}/friend-${friendId}-${Date.now()}.jpg`;
 }
