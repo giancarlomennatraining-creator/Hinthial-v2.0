@@ -3,15 +3,13 @@ import { createConfirmedTestUser, resetDocumentExtraction, uniqueTestUser } from
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// FASE 17e --- la scheda di un contenuto d'Archivio: l'unico posto in cui
-// l'utente vede cosa Hinthial ha letto dentro un suo file. Quello che
-// conta qui non è il layout, è che il testo mostrato sia davvero quello
-// estratto dal contenuto (letto, cifrato, riletto, decifrato) e che i
-// quattro stati di lettura raccontino la verità.
+// La scheda di un contenuto d'Archivio: l'unico posto in cui l'utente vede cosa Hinthial ha letto dentro un suo
+// file. Quello che conta qui non è il layout, è che il testo mostrato sia davvero quello estratto e che i quattro
+// stati di lettura raccontino la verità.
 
 const MASTER_PASSWORD = "una-master-password-solida";
 
-/** PDF minimo valido con due righe di testo --- v. archive-search-inside-pdf. */
+/** PDF minimo valido con due righe di testo, v. archive-search-inside-pdf. */
 function buildPdf(lines: string[]): Buffer {
   const stream = lines
     .map((line, i) => `BT /F1 12 Tf 72 ${720 - i * 20} Td (${line}) Tj ET`)
@@ -82,8 +80,7 @@ test("la scheda di un documento mostra il testo che Hinthial ci ha letto dentro"
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
-  // Si arriva alla scheda dal nome nell'elenco --- è l'unica strada
-  // offerta all'utente, e deve funzionare.
+  // Si arriva alla scheda dal nome nell'elenco: è l'unica strada offerta, e deve funzionare.
   await page.getByRole("link", { name: /referto\.pdf/ }).click();
   await expect(page).toHaveURL(/\/archive\/[0-9a-f-]+$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /referto\.pdf/ })).toBeVisible();
@@ -93,21 +90,14 @@ test("la scheda di un documento mostra il testo che Hinthial ci ha letto dentro"
   await expect(extracted).toContainText("Azienda Ospedaliera di Perugia");
   await expect(extracted).toContainText("Paziente: Ada Lovelace");
 
-  // FASE 17e --- l'impaginazione è conservata: prima della modifica a
-  // normalizeExtractedText le tre righe sarebbero arrivate qui come un
-  // periodo unico. Si verifica sul testo vero, non sul CSS.
+  // L'impaginazione è conservata: senza normalizeExtractedText le tre righe arriverebbero come un periodo unico.
   const text = (await extracted.textContent()) ?? "";
   expect(text).toContain("Azienda Ospedaliera di Perugia\nReferto di visita cardiologica");
 
   // La promessa dichiarata sulla pagina stessa.
   await expect(page.getByText(/non è mai uscito/)).toBeVisible();
 
-  // FASE 17e --- l'anteprima: la prima pagina del PDF. Un PDF non si può
-  // mostrare com'è, e il messaggio di ripiego ("usa Scarica") non deve
-  // comparire. Dalla miniatura (v. lib/thumbnail.ts): un documento
-  // appena caricato ne ha già una, e la didascalia col numero di pagine
-  // --- che solo il file intero porta con sé --- non compare (v.
-  // archive-thumbnails.spec.ts per il percorso dedicato).
+  // L'anteprima è dalla miniatura: un documento appena caricato ne ha già una, e la didascalia col numero di pagine (che solo il file intero porta) non compare (v. archive-thumbnails.spec.ts).
   await expect(page.getByRole("img", { name: /Prima pagina di referto\.pdf/ })).toBeVisible({
     timeout: 30_000,
   });
@@ -116,10 +106,7 @@ test("la scheda di un documento mostra il testo che Hinthial ci ha letto dentro"
   ).toBeVisible();
 });
 
-// FASE 18 --- dal testo ai campi. Il documento è la scansione: nessun
-// livello di testo, quindi tutto ciò che compare qui è passato per OCR e
-// poi per il riconoscimento degli schemi. Se funziona su questo, la
-// catena regge per intero.
+// Il documento è la scansione: nessun livello di testo, quindi tutto qui è passato per OCR e riconoscimento degli schemi.
 test("la scheda ricava data, emittente e scadenza dal testo del documento", async ({ page }) => {
   test.setTimeout(180_000);
 
@@ -137,15 +124,11 @@ test("la scheda ricava data, emittente e scadenza dal testo del documento", asyn
   const ricavato = page.getByRole("region", { name: "Cosa ne ho ricavato" });
   await expect(ricavato).toBeVisible({ timeout: 30_000 });
 
-  // "AZIENDA OSPEDALIERA DI GUBBIO" è l'intestazione, non il titolo del
-  // documento ("Referto di esame istologico", che deve essere scartato).
+  // "AZIENDA OSPEDALIERA DI GUBBIO" è l'intestazione, non il titolo del documento (che deve essere scartato).
   await expect(ricavato).toContainText("AZIENDA OSPEDALIERA DI GUBBIO");
   await expect(ricavato).toContainText("14 mar 2026");
 
-  // La scadenza non è scritta da nessuna parte sul foglio: viene da
-  // "Si consiglia controllo tra dodici mesi" più la data del prelievo.
-  // Dalla FASE 19 vive fra le proposte, non qui: un campo che aspetta
-  // una risposta non si mostra anche come semplice informazione.
+  // La scadenza viene da "Si consiglia controllo tra dodici mesi" più la data del prelievo, e vive fra le proposte, non qui.
   const proposte = page.getByRole("region", { name: "Proposte" });
   await expect(proposte).toContainText("14 mar 2027");
   await expect(proposte).toContainText("calcolata da Hinthial");
@@ -175,8 +158,7 @@ test("la scheda dice quando un contenuto non è ancora stato letto, e lo legge",
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
-  // Si riporta il documento allo stato "mai letto", come lo sarebbe se
-  // fosse stato caricato prima che l'estrazione esistesse.
+  // Si riporta il documento allo stato "mai letto", come se fosse stato caricato prima che l'estrazione esistesse.
   await resetDocumentExtraction(user.email);
   await page.reload();
   await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
