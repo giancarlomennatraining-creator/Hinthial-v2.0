@@ -1,17 +1,8 @@
 /**
- * Integration test for the "Amici v2" model (v. richiesta utente):
- * PERSONA (contatto privato) vs AMICO (amicizia reciproca, richiesta +
- * accettata) vs GUARDIANO (una seconda richiesta distinta, possibile
- * solo tra AMICI). Verificato contro il database reale, come
- * guardian-verification.integration.test.ts (stesso motivo: RLS e RPC
- * SECURITY DEFINER non si possono verificare bene con un database
- * finto) --- quel test resta lo smoke test leggero della sola pagina
- * per la verifica di "Eredità digitale" già in corso; qui si copre
- * invece l'intero nuovo modello di richieste, dalla A alla Z.
- *
- * Skips automatically (rather than failing) when the required env vars
- * aren't configured, like the other integration tests. Only throwaway
- * accounts, deleted at the end.
+ * Integration test for the "Amici v2" model: PERSONA vs AMICO (richiesta + accettata) vs GUARDIANO (richiesta
+ * distinta, solo tra AMICI). Verificato contro il database reale, come guardian-verification.integration.test.ts:
+ * RLS e RPC SECURITY DEFINER non si possono verificare bene con un database finto. Skips automatically when the
+ * required env vars aren't configured. Only throwaway accounts, deleted at the end.
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";

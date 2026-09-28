@@ -17,16 +17,14 @@ test("Impostazioni > Eredità digitale mostra i preset, il riepilogo si aggiorna
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  // Consultabile subito, prima ancora di configurare la cifratura ---
-  // nessun dato cifrato coinvolto, come Sicurezza/Privacy.
+  // Consultabile subito, prima di configurare la cifratura: nessun dato cifrato coinvolto.
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await page.getByRole("tab", { name: "Eredità digitale" }).click();
 
   await expect(page.getByRole("heading", { name: "Eredità digitale" })).toBeVisible();
 
-  // Spento di default (v. richiesta utente: opt-in esplicito) --- il
-  // riepilogo lo dice esplicitamente, non solo l'interruttore.
+  // Spento di default (opt-in esplicito): il riepilogo lo dice, non solo l'interruttore.
   const enableToggle = page.getByRole("checkbox", { name: "Attiva Eredità digitale" });
   await expect(enableToggle).not.toBeChecked();
   await expect(page.getByText("Il monitoraggio è spento")).toBeVisible();
@@ -65,7 +63,7 @@ test("Impostazioni > Eredità digitale mostra i preset, il riepilogo si aggiorna
   await page.reload();
   await page.getByRole("tab", { name: "Eredità digitale" }).click();
   await expect(page.getByText("Personalizzato --- almeno un valore")).toBeVisible();
-  // Anche l'interruttore acceso sopravvive al refresh --- niente più conferma qui: solo l'ACCENSIONE la richiede.
+  // Anche l'interruttore acceso sopravvive al refresh: niente più conferma qui, solo l'ACCENSIONE la richiede.
   await expect(page.getByRole("checkbox", { name: "Attiva Eredità digitale" })).toBeChecked();
   await expect(page.getByText("Il monitoraggio è spento")).not.toBeVisible();
   // Il preset è "custom": i campi sono già aperti, niente da cliccare per vederli.
@@ -95,8 +93,7 @@ test("la prova generale mostra un calendario reale e si ferma onestamente senza 
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  // La prova generale richiede la master key (guardiani/capsule sono
-  // cifrati) --- a differenza del resto della scheda: configurarla qui.
+  // La prova generale richiede la master key (guardiani/capsule sono cifrati), a differenza del resto della scheda.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
@@ -118,8 +115,7 @@ test("la prova generale mostra un calendario reale e si ferma onestamente senza 
   const dialog = page.getByRole("dialog", { name: "Prova generale di Eredità digitale" });
   await expect(dialog).toBeVisible();
 
-  // Il riepilogo usa le impostazioni predefinite ("Normale") --- lo stesso
-  // testo già mostrato altrove in questa scheda, non un doppione a mano.
+  // Il riepilogo usa le impostazioni predefinite ("Normale"): lo stesso testo già mostrato altrove, non un doppione a mano.
   await expect(dialog.getByText(/In totale, nel caso peggiore, circa 7 mesi/)).toBeVisible();
 
   // Il calendario cita davvero le fasi reali, con le date calcolate.
@@ -128,8 +124,7 @@ test("la prova generale mostra un calendario reale e si ferma onestamente senza 
   await expect(dialog.getByText("Periodo di grazia")).toBeVisible();
   await expect(dialog.getByText("I tuoi guardiani vengono interpellati")).toBeVisible();
 
-  // Senza guardiani collegati, si ferma onestamente lì --- nessuna
-  // conferma d'esempio, nessuna fase successiva inventata.
+  // Senza guardiani collegati, si ferma onestamente lì: nessuna conferma d'esempio, nessuna fase inventata.
   await expect(dialog.getByText("Esempio", { exact: true })).not.toBeVisible();
   await expect(dialog.getByText("Verifica formale")).not.toBeVisible();
   await expect(dialog.getByText("Le capsule già condivise si aprono")).not.toBeVisible();
