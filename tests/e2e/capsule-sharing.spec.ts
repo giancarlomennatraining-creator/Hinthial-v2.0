@@ -5,18 +5,11 @@ import { openRowMenu } from "./row-actions";
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
 /**
- * FASE C1 --- verifica end-to-end del vero scambio di chiavi (ECDH P-256
- * + AES-GCM ibrido, v. lib/crypto/keypair.ts): il proprietario chiude e
- * condivide una capsula con un amico collegato a un account Hinthial
- * reale, e quell'account la ritrova in "Condivise con me", la apre e
- * legge lo stesso contenuto scritto dal proprietario --- decifrato con
- * la propria Master Key, mai con quella del proprietario.
- *
- * L'ordine conta: il destinatario deve avere già la propria coppia di
- * chiavi (generata al primo sblocco della Master Key) PRIMA che il
- * proprietario condivida, altrimenti la condivisione è best-effort e
- * silenziosa (v. createOrRefreshShareKey) --- qui si sblocca il
- * destinatario per primo apposta.
+ * Verifica end-to-end del vero scambio di chiavi (ECDH P-256 + AES-GCM ibrido, v. lib/crypto/keypair.ts): il
+ * proprietario chiude e condivide una capsula con un amico collegato, e quell'account la ritrova, la apre e legge
+ * lo stesso contenuto, decifrato con la propria Master Key. L'ordine conta: il destinatario deve avere già la
+ * propria coppia di chiavi PRIMA che il proprietario condivida, altrimenti la condivisione è best-effort e
+ * silenziosa (v. createOrRefreshShareKey) --- qui si sblocca il destinatario per primo apposta.
  */
 test("chiudere e condividere una capsula la rende apribile dal destinatario collegato, con lo stesso contenuto", async ({
   page,
@@ -28,8 +21,7 @@ test("chiudere e condividere una capsula la rende apribile dal destinatario coll
   await createConfirmedTestUser(recipient);
   await createConfirmedTestUser(owner);
 
-  // Il destinatario si sblocca per primo --- guadagna così la propria
-  // coppia di chiavi ECDH prima che il proprietario condivida.
+  // Il destinatario si sblocca per primo: guadagna così la propria coppia di chiavi ECDH prima che il proprietario condivida.
   await page.goto("/login");
   await page.getByLabel("Email").fill(recipient.email);
   await page.getByLabel("Password").fill(recipient.password);
@@ -51,8 +43,7 @@ test("chiudere e condividere una capsula la rende apribile dal destinatario coll
   await page.getByRole("button", { name: "Esci" }).click();
   await expect(page).toHaveURL(/\/$/);
 
-  // Il proprietario: crea l'amico con l'email del destinatario (si
-  // collega da solo), lo segna attivo e gli dedica una capsula.
+  // Il proprietario: crea l'amico con l'email del destinatario (si collega da solo), lo segna attivo e gli dedica una capsula.
   await page.goto("/login");
   await page.getByLabel("Email").fill(owner.email);
   await page.getByLabel("Password").fill(owner.password);
@@ -81,12 +72,10 @@ test("chiudere e condividere una capsula la rende apribile dal destinatario coll
   const friendRow = page.locator("li", { hasText: "Destinatario Collegato" });
   await expect(friendRow).toBeVisible({ timeout: 10_000 });
   await expect(friendRow.getByTitle("Ha un account Hinthial")).toBeVisible({ timeout: 15_000 });
-  // Nasce già "Attivo" --- niente concetto di "In attesa" da sbloccare a mano.
+  // Nasce già "Attivo": niente concetto di "In attesa" da sbloccare a mano.
   await expect(friendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
 
-  // Capsula con data di apertura già nel passato --- non serve aspettare
-  // per verificare che l'apertura funzioni davvero (v. CapsuleOpenAtField,
-  // nessun vincolo lato client su date future).
+  // Capsula con data di apertura già nel passato: non serve aspettare per verificare che l'apertura funzioni davvero.
   const secretMessage = `messaggio segreto per la condivisione --- ${Date.now()}`;
   await page.getByRole("link", { name: "Capsule" }).click();
   await expect(page.getByRole("heading", { name: "Capsule" })).toBeVisible();
@@ -111,9 +100,7 @@ test("chiudere e condividere una capsula la rende apribile dal destinatario coll
   const capsuleRow = page.locator("li", { hasText: "Per il destinatario collegato" });
   await expect(capsuleRow).toBeVisible({ timeout: 15_000 });
 
-  // Chiudi (irreversibile, conferma esplicita) e condividi --- solo a
-  // questo punto scatta la vera cifratura ibrida per il destinatario
-  // (v. createOrRefreshShareKey, chiamata sia da shareCapsule).
+  // Chiudi (irreversibile, conferma esplicita) e condividi: solo a questo punto scatta la vera cifratura ibrida per il destinatario.
   page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(capsuleRow);
   await page.getByRole("menuitem", { name: "Chiudi la capsula" }).click();
@@ -127,9 +114,7 @@ test("chiudere e condividere una capsula la rende apribile dal destinatario coll
   await page.getByRole("button", { name: "Esci" }).click();
   await expect(page).toHaveURL(/\/$/);
 
-  // Il destinatario ritrova la capsula in "Condivise con me", la apre e
-  // legge lo stesso contenuto --- decifrato con la propria Master Key
-  // via lo scambio ECDH, mai con quella del proprietario.
+  // Il destinatario ritrova la capsula in "Condivise con me", la apre e legge lo stesso contenuto, decifrato con la propria Master Key via lo scambio ECDH.
   await page.goto("/login");
   await page.getByLabel("Email").fill(recipient.email);
   await page.getByLabel("Password").fill(recipient.password);

@@ -8,17 +8,12 @@ import {
 } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
-// Emails created via createConfirmedTestUser are cleaned up afterwards
-// by tests/e2e/global-teardown.ts.
+// Emails created via createConfirmedTestUser are cleaned up afterwards by tests/e2e/global-teardown.ts.
 //
-// Only "la registrazione crea un account" goes through the real signUp()
-// UI flow, and needs E2E_REGISTRATION_TEST_EMAIL configured (skipped
-// otherwise): it needs a real, deliverable-to address, so this test
-// reuses one fixed address (a dedicated test address, not anyone's
-// personal/manual-testing account --- see .env.local) and deletes any
-// pre-existing account for it first, to stay repeatable. Every other
-// test just needs "a logged-in user", so it pre-creates a random one via
-// the admin API and exercises the real *login* form instead.
+// Only "la registrazione crea un account" goes through the real signUp() UI flow, and needs
+// E2E_REGISTRATION_TEST_EMAIL configured (skipped otherwise): a dedicated, deliverable test address (not anyone's
+// personal one, see .env.local), deleted and recreated on every run. Every other test pre-creates a random user
+// via the admin API and exercises the real login form instead.
 
 async function loginAndLandOnDashboard(page: Page, user: TestUser) {
   await page.goto("/login");
@@ -52,10 +47,7 @@ test("la registrazione crea un account", async ({ page }) => {
   await page.getByLabel("Conferma password").fill(user.password);
   await page.getByRole("button", { name: "Crea account" }).click();
 
-  // Two valid outcomes depending on whether "Confirm email" is enabled
-  // on this Supabase project: an immediate session (redirect to the
-  // dashboard) or a redirect to the dedicated "check your email" page.
-  // The app handles both.
+  // Two valid outcomes depending on whether "Confirm email" is enabled: an immediate session or a redirect to the dedicated "check your email" page.
   await expect(
     page
       .getByRole("heading", { name: `Ciao, ${fullName(user)}` })
@@ -84,24 +76,17 @@ test("un utente autenticato può navigare la shell e fare logout", async ({
   // Cifratura non ancora configurata: la dashboard lo segnala.
   await expect(page.getByText("Master password non ancora creata")).toBeVisible();
 
-  // La navigazione principale porta alle altre sezioni della shell. Per
-  // un utente senza cifratura configurata, ognuna mostra il setup della
-  // master key (compresa AI, da FASE 10 in poi) --- il flusso di setup
-  // vero e proprio è coperto da tests/e2e/archive.spec.ts,
-  // tests/e2e/reminders.spec.ts, tests/e2e/assets.spec.ts,
-  // tests/e2e/friends.spec.ts e tests/e2e/capsules.spec.ts; qui basta
-  // verificare che la navigazione porti alla schermata giusta.
+  // La navigazione principale porta alle altre sezioni: per un utente senza cifratura configurata, ognuna mostra
+  // il setup della master key. Il flusso vero è coperto altrove; qui basta verificare che la navigazione arrivi.
   await page.getByRole("link", { name: "AI", exact: true }).click();
   await expect(page).toHaveURL(/\/ai$/);
   await expect(page.getByRole("heading", { name: "Configura la cifratura" })).toBeVisible();
 
-  // Il logout (nel menu utente, aperto cliccando il nome) invalida la
-  // sessione e riporta alla landing.
+  // Il logout invalida la sessione e riporta alla landing.
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("button", { name: "Esci" }).click();
   await expect(page).toHaveURL(/\/$/);
-  // Scoped al banner: la hero della landing ripete "Accedi" in un
-  // secondo link (v. home.spec.ts).
+  // Scoped al banner: la hero della landing ripete "Accedi" in un secondo link (v. home.spec.ts).
   await expect(page.getByRole("banner").getByRole("link", { name: "Accedi" })).toBeVisible();
 });
 
