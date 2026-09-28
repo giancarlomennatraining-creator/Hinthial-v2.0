@@ -5,12 +5,7 @@ import { openRowMenu } from "./row-actions";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-/**
- * La creazione vive in una pagina dedicata (/capsules/new): questo apre
- * quella pagina dall'elenco. Il chiamante compila il form e sottomette;
- * dopo il salvataggio si torna a /capsules con un messaggio di conferma
- * (verificato qui una volta sola per test, dov'è più leggibile farlo).
- */
+/** La creazione vive in una pagina dedicata (/capsules/new): questo apre quella pagina dall'elenco. */
 async function goToNewCapsule(page: Page) {
   await page.getByRole("link", { name: "+ Crea capsula" }).click();
   await expect(page.getByRole("heading", { name: "Nuova capsula" })).toBeVisible();
@@ -65,15 +60,11 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   const secondFriendRow = page.locator("li", { hasText: "Luca Bianchi" });
   await expect(secondFriendRow).toBeVisible({ timeout: 10_000 });
 
-  // Gli amici nascono già ATTIVI --- solo i revocati non sono
-  // selezionabili come destinatari di una capsula, nessun passo in più
-  // qui.
+  // Gli amici nascono già ATTIVI: solo i revocati non sono selezionabili come destinatari.
   await expect(friendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
   await expect(secondFriendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
 
-  // Creazione della capsula, nella sua pagina dedicata --- un wizard a tre
-  // passi (FASE 14): passo 1 chi/quando, passo 2 contenuti dall'archivio,
-  // passo 3 audio/video/testo.
+  // Wizard a tre passi: chi/quando, contenuti dall'archivio, audio/video/testo.
   await page.getByRole("link", { name: "Capsule" }).click();
   await expect(page.getByRole("heading", { name: "Capsule" })).toBeVisible();
   await expect(page.getByText("Nessuna capsula ancora")).toBeVisible();
@@ -95,11 +86,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await expect(page.getByText("Passo 3 di 3")).toBeVisible();
 
   await page.getByLabel("Il tuo messaggio").fill("Un pensiero per te.");
-  // Un allegato diretto (non preso dall'Archivio) è ammesso solo se
-  // audio/video (v. CreateCapsuleForm) --- niente più upload libero. Gli
-  // strumenti per aggiungerlo sono un'aggiunta secondaria e discreta (v.
-  // "capsule come lettere"): nascosti finché non si clicca "Aggiungi un
-  // allegato".
+  // Un allegato diretto è ammesso solo se audio/video; gli strumenti restano nascosti finché non si clicca "Aggiungi un allegato".
   await page.getByRole("button", { name: "Aggiungi un allegato" }).click();
   await page.setInputFiles("#mediaFiles", {
     name: "messaggio.mp3",
@@ -119,8 +106,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   // I destinatari vengono elencati in ordine alfabetico (Luca prima di Maria).
   await expect(row.getByText("Per Luca Bianchi, Maria Rossi · ")).toBeVisible();
   await expect(row.getByText("messaggio.mp3")).toBeVisible();
-  // Il testo del messaggio non si vede più nella vista a elenco (si legge
-  // già in Modifica o nell'anteprima) --- verificato aprendo l'anteprima.
+  // Il testo del messaggio non si vede nella vista a elenco: verificato aprendo l'anteprima.
   await openRowMenu(row);
   await page.getByRole("menuitem", { name: "👁️ Anteprima" }).click();
   const createPreview = page.getByRole("dialog", { name: "Anteprima capsula" });
@@ -139,37 +125,27 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   const downloadedContent = await fs.readFile(downloadPath!, "utf-8");
   expect(downloadedContent).toBe(fileContent);
 
-  // Finché è in bozza, la capsula è modificabile --- pagina dedicata (come
-  // la creazione) --- anche i destinatari: se ne rimuove uno, restando
-  // comunque con più di zero destinatari. Si cambia anche la data di
-  // apertura, e si sostituisce l'allegato audio/video con uno nuovo.
+  // Finché è in bozza, la capsula è modificabile: anche i destinatari, la data di apertura, l'allegato.
   await openRowMenu(row);
   await page.getByRole("menuitem", { name: "Modifica" }).click();
   await expect(page).toHaveURL(/\/capsules\/[^/]+\/edit$/);
   await expect(page.getByRole("heading", { name: "Modifica capsula" })).toBeVisible();
 
-  // Passo 1 --- gli stessi tre passi della creazione (v. CreateCapsuleForm).
   await expect(page.getByText("Passo 1 di 3")).toBeVisible();
   await page.getByLabel("Titolo").fill("Per Maria (aggiornato)");
   await page.getByLabel("Data e ora di apertura", { exact: true }).fill("2027-03-15T10:00");
   await page.getByRole("button", { name: "Rimuovi Luca Bianchi" }).click();
   await page.getByRole("button", { name: "Avanti" }).click();
 
-  // Passo 2 --- nessun contenuto dall'archivio da collegare in questo test.
   await expect(page.getByText("Passo 2 di 3")).toBeVisible();
   await page.getByRole("button", { name: "Avanti" }).click();
 
-  // Passo 3 --- contenuto testuale e allegati: si rimuove quello esistente
-  // e se ne carica uno nuovo, esattamente come in creazione.
   await expect(page.getByText("Passo 3 di 3")).toBeVisible();
   await page.getByLabel("Il tuo messaggio").fill("Un pensiero aggiornato per te.");
   const removeExistingAttachmentButton = page.getByRole("button", { name: "Rimuovi messaggio.mp3" });
   await expect(removeExistingAttachmentButton).toBeVisible();
   await removeExistingAttachmentButton.click();
   await expect(removeExistingAttachmentButton).not.toBeVisible();
-  // Gli strumenti per aggiungerne uno nuovo sono un'aggiunta secondaria
-  // e discreta (v. "capsule come lettere"): nascosti finché non si
-  // clicca "Aggiungi un allegato".
   await page.getByRole("button", { name: "Aggiungi un allegato" }).click();
   const newFileContent = `messaggio aggiornato --- ${Date.now()}`;
   await page.setInputFiles("#mediaFiles", {
@@ -185,8 +161,6 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await expect(page.getByText("Capsula aggiornata.")).toBeVisible();
   const updatedRow = page.locator("li", { hasText: "Per Maria (aggiornato)" });
   await expect(updatedRow).toBeVisible({ timeout: 10_000 });
-  // Il testo del messaggio non si vede più nella vista a elenco ---
-  // verificato aprendo l'anteprima (v. sopra).
   await openRowMenu(updatedRow);
   await page.getByRole("menuitem", { name: "👁️ Anteprima" }).click();
   const updatedPreview = page.getByRole("dialog", { name: "Anteprima capsula" });
@@ -196,10 +170,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await expect(updatedRow.getByText("Bozza")).toBeVisible();
   await expect(updatedRow.getByText("Per Maria Rossi · ")).toBeVisible();
   await expect(updatedRow.getByText("apertura prevista 15 mar 2027, 10:00")).toBeVisible();
-  // Il countdown visivo (v. CapsuleCountdown, cartellini a flip con
-  // un'etichetta di accessibilità "Si aprirà tra…") non ha senso su una
-  // bozza, dato che openAt può ancora cambiare: appare solo dopo la
-  // chiusura.
+  // Il countdown non ha senso su una bozza, dato che openAt può ancora cambiare: appare solo dopo la chiusura.
   await expect(updatedRow.getByRole("img", { name: /Si aprirà tra/ })).not.toBeVisible();
   // Il vecchio allegato è sparito, il nuovo è al suo posto.
   await expect(updatedRow.getByText("messaggio.mp3", { exact: true })).not.toBeVisible();
@@ -214,15 +185,12 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   expect(newDownloadPath).not.toBeNull();
   expect(await fs.readFile(newDownloadPath!, "utf-8")).toBe(newFileContent);
 
-  // Stato: Bozza -> Chiusa -> Condivisa. Chiudere è irreversibile, quindi
-  // conferma esplicita.
+  // Stato: Bozza -> Chiusa -> Condivisa. Chiudere è irreversibile, quindi conferma esplicita.
   page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(updatedRow);
   await page.getByRole("menuitem", { name: "Chiudi la capsula" }).click();
   await expect(updatedRow.getByText("Chiusa", { exact: true })).toBeVisible({ timeout: 10_000 });
-  // Ora che non è più una bozza, il countdown compare (v. CapsuleCountdown)
-  // --- una data così lontana nel futuro (oltre i 100 giorni) mostra il
-  // numero secco invece dei cartellini (v. "casi limite" nel prototipo).
+  // Ora che non è più una bozza, il countdown compare: oltre i 100 giorni mostra il numero secco invece dei cartellini.
   await expect(updatedRow.getByRole("img", { name: /Si aprirà tra \d+ giorni/ })).toBeVisible();
   // Una volta non più in bozza, non è più modificabile né richiudibile.
   await openRowMenu(updatedRow);
@@ -234,8 +202,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await openRowMenu(updatedRow);
   await expect(page.getByRole("menuitem", { name: "Condividi" })).not.toBeVisible();
 
-  // In Amici, il destinatario mostra quante capsule lo riguardano ---
-  // e al passaggio del mouse il nome e le date.
+  // In Amici, il destinatario mostra quante capsule lo riguardano, e al passaggio del mouse nome e date.
   await page.getByRole("link", { name: "Amici" }).click();
   await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
   const mariaCapsulesBadge = friendRow.getByText("📦 1 capsula");
@@ -330,9 +297,7 @@ test("collega un documento già presente in Archivio a una capsula, selezionando
   const downloadedContent = await fs.readFile(downloadPath!, "utf-8");
   expect(downloadedContent).toBe(documentContent);
 
-  // In modifica si può rimuovere il collegamento (il documento in Archivio
-  // resta intatto) --- stessi tre passi della creazione: il collegamento
-  // vive nel passo 2 ("contenuti dall'archivio"), il salvataggio nel passo 3.
+  // In modifica si può rimuovere il collegamento (il documento in Archivio resta intatto).
   await openRowMenu(row);
   await page.getByRole("menuitem", { name: "Modifica" }).click();
   await expect(page).toHaveURL(/\/capsules\/[^/]+\/edit$/);
@@ -475,22 +440,16 @@ test("chiudere una capsula copia il contenuto collegato al suo interno; l'origin
   const capsuleRow = page.locator("li", { hasText: "Capsula da chiudere" });
   await expect(capsuleRow).toBeVisible({ timeout: 15_000 });
 
-  // Si chiude la capsula (conferma esplicita, irreversibile) --- il
-  // contenuto collegato viene copiato al suo interno.
+  // Si chiude la capsula (conferma esplicita, irreversibile): il contenuto collegato viene copiato al suo interno.
   page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(capsuleRow);
   await page.getByRole("menuitem", { name: "Chiudi la capsula" }).click();
   await expect(capsuleRow.getByText("Chiusa", { exact: true })).toBeVisible({ timeout: 10_000 });
-  // La capsula continua a mostrare il contenuto --- ora una copia propria.
+  // La capsula continua a mostrare il contenuto: ora una copia propria.
   await expect(capsuleRow.getByText("polizza.txt")).toBeVisible();
 
-  // L'originale in Archivio non è mai stato bloccato: si può cancellare
-  // subito dopo la chiusura, senza alcun blocco.
-  // Attende l'intestazione della pagina di destinazione --- non solo
-  // l'URL/il link attivo nel nav, che possono aggiornarsi prima che il
-  // nuovo contenuto sia effettivamente montato --- prima di cercare righe
-  // il cui testo potrebbe temporaneamente esistere anche nella pagina
-  // precedente (il collegamento al documento dentro la capsula stessa).
+  // L'originale in Archivio non è mai stato bloccato: si può cancellare subito dopo la chiusura.
+  // Attende l'intestazione (non solo l'URL, che può aggiornarsi prima che il nuovo contenuto sia montato).
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
   const docRow = page.locator("li", { hasText: "polizza.txt" });
@@ -501,9 +460,7 @@ test("chiudere una capsula copia il contenuto collegato al suo interno; l'origin
   await page.getByRole("menuitem", { name: "Elimina" }).click();
   await expect(page.getByText("Ancora nulla in archivio.")).toBeVisible({ timeout: 10_000 });
 
-  // ...eppure la capsula continua ad aprire il proprio contenuto, identico
-  // all'originale ormai cancellato: è davvero una copia autosufficiente,
-  // non solo un riferimento che si romperebbe con l'originale.
+  // ...eppure la capsula continua ad aprire il proprio contenuto, identico all'originale ormai cancellato: è una copia autosufficiente.
   await page.getByRole("link", { name: "Capsule" }).click();
   await expect(page.getByRole("heading", { name: "Capsule" })).toBeVisible();
   await expect(capsuleRow.getByText("polizza.txt")).toBeVisible();
