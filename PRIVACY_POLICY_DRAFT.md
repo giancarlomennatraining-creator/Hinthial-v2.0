@@ -1,8 +1,8 @@
 # Informativa sulla privacy --- BOZZA (FASE 15)
 
-> **Questo documento è una bozza di lavoro, non un testo legale pronto per la pubblicazione.** È stato scritto per organizzare i fatti reali del prodotto (chi tratta cosa, cosa vede, cosa non vede mai) in un testo che segua la struttura richiesta dal GDPR (art. 13) --- ma **va fatto rivedere da chi si occupa della parte legale prima di pubblicarlo**. I punti dove manca un'informazione che solo tu/il team puoi fornire sono segnati con `[DA COMPLETARE]` o in un riquadro "Nota per chi revisiona". Non è consulenza legale.
+> **Questo documento è una bozza di lavoro, non un testo legale pronto per la pubblicazione.** Segue la struttura richiesta dal GDPR (art. 13), ma **va fatto rivedere da chi si occupa della parte legale prima di pubblicarlo**. I punti mancanti sono segnati `[DA COMPLETARE]`. Non è consulenza legale.
 >
-> Verificato leggendo il codice reale del progetto (non assunto): quali colonne sono cifrate, quali no, quali fornitori sono davvero integrati, cosa riceve ciascuno --- v. le note tecniche in corsivo sotto ogni sezione, che non entrerebbero nel testo pubblicato ma servono a chi revisiona per controllare che il testo sia accurato.
+> Verificato leggendo il codice reale del progetto, non assunto: le note tecniche in corsivo sotto ogni sezione servono a chi revisiona per controllare l'accuratezza, e non entrerebbero nel testo pubblicato.
 
 ---
 
@@ -31,12 +31,12 @@ Email, nome, e --- se li inserisci --- data di nascita e una foto profilo. Neces
 ### 3.2 Il contenuto del tuo archivio (cifrato, non leggibile da noi)
 Nomi di file, note, tag, trascrizioni, testo estratto dai documenti, il contenuto dei tuoi beni, dei tuoi promemoria, dei tuoi amici e delle tue capsule --- tutto cifrato sul tuo dispositivo prima di essere salvato. Non abbiamo la chiave per leggerlo.
 
-*Nota tecnica per chi revisiona: verificato su `domain/documents/repository.ts` --- `encrypted_filename`, note, tag, trascrizione e testo estratto sono tutti cifrati lato client prima del salvataggio (envelope AES-GCM sotto la Master Key). Lo stesso vale per beni, amici, capsule (v. rispettivi `domain/*/repository.ts`).*
+*Nota tecnica: verificato su `domain/documents/repository.ts` e rispettivi `domain/*/repository.ts` --- tutto cifrato lato client (envelope AES-GCM sotto la Master Key) prima del salvataggio.*
 
 ### 3.3 Metadati necessari al funzionamento, non cifrati
 Per poter organizzare e mostrarti il tuo archivio, alcuni collegamenti tra i tuoi contenuti restano in chiaro sui nostri sistemi: a quale categoria appartiene un documento, la sua eventuale data di scadenza, a quale bene è collegato, quando è stato creato o modificato. Questi dati **non rivelano il contenuto** dei tuoi documenti, ma rivelano una loro struttura (es. "hai un documento nella categoria Assicurazioni con scadenza il 15 ottobre").
 
-*Nota tecnica per chi revisiona: `category_id`, `related_asset_id`, `expires_at`, i timestamp di creazione/modifica --- non cifrati, verificato sullo stesso file. Questa sezione esiste apposta per non lasciare un vuoto tra "tutto cifrato" (falso) e "niente è protetto" (falso anche questo).*
+*Nota tecnica: `category_id`, `related_asset_id`, `expires_at`, timestamp --- non cifrati, verificato sullo stesso file.*
 
 ### 3.4 Dati tecnici e di sicurezza
 Indirizzo IP, tipo di dispositivo/browser, orari di accesso, eventi di sicurezza (accessi riusciti o falliti, modifiche a impostazioni sensibili) --- registrati nel tuo registro Attività, consultabile da te in ogni momento.
@@ -44,7 +44,7 @@ Indirizzo IP, tipo di dispositivo/browser, orari di accesso, eventi di sicurezza
 ### 3.5 Dati condivisi con il nostro assistente basato su intelligenza artificiale --- solo con il tuo consenso esplicito
 Se attivi la funzione (revocabile in qualsiasi momento da Impostazioni), la domanda che scrivi e un numero minimo di elementi del tuo archivio --- individuati da un meccanismo che gira interamente sul tuo dispositivo, prima che qualunque dato parta --- vengono inviati al fornitore che elabora la risposta (v. sezione 5). Mai l'intero archivio, mai il contenuto completo di un documento (oggi): solo nome, categoria e poche informazioni minime sull'elemento pertinente.
 
-*Nota tecnica per chi revisiona: v. `domain/ai/claude-provider.ts` (`projectSource()`) e `app/api/ai/chat/route.ts`. Ogni domanda è elaborata isolatamente: il fornitore non riceve la cronologia delle domande precedenti.*
+*Nota tecnica: v. `domain/ai/claude-provider.ts` (`projectSource()`) e `app/api/ai/chat/route.ts`. Ogni domanda è isolata: nessuna cronologia inviata al fornitore.*
 
 ---
 
@@ -109,7 +109,7 @@ Il consenso funziona su più livelli, tutti gestibili da Impostazioni → Intell
 - **Interruttori specifici per funzione** (oggi: risposte della chat; in futuro, quando saranno disponibili: lettura più approfondita dei contenuti, trascrizione audio/video, avvisi generati automaticamente) --- ciascuno indipendente, nessuno si accende da solo quando accendi quello generale.
 - Un consenso ulteriore, distinto, per includere la categoria **Salute** in un'eventuale lettura più approfondita dei contenuti --- v. sezione 10.
 
-*Nota tecnica per chi revisiona: le funzioni "lettura più approfondita", "trascrizione" e "avvisi automatici" non sono ancora costruite --- l'interruttore esiste già (permette di impostare la preferenza in anticipo) ma oggi non ha alcun effetto reale. Il testo qui sopra è scritto per restare vero sia oggi sia quando quelle funzioni arriveranno, senza dover essere riscritto da capo.*
+*Nota tecnica: "lettura più approfondita", "trascrizione" e "avvisi automatici" non sono ancora costruite --- l'interruttore esiste già ma oggi non ha effetto reale. Il testo resta valido anche quando arriveranno.*
 
 ---
 
@@ -121,7 +121,7 @@ Oggi i contenuti che archivi nella categoria Salute sono trattati come ogni altr
 
 Questa scelta è deliberatamente più cauta di quanto il solo consenso richiederebbe: è coerente con come Hinthial tratta altri dati particolarmente delicati altrove nel prodotto (guardiani, eredità digitale), dove si preferisce un limite fisso a un consenso che potrebbe essere dato senza aver pesato davvero la conseguenza. Il costo, dichiarato apertamente: nessuna estrazione automatica di scadenze di vaccini o promemoria di farmaci dal testo di un referto --- quella parte resta manuale.
 
-*Nota tecnica per chi revisiona: questa è una decisione di prodotto, non una conclusione legale --- va comunque confermata da chi si occupa della parte legale prima della pubblicazione, ma non richiede ulteriori informazioni per essere scritta (a differenza delle altre voci `[DA COMPLETARE]` di questo documento).*
+*Nota tecnica: decisione di prodotto, non conclusione legale --- va confermata dalla parte legale prima della pubblicazione, ma non richiede altre informazioni per essere scritta.*
 
 ---
 
