@@ -1,40 +1,17 @@
 import { renderPdfFirstPage } from "@/lib/pdf";
 
 /**
- * La miniatura di un contenuto: la prima pagina di un PDF o la foto
- * stessa, ridotte, da mostrare nella scheda al posto del file intero.
- *
- * Nasce per un motivo di **banda**, non di estetica. L'anteprima si
- * costruisce dal contenuto vero, quindi finora aprire la scheda di una
- * scansione da 15 MB ne riscaricava 15 MB --- ogni volta, perché niente
- * resta sul dispositivo (v. lib/storage/documents-bucket.ts: il file
- * vive cifrato nello Storage, non qui). E il traffico costa circa
- * quattro volte, al gigabyte, quanto costa conservare quello stesso
- * gigabyte per un mese: un archivio sfogliato spesso costava più in
- * banda che in spazio.
- *
- * Una miniatura pesa qualche decina di kilobyte: due ordini di
- * grandezza in meno, e la scheda si apre all'istante.
- *
- * Viene cifrata come qualunque altro contenuto prima di lasciare il
- * dispositivo --- è un pezzo del documento a tutti gli effetti, e sul
- * server non deve essere più leggibile dell'originale.
+ * La miniatura di un contenuto: la prima pagina di un PDF o la foto stessa, ridotte, da mostrare nella scheda al
+ * posto del file intero. Nasce per un motivo di banda, non di estetica: senza, aprire la scheda di una scansione da
+ * 15 MB la riscaricava ogni volta (niente resta sul dispositivo, v. lib/storage/documents-bucket.ts), e il
+ * traffico costa circa quattro volte quanto conservare lo stesso spazio per un mese. Viene cifrata come qualunque
+ * altro contenuto: sul server non deve essere più leggibile dell'originale.
  */
 
-/**
- * Larghezza massima della miniatura.
- *
- * Serve a **riconoscere** un documento, non a leggerlo: per leggerlo c'è
- * "Scarica". Novecento pixel bastano a capire al volo quale foglio si ha
- * davanti, e su una foto di uno scontrino si legge pure.
- */
+/** Larghezza massima: serve a riconoscere un documento, non a leggerlo (per leggerlo c'è "Scarica"). */
 const MAX_THUMBNAIL_PX = 900;
 
-/**
- * JPEG e non PNG: una pagina scansionata è una fotografia, e in PNG
- * peserebbe megabyte --- cioè esattamente il problema che la miniatura
- * esiste per risolvere.
- */
+/** JPEG e non PNG: una pagina scansionata è una fotografia, e in PNG peserebbe megabyte, il problema che la miniatura esiste per risolvere. */
 const THUMBNAIL_QUALITY = 0.72;
 
 /** I tipi per cui una miniatura ha senso: qualcosa da guardare. */
@@ -42,13 +19,7 @@ export function canHaveThumbnail(mimeType: string): boolean {
   return mimeType === "application/pdf" || mimeType.startsWith("image/");
 }
 
-/**
- * La miniatura di questo contenuto, o null se non se ne può fare una.
- *
- * **Non lancia mai**, come l'estrazione del testo (v.
- * domain/extraction/extract-text.ts): una miniatura è un di più, e un
- * file che non si riesce a disegnare non deve impedire di salvarlo.
- */
+/** La miniatura di questo contenuto, o null se non se ne può fare una. Non lancia mai: una miniatura è un di più, un file che non si riesce a disegnare non deve impedire di salvarlo. */
 export async function createThumbnail(
   bytes: Uint8Array,
   mimeType: string,
@@ -69,14 +40,10 @@ export async function createThumbnail(
 }
 
 async function shrinkImage(image: Blob): Promise<Blob | null> {
-  // Sonda di capacità, come in pdf-extractor.ts: jsdom (i test unitari)
-  // crea un canvas ma non sa disegnarci, e OffscreenCanvas è il modo
-  // meno rumoroso di accorgersene.
+  // Sonda di capacità, come in pdf-extractor.ts: jsdom crea un canvas ma non sa disegnarci.
   if (typeof document === "undefined" || typeof OffscreenCanvas === "undefined") return null;
 
-  // `from-image`: le foto scattate col telefono portano l'orientamento
-  // nei metadati EXIF invece che nei pixel. Senza, una foto verticale
-  // diventerebbe una miniatura coricata.
+  // `from-image`: l'orientamento delle foto da telefono è nei metadati EXIF, non nei pixel.
   const bitmap = await createImageBitmap(image, { imageOrientation: "from-image" });
   try {
     const scale = Math.min(1, MAX_THUMBNAIL_PX / Math.max(bitmap.width, bitmap.height));

@@ -7,31 +7,12 @@ import { sendEmail } from "@/lib/email/send-email";
 import { accountDeletedEmail, accountResetEmail } from "@/lib/email/templates";
 
 /**
- * Cancellazione definitiva dell'account (Impostazioni > Zona pericolosa,
- * "Cancella il tuo account") --- irreversibile, distinta da "Reimposta
- * l'account" (v. domain/danger-zone/repository.ts): qui sparisce anche
- * l'account stesso, non solo il suo contenuto. Ogni riga collegata
- * (profiles, documents, assets, friends, capsules, categories,
- * reminders, mfa_backup_codes, encryption_setup, audit_events) ha già
- * ON DELETE CASCADE da auth.users (v. le rispettive migrazioni):
- * cancellare l'utente Auth le elimina già tutte da sé --- solo Storage
- * (non un dato di Postgres) va ripulito a mano.
- *
- * Richiede la service role key (bypassa le RLS): `auth.admin.deleteUser`
- * non è disponibile al client anonimo/autenticato, per questo è una
- * Server Action e non una chiamata diretta dal browser. Il chiamante
- * (DeleteAccountCard) verifica la master password *prima* di chiamare
- * questa azione (client-side, l'unico posto dove può essere verificata:
- * zero-knowledge, il server non la vede mai) --- qui non viene richiesta
- * di nuovo.
- *
- * Non chiama `redirect()`: chiamata direttamente da un gestore di click
- * (non da un `<form action>`), non da un `try/catch` lato server --- il
- * `try/catch` che la avvolge è nel componente client chiamante, dove
- * intercetterebbe anche il lancio speciale di `redirect()` trattandolo
- * come un errore (v. i docs di Next.js su redirect(), che raccomandano
- * di tenerlo sempre fuori da un `try/catch`). Il chiamante naviga da sé
- * con `router.push` dopo che questa promise si è risolta con successo.
+ * Cancellazione definitiva dell'account: irreversibile, distinta da "Reimposta l'account" (qui sparisce anche
+ * l'account stesso). Ogni riga collegata ha già ON DELETE CASCADE da auth.users: cancellare l'utente Auth le
+ * elimina già tutte da sé, solo Storage va ripulito a mano. Richiede la service role key (bypassa le RLS), per
+ * questo è una Server Action. Il chiamante (DeleteAccountCard) verifica la master password client-side prima di
+ * chiamare questa azione: qui non viene richiesta di nuovo. Non chiama `redirect()`: il `try/catch` lato client
+ * chiamante lo tratterebbe come un errore (v. i docs Next.js su redirect()); il chiamante naviga da sé dopo il successo.
  */
 export async function deleteAccount(): Promise<void> {
   const supabase = await createClient();
@@ -54,26 +35,16 @@ export async function deleteAccount(): Promise<void> {
   if (user.email) {
     const { subject, html } = accountDeletedEmail();
     await sendEmail({ to: user.email, subject, html }).catch(() => {
-      // La cancellazione è già avvenuta ed è irreversibile: un'email di
-      // conferma non riuscita non deve bloccare né essere segnalata a un
-      // account che, a questo punto, non esiste già più.
+      // La cancellazione è già avvenuta ed è irreversibile: un'email non riuscita non deve bloccare nulla.
     });
   }
 
   await supabase.auth.signOut().catch(() => {
-    // L'utente Auth non esiste già più a questo punto --- best-effort
-    // solo per ripulire i cookie di sessione lato client.
+    // L'utente Auth non esiste già più: best-effort solo per ripulire i cookie di sessione lato client.
   });
 }
 
-/**
- * Email di conferma dopo "Reimposta l'account" (v.
- * ResetAccountCard/domain/danger-zone/repository.ts, wipeVault) ---
- * separata dall'operazione stessa (che resta client-side: richiede la
- * Master Key per scoprire i path da rimuovere in Storage) solo perché
- * l'invio email richiede RESEND_API_KEY, che non deve mai lasciare il
- * server.
- */
+/** Email di conferma dopo "Reimposta l'account", separata dall'operazione stessa (client-side) solo perché l'invio richiede RESEND_API_KEY, che non deve mai lasciare il server. */
 export async function sendAccountResetConfirmationEmail(): Promise<void> {
   const supabase = await createClient();
   const {
