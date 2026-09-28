@@ -3,17 +3,13 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// FASE 20 --- Fascicoli: vicende trasversali alle categorie, con una
-// cronologia (i documenti collegati, in ordine di data). Il collegamento
-// si fa dal form del documento ("Fascicolo"), non da una UI di gestione
-// sul fascicolo --- stesso schema di beni e categorie. Qui si prova il
-// percorso vero, da capo a fondo: creare un fascicolo, collegarci un
-// documento al caricamento, vedere la cronologia, chiudere/riaprire, ed
-// eliminare senza perdere il documento.
+// Fascicoli: vicende trasversali alle categorie, con una cronologia. Il collegamento si fa dal form del documento,
+// non da una UI sul fascicolo. Qui si prova il percorso vero: creare, collegare un documento, vedere la
+// cronologia, chiudere/riaprire, ed eliminare senza perdere il documento.
 
 const MASTER_PASSWORD = "una-master-password-solida";
 
-/** PDF minimo valido con più righe di testo --- v. archive-item-detail. */
+/** PDF minimo valido con più righe di testo, v. archive-item-detail. */
 function buildPdf(lines: string[]): Buffer {
   const stream = lines
     .map((line, i) => `BT /F1 12 Tf 72 ${720 - i * 20} Td (${line}) Tj ET`)
@@ -151,11 +147,7 @@ test("un documento può stare in più di un fascicolo insieme (FASE 20c)", async
 
   await signInAndSetUpVault(page);
 
-  // Due vicende distinte. Un'attesa esplicita dell'URL dopo ogni
-  // navigazione --- cliccare "+ Nuovo fascicolo" una seconda volta
-  // troppo in fretta dopo il redirect della creazione precedente può
-  // far leggere/scrivere sulla pagina sbagliata (v. lo stesso principio
-  // già seguito più sotto per ogni altra navigazione in questo test).
+  // Due vicende distinte. Un'attesa esplicita dell'URL dopo ogni navigazione: cliccare due volte troppo in fretta dopo un redirect può far leggere/scrivere sulla pagina sbagliata.
   await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
   await expect(page).toHaveURL(/\/dossiers$/, { timeout: 15_000 });
   await page.getByRole("link", { name: "+ Nuovo fascicolo" }).click();
@@ -174,8 +166,7 @@ test("un documento può stare in più di un fascicolo insieme (FASE 20c)", async
   await expect(page.getByText("Fascicolo creato.")).toBeVisible();
   await expect(page.getByRole("link", { name: /Problema di salute/ })).toBeVisible();
 
-  // Un documento "a corredo" di entrambe --- il caso reale che ha
-  // motivato il passaggio da un fascicolo solo a più fascicoli insieme.
+  // Un documento "a corredo" di entrambe: il caso reale che ha motivato il passaggio da un fascicolo solo a più insieme.
   await page.getByRole("link", { name: "Contenuti", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();

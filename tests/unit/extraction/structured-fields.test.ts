@@ -1,11 +1,6 @@
 /**
- * FASE 18 --- i campi ricavati dal testo di un documento.
- *
- * È il file di questa fase in cui è più facile sbagliare senza
- * accorgersene: una regex troppo larga non lancia un'eccezione, mostra
- * semplicemente un dato falso con l'aria di saperlo. Quindi si testano
- * tanto i casi che devono essere riconosciuti quanto --- soprattutto ---
- * quelli che NON devono esserlo.
+ * I campi ricavati dal testo di un documento. Una regex troppo larga non lancia un'eccezione, mostra semplicemente
+ * un dato falso con l'aria di saperlo: si testano tanto i casi che devono essere riconosciuti quanto quelli che NON devono esserlo.
  */
 import { describe, expect, it } from "vitest";
 import {

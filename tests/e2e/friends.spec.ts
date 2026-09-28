@@ -37,9 +37,7 @@ test("aggiunge un amico, ne segue lo stato e lo elimina", async ({ page }) => {
   await page.getByLabel("Nome visualizzato").fill("Maria Rossi");
   await page.getByLabel("Email").fill("maria.rossi@esempio.it");
   await page.getByLabel("Ruolo").fill("Coniuge");
-  // Presente ma volutamente lasciata deselezionata --- spuntarla invierebbe
-  // un'email vera (Resend è configurato con una chiave reale anche nei
-  // test), da non fare qui solo per verificare che il form la mostri.
+  // Presente ma volutamente lasciata deselezionata: spuntarla invierebbe un'email vera (Resend usa una chiave reale anche nei test).
   await expect(
     page.getByRole("checkbox", { name: "Invita questo amico su Hinthial" }),
   ).not.toBeChecked();
@@ -52,17 +50,14 @@ test("aggiunge un amico, ne segue lo stato e lo elimina", async ({ page }) => {
   await expect(row.getByText("Attivo")).toBeVisible();
   await expect(row.getByText("maria.rossi@esempio.it · Coniuge")).toBeVisible();
 
-  // "Revoca": Attivo -> Revocato. Non implementiamo ancora nessuno
-  // sblocco automatico dei dati (FASE 7): revocare è solo un cambio di
-  // stato registrato, non tocca alcun permesso reale.
+  // "Revoca": Attivo -> Revocato. Nessuno sblocco automatico dei dati: revocare è solo un cambio di stato registrato.
   await openRowMenu(row);
   await page.getByRole("menuitem", { name: "Revoca" }).click();
   await expect(row.getByText("Revocato")).toBeVisible({ timeout: 10_000 });
   await openRowMenu(row);
   await expect(page.getByRole("menuitem", { name: "Revoca" })).not.toBeVisible();
 
-  // Modifica: pagina dedicata (come la creazione) --- si può correggere
-  // anche un amico già revocato.
+  // Modifica: si può correggere anche un amico già revocato.
   await page.getByRole("menuitem", { name: "Modifica" }).click();
   await expect(page).toHaveURL(/\/friends\/[^/]+\/edit$/);
   await expect(page.getByRole("heading", { name: "Modifica amico" })).toBeVisible();
@@ -138,14 +133,9 @@ test("nome e cognome riempiono da soli il nome visualizzato, finché non lo si t
   await expect(row.getByText("GV", { exact: true })).toBeVisible();
 });
 
-// Modello Amici v2 (v. richiesta utente): PERSONA (contatto privato) vs
-// AMICO (amicizia reciproca, richiesta + accettata) vs GUARDIANO (una
-// seconda richiesta distinta, possibile solo tra AMICI). Solo uno smoke
-// test qui, sulla sola pagina/interfaccia raggiungibile in una singola
-// sessione --- il flusso incrociato reale tra due account (richieste,
-// RLS, RPC) è verificato contro il database vero in
-// friend-and-guardian-requests.integration.test.ts, come già per
-// guardian-verification.spec.ts/.integration.test.ts.
+// PERSONA (contatto privato) vs AMICO (amicizia reciproca) vs GUARDIANO (richiesta distinta, solo tra AMICI). Solo
+// uno smoke test qui: il flusso incrociato reale tra due account è verificato in
+// friend-and-guardian-requests.integration.test.ts.
 test("una PERSONA non collegata non offre né \"Richiedi amicizia\" né \"Chiedi di diventare guardiano\", e \"Protetti\" parte vuota", async ({
   page,
 }) => {
@@ -171,8 +161,7 @@ test("una PERSONA non collegata non offre né \"Richiedi amicizia\" né \"Chiedi
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
 
-  // Un amico "di rubrica", mai collegato a un account reale --- resta
-  // una PERSONA per costruzione: nessuna delle due richieste è possibile.
+  // Un amico "di rubrica", mai collegato a un account reale: resta una PERSONA per costruzione.
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await page.getByLabel("Nome visualizzato").fill("Luca Neri");
   await page.getByLabel("Email").fill("luca.neri@esempio.it");
