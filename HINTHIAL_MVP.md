@@ -687,159 +687,95 @@ review.
 
 Solo dopo avere stabilizzato capsule e Dead Man's Switch (FASE 12).
 
-Oggi la Master Key esiste solo in memoria sul dispositivo che l'ha
-sbloccata con la master password o la recovery key --- ogni nuovo
-dispositivo deve reinserirla da capo. Questa fase introduce un secondo
-modo di sbloccarla: un dispositivo già fidato che ne autorizza uno
-nuovo, senza che il server veda mai la chiave in chiaro.
+Oggi la Master Key vive solo in memoria sul dispositivo che l'ha sbloccata: ogni nuovo dispositivo deve reinserirla
+da capo. Questa fase aggiunge un secondo modo di sbloccarla: un dispositivo già fidato che ne autorizza uno nuovo,
+senza che il server veda mai la chiave in chiaro.
 
 Implementare progressivamente:
 
-1.  registrazione di un dispositivo fidato --- richiede comunque la
-    master password o la recovery key almeno una volta: non c'è modo
-    di aggirarlo, è la prima immissione del segreto;
-2.  blocco locale della chiave sul dispositivo fidato, protetto da
-    autenticazione biometrica della piattaforma (WebAuthn/passkey), mai
-    conservata in chiaro;
-3.  pairing tra dispositivi: il dispositivo nuovo genera una coppia di
-    chiavi effimera e la mostra come QR code; il dispositivo fidato la
-    scansiona, l'utente approva, e cifra la Master Key per quella
-    chiave effimera --- il server fa solo da tramite cieco;
+1.  registrazione di un dispositivo fidato --- richiede comunque master password o recovery key almeno una volta;
+2.  blocco locale della chiave sul dispositivo fidato, protetto da autenticazione biometrica di piattaforma
+    (WebAuthn/passkey), mai conservata in chiaro;
+3.  pairing tra dispositivi via QR code: il nuovo genera una coppia di chiavi effimera, il fidato la scansiona,
+    l'utente approva, e cifra la Master Key per quella chiave --- il server fa solo da tramite cieco;
 4.  elenco e revoca dei dispositivi fidati (Impostazioni).
 
-Decisione architetturale da sciogliere prima di iniziare: oggi la
-Master Key viene creata non-extractable (v. PROTOCOL.md) --- per essere
-trasmessa a un altro dispositivo deve poter essere esportata almeno
-temporaneamente, il che indebolisce quella garanzia. Va deciso
-consapevolmente come e quando concederlo.
+Decisione da sciogliere prima di iniziare: la Master Key è non-extractable (v. PROTOCOL.md) --- per trasmetterla
+deve poter essere esportata almeno temporaneamente, indebolendo quella garanzia.
 
-Non usare notifiche push native per l'approvazione: introducono
-frammentazione importante tra iOS e Android (su iOS funzionano solo per
-un sito installato come PWA). L'approvazione tramite QR code aperto
-manualmente nel browser copre tutti i sistemi in modo uniforme.
+Niente notifiche push native per l'approvazione (frammentazione iOS/Android): il QR code aperto manualmente nel
+browser copre tutti i sistemi. Revocare un dispositivo dal server impedisce approvazioni future ma non cancella la
+chiave già in locale --- serve anche un modo per "dimenticare" un dispositivo dal dispositivo stesso.
 
-Revocare un dispositivo dal server impedisce che approvi altri
-dispositivi in futuro, ma non cancella la chiave che aveva già in
-locale --- va previsto anche un modo per "dimenticare" un dispositivo
-dal dispositivo stesso.
-
-Ogni registrazione, approvazione e revoca deve essere auditabile.
-
-Questa funzionalità introduce per la prima volta un trasferimento di
-chiave device-to-device nel modello zero-knowledge --- richiede
-revisione di sicurezza dedicata prima di andare in produzione, allo
-stesso titolo del Dead Man's Switch.
+Ogni registrazione, approvazione e revoca deve essere auditabile. Prima trasferimento di chiave device-to-device
+nel modello zero-knowledge: richiede revisione di sicurezza dedicata prima della produzione, come il Dead Man's Switch.
 
 ------------------------------------------------------------------------
 
 # 12. FASE 14 --- Archivio multi-tipo e capsule autosufficienti
 
-Rinomina "Documenti" in "Archivio" e ne estende il modello a più tipi di
-contenuto (documento, immagine, audio, video, nota testuale) con
-attributi invariati (categoria, asset collegato, scadenza, tag, note) a
-prescindere dal tipo. Allinea la schermata allo stesso pattern già usato
-da scadenze/asset/contatti/capsule (pagina di creazione dedicata, filtro
-in alto, tasto "+ Aggiungi contenuto"). Ridisegna la creazione di una
-capsula come wizard a due passi e cambia cosa significa "chiudere" una
-capsula: da riferimento bloccato a copia autosufficiente.
+Rinomina "Documenti" in "Archivio" ed estende il modello a più tipi di contenuto (documento, immagine, audio,
+video, nota testuale) con attributi invariati. Allinea la schermata al pattern già usato da scadenze/asset/
+capsule. Ridisegna la creazione capsula come wizard a due passi e cambia cosa significa "chiudere" una capsula: da
+riferimento bloccato a copia autosufficiente.
 
 Implementare progressivamente:
 
-1.  rinomina "Documenti" -> "Archivio" nella UI (nomi di file/cartelle/
-    route restano in inglese, per la convenzione del progetto);
-2.  nota testuale come nuovo tipo di contenuto: stessa tabella/
-    cifratura dei documenti, il testo digitato è il contenuto cifrato
+1.  rinomina "Documenti" -> "Archivio" nella UI (nomi di file/route restano in inglese);
+2.  nota testuale come nuovo tipo di contenuto: stessa tabella/cifratura, il testo digitato è il contenuto cifrato
     al posto di un file caricato --- nessun nuovo schema;
-3.  pagina di creazione dedicata (`/archive/new` o simile) con scelta
-    del tipo: carica un file, registra audio/video, scrivi una nota;
-4.  pannello lista semplificato: lista + ricerca/filtro in alto (già
-    pronti) + "+ Aggiungi contenuto" al posto del pannello inline
-    espandibile attuale;
-5.  player inline per audio/video/immagini nella lista, con "Scarica"
-    sempre disponibile a fianco;
-6.  generalizzare `DocumentAttachmentPicker` da "solo documenti" a
-    "qualunque tipo dall'Archivio";
-7.  creazione capsula come wizard a due passi: passo 1 (titolo, data
-    di apertura, destinatari), passo 2 (contenuto dall'Archivio via il
-    picker generalizzato, più registrazione/caricamento diretto di
-    audio/video che restano privati della capsula --- mai copiati in
-    Archivio, pensati come messaggio personale per quel destinatario);
-8.  chiudere una capsula (bozza -> chiusa) diventa una copia vera: ogni
-    contenuto d'Archivio referenziato viene decifrato e ricifrato con
-    una chiave propria della capsula, salvato nel suo storage --- da
-    quel momento la capsula non dipende più dall'originale;
-9.  di conseguenza, il blocco "documento non cancellabile perché dentro
-    una capsula chiusa" non serve più e va rimosso: l'originale torna
-    libero non appena la copia è fatta;
-10. gestire il fallimento a metà chiusura con lo stesso pattern di
-    rollback già usato in `createCapsule` per gli allegati.
+3.  pagina di creazione dedicata con scelta del tipo: carica un file, registra audio/video, scrivi una nota;
+4.  pannello lista semplificato: lista + filtro in alto + "+ Aggiungi contenuto";
+5.  player inline per audio/video/immagini nella lista, "Scarica" sempre a fianco;
+6.  generalizzare `DocumentAttachmentPicker` da "solo documenti" a "qualunque tipo dall'Archivio";
+7.  creazione capsula come wizard a due passi: passo 1 (titolo, data, destinatari), passo 2 (contenuto
+    dall'Archivio via il picker, più audio/video diretti che restano privati della capsula, mai copiati in
+    Archivio);
+8.  chiudere una capsula diventa una copia vera: ogni contenuto referenziato viene decifrato e ricifrato con una
+    chiave propria della capsula --- da quel momento non dipende più dall'originale;
+9.  di conseguenza rimuovere il blocco "documento non cancellabile perché in una capsula chiusa": l'originale torna
+    libero appena fatta la copia;
+10. gestire il fallimento a metà chiusura con lo stesso pattern di rollback già usato in `createCapsule` per gli allegati.
 
-Conseguenza accettata consapevolmente: chiudere una capsula con più
-contenuti richiede più tempo (decifra e ricifra ognuno, non è più solo
-un cambio di stato), e per un po' esistono due copie cifrate della
-stessa cosa --- l'originale in Archivio e la copia nella capsula ---
-finché una delle due non viene eliminata.
+Conseguenza accettata: chiudere una capsula con più contenuti richiede più tempo (decifra e ricifra ognuno), e per
+un po' esistono due copie cifrate della stessa cosa finché una non viene eliminata.
 
 ------------------------------------------------------------------------
 
 # 13. FASI 17-26 --- HINTHIAL AI: dalla lettura locale all'assistente che agisce
 
-Estensione concreta di quanto la FASE 11 lascia abbozzato ("Proactive
-AI", "Retrieval"): portare HINTHIAL da un assistente che *risponde* a
-uno che **legge i contenuti, ne estrae fatti, propone oggetti e aiuta a
-tenere in ordine archivio e vita**.
+Estensione concreta di quanto la FASE 11 lascia abbozzato ("Proactive AI", "Retrieval"): portare HINTHIAL da un
+assistente che *risponde* a uno che **legge i contenuti, ne estrae fatti, propone oggetti e aiuta a tenere in
+ordine archivio e vita**.
 
-Numerate dalla 17 perché 15 (security/legal hardening) e 16 (production
-release) sono già assegnate nella roadmap sintetica --- coerente con la
-scala di priorità del documento, che mette "intelligente" per ultimo.
-
-Il piano è diviso in tre blocchi, con una sola regola che li ordina:
-**tutto ciò che si può fare senza far uscire nulla dal dispositivo viene
-prima.**
+Numerate dalla 17 perché 15 e 16 sono già assegnate nella roadmap sintetica. Il piano è diviso in tre blocchi, con
+una sola regola che li ordina: **tutto ciò che si può fare senza far uscire nulla dal dispositivo viene prima.**
 
 ------------------------------------------------------------------------
 
 ## Blocco A --- valore senza rischio (FASI 17-21)
 
-Nessun contenuto lascia il dispositivo, nessun consenso nuovo da
-chiedere. Da solo copre gran parte del valore percepito: archivio che si
-nomina e cataloga da sé, scadenze che nascono dai documenti, ricerca
-dentro i file, spese sommate per anno.
+Nessun contenuto lascia il dispositivo, nessun consenso nuovo da chiedere. Da solo copre gran parte del valore
+percepito: archivio che si nomina e cataloga da sé, scadenze che nascono dai documenti, ricerca dentro i file.
 
 ### FASE 17 --- Lettura locale dei contenuti
 
-Estrarre testo dai contenuti già in Archivio, tutto in-browser: PDF (via
-pdf.js) e immagini (OCR). Il testo estratto si cifra con la Master Key
-come ogni altro campo.
+Estrarre testo dai contenuti già in Archivio, tutto in-browser: PDF (via pdf.js) e immagini (OCR). Il testo
+estratto si cifra con la Master Key come ogni altro campo.
 
-*Stato: **chiusa.*** PDF nativi (17a), ricerca che spiega i risultati e
-recupero dei contenuti storici (17b), OCR delle immagini (17c) e dei PDF
-scansionati (17d), scheda del contenuto con "cosa ho letto" (17e).
+*Stato: **chiusa.*** PDF nativi (17a), ricerca che spiega i risultati e recupero dei contenuti storici (17b), OCR
+delle immagini (17c) e dei PDF scansionati (17d), scheda del contenuto con "cosa ho letto" (17e).
 
-**La trascrizione audio/video è stata spostata nel blocco B** (v. FASE
-22b), e non è un rinvio per stanchezza: è l'unico pezzo di "lettura
-locale" che la tecnologia locale non sa ancora fare bene. Un modello
-vocale in-browser pesa 40-75 MB contro i 5,6 MB dell'OCR, su un telefono
-è spesso più lento del tempo reale, e in italiano sbaglia abbastanza da
-rendere la trascrizione un danno invece di un aiuto: a differenza
-dell'OCR, un modello vocale produce frasi plausibili anche quando ha
-capito male, e il filtro anti-spazzatura che protegge l'OCR (v.
-`ocr-extractor.ts`) lì non è replicabile. Costo massimo, resa minima
-(gli audio sono una frazione dei contenuti di un archivio personale) e
-qualità insufficiente: tre motivi concordi. Nel frattempo il
-comportamento resta onesto --- la scheda dichiara "non so ancora
-ascoltare gli audio" e la trascrizione si scrive a mano, con la ricerca
-che la usa.
+**La trascrizione audio/video è spostata nel blocco B** (FASE 22b): è l'unico pezzo di lettura locale che la
+tecnologia locale non sa ancora fare bene (modello vocale in-browser pesante e lento, italiano poco affidabile,
+niente filtro anti-spazzatura come per l'OCR). Nel frattempo resta onesto: "non so ancora ascoltare gli audio",
+trascrizione a mano, usata dalla ricerca.
 
-La scheda introdotta in 17e è anche il **pavimento delle fasi
-successive**: i campi estratti (18), le proposte (19), il fascicolo (20)
-e il consenso per singolo contenuto (22) atterrano tutti lì. È il motivo
-per cui è stata costruita prima della 18 e non dopo: senza, la 18
-estrarrebbe campi che nessuna schermata è in grado di mostrare.
+La scheda di 17e è il **pavimento delle fasi successive**: campi estratti (18), proposte (19), fascicolo (20),
+consenso per singolo contenuto (22) atterrano tutti lì --- per questo costruita prima della 18.
 
-Effetto immediato e verificabile: la ricerca globale smette di cercare
-tra i nomi dei file e cerca **dentro**; la categorizzazione euristica
-(`domain/categorizer`), che oggi vede solo il nome, diventa attendibile.
+Effetto immediato: la ricerca globale cerca **dentro** i file, non solo nei nomi; la categorizzazione euristica
+(`domain/categorizer`) diventa attendibile.
 
 ### FASE 18 --- Estrazione strutturata locale
 
@@ -848,125 +784,78 @@ Dal testo estratto ai campi: data del documento, scadenze dichiarate
 nessun modello coinvolto. Alimenta le prime proposte (rinomina, data
 corretta, scadenza, emittente).
 
-(L'importo, che viveva qui insieme al "totale delle spese" di un
-fascicolo che lo sommava, è stato rimosso il 2026-09-24 su richiesta
-esplicita: mai promosso a proposta, giudicato non abbastanza utile da
-meritare un campo tutto suo --- v. CHANGELOG.md.)
+(L'importo, che viveva qui insieme al "totale delle spese" di un fascicolo, è stato rimosso il 2026-09-24: mai
+promosso a proposta, giudicato non abbastanza utile --- v. CHANGELOG.md.)
 
 ### FASE 19 --- Meccanismo delle proposte
 
-Non porta funzioni visibili: porta la **fiducia**, e va costruita prima
-di qualunque scrittura automatica. Un oggetto "proposta" con cosa, la
-fonte da cui nasce, e accetta/modifica/rifiuta; memoria dei rifiuti (non
-ripropone ciò che hai già scartato); annullamento; ogni azione tracciata
-in Attività con tipi di evento propri.
+Non porta funzioni visibili: porta la **fiducia**, e va costruita prima di qualunque scrittura automatica. Un
+oggetto "proposta" con cosa, la fonte da cui nasce, e accetta/modifica/rifiuta; memoria dei rifiuti; annullamento;
+ogni azione tracciata in Attività.
 
-Vincolo architetturale da rispettare: **il server può proporre, solo il
-client può scrivere** --- gli oggetti vanno cifrati con la Master Key,
-che il server non possiede.
+Vincolo architetturale: **il server può proporre, solo il client può scrivere** --- gli oggetti vanno cifrati con
+la Master Key, che il server non possiede.
 
-*Stato: **fatta**, rafforzata il 2026-09-24.* Proposte su scadenza,
-categoria ed emittente nella scheda di un contenuto, con
-accetta/modifica/rifiuta, fonte mostrata accanto a ogni proposta,
-memoria dei rifiuti cifrata (`proposal_rejections`), annullamento e tre
-nuovi tipi di evento in Attività. Scadenza ed emittente possono avere
-più di un candidato (un contratto con più date, un'intestazione con più
-righe che sembrano un mittente): si mostrano tutti invece di
-scommettere su quale sia quello giusto, ognuno come proposta a sé.
+*Stato: **fatta**, rafforzata il 2026-09-24.* Proposte su scadenza, categoria ed emittente, con
+accetta/modifica/rifiuta, fonte mostrata accanto, memoria dei rifiuti cifrata (`proposal_rejections`),
+annullamento. Scadenza ed emittente possono avere più candidati: si mostrano tutti invece di scommettere su quale
+sia quello giusto.
 
-Il vincolo è rispettato in modo **strutturale** e non per disciplina: le
-proposte si calcolano nel browser dal testo già decifrato (v.
-`domain/proposals/build.ts`, funzione pura) e il server non le vede mai
-nascere. Il valore *rifiutato* è cifrato con la Master Key: un valore
-accettato finisce comunque in chiaro in `documents.expires_at`, ma uno
-rifiutato non esisterebbe da nessuna parte sul server, e salvarlo in
-chiaro introdurrebbe un dato che senza questa fase non ci sarebbe.
+Il vincolo è rispettato in modo **strutturale**: le proposte si calcolano nel browser dal testo già decifrato (v.
+`domain/proposals/build.ts`, funzione pura), il server non le vede mai nascere. Il valore *rifiutato* resta cifrato
+con la Master Key; un valore *accettato* finisce comunque in chiaro in `documents.expires_at`.
 
-**19b --- le proposte al momento del caricamento.** La 19, da sola, era
-mezza consegnata: aveva costruito il meccanismo e l'aveva messo nel posto
-meno frequentato dell'app, una scheda che si apre solo andandola a
-cercare. Chi carica venti documenti senza aprirne nessuno non vedrebbe
-mai una proposta. Ora il file viene letto **appena lo scegli** (non al
-salvataggio: così la lettura avviene mentre compili il resto) e il form
-si precompila da solo --- titolo, categoria, bene collegato, scadenza.
+**19b --- le proposte al momento del caricamento.** La 19 da sola era mezza consegnata: il meccanismo viveva in una
+scheda che si apre solo andandola a cercare. Ora il file viene letto **appena lo scegli** e il form si precompila
+da solo (titolo, categoria, bene, scadenza).
 
 Due regole imparate qui:
 
-- **In creazione si precompila, sulla scheda si chiede.** Non è
-  incoerenza: in creazione non c'è ancora niente dell'utente da
-  sovrascrivere, e vedere il valore in un form che si sta già rivedendo
-  *è* il consenso.
-- **Tranne il titolo, che si propone.** È l'unico campo che arriva già
-  compilato --- il nome del file --- e vale anche lì la regola "non si
-  tocca ciò che è già compilato". Un titolo sbagliato messo in silenzio
-  cambierebbe l'identità del documento senza che nessuno se ne accorga.
+- **In creazione si precompila, sulla scheda si chiede.** In creazione non c'è ancora niente dell'utente da
+  sovrascrivere: vedere il valore in un form in revisione *è* il consenso.
+- **Tranne il titolo, che si propone.** È l'unico campo già compilato (il nome del file): un titolo sbagliato
+  messo in silenzio cambierebbe l'identità del documento senza che nessuno se ne accorga.
 
-Proponibili oggi i tre campi che hanno una casa dove essere scritti
-(`expires_at`, `category_id`, ed --- dal 2026-09-24 --- `encrypted_issuer`
-per l'emittente, cifrato come le note). Solo la data del documento
-(FASE 18) resta visibile ma non proponibile: inventare una colonna per
-avere una proposta in più sarebbe il contrario del lavorare per fasi ---
-troverà posto quando un oggetto vero la richiederà (v. FASE 20-21).
+Proponibili oggi i tre campi con una casa dove essere scritti (`expires_at`, `category_id`, `encrypted_issuer`).
+Solo la data del documento (FASE 18) resta visibile ma non proponibile: troverà posto quando un oggetto vero la
+richiederà (v. FASE 20-21).
 
 ### FASE 20 --- Fascicoli
 
-Nuovo oggetto **trasversale alle categorie**, per le vicende che si
-sviluppano nel tempo (un problema di salute, l'acquisto di una casa, un
-incidente): cronologia invece di elenco, stato aperto/chiuso,
-condivisione in blocco. Creazione manuale in questa fase.
+Nuovo oggetto **trasversale alle categorie**, per le vicende che si sviluppano nel tempo (un problema di salute,
+l'acquisto di una casa): cronologia invece di elenco, stato aperto/chiuso, condivisione in blocco. Creazione
+manuale in questa fase.
 
-Non richiede IA: è una struttura che manca già oggi. Categoria = un
-cassetto; fascicolo = una storia che attraversa più cassetti. È anche
-l'unità naturale da lasciare in una capsula.
+Non richiede IA: categoria = un cassetto, fascicolo = una storia che attraversa più cassetti. È anche l'unità
+naturale da lasciare in una capsula.
 
-*Stato: **fatta.*** Nuovo oggetto (`dossiers`), indipendente da
-`category_id`/`related_asset_id` sui documenti: un documento può avere
-categoria, bene e fascicolo insieme. Collegamento manuale dal form del
-documento stesso (campo "Fascicolo"), mai da una UI di gestione sul
-fascicolo --- stesso schema già in uso per beni e categorie. Scheda
-dedicata con cronologia (i documenti collegati, ordinati per la data che
-Hinthial ha letto nel documento se c'è --- FASE 18 --- altrimenti quella
-di caricamento). Apertura/chiusura come azione a sé, un clic, non un
-campo del form di modifica.
+*Stato: **fatta.*** Nuovo oggetto (`dossiers`), indipendente da `category_id`/`related_asset_id`: un documento può
+avere categoria, bene e fascicolo insieme. Collegamento manuale dal form del documento (campo "Fascicolo"), mai da
+una UI sul fascicolo --- stesso schema di beni e categorie. Scheda dedicata con cronologia (ordinata per la data
+letta nel documento se c'è, altrimenti quella di caricamento). Apertura/chiusura come azione a sé, un clic.
 
-(Il "totale delle spese" che viveva qui, insieme al concetto di importo
---- v. FASE 18 --- è stato rimosso il 2026-09-24 su richiesta esplicita.)
+(Il "totale delle spese" che viveva qui è stato rimosso il 2026-09-24.)
 
-Non implementata in questa fase: la condivisione in blocco su una
-capsula. È descrittiva nel testo sopra ("è anche l'unità naturale da
-lasciare in una capsula"), non un requisito a sé della fase --- resta un
-naturale sviluppo futuro quando si torna sulle capsule.
+Non implementata in questa fase: la condivisione in blocco su una capsula --- resta un naturale sviluppo futuro.
 
 ### FASE 21 --- Import massivo e riconoscimento di insiemi
 
-Caricamento di molti file in una volta con riepilogo **per gruppi**
-invece di una conferma per file; rilevamento di serie ricorrenti (lo
-stesso valore misurato nel tempo); proposta di fascicoli dai
-raggruppamenti evidenti.
+Caricamento di molti file in una volta con riepilogo **per gruppi** invece di una conferma per file; rilevamento
+di serie ricorrenti; proposta di fascicoli dai raggruppamenti evidenti.
 
-Limite deliberato: mostrare andamenti e numeri, **mai interpretarli**.
-Un valore fuori range si segnala solo se è il documento stesso a dirlo.
+Limite deliberato: mostrare andamenti e numeri, **mai interpretarli**. Un valore fuori range si segnala solo se è
+il documento stesso a dirlo.
 
-*Stato: **fatta**, con uno scope deliberatamente più stretto sul
-riconoscimento degli insiemi.* Caricamento multiplo (`/archive/import`)
-con riepilogo per gruppi, non conferma per file. "Rilevamento di serie
-ricorrenti" e "proposta di fascicoli dai raggruppamenti evidenti" sono
-implementati come **un solo meccanismo deterministico**: file con lo
-stesso emittente riconosciuto (v. FASE 18, `findIssuer` --- una forma
-societaria o un'intestazione in maiuscolo, non una somiglianza vaga).
-Un gruppo di almeno due file senza una casa propone un fascicolo nuovo;
-un gruppo che condivide l'emittente con documenti già in un fascicolo
-esistente si aggancia a quello invece di proporne un altro. (I totali
-di spesa per anno e categoria, inizialmente parte di questa fase, sono
-stati costruiti e poi rimossi su richiesta dell'utente --- v.
-CHANGELOG.md.)
+*Stato: **fatta**, con uno scope deliberatamente più stretto sul riconoscimento degli insiemi.* Caricamento
+multiplo (`/archive/import`) con riepilogo per gruppi. "Rilevamento di serie ricorrenti" e "proposta di fascicoli"
+sono un solo meccanismo deterministico: file con lo stesso emittente riconosciuto (v. FASE 18, `findIssuer`, mai
+una somiglianza vaga). Un gruppo di almeno due file senza una casa propone un fascicolo nuovo; un gruppo che
+condivide l'emittente con un fascicolo esistente si aggancia a quello. (I totali di spesa per anno e categoria
+sono stati costruiti e poi rimossi --- v. CHANGELOG.md.)
 
-Scelta consapevole di scope, non un rinvio: una "somiglianza di
-significato" tra documenti (senza il segnale forte di un emittente
-uguale) richiederebbe un giudizio che questa fase --- e il principio "nel
-dubbio, non si propone nulla" già applicato in tutta la FASE 18-19 ---
-non è disposta a fare senza un modello vero. Arriverà, se servirà,
-insieme all'IA reale del blocco B.
+Scelta consapevole di scope: una "somiglianza di significato" senza il segnale forte di un emittente uguale
+richiederebbe un giudizio che questa fase, coerente col principio "nel dubbio non si propone nulla", non fa senza
+un modello vero. Arriverà, se servirà, con l'IA reale del blocco B.
 
 ------------------------------------------------------------------------
 
@@ -996,18 +885,13 @@ FASE 19, mai scritture dirette.
 
 ### FASE 22b --- Trascrizione audio/video
 
-Arrivava dalla FASE 17, dove era l'unico pezzo che la tecnologia locale
-non sa ancora fare abbastanza bene (v. FASE 17 per il ragionamento
-completo). Qui trova il suo posto naturale: un modello di qualità vera,
-dietro lo stesso consenso esplicito e la stessa tracciabilità in Attività
-di ogni altro invio. Sostituisce lo stub in `domain/transcription`, che
-oggi restituisce sempre `null`.
+Arrivava dalla FASE 17 (v. per il ragionamento completo): un modello di qualità vera, dietro lo stesso consenso
+esplicito e la stessa tracciabilità in Attività. Sostituisce lo stub in `domain/transcription`, che oggi
+restituisce sempre `null`.
 
-Vincolo che resta dalla FASE 17: una trascrizione sbagliata è peggio di
-nessuna trascrizione, perché riempie la ricerca di parole mai dette.
-Serve la stessa soglia di fiducia applicata all'OCR --- e va deciso, una
-volta per tutte, se il testo trascritto sia correggibile a mano come oggi
-o in sola lettura come il testo estratto (v. FASE 17e).
+Vincolo che resta dalla FASE 17: una trascrizione sbagliata è peggio di nessuna, riempie la ricerca di parole mai
+dette. Serve la stessa soglia di fiducia dell'OCR --- e va deciso se il testo trascritto sia correggibile a mano o
+in sola lettura (v. FASE 17e).
 
 ### FASE 23 --- Chat con memoria e azioni
 
