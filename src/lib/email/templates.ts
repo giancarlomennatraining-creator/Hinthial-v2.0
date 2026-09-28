@@ -1,9 +1,4 @@
-/**
- * Corpo HTML delle email inviate da Hinthial stesso (v. send-email.ts) ---
- * un solo shell condiviso, testo semplice pensato per restare leggibile
- * anche nei client che tolgono gli stili: niente immagini/loghi (spesso
- * bloccati di default), solo testo e due link.
- */
+/** Corpo HTML condiviso delle email, testo semplice per restare leggibile anche nei client che tolgono gli stili: niente immagini/loghi, solo testo e link. */
 function emailShell(bodyHtml: string): string {
   return `<!doctype html>
 <html>
@@ -26,12 +21,7 @@ function formattedToday(): string {
   return new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 }
 
-/**
- * Invito a registrarsi, inviato da chi aggiunge un amico e spunta
- * "Invita su Hinthial" (v. domain/friends). Il nome dell'amico non
- * compare mai qui --- è cifrato, l'email si rivolge genericamente a chi
- * la riceve.
- */
+/** Invito a registrarsi, inviato da chi aggiunge un amico e spunta "Invita su Hinthial". Il nome dell'amico non compare mai qui: è cifrato. */
 export function friendInviteEmail(inviterName: string): { subject: string; html: string } {
   const homepageUrl = appUrl();
   const registerUrl = `${homepageUrl}/register`;
@@ -47,12 +37,7 @@ export function friendInviteEmail(inviterName: string): { subject: string; html:
   };
 }
 
-/**
- * Avviso di una capsula condivisa con l'account che la riceve (v.
- * lib/capsules/actions.ts, notifyCapsuleShared) --- niente su titolo o
- * contenuto della capsula, mai passati qui: sono cifrati, questo
- * server non li vede mai.
- */
+/** Avviso di una capsula condivisa (v. lib/capsules/actions.ts). Niente titolo o contenuto della capsula: sono cifrati, questo server non li vede mai. */
 export function capsuleSharedEmail(ownerName: string): { subject: string; html: string } {
   const dashboardUrl = `${appUrl()}/dashboard`;
 
@@ -66,13 +51,7 @@ export function capsuleSharedEmail(ownerName: string): { subject: string; html: 
   };
 }
 
-/**
- * Fasi 1-3 di "Eredità digitale" (v. domain/digital-legacy/automation.ts)
- * --- il solo accesso a Hinthial, non serve altro, annulla questo avviso
- * (v. computeDigitalLegacyTransition, azione "reset"). Mai un tono
- * allarmante qui: è ancora solo un promemoria tra i tanti previsti,
- * niente ancora di irreversibile.
- */
+/** Fasi 1-3 di "Eredità digitale" (v. domain/digital-legacy/automation.ts): il solo accesso annulla l'avviso. Mai un tono allarmante: è ancora solo un promemoria tra i tanti previsti. */
 export function digitalLegacyReminderEmail(
   reminderNumber: number,
   totalReminders: number,
@@ -91,12 +70,7 @@ export function digitalLegacyReminderEmail(
   };
 }
 
-/**
- * Inviata una sola volta, al passaggio da "reminding" a "grace_period"
- * (v. computeDigitalLegacyTransition) --- il tono si fa più concreto,
- * ma resta tutto reversibile con un solo accesso: i guardiani non sono
- * ancora coinvolti (arriverà con una fase futura, non costruita).
- */
+/** Inviata una sola volta al passaggio da "reminding" a "grace_period": il tono si fa più concreto ma resta reversibile con un solo accesso, i guardiani non sono ancora coinvolti. */
 export function digitalLegacyGracePeriodEmail(gracePeriodDays: number): { subject: string; html: string } {
   const dashboardUrl = `${appUrl()}/dashboard`;
 
@@ -112,15 +86,7 @@ export function digitalLegacyGracePeriodEmail(gracePeriodDays: number): { subjec
   };
 }
 
-/**
- * Inviata a UN guardiano collegato quando il proprietario entra in
- * "awaiting_guardians" (v. automation.ts) --- mai a un guardiano non
- * collegato: il server non conoscerebbe nemmeno il suo indirizzo (v.
- * FriendsPanel.tsx, badge "non collegato"). Il link porta a una pagina
- * dentro l'app (v. app/(app)/guardian-check/[requestId]), non a
- * un'azione compiuta direttamente dall'email: chi risponde deve essere
- * autenticato con il PROPRIO account, non un click anonimo.
- */
+/** Inviata a UN guardiano collegato quando il proprietario entra in "awaiting_guardians". Il link porta a una pagina dentro l'app, non un'azione anonima: chi risponde deve essere autenticato col proprio account. */
 export function digitalLegacyGuardianRequestEmail(
   ownerName: string,
   respondUrl: string,
@@ -136,14 +102,7 @@ export function digitalLegacyGuardianRequestEmail(
   };
 }
 
-/**
- * Inviata al proprietario quando i suoi guardiani confermano di non
- * riuscire a raggiungerlo (v. isGuardianQuorumSatisfied) --- un'ultima
- * rete di sicurezza, anche se l'account potrebbe non poterla leggere.
- * Segue una verifica formale, poi un'attesa finale (v.
- * digitalLegacyFinalWaitEmail): un solo accesso, in qualunque momento
- * prima che l'attesa finale scada, annulla comunque tutto.
- */
+/** Inviata al proprietario quando i guardiani confermano di non riuscire a raggiungerlo: un'ultima rete di sicurezza. Un solo accesso prima che l'attesa finale scada annulla tutto. */
 export function digitalLegacyGuardiansConfirmedEmail(): { subject: string; html: string } {
   const dashboardUrl = `${appUrl()}/dashboard`;
 
@@ -157,12 +116,7 @@ export function digitalLegacyGuardiansConfirmedEmail(): { subject: string; html:
   };
 }
 
-/**
- * L'ultima email al proprietario prima dell'apertura vera e propria
- * delle capsule --- inviata all'inizio dell'attesa finale (v.
- * computeDigitalLegacyTransition, "start_final_wait"), l'unico avviso
- * che dice esplicitamente cosa sta per succedere e quando.
- */
+/** L'ultima email prima dell'apertura vera e propria delle capsule, inviata all'inizio dell'attesa finale: l'unico avviso che dice esplicitamente cosa sta per succedere e quando. */
 export function digitalLegacyFinalWaitEmail(finalWaitDays: number): { subject: string; html: string } {
   const dashboardUrl = `${appUrl()}/dashboard`;
 
@@ -176,13 +130,7 @@ export function digitalLegacyFinalWaitEmail(finalWaitDays: number): { subject: s
   };
 }
 
-/**
- * Inviata a ogni destinatario di una capsula già condivisa, quando
- * "Eredità digitale" fa scattare l'apertura (v. domain/digital-legacy/
- * automation.ts, releaseCapsulesToRecipients) --- mai il titolo o il
- * contenuto della capsula, ancora cifrati e mai visti da questo
- * server: solo l'avviso che è arrivato il momento di aprirla.
- */
+/** Inviata a ogni destinatario quando "Eredità digitale" fa scattare l'apertura. Mai il titolo o contenuto della capsula, ancora cifrati: solo l'avviso che è arrivato il momento di aprirla. */
 export function digitalLegacyCapsuleReleasedEmail(ownerName: string): { subject: string; html: string } {
   const dashboardUrl = `${appUrl()}/dashboard`;
 
@@ -219,12 +167,7 @@ export function accountResetEmail(): { subject: string; html: string } {
   };
 }
 
-/**
- * Richiesta di amicizia (v. domain/friends/friend-requests.ts) --- inviata
- * a un utente Hinthial già esistente, trovato per email. Il link porta
- * alla scheda Amici, dove la richiesta è già in attesa: chi risponde deve
- * essere autenticato con il proprio account, mai un click anonimo.
- */
+/** Richiesta di amicizia, inviata a un utente Hinthial già esistente trovato per email. Il link porta alla scheda Amici: chi risponde deve essere autenticato col proprio account, mai un click anonimo. */
 export function friendRequestEmail(senderName: string): { subject: string; html: string } {
   const friendsUrl = `${appUrl()}/friends`;
 
@@ -239,14 +182,7 @@ export function friendRequestEmail(senderName: string): { subject: string; html:
   };
 }
 
-/**
- * Richiesta di diventare guardiano (v. domain/friends/guardian-requests.ts)
- * --- distinta dalla verifica di "Eredità digitale" già in corso
- * (digitalLegacyGuardianRequestEmail): questa è il consenso preliminare
- * per DIVENTARE guardiano di un amico, non ancora la verifica reale di
- * un'inattività. Il link porta alla scheda "Protetti", dove la richiesta
- * è già in attesa.
- */
+/** Richiesta di diventare guardiano, distinta dalla verifica di "Eredità digitale" già in corso: questo è il consenso preliminare, non ancora la verifica reale di un'inattività. */
 export function guardianRoleRequestEmail(ownerName: string): { subject: string; html: string } {
   const protectedUrl = `${appUrl()}/friends/protected`;
 

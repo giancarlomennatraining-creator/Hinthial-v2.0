@@ -1,40 +1,20 @@
 /**
- * pdf.js, caricato e configurato in un punto solo.
- *
- * Due parti dell'app hanno bisogno di disegnare le pagine di un PDF, per
- * motivi diversi: l'OCR, che le legge quando il PDF è una scansione (v.
- * domain/extraction/pdf-extractor.ts), e la scheda di un contenuto, che
- * ne mostra la prima all'utente (FASE 17e). La preparazione di pdf.js ---
- * import dinamico, worker --- è delicata e identica per entrambe: stava
- * per diventare due copie, e due copie divergono sempre.
+ * pdf.js, caricato e configurato in un punto solo: l'OCR (v. domain/extraction/pdf-extractor.ts) e la scheda di un
+ * contenuto hanno entrambi bisogno di disegnare le pagine di un PDF, e la preparazione (import dinamico, worker) è
+ * delicata e identica per entrambi.
  */
 
 /**
- * Carica pdf.js e si assicura che il worker sia configurato.
- *
- * Build `legacy` e non quello moderno: è l'unico che funziona anche
- * fuori dal browser --- pdf.js stesso lo raccomanda per Node. Così i test
- * unitari esercitano esattamente lo stesso codice che gira in
- * produzione, invece di una variante diversa.
- *
- * `import()` dinamico: pdf.js pesa oltre un megabyte e non deve toccare
- * chi carica una foto o scrive una nota --- si carica solo nell'istante
- * in cui c'è davvero un PDF da aprire (stessa scelta fatta per `qrcode`,
- * v. SetupMasterKeyForm, e per tesseract.js).
+ * Carica pdf.js e si assicura che il worker sia configurato. Build `legacy` (non quello moderno): è l'unico che
+ * funziona anche fuori dal browser, così i test unitari esercitano lo stesso codice della produzione. `import()`
+ * dinamico: pdf.js pesa oltre un megabyte, si carica solo quando c'è davvero un PDF da aprire.
  */
 export async function loadPdfjs() {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
-  // Il worker va indicato esplicitamente **solo nel browser**: senza,
-  // pdf.js prova a dedurne il percorso e in un bundle non lo trova.
-  // `new URL(..., import.meta.url)` lascia che sia il bundler a
-  // risolverlo e a servirlo come asset.
-  //
-  // Non si sovrascrive una configurazione già presente: fuori dal
-  // browser (i test unitari girano in jsdom, dove `window` esiste ma il
-  // loader ESM di Node accetta solo file:/data:) chi chiama può indicare
-  // il worker per conto proprio. Il percorso browser vero resta coperto
-  // dai test e2e.
+  // Il worker va indicato esplicitamente solo nel browser: senza, pdf.js non lo trova in un bundle.
+  // `new URL(..., import.meta.url)` lascia che sia il bundler a risolverlo. Non si sovrascrive una
+  // configurazione già presente: fuori dal browser chi chiama può indicare il worker per conto proprio.
   if (!pdfjs.GlobalWorkerOptions.workerSrc && typeof window !== "undefined") {
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
       "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
@@ -55,25 +35,17 @@ export interface PdfFirstPage {
   pageCount: number;
 }
 
-/**
- * Disegna la prima pagina di un PDF, per mostrarla come anteprima.
- *
- * Restituisce null (non un errore) dove non si può disegnare: fuori da
- * un browser vero, o se il file non è un PDF valido. L'anteprima è un
- * di più --- chi chiama mostra semplicemente il messaggio di ripiego.
- */
+/** Disegna la prima pagina di un PDF come anteprima. Restituisce null (non un errore) dove non si può disegnare: chi chiama mostra semplicemente il messaggio di ripiego. */
 export async function renderPdfFirstPage(
   bytes: Uint8Array,
   width = DEFAULT_PREVIEW_WIDTH,
 ): Promise<PdfFirstPage | null> {
-  // Sonda di capacità: v. lo stesso controllo in pdf-extractor.ts ---
-  // jsdom un canvas lo crea ma non sa disegnarci.
+  // Sonda di capacità (v. pdf-extractor.ts): jsdom un canvas lo crea ma non sa disegnarci.
   if (typeof document === "undefined" || typeof OffscreenCanvas === "undefined") return null;
 
   const pdfjs = await loadPdfjs();
 
-  // pdf.js prende possesso del buffer che riceve (lo "detacha"): si
-  // passa una copia, altrimenti chi chiama si ritrova i byte svuotati.
+  // pdf.js prende possesso del buffer che riceve: si passa una copia, altrimenti chi chiama si ritrova i byte svuotati.
   const loadingTask = pdfjs.getDocument({ data: new Uint8Array(bytes) });
   try {
     const doc = await loadingTask.promise;

@@ -3,28 +3,13 @@ import { utf8ToBytes, bytesToBase64, base64ToBytes } from "@/lib/crypto/codec";
 import { CryptoModuleError } from "@/lib/crypto/errors";
 
 /**
- * FASE 13, primo passo --- "rendere fidato" questo dispositivo così può
- * sbloccare il vault con l'impronta/Face ID (WebAuthn, autenticatore di
- * piattaforma) invece della master password, senza che questa lasci mai
- * il dispositivo. Non è login: l'account resta autenticato come sempre
- * (Supabase Auth) --- questo protegge solo una copia locale del Master
- * Key, mai vista dal server (v. lib/device-lock-storage.ts per dove
- * vive quella copia).
- *
- * La parte che rende possibile derivare davvero una chiave di
- * cifratura (non solo "provare la presenza dell'utente", il normale
- * uso di WebAuthn per il login) è l'estensione PRF: l'autenticatore
- * calcola una funzione pseudo-random legata alla credenziale, mai
- * esponendo il segreto sottostante --- esattamente come una password o
- * la recovery key vengono già passate per HKDF prima di diventare una
- * chiave AES-GCM (v. recovery-key.ts), qui l'input a HKDF è l'output
- * del PRF invece che i byte grezzi di un segreto scelto dall'utente.
- *
- * Non ogni browser/piattaforma supporta ancora l'estensione PRF (v.
- * isDeviceLockSupported --- il controllo è esplicito, mai un tentativo
- * silenzioso che poi fallisce a metà) --- dove non è disponibile,
- * "rendere fidato questo dispositivo" resta semplicemente un'opzione
- * non offerta, la master password resta comunque sempre disponibile.
+ * "Rendere fidato" questo dispositivo così può sbloccare il vault con l'impronta/Face ID (WebAuthn, autenticatore
+ * di piattaforma) invece della master password. Non è login: l'account resta autenticato come sempre (Supabase
+ * Auth), questo protegge solo una copia locale del Master Key, mai vista dal server (v. lib/device-lock-storage.ts).
+ * L'estensione PRF calcola una funzione pseudo-random legata alla credenziale, mai esponendo il segreto sottostante:
+ * l'input a HKDF è l'output del PRF invece che i byte grezzi di un segreto scelto dall'utente (v. recovery-key.ts
+ * per lo stesso schema). Non ogni browser supporta ancora l'estensione PRF (v. isDeviceLockSupported, controllo
+ * esplicito): dove non disponibile, resta un'opzione non offerta, la master password resta sempre disponibile.
  */
 
 const RP_NAME = "Hinthial";
@@ -35,11 +20,7 @@ async function prfEvalSalt(): Promise<Uint8Array<ArrayBuffer>> {
   return new Uint8Array(digest);
 }
 
-/**
- * Deriva una chiave AES-256-GCM non estraibile dall'output del PRF di
- * WebAuthn --- stesso schema (HKDF, domain-separated) di
- * deriveKeyFromRecoveryKey, solo con un input diverso.
- */
+/** Deriva una chiave AES-256-GCM non estraibile dall'output del PRF di WebAuthn, stesso schema di deriveKeyFromRecoveryKey con un input diverso. */
 async function deriveKeyFromPrfOutput(prfOutput: ArrayBuffer): Promise<CryptoKey> {
   const keyMaterial = await crypto.subtle.importKey("raw", prfOutput, "HKDF", false, [
     "deriveKey",
@@ -67,22 +48,14 @@ export class DeviceLockUnsupportedError extends CryptoModuleError {
   }
 }
 
-/**
- * Vero controllo di supporto --- non solo "WebAuthn esiste" (praticamente
- * ovunque ormai) ma "un autenticatore di piattaforma con l'estensione
- * PRF è davvero disponibile qui", l'unica combinazione che rende questa
- * funzionalità utilizzabile.
- */
+/** Vero controllo di supporto: non solo "WebAuthn esiste" ma "un autenticatore di piattaforma con PRF è davvero disponibile qui". */
 export async function isDeviceLockSupported(): Promise<boolean> {
   if (typeof window === "undefined" || !window.PublicKeyCredential) return false;
   try {
     const platformAvailable =
       await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
     if (!platformAvailable) return false;
-    // getClientCapabilities (livello 3) segnala se l'estensione prf è
-    // nota al browser --- se assente, si tenta comunque la
-    // registrazione reale (più affidabile di questo controllo su
-    // qualche piattaforma) e si scopre lì se l'autenticatore la offre.
+    // getClientCapabilities segnala se l'estensione prf è nota al browser; se assente, si tenta comunque la registrazione reale (più affidabile su qualche piattaforma).
     const withCapabilities = PublicKeyCredential as unknown as {
       getClientCapabilities?: () => Promise<Record<string, boolean>>;
     };
@@ -97,16 +70,9 @@ export async function isDeviceLockSupported(): Promise<boolean> {
 }
 
 /**
- * Registra una nuova credenziale WebAuthn di piattaforma per questo
- * account su questo dispositivo, poi deriva subito la chiave AES-GCM
- * che protegge il Master Key --- due cerimonie separate (create, poi
- * get) perché è il modo in cui l'estensione PRF restituisce davvero un
- * valore in modo affidabile su ogni piattaforma che la supporta (in
- * fase di create() può non farlo, anche se l'autenticatore la offre).
- *
- * `userId`/`userEmail` identificano l'account solo verso l'autenticatore
- * locale (mai verso il server in questa chiamata) --- coerente con
- * l'uso "solo per derivare una chiave", non come login.
+ * Registra una nuova credenziale WebAuthn di piattaforma, poi deriva subito la chiave AES-GCM che protegge il
+ * Master Key --- due cerimonie separate (create, poi get) perché l'estensione PRF restituisce un valore affidabile
+ * solo così su ogni piattaforma. `userId`/`userEmail` identificano l'account solo verso l'autenticatore locale, mai verso il server.
  */
 export async function registerDeviceCredential(
   userId: string,
@@ -143,13 +109,7 @@ export async function registerDeviceCredential(
   return { credentialId, deviceKey };
 }
 
-/**
- * Rideriva la stessa chiave AES-256-GCM per una credenziale già
- * registrata --- usato sia subito dopo registerDeviceCredential (per
- * ottenere davvero il valore del PRF) sia a ogni sblocco successivo:
- * l'estensione PRF è deterministica per la stessa coppia
- * credenziale+salt, quindi restituisce sempre la stessa chiave.
- */
+/** Rideriva la stessa chiave AES-256-GCM per una credenziale già registrata: l'estensione PRF è deterministica per la stessa coppia credenziale+salt, restituisce sempre la stessa chiave. */
 export async function deriveDeviceKeyForCredential(credentialId: string): Promise<CryptoKey> {
   const challenge = crypto.getRandomValues(new Uint8Array(32));
   const salt = await prfEvalSalt();
