@@ -254,16 +254,13 @@ Verificato: 11 unit test su `lib/thumbnail.ts`, 3 e2e che distinguono i due perc
 
 ### Ritocchi all'Archivio: il link senza sottolineatura, e la scheda riordinata
 
-**(1) Il nome di un documento non si sottolinea più al passaggio del mouse.** In un elenco di venti righe una sottolineatura che si accende e si spegne è rumore. Il nome passa invece al **blu Hinthial**, lo stesso colore che in tutta l'app segnala ciò su cui si può agire (richiesta utente).
+**(1) Il nome di un documento non si sottolinea più al passaggio del mouse** (rumore in un elenco lungo) --- passa al **blu Hinthial**, il colore che segnala in tutta l'app ciò su cui si può agire.
 
-*Nota tecnica:* nel tema scuro si usa un blu più chiaro. Il token `--brand` (`#2b4fc4`) è identico nei due temi, e su fondo quasi nero avrebbe reso il nome **meno** leggibile passandoci sopra --- l'esatto contrario di quello che deve fare uno stato di hover.
+*Nota tecnica:* nel tema scuro si usa un blu più chiaro --- il token `--brand` identico nei due temi renderebbe il nome meno leggibile su fondo quasi nero.
 
-**(2) Nel dettaglio di un documento, "Cosa ne ho ricavato" si è spostato sotto "Scheda"**, nella colonna di destra (richiesta utente). Stanno bene insieme perché sono la stessa cosa vista da due parti: quello che il documento **è** e quello che il documento **dice**. *"Cosa ho letto"* resta in fondo a tutta larghezza, e *"Hinthial propone"* pure --- è l'unica parte che chiede una risposta, e una domanda stretta in una colonna è una domanda che nessuno vede.
+**(2) Nel dettaglio di un documento, "Cosa ne ho ricavato" si è spostato sotto "Scheda"**, nella colonna di destra: sono la stessa cosa vista da due parti, ciò che il documento **è** e ciò che il documento **dice**. *"Cosa ho letto"* e *"Hinthial propone"* restano in fondo a tutta larghezza (l'unica che chiede una risposta, e una domanda stretta in colonna è una domanda che nessuno vede).
 
-Affiancando i due riquadri sono saltate all'occhio due ripetizioni che prima, a mezza pagina di distanza, non si notavano. Ora *"Cosa ne ho ricavato"* mostra solo ciò che **non si legge già altrove nella stessa schermata**:
-
-- niente scadenza se è già impostata nella scheda --- una scadenza confermata non è più una notizia, è un dato del documento;
-- niente titolo, che da quella pagina non si può nemmeno applicare: un suggerimento su cui non si può agire è solo un invito a chiedersi "e allora?". Vive dov'è utile, cioè al caricamento.
+Affiancando i due riquadri sono emerse due ripetizioni: ora *"Cosa ne ho ricavato"* mostra solo ciò che **non si legge già altrove nella stessa schermata** --- niente scadenza se già impostata nella scheda, niente titolo (non applicabile da quella pagina, vive dov'è utile, al caricamento).
 
 ---
 
@@ -271,35 +268,19 @@ Affiancando i due riquadri sono saltate all'occhio due ripetizioni che prima, a 
 
 ### FASE 19b --- il documento si legge da solo appena lo scegli
 
-**Cosa fa:** carichi un file e, **prima di salvare**, il form è già compilato. Scegli `scan_0012.pdf` e trovi:
+**Cosa fa:** carichi un file e, **prima di salvare**, il form è già compilato. Scegli `scan_0012.pdf` e trovi un riquadro *"✓ Ho letto il documento"* con emittente, data e importo (ognuno con la riga da cui viene), **Categoria** e **Bene collegato** suggeriti, **Scadenza** trovata nel testo, e un titolo pronto con un clic. Premi Salva e basta.
 
-- un riquadro *"✓ Ho letto il documento"* con emittente, data e importo, ognuno con la riga da cui viene
-- **Categoria** *Assicurazioni* — ✨ suggerita da Hinthial
-- **Bene collegato** *Fiat Panda AB123CD* — ✨ riconosciuto nel documento
-- **Scadenza** *03/06/2027* — ✨ trovata nel documento, con la frase *"…Valida fino al 3 giugno 2027…"*
-- un titolo pronto da usare con un clic: *«Polizza responsabilità civile — GENERALI ITALIA S.p.A.»*
+**Perché serviva:** la FASE 19 aveva costruito il meccanismo delle proposte nel posto meno frequentato dell'app --- una scheda che si apre solo andandola a cercare. Chi carica venti documenti senza aprirne nessuno non avrebbe mai visto una proposta; il momento in cui hai la testa sul documento è proprio quello in cui lo carichi.
 
-Premi Salva e basta. Niente da digitare, e la polizza è già nelle Scadenze.
+**La lettura parte quando scegli il file, non quando premi Salva:** avviene mentre compili tag e note, quindi quando arrivi in fondo ha già finito.
 
-**Perché serviva:** la FASE 19 era **mezza consegnata**. Aveva costruito il meccanismo delle proposte e l'aveva messo nel posto meno frequentato dell'app — una scheda che si apre solo andandola a cercare. Chi carica venti documenti senza aprirne nessuno non avrebbe mai visto una proposta. Il momento in cui hai la testa su quel documento è proprio quello in cui lo carichi; dopo non ci pensi più.
+**Il bene collegato è l'aggancio più forte che ci sia:** targa/IBAN/numero di polizza che compaiono nel documento non sono una somiglianza, sono una certezza, e portano con sé anche la categoria giusta.
 
-**La lettura parte quando scegli il file, non quando premi Salva.** Così avviene mentre compili tag e note, e quando arrivi in fondo ha già finito: stesso lavoro, ma dentro il tempo che stavi già spendendo. Se premi Salva prima che abbia finito, aspetta — ma l'attesa è al massimo quella di prima, perché è cominciata prima.
+**Correggi una data e Hinthial ritrova la frase da cui viene** --- utile soprattutto quando ne trova cinque (emissione, decorrenza, scadenza, stampa) e sceglie quella sbagliata. Il confronto è tra **date**, non tra stringhe, altrimenti "14 marzo 2026" non troverebbe mai `2026-03-14`. Quando non trova nulla lo dice: *"Questa data nel documento non l'ho trovata. La salvo lo stesso."*
 
-**Il bene collegato è l'aggancio più forte che ci sia.** I beni hanno spesso un identificativo unico: una targa, un IBAN, un numero di polizza. Se il bene si chiama *"Fiat Panda AB123CD"* e nel documento compare `AB123CD`, quella non è una somiglianza, è una certezza — e porta con sé anche la categoria giusta. Funziona anche se la targa è scritta spaziata da una parte e attaccata dall'altra.
+**Note tecniche --- due regole imparate strada facendo:** in creazione si precompila, sulla scheda si chiede (non c'è ancora nulla dell'utente da sovrascrivere, e rivedere un form riga per riga *è* il consenso). Il titolo però **si propone e non si impone**: la prima versione lo precompilava, e dieci e2e sono diventati rossi perché i documenti non si chiamavano più come il loro file --- a differenza di categoria/bene/scadenza (campi vuoti), il nome del file c'è sempre, e sostituirlo d'ufficio viola la regola della FASE 19 ("non si tocca ciò che è già compilato"). Il campo Scadenza compare ora anche in creazione. Il segno *"✨ suggerito da Hinthial"* sparisce appena tocchi il campo.
 
-**Correggi una data e Hinthial ritrova la frase da cui viene.** È la richiesta esplicita dell'utente, e il suo valore sta nel caso più frequente: non che Hinthial non trovi la data, ma che ne trovi **cinque** e scelga quella sbagliata (una polizza ha emissione, decorrenza, scadenza, stampa). Correggi, e lei risponde *"quella è qui: «Emessa il 14 marzo 2026»"*. Il confronto è tra **date**, non tra stringhe: dal calendario arriva `2026-03-14` mentre il documento dice "14 marzo 2026", e cercare il testo non troverebbe mai niente. E quando davvero non c'è lo dice: *"Questa data nel documento non l'ho trovata. La salvo lo stesso."* — succede spesso e per buoni motivi (l'OCR l'ha storpiata, la scadenza è calcolata, o la sai tu da fuori).
-
-**Note tecniche --- due regole imparate strada facendo:**
-
-**In creazione si precompila, sulla scheda si chiede.** Non è un'incoerenza col meccanismo della 19: in creazione non c'è ancora niente dell'utente da sovrascrivere, e vedere il valore dentro un form che si sta già rivedendo riga per riga *è* il consenso. Su un documento già in archivio la categoria potresti averla scelta tu mesi fa.
-
-**Tranne il titolo, che si propone e non si impone** — e questo l'hanno scoperto i test. La prima versione precompilava anche il nome: dieci test e2e sono diventati rossi tutti insieme perché i documenti non si chiamavano più come il loro file. Il sintomo ha smascherato l'errore di progetto: categoria, bene e scadenza erano campi **vuoti**, e riempirli non toglie niente a nessuno; il nome del file invece c'è sempre, e sostituirlo d'ufficio viola la regola stessa della FASE 19 — *non si tocca ciò che è già compilato*. Ora il titolo è un clic.
-
-Il campo **Scadenza** compare ora anche in creazione: era nascosto perché "in creazione raramente si conosce già la scadenza esatta --- la si aggiunge dopo, a mano o in futuro suggerita dall'AI che legge il contenuto". Quel futuro è arrivato.
-
-Il segno *"✨ suggerito da Hinthial"* sparisce appena tocchi il campo: da quel momento il valore è tuo, e continuare a chiamarlo suggerito sarebbe falso.
-
-Verificato: 21 test unitari nuovi (il riconoscimento dei beni, il titolo, il ritrovamento di una data nel testo) e 3 e2e sul percorso completo — dal file scelto al documento salvato, compresa la correzione della data e la sparizione del segno. Più 24 e2e dell'Archivio rieseguiti in blocco, perché questa modifica tocca la strada che tutti percorrono.
+Verificato: 21 unit test nuovi (riconoscimento beni, titolo, ritrovamento data nel testo), 3 e2e sul percorso completo, 24 e2e dell'Archivio rieseguiti in blocco.
 
 ---
 
@@ -307,37 +288,23 @@ Verificato: 21 test unitari nuovi (il riconoscimento dei beni, il titolo, il rit
 
 ### FASE 19 --- Hinthial propone, tu decidi
 
-**Cosa fa:** sulla scheda di un contenuto compare un riquadro **"Hinthial propone"**, con quello che ha capito e che potrebbe scrivere al posto tuo. Per ogni proposta tre risposte: **Accetta**, **Modifica**, **No grazie**.
+**Cosa fa:** sulla scheda di un contenuto compare un riquadro **"Hinthial propone"** con quello che ha capito, con tre risposte per proposta: **Accetta**, **Modifica**, **No grazie**. Accetti una scadenza proposta e compare in **Scadenze** con tutte le altre.
 
-Carichi `scan_0012.pdf` — un nome che non dice niente, come esce da ogni scanner — e Hinthial propone *Scadenza: 3 giu 2027* e *Categoria: Assicurazioni*. Nessuna delle due viene dal nome del file: vengono da quello che c'è scritto dentro. Accetti, e la scadenza compare in **Scadenze** insieme a tutte le altre.
+**Questa fase non porta funzioni: porta il permesso di scrivere.** Fino alla 18 Hinthial mostrava soltanto; qui nasce il meccanismo di accetta/modifica/rifiuta che rende sicuro scrivere per conto dell'utente.
 
-**Questa fase non porta funzioni: porta il permesso di scrivere.** Fino alla 18 Hinthial ricavava informazioni e si limitava a mostrarle, perché modificare i dati di qualcuno senza avere ancora il modo di disfare sarebbe stato scorretto. Qui nasce quel modo, e con esso la possibilità di dire di sì.
+**"Modifica" è il caso più frequente, non l'opzione di mezzo:** una proposta è spesso giusta per metà, e senza una terza via l'utente rifiuterebbe e rifarebbe tutto a mano, smettendo di leggere le proposte.
 
-**"Modifica" non è l'opzione di mezzo, è il caso più frequente.** Una proposta è spesso giusta per metà — la data c'è ma è quella sbagliata, la categoria è vicina ma non quella. Senza una terza via dovresti rifiutare e rifare tutto a mano altrove, che è il modo più sicuro per farti smettere di leggere le proposte.
+**Quello che rifiuti non ti viene richiesto più**, ma vale per quel valore, non per quel tipo: rifiutare "3 giugno 2027" non esclude che una rilettura ne proponga un'altra data.
 
-**Quello che rifiuti non ti viene richiesto più.** Il rifiuto sopravvive al ricaricamento: passa dal database, cifrato, e viene riletto e decifrato ogni volta. Ma vale per **quel valore**, non per quel tipo: rifiutare "3 giugno 2027" non significa aver detto che il documento non scade — se una rilettura ne ricava un'altra, quella è una proposta nuova e va fatta.
+**Tutto è annullabile e tutto lascia traccia** in *Impostazioni → Attività*.
 
-**Tutto è annullabile e tutto lascia traccia.** Dopo ogni scelta compare una riga con **Annulla** che rimette le cose com'erano, e ogni accettazione, rifiuto e annullamento finisce in *Impostazioni → Attività*.
+**Note tecniche:** il vincolo *il server può proporre, solo il client può scrivere* è rispettato in modo strutturale: `buildProposals` è una funzione pura che gira nel browser sul testo già decifrato. Il valore **rifiutato** è cifrato con la Master Key --- a differenza di un valore accettato (che finisce comunque in chiaro in `documents.expires_at`), un rifiuto non esisterebbe altrimenti in chiaro sul server, quindi il confronto tra una proposta nuova e i rifiuti passati avviene sul client.
 
-**Note tecniche:** il vincolo del piano — *il server può proporre, solo il client può scrivere* — è rispettato in modo **strutturale** e non per disciplina: `buildProposals` è una funzione pura che gira nel browser sul testo già decifrato, e il server non vede mai nascere una proposta.
+Tre regole su quando tacere: niente proposte su campi già compilati (svuotare il campo le fa tornare); niente proposte già rifiutate; niente proposte senza una fonte da mostrare nel documento. Proponibili oggi solo scadenza e categoria --- data documento, importo ed emittente restano visibili ma non proponibili. Il categorizzatore euristico guarda ora anche dentro il documento, ma solo con parole chiave curate (non la corrispondenza col nome categoria, che su tremila caratteri darebbe troppi falsi positivi).
 
-Il valore **rifiutato** è cifrato con la Master Key, e vale la pena spiegare perché non era ovvio: un valore *accettato* finisce comunque in chiaro in `documents.expires_at`, che è già così da sempre. Ma un valore *rifiutato* non esisterebbe da nessuna parte sul server — salvarlo in chiaro introdurrebbe un dato che senza questa fase non ci sarebbe. Il confronto tra una proposta nuova e i rifiuti passati avviene quindi sul client, l'unico posto dove può avvenire.
+Verificato: 12 unit test su `buildProposals` (soprattutto i casi in cui deve tacere), 4 e2e sulle due promesse non verificabili da unit test (accettare scrive davvero, rifiutare viene ricordato dopo un ricaricamento).
 
-Tre regole su quando **tacere**, che contano più di quelle su quando proporre:
-
-- **Niente proposte su campi già compilati.** Se la scadenza c'è già, proporne una significa mettere in discussione una tua scelta, non aiutarti. Vale al contrario: se svuoti quel campo, la proposta torna — il documento è tornato incompleto.
-- **Niente proposte già rifiutate** (v. sopra).
-- **Niente proposte senza una fonte da mostrare.** Ogni proposta porta accanto il pezzo di documento da cui nasce: una proposta senza la sua fonte chiede fiducia cieca.
-
-Proponibili oggi solo i due campi che hanno una casa dove essere scritti: scadenza e categoria. Data del documento, importo ed emittente restano visibili in *"Cosa ne ho ricavato"* ma non proponibili — inventare una colonna per avere una proposta in più sarebbe il contrario del lavorare per fasi.
-
-Il categorizzatore euristico ora guarda anche **dentro** il documento, mantenendo la promessa della FASE 17: finché vedeva solo il nome del file, `IMG_4821.jpg` non diceva niente e il suggerimento restava muto per la maggior parte di un archivio reale. Guardando nel testo usa però **solo le parole chiave curate**, non la corrispondenza col nome della categoria: quella regola, ragionevole su un nome di file di tre parole, diventa disastrosa su tremila caratteri — una categoria "Casa" scatterebbe su qualunque documento che nomina una casa.
-
-Ciò che è già una proposta non viene ripetuto in *"Cosa ne ho ricavato"*: sarebbe lo stesso valore due volte a due centimetri di distanza, e la seconda copia — senza i tasti — sembrerebbe pure un'altra cosa.
-
-Verificato: 12 test unitari su `buildProposals` (la funzione che decide quando l'app ti interrompe, quindi testata soprattutto sui casi in cui deve tacere) e 4 e2e sulle due promesse che nessun test unitario può verificare — accettare **scrive davvero** e l'effetto si vede in Scadenze; rifiutare **viene ricordato** e sopravvive al ricaricamento. Più modifica-prima-di-accettare e la traccia in Attività.
-
-**Limite dichiarato:** l'annullamento vale finché resti sulla pagina. Chi se ne accorge dopo corregge dalla scheda, che è dove quel valore vive: un registro di undo persistente sarebbe una macchina molto più grande per un guadagno che il tasto "Modifica" già copre.
+**Limite dichiarato:** l'annullamento vale finché resti sulla pagina --- un registro di undo persistente sarebbe sproporzionato rispetto al guadagno.
 
 ---
 
@@ -345,31 +312,19 @@ Verificato: 12 test unitari su `buildProposals` (la funzione che decide quando l
 
 ### FASE 18 --- dal testo ai campi: "cosa ne ho ricavato"
 
-**Cosa fa:** sulla scheda di un contenuto compare un nuovo riquadro che dice cosa Hinthial ha **capito** leggendo il documento, non solo cosa c'è scritto: la data del documento, una scadenza, un importo, chi l'ha emesso.
+**Cosa fa:** sulla scheda di un contenuto compare un riquadro con ciò che Hinthial ha **capito** leggendo il documento: data del documento, scadenza, importo, emittente --- ognuno con il pezzo di documento da cui viene. Una scadenza può anche essere **calcolata** (es. da "controllo tra dodici mesi" più la data del prelievo), etichettata come tale per distinguere un conto da una data letta. Non scrive niente nella scheda, lo dice esplicitamente: la scrittura automatica arriva con la FASE 19, che porta accetta/modifica/rifiuta.
 
-Carichi un referto scansionato e ti dice: *emittente* AZIENDA OSPEDALIERA DI GUBBIO, *data del documento* 14 mar 2026, *scadenza* 14 mar 2027. Quest'ultima non è scritta da nessuna parte sul foglio --- il documento dice *"si consiglia controllo tra dodici mesi"*, e Hinthial ha fatto il conto a partire dalla data del prelievo. Per questo accanto compare un'etichetta **"calcolata da Hinthial"**: dire che è un conto e non una data letta è la differenza tra una proposta e un'affermazione.
+**Note tecniche:** sono schemi, non ragionamento --- nessun modello, nessun download. Non si salva nulla nel database: i campi si calcolano al volo dal testo già decifrato in memoria, quindi nessuna migrazione e valgono da subito su tutto l'archivio esistente.
 
-**Ogni campo mostra il pezzo di documento da cui viene.** Devi poter dare ragione o torto a Hinthial in un colpo d'occhio, senza fidarti.
+Le regole restrittive contano più di quelle permissive: un numero con la virgola non è un importo (serve un simbolo di valuta o un'etichetta di totale attaccata, altrimenti "Glicemia 92,50" ne sarebbe uno); una data qualunque non è una scadenza (serve una parola che la qualifichi); il punto non separa le date (altrimenti ogni "art. 2.1.3" lo sarebbe); le scadenze a intervallo si calcolano solo con una data del documento da cui contare e una parola che le apra (*controllo*, *rinnovo*); il titolo di un documento non è chi l'ha emesso (una lista di parole che aprono un titolo scarta le righe tipo "CERTIFICATO DI RESIDENZA").
 
-**Non scrive niente, e lo dice.** In fondo al riquadro: *"Per ora te le mostro soltanto: non ho cambiato niente nella scheda qui sopra."* Non è una limitazione tecnica ma una scelta d'ordine: la scrittura automatica ha bisogno di accetta/modifica/rifiuta, della memoria dei rifiuti e dell'annullamento --- cioè della FASE 19. Farla prima significherebbe modificare i dati dell'utente senza avere ancora lo strumento per disfare.
+Le quattro sezioni della scheda hanno ora un `aria-label` (vere *region* per lo screen reader, e i test le puntano per nome).
 
-**Note tecniche:** sono **schemi, non ragionamento** --- nessun modello, nessun download, nessuna domanda di privacy. E non si salva niente nel database: i campi si calcolano al volo dal testo già decifrato in memoria. Tre conseguenze, tutte desiderabili: nessuna migrazione, valgono da subito su tutto l'archivio esistente, e **non esiste proprio il modo** di scrivere per sbaglio qualcosa che l'utente non ha accettato.
-
-Le regole restrittive contano più di quelle permissive, e sono quelle testate a fondo:
-
-- **Un numero con la virgola non è un importo.** Un referto di analisi del sangue ne è pieno: se "Glicemia 92,50" diventasse un importo, la funzione smetterebbe di essere utile per l'intera categoria Salute. Servono un simbolo di valuta oppure un'etichetta di totale **attaccata** al numero --- "TOTALE PROTEINE 7,25" non passa.
-- **Una data qualunque non è una scadenza.** In una polizza ce ne sono cinque: serve una parola che la qualifichi (*scade il*, *valida fino al*, *data di scadenza*).
-- **Il punto non separa le date.** Con `14.03.2026` valido, ogni `art. 2.1.3` di un contratto diventerebbe una data.
-- **Le scadenze a intervallo si calcolano solo se c'è una data del documento** da cui contare: partire da oggi sarebbe sbagliato per qualunque documento archiviato in ritardo, cioè per la maggioranza. E serve una parola che apra (*controllo*, *rinnovo*, *ripetere*): altrimenti ogni "da tre settimane" in un'anamnesi diventerebbe una scadenza.
-- **Il titolo di un documento non è chi l'ha emesso.** "CERTIFICATO DI RESIDENZA" in cima al foglio è maiuscolo esattamente come lo sarebbe una carta intestata vera: c'è una lista di parole che aprono un titolo, e quelle righe vengono scartate.
-
-Le quattro sezioni della scheda hanno ora un nome accessibile (`aria-label`), il che le rende vere *region* per chi naviga con lo screen reader --- e permette ai test di puntarle per nome invece che per testo contenuto.
-
-Verificato: 41 test unitari, dei quali circa la metà verificano ciò che **non** deve essere riconosciuto --- è lì che una regex troppo larga fa danni, perché non lancia un'eccezione: mostra un dato falso con l'aria di saperlo. Più un e2e end-to-end sulla scansione, che prova l'intera catena (OCR → testo → schemi → interfaccia) e verifica anche che la scheda sia rimasta intatta.
+Verificato: 41 unit test (metà sui casi che **non** devono essere riconosciuti, dove una regex troppo larga farebbe danni), un e2e end-to-end sulla scansione (OCR → testo → schemi → interfaccia).
 
 ### La trascrizione audio/video si sposta nel blocco B
 
-Era l'ultimo pezzo della FASE 17. Non è un rinvio per stanchezza: è l'unico pezzo di "lettura locale" che la tecnologia locale non sa ancora fare bene. Un modello vocale in-browser pesa 40-75 MB contro i 5,6 MB dell'OCR, su un telefono è spesso più lento del tempo reale, e in italiano sbaglia abbastanza da rendere la trascrizione un danno invece di un aiuto --- a differenza dell'OCR, un modello vocale produce frasi *plausibili* anche quando ha capito male, e il filtro anti-spazzatura che protegge l'OCR lì non è replicabile. Costo massimo, resa minima, qualità insufficiente. Diventa la FASE 22b, dove un modello vero è già previsto e dietro consenso esplicito. Nel frattempo il comportamento resta onesto: la scheda dichiara *"non so ancora ascoltare gli audio"* e la trascrizione si scrive a mano, con la ricerca che la usa. **La FASE 17 si chiude qui.**
+Era l'ultimo pezzo della FASE 17, spostato non per stanchezza ma perché la tecnologia locale non sa ancora farlo bene: un modello vocale in-browser pesa 40-75 MB contro i 5,6 MB dell'OCR, è spesso più lento del tempo reale su un telefono, e in italiano sbaglia abbastanza da rendere la trascrizione un danno --- a differenza dell'OCR, produce frasi *plausibili* anche quando ha capito male, e il filtro anti-spazzatura non è replicabile per l'audio. Diventa la FASE 22b, con un modello vero dietro consenso esplicito. Nel frattempo la scheda dichiara onestamente *"non so ancora ascoltare gli audio"*, e la trascrizione si scrive a mano. **La FASE 17 si chiude qui.**
 
 ---
 
@@ -377,36 +332,21 @@ Era l'ultimo pezzo della FASE 17. Non è un rinvio per stanchezza: è l'unico pe
 
 ### FASE 17e --- la scheda di un contenuto: "cosa ho letto"
 
-**Cosa fa:** ogni elemento dell'Archivio ha ora una pagina sua. Ci si arriva cliccando il nome nell'elenco, e ci si arriva anche dai risultati della ricerca globale (prima portavano genericamente all'Archivio, lasciando a te il compito di ritrovare il file in mezzo agli altri).
+**Cosa fa:** ogni elemento dell'Archivio ha ora una pagina sua, raggiungibile dal nome nell'elenco o dai risultati della ricerca globale (prima portavano genericamente all'Archivio). Mostra l'anteprima, la scheda (categoria, bene, scadenza, tag, note) e un riquadro **"Cosa ho letto"** con il testo che Hinthial ha ricavato dal file, per intero.
 
-La pagina mostra l'anteprima del contenuto, la sua scheda (categoria, bene, scadenza, tag, note) e soprattutto un riquadro **"Cosa ho letto"**: il testo che Hinthial ha ricavato da quel file, per intero.
+**L'anteprima vale anche per i PDF:** se ne disegna la prima pagina con lo stesso pdf.js dell'OCR, con il numero totale di pagine sotto. Audio e video non si scaricano da soli (possono pesare decine di MB).
 
-**L'impaginato:** anteprima e scheda affiancate in alto --- un terzo e due terzi --- e **"Cosa ho letto"** a tutta larghezza sotto, perché è il testo di un documento e in una colonna stretta si leggerebbe peggio del documento stesso. Su schermi stretti si impila tutto.
+**Perché conta più di quanto sembri:** dalla FASE 17 Hinthial legge i documenti, ma l'unica traccia visibile era uno spezzone nei risultati di ricerca. Vedere esattamente cosa è stato letto è la dimostrazione della promessa *"niente esce dal tuo dispositivo"*.
 
-**L'anteprima vale anche per i PDF**, che non si possono mostrare così come sono: se ne disegna la **prima pagina**, con lo stesso pdf.js che l'OCR usa per leggerle --- e quindi funziona identica per i PDF nativi e per le scansioni. Sotto è scritto quante pagine ha in tutto. Immagini e note si aprono da sole; audio e video no, perché possono pesare decine di megabyte e si scaricano solo se li vuoi davvero sentire.
+**I quattro stati finalmente si distinguono** (prima, in tre casi su quattro, il testo risultava semplicemente vuoto): *mai letto* (tasto "Leggilo ora"), *letto ma senza testo trovato*, *letto con successo* (tasto "Rileggi" se l'OCR ha sbagliato), *non so ancora ascoltare gli audio*.
 
-**Perché conta più di quanto sembri.** Dalla FASE 17 Hinthial legge i tuoi documenti, ma l'unica traccia visibile di quella lettura era uno spezzone di una riga nei risultati di ricerca — e solo se indovinavi la parola giusta. In un prodotto che promette *"niente esce dal tuo dispositivo"*, poter vedere esattamente cosa è stato letto non è un accessorio: è la dimostrazione della promessa. Sulla pagina è scritto a chiare lettere, accanto al testo: *letto qui, sul tuo dispositivo, non è mai uscito*.
+**Il testo estratto ora conserva l'impaginazione** (prima ogni a capo veniva schiacciato in uno spazio, illeggibile su un referto di più pagine). I documenti caricati prima restano nella vecchia forma finché non si preme "Rileggi" --- deliberatamente nessuna migrazione forzata.
 
-**I quattro stati finalmente si distinguono.** Fino a ieri, dal di fuori, erano indistinguibili --- in tre casi su quattro il testo risultava semplicemente vuoto:
+**Note tecniche:** `normalizeExtractedText` compatta gli spazi dentro la riga senza schiacciare tutto, usando `hasEOL` di pdf.js. Per non rompere la ricerca su testo multi-riga, `flattenForSearch` (con test dedicati) appiattisce dove si cerca e dove si costruisce lo spezzone. Nuovo `lib/pdf.ts` unifica la preparazione di pdf.js tra estrattore e anteprima (JPEG, non PNG: una pagina scansionata è una fotografia). Nuovo `domain/extraction/reading-state.ts` (7 test), funzione pura che decide quale dei quattro stati raccontare. `formatSize`/`formatDate` estratte in `lib/format.ts`, erano due copie divergenti.
 
-- *non l'ho ancora letto* (caricato prima che l'estrazione esistesse) → con il tasto **"Leggilo ora"**, senza tornare all'elenco
-- *l'ho guardato ma non ci ho trovato testo* → è qui che trova finalmente casa l'avviso che nella 17b avevo deliberatamente **non** messo nell'elenco: là sarebbe stato un cartello addosso a documenti di cui nessuno aveva chiesto niente, qui è la risposta a una domanda che hai appena fatto aprendo la scheda
-- *l'ho letto, ecco cosa c'è scritto* → con **"Rileggi"** se l'OCR ha sbagliato
-- *non so ancora ascoltare gli audio* → onesto sul fatto che manca, non silenzioso
+**Di proposito NON c'è**, pur essendo pronto ad accoglierlo: nessun riquadro vuoto per campi estratti/proposte/fascicolo/consenso (fasi future) --- una pagina piena di sezioni "in arrivo" sembra finita e non lo è. Il testo letto resta in sola lettura (renderlo modificabile lo confonderebbe con le Note, e una rilettura cancellerebbe la correzione).
 
-**Il testo estratto ora conserva l'impaginazione.** Fino alla 17d ogni a capo veniva schiacciato in uno spazio. Per cercare andava benissimo — la ricerca non guarda l'impaginazione — ma dal momento in cui quel testo si mostra, un referto di tre pagine diventava un unico paragrafo da ottomila caratteri: tecnicamente corretto e illeggibile. Ora le righe restano. I documenti caricati **prima** di oggi conservano la vecchia forma appiattita: il tasto **"Rileggi"** sulla loro scheda li recupera uno per uno. Deliberatamente nessuna migrazione forzata: il contenuto del testo non cambia, cambia solo come si legge, e non vale far ripartire da zero l'archivio di tutti.
-
-**Note tecniche:** `normalizeExtractedText` compatta gli spazi *dentro* la riga e riduce a una le righe vuote di troppo, invece di schiacciare tutto. pdf.js conosceva già la fine di ogni riga (`hasEOL`) e la stavamo buttando via. La contropartita è la regressione più facile da introdurre e la più difficile da notare: chi cerca *"risonanza magnetica"* deve trovarlo anche se nel documento le due parole stanno su righe diverse --- da qui `flattenForSearch`, applicato dove si cerca e dove si costruisce lo spezzone, con tre test che lo difendono.
-
-Nuovo `lib/pdf.ts`: la preparazione di pdf.js (import dinamico, worker) e il disegno di una pagina stavano per diventare due copie --- una nell'estrattore, una nell'anteprima --- e due copie divergono sempre. L'anteprima esce in JPEG e non PNG: una pagina scansionata è una fotografia, e in PNG peserebbe megabyte per un'immagine che si guarda e basta.
-
-Nuovo `domain/extraction/reading-state.ts` (7 test): una funzione pura che decide quale dei quattro stati raccontare. Se sbaglia, la pagina dice all'utente una cosa falsa sul proprio archivio, quindi è testata caso per caso. `formatSize`/`formatDate` estratte in `lib/format.ts` --- erano due copie della stessa funzione, e due copie divergono sempre.
-
-**Di proposito NON c'è**, pur essendo tutto pronto per accoglierlo: nessun riquadro vuoto in attesa dei campi estratti (18), delle proposte (19), del fascicolo (20) o del consenso per singolo contenuto (22). Una pagina piena di sezioni "in arrivo" sembra quasi finita e non lo è. E il testo letto resta in **sola lettura**: renderlo modificabile lo trasformerebbe in un secondo campo Note e creerebbe una regola scomoda (una rilettura cancellerebbe la tua correzione). Le tue parole hanno già un posto. Resta aperta la decisione su come trattare allo stesso modo la trascrizione audio/video, che oggi invece è modificabile.
-
-Verificato: 10 test unitari nuovi, più due e2e che percorrono la strada vera --- si carica un PDF, si clicca il nome nell'elenco, si verifica che il testo mostrato sia quello dentro il file **e che gli a capo ci siano davvero** (controllato sul testo, non sul CSS); poi si riporta un documento a "mai letto", si verifica che la pagina lo dichiari, si preme "Leggilo ora" e si verifica che compaia.
-
-**Corretti di passaggio** due test e2e (`list-filters`, `transcription`) rimasti indietro dalla FASE 17a, quando il segnaposto della ricerca era stato rinominato: cercavano ancora *"Cerca per nome, tag, note o trascrizione…"*. Erano rotti da allora senza che nessuno li rieseguisse.
+Verificato: 10 unit test, due e2e (testo mostrato con gli a capo reali; recupero di un documento riportato a "mai letto"). Corretti di passaggio due e2e (`list-filters`, `transcription`) rimasti indietro dalla FASE 17a, rotti da allora senza che nessuno li rieseguisse.
 
 ---
 
@@ -414,18 +354,11 @@ Verificato: 10 test unitari nuovi, più due e2e che percorrono la strada vera --
 
 ### FASE 17d --- anche i PDF che sono solo una scansione
 
-**Cosa fa:** un referto passato dallo scanner dell'ospedale, un atto ritirato allo sportello, un contratto fotocopiato --- sono PDF che di testo non ne contengono nemmeno una parola: contengono la fotografia di un foglio. Fino a ieri Hinthial li apriva, non ci trovava niente e li archiviava muti. Ora, quando si accorge che un PDF non ha testo, ne disegna le pagine e le legge con l'OCR --- esattamente come farebbe con una foto.
+**Cosa fa:** un PDF che è solo la fotografia di un foglio scansionato (il caso più comune nei documenti sanitari e burocratici italiani) non conteneva testo e restava muto. Ora, quando Hinthial si accorge che un PDF non ha testo, ne disegna le pagine e le legge con l'OCR, come farebbe con una foto.
 
-È il caso più comune di tutti nei documenti sanitari e burocratici italiani, ed è quello che rendeva la ricerca dentro i documenti una mezza promessa.
+**Note tecniche:** la soglia è "il testo è sotto i 40 caratteri?" e non "è vuoto?", perché un PDF scansionato porta quasi sempre qualche carattere di scarto. Otto pagine al massimo (un faldone da cento bloccherebbe l'utente per minuti, per un guadagno che il tetto di 200.000 caratteri taglierebbe comunque); 1700px di larghezza (l'intervallo dove Tesseract legge bene); il filtro anti-spazzatura vale per pagina, non per documento, così il retro bianco di un foglio non rovina le pagine leggibili.
 
-**Note tecniche:** la scelta tra le due strade non è "il testo è vuoto?" ma "il testo è sotto i 40 caratteri?" --- un PDF scansionato raramente restituisce la stringa vuota: di solito porta con sé un numero di pagina, un'intestazione vettoriale o qualche carattere di scarto. Quaranta caratteri sono più di così e incomparabilmente meno di qualunque documento vero.
-
-- **Otto pagine al massimo.** Ogni pagina costa qualche secondo e l'attesa è dentro il salvataggio: otto coprono referti, ricette e contratti, mentre un faldone da cento bloccherebbe l'utente per dieci minuti per un guadagno che il tetto dei 200.000 caratteri taglierebbe comunque.
-- **1700 pixel di larghezza.** Tesseract legge male sotto i ~150 DPI e non migliora sopra i ~200: su un A4 quella larghezza sta in mezzo. Più grande significherebbe solo più memoria e più secondi.
-- **Il filtro anti-spazzatura vale per pagina, non per documento:** il retro bianco di un foglio scansionato non deve rovinare il testo delle pagine che invece si leggono benissimo.
-- Se anche l'OCR non trova nulla si tiene comunque il poco testo del livello testuale, se ce n'era.
-
-Verificato con un test e2e su un PDF che contiene **un unico JPEG e nessun livello di testo** --- verificato a parte che `getTextContent()` su quella pagina restituisce la stringa vuota. Se la ricerca trova una parola scritta lì dentro, l'ha letta l'OCR e non pdf.js. Il test ha anche confermato per caso una scelta della FASE 17b: cercando "Gubbio" lo spezzone evidenzia `GUBBIO`, perché conserva la forma del testo e non quella digitata.
+Verificato con un e2e su un PDF con un unico JPEG e nessun livello di testo (confermato che `getTextContent()` restituisce stringa vuota) --- se la ricerca trova una parola lì dentro, l'ha letta l'OCR.
 
 ---
 
@@ -433,27 +366,15 @@ Verificato con un test e2e su un PDF che contiene **un unico JPEG e nessun livel
 
 ### FASE 17c --- Hinthial legge dentro le foto
 
-**Cosa fa:** fotografi uno scontrino, una ricetta, un referto stampato --- e Hinthial legge il testo scritto nell'immagine. Da quel momento quella foto si cerca per quello che c'è scritto sopra, non solo per come si chiama il file. È il caso più frequente di tutti in un archivio personale: quasi nessuno rinomina `IMG_4821.jpg`, ma tutti si ricordano che "c'era scritto Sassoferrato".
+**Cosa fa:** fotografi uno scontrino, una ricetta, un referto stampato --- e Hinthial legge il testo nell'immagine, cercabile da quel momento per il contenuto, non solo per il nome del file. Vale anche all'indietro: le immagini già in archivio compaiono nell'avviso "Leggili ora". L'attesa è annunciata con una percentuale ("Sto leggendo l'immagine… 42%"), non subita in silenzio.
 
-Vale anche all'indietro: le immagini già in archivio compaiono nell'avviso *"Leggili ora"* introdotto poco fa, e si recuperano tutte insieme.
+**Come per i PDF, non esce niente:** il riconoscimento avviene sul dispositivo. La prima volta Hinthial scarica una tantum il motore di lettura (~5,6 MB) **dal proprio dominio, non da una CDN esterna** --- scaricarlo da terzi rivelerebbe comunque "questo utente sta leggendo un documento ora".
 
-**Come per i PDF, non esce niente.** Il riconoscimento avviene sul dispositivo. La prima volta Hinthial scarica una tantum il motore di lettura (~5,6 MB) --- **dal proprio dominio, non da una CDN esterna**: il contenuto non uscirebbe comunque, ma scaricare un modello da un terzo significherebbe dirgli "questo utente, a quest'ora, sta leggendo un documento", ed è esattamente il tipo di informazione che Hinthial promette di non far uscire. Da lì in poi resta in memoria sul dispositivo e funziona anche offline.
+**Note tecniche:** Tesseract.js (WebAssembly) dietro la stessa interfaccia `TextExtractor` di pdf.js. Un solo file di motore (variante SIMD/solo-LSTM, non tutte e sei le varianti, ~12 MB) e solo italiano, per limitare il download iniziale. Il filtro anti-spazzatura scarta ciò che sta sotto una soglia di confidenza *o* che non ha almeno tre gruppi di caratteri di lunghezza credibile (la confidenza da sola può essere altissima su due lettere) --- senza, un muro o una firma restituirebbero comunque simboli slegati che inquinerebbero la ricerca. Il motore resta acceso un minuto dopo l'ultima immagine, per non ricompilare il WebAssembly venti volte recuperando venti foto dal banner. I file del motore non sono in git: copiati da `node_modules` da `scripts/sync-ocr-assets.mjs`.
 
-**L'attesa è annunciata, non subita.** Scegliendo un'immagine compare subito l'avviso che verrà letta e che può richiedere qualche decina di secondi; durante la lettura il pulsante dice *"Sto leggendo l'immagine… 42%"*. L'OCR è lento per natura, e una percentuale è ciò che distingue un'attesa lunga da un'app bloccata.
+Verificato: 13 unit test (filtro anti-spazzatura in ogni caso limite), un e2e che carica un'immagine vera e cerca una parola che esiste solo dentro i pixel (unico modo di esercitare l'intero percorso: Web Worker, WebAssembly, cifratura, rilettura).
 
-**Note tecniche:** Tesseract.js (WebAssembly) dietro la stessa interfaccia `TextExtractor` già usata per pdf.js --- registrarlo è stata una riga in `extract-text.ts`, nessun chiamante è cambiato. Tre scelte che vale la pena motivare:
-
-- **Un solo file di motore, non sei.** Si serve esplicitamente la variante SIMD/solo-LSTM invece di lasciare che Tesseract.js scelga da sé tra le sei disponibili (il che obbligherebbe a pubblicarle tutte, ~12 MB). SIMD è supportato da ogni browser dal 2021, e chi non ce l'ha non arriverebbe comunque fin qui.
-- **Solo italiano.** Ogni lingua in più è qualche megabyte in più al primo utilizzo. Aggiungerne una è una riga in `scripts/sync-ocr-assets.mjs` e una in `ocr-extractor.ts`.
-- **Un filtro contro la spazzatura.** Un OCR non dice mai "non ho trovato niente": davanti a un muro o a una firma restituisce comunque una manciata di simboli slegati. Senza filtro, la ricerca si riempirebbe di documenti che "contengono" parole che nessuno ci ha mai scritto. Si scarta ciò che sta sotto una soglia di confidenza **o** che non ha almeno tre gruppi di caratteri di lunghezza credibile: entrambe servono, perché la confidenza da sola può essere altissima su due sole lettere.
-
-Il motore resta acceso un minuto dopo l'ultima immagine invece di spegnersi subito: avviarlo costa qualche megabyte di WebAssembly da compilare, e chi recupera venti foto dal banner lo pagherebbe venti volte. `TextExtractor.extract` accetta ora un `onProgress` opzionale, che arriva fino al pulsante e al banner.
-
-I file del motore **non sono in git**: sono artefatti copiati da `node_modules` da `scripts/sync-ocr-assets.mjs`, che gira da sé prima di `dev`, `build` e dei test e2e.
-
-Verificato: 13 test unitari (quali file l'OCR accetta, e il filtro anti-spazzatura in tutti i suoi casi limite), più un test e2e che carica un'immagine vera dall'interfaccia vera e cerca una parola che esiste **solo dentro i pixel** --- unico modo di esercitare il percorso completo (Web Worker, WebAssembly, modello servito dal nostro dominio, cifratura, rilettura). Test completo in 25 secondi, download del motore incluso.
-
-**Resta fuori, per il passo successivo:** i PDF fatti di sole scansioni. Oggi l'OCR guarda le immagini; un PDF scansionato è un'immagine dentro un PDF, e pdf.js non ci trova testo. Sono i documenti sanitari e burocratici più comuni, e arrivano subito dopo.
+**Resta fuori, per il passo successivo:** i PDF fatti di sole scansioni (un'immagine dentro un PDF, dove pdf.js non trova testo).
 
 ---
 
@@ -461,19 +382,13 @@ Verificato: 13 test unitari (quali file l'OCR accetta, e il filtro anti-spazzatu
 
 ### FASE 17b --- il perché dei risultati, e i documenti già in archivio
 
-**Cosa fa:** tre cose che rendono percepibile la lettura dei PDF introdotta poco fa.
+**Cosa fa:** tre rifiniture alla lettura dei PDF introdotta poco fa. **(1)** Il risultato di ricerca mostra ora lo spezzone di testo attorno alla parola trovata, evidenziata (non compare se la parola è già nel nome del file). **(2)** Il pulsante di caricamento dice *"Sto leggendo il documento…"* mentre legge e *"Salvataggio…"* mentre salva, invece di "Salvataggio…" per tutta l'attesa. **(3)** I documenti caricati prima di questa fase si recuperano: un avviso in Archivio con **"Leggili ora"** li scorre uno per uno mostrando l'avanzamento.
 
-**(1) Il risultato spiega perché è comparso.** Cerchi "cardiologia" e trovi `scan_0012.pdf`: sotto al nome compare ora lo spezzone di testo attorno alla parola, con la parola evidenziata --- *"…reparto di **cardiologia**. Referto della visita del 14 marzo…"*. Senza, vedevi un file il cui nome non c'entrava nulla e non avevi modo di capire se il risultato fosse giusto. Non compare quando la parola sta già nel nome: lì il motivo è sotto gli occhi e una riga in più sarebbe solo rumore.
+**Note tecniche:** nuova colonna `extracted_at` distingue tre stati prima indistinguibili (mai tentata, tentata con esito, tentata a vuoto --- tipicamente una scansione in attesa dell'OCR). Il recupero è sequenziale, non parallelo (un file illeggibile viene contato e non ferma gli altri). Nuovo `lib/text-snippet.ts` (8 test): sceglie il primo termine presente, conserva la forma del testo, allinea il taglio al confine di parola solo quando è vicino.
 
-**(2) Il pulsante non mente più.** Durante il caricamento di un PDF dice *"Sto leggendo il documento…"* mentre legge, e *"Salvataggio…"* mentre salva. Prima diceva "Salvataggio…" per tutto il tempo, anche quando stava ancora leggendo: stessa attesa, ma inspiegata.
+Verificato: 8 unit test sullo spezzone, e2e esteso (spezzone solo cercando per contenuto, recupero funzionante di un documento "mai letto").
 
-**(3) I documenti già in archivio si recuperano.** Chi aveva file caricati prima non vedeva alcuna differenza: l'estrazione avveniva solo al caricamento. Ora in Archivio compare un avviso --- *"N documenti sono stati caricati prima che Hinthial sapesse leggerne il contenuto"* --- con un tasto **"Leggili ora"** che li scorre uno per uno mostrando l'avanzamento, e sparisce da sé quando ha finito.
-
-**Note tecniche:** nuova colonna `extracted_at` (solo una data, mai contenuto) che distingue tre stati prima indistinguibili, perché in tutti e tre il testo risultava vuoto: *mai tentata* (null, caricato prima della FASE 17), *tentata con esito* e *tentata a vuoto* (tipicamente una scansione, in attesa dell'OCR). Senza, il recupero non saprebbe quali file ha già guardato e riproverebbe all'infinito sugli stessi. Il recupero è **sequenziale e non parallelo**: ogni documento va scaricato, decifrato e letto, e lanciarne dieci insieme su un telefono lo farebbe solo arrancare; un file illeggibile viene contato e non ferma gli altri. `uploadDocument` accetta ora un `onPhase` opzionale per dire al form cosa sta facendo --- l'estrazione resta dentro il repository, così ogni chiamante futuro la eredita senza doversene ricordare. Nuovo `lib/text-snippet.ts` con 8 test: sceglie il primo termine presente, conserva la forma del testo e non quella digitata, allinea il taglio al confine di parola solo quando è vicino (meglio tagliare a metà parola che perdere il contesto), segnala se il testo continua oltre.
-
-Verificato: 8 test unitari sullo spezzone, più il test e2e esteso che ora copre anche il nuovo percorso --- lo spezzone compare cercando per contenuto e **non** compare cercando per nome, e il recupero dei documenti storici funziona davvero (si riporta un documento allo stato "mai letto", si verifica che la ricerca non lo trovi, si preme "Leggili ora", si verifica che ora lo trovi).
-
-**Resta fuori, deliberatamente:** l'avviso *"questo documento non contiene testo leggibile"* per le scansioni. Sarebbe un cartello che descrive un problema che l'OCR elimina --- si scriverebbe codice destinato a sparire un passo dopo. E lo spezzone nella ricerca globale: quella passa da `AISource`, lo stesso tipo che alimenta ciò che viene inviato a Claude (`claude-provider.ts`), dove oggi per scelta viaggiano solo metadati e mai contenuto. Aggiungerlo lì richiede una regola esplicita e un test che la difenda: si farà quando si lavorerà su quel confine.
+**Resta fuori, deliberatamente:** l'avviso "nessun testo leggibile" per le scansioni (l'OCR lo risolverà un passo dopo) e lo spezzone nella ricerca globale (passa da `AISource`, dove oggi viaggiano solo metadati verso Claude).
 
 ---
 
@@ -481,17 +396,17 @@ Verificato: 8 test unitari sullo spezzone, più il test e2e esteso che ora copre
 
 ### FASE 17, primo passo --- la ricerca guarda dentro i PDF
 
-**Cosa fa:** quando carichi un PDF in Archivio, Hinthial ne legge il testo **sul tuo dispositivo** e lo salva cifrato insieme al resto. Da quel momento la ricerca non guarda più solo nome, tag e note: trova un documento anche per una parola scritta **dentro** il file. Cerchi "cardiologia" e salta fuori `scan_0012.pdf`, che nel nome non lo dice da nessuna parte. Vale sia per la ricerca dell'Archivio sia per quella globale (Ctrl+K).
+**Cosa fa:** quando carichi un PDF in Archivio, Hinthial ne legge il testo **sul tuo dispositivo** e lo salva cifrato insieme al resto. Da quel momento la ricerca trova un documento anche per una parola scritta **dentro** il file, sia in Archivio sia nella ricerca globale (Ctrl+K).
 
-**Nessun consenso richiesto, perché non esce niente:** l'estrazione avviene nel browser, prima della cifratura --- è la differenza tra "leggere" e "far leggere a qualcun altro". I PDF fatti di sole scansioni non contengono testo e restano per ora invisibili alla ricerca: li leggerà l'OCR, secondo passo di questa fase.
+**Nessun consenso richiesto, perché non esce niente:** l'estrazione avviene nel browser, prima della cifratura. I PDF fatti di sole scansioni non contengono testo e restano per ora invisibili: li leggerà l'OCR, secondo passo di questa fase.
 
-**Note tecniche:** nuovo modulo `domain/extraction` sullo stesso schema a provider già usato da `Categorizer`, `TranscriptionProvider` e `AIProvider` --- un'interfaccia `TextExtractor` con oggi una sola implementazione (pdf.js), a cui OCR e trascrizione si aggiungeranno senza toccare chi chiama. L'estrazione è agganciata dentro `uploadDocument`, l'unico punto in cui il contenuto è già in chiaro in memoria: nessun download né decifratura in più. È **best-effort e non lancia mai**: un PDF malformato o protetto non impedisce di salvare il file, si perde solo la ricerca dentro quel documento. Nuova colonna `encrypted_extracted_text`, deliberatamente distinta da `encrypted_transcript`: quella è scritta a mano dall'utente ed è un suo contenuto, questa è derivata dal file e rigenerabile --- tenerle insieme avrebbe significato che un'estrazione automatica può sovrascrivere ciò che l'utente ha scritto. Testo normalizzato negli spazi e tagliato a 200.000 caratteri: oltre, si cifrerebbero e ri-decifrerebbero megabyte a ogni caricamento dell'elenco per un guadagno nullo in ricerca.
+**Note tecniche:** nuovo modulo `domain/extraction`, un'interfaccia `TextExtractor` (oggi solo pdf.js, a cui OCR e trascrizione si aggiungeranno) sullo stesso schema a provider di `Categorizer`/`AIProvider`. Agganciata dentro `uploadDocument`, l'unico punto in cui il contenuto è già in chiaro in memoria. È best-effort e non lancia mai: un PDF malformato non impedisce di salvare il file. Nuova colonna `encrypted_extracted_text`, distinta da `encrypted_transcript` (quella scritta a mano dall'utente, questa derivata e rigenerabile) --- tenerle insieme avrebbe permesso a un'estrazione automatica di sovrascrivere testo dell'utente. Testo tagliato a 200.000 caratteri.
 
-Due trappole trovate e risolte durante la scrittura, entrambe verificate e non dedotte: **(1)** pdf.js prende possesso del buffer che riceve (lo "detacha"), quindi gli si passa una copia --- senza, il documento verrebbe salvato vuoto, e c'è un test apposta che lo verifica; **(2)** il build moderno di pdf.js non funziona fuori dal browser (il loader ESM di Node rifiuta l'URL del worker), quindi si usa il build `legacy`, che pdf.js stesso raccomanda per Node: così i test unitari esercitano esattamente lo stesso codice che gira in produzione invece di una variante diversa. `import()` dinamico, come già per `qrcode`: oltre un megabyte che si carica solo quando arriva davvero un PDF.
+Due trappole trovate scrivendo: pdf.js "detacha" il buffer che riceve, quindi gli si passa una copia; il build moderno di pdf.js non funziona fuori dal browser (loader ESM di Node), quindi si usa il build `legacy` che pdf.js stesso raccomanda per Node.
 
-Verificato su due livelli: 6 test unitari su un PDF vero costruito nel test (lettura, byte non toccati, nessun lancio su file non validi, normalizzazione), più un test e2e che copre il percorso che i test unitari **non possono** toccare --- pdf.js con il suo worker dentro un browser vero: carica un PDF dall'interfaccia, cerca una parola che esiste solo dentro il file, e verifica anche che una parola assente non trovi nulla (altrimenti il test passerebbe pure con una ricerca rotta).
+Verificato: 6 unit test su un PDF vero costruito nel test, un e2e che copre pdf.js col suo worker in un browser vero (carica, cerca una parola presente e una assente).
 
-**Nota non correlata:** durante la verifica, `tests/unit/crypto/aes-gcm.test.ts` ("round-trips a large payload") va in timeout su questa macchina. Verificato mettendo da parte le modifiche con `git stash`: **fallisce identico anche sul codice pulito**, quindi non è una regressione di questa fase --- cifra 4 MB in jsdom con un limite di 20 secondi, e la macchina è semplicemente più lenta di prima. Da rivedere a parte (alzare il limite o ridurre il payload).
+**Nota non correlata:** `tests/unit/crypto/aes-gcm.test.ts` va in timeout su questa macchina --- verificato con `git stash` che fallisce identico anche sul codice pulito, quindi non è una regressione di questa fase (cifra 4 MB in jsdom con un limite di 20s, macchina più lenta di prima). Da rivedere a parte.
 
 ---
 
