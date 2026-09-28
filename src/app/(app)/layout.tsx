@@ -5,20 +5,11 @@ import { hasMfaVerifiedViaBackupCode } from "@/lib/auth/mfa-bypass";
 import { AppShell } from "@/components/layout/AppShell";
 
 /**
- * Shared layout for every authenticated section (dashboard, documents,
- * reminders, assets, friends, capsules, ai, settings). A route group
- * ((app)) so it applies to all of them without adding a URL segment.
- *
- * This is the single place that guards these routes: it redirects to
- * /login whenever there is no valid Supabase session, and to
- * /login/mfa whenever there is a session but its second factor (v.
- * domain/mfa) hasn't been verified yet --- catches a direct/bookmarked
- * URL reached without going through the /login/mfa step that signIn()
- * (lib/auth/actions.ts) already redirects to right after the password.
- * Un codice di backup non è un vero fattore Supabase, quindi non alza
- * da sé l'AAL della sessione (v. lib/auth/mfa-bypass.ts): il suo
- * cookie conta come equivalente ad aal2 qui, oppure questo gate
- * rimanderebbe sempre indietro anche dopo un codice di backup corretto.
+ * Shared layout for every authenticated section. A route group ((app)) so it applies to all of them without adding
+ * a URL segment. This is the single place that guards these routes: redirects to /login without a valid session,
+ * and to /login/mfa with a session whose second factor hasn't been verified — catches a direct/bookmarked URL that
+ * skipped the /login/mfa step. A backup code doesn't alter the real AAL (v. lib/auth/mfa-bypass.ts): its cookie
+ * counts as equivalent to aal2 here, or this gate would redirect back even after a correct backup code.
  */
 export default async function AppLayout({
   children,

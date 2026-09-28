@@ -5,21 +5,11 @@ import { logAuditEvent } from "@/lib/audit/log-event";
 import type { MinimalItem } from "@/domain/ai/claude-provider";
 
 /**
- * FASE 11 --- "Explicit AI processing" (v. HINTHIAL_MVP.md sezione 8).
- * Unico punto di contatto tra Hinthial e Anthropic: la chiave API vive
- * solo qui (env server-side, mai `NEXT_PUBLIC_*`), mai nel browser. Chi
- * chiama (v. domain/ai/claude-provider.ts) ha già ridotto il contesto al
- * minimo necessario --- questa route si limita a verificare
- * autenticazione + consenso e a passare la domanda avanti.
- *
- * Il consenso viene riverificato QUI sul valore salvato sul server, non
- * fidandosi del solo stato client (v. AIProcessingConsentProvider): è il
- * vero cancello di autorizzazione, l'altro è solo comodità della UI. Due
- * controlli distinti, entrambi obbligatori --- il "cancello" generale
- * (ai_master_enabled) e il consenso specifico a questa funzione
- * (ai_chat_consent): un domani, un'altra funzione (es. estrazione
- * automatica) avrà il proprio consenso specifico, ma dipenderà dallo
- * stesso cancello.
+ * Unico punto di contatto tra Hinthial e Anthropic: la chiave API vive solo qui (server-side), mai nel browser. Il
+ * chiamante (v. domain/ai/claude-provider.ts) ha già ridotto il contesto al minimo necessario. Il consenso viene
+ * riverificato QUI sul valore salvato sul server, non fidandosi del solo stato client: è il vero cancello di
+ * autorizzazione, l'altro è solo comodità della UI. Due controlli distinti, entrambi obbligatori: il "cancello"
+ * generale (ai_master_enabled) e il consenso specifico a questa funzione (ai_chat_consent).
  */
 
 const SYSTEM_PROMPT = `Sei l'assistente di Hinthial, un'app personale di gestione della vita digitale.
@@ -112,9 +102,7 @@ export async function POST(request: NextRequest) {
 
     const textBlock = response.content.find((block) => block.type === "text");
 
-    // Traccia che una domanda ha davvero raggiunto Claude --- non solo che
-    // il consenso lo permetteva (v. Impostazioni > Attività). Mai
-    // bloccante: v. logAuditEvent, che inghiotte da sé i propri errori.
+    // Traccia che una domanda ha davvero raggiunto Claude, non solo che il consenso lo permetteva.
     await logAuditEvent(supabase, user.id, "ai_chat_used");
 
     return NextResponse.json({ text: textBlock?.text ?? "" });

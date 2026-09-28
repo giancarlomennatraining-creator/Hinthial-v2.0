@@ -3,12 +3,7 @@ import { Baloo_2, Caveat, Geist_Mono, Manrope, Work_Sans } from "next/font/googl
 import Script from "next/script";
 import "./globals.css";
 
-/**
- * Applica il tema chiaro/scuro/sistema (v. lib/theme.ts) prima del primo
- * paint --- deve restare uno script inline autonomo (non può importare
- * lib/theme.ts: gira prima che qualunque modulo dell'app sia caricato).
- * La chiave di storage ("hinthial-theme") è duplicata qui di proposito.
- */
+/** Applica il tema chiaro/scuro/sistema (v. lib/theme.ts) prima del primo paint: deve restare uno script inline autonomo, gira prima che qualunque modulo dell'app sia caricato. */
 const THEME_INIT_SCRIPT = `
 (function () {
   try {
@@ -21,39 +16,21 @@ const THEME_INIT_SCRIPT = `
 })();
 `;
 
-/**
- * Registra il service worker minimo (v. public/sw.js) --- non serve
- * prima del primo paint come lo script sopra, solo dopo che la pagina è
- * interattiva. `navigator.serviceWorker` non esiste su ogni browser
- * (es. contesti senza HTTPS): il controllo è nello script stesso, non
- * qui, perché questo gira lato client puro.
- */
+/** Registra il service worker minimo (v. public/sw.js), solo dopo che la pagina è interattiva. Il controllo `"serviceWorker" in navigator` è nello script stesso, che gira lato client puro. */
 const SW_REGISTER_SCRIPT = `
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(function () {});
 }
 `;
 
-/*
- * Font della direzione visiva "Fresh Clarity" (v. mockup condiviso con
- * l'utente): Manrope per i titoli, Work Sans per il resto --- Geist Mono
- * resta solo per gli sniplet di codice (font-mono, es. codice di
- * recovery/MFA).
- */
+// Manrope per i titoli, Work Sans per il resto, Geist Mono solo per gli snippet di codice (recovery/MFA).
 const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
   weight: ["500", "700", "800"],
 });
 
-/*
- * Baloo 2 --- lo stesso carattere (identificato a occhio, l'SVG del logo
- * è un'immagine raster, non testo vero) usato per la scritta "Hinthial"
- * nel logo (v. public/brand/logo-lockup.svg): riservato al solo titolo
- * di pagina (<h1>, es. "Capsule", "Ciao, ...") per farlo risaltare come
- * un'estensione del logo --- Manrope resta per i titoli più piccoli
- * (card, sezioni).
- */
+// Baloo 2, lo stesso carattere della scritta "Hinthial" nel logo, riservato al solo titolo di pagina per farlo risaltare come un'estensione del logo.
 const baloo2 = Baloo_2({
   variable: "--font-baloo",
   subsets: ["latin"],
@@ -66,13 +43,7 @@ const workSans = Work_Sans({
   weight: ["400", "500", "600"],
 });
 
-/**
- * Caveat --- lo stile "a mano" opzionale per il testo di una capsula
- * (v. CreateCapsuleForm/EditCapsuleForm/CapsulePreview): chi scrive può
- * scegliere questo font al posto di Work Sans per il proprio messaggio,
- * mai imposto. Solo il peso 600: è l'unico usato (niente normale/400,
- * che il browser sostituirebbe comunque col peso più vicino caricato).
- */
+/** Caveat, lo stile "a mano" opzionale per il testo di una capsula, mai imposto. Solo il peso 600: l'unico usato. */
 const caveat = Caveat({
   variable: "--font-caveat",
   subsets: ["latin"],
