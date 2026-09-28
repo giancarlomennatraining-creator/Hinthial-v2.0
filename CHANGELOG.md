@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-28 (3)
+
+### Scheda documento --- concept 1: identità fissa a sinistra, tab a destra
+
+**Cosa fa:** la scheda di un documento era arrivata ad affiancare troppe cose sulla stessa pagina (Scheda, campi eterogenei, bottone AI, sintesi di Claude, Proposte, Letto dal dispositivo). Ora l'identità del documento --- Anteprima, Scheda e il bottone "Chiedi a Claude" --- resta fissa in una colonna a sinistra, sempre visibile; il resto vive in tre tab a destra: **Proposte** (con il conteggio, se ce ne sono), **Letto dal dispositivo** (l'estrazione locale, prima "Cosa ne ho ricavato"/"Cosa ho letto") e **Analisi di Claude** (la sintesi, o la dichiarazione onesta che non è stata ancora chiesta). Dopo un'analisi Claude riuscita la pagina salta da sola sulla tab con qualcosa di nuovo da vedere.
+
+**Note tecniche:** unico file di produzione toccato, `ArchiveItemDetail.tsx` --- nessuna modifica a `ProposalsSection`/`StructuredFieldsSection`/`ReadingSection`: il loro `<section aria-label="...">` interno resta la region raggiungibile via `getByRole`, il tab è solo il contenitore attorno (`role="tablist"`/`role="tab"`/`role="tabpanel"`, un solo pannello montato alla volta, come `SettingsTabs.tsx`). La griglia a container query (`@container`/`@3xl`) diventa un flex fisso-a-sinistra (`@3xl:w-[380px] @3xl:shrink-0`)/tab-a-destra, stesso breakpoint di prima.
+
+**Due bug preesistenti scoperti verificando, non causati da questa modifica:** (1) `archive-proposals.spec.ts` cliccava un link "Impostazioni" ambiguo con quello di `AIAnalysisTrigger` ("Impostazioni → Intelligenza artificiale", introdotto dalla FASE 22) --- latente da allora, mai eseguito questo test dopo. Corretto con un `exact: true` nel test. (2) `archive-item-detail.spec.ts` si aspetta "AZIENDA OSPEDALIERA DI GUBBIO" nel testo OCR di `ocr-scansione.pdf`, ma non lo trova più --- riproducibile identico anche su `master` prima di questa modifica (verificato con `git stash`), quindi non causato da questo lavoro. Non risolto qui: fuori dallo scopo di questa voce.
+
+Verificato: typecheck, lint, build di produzione; `archive-item-detail.spec.ts`, `archive-thumbnails.spec.ts`, `archive-proposals.spec.ts` (8 test su 9 passano; il nono è il bug OCR preesistente sopra). `ai-content-analysis.spec.ts`/`ai-extraction-consent.spec.ts` non eseguiti, stesso motivo di sempre (`ANTHROPIC_API_KEY` reale in `.env.local`).
+
+---
+
 ## 2026-09-28 (2)
 
 ### Campi eterogenei per documento: vocabolario personale e sintesi di Claude

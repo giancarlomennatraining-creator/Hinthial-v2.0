@@ -107,6 +107,10 @@ export function ArchiveItemDetail({
   // Testo letto potenzialmente lungo: se ne mostra un pezzo, il resto solo a richiesta.
   const [fullText, setFullText] = useState(false);
 
+  // Concept 1 (scheda fissa + tab, v. Artifact discusso con l'utente): quale delle tre tab è attiva a destra.
+  // Si azzera su "proposals" a ogni apertura della pagina, come fullText --- nessuna persistenza necessaria.
+  const [activeTab, setActiveTab] = useState<"proposals" | "reading" | "analysis">("proposals");
+
   // Contatore di richieste --- v. EditArchiveItemForm (StrictMode invoca l'effetto due volte al mount).
   const latestRequestRef = useRef(0);
 
@@ -326,6 +330,13 @@ export function ArchiveItemDetail({
         await saveAISynthesis(supabase, masterKey, doc.id, fields.synthesis);
         await refresh();
       }
+      // Senza, l'utente non si accorgerebbe che qualcosa è successo: salta sulla tab che ha davvero qualcosa di nuovo.
+      const gotProposals = fields.expiry.length > 0 || fields.issuer.length > 0 || fields.category || fields.fields.length > 0;
+      if (gotProposals) {
+        setActiveTab("proposals");
+      } else if (fields.synthesis) {
+        setActiveTab("analysis");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Claude.");
     } finally {
@@ -457,12 +468,16 @@ export function ArchiveItemDetail({
         </button>
       </div>
 
-      {/* Anteprima e scheda affiancate, un terzo e due terzi. Container query (non breakpoint di viewport)
-          perché la larghezza reale dipende anche dalla barra laterale, aperta o chiusa. */}
+      {/* Concept 1 (v. Artifact discusso con l'utente): identità del documento fissa a sinistra,
+          il resto --- Proposte / Letto dal dispositivo / Analisi di Claude --- a tab a destra.
+          Container query (non breakpoint di viewport) perché la larghezza reale dipende anche
+          dalla barra laterale, aperta o chiusa. */}
       <div className="@container">
-        {/* items-start: senza, la griglia allungherebbe la scheda fino all'altezza dell'anteprima. */}
-        <div className="grid items-start gap-6 @3xl:grid-cols-3">
-          <section aria-label="Anteprima" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 @3xl:col-span-1 dark:border-zinc-800 dark:bg-zinc-950">
+        {/* items-start: senza, il flex allungherebbe la colonna fissa fino all'altezza del pannello attivo. */}
+        <div className="flex flex-col items-stretch gap-6 @3xl:flex-row @3xl:items-start">
+          {/* Colonna fissa: identità del documento, sempre visibile, mai dietro una tab. */}
+          <div className="flex flex-col gap-6 @3xl:w-[380px] @3xl:shrink-0">
+          <section aria-label="Anteprima" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Anteprima</h2>
             {previewLoading ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
@@ -519,8 +534,6 @@ export function ArchiveItemDetail({
             )}
           </section>
 
-          {/* Colonna di destra: la scheda e, sotto, ciò che Hinthial ha ricavato dal testo. */}
-          <div className="flex flex-col gap-6 @3xl:col-span-2">
             <section aria-label="Scheda" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
               <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Scheda</h2>
               <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[10rem_1fr]">
@@ -578,58 +591,118 @@ export function ArchiveItemDetail({
               </dl>
             </section>
 
-            <StructuredFieldsSection fields={structuredFields} />
+            {/* FASE 22: sopra il trigger di analisi, sotto la scheda --- resta nella colonna fissa, sempre visibile. */}
+            <AIAnalysisTrigger
+              masterEnabled={masterEnabled}
+              extractionConsent={extractionConsent}
+              hasCategory={doc.categoryId !== null}
+              categoryEnabled={categoryEnabledForAI}
+              excluded={doc.aiExtractionExcluded}
+              busy={aiBusy}
+              onAnalyze={handleAnalyzeWithClaude}
+              onToggleExcluded={handleToggleAIExclusion}
+            />
+          </div>
+
+          {/* Colonna a tab: Proposte / Letto dal dispositivo / Analisi di Claude --- v. Artifact concept 1. */}
+          <div className="flex min-w-0 flex-1 flex-col gap-4">
+            <div role="tablist" className="flex flex-wrap gap-1 border-b border-zinc-200 dark:border-zinc-800">
+              <button
+                type="button"
+                role="tab"
+                id="tab-proposals"
+                aria-selected={activeTab === "proposals"}
+                aria-controls="tabpanel-proposals"
+                onClick={() => setActiveTab("proposals")}
+                className={`rounded-t-md px-3 py-2 text-sm font-medium ${
+                  activeTab === "proposals"
+                    ? "border-b-2 border-brand text-brand"
+                    : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                }`}
+              >
+                Proposte{proposals.length > 0 ? ` · ${proposals.length}` : ""}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="tab-reading"
+                aria-selected={activeTab === "reading"}
+                aria-controls="tabpanel-reading"
+                onClick={() => setActiveTab("reading")}
+                className={`rounded-t-md px-3 py-2 text-sm font-medium ${
+                  activeTab === "reading"
+                    ? "border-b-2 border-brand text-brand"
+                    : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                }`}
+              >
+                Letto dal dispositivo
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="tab-analysis"
+                aria-selected={activeTab === "analysis"}
+                aria-controls="tabpanel-analysis"
+                onClick={() => setActiveTab("analysis")}
+                className={`rounded-t-md px-3 py-2 text-sm font-medium ${
+                  activeTab === "analysis"
+                    ? "border-b-2 border-brand text-brand"
+                    : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                }`}
+              >
+                Analisi di Claude
+              </button>
+            </div>
+
+            {/* Un solo pannello montato alla volta, come SettingsTabs.tsx --- non tutti nascosti con `hidden`. */}
+            {activeTab === "proposals" ? (
+              <div id="tabpanel-proposals" role="tabpanel" aria-labelledby="tab-proposals">
+                <ProposalsSection
+                  proposals={proposals}
+                  categories={categories}
+                  busy={proposalBusy}
+                  undoable={undoable}
+                  onAccept={handleAcceptProposal}
+                  onReject={handleRejectProposal}
+                />
+              </div>
+            ) : activeTab === "reading" ? (
+              <div id="tabpanel-reading" role="tabpanel" aria-labelledby="tab-reading" className="flex flex-col gap-6">
+                <StructuredFieldsSection fields={structuredFields} />
+                <ReadingSection
+                  doc={doc}
+                  reading={reading}
+                  rereading={rereading}
+                  fullText={fullText}
+                  onToggleFullText={() => setFullText((v) => !v)}
+                  onReread={handleReread}
+                />
+              </div>
+            ) : (
+              <div id="tabpanel-analysis" role="tabpanel" aria-labelledby="tab-analysis">
+                {doc.aiSynthesis ? (
+                  <section
+                    aria-label="Analisi di Claude"
+                    className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
+                  >
+                    <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">🔒 Analisi di Claude</h2>
+                    <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">{doc.aiSynthesis}</p>
+                    {doc.aiSynthesisGeneratedAt ? (
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Letta il {formatDate(doc.aiSynthesisGeneratedAt)}
+                      </p>
+                    ) : null}
+                  </section>
+                ) : (
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    Non hai ancora chiesto a Claude di leggere questo documento.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* FASE 22: sopra le proposte --- il bottone che le può alimentare con una lettura vera, non solo locale. */}
-      <AIAnalysisTrigger
-        masterEnabled={masterEnabled}
-        extractionConsent={extractionConsent}
-        hasCategory={doc.categoryId !== null}
-        categoryEnabled={categoryEnabledForAI}
-        excluded={doc.aiExtractionExcluded}
-        busy={aiBusy}
-        onAnalyze={handleAnalyzeWithClaude}
-        onToggleExcluded={handleToggleAIExclusion}
-      />
-
-      {/* Posto provvisorio, non il layout finale (v. concept pubblicati) --- una sintesi non è una proposta: si sostituisce da sola, non si accetta. */}
-      {doc.aiSynthesis ? (
-        <section
-          aria-label="Analisi di Claude"
-          className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
-        >
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">🔒 Analisi di Claude</h2>
-          <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">{doc.aiSynthesis}</p>
-          {doc.aiSynthesisGeneratedAt ? (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Letta il {formatDate(doc.aiSynthesisGeneratedAt)}
-            </p>
-          ) : null}
-        </section>
-      ) : null}
-
-      {/* A tutta larghezza e prima del testo: è l'unica parte che chiede una risposta. */}
-      <ProposalsSection
-        proposals={proposals}
-        categories={categories}
-        busy={proposalBusy}
-        undoable={undoable}
-        onAccept={handleAcceptProposal}
-        onReject={handleRejectProposal}
-      />
-
-      {/* A tutta larghezza, sotto: in una colonna stretta si leggerebbe peggio del documento stesso. */}
-      <ReadingSection
-        doc={doc}
-        reading={reading}
-        rereading={rereading}
-        fullText={fullText}
-        onToggleFullText={() => setFullText((v) => !v)}
-        onReread={handleReread}
-      />
     </div>
   );
 }

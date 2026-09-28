@@ -169,7 +169,8 @@ test("le scelte sulle proposte restano in Attività", async ({ page }) => {
 
   // Ogni scrittura automatica deve lasciare traccia.
   await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  // exact: senza, "Impostazioni" ambiguo con il link "Impostazioni → Intelligenza artificiale" di AIAnalysisTrigger (FASE 22).
+  await page.getByRole("link", { name: "Impostazioni", exact: true }).click();
   await page.getByRole("tab", { name: "Attività" }).click();
   await page.getByRole("button", { name: "Trova" }).click();
 

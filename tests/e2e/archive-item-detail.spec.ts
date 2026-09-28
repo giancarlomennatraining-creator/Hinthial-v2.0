@@ -39,6 +39,11 @@ function buildPdf(lines: string[]): Buffer {
   return Buffer.from(pdf, "latin1");
 }
 
+/** Concept 1 (scheda fissa + tab): "Cosa ne ho ricavato"/"Cosa ho letto" vivono sotto "Letto dal dispositivo". */
+async function openTab(page: import("@playwright/test").Page, name: string) {
+  await page.getByRole("tab", { name }).click();
+}
+
 async function signInAndSetUpVault(page: import("@playwright/test").Page, email: string, password: string) {
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
@@ -85,7 +90,8 @@ test("la scheda di un documento mostra il testo che Hinthial ci ha letto dentro"
   await expect(page).toHaveURL(/\/archive\/[0-9a-f-]+$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /referto\.pdf/ })).toBeVisible();
 
-  // Il cuore della pagina: cosa ha letto.
+  // Il cuore della pagina: cosa ha letto, sotto "Letto dal dispositivo" (v. Concept 1).
+  await openTab(page, "Letto dal dispositivo");
   const extracted = page.getByTestId("extracted-text");
   await expect(extracted).toContainText("Azienda Ospedaliera di Perugia");
   await expect(extracted).toContainText("Paziente: Ada Lovelace");
@@ -121,6 +127,8 @@ test("la scheda ricava data, emittente e scadenza dal testo del documento", asyn
 
   await page.getByRole("link", { name: /ocr-scansione\.pdf/ }).click();
 
+  // "Cosa ne ho ricavato" vive sotto "Letto dal dispositivo" (v. Concept 1); "Proposte" resta la tab di default.
+  await openTab(page, "Letto dal dispositivo");
   const ricavato = page.getByRole("region", { name: "Cosa ne ho ricavato" });
   await expect(ricavato).toBeVisible({ timeout: 30_000 });
 
@@ -129,12 +137,15 @@ test("la scheda ricava data, emittente e scadenza dal testo del documento", asyn
   await expect(ricavato).toContainText("14 mar 2026");
 
   // La scadenza viene da "Si consiglia controllo tra dodici mesi" più la data del prelievo, e vive fra le proposte, non qui.
+  await openTab(page, "Proposte");
   const proposte = page.getByRole("region", { name: "Proposte" });
   await expect(proposte).toContainText("14 mar 2027");
   await expect(proposte).toContainText("calcolata da Hinthial");
+
+  await openTab(page, "Letto dal dispositivo");
   await expect(ricavato).not.toContainText("14 mar 2027");
 
-  // E soprattutto: non ha scritto niente: la scheda resta vuota.
+  // E soprattutto: non ha scritto niente: la scheda resta vuota --- fissa a sinistra, sempre visibile.
   await expect(ricavato).toContainText("non ho cambiato niente");
   const scheda = page.getByRole("region", { name: "Scheda" });
   await expect(scheda).not.toContainText("2027");
@@ -168,7 +179,8 @@ test("la scheda dice quando un contenuto non è ancora stato letto, e lo legge",
   await page.getByRole("link", { name: /vecchio\.pdf/ }).click();
   await expect(page.getByRole("heading", { name: /vecchio\.pdf/ })).toBeVisible({ timeout: 15_000 });
 
-  // Lo stato "mai letto" è dichiarato, non dedotto da un riquadro vuoto.
+  // Lo stato "mai letto" vive sotto "Letto dal dispositivo" (v. Concept 1), dichiarato e non dedotto da un riquadro vuoto.
+  await openTab(page, "Letto dal dispositivo");
   await expect(page.getByText(/Non l'ho ancora letto/)).toBeVisible();
   await expect(page.getByTestId("extracted-text")).toHaveCount(0);
 

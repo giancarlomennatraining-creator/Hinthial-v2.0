@@ -141,6 +141,9 @@ test("un contenuto caricato prima delle miniature la ricava rileggendolo, e la v
   // Prima del recupero: nessuna miniatura, l'anteprima viene dal file intero, lo prova la didascalia col numero di pagine.
   await expect(page.getByText(/Pagina unica\./)).toBeVisible({ timeout: 20_000 });
 
+  // "Leggilo ora" vive sotto "Letto dal dispositivo" (v. Concept 1, archive-item-detail.spec.ts).
+  await page.getByRole("tab", { name: "Letto dal dispositivo" }).click();
+
   // "Leggilo ora" rilegge il testo e, con gli stessi byte già in chiaro, genera anche la miniatura che non c'era.
   await page.getByRole("button", { name: "Leggilo ora" }).click();
   await expect(page.getByTestId("extracted-text")).toContainText("via Manzoni 4 Milano", {
