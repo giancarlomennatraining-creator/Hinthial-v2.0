@@ -56,8 +56,9 @@ test("un nome file con parole chiave riconoscibili riceve una categoria suggerit
   // normale, dalla scheda del contenuto (sempre modificabile lì).
   await row.getByRole("link", { name: /polizza-assicurazione-auto\.txt/ }).click();
   await expect(page).toHaveURL(/\/archive\/[^/]+$/, { timeout: 15_000 });
-  // exact: senza, ambiguo con la checkbox di esclusione dall'analisi di Hinthia ("...la categoria abilitata"),
-  // ora sulla stessa pagina fusa Scheda/Modifica (v. AIAnalysisTrigger, sempre nella colonna fissa).
+  // exact: la tab di default è "Scheda", quindi qui l'unica ambiguità possibile sarebbe stata con la
+  // checkbox di esclusione dall'analisi di Hinthia --- ma quella vive nella tab "Analisi con Hinthia"
+  // (v. feedback utente), non montata insieme a "Scheda": lasciato comunque per chiarezza.
   await page.getByLabel("Categoria", { exact: true }).selectOption({ label: "🏠 Casa" });
   await page.getByRole("button", { name: "Salva modifiche" }).click();
   await expect(page.getByText("Modifiche salvate.")).toBeVisible();

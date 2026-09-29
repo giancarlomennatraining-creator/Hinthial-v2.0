@@ -118,10 +118,11 @@ export function ArchiveItemDetail({
   // Testo letto potenzialmente lungo: se ne mostra un pezzo, il resto solo a richiesta.
   const [fullText, setFullText] = useState(false);
 
-  // Concept 1 (scheda fissa + tab): quale delle due tab è attiva a destra --- "Proposte" non esiste più come
-  // tab a sé (v. feedback utente): quello che c'è da accettare vive già dentro una delle due. Si azzera su
-  // "reading" a ogni apertura della pagina, come fullText --- nessuna persistenza necessaria.
-  const [activeTab, setActiveTab] = useState<"reading" | "analysis">("reading");
+  // Scheda / Letto dal dispositivo / Analisi con Hinthia: quale delle tre tab è attiva a destra --- "Proposte"
+  // non esiste più come tab a sé (v. feedback utente): quello che c'è da accettare vive già dentro una delle
+  // due letture. Si azzera su "scheda" a ogni apertura della pagina, come fullText --- nessuna persistenza
+  // necessaria; "scheda" di default perché prima era sempre visibile a sinistra, mai dietro un click.
+  const [activeTab, setActiveTab] = useState<"scheda" | "reading" | "analysis">("scheda");
 
   // Fusione Scheda/Modifica: i metadati modificabili, sempre live qui (mai una pagina a parte). `null` finché
   // il documento non è ancora caricato. Le proposte (Scadenza/Categoria/Emittente) scrivono direttamente su `doc`
@@ -523,14 +524,14 @@ export function ArchiveItemDetail({
         </button>
       </div>
 
-      {/* Concept 1 (v. Artifact discusso con l'utente): identità del documento fissa a sinistra,
-          il resto --- Proposte / Letto dal dispositivo / Analisi di Claude --- a tab a destra.
+      {/* Anteprima fissa a sinistra (v. feedback utente); Scheda/Letto dal dispositivo/Analisi con Hinthia sono
+          tre tab a destra --- niente più Scheda né il trigger di analisi sempre visibili a sinistra.
           Container query (non breakpoint di viewport) perché la larghezza reale dipende anche
           dalla barra laterale, aperta o chiusa. */}
       <div className="@container">
         {/* items-start: senza, il flex allungherebbe la colonna fissa fino all'altezza del pannello attivo. */}
         <div className="flex flex-col items-stretch gap-6 @3xl:flex-row @3xl:items-start">
-          {/* Colonna fissa: identità del documento, sempre visibile, mai dietro una tab. */}
+          {/* Colonna fissa: solo l'anteprima, sempre visibile, mai dietro una tab. */}
           <div className="flex flex-col gap-6 @3xl:w-[380px] @3xl:shrink-0">
           <section aria-label="Anteprima" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Anteprima</h2>
@@ -588,60 +589,28 @@ export function ArchiveItemDetail({
               </p>
             )}
           </section>
-
-            {/* Fusione Scheda/Modifica (v. feedback utente): niente più una pagina /edit a parte, i campi sono
-                sempre modificabili qui --- un "Salva modifiche" li mette via quando ce n'è bisogno. */}
-            <section aria-label="Scheda" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Scheda</h2>
-              {fields ? (
-                <DocumentMetadataFields
-                  idPrefix="scheda"
-                  categories={categories}
-                  assets={assets}
-                  dossiers={dossiers}
-                  value={fields}
-                  onChange={setFields}
-                />
-              ) : null}
-              {Object.keys(doc.structuredFields).length > 0 ? (
-                <dl className="grid gap-x-6 gap-y-2 border-t border-zinc-100 pt-3 text-sm sm:grid-cols-[10rem_1fr] dark:border-zinc-900">
-                  {Object.entries(doc.structuredFields).map(([key, value]) => (
-                    <Field
-                      key={key}
-                      label={fieldVocabulary.find((v) => v.fieldKey === key)?.label ?? key}
-                    >
-                      {value}
-                    </Field>
-                  ))}
-                </dl>
-              ) : null}
-              <button
-                type="button"
-                disabled={!fieldsDirty || savingFields}
-                onClick={handleSaveFields}
-                className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-              >
-                {savingFields ? "Salvataggio…" : "Salva modifiche"}
-              </button>
-            </section>
-
-            {/* FASE 22: sopra il trigger di analisi, sotto la scheda --- resta nella colonna fissa, sempre visibile. */}
-            <AIAnalysisTrigger
-              masterEnabled={masterEnabled}
-              extractionConsent={extractionConsent}
-              hasCategory={doc.categoryId !== null}
-              categoryEnabled={categoryEnabledForAI}
-              excluded={doc.aiExtractionExcluded}
-              busy={aiBusy}
-              onAnalyze={handleAnalyzeWithClaude}
-              onToggleExcluded={handleToggleAIExclusion}
-            />
           </div>
 
-          {/* Colonna a tab: Letto dal dispositivo / Analisi con Hinthia --- niente più "Proposte" a sé (v.
-              feedback utente): quello che c'è da accettare vive già dentro una delle due, secondo la fonte. */}
+          {/* Colonna a tab: Scheda / Letto dal dispositivo / Analisi con Hinthia --- niente più "Proposte" a sé
+              (v. feedback utente): quello che c'è da accettare vive già dentro una delle due letture, secondo
+              la fonte. Scheda è la prima tab, non più fissa a sinistra (v. feedback utente). */}
           <div className="flex min-w-0 flex-1 flex-col gap-4">
             <div role="tablist" className="flex flex-wrap gap-1 border-b border-zinc-200 dark:border-zinc-800">
+              <button
+                type="button"
+                role="tab"
+                id="tab-scheda"
+                aria-selected={activeTab === "scheda"}
+                aria-controls="tabpanel-scheda"
+                onClick={() => setActiveTab("scheda")}
+                className={`rounded-t-md px-3 py-2 text-sm font-medium ${
+                  activeTab === "scheda"
+                    ? "border-b-2 border-brand text-brand"
+                    : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                }`}
+              >
+                Scheda
+              </button>
               <button
                 type="button"
                 role="tab"
@@ -694,7 +663,42 @@ export function ArchiveItemDetail({
             ) : null}
 
             {/* Un solo pannello montato alla volta, come SettingsTabs.tsx --- non tutti nascosti con `hidden`. */}
-            {activeTab === "reading" ? (
+            {activeTab === "scheda" ? (
+              <div id="tabpanel-scheda" role="tabpanel" aria-labelledby="tab-scheda" className="flex flex-col gap-3">
+                {/* Fusione Scheda/Modifica (v. feedback utente): niente più una pagina /edit a parte, i campi
+                    sono sempre modificabili qui --- un "Salva modifiche" li mette via quando ce n'è bisogno. */}
+                {fields ? (
+                  <DocumentMetadataFields
+                    idPrefix="scheda"
+                    categories={categories}
+                    assets={assets}
+                    dossiers={dossiers}
+                    value={fields}
+                    onChange={setFields}
+                  />
+                ) : null}
+                {Object.keys(doc.structuredFields).length > 0 ? (
+                  <dl className="grid gap-x-6 gap-y-2 border-t border-zinc-100 pt-3 text-sm sm:grid-cols-[10rem_1fr] dark:border-zinc-900">
+                    {Object.entries(doc.structuredFields).map(([key, value]) => (
+                      <Field
+                        key={key}
+                        label={fieldVocabulary.find((v) => v.fieldKey === key)?.label ?? key}
+                      >
+                        {value}
+                      </Field>
+                    ))}
+                  </dl>
+                ) : null}
+                <button
+                  type="button"
+                  disabled={!fieldsDirty || savingFields}
+                  onClick={handleSaveFields}
+                  className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                >
+                  {savingFields ? "Salvataggio…" : "Salva modifiche"}
+                </button>
+              </div>
+            ) : activeTab === "reading" ? (
               <div id="tabpanel-reading" role="tabpanel" aria-labelledby="tab-reading" className="flex flex-col gap-6">
                 <ProposalsSection
                   proposals={localProposals}
@@ -715,6 +719,18 @@ export function ArchiveItemDetail({
               </div>
             ) : (
               <div id="tabpanel-analysis" role="tabpanel" aria-labelledby="tab-analysis" className="flex flex-col gap-6">
+                {/* Il trigger vive qui, non più fisso a sinistra (v. feedback utente): "Analisi con Hinthia" è
+                    sia dove si chiede la lettura sia dove ne arriva il risultato. */}
+                <AIAnalysisTrigger
+                  masterEnabled={masterEnabled}
+                  extractionConsent={extractionConsent}
+                  hasCategory={doc.categoryId !== null}
+                  categoryEnabled={categoryEnabledForAI}
+                  excluded={doc.aiExtractionExcluded}
+                  busy={aiBusy}
+                  onAnalyze={handleAnalyzeWithClaude}
+                  onToggleExcluded={handleToggleAIExclusion}
+                />
                 <ProposalsSection
                   proposals={aiProposals}
                   categories={categories}

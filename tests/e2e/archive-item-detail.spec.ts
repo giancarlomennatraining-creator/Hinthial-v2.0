@@ -150,10 +150,11 @@ test("la scheda ricava data, emittente e scadenza dal testo del documento", asyn
   await expect(tabpanel).toContainText("calcolata da Hinthial");
   await expect(ricavato).not.toContainText("14 mar 2027");
 
-  // E soprattutto: non ha scritto niente: la scheda resta vuota --- fissa a sinistra, sempre visibile.
+  // E soprattutto: non ha scritto niente: la scheda resta vuota --- ora sulla sua tab (v. feedback utente),
+  // non più fissa a sinistra.
   await expect(ricavato).toContainText("non ho cambiato niente");
-  const scheda = page.getByRole("region", { name: "Scheda" });
-  await expect(scheda).not.toContainText("2027");
+  await openTab(page, "Scheda");
+  await expect(page.getByLabel("Scadenza")).toHaveValue("");
 });
 
 test("la scheda dice quando un contenuto non è ancora stato letto, e lo legge", async ({

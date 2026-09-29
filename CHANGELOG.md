@@ -10,6 +10,26 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-29 (3)
+
+### Scheda documento --- anteprima fissa, "Scheda" come prima tab, il trigger di analisi dentro "Analisi con Hinthia"
+
+**Cosa fa:** tre correzioni alla scheda fusa Scheda/Modifica appena introdotta (v. voce precedente), dopo averla provata:
+
+1. **L'anteprima resta fissa a sinistra**, sola: prima condivideva la colonna con la Scheda e il trigger di analisi, ora è l'unica cosa sempre visibile senza aprire una tab.
+2. **"Scheda" diventa la prima delle tre tab a destra** (prima di "Letto dal dispositivo" e "Analisi con Hinthia"), ed è quella attiva per default all'apertura della pagina --- coerente col fatto che prima era sempre visibile, non nascosta dietro un click.
+3. **"Chiedi a Hinthia di leggere questo documento" vive dentro la tab "Analisi con Hinthia"**, non più fissa a sinistra: quella tab è ora sia dove si chiede la lettura sia dove ne arriva il risultato (proposte di Hinthia, sintesi).
+
+**Note tecniche:** `activeTab` passa da `"reading" | "analysis"` a `"scheda" | "reading" | "analysis"`, default `"scheda"`. La sezione `<section aria-label="Scheda">` diventa il contenuto della nuova tabpanel `tabpanel-scheda` (niente più region "Scheda" raggiungibile via `getByRole("region", ...)` --- ora è una tabpanel come le altre due). `AIAnalysisTrigger` si sposta, invariato, in testa alla tabpanel "Analisi con Hinthia", sopra le eventuali proposte di Hinthia e la sintesi.
+
+**Impatto sui test e2e, di due tipi.** Il primo: `document-categorization.spec.ts`/`reminders.spec.ts`/`dossiers.spec.ts` interagivano con i campi della Scheda subito dopo aver aperto la pagina, senza mai cliccare una tab --- continuano a funzionare senza modifiche, perché "Scheda" è ora proprio la tab di default. Il secondo, più esteso, su `archive-proposals.spec.ts` e `archive-item-detail.spec.ts`: i test che restano sulla tab "Letto dal dispositivo" (dove si accetta una proposta) e poi controllano il valore scritto nel campo "Scadenza" ora devono passare esplicitamente dalla tab "Scheda" per leggerlo --- un solo pannello è montato alla volta, non basta più che il campo sia "da qualche parte sulla pagina". Un `page.reload()` a metà test azzera di nuovo la tab attiva su "Scheda": va riaperta la tab giusta anche dopo. `ai-content-analysis.spec.ts` (non eseguito, solo aggiornato meccanicamente) riceve lo stesso trattamento per il trigger di analisi, ora dentro "Analisi con Hinthia".
+
+Un compromesso onestamente accettato con questa scelta: prima, accettare una proposta sulla destra si rifletteva subito, visibilmente, nella Scheda sempre aperta a sinistra. Ora la conferma immediata è solo il banner di annullamento condiviso ("Scadenza impostata al..."); per vedere il campo aggiornato nella Scheda occorre cambiare tab. Non risolto qui, segnalato perché è un cambiamento di comportamento reale, non solo di layout.
+
+Verificato: typecheck, lint, build di produzione, e l'intera batteria dei file toccati direttamente (`archive-proposals`, `archive-item-detail`, `document-categorization`, `reminders`, `dossiers`) --- tutti passano tranne il solito fallimento preesistente e indipendente (`archive-item-detail.spec.ts`, l'OCR di "AZIENDA OSPEDALIERA DI GUBBIO", riconfermato). Una batteria più ampia (`assets`, `capsules`, `categories`, `tags`, `archive`, `ai`, `auth-shell`) ha mostrato alcuni fallimenti isolati (utente di test non pre-creato, un popup di onboarding che intercetta un click) --- rieseguiti singolarmente, passano tutti: contesa fra i tanti test eseguiti in sequenza oggi, non causata da questa modifica.
+
+---
+
 ## 2026-09-29 (2)
 
 ### HINTHIA come unica IA dell'app, scheda fusa con la modifica (concept E), niente più tab "Proposte"
