@@ -31,6 +31,7 @@ import { saveBytesAsFile } from "@/lib/download";
 import { formatDate, formatSize } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
+import { PageHelp } from "@/components/help/PageHelp";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
@@ -565,13 +566,20 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="min-w-0 w-full sm:flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-brand">
-            Archivio
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Documenti, immagini, audio, video e note — tutto cifrato sul tuo dispositivo prima
-            di essere salvato.
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight text-brand">
+              Archivio
+            </h1>
+            <PageHelp
+              title="Archivio"
+              tips={[
+                { icon: "➕", text: "Aggiungi un contenuto nuovo, o trascinalo qui sopra." },
+                { icon: "🔍", text: "Cerca per nome, tag, note — o dentro ai documenti stessi." },
+                { icon: "🏷️", text: "Filtra per categoria dal menu in alto." },
+                { icon: "📂", text: "Passa a “Fascicolo” per raggruppare più contenuti insieme." },
+              ]}
+            />
+          </div>
           {/* Una porta secondaria, non un bottone: caricare un file resta l'azione principale. */}
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             <Link href="/archive/import" className="text-brand hover:underline">

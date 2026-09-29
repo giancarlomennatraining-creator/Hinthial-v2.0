@@ -116,21 +116,18 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight text-brand">
-            Cronologia
-          </h1>
-          <PageHelp
-            title="Cronologia"
-            tips={[
-              { icon: "📅", text: "Uno sguardo d'insieme su come è cresciuta la tua vita digitale nel tempo." },
-              { icon: "🗂️", text: "Beni e documenti compaiono qui raggruppati per mese di creazione." },
-              { icon: "🔍", text: "Passa alla vista a tabella per ordinare per nome, data o tipo." },
-            ]}
-          />
-        </div>
-        {allEntries.length > 0 ? <ListViewToggle section="timeline" hideOnMobile /> : null}
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight text-brand">
+          Cronologia
+        </h1>
+        <PageHelp
+          title="Cronologia"
+          tips={[
+            { icon: "📅", text: "Uno sguardo d'insieme su come è cresciuta la tua vita digitale nel tempo." },
+            { icon: "🗂️", text: "Beni e documenti compaiono qui raggruppati per mese di creazione." },
+            { icon: "🔍", text: "Passa alla vista a tabella per ordinare per nome, data o tipo." },
+          ]}
+        />
       </div>
 
       {error ? (
@@ -191,6 +188,7 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
                 </option>
               ))}
             </select>
+            <ListViewToggle section="timeline" hideOnMobile />
           </div>
 
           {groups.length === 0 ? (

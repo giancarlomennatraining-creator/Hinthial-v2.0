@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-29 (7)
+
+### Pannello Aiuto: arrivato anche in Archivio, corretto il posizionamento in Cronologia
+
+**Cosa fa:** tre rifiniture alla voce precedente, dopo averla provata:
+
+1. **Il pannello Aiuto arriva anche in Archivio** --- era rimasto fuori dall'elenco delle nove pagine, ma è proprio la pagina da cui è partita l'idea.
+2. **In Cronologia il bottone Aiuto non è più attaccato al titolo**: ora è staccato all'altro capo della riga, come in tutte le altre pagine.
+3. **In Cronologia l'interruttore elenco/tabella si è spostato dalla riga del titolo alla riga dei filtri** (accanto a "Data inizio", "Data fine" e "Filtra per sezione"), come nelle altre pagine che lo hanno (es. Scadenze).
+
+**Note tecniche:** in `DocumentsPanel.tsx` il paragrafo descrittivo di Archivio lascia il posto al bottone Aiuto, mentre il link secondario "Importa più file insieme" resta dov'era (non era testo descrittivo, ma un'azione). In `TimelinePanel.tsx` la riga del titolo torna a un semplice `justify-between` (titolo a sinistra, Aiuto a destra, senza il contenitore intermedio che li teneva vicini); `ListViewToggle` si sposta nella riga dei filtri, che esiste solo quando ci sono elementi da mostrare --- stessa condizione che prima gestiva la sua visibilità, ora implicita nella posizione.
+
+Verificato: typecheck, lint, build di produzione, e i test e2e su Cronologia, Archivio e le preferenze di visualizzazione --- tutti passano.
+
+---
+
 ## 2026-09-29 (6)
 
 ### Pannello Aiuto di Hinthia (concept ibrido) su nove pagine, pulizia del trattino "---", icona cestino rimossa dai titoli
