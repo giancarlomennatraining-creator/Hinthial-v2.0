@@ -251,13 +251,15 @@ test("collega un documento già presente in Archivio a una capsula, selezionando
   const documentContent = `contratto di prova --- ${Date.now()}`;
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
-  await page.locator("#upload-category").selectOption({ label: "📄 Contratti" });
   await page.setInputFiles('input[type="file"]', {
     name: "contratto.txt",
     mimeType: "text/plain",
     buffer: Buffer.from(documentContent, "utf-8"),
   });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.locator("#upload-category").selectOption({ label: "📄 Contratti" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("contratto.txt")).toBeVisible({ timeout: 15_000 });
 
@@ -354,9 +356,11 @@ test("allega un intero fascicolo a una capsula in un colpo solo", async ({ page 
       mimeType: "text/plain",
       buffer: Buffer.from(`${name} --- ${Date.now()}`, "utf-8"),
     });
+    await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
     await page.getByLabel("Fascicoli").selectOption({ label: "📂 Trasloco" });
     await page.getByRole("button", { name: "+ Aggiungi fascicolo" }).click();
     await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+    await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
     await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   }
 
@@ -412,13 +416,15 @@ test("chiudere una capsula copia il contenuto collegato al suo interno; l'origin
   const documentContent = `polizza di prova --- ${Date.now()}`;
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
-  await page.locator("#upload-category").selectOption({ label: "📄 Contratti" });
   await page.setInputFiles('input[type="file"]', {
     name: "polizza.txt",
     mimeType: "text/plain",
     buffer: Buffer.from(documentContent, "utf-8"),
   });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.locator("#upload-category").selectOption({ label: "📄 Contratti" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("polizza.txt")).toBeVisible({ timeout: 15_000 });
 

@@ -41,8 +41,10 @@ test("gestisce i tag: aggregazione con merge, rinomina, eliminazione, e il filtr
     mimeType: "text/plain",
     buffer: Buffer.from("primo documento"),
   });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
   await page.getByLabel("Tag (separati da virgola)").fill("Casa, Lavoro");
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("documento-uno.txt")).toBeVisible({ timeout: 15_000 });
 
@@ -54,8 +56,10 @@ test("gestisce i tag: aggregazione con merge, rinomina, eliminazione, e il filtr
     mimeType: "text/plain",
     buffer: Buffer.from("secondo documento"),
   });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
   await page.getByLabel("Tag (separati da virgola)").fill("casa");
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("documento-due.txt")).toBeVisible({ timeout: 15_000 });
 
@@ -67,6 +71,7 @@ test("gestisce i tag: aggregazione con merge, rinomina, eliminazione, e il filtr
     buffer: Buffer.from("terzo documento"),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("documento-tre.txt")).toBeVisible({ timeout: 15_000 });
 

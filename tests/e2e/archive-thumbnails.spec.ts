@@ -74,6 +74,7 @@ test("l'anteprima di un PDF appena caricato viene dalla miniatura, non dal file 
     buffer: buildPdf(["Referto di visita cardiologica", "Paziente: Ada Lovelace"]),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
   await page.getByRole("link", { name: /referto\.pdf/ }).click();
@@ -97,6 +98,7 @@ test("l'anteprima di una foto appena caricata viene dalla miniatura", async ({ p
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await page.setInputFiles('input[type="file"]', "tests/e2e/fixtures/ocr-referto.png");
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 60_000 });
 
   await page.getByRole("link", { name: /ocr-referto\.png/ }).click();
@@ -126,6 +128,7 @@ test("un contenuto caricato prima delle miniature la ricava rileggendolo, e la v
     buffer: buildPdf(["Contratto di locazione", "via Manzoni 4 Milano"]),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
   // Si riporta il documento a prima dell'estrazione: niente testo, niente miniatura.

@@ -263,7 +263,7 @@ export async function uploadDocument(
   file: File,
   metadata: DocumentMetadataInput,
   options: UploadOptions = {},
-): Promise<void> {
+): Promise<string> {
   const { title, extraction, onPhase } = options;
   const plaintext = new Uint8Array(await file.arrayBuffer());
   const mimeType = file.type || "application/octet-stream";
@@ -355,6 +355,7 @@ export async function uploadDocument(
 
   await logAuditEvent(supabase, ownerId, "document_created");
   await replaceDocumentDossierLinks(supabase, ownerId, documentId, metadata.dossierIds);
+  return documentId;
 }
 
 /** Nota di testo: stessa tabella/cifratura di un file --- distinta solo dal mime_type (NOTE_MIME_TYPE), che fa mostrare la UI come nota editabile invece di download. */
@@ -364,7 +365,7 @@ export async function createTextNote(
   ownerId: string,
   note: TextNoteInput,
   metadata: DocumentMetadataInput,
-): Promise<void> {
+): Promise<string> {
   const plaintext = utf8ToBytes(note.body);
   const [{ wrappedDocumentKey, payload }, encryptedFilename, encryptedNotes, encryptedTags, encryptedIssuer] =
     await Promise.all([
@@ -403,6 +404,7 @@ export async function createTextNote(
 
   await logAuditEvent(supabase, ownerId, "document_created");
   await replaceDocumentDossierLinks(supabase, ownerId, documentId, metadata.dossierIds);
+  return documentId;
 }
 
 /** Ricifra con una Document Key fresca e carica su un path NUOVO (mai sovrascrivendo) --- una lettura Storage stale altrimenti pairerebbe cifrato-vecchio con chiave-nuova, e la decifratura fallirebbe. */

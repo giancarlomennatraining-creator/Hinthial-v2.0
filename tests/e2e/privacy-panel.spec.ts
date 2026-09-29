@@ -53,13 +53,15 @@ test("Impostazioni > Privacy mostra dati reali dell'account e non richiede la ma
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
-  await page.locator("#upload-category").selectOption({ label: "🛡️ Assicurazioni" });
   await page.setInputFiles('input[type="file"]', {
     name: "polizza.txt",
     mimeType: "text/plain",
     buffer: Buffer.from("polizza di prova"),
   });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.locator("#upload-category").selectOption({ label: "🛡️ Assicurazioni" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
 
   await page.getByRole("button", { name: fullName(user) }).click();

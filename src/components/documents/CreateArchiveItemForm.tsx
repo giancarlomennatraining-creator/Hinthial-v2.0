@@ -6,24 +6,30 @@ import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
 import {
   createTextNote,
+  listDocuments,
+  saveAISynthesis,
+  updateDocumentAIExtractionExclusion,
   uploadDocument,
   type PriorExtraction,
   type UploadPhase,
 } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
-import { listCategories } from "@/domain/categories/repository";
+import { listCategories, grantCategoryAIExtractionTemporarily } from "@/domain/categories/repository";
+import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
 import { listDossiers } from "@/domain/dossiers/repository";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import { heuristicCategorizer } from "@/domain/categorizer/heuristic-provider";
 import { canExtractText, extractText } from "@/domain/extraction/extract-text";
-import {
-  extractStructuredFields,
-  findDateContext,
-  type StructuredField,
-  type StructuredFieldKind,
-} from "@/domain/extraction/structured-fields";
+import { extractStructuredFields, type StructuredField } from "@/domain/extraction/structured-fields";
+import { readingStateFor } from "@/domain/extraction/reading-state";
+import { buildProposals } from "@/domain/proposals/build";
+import type { Proposal } from "@/domain/proposals/types";
 import { suggestAssetFromText } from "@/domain/proposals/asset-match";
-import { formatDate } from "@/lib/format";
+import { analyzeDocumentWithClaude, type AIAnalysisScope } from "@/domain/ai/analyze-document";
+import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
+import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
+import { CheckCircleIcon } from "@/components/icons/nav-icons";
+import { formatDate, formatSize } from "@/lib/format";
 import { AudioVideoRecorder } from "@/components/media/AudioVideoRecorder";
 import {
   DocumentMetadataFields,
@@ -33,7 +39,7 @@ import {
 } from "@/components/documents/DocumentMetadataFields";
 import type { Category } from "@/domain/categories/types";
 import type { AssetListItem } from "@/domain/assets/types";
-import type { DocumentMetadataInput } from "@/domain/documents/types";
+import type { DocumentListItem, DocumentMetadataInput } from "@/domain/documents/types";
 
 type CreationMode = "upload" | "record" | "note";
 
@@ -42,14 +48,13 @@ type ReadingState =
   | { status: "idle" }
   | { status: "reading"; progress: number | null }
   | { status: "skipped" }
-  | { status: "done"; text: string | null; fields: StructuredField[] };
+  | { status: "done"; text: string | null };
 
 /** I valori messi da Hinthial, per distinguerli da quelli scritti a mano. */
 interface Suggested {
   title?: string;
   categoryId?: string;
   relatedAssetId?: string;
-  expiresAt?: string;
 }
 
 /** Il segno accanto a un campo riempito da Hinthial. */
@@ -61,126 +66,106 @@ function SuggestedHint({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Le voci ricavate che si mostrano nel form, nell'ordine in cui servono. */
-const REPORTED_FIELDS: { kind: StructuredFieldKind; label: string }[] = [
-  { kind: "issuer", label: "Emittente" },
-  { kind: "document-date", label: "Data del documento" },
-];
-
-/** FASE 19b: "ho letto il documento" --- mostra solo le voci senza già un campo proprio (titolo/categoria/scadenza sono già precompilati). */
-function ReadingReport({ reading }: { reading: ReadingState }) {
-  if (reading.status === "idle") return null;
-
-  if (reading.status === "reading") {
-    return (
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        Sto leggendo il documento…
-        {reading.progress === null ? "" : ` ${Math.round(reading.progress * 100)}%`}
-      </p>
-    );
-  }
-
-  if (reading.status === "skipped") {
-    return (
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        Questo tipo di contenuto non lo so ancora leggere: lo trovi per nome, tag e note.
-      </p>
-    );
-  }
-
-  if (!reading.text) {
-    return (
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        L&apos;ho guardato, ma non ci ho trovato testo.
-      </p>
-    );
-  }
-
-  const reported = REPORTED_FIELDS.map((entry) => ({
-    ...entry,
-    field: reading.fields.find((f) => f.kind === entry.kind),
-  })).filter((entry) => entry.field);
-
-  return (
-    <div className="mt-1 flex flex-col gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-        ✓ Ho letto il documento{" "}
-        <span className="font-normal text-zinc-500 dark:text-zinc-400">
-          --- {reading.text.length.toLocaleString("it-IT")} caratteri
-        </span>
-      </p>
-      {reported.map(({ kind, label, field }) => (
-        <div key={kind} className="min-w-0">
-          <p className="flex flex-wrap items-baseline gap-2 text-sm">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{label}</span>
-            <span className="font-medium text-zinc-900 dark:text-zinc-100">
-              {field!.kind === "document-date" ? formatDate(field!.value) : field!.raw}
-            </span>
-          </p>
-          {field!.context === field!.value ? null : (
-            <p className="truncate text-xs text-zinc-500 italic dark:text-zinc-400">
-              {field!.context}
-            </p>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/**
- * FASE 19b: da dove viene la scadenza nel campo, qualunque essa sia --- se corretta a mano, ritrova nel documento la
- * frase con quella data (confronto tra date, non stringhe, v. findDateContext), o dice onestamente "non l'ho trovata".
- */
-function ExpiryHint({
-  metadata,
-  suggested,
-  reading,
-}: {
-  metadata: DocumentMetadataFieldsValue;
-  suggested: Suggested;
-  reading: ReadingState;
-}) {
-  if (!metadata.expiresAt || reading.status !== "done" || !reading.text) return null;
-
-  // Valore ancora quello proposto: si riusa ciò che l'estrazione sapeva già, anche se calcolata e non nel testo.
-  if (suggested.expiresAt && metadata.expiresAt === suggested.expiresAt) {
-    const field = reading.fields.find((f) => f.kind === "expiry");
-    if (field?.derived) {
-      return <SuggestedHint>Calcolata da Hinthial: {field.context}</SuggestedHint>;
-    }
-    if (field) return <SuggestedHint>Trovata nel documento: {field.context}</SuggestedHint>;
-  }
-
-  const context = findDateContext(reading.text, metadata.expiresAt);
-  if (context) {
-    return (
-      <p className="line-clamp-2 max-w-[16rem] text-xs text-zinc-500 dark:text-zinc-400">
-        Nel documento: <span className="italic">{context}</span>
-      </p>
-    );
-  }
-
-  return (
-    <p className="line-clamp-2 max-w-[16rem] text-xs text-zinc-500 dark:text-zinc-400">
-      Questa data nel documento non l&apos;ho trovata. La salvo lo stesso.
-    </p>
-  );
-}
-
 const MODE_LABEL: Record<CreationMode, string> = {
   upload: "Carica un file",
   record: "Registra audio/video",
   note: "Scrivi una nota",
 };
 
+const MODE_ICON: Record<CreationMode, string> = {
+  upload: "📄",
+  record: "🎬",
+  note: "📝",
+};
+
+const MODE_DESCRIPTION: Record<CreationMode, string> = {
+  upload: "bollette, contratti, referti",
+  record: "audio o video",
+  note: "testo scritto ora",
+};
+
+/** Concept C (v. Artifact discusso con l'utente): un passo alla volta, gli altri si riducono a un riepilogo con "Modifica". */
+function AccordionStep({
+  step,
+  active,
+  title,
+  summary,
+  onOpen,
+  children,
+}: {
+  step: number;
+  active: boolean;
+  title: string;
+  summary: React.ReactNode;
+  onOpen: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <span
+            className={
+              active
+                ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white"
+                : "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-200 text-emerald-600 dark:border-emerald-900 dark:text-emerald-400"
+            }
+          >
+            {active ? step : <CheckCircleIcon width={16} height={16} />}
+          </span>
+          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</span>
+        </span>
+        {active ? null : (
+          <span className="flex min-w-0 items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="truncate">{summary}</span>
+            <span className="shrink-0 font-semibold text-brand">Modifica</span>
+          </span>
+        )}
+      </button>
+      {active ? <div className="flex flex-col gap-4 px-5 pb-5">{children}</div> : null}
+    </div>
+  );
+}
+
+/** Segno accanto al file scelto --- sostituisce il vecchio blocco "Ho letto il documento": un segno, non un riquadro a sé. */
+function FileReadingStatus({ reading }: { reading: ReadingState }) {
+  if (reading.status === "reading") {
+    return (
+      <span className="text-xs whitespace-nowrap text-zinc-500 dark:text-zinc-400">
+        Lettura…{reading.progress === null ? "" : ` ${Math.round(reading.progress * 100)}%`}
+      </span>
+    );
+  }
+  if (reading.status === "skipped") {
+    return (
+      <span className="text-xs whitespace-nowrap text-zinc-500 dark:text-zinc-400">Non so ancora leggerlo</span>
+    );
+  }
+  if (reading.status === "done") {
+    return reading.text ? (
+      <span className="flex items-center gap-1 text-xs font-medium whitespace-nowrap text-emerald-600 dark:text-emerald-400">
+        <CheckCircleIcon width={14} height={14} /> Letto sul dispositivo
+      </span>
+    ) : (
+      <span className="text-xs whitespace-nowrap text-zinc-500 dark:text-zinc-400">Nessun testo trovato</span>
+    );
+  }
+  return null;
+}
+
 /**
- * Pagina di creazione di un elemento d'Archivio --- un unico form per i tre modi (file, registrazione, nota), stessi
- * campi a prescindere dal tipo. Alla creazione torna a /archive con `?created=1`, come capsule/beni/scadenze.
+ * Pagina di creazione di un elemento d'Archivio --- un unico form per i tre modi (file, registrazione, nota), a
+ * tappe (v. Artifact "Concept C" discusso con l'utente): un passo alla volta, gli altri si riducono a un riepilogo.
+ * Dopo il salvataggio, i passi di cosa succede dopo (v. "Concept D"), invece del ritorno diretto all'archivio.
  */
 export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
+  const { masterEnabled, extractionConsent } = useAIProcessingConsent();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
@@ -191,6 +176,10 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   // FASE 17b/17c: dice "sto leggendo" invece di "Salvataggio…" mentre legge; la percentuale distingue un'attesa lunga da un blocco.
   const [phase, setPhase] = useState<UploadPhase>("saving");
   const [readProgress, setReadProgress] = useState<number | null>(null);
+
+  // Concept C: quale dei tre passi è aperto --- gli altri restano come riepilogo, mai tutti insieme. Parte dal
+  // passo 2: "upload" è già la modalità di default, chiedere di confermarla ogni volta sarebbe un clic in più inutile.
+  const [activeStep, setActiveStep] = useState<1 | 2 | 3>(2);
 
   const [mode, setMode] = useState<CreationMode>("upload");
   const [metadata, setMetadata] = useState<DocumentMetadataFieldsValue>(EMPTY_METADATA_FIELDS);
@@ -209,6 +198,12 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const [recordedFile, setRecordedFile] = useState<File | null>(null);
   const [noteTitle, setNoteTitle] = useState("");
   const [noteBody, setNoteBody] = useState("");
+
+  // Concept D: dopo il salvataggio, il documento appena creato e i passi su cosa farne --- invece del ritorno
+  // diretto all'archivio. `null` = form ancora in corso.
+  const [savedDoc, setSavedDoc] = useState<DocumentListItem | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiDone, setAiDone] = useState(false);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -247,8 +242,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     setMetadata(EMPTY_METADATA_FIELDS);
   }
 
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
+  function pickFile(file: File | null) {
     setPickedFile(file);
     // Non si azzerano titolo/categoria/bene/fascicolo/tag/note ("non si tocca ciò che è già compilato") --- solo il segno "suggerito", legato al file precedente.
     setSuggested({});
@@ -258,6 +252,18 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       readingPromiseRef.current = null;
       setReading({ status: "idle" });
     }
+  }
+
+  function handleRemoveFile() {
+    readingTokenRef.current++;
+    pickFile(null);
+    setTitle("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function handleDropFile(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    pickFile(event.dataTransfer.files?.[0] ?? null);
   }
 
   /** FASE 19b: legge il file e precompila --- niente di tuo da sovrascrivere ancora, vedere il valore e premere Salva È il consenso (diverso da ProposalsSection, dove il campo può essere già tuo). */
@@ -288,19 +294,19 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       // Un altro file è stato scelto nel frattempo: risultato vecchio, non tocca niente (v. readingPromiseRef).
       if (token === readingTokenRef.current) {
         const fields = text ? extractStructuredFields(text) : [];
-        setReading({ status: "done", text, fields });
+        setReading({ status: "done", text });
         applySuggestions(file, text ?? "", fields);
       }
 
       return { text, attempted: true };
     } catch {
       // Leggere è un di più: un file illeggibile non deve impedire di salvarlo.
-      if (token === readingTokenRef.current) setReading({ status: "done", text: null, fields: [] });
+      if (token === readingTokenRef.current) setReading({ status: "done", text: null });
       return { text: null, attempted: false };
     }
   }
 
-  /** Riempie i campi che Hinthial è riuscito a ricavare, e se lo segna. */
+  /** Riempie i campi che Hinthial è riuscito a ricavare, e se lo segna. Scadenza/emittente non sono più qui: emergono come proposta dopo il salvataggio (v. passi post-salvataggio), non vanno indovinati prima. */
   function applySuggestions(file: File, text: string, fields: StructuredField[]) {
     const next: Suggested = {};
 
@@ -323,15 +329,11 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       if (asset && asset.categoryId === categoryId) next.relatedAssetId = asset.id;
     }
 
-    const expiry = fields.find((f) => f.kind === "expiry")?.value;
-    if (expiry) next.expiresAt = expiry;
-
     setSuggested(next);
     setMetadata((prev) => ({
       ...prev,
       categoryId: next.categoryId ?? prev.categoryId,
       relatedAssetId: next.relatedAssetId ?? prev.relatedAssetId,
-      expiresAt: next.expiresAt ?? prev.expiresAt,
     }));
   }
 
@@ -392,8 +394,9 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         issuer: metadata.issuer,
       };
 
+      let newId: string;
       if (mode === "note") {
-        await createTextNote(
+        newId = await createTextNote(
           supabase,
           masterKey,
           user.id,
@@ -402,7 +405,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         );
       } else {
         const file = mode === "record" ? recordedFile! : pickedFile!;
-        await uploadDocument(supabase, masterKey, user.id, file, metadataInput, {
+        newId = await uploadDocument(supabase, masterKey, user.id, file, metadataInput, {
           title: mode === "upload" ? title : undefined,
           // Il file registrato non passa dalla lettura del form: lo legge uploadDocument come sempre.
           extraction: mode === "upload" ? await extractionForSave() : undefined,
@@ -413,10 +416,58 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         });
       }
 
-      router.push("/archive?created=1");
+      // Concept D: invece del ritorno diretto a /archive, i passi su cosa Hinthial ne ha già ricavato e,
+      // se vuoi, l'analisi con Claude --- prima di scegliere se andare sulla scheda o tornare all'archivio.
+      const documents = await listDocuments(supabase, masterKey);
+      const created = documents.find((d) => d.id === newId) ?? null;
+      if (created) {
+        setSavedDoc(created);
+      } else {
+        // Non dovrebbe succedere, ma senza il documento non c'è niente da mostrare nei passi.
+        router.push("/archive?created=1");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile aggiungere il contenuto.");
       setCreating(false);
+    }
+  }
+
+  /** Stesso principio di ArchiveItemDetail.handleAnalyzeWithClaude --- qui basta la sintesi: le proposte si accettano sulla scheda, non qui. */
+  async function handleAnalyzeWithClaude(scope: AIAnalysisScope) {
+    if (!savedDoc) return;
+    if (!window.confirm("Il testo di questo documento verrà inviato a Claude (Anthropic). Continuare?")) {
+      return;
+    }
+
+    setAiBusy(true);
+    setError(null);
+    try {
+      if (scope === "temporary" && savedDoc.categoryId) {
+        await grantCategoryAIExtractionTemporarily(supabase, savedDoc.categoryId, 30);
+      }
+      const fields = await analyzeDocumentWithClaude(savedDoc, categories, scope);
+      if (fields.synthesis) {
+        await saveAISynthesis(supabase, masterKey, savedDoc.id, fields.synthesis);
+      }
+      const documents = await listDocuments(supabase, masterKey);
+      setSavedDoc(documents.find((d) => d.id === savedDoc.id) ?? savedDoc);
+      setAiDone(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Claude.");
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function handleToggleAIExclusion(next: boolean) {
+    if (!savedDoc) return;
+    setError(null);
+    try {
+      await updateDocumentAIExtractionExclusion(supabase, savedDoc.id, next);
+      const documents = await listDocuments(supabase, masterKey);
+      setSavedDoc(documents.find((d) => d.id === savedDoc.id) ?? savedDoc);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile salvare l'esclusione.");
     }
   }
 
@@ -435,6 +486,146 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     (mode === "record" && recordedFile) ||
     (mode === "note" && noteTitle.trim());
 
+  const step2Summary =
+    mode === "upload"
+      ? (pickedFile?.name ?? "Nessun file scelto")
+      : mode === "record"
+        ? recordedFile
+          ? "Registrazione pronta"
+          : "Nessuna registrazione"
+        : noteTitle || "Nota senza titolo";
+
+  const step3Category = categories.find((c) => c.id === metadata.categoryId);
+  const step3Summary = step3Category ? `${step3Category.icon} ${step3Category.name}` : "Nessun dettaglio aggiunto";
+
+  // --- Dopo il salvataggio: Concept D (v. Artifact) --- i passi invece del ritorno diretto all'archivio.
+  if (savedDoc) {
+    const aiCategory = categories.find((c) => c.id === savedDoc.categoryId);
+    const categoryEnabledForAI = aiCategory ? isCategoryEnabledForExtraction(aiCategory) : false;
+    const readingState = readingStateFor(savedDoc);
+    // Nessun rifiuto ancora possibile su un documento appena nato: lo stesso meccanismo della scheda, senza cronologia.
+    const localProposals: Proposal[] = buildProposals(savedDoc, categories, []);
+
+    function proposalChipLabel(p: Proposal): string {
+      if (p.kind === "expiry") return `📅 Scadenza — ${formatDate(p.value)}`;
+      if (p.kind === "issuer") return `🏛️ Emittente — ${p.value}`;
+      const cat = categories.find((c) => c.id === p.value);
+      return `🗂️ Categoria — ${cat ? `${cat.icon} ${cat.name}` : p.value}`;
+    }
+
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <span className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+            <CheckCircleIcon width={16} height={16} /> Documento salvato
+          </span>
+          <h1 className="text-2xl font-semibold tracking-tight text-brand">{savedDoc.filename}</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            È già nel tuo Archivio. Ecco cosa succede adesso, come quando riapri un contenuto.
+          </p>
+        </div>
+
+        {error ? (
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            {error}
+          </p>
+        ) : null}
+
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+            <CheckCircleIcon
+              width={20}
+              height={20}
+              className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"
+            />
+            <div>
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Salvato in Archivio</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Cifrato sul tuo dispositivo prima ancora di essere inviato.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Lettura sul dispositivo (OCR)</p>
+            {readingState === "own-text" ? (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">È già testo: non c&apos;è altro da leggere.</p>
+            ) : readingState === "cannot" ? (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Non so ancora leggere questo tipo di contenuto: lo trovi per nome, tag e note.
+              </p>
+            ) : readingState === "nothing" ? (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                L&apos;ho guardato, ma non ci ho trovato testo.
+              </p>
+            ) : readingState === "never" ? (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Non l&apos;ho ancora letto.</p>
+            ) : (
+              <>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {savedDoc.extractedText.length.toLocaleString("it-IT")} caratteri letti
+                  {localProposals.length > 0 ? " --- ecco cosa ho trovato:" : "."}
+                </p>
+                {localProposals.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {localProposals.map((p, i) => (
+                      <span key={i} className="rounded-lg bg-brand/10 px-3 py-1.5 text-xs font-medium text-brand">
+                        {proposalChipLabel(p)}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                <Link
+                  href={`/archive/${savedDoc.id}`}
+                  className="w-fit text-sm font-medium text-brand underline-offset-2 hover:underline"
+                >
+                  Vedi tutte le proposte sulla scheda →
+                </Link>
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              Analisi con Claude <span className="font-normal text-zinc-500 dark:text-zinc-400">(opzionale)</span>
+            </p>
+            {aiDone ? (
+              <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                ✓ Fatto --- trovi la sintesi e le proposte sulla scheda del documento.
+              </p>
+            ) : (
+              <AIAnalysisTrigger
+                masterEnabled={masterEnabled}
+                extractionConsent={extractionConsent}
+                hasCategory={savedDoc.categoryId !== null}
+                categoryEnabled={categoryEnabledForAI}
+                excluded={savedDoc.aiExtractionExcluded}
+                busy={aiBusy}
+                onAnalyze={handleAnalyzeWithClaude}
+                onToggleExcluded={handleToggleAIExclusion}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={`/archive/${savedDoc.id}`}
+            className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          >
+            Vai alla scheda del documento →
+          </Link>
+          <Link
+            href="/archive?created=1"
+            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          >
+            Torna all&apos;archivio
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -444,181 +635,238 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         >
           ← Torna all&apos;archivio
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
-          Nuovo contenuto
-        </h1>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">Nuovo contenuto</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Documenti, immagini, audio, video o una nota scritta al momento --- tutto cifrato sul
-          tuo dispositivo prima di essere salvato.
+          Documenti, immagini, audio, video o una nota scritta al momento --- tutto cifrato sul tuo dispositivo prima
+          di essere salvato.
         </p>
       </div>
 
       {loading ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
       ) : (
-        <form
-          onSubmit={handleCreate}
-          className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
-        >
-          <div role="radiogroup" aria-label="Tipo di contenuto" className="flex flex-wrap gap-2">
-            {(Object.keys(MODE_LABEL) as CreationMode[]).map((option) => (
-              <button
-                key={option}
-                type="button"
-                role="radio"
-                aria-checked={mode === option}
-                onClick={() => handleModeChange(option)}
-                className={
-                  mode === option
-                    ? "rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white"
-                    : "rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-                }
-              >
-                {MODE_LABEL[option]}
-              </button>
-            ))}
-          </div>
-
-          {mode === "upload" ? (
-            <div className="flex flex-col gap-1">
-              <label htmlFor="file" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                File
-              </label>
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  id="file"
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileChange}
-                  onBlur={handleFileInputBlur}
-                  className="text-sm text-zinc-700 dark:text-zinc-300"
-                />
-                {/* Solo su smartphone --- su desktop capture non ha effetto e sarebbe ridondante. */}
+        <form onSubmit={handleCreate} className="flex flex-col gap-4">
+          <AccordionStep
+            step={1}
+            active={activeStep === 1}
+            title="Cosa vuoi aggiungere?"
+            summary={
+              <>
+                {MODE_ICON[mode]} {MODE_LABEL[mode]}
+              </>
+            }
+            onOpen={() => setActiveStep(1)}
+          >
+            <div role="radiogroup" aria-label="Tipo di contenuto" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {(Object.keys(MODE_LABEL) as CreationMode[]).map((option) => (
                 <button
+                  key={option}
                   type="button"
-                  onClick={handleCameraClick}
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 md:hidden dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  role="radio"
+                  aria-checked={mode === option}
+                  onClick={() => {
+                    handleModeChange(option);
+                    setActiveStep(2);
+                  }}
+                  className={
+                    mode === option
+                      ? "flex flex-col items-center gap-1.5 rounded-2xl border-2 border-brand bg-brand/5 px-4 py-5 text-center"
+                      : "flex flex-col items-center gap-1.5 rounded-2xl border border-zinc-200 px-4 py-5 text-center hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700"
+                  }
                 >
-                  📷 Scatta foto
+                  <span className="text-2xl" aria-hidden="true">
+                    {MODE_ICON[option]}
+                  </span>
+                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{MODE_LABEL[option]}</span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">{MODE_DESCRIPTION[option]}</span>
                 </button>
-              </div>
-
-              {/* FASE 19b: solo un riassunto --- il testo per intero vive sulla scheda del contenuto. */}
-              {pickedFile ? <ReadingReport reading={reading} /> : null}
+              ))}
             </div>
-          ) : mode === "record" ? (
-            <AudioVideoRecorder
-              onRecorded={setRecordedFile}
-              title="Registra un audio o un video"
-              description="Resta in memoria finché non salvi il contenuto qui sotto."
-              confirmLabel="Usa questa registrazione"
+          </AccordionStep>
+
+          <AccordionStep
+            step={2}
+            active={activeStep === 2}
+            title="Aggiungi il contenuto"
+            summary={step2Summary}
+            onOpen={() => setActiveStep(2)}
+          >
+            {mode === "upload" ? (
+              <div className="flex flex-col gap-3">
+                {pickedFile ? (
+                  <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+                    <span className="text-xl" aria-hidden="true">
+                      📄
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        {pickedFile.name}
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">{formatSize(pickedFile.size)}</p>
+                    </div>
+                    <FileReadingStatus reading={reading} />
+                    <button
+                      type="button"
+                      onClick={handleRemoveFile}
+                      aria-label="Rimuovi file"
+                      className="shrink-0 rounded-full p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleDropFile}
+                    className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700"
+                  >
+                    <span className="text-3xl" aria-hidden="true">
+                      📎
+                    </span>
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Trascina qui il documento</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">oppure scegli un file</p>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <input
+                        id="file"
+                        ref={fileInputRef}
+                        type="file"
+                        onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+                        onBlur={handleFileInputBlur}
+                        className="text-sm text-zinc-700 dark:text-zinc-300"
+                      />
+                      {/* Solo su smartphone --- su desktop capture non ha effetto e sarebbe ridondante. */}
+                      <button
+                        type="button"
+                        onClick={handleCameraClick}
+                        className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 md:hidden dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                      >
+                        📷 Scatta foto
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* FASE 17c: detto prima è un'attesa annunciata, scoperto dopo è un'app lenta. */}
+                {isImage && !creating ? (
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    Hinthial leggerà il testo scritto dentro l&apos;immagine, sul tuo dispositivo, per renderlo
+                    cercabile. Può richiedere qualche decina di secondi.
+                  </p>
+                ) : null}
+
+                {/* FASE 19b: "scan_0012.pdf" e "IMG_4821.jpg" sono il motivo per cui poi non si ritrova niente. */}
+                {pickedFile ? (
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="upload-title" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                      Titolo
+                    </label>
+                    <input
+                      id="upload-title"
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder={pickedFile.name}
+                      className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                    />
+                    {suggested.title && title === suggested.title ? (
+                      <SuggestedHint>Titolo suggerito da Hinthial</SuggestedHint>
+                    ) : suggested.title ? (
+                      <button
+                        type="button"
+                        onClick={() => setTitle(suggested.title!)}
+                        className="self-start text-left text-xs text-brand underline-offset-2 hover:underline"
+                      >
+                        ✨ Usa il titolo che ho ricavato: &laquo;{suggested.title}&raquo;
+                      </button>
+                    ) : (
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Lascia vuoto per usare il nome del file.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            ) : mode === "record" ? (
+              <div className="flex flex-col gap-2">
+                <AudioVideoRecorder
+                  onRecorded={setRecordedFile}
+                  title="Registra un audio o un video"
+                  description="Resta in memoria finché non salvi il contenuto qui sotto."
+                  confirmLabel="Usa questa registrazione"
+                />
+                {recordedFile ? (
+                  <p className="text-sm text-zinc-700 dark:text-zinc-300">🎬 Pronta: {recordedFile.name}</p>
+                ) : null}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="note-title" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                    Titolo
+                  </label>
+                  <input
+                    id="note-title"
+                    type="text"
+                    value={noteTitle}
+                    onChange={(e) => setNoteTitle(e.target.value)}
+                    placeholder="es. Combinazione della cassaforte"
+                    className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="note-body" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                    Testo
+                  </label>
+                  <textarea
+                    id="note-body"
+                    rows={6}
+                    value={noteBody}
+                    onChange={(e) => setNoteBody(e.target.value)}
+                    className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                  />
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              disabled={!canSubmit}
+              onClick={() => setActiveStep(3)}
+              className="w-fit rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            >
+              Continua →
+            </button>
+          </AccordionStep>
+
+          <AccordionStep
+            step={3}
+            active={activeStep === 3}
+            title="Aiutaci a ritrovarlo"
+            summary={step3Summary}
+            onOpen={() => setActiveStep(3)}
+          >
+            <DocumentMetadataFields
+              idPrefix="upload"
+              categories={categories}
+              assets={assets}
+              dossiers={dossiers}
+              value={metadata}
+              onChange={setMetadata}
+              // Scadenza ed emittente non si chiedono più qui: emergono come proposta dopo il salvataggio (v. passi post-salvataggio).
+              showExpiry={false}
+              showIssuer={false}
+              hints={{
+                categoryId:
+                  suggested.categoryId && metadata.categoryId === suggested.categoryId ? (
+                    <SuggestedHint>Suggerita da Hinthial</SuggestedHint>
+                  ) : null,
+                relatedAssetId:
+                  suggested.relatedAssetId && metadata.relatedAssetId === suggested.relatedAssetId ? (
+                    <SuggestedHint>Riconosciuto nel documento</SuggestedHint>
+                  ) : null,
+              }}
             />
-          ) : (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="note-title"
-                  className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                >
-                  Titolo
-                </label>
-                <input
-                  id="note-title"
-                  type="text"
-                  value={noteTitle}
-                  onChange={(e) => setNoteTitle(e.target.value)}
-                  placeholder="es. Combinazione della cassaforte"
-                  className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="note-body"
-                  className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                >
-                  Testo
-                </label>
-                <textarea
-                  id="note-body"
-                  rows={6}
-                  value={noteBody}
-                  onChange={(e) => setNoteBody(e.target.value)}
-                  className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                />
-              </div>
-            </div>
-          )}
-
-          {mode === "record" && recordedFile ? (
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              🎬 Pronta: {recordedFile.name}
-            </p>
-          ) : null}
-
-          {/* FASE 17c: detto prima è un'attesa annunciata, scoperto dopo è un'app lenta. */}
-          {isImage && !creating ? (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Hinthial leggerà il testo scritto dentro l&apos;immagine, sul tuo dispositivo, per
-              renderlo cercabile. Può richiedere qualche decina di secondi.
-            </p>
-          ) : null}
-
-          {/* FASE 19b: "scan_0012.pdf" e "IMG_4821.jpg" sono il motivo per cui poi non si ritrova niente. */}
-          {mode === "upload" && pickedFile ? (
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="upload-title"
-                className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-              >
-                Titolo
-              </label>
-              <input
-                id="upload-title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder={pickedFile.name}
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-              />
-              {suggested.title && title === suggested.title ? (
-                <SuggestedHint>Titolo suggerito da Hinthial</SuggestedHint>
-              ) : suggested.title ? (
-                <button
-                  type="button"
-                  onClick={() => setTitle(suggested.title!)}
-                  className="self-start text-left text-xs text-brand underline-offset-2 hover:underline"
-                >
-                  ✨ Usa il titolo che ho ricavato: &laquo;{suggested.title}&raquo;
-                </button>
-              ) : (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Lascia vuoto per usare il nome del file.
-                </p>
-              )}
-            </div>
-          ) : null}
-
-          <DocumentMetadataFields
-            idPrefix="upload"
-            categories={categories}
-            assets={assets}
-            dossiers={dossiers}
-            value={metadata}
-            onChange={setMetadata}
-            // La scadenza si chiede solo per i file --- prima era nascosta, ora Hinthial la trova nel documento.
-            showExpiry={mode === "upload"}
-            hints={{
-              categoryId:
-                suggested.categoryId && metadata.categoryId === suggested.categoryId ? (
-                  <SuggestedHint>Suggerita da Hinthial</SuggestedHint>
-                ) : null,
-              relatedAssetId:
-                suggested.relatedAssetId && metadata.relatedAssetId === suggested.relatedAssetId ? (
-                  <SuggestedHint>Riconosciuto nel documento</SuggestedHint>
-                ) : null,
-              expiresAt: <ExpiryHint metadata={metadata} suggested={suggested} reading={reading} />,
-            }}
-          />
+          </AccordionStep>
 
           {error ? (
             <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -632,11 +880,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
               disabled={creating || !canSubmit}
               className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
             >
-              {creating
-                ? phase === "reading"
-                  ? readingLabel()
-                  : "Salvataggio…"
-                : "Aggiungi all'archivio"}
+              {creating ? (phase === "reading" ? readingLabel() : "Salvataggio…") : "Aggiungi all'archivio"}
             </button>
             <Link
               href="/archive"

@@ -73,20 +73,20 @@ test("aggiunge scadenza, tag e note a un documento e li vede in dashboard", asyn
 
   const user = await loginAndSetUpEncryption(page);
 
-  // Dalla FASE 19b la scadenza si può inserire già in creazione (prima
-  // no --- v. DocumentMetadataFields, showExpiry): qui si esercita solo
-  // tag e note, senza toccarla.
+  // La scadenza non si inserisce in creazione (v. DocumentMetadataFields, showExpiry): qui si esercita solo
+  // tag e note, la scadenza si aggiunge dalla pagina di modifica più sotto.
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
-  await page.locator("#upload-tags").fill("fattura, 2026");
-  await page.locator("#upload-notes").fill("Nota di prova");
-
   await page.setInputFiles('input[type="file"]', {
     name: "documento-con-metadati.txt",
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.locator("#upload-tags").fill("fattura, 2026");
+  await page.locator("#upload-notes").fill("Nota di prova");
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
 
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("documento-con-metadati.txt")).toBeVisible({ timeout: 15_000 });

@@ -41,14 +41,16 @@ test("l'assistente AI risponde su beni/documenti collegati per categoria e segna
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
-  await page.locator("#upload-category").selectOption({ label: "🛡️ Assicurazioni" });
-  await page.locator("#upload-asset").selectOption({ label: "Auto Panda" });
   await page.setInputFiles('input[type="file"]', {
     name: "polizza-auto.txt",
     mimeType: "text/plain",
     buffer: Buffer.from("polizza di prova"),
   });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.locator("#upload-category").selectOption({ label: "🛡️ Assicurazioni" });
+  await page.locator("#upload-asset").selectOption({ label: "Auto Panda" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("polizza-auto.txt")).toBeVisible({ timeout: 15_000 });
 

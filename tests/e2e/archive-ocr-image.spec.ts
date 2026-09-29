@@ -44,9 +44,10 @@ test("la ricerca in Archivio trova una foto per una parola scritta dentro l'imma
   await expect(page.getByText(/leggerà il testo scritto dentro l'immagine/)).toBeVisible();
 
   // La lettura parte qui, appena scelto il file, non al salvataggio: quando si preme "Aggiungi" ha già finito.
-  await expect(page.getByText(/Ho letto il documento/)).toBeVisible({ timeout: 150_000 });
+  await expect(page.getByText("Letto sul dispositivo")).toBeVisible({ timeout: 150_000 });
 
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 150_000 });
   await expect(page.getByText("ocr-referto.png")).toBeVisible({ timeout: 20_000 });
 
@@ -95,6 +96,7 @@ test("la ricerca in Archivio trova un PDF scansionato, che di testo non ne ha", 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await page.setInputFiles('input[type="file"]', "tests/e2e/fixtures/ocr-scansione.pdf");
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
 
   await expect(page).toHaveURL(/\/archive$/, { timeout: 150_000 });
   await expect(page.getByText("ocr-scansione.pdf")).toBeVisible({ timeout: 20_000 });

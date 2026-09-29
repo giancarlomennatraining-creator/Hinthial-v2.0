@@ -34,10 +34,13 @@ test("scrive una nota testuale, la riapre e ne modifica il contenuto in linea", 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
 
+  // Il passo 1 (tipo di contenuto) parte già riassunto su "Carica un file" --- va riaperto per scegliere altro.
+  await page.getByRole("button", { name: "Cosa vuoi aggiungere?" }).click();
   await page.getByRole("radio", { name: "Scrivi una nota" }).click();
   await page.getByLabel("Titolo").fill("Combinazione cassaforte");
   await page.getByLabel("Testo").fill("12-34-56");
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
 
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   const row = page.locator("li", { hasText: "Combinazione cassaforte" });
@@ -84,6 +87,7 @@ test("un'immagine caricata ha un player inline, oltre al download", async ({ pag
     buffer: onePixelPng,
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
 
   const row = page.locator("li", { hasText: "foto.png" });

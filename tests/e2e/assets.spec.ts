@@ -61,18 +61,24 @@ test("crea un bene e vi collega un documento e una scadenza", async ({ page }) =
   await page.getByRole("link", { name: "Archivio" }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  // Il passo 3 va aperto PRIMA di scegliere il file: "contratto-affitto.txt" fa scattare il
+  // suggerimento automatico della categoria (v. heuristicCategorizer), che altrimenti riempirebbe
+  // il campo prima ancora di questo controllo sullo stato vuoto/disabilitato.
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
   // Senza categoria selezionata, il menu del bene è vuoto/disabilitato.
   await expect(page.locator("#upload-asset")).toBeDisabled();
   await expect(page.locator("#upload-asset")).not.toContainText("Casa di Via Roma");
 
   await page.locator("#upload-category").selectOption({ label: "🏠 Casa" });
   await page.locator("#upload-asset").selectOption({ label: "Casa di Via Roma" });
+  await page.getByRole("button", { name: "Aggiungi il contenuto" }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "contratto-affitto.txt",
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("🔗 Casa di Via Roma")).toBeVisible();
@@ -143,31 +149,35 @@ test("la categoria filtra i beni nei documenti, il bene filtra i documenti nelle
   await page.getByRole("link", { name: "Archivio" }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
-  await page.locator("#upload-category").selectOption({ label: "🏠 Casa" });
-  await expect(page.locator("#upload-asset")).toContainText("Appartamento");
-  await expect(page.locator("#upload-asset")).not.toContainText("Fiat Panda");
-  await page.locator("#upload-asset").selectOption({ label: "Appartamento" });
   await page.setInputFiles('input[type="file"]', {
     name: "contratto-affitto.txt",
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.locator("#upload-category").selectOption({ label: "🏠 Casa" });
+  await expect(page.locator("#upload-asset")).toContainText("Appartamento");
+  await expect(page.locator("#upload-asset")).not.toContainText("Fiat Panda");
+  await page.locator("#upload-asset").selectOption({ label: "Appartamento" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible({ timeout: 15_000 });
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
-  await page.locator("#upload-category").selectOption({ label: "🚗 Veicoli" });
-  await expect(page.locator("#upload-asset")).toContainText("Fiat Panda");
-  await expect(page.locator("#upload-asset")).not.toContainText("Appartamento");
-  await page.locator("#upload-asset").selectOption({ label: "Fiat Panda" });
   await page.setInputFiles('input[type="file"]', {
     name: "libretto-auto.txt",
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.locator("#upload-category").selectOption({ label: "🚗 Veicoli" });
+  await expect(page.locator("#upload-asset")).toContainText("Fiat Panda");
+  await expect(page.locator("#upload-asset")).not.toContainText("Appartamento");
+  await page.locator("#upload-asset").selectOption({ label: "Fiat Panda" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("libretto-auto.txt")).toBeVisible({ timeout: 15_000 });
 

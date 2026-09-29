@@ -37,6 +37,7 @@ test("le intestazioni delle tabelle in Archivio ordinano lessicograficamente, co
       buffer: Buffer.from("contenuto di prova"),
     });
     await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+    await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
     await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
     await expect(page.getByText(name)).toBeVisible({ timeout: 15_000 });
   }

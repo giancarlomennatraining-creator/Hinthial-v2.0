@@ -38,6 +38,7 @@ test("esporta tutti i dati in un unico archivio .zip", async ({ page }) => {
     buffer: Buffer.from("qualcosa da esportare", "utf-8"),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("appunti.txt")).toBeVisible({ timeout: 15_000 });
 

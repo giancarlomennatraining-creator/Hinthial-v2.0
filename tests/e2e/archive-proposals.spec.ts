@@ -75,6 +75,7 @@ async function setUpWithPolizza(page: import("@playwright/test").Page) {
     buffer: buildPdf(POLIZZA),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
   await page.getByRole("link", { name: /scan_0012\.pdf/ }).click();

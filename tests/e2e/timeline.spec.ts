@@ -46,6 +46,7 @@ test("la cronologia elenca beni e documenti creati, raggruppati per mese", async
     buffer: Buffer.from("polizza di prova"),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("polizza.txt")).toBeVisible({ timeout: 15_000 });
 

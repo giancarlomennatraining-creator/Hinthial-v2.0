@@ -95,10 +95,12 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
     mimeType: "application/pdf",
     buffer: buildPdf(["Ospedale San Giovanni", "Referto di visita ortopedica", "Emesso il 14 marzo 2026"]),
   });
-  await page.getByText(/Ho letto il documento/).waitFor({ timeout: 45_000 });
+  await page.getByText("Letto sul dispositivo").waitFor({ timeout: 45_000 });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
   await page.getByLabel("Fascicoli").selectOption({ label: "📂 Intervento al ginocchio" });
   await page.getByRole("button", { name: "+ Aggiungi fascicolo" }).click();
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
   // Nell'elenco, l'icona del documento ha il badge "in un fascicolo".
@@ -176,6 +178,7 @@ test("un documento può stare in più di un fascicolo insieme (FASE 20c)", async
     mimeType: "text/plain",
     buffer: Buffer.from("RSSMRA80A01H501U"),
   });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
   await page.getByLabel("Fascicoli").selectOption({ label: "📂 Acquisto casa" });
   await page.getByRole("button", { name: "+ Aggiungi fascicolo" }).click();
   await page.getByLabel("Fascicoli").selectOption({ label: "📂 Problema di salute" });
@@ -186,6 +189,7 @@ test("un documento può stare in più di un fascicolo insieme (FASE 20c)", async
   await expect(page.getByText("📂 Problema di salute", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
 
   // La scheda del documento mostra entrambi i fascicoli, ognuno con un link.

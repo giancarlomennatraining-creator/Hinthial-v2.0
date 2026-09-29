@@ -37,6 +37,7 @@ test("trascrizione di un audio in Archivio: il motore automatico non è ancora d
     buffer: Buffer.from("finto audio", "utf-8"),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
 
   const row = page.locator("li", { hasText: "messaggio.mp3" });

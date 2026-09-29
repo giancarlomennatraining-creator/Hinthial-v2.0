@@ -76,6 +76,7 @@ test("configura la cifratura, carica, apre e cancella un documento", async ({
     buffer: Buffer.from(fileContent, "utf-8"),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
 
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("appunti.txt")).toBeVisible({ timeout: 15_000 });

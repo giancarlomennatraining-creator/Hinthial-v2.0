@@ -94,10 +94,9 @@ test("scegliendo il file, Hinthial lo legge e precompila il form", async ({ page
     buffer: buildPdf(POLIZZA),
   });
 
-  // 1. La lettura avviene QUI, senza aver premuto Salva.
-  await expect(page.getByText(/Ho letto il documento/)).toBeVisible({ timeout: 45_000 });
-  // exact: l'emittente compare anche dentro al titolo proposto qui sotto.
-  await expect(page.getByText("GENERALI ITALIA S.p.A.", { exact: true })).toBeVisible();
+  // 1. La lettura avviene QUI, senza aver premuto Salva --- un segno accanto al file, non più un riquadro a sé
+  // (scadenza ed emittente non si chiedono più qui: emergono come proposta dopo il salvataggio, v. archive-item-detail.spec.ts).
+  await expect(page.getByText("Letto sul dispositivo")).toBeVisible({ timeout: 45_000 });
 
   // 2. Il titolo è proposto, non imposto: sostituirlo d'ufficio violerebbe la stessa regola delle proposte sulla scheda.
   await expect(page.getByLabel("Titolo")).toHaveValue("");
@@ -107,43 +106,17 @@ test("scegliendo il file, Hinthial lo legge e precompila il form", async ({ page
   );
   await expect(page.getByText("Titolo suggerito da Hinthial")).toBeVisible();
 
-  // 3. Categoria e bene, riconosciuti dalla targa dentro il documento.
+  // 3. Categoria e bene, riconosciuti dalla targa dentro il documento --- nel passo successivo (v. Concept C).
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
   await expect(page.getByLabel("Bene collegato")).toHaveValue(/.+/);
   await expect(page.getByText("Riconosciuto nel documento")).toBeVisible();
 
-  // 4. La scadenza, con la frase da cui viene.
-  await expect(page.getByLabel("Scadenza")).toHaveValue("2027-06-03");
-  await expect(page.getByText(/Trovata nel documento/)).toBeVisible();
-
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
   // Salvato col titolo proposto, non col nome del file.
   await expect(page.getByText(/Polizza responsabilita civile/)).toBeVisible({ timeout: 20_000 });
-});
-
-test("correggendo la scadenza, Hinthial ritrova la frase da cui viene", async ({ page }) => {
-  test.slow();
-
-  await signInAndUnlock(page);
-  await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
-
-  await page.setInputFiles('input[type="file"]', {
-    name: "scan_0012.pdf",
-    mimeType: "application/pdf",
-    buffer: buildPdf(POLIZZA),
-  });
-  await expect(page.getByText(/Ho letto il documento/)).toBeVisible({ timeout: 45_000 });
-
-  // Il caso più frequente è che trovi cinque date e scelga quella sbagliata. Si corregge con l'ALTRA data del
-  // documento, e Hinthial deve ritrovarne la frase pur avendola ricevuta in formato calendario.
-  await page.getByLabel("Scadenza").fill("2026-03-14");
-  await expect(page.getByText(/^Nel documento:/)).toContainText("Emessa il 14 marzo 2026");
-
-  // E una data che nel documento non c'è va detta, non nascosta.
-  await page.getByLabel("Scadenza").fill("2031-01-01");
-  await expect(page.getByText(/non l'ho trovata/)).toBeVisible();
 });
 
 test("il segno «suggerito» sparisce appena l'utente tocca il campo", async ({ page }) => {

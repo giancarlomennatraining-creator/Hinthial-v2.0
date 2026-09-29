@@ -59,6 +59,7 @@ export function DocumentMetadataFields({
   value,
   onChange,
   showExpiry = true,
+  showIssuer = true,
   hints,
 }: {
   idPrefix: string;
@@ -70,6 +71,8 @@ export function DocumentMetadataFields({
   onChange: (next: DocumentMetadataFieldsValue) => void;
   /** Nascosto in creazione dove chiederla non ha ancora senso (audio, video, note): il documento viene letto appena scelto, e se una scadenza c'è dentro la trova da sé. */
   showExpiry?: boolean;
+  /** Nascosto in creazione, stesso motivo della scadenza: emerge come proposta dopo il salvataggio (lettura locale o Claude), non va indovinato prima. */
+  showIssuer?: boolean;
   /** Una riga sotto a un campo per dire chi ce l'ha messo e da dove viene. Sta qui perché è questo componente a possedere il layout dei campi. */
   hints?: Partial<Record<"categoryId" | "relatedAssetId" | "dossierIds" | "expiresAt", React.ReactNode>>;
 }) {
@@ -239,22 +242,24 @@ export function DocumentMetadataFields({
         {hints?.dossierIds}
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label
-          htmlFor={`${idPrefix}-issuer`}
-          className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-        >
-          Emittente
-        </label>
-        <input
-          id={`${idPrefix}-issuer`}
-          type="text"
-          value={value.issuer}
-          onChange={(e) => onChange({ ...value, issuer: e.target.value })}
-          placeholder="es. Generali Italia S.p.A."
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-        />
-      </div>
+      {showIssuer ? (
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor={`${idPrefix}-issuer`}
+            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
+          >
+            Emittente
+          </label>
+          <input
+            id={`${idPrefix}-issuer`}
+            type="text"
+            value={value.issuer}
+            onChange={(e) => onChange({ ...value, issuer: e.target.value })}
+            placeholder="es. Generali Italia S.p.A."
+            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+          />
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-1">
         <label

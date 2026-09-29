@@ -66,8 +66,10 @@ test("il bottone 'Chiedi a Claude' rispetta consenso generale, per categoria ed 
     mimeType: "application/pdf",
     buffer: buildPdf("Polizza responsabilita civile"),
   });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
   await page.getByLabel("Categoria").selectOption({ label: "🛡️ Assicurazioni" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
   await page.getByRole("link", { name: /polizza\.pdf/ }).click();

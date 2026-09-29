@@ -83,6 +83,7 @@ test("la scheda di un documento mostra il testo che Hinthial ci ha letto dentro"
     ]),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
   // Si arriva alla scheda dal nome nell'elenco: è l'unica strada offerta, e deve funzionare.
@@ -123,6 +124,7 @@ test("la scheda ricava data, emittente e scadenza dal testo del documento", asyn
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await page.setInputFiles('input[type="file"]', "tests/e2e/fixtures/ocr-scansione.pdf");
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 150_000 });
 
   await page.getByRole("link", { name: /ocr-scansione\.pdf/ }).click();
@@ -167,6 +169,7 @@ test("la scheda dice quando un contenuto non è ancora stato letto, e lo legge",
     buffer: buildPdf(["Contratto di locazione", "via Manzoni 4 Milano"]),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
   // Si riporta il documento allo stato "mai letto", come se fosse stato caricato prima che l'estrazione esistesse.

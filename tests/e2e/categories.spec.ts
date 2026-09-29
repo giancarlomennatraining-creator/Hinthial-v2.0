@@ -51,6 +51,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   await page.getByRole("button", { name: "Continua" }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
   await expect(page.locator("#upload-category")).toContainText("🎯 Hobby");
 
   // Modifica: rinomina la categoria personalizzata.
@@ -68,13 +69,15 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   await page.getByRole("link", { name: "Archivio" }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
-  await page.locator("#upload-category").selectOption({ label: "🎯 Hobby e sport" });
   await page.setInputFiles('input[type="file"]', {
     name: "tesserino-palestra.txt",
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
+  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.locator("#upload-category").selectOption({ label: "🎯 Hobby e sport" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("tesserino-palestra.txt")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("🎯 Hobby e sport · ")).toBeVisible();

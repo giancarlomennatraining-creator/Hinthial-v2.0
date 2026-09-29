@@ -67,6 +67,7 @@ test("la ricerca in Archivio trova un PDF per una parola scritta solo dentro il 
     buffer: buildPdf("Referto visita cardiologia del 14 marzo 2026 - dott Ferrari"),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
   await expect(page.getByText("scan_0012.pdf")).toBeVisible({ timeout: 20_000 });
 
@@ -126,6 +127,7 @@ test("i documenti caricati prima della FASE 17 si recuperano dal banner in Archi
     buffer: buildPdf("Contratto di locazione immobile via Manzoni 4 Milano"),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
   await expect(page.getByText("vecchio.pdf")).toBeVisible({ timeout: 20_000 });
 
