@@ -503,6 +503,37 @@ export function ArchiveItemDetail({
         </p>
       ) : null}
 
+      {/* Barra a sé (v. feedback utente): Salva modifiche/Scarica/Elimina, stessa forma per tutti e tre
+          (rounded-xl), sopra al riquadro bianco con Anteprima e le tab --- non più dentro la tab Scheda. */}
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          disabled={!fieldsDirty || savingFields}
+          onClick={handleSaveFields}
+          className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+        >
+          {savingFields ? "Salvataggio…" : "Salva modifiche"}
+        </button>
+        {kind === "note" ? null : (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={handleDownload}
+            className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          >
+            Scarica
+          </button>
+        )}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={handleDelete}
+          className="rounded-xl border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
+        >
+          Elimina
+        </button>
+      </div>
+
       {/* Anteprima fissa a sinistra (v. feedback utente); Scheda/Letto dal dispositivo/Analisi con Hinthia sono
           tre tab a destra --- niente più Scheda né il trigger di analisi sempre visibili a sinistra.
           Container query (non breakpoint di viewport) perché la larghezza reale dipende anche
@@ -670,36 +701,6 @@ export function ArchiveItemDetail({
                     ))}
                   </dl>
                 ) : null}
-                {/* Scarica/Elimina vivono qui, vicino a "Salva modifiche" (v. feedback utente): non più un
-                    riquadro a parte sopra le tab. */}
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    disabled={!fieldsDirty || savingFields}
-                    onClick={handleSaveFields}
-                    className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                  >
-                    {savingFields ? "Salvataggio…" : "Salva modifiche"}
-                  </button>
-                  {kind === "note" ? null : (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={handleDownload}
-                      className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-                    >
-                      Scarica
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={handleDelete}
-                    className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
-                  >
-                    Elimina
-                  </button>
-                </div>
               </div>
             ) : activeTab === "reading" ? (
               <div id="tabpanel-reading" role="tabpanel" aria-labelledby="tab-reading" className="flex flex-col gap-6">
@@ -817,10 +818,7 @@ function ReadingSection({
 
   return (
     <section aria-label="Cosa ho letto" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Cosa ho letto</h2>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">🔒 sul tuo dispositivo</p>
-      </div>
+      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Cosa ho letto</h2>
 
       {reading === "cannot" ? (
         <>

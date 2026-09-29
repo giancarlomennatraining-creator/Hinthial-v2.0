@@ -10,6 +10,24 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-29 (5)
+
+### Scheda documento --- barra azioni omogenea a sé, pulizia di badge e cornici ridondanti
+
+**Cosa fa:** cinque rifiniture alla scheda del documento, dopo averla provata ancora:
+
+1. **"Salva modifiche", "Scarica" ed "Elimina" hanno ora la stessa forma** (stessi angoli arrotondati, stesso peso) --- prima "Salva modifiche" aveva angoli diversi dagli altri due.
+2. **I tre bottoni tornano in una barra a sé**, sopra al riquadro con Anteprima e le tab --- non più dentro la tab "Scheda": tutto il contenuto (Anteprima e le tre tab) sta sotto, non più sopra o accanto.
+3. **Nella tab "Letto dal dispositivo"**, le due sezioni ("Cosa ne ho ricavato", "Cosa ho letto") non ripetono più "🔒 sul tuo dispositivo" --- il nome della tab lo dice già.
+4. **Nella tab "Analisi con Hinthia"**, il bottone di richiesta lettura non dice più "il testo lascia il dispositivo" --- il nome della tab lo dice già, nell'altro senso.
+5. **La stessa richiesta ("Chiedi a Hinthia di leggere questo documento") perde la sua cornice bianca propria** --- ora è già dentro il riquadro della tab, una cornice dentro un'altra cornice era ridondante.
+
+**Note tecniche:** nessuna logica toccata. `AIAnalysisTrigger` perde solo il `<div>` esterno con `rounded-xl border ... bg-white ... p-3` (resta un `flex flex-col gap-2` semplice) e la riga "il testo lascia il dispositivo". `StructuredFieldsSection` e la sezione "Cosa ho letto" (in `ArchiveItemDetail.tsx`) perdono la riga "🔒 sul tuo dispositivo" e il contenitore flex che la affiancava al titolo, tornando a un semplice `<h2>`.
+
+Verificato: typecheck, lint, build di produzione, e i test e2e sulla scheda documento (`archive-item-detail`, `archive-proposals`, `document-categorization`, `reminders`, `dossiers`, `archive`) --- tutti passano tranne il solito fallimento preesistente e indipendente già documentato (`archive-item-detail.spec.ts`, l'OCR di "AZIENDA OSPEDALIERA DI GUBBIO").
+
+---
+
 ## 2026-09-29 (4)
 
 ### Scheda documento --- Scarica/Elimina vicino a "Salva modifiche", tab in un riquadro con contorno

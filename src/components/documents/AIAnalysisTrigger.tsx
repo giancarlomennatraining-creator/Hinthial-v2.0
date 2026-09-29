@@ -32,15 +32,12 @@ export function AIAnalysisTrigger({
   const consentActive = masterEnabled && extractionConsent;
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="flex items-center gap-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
-          {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
-          <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-5 w-5 shrink-0 rounded-full" />
-          Chiedi a Hinthia di leggere questo documento
-        </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">il testo lascia il dispositivo</p>
-      </div>
+    <div className="flex flex-col gap-2">
+      <p className="flex items-center gap-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
+        <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-5 w-5 shrink-0 rounded-full" />
+        Chiedi a Hinthia di leggere questo documento
+      </p>
 
       {excluded ? (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">

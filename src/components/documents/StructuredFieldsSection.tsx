@@ -43,12 +43,9 @@ export function StructuredFieldsSection({ fields }: { fields: StructuredField[] 
 
   return (
     <section aria-label="Cosa ne ho ricavato" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          Cosa ne ho ricavato
-        </h2>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">🔒 sul tuo dispositivo</p>
-      </div>
+      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+        Cosa ne ho ricavato
+      </h2>
 
       <ul className="flex flex-col gap-3">
         {fields.map((field) => (
