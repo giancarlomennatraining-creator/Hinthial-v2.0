@@ -61,6 +61,8 @@ test("la ricerca in Archivio trova un PDF per una parola scritta solo dentro il 
 
   // Il nome del file non contiene "cardiologia": quella parola vive solo dentro il PDF.
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "scan_0012.pdf",
     mimeType: "application/pdf",
@@ -121,6 +123,8 @@ test("i documenti caricati prima della FASE 17 si recuperano dal banner in Archi
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "vecchio.pdf",
     mimeType: "application/pdf",

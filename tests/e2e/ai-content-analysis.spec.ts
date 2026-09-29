@@ -34,7 +34,7 @@ function buildPdf(line: string): Buffer {
   return Buffer.from(pdf, "latin1");
 }
 
-test("il bottone 'Chiedi a Claude' rispetta consenso generale, per categoria ed esclusione per singolo documento", async ({
+test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed esclusione per singolo documento", async ({
   page,
 }) => {
   test.slow();
@@ -61,6 +61,8 @@ test("il bottone 'Chiedi a Claude' rispetta consenso generale, per categoria ed 
 
   // Un documento con categoria, perché "abilita per categoria"/"solo questa volta" abbiano senso.
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "polizza.pdf",
     mimeType: "application/pdf",
@@ -76,22 +78,22 @@ test("il bottone 'Chiedi a Claude' rispetta consenso generale, per categoria ed 
   await expect(page).toHaveURL(/\/archive\/[0-9a-f-]+$/, { timeout: 15_000 });
 
   // Senza consenso generale/di funzione, il bottone non compare --- solo il rimando alle Impostazioni.
-  await expect(page.getByText("🔒 Chiedi a Claude di leggere questo documento")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Chiedi a Claude" })).toHaveCount(0);
+  await expect(page.getByText("Chiedi a Hinthia di leggere questo documento")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Chiedi a Hinthia" })).toHaveCount(0);
   await expect(page.getByText(/Attiva "Estrazione avanzata dei contenuti"/)).toBeVisible();
 
   // Attiva cancello generale + funzione, e abilita la categoria "Assicurazioni" per questo utente.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Intelligenza artificiale" }).click();
-  await expect(page.getByRole("heading", { name: "Intelligenza artificiale" })).toBeVisible();
+  await page.getByRole("tab", { name: "Hinthia" }).click();
+  await expect(page.getByRole("heading", { name: "Hinthia" })).toBeVisible();
 
-  const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di IA esterna" });
+  const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Hinthia" });
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     masterSwitch.click(),
   ]);
-  const extractionCheckbox = page.getByRole("checkbox", { name: /^🔒 Estrazione avanzata/ });
+  const extractionCheckbox = page.getByRole("checkbox", { name: /^Estrazione avanzata/ });
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     extractionCheckbox.check(),
@@ -112,23 +114,23 @@ test("il bottone 'Chiedi a Claude' rispetta consenso generale, per categoria ed 
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Solo questa volta" }).click();
   await expect(
-    page.getByText("L'analisi AI reale non è ancora configurata su questo server."),
+    page.getByText("Hinthia non è ancora configurata su questo server."),
   ).toBeVisible({ timeout: 15_000 });
 
   // Escludere il documento nasconde il bottone e resta impostato dopo un refresh.
-  await page.getByLabel(/Escludi questo documento dall'analisi AI/).check();
+  await page.getByLabel(/Escludi questo documento dall'analisi di Hinthia/).check();
   await page.reload();
-  await expect(page.getByText("Questo documento è escluso dall'analisi AI")).toBeVisible();
+  await expect(page.getByText("Questo documento è escluso dall'analisi di Hinthia")).toBeVisible();
   await expect(page.getByRole("button", { name: "Solo questa volta" })).toHaveCount(0);
 
   // Il consenso per categoria, impostato in Impostazioni, resta impostato dopo un refresh.
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Intelligenza artificiale" }).click();
+  await page.getByRole("tab", { name: "Hinthia" }).click();
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/categories") && res.request().method() === "PATCH"),
     page.getByRole("checkbox", { name: "🛡️ Assicurazioni" }).check(),
   ]);
   await page.reload();
-  await page.getByRole("tab", { name: "Intelligenza artificiale" }).click();
+  await page.getByRole("tab", { name: "Hinthia" }).click();
   await expect(page.getByRole("checkbox", { name: "🛡️ Assicurazioni" })).toBeChecked();
 });

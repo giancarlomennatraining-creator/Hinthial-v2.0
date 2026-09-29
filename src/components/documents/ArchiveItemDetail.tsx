@@ -13,6 +13,7 @@ import {
   listDocuments,
   saveAISynthesis,
   updateDocumentAIExtractionExclusion,
+  updateDocumentMetadata,
 } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories, grantCategoryAIExtractionTemporarily } from "@/domain/categories/repository";
@@ -38,11 +39,14 @@ import {
 } from "@/domain/ai/analyze-document";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { StructuredFieldsSection } from "@/components/documents/StructuredFieldsSection";
-import {
-  ProposalsSection,
-  type UndoableAction,
-} from "@/components/documents/ProposalsSection";
+import { ProposalsSection, type UndoableAction } from "@/components/documents/ProposalsSection";
 import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
+import {
+  DocumentMetadataFields,
+  documentToFields,
+  parseTagsInput,
+  type DocumentMetadataFieldsValue,
+} from "@/components/documents/DocumentMetadataFields";
 import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
 import {
   contentKindFor,
@@ -58,7 +62,14 @@ import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
 
-/** Scheda di un contenuto d'Archivio: mostra anche cosa Hinthial ha estratto dal file, a dimostrazione che resta sul dispositivo. Niente sezioni vuote per fasi future --- sembrerebbero quasi finite e non lo sono. */
+/**
+ * Scheda di un contenuto d'Archivio --- fonde vista e modifica (v. feedback utente: due pagine separate creavano
+ * confusione): niente più `/archive/[id]/edit`, i campi della Scheda sono sempre modificabili qui, un "Salva
+ * modifiche" li mette via. Mostra anche cosa Hinthial ha estratto dal file, a dimostrazione che resta sul
+ * dispositivo. Niente più tab "Proposte" a sé: quello che c'è da accettare/rifiutare vive dentro "Letto dal
+ * dispositivo" (locale) o "Analisi con Hinthia" (Claude), a seconda di dove viene. Niente sezioni vuote per fasi
+ * future --- sembrerebbero quasi finite e non lo sono.
+ */
 export function ArchiveItemDetail({
   masterKey,
   documentId,
@@ -107,9 +118,34 @@ export function ArchiveItemDetail({
   // Testo letto potenzialmente lungo: se ne mostra un pezzo, il resto solo a richiesta.
   const [fullText, setFullText] = useState(false);
 
-  // Concept 1 (scheda fissa + tab, v. Artifact discusso con l'utente): quale delle tre tab è attiva a destra.
-  // Si azzera su "proposals" a ogni apertura della pagina, come fullText --- nessuna persistenza necessaria.
-  const [activeTab, setActiveTab] = useState<"proposals" | "reading" | "analysis">("proposals");
+  // Concept 1 (scheda fissa + tab): quale delle due tab è attiva a destra --- "Proposte" non esiste più come
+  // tab a sé (v. feedback utente): quello che c'è da accettare vive già dentro una delle due. Si azzera su
+  // "reading" a ogni apertura della pagina, come fullText --- nessuna persistenza necessaria.
+  const [activeTab, setActiveTab] = useState<"reading" | "analysis">("reading");
+
+  // Fusione Scheda/Modifica: i metadati modificabili, sempre live qui (mai una pagina a parte). `null` finché
+  // il documento non è ancora caricato. Le proposte (Scadenza/Categoria/Emittente) scrivono direttamente su `doc`
+  // via acceptProposal, non su questo stato --- v. i tre effect più sotto, che li tengono sincronizzati uno per
+  // uno: un ricalcolo unico sovrascriverebbe una modifica in corso su un ALTRO campo non toccato dalla proposta.
+  const [fields, setFields] = useState<DocumentMetadataFieldsValue | null>(null);
+  const [savingFields, setSavingFields] = useState(false);
+
+  // Sincronizzano UN campo alla volta da `doc` a `fields` quando una proposta lo scrive --- mai un ricalcolo
+  // unico dell'intero oggetto, che sovrascriverebbe una modifica in corso su un campo diverso (v. commento sopra).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- risincronizza `fields` da `doc`, non solo un DOM esterno.
+    setFields((prev) => (prev ? { ...prev, categoryId: doc?.categoryId ?? "" } : prev));
+  }, [doc?.categoryId]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- v. sopra.
+    setFields((prev) =>
+      prev ? { ...prev, expiresAt: doc?.expiresAt ? doc.expiresAt.slice(0, 10) : "" } : prev,
+    );
+  }, [doc?.expiresAt]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- v. sopra.
+    setFields((prev) => (prev ? { ...prev, issuer: doc?.issuer ?? "" } : prev));
+  }, [doc?.issuer]);
 
   // Contatore di richieste --- v. EditArchiveItemForm (StrictMode invoca l'effetto due volte al mount).
   const latestRequestRef = useRef(0);
@@ -128,7 +164,9 @@ export function ArchiveItemDetail({
           listFieldVocabulary(supabase),
         ]);
       if (requestId !== latestRequestRef.current) return;
-      setDoc(documents.find((d) => d.id === documentId) ?? null);
+      const found = documents.find((d) => d.id === documentId) ?? null;
+      setDoc(found);
+      setFields((prev) => prev ?? (found ? documentToFields(found) : null));
       setAssets(assetsResult);
       setCategories(categoriesResult);
       setDossiers(dossiersResult);
@@ -312,7 +350,7 @@ export function ArchiveItemDetail({
   /** FASE 22: unica fase irreversibile del piano --- un contenuto uscito è uscito, quindi un window.confirm prima di ogni invio, qualunque sia lo scope scelto. */
   async function handleAnalyzeWithClaude(scope: AIAnalysisScope) {
     if (!doc) return;
-    if (!window.confirm("Il testo di questo documento verrà inviato a Claude (Anthropic). Continuare?")) {
+    if (!window.confirm("Il testo di questo documento verrà inviato a Hinthia. Continuare?")) {
       return;
     }
 
@@ -323,22 +361,18 @@ export function ArchiveItemDetail({
         await grantCategoryAIExtractionTemporarily(supabase, doc.categoryId, 30);
         await refresh();
       }
-      const fields = await analyzeDocumentWithClaude(doc, categories, scope);
-      setAiFields(fields);
-      if (fields.synthesis) {
+      const extracted = await analyzeDocumentWithClaude(doc, categories, scope);
+      setAiFields(extracted);
+      if (extracted.synthesis) {
         // Non è una proposta: sostituisce sempre l'ultima lettura, come extractedText/Rileggi per il testo locale.
-        await saveAISynthesis(supabase, masterKey, doc.id, fields.synthesis);
+        await saveAISynthesis(supabase, masterKey, doc.id, extracted.synthesis);
         await refresh();
       }
-      // Senza, l'utente non si accorgerebbe che qualcosa è successo: salta sulla tab che ha davvero qualcosa di nuovo.
-      const gotProposals = fields.expiry.length > 0 || fields.issuer.length > 0 || fields.category || fields.fields.length > 0;
-      if (gotProposals) {
-        setActiveTab("proposals");
-      } else if (fields.synthesis) {
-        setActiveTab("analysis");
-      }
+      // Senza, l'utente non si accorgerebbe che qualcosa è successo: niente più tab "Proposte" a sé, quello che
+      // Hinthia ha trovato vive già in "Analisi con Hinthia".
+      setActiveTab("analysis");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Claude.");
+      setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Hinthia.");
     } finally {
       setAiBusy(false);
     }
@@ -352,6 +386,30 @@ export function ArchiveItemDetail({
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile salvare l'esclusione.");
+    }
+  }
+
+  /** Fusione Scheda/Modifica: non più una pagina a parte (v. EditArchiveItemForm, ora rimossa). */
+  async function handleSaveFields() {
+    if (!fields) return;
+    setSavingFields(true);
+    setError(null);
+    try {
+      await updateDocumentMetadata(supabase, masterKey, documentId, {
+        categoryId: fields.categoryId || null,
+        relatedAssetId: fields.relatedAssetId || null,
+        dossierIds: fields.dossierIds,
+        expiresAt: fields.expiresAt || null,
+        notes: fields.notes,
+        tags: parseTagsInput(fields.tagsInput),
+        issuer: fields.issuer,
+      });
+      await refresh();
+      showToast("Modifiche salvate.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile aggiornare il contenuto.");
+    } finally {
+      setSavingFields(false);
     }
   }
 
@@ -395,8 +453,6 @@ export function ArchiveItemDetail({
   }
 
   const category = categories.find((c) => c.id === doc.categoryId);
-  const asset = assets.find((a) => a.id === doc.relatedAssetId);
-  const linkedDossiers = dossiers.filter((d) => doc.dossierIds.includes(d.id));
   const reading = readingStateFor(doc);
   // Calcolati al volo dal testo già decifrato, non salvati: niente da migrare, valgono su tutto l'archivio esistente.
   // Che cosa c'è da proporre, tolto ciò che è già impostato e ciò che l'utente ha già scartato (v. domain/proposals/build.ts).
@@ -415,6 +471,11 @@ export function ArchiveItemDetail({
     if (field.kind === "issuer" && doc.issuer === field.value) return false;
     return true;
   });
+
+  // Disabilita "Salva modifiche" quando non c'è nulla da salvare --- confronto per valore, non per riferimento:
+  // `fields` è un oggetto nuovo a ogni onChange anche quando il contenuto torna uguale (es. una proposta accettata
+  // e poi risincronizzata dagli effect sopra).
+  const fieldsDirty = fields !== null && JSON.stringify(fields) !== JSON.stringify(documentToFields(doc));
 
   return (
     <div className="flex flex-col gap-6">
@@ -442,12 +503,6 @@ export function ArchiveItemDetail({
       ) : null}
 
       <div className="flex flex-wrap gap-3">
-        <Link
-          href={`/archive/${doc.id}/edit`}
-          className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
-        >
-          Modifica
-        </Link>
         {kind === "note" ? null : (
           <button
             type="button"
@@ -534,61 +589,40 @@ export function ArchiveItemDetail({
             )}
           </section>
 
+            {/* Fusione Scheda/Modifica (v. feedback utente): niente più una pagina /edit a parte, i campi sono
+                sempre modificabili qui --- un "Salva modifiche" li mette via quando ce n'è bisogno. */}
             <section aria-label="Scheda" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
               <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Scheda</h2>
-              <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[10rem_1fr]">
-                <Field label="Categoria">
-                  {category ? `${category.icon} ${category.name}` : "—"}
-                </Field>
-                <Field label="Bene collegato">{asset ? asset.name : "—"}</Field>
-                <Field label="Fascicoli">
-                  {linkedDossiers.length > 0 ? (
-                    <span className="flex flex-wrap gap-x-3 gap-y-1">
-                      {linkedDossiers.map((dossier) => (
-                        <Link
-                          key={dossier.id}
-                          href={`/dossiers/${dossier.id}`}
-                          className="text-brand hover:underline"
-                        >
-                          {dossier.status === "closed" ? "🗂️ " : "📂 "}
-                          {dossier.title}
-                        </Link>
-                      ))}
-                    </span>
-                  ) : (
-                    "—"
-                  )}
-                </Field>
-                <Field label="Scadenza">{doc.expiresAt ? formatDate(doc.expiresAt) : "—"}</Field>
-                <Field label="Emittente">{doc.issuer || "—"}</Field>
-                {Object.entries(doc.structuredFields).map(([key, value]) => (
-                  <Field
-                    key={key}
-                    label={fieldVocabulary.find((v) => v.fieldKey === key)?.label ?? key}
-                  >
-                    {value}
-                  </Field>
-                ))}
-                <Field label="Tag">
-                  {doc.tags.length > 0 ? (
-                    <span className="flex flex-wrap gap-1">
-                      {doc.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </span>
-                  ) : (
-                    "—"
-                  )}
-                </Field>
-                <Field label="Note">
-                  <span className="whitespace-pre-wrap">{doc.notes || "—"}</span>
-                </Field>
-              </dl>
+              {fields ? (
+                <DocumentMetadataFields
+                  idPrefix="scheda"
+                  categories={categories}
+                  assets={assets}
+                  dossiers={dossiers}
+                  value={fields}
+                  onChange={setFields}
+                />
+              ) : null}
+              {Object.keys(doc.structuredFields).length > 0 ? (
+                <dl className="grid gap-x-6 gap-y-2 border-t border-zinc-100 pt-3 text-sm sm:grid-cols-[10rem_1fr] dark:border-zinc-900">
+                  {Object.entries(doc.structuredFields).map(([key, value]) => (
+                    <Field
+                      key={key}
+                      label={fieldVocabulary.find((v) => v.fieldKey === key)?.label ?? key}
+                    >
+                      {value}
+                    </Field>
+                  ))}
+                </dl>
+              ) : null}
+              <button
+                type="button"
+                disabled={!fieldsDirty || savingFields}
+                onClick={handleSaveFields}
+                className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+              >
+                {savingFields ? "Salvataggio…" : "Salva modifiche"}
+              </button>
             </section>
 
             {/* FASE 22: sopra il trigger di analisi, sotto la scheda --- resta nella colonna fissa, sempre visibile. */}
@@ -604,24 +638,10 @@ export function ArchiveItemDetail({
             />
           </div>
 
-          {/* Colonna a tab: Proposte / Letto dal dispositivo / Analisi di Claude --- v. Artifact concept 1. */}
+          {/* Colonna a tab: Letto dal dispositivo / Analisi con Hinthia --- niente più "Proposte" a sé (v.
+              feedback utente): quello che c'è da accettare vive già dentro una delle due, secondo la fonte. */}
           <div className="flex min-w-0 flex-1 flex-col gap-4">
             <div role="tablist" className="flex flex-wrap gap-1 border-b border-zinc-200 dark:border-zinc-800">
-              <button
-                type="button"
-                role="tab"
-                id="tab-proposals"
-                aria-selected={activeTab === "proposals"}
-                aria-controls="tabpanel-proposals"
-                onClick={() => setActiveTab("proposals")}
-                className={`rounded-t-md px-3 py-2 text-sm font-medium ${
-                  activeTab === "proposals"
-                    ? "border-b-2 border-brand text-brand"
-                    : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
-                }`}
-              >
-                Proposte{proposals.length > 0 ? ` · ${proposals.length}` : ""}
-              </button>
               <button
                 type="button"
                 role="tab"
@@ -635,7 +655,7 @@ export function ArchiveItemDetail({
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
                 }`}
               >
-                Letto dal dispositivo
+                Letto dal dispositivo{localProposals.length > 0 ? ` · ${localProposals.length}` : ""}
               </button>
               <button
                 type="button"
@@ -650,24 +670,39 @@ export function ArchiveItemDetail({
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
                 }`}
               >
-                Analisi di Claude
+                Analisi con Hinthia{aiProposals.length > 0 ? ` · ${aiProposals.length}` : ""}
               </button>
             </div>
 
+            {/* L'annullamento resta visibile a cambio tab: una sola istanza sopra i pannelli, non una per tab.
+                aria-label distinto dal toast globale (v. ToastProvider): entrambi sono role="status". */}
+            {undoable ? (
+              <div
+                role="status"
+                aria-label="Ultima proposta"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/20 bg-brand/5 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300"
+              >
+                <span>{undoable.message}</span>
+                <button
+                  type="button"
+                  onClick={undoable.onUndo}
+                  className="font-medium text-brand underline-offset-2 hover:underline"
+                >
+                  Annulla
+                </button>
+              </div>
+            ) : null}
+
             {/* Un solo pannello montato alla volta, come SettingsTabs.tsx --- non tutti nascosti con `hidden`. */}
-            {activeTab === "proposals" ? (
-              <div id="tabpanel-proposals" role="tabpanel" aria-labelledby="tab-proposals">
+            {activeTab === "reading" ? (
+              <div id="tabpanel-reading" role="tabpanel" aria-labelledby="tab-reading" className="flex flex-col gap-6">
                 <ProposalsSection
-                  proposals={proposals}
+                  proposals={localProposals}
                   categories={categories}
                   busy={proposalBusy}
-                  undoable={undoable}
                   onAccept={handleAcceptProposal}
                   onReject={handleRejectProposal}
                 />
-              </div>
-            ) : activeTab === "reading" ? (
-              <div id="tabpanel-reading" role="tabpanel" aria-labelledby="tab-reading" className="flex flex-col gap-6">
                 <StructuredFieldsSection fields={structuredFields} />
                 <ReadingSection
                   doc={doc}
@@ -679,13 +714,24 @@ export function ArchiveItemDetail({
                 />
               </div>
             ) : (
-              <div id="tabpanel-analysis" role="tabpanel" aria-labelledby="tab-analysis">
+              <div id="tabpanel-analysis" role="tabpanel" aria-labelledby="tab-analysis" className="flex flex-col gap-6">
+                <ProposalsSection
+                  proposals={aiProposals}
+                  categories={categories}
+                  busy={proposalBusy}
+                  onAccept={handleAcceptProposal}
+                  onReject={handleRejectProposal}
+                />
                 {doc.aiSynthesis ? (
                   <section
-                    aria-label="Analisi di Claude"
+                    aria-label="Analisi con Hinthia"
                     className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
                   >
-                    <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">🔒 Analisi di Claude</h2>
+                    <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
+                      <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-5 w-5 shrink-0 rounded-full" />
+                      Analisi con Hinthia
+                    </h2>
                     <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">{doc.aiSynthesis}</p>
                     {doc.aiSynthesisGeneratedAt ? (
                       <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -695,7 +741,7 @@ export function ArchiveItemDetail({
                   </section>
                 ) : (
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    Non hai ancora chiesto a Claude di leggere questo documento.
+                    Non hai ancora chiesto a Hinthia di leggere questo documento.
                   </p>
                 )}
               </div>

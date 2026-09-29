@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Documento non trovato." }, { status: 404 });
   }
   if (doc.ai_extraction_excluded) {
-    return NextResponse.json({ error: "Questo documento è escluso dall'analisi AI." }, { status: 403 });
+    return NextResponse.json({ error: "Questo documento è escluso dall'analisi di Hinthia." }, { status: 403 });
   }
 
   let categoryName: string | null = null;
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         aiExtractionEnabledUntil: category.ai_extraction_enabled_until,
       })
     ) {
-      return NextResponse.json({ error: "Questa categoria non è abilitata all'estrazione AI." }, { status: 403 });
+      return NextResponse.json({ error: "Questa categoria non è abilitata all'estrazione con Hinthia." }, { status: 403 });
     }
     categoryName = category.name;
   }
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: "L'analisi AI reale non è ancora configurata su questo server." },
+      { error: "Hinthia non è ancora configurata su questo server." },
       { status: 503 },
     );
   }
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
     try {
       parsed = parseClaudeJson(raw);
     } catch {
-      return NextResponse.json({ error: "Risposta di Claude non interpretabile." }, { status: 502 });
+      return NextResponse.json({ error: "Risposta di Hinthia non interpretabile." }, { status: 502 });
     }
 
     // Traccia che il contenuto è davvero uscito, con che permesso --- mai il testo o il nome del file.
@@ -176,6 +176,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ result: parsed });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Errore sconosciuto.";
-    return NextResponse.json({ error: `Impossibile contattare Claude: ${message}` }, { status: 502 });
+    return NextResponse.json({ error: `Impossibile contattare Hinthia: ${message}` }, { status: 502 });
   }
 }

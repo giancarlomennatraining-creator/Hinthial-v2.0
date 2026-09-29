@@ -5,7 +5,7 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
 
 /**
  * FASE 22/22b/24 --- il cancello generale e le funzioni specifiche che ne dipendono. L'estrazione avanzata (FASE
- * 22) ha oggi una funzione reale dietro (v. ai-content-analysis.spec.ts per il bottone "Chiedi a Claude"); questo
+ * 22) ha oggi una funzione reale dietro (v. ai-content-analysis.spec.ts per il bottone "Chiedi a Hinthia"); questo
  * test resta sulla cascata di consenso in Impostazioni, comune a tutte le funzioni, incluso l'elenco per categoria
  * che ha sostituito l'eccezione a parte "Includi anche Salute" (Salute è ora una categoria come le altre).
  * Trascrizione e avvisi proattivi non hanno ancora una funzione dietro, ma la cascata deve comportarsi bene fin da
@@ -27,11 +27,11 @@ test("cancello generale, estrazione avanzata per categoria, trascrizione e avvis
 
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
-  await page.getByRole("tab", { name: "Intelligenza artificiale" }).click();
-  await expect(page.getByRole("heading", { name: "Intelligenza artificiale" })).toBeVisible();
+  await page.getByRole("tab", { name: "Hinthia" }).click();
+  await expect(page.getByRole("heading", { name: "Hinthia" })).toBeVisible();
 
-  const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di IA esterna" });
-  const extractionCheckbox = page.getByRole("checkbox", { name: /^🔒 Estrazione avanzata/ });
+  const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Hinthia" });
+  const extractionCheckbox = page.getByRole("checkbox", { name: /^Estrazione avanzata/ });
   // "Salute" è una categoria predefinita come le altre --- non più un'eccezione a parte con un consenso proprio.
   const saluteCheckbox = page.getByRole("checkbox", { name: "❤️ Salute" });
   const transcriptionCheckbox = page.getByRole("checkbox", { name: /^Trascrizione/ });
@@ -96,8 +96,8 @@ test("cancello generale, estrazione avanzata per categoria, trascrizione e avvis
 
   // Resta impostato dopo un refresh vero.
   await page.reload();
-  await page.getByRole("tab", { name: "Intelligenza artificiale" }).click();
-  await expect(page.getByRole("heading", { name: "Intelligenza artificiale" })).toBeVisible();
+  await page.getByRole("tab", { name: "Hinthia" }).click();
+  await expect(page.getByRole("heading", { name: "Hinthia" })).toBeVisible();
   await expect(extractionCheckbox).not.toBeChecked();
   await expect(transcriptionCheckbox).toBeChecked();
   await expect(saluteCheckbox).toBeDisabled();

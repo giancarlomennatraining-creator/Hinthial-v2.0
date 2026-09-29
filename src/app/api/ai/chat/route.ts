@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     .single();
   if (profileError || !profile?.ai_master_enabled || !profile.ai_chat_consent) {
     return NextResponse.json(
-      { error: "Consenso all'elaborazione AI non attivo." },
+      { error: "Consenso all'uso di Hinthia non attivo." },
       { status: 403 },
     );
   }
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: "L'assistente AI reale non è ancora configurato su questo server." },
+      { error: "Hinthia non è ancora configurata su questo server." },
       { status: 503 },
     );
   }
@@ -108,6 +108,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ text: textBlock?.text ?? "" });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Errore sconosciuto.";
-    return NextResponse.json({ error: `Impossibile contattare Claude: ${message}` }, { status: 502 });
+    return NextResponse.json({ error: `Impossibile contattare Hinthia: ${message}` }, { status: 502 });
   }
 }

@@ -177,11 +177,12 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const [phase, setPhase] = useState<UploadPhase>("saving");
   const [readProgress, setReadProgress] = useState<number | null>(null);
 
-  // Concept C: quale dei tre passi è aperto --- gli altri restano come riepilogo, mai tutti insieme. Parte dal
-  // passo 2: "upload" è già la modalità di default, chiedere di confermarla ogni volta sarebbe un clic in più inutile.
-  const [activeStep, setActiveStep] = useState<1 | 2 | 3>(2);
+  // Concept C (v2, v. feedback utente): quale dei tre passi è aperto --- gli altri restano come riepilogo, mai
+  // tutti insieme. Parte dal passo 1: il primo input deve essere davvero la prima scelta dell'utente, non una
+  // modalità già decisa per lui.
+  const [activeStep, setActiveStep] = useState<1 | 2 | 3>(1);
 
-  const [mode, setMode] = useState<CreationMode>("upload");
+  const [mode, setMode] = useState<CreationMode | null>(null);
   const [metadata, setMetadata] = useState<DocumentMetadataFieldsValue>(EMPTY_METADATA_FIELDS);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pickedFile, setPickedFile] = useState<File | null>(null);
@@ -435,7 +436,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   /** Stesso principio di ArchiveItemDetail.handleAnalyzeWithClaude --- qui basta la sintesi: le proposte si accettano sulla scheda, non qui. */
   async function handleAnalyzeWithClaude(scope: AIAnalysisScope) {
     if (!savedDoc) return;
-    if (!window.confirm("Il testo di questo documento verrà inviato a Claude (Anthropic). Continuare?")) {
+    if (!window.confirm("Il testo di questo documento verrà inviato a Hinthia. Continuare?")) {
       return;
     }
 
@@ -453,7 +454,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       setSavedDoc(documents.find((d) => d.id === savedDoc.id) ?? savedDoc);
       setAiDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Claude.");
+      setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Hinthia.");
     } finally {
       setAiBusy(false);
     }
@@ -493,7 +494,9 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         ? recordedFile
           ? "Registrazione pronta"
           : "Nessuna registrazione"
-        : noteTitle || "Nota senza titolo";
+        : mode === "note"
+          ? noteTitle || "Nota senza titolo"
+          : "";
 
   const step3Category = categories.find((c) => c.id === metadata.categoryId);
   const step3Summary = step3Category ? `${step3Category.icon} ${step3Category.name}` : "Nessun dettaglio aggiunto";
@@ -579,15 +582,17 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                   href={`/archive/${savedDoc.id}`}
                   className="w-fit text-sm font-medium text-brand underline-offset-2 hover:underline"
                 >
-                  Vedi tutte le proposte sulla scheda →
+                  Vedi tutto sulla scheda →
                 </Link>
               </>
             )}
           </div>
 
           <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              Analisi con Claude <span className="font-normal text-zinc-500 dark:text-zinc-400">(opzionale)</span>
+            <p className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
+              <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-5 w-5 shrink-0 rounded-full" />
+              Analisi con Hinthia <span className="font-normal text-zinc-500 dark:text-zinc-400">(opzionale)</span>
             </p>
             {aiDone ? (
               <p className="text-sm text-emerald-600 dark:text-emerald-400">
@@ -651,9 +656,11 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
             active={activeStep === 1}
             title="Cosa vuoi aggiungere?"
             summary={
-              <>
-                {MODE_ICON[mode]} {MODE_LABEL[mode]}
-              </>
+              mode ? (
+                <>
+                  {MODE_ICON[mode]} {MODE_LABEL[mode]}
+                </>
+              ) : null
             }
             onOpen={() => setActiveStep(1)}
           >
@@ -684,6 +691,8 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
             </div>
           </AccordionStep>
 
+          {mode ? (
+          <>
           <AccordionStep
             step={2}
             active={activeStep === 2}
@@ -715,34 +724,42 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                     </button>
                   </div>
                 ) : (
-                  <div
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={handleDropFile}
-                    className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700"
-                  >
-                    <span className="text-3xl" aria-hidden="true">
-                      📎
-                    </span>
-                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Trascina qui il documento</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">oppure scegli un file</p>
-                    <div className="flex flex-wrap items-center justify-center gap-2">
+                  <div className="flex flex-col items-center gap-3">
+                    {/* Concept pulito (v. feedback utente): un'unica superficie, non due messaggi sovrapposti ---
+                        l'intero riquadro è insieme zona di rilascio e "clicca per scegliere": la casella nativa
+                        lo ricopre per intero, invisibile ma presente (non `hidden`: resta un vero controllo,
+                        raggiungibile da tastiera e da chi verifica l'interfaccia), un solo messaggio sopra. */}
+                    <div
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={handleDropFile}
+                      className="relative flex w-full flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700"
+                    >
                       <input
                         id="file"
                         ref={fileInputRef}
                         type="file"
                         onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
                         onBlur={handleFileInputBlur}
-                        className="text-sm text-zinc-700 dark:text-zinc-300"
+                        aria-label="Scegli un file"
+                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                       />
-                      {/* Solo su smartphone --- su desktop capture non ha effetto e sarebbe ridondante. */}
-                      <button
-                        type="button"
-                        onClick={handleCameraClick}
-                        className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 md:hidden dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-                      >
-                        📷 Scatta foto
-                      </button>
+                      <span className="text-3xl" aria-hidden="true">
+                        📎
+                      </span>
+                      <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        Trascina qui un documento, o clicca per sceglierlo
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">PDF, immagini, file di testo</p>
                     </div>
+                    {/* Solo su smartphone --- su desktop capture non ha effetto e sarebbe ridondante. Fuori dal
+                        riquadro sopra: dentro, la casella invisibile ne intercetterebbe il click. */}
+                    <button
+                      type="button"
+                      onClick={handleCameraClick}
+                      className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 md:hidden dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                    >
+                      📷 Scatta foto
+                    </button>
                   </div>
                 )}
 
@@ -867,6 +884,8 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
               }}
             />
           </AccordionStep>
+          </>
+          ) : null}
 
           {error ? (
             <p role="alert" className="text-sm text-red-600 dark:text-red-400">

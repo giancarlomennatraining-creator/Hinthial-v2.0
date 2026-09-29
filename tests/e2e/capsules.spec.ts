@@ -251,6 +251,8 @@ test("collega un documento già presente in Archivio a una capsula, selezionando
   const documentContent = `contratto di prova --- ${Date.now()}`;
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "contratto.txt",
     mimeType: "text/plain",
@@ -351,6 +353,8 @@ test("allega un intero fascicolo a una capsula in un colpo solo", async ({ page 
   for (const name of ["contratto-affitto.txt", "verbale-consegna.txt"]) {
     await page.getByRole("link", { name: "Contenuti", exact: true }).click();
     await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+    // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+    await page.getByRole("radio", { name: /Carica un file/ }).click();
     await page.setInputFiles('input[type="file"]', {
       name,
       mimeType: "text/plain",
@@ -416,6 +420,8 @@ test("chiudere una capsula copia il contenuto collegato al suo interno; l'origin
   const documentContent = `polizza di prova --- ${Date.now()}`;
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "polizza.txt",
     mimeType: "text/plain",

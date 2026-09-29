@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { sortAlphabetically } from "@/lib/utils";
 import type { Category } from "@/domain/categories/types";
 import type { AssetListItem } from "@/domain/assets/types";
@@ -31,7 +32,7 @@ export const EMPTY_METADATA_FIELDS: DocumentMetadataFieldsValue = {
   issuer: "",
 };
 
-/** Converte un DocumentListItem già decifrato nei valori di partenza del form --- usato sia dall'edit inline (DocumentsPanel) sia dalla pagina di modifica dedicata (EditArchiveItemForm). */
+/** Converte un DocumentListItem già decifrato nei valori di partenza del form --- usato dalla creazione e dalla Scheda fusa (v. ArchiveItemDetail.tsx). */
 export function documentToFields(doc: DocumentListItem): DocumentMetadataFieldsValue {
   return {
     categoryId: doc.categoryId ?? "",
@@ -223,9 +224,11 @@ export function DocumentMetadataFields({
                   key={dossierId}
                   className="flex items-center gap-1 rounded-full bg-zinc-100 py-0.5 pl-2.5 pr-1 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
                 >
-                  <span>
+                  {/* Link, non solo etichetta: la Scheda fusa (v. ArchiveItemDetail.tsx) è anche l'unico modo di
+                      arrivare al fascicolo da un documento, ora che non esiste più una vista di sola lettura a parte. */}
+                  <Link href={`/dossiers/${dossierId}`} className="hover:underline">
                     {dossier.status === "closed" ? "🗂️" : "📂"} {dossier.title}
-                  </span>
+                  </Link>
                   <button
                     type="button"
                     onClick={() => handleRemoveDossier(dossierId)}

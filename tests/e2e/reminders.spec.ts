@@ -74,9 +74,11 @@ test("aggiunge scadenza, tag e note a un documento e li vede in dashboard", asyn
   const user = await loginAndSetUpEncryption(page);
 
   // La scadenza non si inserisce in creazione (v. DocumentMetadataFields, showExpiry): qui si esercita solo
-  // tag e note, la scadenza si aggiunge dalla pagina di modifica più sotto.
+  // tag e note, la scadenza si aggiunge dalla scheda del contenuto più sotto.
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "documento-con-metadati.txt",
     mimeType: "text/plain",
@@ -93,20 +95,19 @@ test("aggiunge scadenza, tag e note a un documento e li vede in dashboard", asyn
   await expect(page.getByText("fattura")).toBeVisible();
   await expect(page.getByText("2026", { exact: true })).toBeVisible();
 
-  // Modifica: pagina dedicata (come la creazione) --- la scadenza si
+  // Modifica: sempre sulla scheda del contenuto, niente più pagina dedicata --- la scadenza si
   // aggiunge qui, insieme al cambio dei tag.
   const docRow = page.locator("li", { hasText: "documento-con-metadati.txt" });
-  await openRowMenu(docRow);
-  await page.getByRole("menuitem", { name: "Modifica" }).click();
-  await expect(page).toHaveURL(/\/archive\/[^/]+\/edit$/);
+  await docRow.getByRole("link", { name: /documento-con-metadati\.txt/ }).click();
+  await expect(page).toHaveURL(/\/archive\/[^/]+$/, { timeout: 15_000 });
   const future = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   await page.getByLabel("Scadenza").fill(future);
   await page.getByLabel("Tag (separati da virgola)").fill("aggiornato");
   await page.getByRole("button", { name: "Salva modifiche" }).click();
+  await expect(page.getByText("Modifiche salvate.")).toBeVisible();
+  // Niente più un link "Torna all'archivio" qui (era della pagina di modifica ora rimossa): si torna dal nav.
+  await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
-  await expect(page.getByText("Contenuto aggiornato.")).toBeVisible();
-  // exact: true --- il messaggio di conferma appena sopra contiene
-  // "aggiornato" come sottostringa, altrimenti ambiguo con questo tag.
   await expect(page.getByText("aggiornato", { exact: true })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText(/scade \d/)).toBeVisible();
 

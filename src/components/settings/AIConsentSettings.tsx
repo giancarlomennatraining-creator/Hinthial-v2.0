@@ -144,11 +144,11 @@ export function AIConsentSettings() {
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-            Consenti l&apos;uso di IA esterna (Claude)
+            Consenti l&apos;uso di Hinthia
           </p>
           <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-            Cancello generale --- deve essere acceso perché una qualunque funzione basata su IA
-            reale possa essere attivata qui sotto. Spegnerlo spegne anche le funzioni già attive.
+            Cancello generale --- deve essere acceso perché una qualunque funzione di Hinthia
+            possa essere attivata qui sotto. Spegnerlo spegne anche le funzioni già attive.
           </p>
           {masterError ? (
             <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
@@ -160,7 +160,7 @@ export function AIConsentSettings() {
           type="button"
           role="switch"
           aria-checked={masterEnabled}
-          aria-label="Consenti l'uso di IA esterna"
+          aria-label="Consenti l'uso di Hinthia"
           disabled={masterBusy}
           onClick={() => handleMasterChange(!masterEnabled)}
           className={cn(
@@ -195,7 +195,7 @@ export function AIConsentSettings() {
                 onChange={() => handleChatChange(!chatConsent)}
                 className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
               />
-              Chat --- risposte reali alle tue domande (v. pagina AI)
+              Chat --- risposte reali alle tue domande (v. pagina Hinthia)
             </label>
           </li>
 
@@ -215,7 +215,9 @@ export function AIConsentSettings() {
                 onChange={() => handleExtractionChange(!extractionConsent)}
                 className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
               />
-              🔒 Estrazione avanzata dei contenuti --- Claude legge il testo dei documenti delle
+              {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
+              <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-4 w-4 shrink-0 rounded-full" />
+              Estrazione avanzata dei contenuti --- Hinthia legge il testo dei documenti delle
               categorie che abiliti qui sotto
             </label>
           </li>

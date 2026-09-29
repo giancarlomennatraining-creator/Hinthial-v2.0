@@ -9,7 +9,7 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
  * della pagina AI: lo stesso stato, non due copie da sincronizzare. Non serve una vera ANTHROPIC_API_KEY: con
  * entrambi i consensi attivi ma la chiave non configurata, la route risponde con un errore chiaro.
  */
-test("il consenso all'AI reale ha un cancello generale (Impostazioni > Intelligenza artificiale) e un consenso specifico per la Chat, entrambi necessari", async ({
+test("il consenso all'AI reale ha un cancello generale (Impostazioni > Hinthia) e un consenso specifico per la Chat, entrambi necessari", async ({
   page,
 }) => {
   test.slow();
@@ -43,12 +43,12 @@ test("il consenso all'AI reale ha un cancello generale (Impostazioni > Intellige
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
 
   // Senza il cancello generale, l'interruttore specifico resta visibile ma disabilitato.
-  await page.getByRole("link", { name: "AI", exact: true }).click();
+  await page.getByRole("link", { name: "Hinthia", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Parla con Hinthia" })).toBeVisible();
-  await page.getByRole("button", { name: "Configura l'assistente AI" }).click();
-  const panel = page.getByRole("dialog", { name: "Configura l'assistente AI" });
+  await page.getByRole("button", { name: "Configura Hinthia" }).click();
+  const panel = page.getByRole("dialog", { name: "Configura Hinthia" });
 
-  const masterSwitch = panel.getByRole("switch", { name: "Consenti l'uso di IA esterna" });
+  const masterSwitch = panel.getByRole("switch", { name: "Consenti l'uso di Hinthia" });
   const chatCheckbox = panel.getByRole("checkbox", { name: /^Chat/ });
   await expect(masterSwitch).toHaveAttribute("aria-checked", "false");
   await expect(chatCheckbox).toBeDisabled();
@@ -75,15 +75,15 @@ test("il consenso all'AI reale ha un cancello generale (Impostazioni > Intellige
   await page.getByLabel("Fai una domanda").fill("Quali assicurazioni ho?");
   await page.getByRole("button", { name: "Invia" }).click();
   await expect(
-    page.getByText("L'assistente AI reale non è ancora configurato su questo server."),
+    page.getByText("Hinthia non è ancora configurata su questo server."),
   ).toBeVisible({ timeout: 15_000 });
 
   // Stesso stato, visibile e modificabile anche da Impostazioni: non una copia separata, lo stesso componente.
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
-  await page.getByRole("tab", { name: "Intelligenza artificiale" }).click();
-  await expect(page.getByRole("heading", { name: "Intelligenza artificiale" })).toBeVisible();
-  const settingsMasterSwitch = page.getByRole("switch", { name: "Consenti l'uso di IA esterna" });
+  await page.getByRole("tab", { name: "Hinthia" }).click();
+  await expect(page.getByRole("heading", { name: "Hinthia" })).toBeVisible();
+  const settingsMasterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Hinthia" });
   const settingsChatCheckbox = page.getByRole("checkbox", { name: /^Chat/ });
   await expect(settingsMasterSwitch).toHaveAttribute("aria-checked", "true");
   await expect(settingsChatCheckbox).toBeChecked();
@@ -99,13 +99,13 @@ test("il consenso all'AI reale ha un cancello generale (Impostazioni > Intellige
 
   // Resta impostato dopo un refresh vero: questa scheda non richiede la Master Key sbloccata.
   await page.reload();
-  await page.getByRole("tab", { name: "Intelligenza artificiale" }).click();
-  await expect(page.getByRole("heading", { name: "Intelligenza artificiale" })).toBeVisible();
+  await page.getByRole("tab", { name: "Hinthia" }).click();
+  await expect(page.getByRole("heading", { name: "Hinthia" })).toBeVisible();
   await expect(settingsMasterSwitch).toHaveAttribute("aria-checked", "false");
 
-  // Tornando sulla pagina AI, il pannello mostra lo stesso stato spento.
-  await page.getByRole("link", { name: "AI", exact: true }).click();
-  await page.getByRole("button", { name: "Configura l'assistente AI" }).click();
+  // Tornando sulla pagina Hinthia, il pannello mostra lo stesso stato spento.
+  await page.getByRole("link", { name: "Hinthia", exact: true }).click();
+  await page.getByRole("button", { name: "Configura Hinthia" }).click();
   await expect(masterSwitch).toHaveAttribute("aria-checked", "false");
   await expect(chatCheckbox).toBeDisabled();
 });

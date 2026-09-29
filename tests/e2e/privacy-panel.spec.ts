@@ -53,6 +53,8 @@ test("Impostazioni > Privacy mostra dati reali dell'account e non richiede la ma
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "polizza.txt",
     mimeType: "text/plain",

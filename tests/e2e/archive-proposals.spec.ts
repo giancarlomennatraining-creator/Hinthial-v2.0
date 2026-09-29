@@ -69,6 +69,8 @@ async function setUpWithPolizza(page: import("@playwright/test").Page) {
 
   // Il nome del file non dice niente: categoria e scadenza possono venire solo da dentro il documento.
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "scan_0012.pdf",
     mimeType: "application/pdf",
@@ -79,7 +81,10 @@ async function setUpWithPolizza(page: import("@playwright/test").Page) {
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
   await page.getByRole("link", { name: /scan_0012\.pdf/ }).click();
-  await expect(page.getByRole("region", { name: "Proposte" })).toBeVisible({ timeout: 30_000 });
+  // Locali (categoria/scadenza da testo OCR): vivono già nella tab di default "Letto dal dispositivo" --- niente
+  // più una tab "Proposte" a sé (v. feedback utente).
+  const proposte = page.getByRole("tabpanel", { name: "Letto dal dispositivo" });
+  await expect(proposte.getByRole("button", { name: "Accetta" }).first()).toBeVisible({ timeout: 30_000 });
 
   return user;
 }
@@ -89,27 +94,30 @@ test("accettare una proposta scrive davvero, e si può annullare", async ({ page
 
   await setUpWithPolizza(page);
 
-  const proposte = page.getByRole("region", { name: "Proposte" });
+  const proposte = page.getByRole("tabpanel", { name: "Letto dal dispositivo" });
   await expect(proposte).toContainText("3 giu 2027");
 
-  // Prima di accettare, la scheda è vuota.
-  const scheda = page.getByRole("region", { name: "Scheda" });
-  await expect(scheda).not.toContainText("3 giu 2027");
+  // Prima di accettare, la scheda (sempre modificabile, v. Concept E) è vuota.
+  const scadenza = page.getByLabel("Scadenza");
+  await expect(scadenza).toHaveValue("");
 
   await proposte.getByRole("button", { name: "Accetta" }).first().click();
 
   // La scheda si aggiorna, e la proposta sparisce: ciò che è impostato non si ripropone.
-  await expect(scheda).toContainText("3 giu 2027", { timeout: 20_000 });
-  await expect(proposte).toContainText("Scadenza impostata");
+  await expect(scadenza).toHaveValue("2027-06-03", { timeout: 20_000 });
+  // L'annullamento è condiviso sopra le tab (v. ArchiveItemDetail.tsx), non dentro il pannello: non deve
+  // sparire cambiando tab. Nome distinto dal toast globale, anch'esso role="status".
+  const lastAction = page.getByRole("status", { name: "Ultima proposta" });
+  await expect(lastAction).toContainText("Scadenza impostata");
 
   // Annullamento, subito e senza lasciare la pagina: rimette il campo com'era, e la proposta torna a comparire.
-  await proposte.getByRole("button", { name: "Annulla" }).click();
-  await expect(scheda).not.toContainText("3 giu 2027", { timeout: 20_000 });
+  await lastAction.getByRole("button", { name: "Annulla" }).click();
+  await expect(scadenza).toHaveValue("", { timeout: 20_000 });
   await expect(proposte).toContainText("3 giu 2027");
 
   // Si riaccetta, e stavolta si va a vedere l'effetto fuori dall'Archivio.
   await proposte.getByRole("button", { name: "Accetta" }).first().click();
-  await expect(scheda).toContainText("3 giu 2027", { timeout: 20_000 });
+  await expect(scadenza).toHaveValue("2027-06-03", { timeout: 20_000 });
 
   await page.getByRole("link", { name: "Scadenze", exact: true }).click();
   await expect(page.getByText("scan_0012.pdf").first()).toBeVisible({ timeout: 20_000 });
@@ -120,12 +128,20 @@ test("un rifiuto viene ricordato e sopravvive al ricaricamento", async ({ page }
 
   await setUpWithPolizza(page);
 
-  const proposte = page.getByRole("region", { name: "Proposte" });
+  const proposte = page.getByRole("tabpanel", { name: "Letto dal dispositivo" });
   await expect(proposte).toContainText("Scadenza");
+  // 3 proposte (scadenza/categoria/emittente): il conteggio, non il testo, distingue una proposta accettabile
+  // dal fatto grezzo che "Cosa ne ho ricavato" mostra comunque --- rifiutare una proposta non fa sparire il
+  // valore da lì, lo rende di nuovo visibile come informazione (v. ArchiveItemDetail.tsx, filtro structuredFields).
+  const accetta = proposte.getByRole("button", { name: "Accetta" });
+  await expect(accetta).toHaveCount(3);
 
   await proposte.getByRole("button", { name: "No, grazie" }).first().click();
-  await expect(proposte).toContainText("Non te lo richiederò più");
-  await expect(proposte).not.toContainText("3 giu 2027");
+  // L'annullamento è condiviso sopra le tab (v. ArchiveItemDetail.tsx), non dentro il pannello.
+  await expect(page.getByRole("status", { name: "Ultima proposta" })).toContainText(
+    "Non te lo richiederò più",
+  );
+  await expect(accetta).toHaveCount(2);
 
   // La prova vera: il rifiuto è cifrato nel database, e per restare valido dev'essere riletto e decifrato al caricamento successivo.
   await page.reload();
@@ -133,8 +149,8 @@ test("un rifiuto viene ricordato e sopravvive al ricaricamento", async ({ page }
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
 
   // La proposta di categoria resta (rifiutarne una non è rifiutarle tutte), ma la scadenza rifiutata non deve tornare.
-  await expect(page.getByRole("region", { name: "Proposte" })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("region", { name: "Proposte" })).not.toContainText("3 giu 2027");
+  await expect(proposte).toBeVisible({ timeout: 30_000 });
+  await expect(accetta).toHaveCount(2);
 });
 
 test("modificare una proposta prima di accettarla", async ({ page }) => {
@@ -142,16 +158,15 @@ test("modificare una proposta prima di accettarla", async ({ page }) => {
 
   await setUpWithPolizza(page);
 
-  const proposte = page.getByRole("region", { name: "Proposte" });
+  const proposte = page.getByRole("tabpanel", { name: "Letto dal dispositivo" });
   await proposte.getByRole("button", { name: "Modifica" }).first().click();
 
   // Il caso più frequente: la data c'è ma è quella sbagliata.
   await page.getByLabel("Scadenza da impostare").fill("2028-01-15");
-  await page.getByRole("button", { name: "Salva" }).click();
+  // exact: senza, ambiguo con "Salva modifiche" della Scheda sempre modificabile (v. Concept E).
+  await page.getByRole("button", { name: "Salva", exact: true }).click();
 
-  const scheda = page.getByRole("region", { name: "Scheda" });
-  await expect(scheda).toContainText("15 gen 2028", { timeout: 20_000 });
-  await expect(scheda).not.toContainText("3 giu 2027");
+  await expect(page.getByLabel("Scadenza")).toHaveValue("2028-01-15", { timeout: 20_000 });
 });
 
 test("le scelte sulle proposte restano in Attività", async ({ page }) => {
@@ -160,17 +175,15 @@ test("le scelte sulle proposte restano in Attività", async ({ page }) => {
   const user = await setUpWithPolizza(page);
 
   await page
-    .getByRole("region", { name: "Proposte" })
+    .getByRole("tabpanel", { name: "Letto dal dispositivo" })
     .getByRole("button", { name: "Accetta" })
     .first()
     .click();
-  await expect(page.getByRole("region", { name: "Scheda" })).toContainText("3 giu 2027", {
-    timeout: 20_000,
-  });
+  await expect(page.getByLabel("Scadenza")).toHaveValue("2027-06-03", { timeout: 20_000 });
 
   // Ogni scrittura automatica deve lasciare traccia.
   await page.getByRole("button", { name: fullName(user) }).click();
-  // exact: senza, "Impostazioni" ambiguo con il link "Impostazioni → Intelligenza artificiale" di AIAnalysisTrigger (FASE 22).
+  // exact: senza, "Impostazioni" ambiguo con il link "Impostazioni → Hinthia" di AIAnalysisTrigger (FASE 22).
   await page.getByRole("link", { name: "Impostazioni", exact: true }).click();
   await page.getByRole("tab", { name: "Attività" }).click();
   await page.getByRole("button", { name: "Trova" }).click();

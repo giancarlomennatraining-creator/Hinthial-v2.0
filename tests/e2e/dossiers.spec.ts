@@ -90,6 +90,8 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   // Il collegamento si fa dal form del documento, non da qui.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "referto-visita.pdf",
     mimeType: "application/pdf",
@@ -173,6 +175,8 @@ test("un documento può stare in più di un fascicolo insieme (FASE 20c)", async
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page).toHaveURL(/\/archive\/new$/, { timeout: 15_000 });
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "codice-fiscale.txt",
     mimeType: "text/plain",
@@ -220,15 +224,18 @@ test("un documento può stare in più di un fascicolo insieme (FASE 20c)", async
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await page.getByRole("link", { name: /codice-fiscale\.txt/ }).click();
   await expect(page).toHaveURL(/\/archive\/[^/]+$/, { timeout: 15_000 });
-  await page.getByRole("link", { name: "Modifica" }).click();
-  await expect(page).toHaveURL(/\/archive\/[^/]+\/edit$/, { timeout: 15_000 });
   await expect(page.getByRole("button", { name: "Rimuovi Problema di salute" })).toBeVisible();
   await page.getByRole("button", { name: "Rimuovi Problema di salute" }).click();
   await page.getByRole("button", { name: "Salva modifiche" }).click();
-  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
+  // Attende che il salvataggio sia davvero completato prima di ricaricare: altrimenti si rischia di
+  // ricaricare prima che la scrittura asincrona sia arrivata al server (v. la stessa razza di bug per
+  // "Torna all'archivio" in CreateArchiveItemForm).
+  await expect(page.getByText("Modifiche salvate.")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Problema di salute/ })).not.toBeVisible();
 
-  await page.getByRole("link", { name: /codice-fiscale\.txt/ }).click();
-  await expect(page).toHaveURL(/\/archive\/[^/]+$/, { timeout: 15_000 });
+  await page.reload();
+  await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await expect(page.getByRole("link", { name: /Acquisto casa/ })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("link", { name: /Problema di salute/ })).not.toBeVisible();
 });

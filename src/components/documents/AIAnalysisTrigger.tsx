@@ -34,21 +34,23 @@ export function AIAnalysisTrigger({
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-          🔒 Chiedi a Claude di leggere questo documento
+        <p className="flex items-center gap-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
+          <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-5 w-5 shrink-0 rounded-full" />
+          Chiedi a Hinthia di leggere questo documento
         </p>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">il testo lascia il dispositivo</p>
       </div>
 
       {excluded ? (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Questo documento è escluso dall&apos;analisi AI --- vince su qualunque consenso di categoria.
+          Questo documento è escluso dall&apos;analisi di Hinthia --- vince su qualunque consenso di categoria.
         </p>
       ) : !consentActive ? (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Attiva &quot;Estrazione avanzata dei contenuti&quot; in{" "}
           <Link href="/settings" className="underline underline-offset-2 hover:text-brand">
-            Impostazioni → Intelligenza artificiale
+            Impostazioni → Hinthia
           </Link>{" "}
           per usare questa funzione.
         </p>
@@ -59,7 +61,7 @@ export function AIAnalysisTrigger({
           onClick={() => onAnalyze("category")}
           className="w-fit rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
         >
-          {busy ? "Sto leggendo…" : "Chiedi a Claude"}
+          {busy ? "Sto leggendo…" : "Chiedi a Hinthia"}
         </button>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
@@ -102,7 +104,7 @@ export function AIAnalysisTrigger({
           onChange={() => onToggleExcluded(!excluded)}
           className="h-3.5 w-3.5 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
         />
-        Escludi questo documento dall&apos;analisi AI, anche con la categoria abilitata
+        Escludi questo documento dall&apos;analisi di Hinthia, anche con la categoria abilitata
       </label>
     </div>
   );

@@ -61,6 +61,8 @@ test("crea un bene e vi collega un documento e una scadenza", async ({ page }) =
   await page.getByRole("link", { name: "Archivio" }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   // Il passo 3 va aperto PRIMA di scegliere il file: "contratto-affitto.txt" fa scattare il
   // suggerimento automatico della categoria (v. heuristicCategorizer), che altrimenti riempirebbe
   // il campo prima ancora di questo controllo sullo stato vuoto/disabilitato.
@@ -149,6 +151,8 @@ test("la categoria filtra i beni nei documenti, il bene filtra i documenti nelle
   await page.getByRole("link", { name: "Archivio" }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "contratto-affitto.txt",
     mimeType: "text/plain",
@@ -166,6 +170,8 @@ test("la categoria filtra i beni nei documenti, il bene filtra i documenti nelle
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "libretto-auto.txt",
     mimeType: "text/plain",

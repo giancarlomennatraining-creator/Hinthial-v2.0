@@ -78,7 +78,7 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
     label: "Privacy e dati",
     tabs: [
       { id: "privacy", label: "Privacy", icon: EyeIcon },
-      { id: "ai", label: "Intelligenza artificiale", icon: AIIcon },
+      { id: "ai", label: "Hinthia", icon: AIIcon },
       { id: "categories", label: "Categorie", icon: CategoryIcon },
       { id: "tags", label: "Tag", icon: TagIcon },
       { id: "import-export", label: "Importa/Esporta", icon: ImportExportIcon },
@@ -201,10 +201,10 @@ export function SettingsTabs({
       return (
         <div className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Intelligenza artificiale
+            Hinthia
           </h2>
           <p className="max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
-            Per impostazione predefinita nessuna funzione di IA reale è attiva --- ogni domanda
+            Per impostazione predefinita nessuna funzione di Hinthia è attiva --- ogni domanda
             e ogni contenuto restano elaborati solo sul tuo dispositivo. Attivando il cancello
             generale qui sotto, attivi solo la possibilità di accendere le singole funzioni, una
             per una.

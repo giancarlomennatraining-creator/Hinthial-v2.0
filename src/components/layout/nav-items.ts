@@ -30,7 +30,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Amici", href: "/friends", icon: FriendIcon, requiresEncryption: true },
   { label: "Capsule", href: "/capsules", icon: CapsuleIcon, requiresEncryption: true },
   { label: "Cronologia", href: "/timeline", icon: TimelineIcon, requiresEncryption: true },
-  { label: "AI", href: "/ai", icon: AIIcon, requiresEncryption: true },
+  { label: "Hinthia", href: "/ai", icon: AIIcon, requiresEncryption: true },
   // Contenuto globale, non cifrato: non richiede la master key, a differenza di ogni altra voce sopra tranne Dashboard.
   { label: "Novità", href: "/updates", icon: UpdatesIcon, requiresEncryption: false },
 ];

@@ -34,8 +34,7 @@ test("scrive una nota testuale, la riapre e ne modifica il contenuto in linea", 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
 
-  // Il passo 1 (tipo di contenuto) parte già riassunto su "Carica un file" --- va riaperto per scegliere altro.
-  await page.getByRole("button", { name: "Cosa vuoi aggiungere?" }).click();
+  // Il passo 1 (tipo di contenuto) parte aperto e senza scelta --- va scelta esplicitamente (v. feedback utente).
   await page.getByRole("radio", { name: "Scrivi una nota" }).click();
   await page.getByLabel("Titolo").fill("Combinazione cassaforte");
   await page.getByLabel("Testo").fill("12-34-56");
@@ -81,6 +80,8 @@ test("un'immagine caricata ha un player inline, oltre al download", async ({ pag
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.locator("#file").setInputFiles({
     name: "foto.png",
     mimeType: "image/png",

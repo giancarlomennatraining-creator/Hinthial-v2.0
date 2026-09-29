@@ -10,6 +10,31 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-29 (2)
+
+### HINTHIA come unica IA dell'app, scheda fusa con la modifica (concept E), niente più tab "Proposte"
+
+**Cosa fa:** sei correzioni chieste insieme dopo aver provato "Nuovo contenuto" e la scheda di un documento:
+
+1. **Il passo 1 di "Nuovo contenuto" non parte più su una modalità già scelta** --- "Cosa vuoi aggiungere?" è davvero la prima domanda, non un default silenzioso su "Carica un file" da dover notare e correggere.
+2. **Un solo concetto pulito per il caricamento**, non due messaggi sovrapposti: l'intero riquadro (icona, "Trascina qui un documento, o clicca per sceglierlo", tipi ammessi) è insieme zona di trascinamento e zona cliccabile --- una casella `<input type="file">` invisibile ma presente lo ricopre per intero.
+3. **HINTHIA è l'unica IA che l'app mostra**: ogni "AI"/"IA"/"Claude" rivolto all'utente --- bottoni, etichette, aria-label, messaggi di errore delle due route server (`api/ai/chat`, `api/ai/analyze`), la voce "Attività", persino la voce di navigazione principale (prima "AI", ora "Hinthia") --- diventa "Hinthia". Mai più un nome di provider in vista: dietro c'è sempre Claude (Anthropic), ma l'utente non deve saperlo per usare l'app.
+4. **L'avatar di Hinthia sostituisce il lucchetto 🔒** ovunque comparisse per l'analisi con IA: il bottone "Chiedi a Hinthia", l'intestazione "Analisi con Hinthia" sulla scheda, la stessa sezione nei passi post-salvataggio di "Nuovo contenuto".
+5. **Scheda e Modifica sono la stessa pagina.** Niente più `/archive/[id]/edit`: i campi (Categoria, Bene, Fascicoli, Scadenza, Emittente, Tag, Note) sono sempre modificabili direttamente sulla scheda, con un "Salva modifiche" che si accende solo quando c'è davvero qualcosa da salvare.
+6. **"Proposte" non è più una tab a sé.** Quello che c'è da accettare o rifiutare vive già dentro "Letto dal dispositivo" (le proposte locali) o "Analisi con Hinthia" (quelle di Hinthia) --- a seconda di dove viene, non in una terza vetrina separata. L'eventuale annullamento resta visibile sopra le due tab, condiviso, così non sparisce cambiando tab.
+
+**Note tecniche:** `ArchiveItemDetail.tsx` guadagna un `fields` locale (`DocumentMetadataFieldsValue`) sincronizzato da `doc` con tre `useEffect` distinti, uno per campo (`categoryId`/`expiresAt`/`issuer`) --- mai un ricalcolo unico dell'intero oggetto, che sovrascriverebbe una modifica in corso su un campo diverso non toccato da una proposta appena accettata. `handleSaveFields` richiama `updateDocumentMetadata` (la stessa funzione già usata dalla vecchia pagina di modifica, ora rimossa insieme a `EditArchiveItemForm.tsx`). `ProposalsSection` perde la sua sezione `<section aria-label="Proposte">`/l'header "Hinthial propone"/il banner di annullamento interno: il genitore ne monta due istanze (proposte locali dentro "Letto dal dispositivo", proposte di Hinthia dentro "Analisi con Hinthia") e possiede lui il banner di annullamento, una volta sola sopra le tab. `DocumentMetadataFields` --- condiviso con la creazione --- guadagna un `<Link>` sul nome di ogni fascicolo nel chip: prima era solo etichetta, ma sulla scheda fusa è anche l'unico modo di arrivare al fascicolo da un documento, non essendoci più una vista di sola lettura a parte. `DocumentsPanel.tsx` perde la voce di menu "Modifica" (ridondante col nome del contenuto, che porta già alla stessa pagina fusa) e lo stato `showUpdatedMessage`/`?updated=1` (nessuna pagina scrive più quella query string per un documento).
+
+**Impatto ampio sui test e2e, in due ondate distinte.** La prima: rimuovere la pre-selezione del passo 1 (punto 1) rompe **44 controlli in 28 file** che caricavano un file subito dopo aver aperto "Nuovo contenuto", assumendo (correttamente, prima di oggi) che il passo del file fosse già pronto --- ognuno ora seleziona esplicitamente "Carica un file" (o "Scrivi una nota", dov'è il caso) prima di procedere. La seconda, sulla fusione Scheda/Modifica: gli stessi test che prima passavano per `/archive/[id]/edit` restano sulla stessa pagina e usano "Salva modifiche" al posto di "Salva modifiche" + redirect a `/archive?updated=1`; la voce di menu "Modifica" viene sostituita dal click sul nome del contenuto. In `document-categorization.spec.ts` la ricerca di `getByLabel("Categoria")` è diventata ambigua con la nuova checkbox di esclusione dall'analisi di Hinthia ("...anche con la categoria abilitata"), ora sulla stessa pagina --- risolto con `exact: true`.
+
+**Due bug reali scoperti scrivendo questi test, non causati dai test in sé:**
+- In `dossiers.spec.ts`, ricaricare subito dopo "Salva modifiche" (senza aspettare la conferma) rischiava di leggere lo stato prima che la scrittura asincrona fosse arrivata al server --- stessa famiglia del bug "Torna all'archivio" trovato nella voce precedente. Risolto aspettando il toast "Modifiche salvate." prima di ricaricare in tutti i punti che lo fanno.
+- Il banner di annullamento condiviso (`role="status"`) collideva con quello dei toast globali (`ToastProvider`, anche lui `role="status"`): un `getByRole("status")` senza distinzione trovava il toast sbagliato. Risolto con un `aria-label="Ultima proposta"` sul banner delle proposte.
+
+Verificato: typecheck, lint, build di produzione, e l'intera batteria di e2e realmente eseguiti tra i file toccati (oltre trenta, incluse le sei sopra citate) --- tutti passano tranne i due fallimenti preesistenti e indipendenti già documentati nella voce precedente (`archive-content-kinds.spec.ts`, `table-sort.spec.ts`), più `archive-item-detail.spec.ts` (l'OCR di "AZIENDA OSPEDALIERA DI GUBBIO"), tutti riconfermati identici su `master` pulito con `git stash`. `ai-content-analysis.spec.ts`/`ai-extraction-consent.spec.ts`/`ai-processing-consent.spec.ts` non eseguiti per il solito motivo (`ANTHROPIC_API_KEY` reale in `.env.local`), solo aggiornati meccanicamente per il rebranding e la tab "Hinthia" in Impostazioni.
+
+---
+
 ## 2026-09-29
 
 ### Nuovo contenuto --- concept C (a tappe) e concept D (passi dopo il salvataggio)

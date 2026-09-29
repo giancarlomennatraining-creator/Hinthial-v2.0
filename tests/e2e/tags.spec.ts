@@ -36,6 +36,8 @@ test("gestisce i tag: aggregazione con merge, rinomina, eliminazione, e il filtr
   // Primo documento: tag "Casa" e "Lavoro".
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "documento-uno.txt",
     mimeType: "text/plain",
@@ -51,6 +53,7 @@ test("gestisce i tag: aggregazione con merge, rinomina, eliminazione, e il filtr
   // Secondo documento: tag "casa" (stessa parola, maiuscole diverse) ---
   // deve confluire nello stesso tag del primo, non crearne un secondo.
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "documento-due.txt",
     mimeType: "text/plain",
@@ -65,6 +68,7 @@ test("gestisce i tag: aggregazione con merge, rinomina, eliminazione, e il filtr
 
   // Terzo documento: nessun tag --- controllo per il filtro più sotto.
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "documento-tre.txt",
     mimeType: "text/plain",

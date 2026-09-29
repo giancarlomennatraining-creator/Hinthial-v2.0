@@ -78,7 +78,7 @@ test("un utente autenticato può navigare la shell e fare logout", async ({
 
   // La navigazione principale porta alle altre sezioni: per un utente senza cifratura configurata, ognuna mostra
   // il setup della master key. Il flusso vero è coperto altrove; qui basta verificare che la navigazione arrivi.
-  await page.getByRole("link", { name: "AI", exact: true }).click();
+  await page.getByRole("link", { name: "Hinthia", exact: true }).click();
   await expect(page).toHaveURL(/\/ai$/);
   await expect(page.getByRole("heading", { name: "Configura la cifratura" })).toBeVisible();
 

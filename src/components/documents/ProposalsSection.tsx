@@ -9,7 +9,9 @@ import type { Proposal, ProposalKind } from "@/domain/proposals/types";
 /**
  * Le proposte di Hinthial su un contenuto, con tre risposte possibili. "Modifica" non è un ornamento tra accetta e
  * rifiuta: una proposta è spesso giusta per metà, e senza una terza via l'utente rifiuterebbe e rifarebbe tutto a
- * mano. L'annullamento vive qui, non in un popup: una riga che resta finché l'utente non fa altro.
+ * mano. Niente più una sezione "Proposte" a sé: queste righe vivono dentro "Letto dal dispositivo" o "Analisi con
+ * Hinthia" (v. ArchiveItemDetail.tsx, che sceglie il sottoinsieme --- locali o di Hinthia --- e mostra l'eventuale
+ * annullamento una volta sola, sopra le tab, non qui: un annullamento non deve sparire cambiando tab).
  */
 
 const KIND_LABEL: Record<ProposalKind, string> = {
@@ -46,14 +48,12 @@ export function ProposalsSection({
   proposals,
   categories,
   busy,
-  undoable,
   onAccept,
   onReject,
 }: {
   proposals: Proposal[];
   categories: Category[];
   busy: boolean;
-  undoable: UndoableAction | null;
   /** `value` può differire da `proposal.value`: è il percorso di "Modifica". */
   onAccept: (proposal: Proposal, value: string) => void;
   onReject: (proposal: Proposal) => void;
@@ -61,7 +61,7 @@ export function ProposalsSection({
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
 
-  if (proposals.length === 0 && !undoable) return null;
+  if (proposals.length === 0) return null;
 
   function startEditing(proposal: Proposal) {
     setEditing(proposalKey(proposal));
@@ -75,38 +75,14 @@ export function ProposalsSection({
   }
 
   return (
-    <section
-      aria-label="Proposte"
-      className="flex flex-col gap-3 rounded-2xl border border-brand/30 bg-brand/5 p-4"
-    >
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          Hinthial propone
-        </h2>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">🔒 sul tuo dispositivo</p>
-      </div>
-
-      {undoable ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
-          <p className="min-w-0 text-sm text-zinc-700 dark:text-zinc-300">{undoable.message}</p>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={undoable.onUndo}
-            className="shrink-0 rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-          >
-            Annulla
-          </button>
-        </div>
-      ) : null}
-
+    <div className="flex flex-col gap-3">
       {proposals.map((proposal) => {
         const isEditing = editing === proposalKey(proposal);
 
         return (
           <div
             key={proposalKey(proposal)}
-            className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950"
+            className="flex flex-col gap-2 rounded-xl border border-brand/20 bg-brand/5 p-3"
           >
             <div className="flex gap-3">
               <span aria-hidden="true" className="mt-0.5 shrink-0 text-base">
@@ -123,11 +99,6 @@ export function ProposalsSection({
                   {proposal.derived ? (
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
                       calcolata da Hinthial
-                    </span>
-                  ) : null}
-                  {proposal.aiGenerated ? (
-                    <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs text-brand">
-                      🔒 letto da Claude
                     </span>
                   ) : null}
                 </p>
@@ -220,11 +191,9 @@ export function ProposalsSection({
         );
       })}
 
-      {proposals.length > 0 ? (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Quello che rifiuti non te lo richiedo più. Ogni scelta resta in Attività.
-        </p>
-      ) : null}
-    </section>
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        Quello che rifiuti non te lo richiedo più. Ogni scelta resta in Attività.
+      </p>
+    </div>
   );
 }

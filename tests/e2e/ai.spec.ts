@@ -41,6 +41,8 @@ test("l'assistente AI risponde su beni/documenti collegati per categoria e segna
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "polizza-auto.txt",
     mimeType: "text/plain",
@@ -72,7 +74,7 @@ test("l'assistente AI risponde su beni/documenti collegati per categoria e segna
   await expect(page.getByText("Rinnovo assicurazione auto").first()).toBeVisible();
 
   // L'assistente AI.
-  await page.getByRole("link", { name: "AI", exact: true }).click();
+  await page.getByRole("link", { name: "Hinthia", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Parla con Hinthia" })).toBeVisible();
 
   // Domanda diretta: "assicurazioni" è il nome della categoria, non
@@ -98,7 +100,7 @@ test("l'assistente AI risponde su beni/documenti collegati per categoria e segna
   // nel ciclo di vita di AIPanel, che si smonta e rimonta ad ogni
   // cambio pagina --- v. AIChatProvider, montato in AppShell): si perde
   // solo a un refresh vero, non lasciando e tornando sulla pagina.
-  await page.getByRole("link", { name: "AI", exact: true }).click();
+  await page.getByRole("link", { name: "Hinthia", exact: true }).click();
   await expect(page.getByText("Quali assicurazioni ho?").first()).toBeVisible();
   await expect(page.getByText("Quanti beni ho?").first()).toBeVisible();
 

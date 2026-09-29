@@ -135,14 +135,15 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [transcriptAutoBusy, setTranscriptAutoBusy] = useState(false);
   const [transcriptSaving, setTranscriptSaving] = useState(false);
 
-  // "?created=1"/"?updated=1" arrivano da /archive/new e da /archive/[id]/edit dopo un salvataggio riuscito.
+  // "?created=1" arriva da /archive/new dopo un salvataggio riuscito. Niente più "?updated=1": la Scheda
+  // (v. ArchiveItemDetail.tsx) salva sul posto, senza tornare qui --- il suo "Modifiche salvate." è un toast lì.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
-  const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
   useEffect(() => {
-    if (showCreatedMessage) showToast("Contenuto aggiunto.");
-    if (showUpdatedMessage) showToast("Contenuto aggiornato.");
-    if (showCreatedMessage || showUpdatedMessage) router.replace("/archive");
-  }, [showCreatedMessage, showUpdatedMessage, router, showToast]);
+    if (showCreatedMessage) {
+      showToast("Contenuto aggiunto.");
+      router.replace("/archive");
+    }
+  }, [showCreatedMessage, router, showToast]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -902,10 +903,10 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                               )}
                             </td>
                             <td className="p-3">
+                              {/* Niente più "Modifica" qui: la Scheda (v. ArchiveItemDetail.tsx), raggiunta dal
+                                  nome del contenuto sopra, è già dove i metadati si modificano --- non serve una
+                                  scorciatoia duplicata verso la stessa pagina. */}
                               <RowActionsMenu label={`Azioni per ${doc.filename}`}>
-                                <RowMenuItem disabled={busy} onClick={() => router.push(`/archive/${doc.id}/edit`)}>
-                                  Modifica
-                                </RowMenuItem>
                                 {kind === "note" ? (
                                   <RowMenuItem disabled={busy} onClick={() => toggleNote(doc)}>
                                     {isNoteOpen ? "Chiudi" : "Apri"}
@@ -1118,10 +1119,10 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         ) : null}
                       </div>
                       </div>
+                      {/* Niente più "Modifica" qui: la Scheda (v. ArchiveItemDetail.tsx), raggiunta dal nome del
+                          contenuto sopra, è già dove i metadati si modificano --- non serve una scorciatoia
+                          duplicata verso la stessa pagina. */}
                       <RowActionsMenu label={`Azioni per ${doc.filename}`}>
-                        <RowMenuItem disabled={busy} onClick={() => router.push(`/archive/${doc.id}/edit`)}>
-                          Modifica
-                        </RowMenuItem>
                         {kind === "note" ? (
                           <RowMenuItem disabled={busy} onClick={() => toggleNote(doc)}>
                             {isNoteOpen ? "Chiudi" : "Apri"}

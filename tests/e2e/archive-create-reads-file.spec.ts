@@ -85,6 +85,8 @@ test("scegliendo il file, Hinthial lo legge e precompila il form", async ({ page
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
 
   // Il nome del file non dice niente: tutto quello che comparirà viene
   // da dentro il documento.
@@ -125,6 +127,8 @@ test("il segno «suggerito» sparisce appena l'utente tocca il campo", async ({ 
   await signInAndUnlock(page);
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
 
   await page.setInputFiles('input[type="file"]', {
     name: "scan_0012.pdf",

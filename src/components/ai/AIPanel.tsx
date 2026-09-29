@@ -122,7 +122,7 @@ export function AIPanel({
         { role: "user", text: trimmed, createdAt: Date.now() },
         {
           role: "assistant",
-          text: err instanceof Error ? err.message : "Impossibile contattare l'assistente AI.",
+          text: err instanceof Error ? err.message : "Impossibile contattare Hinthia.",
           createdAt: Date.now(),
         },
       ]);
@@ -150,7 +150,7 @@ export function AIPanel({
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
-            aria-label="Configura l'assistente AI"
+            aria-label="Configura Hinthia"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-200 text-zinc-500 hover:border-brand/30 hover:bg-brand/5 hover:text-brand dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-brand/10"
           >
             <SlidersIcon width={18} height={18} />
@@ -158,8 +158,8 @@ export function AIPanel({
         </div>
         <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
           {active
-            ? "Fai domande sui tuoi dati. Le risposte vengono generate da Claude (Anthropic): solo la tua domanda e i pochi elementi pertinenti trovati qui sul dispositivo vengono inviati --- mai l'intero archivio."
-            : "Fai domande sui tuoi dati. Risponde un motore locale, senza intelligenza artificiale vera: le tue domande vengono elaborate qui, sul tuo dispositivo --- nessun dato esce dal browser."}
+            ? "Fai domande sui tuoi dati. Le risposte vengono generate da Hinthia: solo la tua domanda e i pochi elementi pertinenti trovati qui sul dispositivo vengono inviati --- mai l'intero archivio."
+            : "Fai domande sui tuoi dati. Risponde un motore locale, non Hinthia: le tue domande vengono elaborate qui, sul tuo dispositivo --- nessun dato esce dal browser."}
         </p>
       </div>
 
@@ -303,10 +303,10 @@ export function AIPanel({
         </div>
       )}
 
-      <SidePanel open={settingsOpen} onClose={() => setSettingsOpen(false)} label="Configura l'assistente AI">
+      <SidePanel open={settingsOpen} onClose={() => setSettingsOpen(false)} label="Configura Hinthia">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Configura l&apos;assistente AI
+            Configura Hinthia
           </h2>
           <button
             type="button"

@@ -70,6 +70,8 @@ test("la ricerca e il filtro per categoria funzionano in Beni e Archivio", async
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "polizza.txt",
     mimeType: "text/plain",
@@ -84,6 +86,8 @@ test("la ricerca e il filtro per categoria funzionano in Beni e Archivio", async
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "contratto-affitto.txt",
     mimeType: "text/plain",

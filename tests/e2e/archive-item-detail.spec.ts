@@ -73,6 +73,8 @@ test("la scheda di un documento mostra il testo che Hinthial ci ha letto dentro"
   await signInAndSetUpVault(page, user.email, user.password);
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "referto.pdf",
     mimeType: "application/pdf",
@@ -122,6 +124,8 @@ test("la scheda ricava data, emittente e scadenza dal testo del documento", asyn
   await signInAndSetUpVault(page, user.email, user.password);
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', "tests/e2e/fixtures/ocr-scansione.pdf");
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
@@ -129,7 +133,8 @@ test("la scheda ricava data, emittente e scadenza dal testo del documento", asyn
 
   await page.getByRole("link", { name: /ocr-scansione\.pdf/ }).click();
 
-  // "Cosa ne ho ricavato" vive sotto "Letto dal dispositivo" (v. Concept 1); "Proposte" resta la tab di default.
+  // "Cosa ne ho ricavato" vive sotto "Letto dal dispositivo" (v. Concept 1); niente più una tab "Proposte" a
+  // sé (v. feedback utente): le proposte locali vivono nella stessa tab.
   await openTab(page, "Letto dal dispositivo");
   const ricavato = page.getByRole("region", { name: "Cosa ne ho ricavato" });
   await expect(ricavato).toBeVisible({ timeout: 30_000 });
@@ -138,13 +143,11 @@ test("la scheda ricava data, emittente e scadenza dal testo del documento", asyn
   await expect(ricavato).toContainText("AZIENDA OSPEDALIERA DI GUBBIO");
   await expect(ricavato).toContainText("14 mar 2026");
 
-  // La scadenza viene da "Si consiglia controllo tra dodici mesi" più la data del prelievo, e vive fra le proposte, non qui.
-  await openTab(page, "Proposte");
-  const proposte = page.getByRole("region", { name: "Proposte" });
-  await expect(proposte).toContainText("14 mar 2027");
-  await expect(proposte).toContainText("calcolata da Hinthial");
-
-  await openTab(page, "Letto dal dispositivo");
+  // La scadenza viene da "Si consiglia controllo tra dodici mesi" più la data del prelievo, e vive fra le
+  // proposte, non qui --- stessa tab: è una proposta locale, non di Hinthia.
+  const tabpanel = page.getByRole("tabpanel", { name: "Letto dal dispositivo" });
+  await expect(tabpanel).toContainText("14 mar 2027");
+  await expect(tabpanel).toContainText("calcolata da Hinthial");
   await expect(ricavato).not.toContainText("14 mar 2027");
 
   // E soprattutto: non ha scritto niente: la scheda resta vuota --- fissa a sinistra, sempre visibile.
@@ -163,6 +166,8 @@ test("la scheda dice quando un contenuto non è ancora stato letto, e lo legge",
   await signInAndSetUpVault(page, user.email, user.password);
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "vecchio.pdf",
     mimeType: "application/pdf",

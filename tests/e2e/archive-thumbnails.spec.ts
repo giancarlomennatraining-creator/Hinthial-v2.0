@@ -68,6 +68,8 @@ test("l'anteprima di un PDF appena caricato viene dalla miniatura, non dal file 
   await signInAndSetUpVault(page, user.email, user.password);
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "referto.pdf",
     mimeType: "application/pdf",
@@ -96,6 +98,8 @@ test("l'anteprima di una foto appena caricata viene dalla miniatura", async ({ p
   await signInAndSetUpVault(page, user.email, user.password);
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', "tests/e2e/fixtures/ocr-referto.png");
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
@@ -122,6 +126,8 @@ test("un contenuto caricato prima delle miniature la ricava rileggendolo, e la v
   await signInAndSetUpVault(page, user.email, user.password);
 
   await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "vecchio.pdf",
     mimeType: "application/pdf",
