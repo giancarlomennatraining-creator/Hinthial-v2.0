@@ -503,27 +503,6 @@ export function ArchiveItemDetail({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap gap-3">
-        {kind === "note" ? null : (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={handleDownload}
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-          >
-            Scarica
-          </button>
-        )}
-        <button
-          type="button"
-          disabled={busy}
-          onClick={handleDelete}
-          className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
-        >
-          Elimina
-        </button>
-      </div>
-
       {/* Anteprima fissa a sinistra (v. feedback utente); Scheda/Letto dal dispositivo/Analisi con Hinthia sono
           tre tab a destra --- niente più Scheda né il trigger di analisi sempre visibili a sinistra.
           Container query (non breakpoint di viewport) perché la larghezza reale dipende anche
@@ -593,8 +572,10 @@ export function ArchiveItemDetail({
 
           {/* Colonna a tab: Scheda / Letto dal dispositivo / Analisi con Hinthia --- niente più "Proposte" a sé
               (v. feedback utente): quello che c'è da accettare vive già dentro una delle due letture, secondo
-              la fonte. Scheda è la prima tab, non più fissa a sinistra (v. feedback utente). */}
+              la fonte. Scheda è la prima tab, non più fissa a sinistra (v. feedback utente). Tab e pannelli
+              dentro un unico riquadro bianco con contorno (v. feedback utente), come Anteprima a fianco. */}
           <div className="flex min-w-0 flex-1 flex-col gap-4">
+          <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
             <div role="tablist" className="flex flex-wrap gap-1 border-b border-zinc-200 dark:border-zinc-800">
               <button
                 type="button"
@@ -689,14 +670,36 @@ export function ArchiveItemDetail({
                     ))}
                   </dl>
                 ) : null}
-                <button
-                  type="button"
-                  disabled={!fieldsDirty || savingFields}
-                  onClick={handleSaveFields}
-                  className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                >
-                  {savingFields ? "Salvataggio…" : "Salva modifiche"}
-                </button>
+                {/* Scarica/Elimina vivono qui, vicino a "Salva modifiche" (v. feedback utente): non più un
+                    riquadro a parte sopra le tab. */}
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    disabled={!fieldsDirty || savingFields}
+                    onClick={handleSaveFields}
+                    className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                  >
+                    {savingFields ? "Salvataggio…" : "Salva modifiche"}
+                  </button>
+                  {kind === "note" ? null : (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={handleDownload}
+                      className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                    >
+                      Scarica
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={handleDelete}
+                    className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
+                  >
+                    Elimina
+                  </button>
+                </div>
               </div>
             ) : activeTab === "reading" ? (
               <div id="tabpanel-reading" role="tabpanel" aria-labelledby="tab-reading" className="flex flex-col gap-6">
@@ -762,6 +765,7 @@ export function ArchiveItemDetail({
                 )}
               </div>
             )}
+          </div>
           </div>
         </div>
       </div>

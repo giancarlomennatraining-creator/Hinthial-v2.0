@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-29 (4)
+
+### Scheda documento --- Scarica/Elimina vicino a "Salva modifiche", tab in un riquadro con contorno
+
+**Cosa fa:** due rifiniture di layout sulla scheda del documento, dopo averla provata:
+
+1. **"Scarica" ed "Elimina" si spostano vicino a "Salva modifiche"**, dentro la tab "Scheda" --- non più un riquadro a parte sopra le tab, isolato dal resto delle azioni sul contenuto.
+2. **Le tre tab (Scheda / Letto dal dispositivo / Analisi con Hinthia) e il loro contenuto vivono in un unico riquadro bianco con contorno**, come l'Anteprima a fianco --- prima galleggiavano senza un bordo proprio.
+
+**Note tecniche:** nessuna logica toccata, solo dove i bottoni/il markup vivono. `handleDownload`/`handleDelete`/`busy`/`kind` restano gli stessi; il bottone "Scarica" resta condizionale su `kind !== "note"`, come prima.
+
+Verificato: typecheck, lint, build di produzione, e i test e2e che toccano la scheda documento (`archive-item-detail`, `archive-proposals`, `document-categorization`, `reminders`, `dossiers`, `archive`) --- tutti passano tranne il solito fallimento preesistente e indipendente già documentato (`archive-item-detail.spec.ts`, l'OCR di "AZIENDA OSPEDALIERA DI GUBBIO").
+
+---
+
 ## 2026-09-29 (3)
 
 ### Scheda documento --- anteprima fissa, "Scheda" come prima tab, il trigger di analisi dentro "Analisi con Hinthia"
