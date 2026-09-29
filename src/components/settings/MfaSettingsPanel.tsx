@@ -179,7 +179,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
   function handleDownloadBackupCodes() {
     if (!revealedCodes) return;
     const text = [
-      "HINTHIAL --- Codici di backup per l'autenticazione a due fattori",
+      "HINTHIAL — Codici di backup per l'autenticazione a due fattori",
       `Generati il ${new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}`,
       "",
       ...revealedCodes,
@@ -217,7 +217,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
           </h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Dopo email e password, un codice generato da un&apos;app come Google Authenticator o
-            1Password. Riguarda solo l&apos;accesso al tuo account --- non la cifratura del vault,
+            1Password. Riguarda solo l&apos;accesso al tuo account — non la cifratura del vault,
             che resta protetta unicamente dalla tua master password.
           </p>
         </div>

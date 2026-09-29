@@ -63,7 +63,7 @@ export function GuardianVerificationPanel({ requestId }: { requestId: string }) 
       <div className="flex max-w-sm flex-col gap-2">
         <h1 className="text-xl font-semibold text-brand">Richiesta non trovata</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Questo link non esiste più --- se pensi sia un errore, contatta direttamente la persona
+          Questo link non esiste più — se pensi sia un errore, contatta direttamente la persona
           che ti ha indicato come guardiano.
         </p>
       </div>
@@ -98,7 +98,7 @@ export function GuardianVerificationPanel({ requestId }: { requestId: string }) 
         <h1 className="text-xl font-semibold text-brand">Riesci a raggiungere {request.ownerName}?</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           {request.ownerName} ti ha indicato come guardiano su Hinthial. Non riusciamo a
-          contattarlo/la da un po&apos; di tempo, nonostante diversi promemoria --- puoi dirci se
+          contattarlo/la da un po&apos; di tempo, nonostante diversi promemoria — puoi dirci se
           hai sue notizie?
         </p>
       </div>

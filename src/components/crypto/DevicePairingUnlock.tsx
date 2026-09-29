@@ -93,7 +93,7 @@ export function DevicePairingUnlock() {
         <>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Inquadra questo codice con la fotocamera di un dispositivo già fidato, e apri il link
-            che ti propone --- senza digitare nulla qui.
+            che ti propone — senza digitare nulla qui.
           </p>
           {/* eslint-disable-next-line @next/next/no-img-element -- data URI generato al volo, non un asset statico */}
           <img src={qrDataUrl} alt="Codice per sbloccare da un dispositivo fidato" className="h-56 w-56 self-center" />

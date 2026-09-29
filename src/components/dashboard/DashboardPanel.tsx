@@ -6,6 +6,7 @@ import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
 import { SharedCapsuleNotificationPopup } from "@/components/dashboard/SharedCapsuleNotificationPopup";
 import { FriendRequestNotificationPopup } from "@/components/dashboard/FriendRequestNotificationPopup";
+import { PageHelp } from "@/components/help/PageHelp";
 
 /**
  * The greeting always renders, regardless of encryption status ---
@@ -25,13 +26,19 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-brand">
-          Ciao, {displayName}
-        </h1>
-        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-          Questa è la tua dashboard: scadenze, documenti recenti e attività da
-          completare.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight text-brand">
+            Ciao, {displayName}
+          </h1>
+          <PageHelp
+            title="Dashboard"
+            tips={[
+              { icon: "📊", text: "I riquadri in alto contano cosa hai in ogni sezione, aggiornati in tempo reale." },
+              { icon: "⏰", text: "Le scadenze più vicine e i documenti aggiunti di recente arrivano qui per primi." },
+              { icon: "🔒", text: "Serve la master password sbloccata per vedere i dettagli cifrati — il resto resta comunque visibile." },
+            ]}
+          />
+        </div>
         {status.kind !== "checking" ? (
           <span
             className={

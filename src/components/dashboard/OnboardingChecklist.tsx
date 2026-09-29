@@ -31,7 +31,7 @@ export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
           </p>
         </div>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          I passi per iniziare a usare Hinthial al meglio --- il tuo avanzamento resta qui finché
+          I passi per iniziare a usare Hinthial al meglio — il tuo avanzamento resta qui finché
           non li avrai completati tutti.
         </p>
       </div>

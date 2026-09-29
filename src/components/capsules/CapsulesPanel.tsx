@@ -23,6 +23,7 @@ import { CapsuleCountdown } from "@/components/capsules/CapsuleCountdown";
 import { CapsulePreview } from "@/components/capsules/CapsulePreview";
 import { SharedCapsuleViewer } from "@/components/capsules/SharedCapsuleViewer";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
+import { PageHelp } from "@/components/help/PageHelp";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
@@ -164,7 +165,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   async function handleClose(capsule: CapsuleListItem) {
     const copyNote =
       capsule.linkedDocuments.length > 0
-        ? ` ${capsule.linkedDocuments.length === 1 ? "Il contenuto collegato verrà copiato" : "I contenuti collegati verranno copiati"} al suo interno --- l'originale in Archivio resterà libero di essere modificato o cancellato.`
+        ? ` ${capsule.linkedDocuments.length === 1 ? "Il contenuto collegato verrà copiato" : "I contenuti collegati verranno copiati"} al suo interno — l'originale in Archivio resterà libero di essere modificato o cancellato.`
         : "";
     if (!window.confirm(`Chiudere la capsula "${capsule.title}"? Non sarà più modificabile.${copyNote}`)) {
       return;
@@ -367,23 +368,20 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
-        <div className="min-w-0 w-full sm:flex-1">
+        <div className="flex min-w-0 w-full items-start justify-between gap-3 sm:flex-1">
           <h1 className="text-2xl font-semibold tracking-tight text-brand">
             Capsule
           </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Contenuti cifrati da lasciare a chi vuoi tu, in condizioni definite da te.
-          </p>
-          {/* Il dettaglio sull'irreversibilità è ripetuto al momento di chiudere (v. handleClose): qui solo per chi lo vuole leggere prima, non un <p> fisso che "mangia" lo schermo su smartphone. */}
-          <details className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            <summary className="cursor-pointer font-medium text-brand">Come funziona chiudere una capsula</summary>
-            <p className="mt-1">
-              Chiudere una capsula è irreversibile: non sarà più modificabile e ogni contenuto
-              d&apos;Archivio ancora collegato viene copiato al suo interno --- l&apos;originale resta
-              libero di essere modificato o cancellato. Non concede però ancora alcun accesso ai
-              destinatari --- l&apos;apertura vera e propria arriverà con una fase futura.
-            </p>
-          </details>
+          {/* Il dettaglio sull'irreversibilità del chiudere è ripetuto al momento di farlo (v. handleClose):
+              qui basta un consiglio, non serve più il <details> a parte. */}
+          <PageHelp
+            title="Capsule"
+            tips={[
+              { icon: "🔒", text: "Contenuti cifrati da lasciare a chi vuoi tu, in condizioni definite da te." },
+              { icon: "⚠️", text: "Chiudere una capsula è irreversibile: non sarà più modificabile." },
+              { icon: "📎", text: "Un contenuto d'Archivio collegato viene copiato dentro, l'originale resta libero." },
+            ]}
+          />
         </div>
         <Link
           href="/capsules/new"

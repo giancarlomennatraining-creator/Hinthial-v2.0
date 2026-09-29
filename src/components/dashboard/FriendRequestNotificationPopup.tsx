@@ -63,7 +63,7 @@ export function FriendRequestNotificationPopup({ masterKey }: { masterKey: Crypt
       await acceptFriendRequest(supabase, masterKey, userId, currentRequest);
       showToast(`Ora sei amico di ${currentRequest.senderName}.`);
     } catch {
-      showToast("Non è stato possibile accettare la richiesta --- riprova da Amici.");
+      showToast("Non è stato possibile accettare la richiesta — riprova da Amici.");
     } finally {
       setQueue((prev) => (prev ? prev.slice(1) : prev));
       setBusy(false);

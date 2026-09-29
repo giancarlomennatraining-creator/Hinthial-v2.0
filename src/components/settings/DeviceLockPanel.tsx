@@ -151,7 +151,7 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Verifica del dispositivo in corso…</p>
       ) : !deviceLockSupported ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Questo browser/dispositivo non supporta ancora lo sblocco biometrico locale --- resta
+          Questo browser/dispositivo non supporta ancora lo sblocco biometrico locale — resta
           comunque sempre disponibile la master password.
         </p>
       ) : deviceLockAvailable ? (
@@ -180,7 +180,7 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
         <form onSubmit={handleRegister} className="flex flex-col gap-4">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             Confermando la tua master password, potrai in futuro sbloccare qui con l&apos;impronta
-            o Face ID --- la password non lascia mai questo dispositivo.
+            o Face ID — la password non lascia mai questo dispositivo.
           </p>
 
           <div className="flex flex-col gap-1">
@@ -264,7 +264,7 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
                     ) : null}
                   </span>
                   <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Registrato il {formatDate(device.createdAt)} --- ultimo accesso il{" "}
+                    Registrato il {formatDate(device.createdAt)} — ultimo accesso il{" "}
                     {formatDate(device.lastActiveAt)}
                   </span>
                 </div>

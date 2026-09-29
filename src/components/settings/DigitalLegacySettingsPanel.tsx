@@ -171,7 +171,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Eredità digitale</h2>
         <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
           Se un giorno non dovessi più poter accedere a Hinthial, questa è la strategia che
-          decide quando le tue capsule arrivano davvero a chi le doveva ricevere --- con più
+          decide quando le tue capsule arrivano davvero a chi le doveva ricevere — con più
           promemoria a te prima, e la verifica dei tuoi guardiani dopo, non un&apos;apertura
           improvvisa.
         </p>
@@ -192,7 +192,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
           </span>
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
             Finché è spento, nessuna email di verifica viene inviata e nessuna capsula si apre da
-            sola, qualunque preset o valore tu scelga qui sotto --- puoi configurare tutto in
+            sola, qualunque preset o valore tu scelga qui sotto — puoi configurare tutto in
             anticipo e accendere l&apos;interruttore solo quando sei pronto.
           </span>
         </span>
@@ -224,7 +224,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
         </div>
         {settings.preset === "custom" ? (
           <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            {DIGITAL_LEGACY_PRESET_LABEL.custom} --- almeno un valore non corrisponde più a nessuno dei tre preset.
+            {DIGITAL_LEGACY_PRESET_LABEL.custom} — almeno un valore non corrisponde più a nessuno dei tre preset.
           </p>
         ) : null}
       </div>
@@ -237,7 +237,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
       >
         {settings.enabled
           ? describeDigitalLegacySettings(settings)
-          : "Il monitoraggio è spento: nessuna email verrà inviata. Ecco comunque cosa succederebbe se lo accendessi con questi valori --- " +
+          : "Il monitoraggio è spento: nessuna email verrà inviata. Ecco comunque cosa succederebbe se lo accendessi con questi valori — " +
             describeDigitalLegacySettings(settings)}
       </p>
 

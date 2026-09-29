@@ -11,6 +11,7 @@ import { useAIChat, type ChatMessage } from "@/components/ai/AIChatProvider";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Avatar } from "@/components/ui/Avatar";
 import { SidePanel } from "@/components/ui/SidePanel";
+import { PageHelp } from "@/components/help/PageHelp";
 import { AIConsentSettings } from "@/components/settings/AIConsentSettings";
 import { SlidersIcon, ArrowRightIcon } from "@/components/icons/nav-icons";
 import type { AIContext } from "@/domain/ai/types";
@@ -147,6 +148,19 @@ export function AIPanel({
           <h1 className="min-w-0 flex-1 text-2xl font-semibold tracking-tight text-brand">
             Parla con Hinthia
           </h1>
+          {/* chatEnabled=false: questa pagina è già interamente la chat, un secondo campo domanda nel
+              pannello sarebbe ridondante (v. feedback utente) --- solo i consigli statici. */}
+          <PageHelp
+            title="Hinthia"
+            chatEnabled={false}
+            tips={[
+              { icon: "💬", text: "Fai una domanda sui tuoi dati: beni, documenti, scadenze, amici o capsule." },
+              active
+                ? { icon: "🔒", text: "Le risposte vengono generate da Hinthia: solo la domanda e i pochi elementi pertinenti vengono inviati, mai l'intero archivio." }
+                : { icon: "🔒", text: "Risponde un motore locale sul tuo dispositivo, non Hinthia: nessun dato esce dal browser." },
+              { icon: "🧹", text: "“Nuova conversazione” svuota la chat, quando vuoi ricominciare." },
+            ]}
+          />
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
@@ -156,11 +170,6 @@ export function AIPanel({
             <SlidersIcon width={18} height={18} />
           </button>
         </div>
-        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-          {active
-            ? "Fai domande sui tuoi dati. Le risposte vengono generate da Hinthia: solo la tua domanda e i pochi elementi pertinenti trovati qui sul dispositivo vengono inviati --- mai l'intero archivio."
-            : "Fai domande sui tuoi dati. Risponde un motore locale, non Hinthia: le tue domande vengono elaborate qui, sul tuo dispositivo --- nessun dato esce dal browser."}
-        </p>
       </div>
 
       {error ? (

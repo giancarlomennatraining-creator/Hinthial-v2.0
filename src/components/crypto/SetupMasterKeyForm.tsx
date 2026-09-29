@@ -110,7 +110,7 @@ export function SetupMasterKeyForm() {
     setError(null);
 
     const text = [
-      "HINTHIAL --- Recovery key",
+      "HINTHIAL — Recovery key",
       `Generata il ${new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}`,
       "",
       pending.setup.recoveryKey.formatted,
@@ -193,7 +193,7 @@ export function SetupMasterKeyForm() {
             <p className="max-w-md text-sm text-zinc-700">
               Se dimentichi la tua master password, questa è l&apos;unica chiave che potrà farti
               recuperare l&apos;accesso ai tuoi documenti. HINTHIAL non la conserva da nessuna
-              parte: conservala tu, offline, in un posto sicuro (es. una cassaforte) --- non
+              parte: conservala tu, offline, in un posto sicuro (es. una cassaforte) — non
               nella posta elettronica.
             </p>
             <code className="break-all rounded-md border border-zinc-300 p-4 text-base font-mono text-zinc-950">

@@ -60,7 +60,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
         </Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">Nuovo fascicolo</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Una vicenda che attraversa più categorie --- un problema di salute, l&apos;acquisto di una
+          Una vicenda che attraversa più categorie — un problema di salute, l&apos;acquisto di una
           casa, un incidente. I documenti si collegano dal loro stesso form, con &laquo;Fascicolo&raquo;.
         </p>
       </div>

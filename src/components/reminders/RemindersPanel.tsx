@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import { deleteReminder, listReminders, setReminderCompleted } from "@/domain/reminders/repository";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
+import { PageHelp } from "@/components/help/PageHelp";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
@@ -183,13 +184,18 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
-        <div className="min-w-0 w-full sm:flex-1">
+        <div className="flex min-w-0 w-full items-start justify-between gap-3 sm:flex-1">
           <h1 className="text-2xl font-semibold tracking-tight text-brand">
             Scadenze
           </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Promemoria per le date importanti, cifrati come tutto il resto.
-          </p>
+          <PageHelp
+            title="Scadenze"
+            tips={[
+              { icon: "➕", text: "Crea una scadenza e collegala, se vuoi, a un bene o a un documento." },
+              { icon: "✅", text: "Segnala una scadenza come completata quando l'hai gestita." },
+              { icon: "🔗", text: "Le scadenze collegate a un bene compaiono anche nella sua scheda." },
+            ]}
+          />
         </div>
         <Link
           href="/reminders/new"

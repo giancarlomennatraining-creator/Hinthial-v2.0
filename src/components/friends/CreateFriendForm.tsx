@@ -127,7 +127,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Una persona che potrà essere autorizzata in futuro ad accedere ai tuoi dati. Per ora
-          questa sezione registra solo l&apos;amico e il suo stato --- nessun accesso viene concesso
+          questa sezione registra solo l&apos;amico e il suo stato — nessun accesso viene concesso
           automaticamente.
         </p>
       </div>

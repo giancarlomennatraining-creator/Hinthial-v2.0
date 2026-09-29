@@ -6,6 +6,7 @@ import { createClient } from "@/lib/db/supabase/client";
 import { buildAIContext } from "@/domain/ai/context";
 import { buildTimeline, groupTimelineByMonth, type TimelineEntryKind } from "@/lib/timeline";
 import { ListSkeleton } from "@/components/ui/Skeleton";
+import { PageHelp } from "@/components/help/PageHelp";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
 import { Pagination } from "@/components/ui/Pagination";
 import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
@@ -116,13 +117,18 @@ export function TimelinePanel({ masterKey }: { masterKey: CryptoKey }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="flex items-start gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-brand">
             Cronologia
           </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Uno sguardo d&apos;insieme su come è cresciuta la tua vita digitale nel tempo.
-          </p>
+          <PageHelp
+            title="Cronologia"
+            tips={[
+              { icon: "📅", text: "Uno sguardo d'insieme su come è cresciuta la tua vita digitale nel tempo." },
+              { icon: "🗂️", text: "Beni e documenti compaiono qui raggruppati per mese di creazione." },
+              { icon: "🔍", text: "Passa alla vista a tabella per ordinare per nome, data o tipo." },
+            ]}
+          />
         </div>
         {allEntries.length > 0 ? <ListViewToggle section="timeline" hideOnMobile /> : null}
       </div>

@@ -69,8 +69,8 @@ export function ResetAccountCard({ userId, masterKey }: { userId: string; master
         </h2>
         <p className="mt-1 text-sm text-red-800/90 dark:text-red-400/90">
           Svuota completamente il tuo vault (Archivio, Beni, Amici e Capsule) e
-          ripristina le categorie predefinite, mantenendo l&apos;account attivo --- utile per
-          ricominciare da capo senza cancellarti. Le Scadenze non vengono eliminate --- restano,
+          ripristina le categorie predefinite, mantenendo l&apos;account attivo — utile per
+          ricominciare da capo senza cancellarti. Le Scadenze non vengono eliminate — restano,
           solo scollegate da ciò che viene cancellato. Richiede la tua master password.
           L&apos;operazione non è reversibile, e riceverai un&apos;email di conferma.
         </p>

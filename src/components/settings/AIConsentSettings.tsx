@@ -147,7 +147,7 @@ export function AIConsentSettings() {
             Consenti l&apos;uso di Hinthia
           </p>
           <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-            Cancello generale --- deve essere acceso perché una qualunque funzione di Hinthia
+            Cancello generale — deve essere acceso perché una qualunque funzione di Hinthia
             possa essere attivata qui sotto. Spegnerlo spegne anche le funzioni già attive.
           </p>
           {masterError ? (
@@ -195,7 +195,7 @@ export function AIConsentSettings() {
                 onChange={() => handleChatChange(!chatConsent)}
                 className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
               />
-              Chat --- risposte reali alle tue domande (v. pagina Hinthia)
+              Chat — risposte reali alle tue domande (v. pagina Hinthia)
             </label>
           </li>
 
@@ -217,7 +217,7 @@ export function AIConsentSettings() {
               />
               {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
               <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-4 w-4 shrink-0 rounded-full" />
-              Estrazione avanzata dei contenuti --- Hinthia legge il testo dei documenti delle
+              Estrazione avanzata dei contenuti — Hinthia legge il testo dei documenti delle
               categorie che abiliti qui sotto
             </label>
           </li>
@@ -231,7 +231,7 @@ export function AIConsentSettings() {
                   : "text-zinc-400 dark:text-zinc-600",
               )}
             >
-              Categorie abilitate all&apos;estrazione avanzata --- spento di default per ognuna,
+              Categorie abilitate all&apos;estrazione avanzata — spento di default per ognuna,
               anche Salute:
             </p>
             {categoriesError ? (
@@ -280,7 +280,7 @@ export function AIConsentSettings() {
                 onChange={() => handleTranscriptionChange(!transcriptionConsent)}
                 className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
               />
-              Trascrizione audio/video --- non ancora disponibile, imposta già la preferenza
+              Trascrizione audio/video — non ancora disponibile, imposta già la preferenza
             </label>
           </li>
 
@@ -300,7 +300,7 @@ export function AIConsentSettings() {
                 onChange={() => handleAlertsChange(!proactiveAlertsConsent)}
                 className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
               />
-              Generazione di avvisi proattivi --- richiede l&apos;estrazione avanzata attiva
+              Generazione di avvisi proattivi — richiede l&apos;estrazione avanzata attiva
             </label>
           </li>
         </ul>

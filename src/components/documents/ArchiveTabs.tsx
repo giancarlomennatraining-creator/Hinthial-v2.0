@@ -53,7 +53,7 @@ export function ArchiveTabs() {
             : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
         )}
       >
-        🗑️ Cestino
+        Cestino
       </Link>
     </nav>
   );

@@ -569,7 +569,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             Archivio
           </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Documenti, immagini, audio, video e note --- tutto cifrato sul tuo dispositivo prima
+            Documenti, immagini, audio, video e note — tutto cifrato sul tuo dispositivo prima
             di essere salvato.
           </p>
           {/* Una porta secondaria, non un bottone: caricare un file resta l'azione principale. */}
@@ -616,7 +616,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                     )} di ${extractionProgress.total}${
                       extractionProgress.fraction === null
                         ? ""
-                        : ` --- ${Math.round(extractionProgress.fraction * 100)}%`
+                        : ` — ${Math.round(extractionProgress.fraction * 100)}%`
                     }`
                   : `${pendingExtraction.length} ${
                       pendingExtraction.length === 1

@@ -24,6 +24,7 @@ import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { ImportExportTabs } from "@/components/import-export/ImportExportTabs";
 import { AIConsentSettings } from "@/components/settings/AIConsentSettings";
+import { PageHelp, type HelpTip } from "@/components/help/PageHelp";
 import type { ComponentType, SVGProps } from "react";
 import {
   ActivityIcon,
@@ -96,6 +97,64 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
 ];
 
 const TABS: TabDef[] = TAB_GROUPS.flatMap((group) => group.tabs);
+
+/** Consigli statici per il pannello Aiuto di ogni tab (v. feedback utente: niente più testo descrittivo fisso
+ * sotto ogni titolo). Un pannello per tab, non uno per Impostazioni intera: il contenuto cambia con `tab`. */
+const TAB_HELP: Record<Tab, HelpTip[]> = {
+  "user-info": [
+    { icon: "👤", text: "Nome, email e data di nascita: usati per la scheda d'emergenza e per farti riconoscere dagli amici." },
+    { icon: "🖼️", text: "Cambia il tuo avatar da qui, in qualunque momento." },
+  ],
+  onboarding: [
+    { icon: "✅", text: "La checklist guidata per completare la configurazione di Hinthial." },
+    { icon: "🔁", text: "Puoi riaprirla in ogni momento dal gadget nella barra laterale." },
+  ],
+  privacy: [
+    { icon: "👁️", text: "Dati reali del tuo account: non richiede la master password sbloccata." },
+    { icon: "📊", text: "Solo conteggi e informazioni mai cifrate: niente contenuto dei tuoi documenti." },
+  ],
+  security: [
+    { icon: "🔐", text: "Attiva l'autenticazione a due fattori per un accesso più sicuro." },
+    { icon: "👆", text: "“Dispositivi fidati” sblocca il vault con l'impronta o Face ID, senza digitare la master password." },
+  ],
+  "digital-legacy": [
+    { icon: "💌", text: "Cosa succede ai tuoi dati se resti inattivo a lungo: lo decidi tu qui." },
+    { icon: "🛡️", text: "I guardiani che hai scelto possono confermare la tua assenza." },
+  ],
+  "emergency-card": [
+    { icon: "🆘", text: "Una scheda stampabile con le informazioni utili in caso di emergenza." },
+    { icon: "🔒", text: "Cifrata come tutto il resto: richiede la master password sbloccata." },
+  ],
+  categories: [
+    { icon: "🏷️", text: "Le categorie predefinite coprono i casi più comuni; puoi aggiungerne altre." },
+    { icon: "✏️", text: "Rinomina o elimina una categoria in ogni momento." },
+  ],
+  tags: [
+    { icon: "🏷️", text: "I tag si aggregano automaticamente, senza distinguere maiuscole e minuscole." },
+    { icon: "✏️", text: "Rinominali o eliminali da qui: l'effetto si vede su ogni contenuto che li usa." },
+  ],
+  appearance: [
+    { icon: "🎨", text: "Tema, disposizione del menu e cosa mostrare dove: tutto qui." },
+    { icon: "📱", text: "Le scelte restano le stesse su tutti i tuoi dispositivi." },
+  ],
+  activity: [
+    { icon: "📜", text: "Il registro di ogni accesso e azione sensibile sul tuo account." },
+    { icon: "🔍", text: "Filtra per data o per tipo di evento." },
+  ],
+  "import-export": [
+    { icon: "📤", text: "Esporta tutti i tuoi dati in un unico archivio cifrato." },
+    { icon: "📥", text: "Importa amici o beni da un file .csv compilato." },
+  ],
+  ai: [
+    { icon: "🔒", text: "Per impostazione predefinita nessuna funzione di Hinthia è attiva." },
+    { icon: "🎚️", text: "Il cancello generale accende solo la possibilità di attivare le singole funzioni, una per una." },
+    { icon: "🏷️", text: "Il consenso all'estrazione avanzata si dà anche per categoria, qui sotto." },
+  ],
+  "danger-zone": [
+    { icon: "⚠️", text: "“Cancella tutto” svuota Archivio, Beni, Amici e Capsule: non si può annullare." },
+    { icon: "🗑️", text: "Cancellare l'account è definitivo: non sarà più possibile accedere." },
+  ],
+};
 
 export function SettingsTabs({
   userId,
@@ -203,12 +262,6 @@ export function SettingsTabs({
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Hinthia
           </h2>
-          <p className="max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
-            Per impostazione predefinita nessuna funzione di Hinthia è attiva --- ogni domanda
-            e ogni contenuto restano elaborati solo sul tuo dispositivo. Attivando il cancello
-            generale qui sotto, attivi solo la possibilità di accendere le singole funzioni, una
-            per una.
-          </p>
           <AIConsentSettings />
         </div>
       );
@@ -241,7 +294,7 @@ export function SettingsTabs({
                 Disposizione del menu
               </h2>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Barra laterale a sinistra o a destra, oppure barra orizzontale in alto --- la
+                Barra laterale a sinistra o a destra, oppure barra orizzontale in alto — la
                 scelta resta la stessa su tutti i tuoi dispositivi.
               </p>
             </div>
@@ -266,7 +319,7 @@ export function SettingsTabs({
                 Barra di navigazione in basso (smartphone)
               </h2>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Scegli quali voci mostrare sempre in basso su smartphone --- le altre restano
+                Scegli quali voci mostrare sempre in basso su smartphone — le altre restano
                 comunque raggiungibili dal menu con le 3 lineette.
               </p>
             </div>
@@ -279,7 +332,7 @@ export function SettingsTabs({
                 Visualizzazione delle liste
               </h2>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Elenco o tabella impaginata, per ogni sezione --- la scelta resta la stessa su
+                Elenco o tabella impaginata, per ogni sezione — la scelta resta la stessa su
                 tutti i tuoi dispositivi, e puoi cambiarla anche direttamente da ogni sezione.
                 Su schermi stretti si mostra comunque sempre l&apos;elenco, dove la tabella non
                 avrebbe spazio per restare leggibile.
@@ -387,9 +440,15 @@ export function SettingsTabs({
               >
                 <span aria-hidden="true">←</span> Torna alle impostazioni
               </button>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                {TABS.find((t) => t.id === displayedMobileView)?.label}
-              </h2>
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                  {TABS.find((t) => t.id === displayedMobileView)?.label}
+                </h2>
+                <PageHelp
+                  title={TABS.find((t) => t.id === displayedMobileView)?.label ?? ""}
+                  tips={TAB_HELP[displayedMobileView]}
+                />
+              </div>
               {renderPanel(displayedMobileView)}
             </div>
           )}
@@ -453,6 +512,9 @@ export function SettingsTabs({
             tabContentVisible ? "opacity-100" : "opacity-0",
           )}
         >
+          <div className="mb-4 flex justify-end">
+            <PageHelp title={TABS.find((t) => t.id === displayedTab)?.label ?? ""} tips={TAB_HELP[displayedTab]} />
+          </div>
           {renderPanel(displayedTab)}
         </div>
       </div>

@@ -41,7 +41,7 @@ export function AIAnalysisTrigger({
 
       {excluded ? (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Questo documento è escluso dall&apos;analisi di Hinthia --- vince su qualunque consenso di categoria.
+          Questo documento è escluso dall&apos;analisi di Hinthia — vince su qualunque consenso di categoria.
         </p>
       ) : !consentActive ? (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">

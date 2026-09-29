@@ -13,7 +13,7 @@ import { CheckCircleIcon } from "@/components/icons/nav-icons";
 const ENCOURAGEMENT: { min: number; message: string }[] = [
   { min: 100, message: "Hai completato tutti i passi: il tuo Hinthial è pronto a fare il suo lavoro." },
   { min: 75, message: "Ci sei quasi: ancora pochi passi e avrai messo al sicuro tutto quello che conta." },
-  { min: 50, message: "A buon punto --- continua così: ogni passo in più rende Hinthial più utile per te." },
+  { min: 50, message: "A buon punto — continua così: ogni passo in più rende Hinthial più utile per te." },
   { min: 25, message: "Un buon inizio: completa i prossimi passi per iniziare a vedere il valore di Hinthial." },
   { min: 0, message: "Hai appena iniziato: i passi qui sotto ti guidano a mettere al sicuro ciò che conta." },
 ];

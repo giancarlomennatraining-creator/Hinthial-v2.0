@@ -81,7 +81,7 @@ function RecipientBlock({ group }: { group: RecipientGroup }) {
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
       <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-        👤 {group.recipient.name} --- {group.capsules.length}{" "}
+        👤 {group.recipient.name} — {group.capsules.length}{" "}
         {group.capsules.length === 1 ? "capsula" : "capsule"}
       </span>
       {group.capsules.map((capsule) => (
@@ -141,7 +141,7 @@ export function DigitalLegacyRehearsal({
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">La prova generale</h2>
         <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
           Se si attivasse oggi: quando succederebbe cosa, chi verrebbe interpellato, e chi
-          riceverebbe cosa --- con i tuoi guardiani e le tue capsule già condivise veri, non un
+          riceverebbe cosa — con i tuoi guardiani e le tue capsule già condivise veri, non un
           esempio. Nessun accesso reale viene concesso e nessuna email viene davvero inviata.
         </p>
       </div>
@@ -208,7 +208,7 @@ export function DigitalLegacyRehearsal({
                     </span>
                     {guardians.length === 0 ? (
                       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Non hai ancora nessun guardiano collegato --- puoi aggiungerne uno da Amici.
+                        Non hai ancora nessun guardiano collegato — puoi aggiungerne uno da Amici.
                       </p>
                     ) : (
                       <>
@@ -228,7 +228,7 @@ export function DigitalLegacyRehearsal({
                     </span>
                     {recipientGroups.length === 0 ? (
                       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Nessuna capsula già condivisa oggi --- solo quelle &quot;condivise&quot; si
+                        Nessuna capsula già condivisa oggi — solo quelle &quot;condivise&quot; si
                         aprirebbero, mai le bozze.
                       </p>
                     ) : (
@@ -240,7 +240,7 @@ export function DigitalLegacyRehearsal({
                 </div>
 
                 <p className="border-t border-zinc-200 pt-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                  🔒 Solo un&apos;anteprima su questo schermo --- nessun accesso reale viene
+                  🔒 Solo un&apos;anteprima su questo schermo — nessun accesso reale viene
                   concesso a nessuno a questo punto, e nessun promemoria è stato davvero inviato.
                 </p>
               </>

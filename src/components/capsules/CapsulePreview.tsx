@@ -293,7 +293,7 @@ export function CapsulePreview({
         ) : null}
 
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Solo un&apos;anteprima su questo schermo --- nessun accesso reale viene concesso ai
+          Solo un&apos;anteprima su questo schermo — nessun accesso reale viene concesso ai
           destinatari a questo punto.
         </p>
       </div>

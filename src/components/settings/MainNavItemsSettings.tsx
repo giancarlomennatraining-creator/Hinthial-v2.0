@@ -65,11 +65,11 @@ export function MainNavItemsSettings() {
     <div className="flex flex-col gap-4">
       <div>
         <p className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          Visibili --- in quest&apos;ordine
+          Visibili — in quest&apos;ordine
         </p>
         {visible.length === 0 ? (
           <p className="rounded-md border border-dashed border-zinc-300 px-3 py-2 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-            Nessuna voce scelta --- la barra di navigazione non compare.
+            Nessuna voce scelta — la barra di navigazione non compare.
           </p>
         ) : (
           <ul className="flex flex-col gap-1 rounded-md border border-zinc-300 p-1 dark:border-zinc-700">
@@ -155,7 +155,7 @@ export function MainNavItemsSettings() {
       ) : null}
 
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        Una voce nascosta qui non compare più nel menu principale --- resta comunque raggiungibile
+        Una voce nascosta qui non compare più nel menu principale — resta comunque raggiungibile
         dalla dashboard o dalla ricerca.
       </p>
       {error ? (

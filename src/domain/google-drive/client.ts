@@ -166,7 +166,7 @@ export async function resolveDriveSelection(
 ): Promise<GoogleDriveFileToImport[]> {
   const budget: ImportBudget = { remaining: MAX_FILES_PER_IMPORT - selection.files.length };
   if (budget.remaining < 0) {
-    throw new Error(`Hai selezionato più di ${MAX_FILES_PER_IMPORT} file --- scegli un insieme più piccolo.`);
+    throw new Error(`Hai selezionato più di ${MAX_FILES_PER_IMPORT} file — scegli un insieme più piccolo.`);
   }
 
   const fromFolders: GoogleDriveFileToImport[] = [];

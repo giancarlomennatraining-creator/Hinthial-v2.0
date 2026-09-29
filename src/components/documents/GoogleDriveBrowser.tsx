@@ -206,7 +206,7 @@ export function GoogleDriveBrowser({
 
             {currentFolderIsFullySelected ? (
               <p className="rounded-lg bg-brand/5 px-3 py-2 text-xs text-brand">
-                Questa cartella è selezionata per intero --- il suo contenuto verrà importato tutto,
+                Questa cartella è selezionata per intero — il suo contenuto verrà importato tutto,
                 comprese le sottocartelle.
               </p>
             ) : null}

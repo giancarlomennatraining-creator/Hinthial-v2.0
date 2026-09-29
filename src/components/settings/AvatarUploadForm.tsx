@@ -48,7 +48,7 @@ export function AvatarUploadForm({
       <div>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Foto profilo</h2>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Mostrata accanto al tuo nome nell&apos;app. In chiaro, non cifrata --- come nome e
+          Mostrata accanto al tuo nome nell&apos;app. In chiaro, non cifrata — come nome e
           cognome.
         </p>
       </div>

@@ -32,7 +32,7 @@ test("Impostazioni > Eredità digitale mostra i preset, il riepilogo si aggiorna
   // Default: "Normale" già selezionato, nessuna etichetta "Personalizzato".
   const normale = page.getByRole("radio", { name: "Normale" });
   await expect(normale).toHaveAttribute("aria-checked", "true");
-  await expect(page.getByText("Personalizzato --- almeno un valore")).not.toBeVisible();
+  await expect(page.getByText("Personalizzato — almeno un valore")).not.toBeVisible();
   await expect(page.getByText(/In totale, nel caso peggiore, circa 7 mesi/)).toBeVisible();
 
   // Attivarlo chiede conferma (v. window.confirm) e fa sparire l'avviso "spento".
@@ -51,7 +51,7 @@ test("Impostazioni > Eredità digitale mostra i preset, il riepilogo si aggiorna
   await expect(inactivityField).toHaveValue("180");
   await inactivityField.fill("200");
   await expect(page.getByRole("radio", { name: "Prudente" })).toHaveAttribute("aria-checked", "false");
-  await expect(page.getByText("Personalizzato --- almeno un valore")).toBeVisible();
+  await expect(page.getByText("Personalizzato — almeno un valore")).toBeVisible();
 
   // Salvare e ricaricare: i valori personalizzati sopravvivono.
   await Promise.all([
@@ -62,7 +62,7 @@ test("Impostazioni > Eredità digitale mostra i preset, il riepilogo si aggiorna
 
   await page.reload();
   await page.getByRole("tab", { name: "Eredità digitale" }).click();
-  await expect(page.getByText("Personalizzato --- almeno un valore")).toBeVisible();
+  await expect(page.getByText("Personalizzato — almeno un valore")).toBeVisible();
   // Anche l'interruttore acceso sopravvive al refresh: niente più conferma qui, solo l'ACCENSIONE la richiede.
   await expect(page.getByRole("checkbox", { name: "Attiva Eredità digitale" })).toBeChecked();
   await expect(page.getByText("Il monitoraggio è spento")).not.toBeVisible();

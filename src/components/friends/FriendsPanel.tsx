@@ -29,6 +29,7 @@ import { sendFriendRequestEmail, sendGuardianRoleRequestEmail } from "@/lib/frie
 import { Avatar } from "@/components/ui/Avatar";
 import { listCapsules, syncCapsuleSharesForLinkedFriend } from "@/domain/capsules/repository";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
+import { PageHelp } from "@/components/help/PageHelp";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
@@ -375,7 +376,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       } else if (friend.linkedUserId) {
         await requestGuardianRole(supabase, currentUser.id, friend.id, friend.linkedUserId);
         setPendingGuardianRequestTo((prev) => new Set(prev).add(friend.linkedUserId!));
-        showToast("Richiesta di diventare guardiano inviata --- diventerà guardiano solo se accetta.");
+        showToast("Richiesta di diventare guardiano inviata — diventerà guardiano solo se accetta.");
         try {
           await sendGuardianRoleRequestEmail(friend.linkedUserId);
         } catch {
@@ -493,18 +494,22 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="min-w-0 w-full sm:flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-brand">
-            Amici
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Persone che potranno essere autorizzate in futuro ad accedere ai tuoi dati. Ogni nuovo
-            contatto resta una PERSONA privata finché non richiede e accetta l&apos;amicizia con
-            l&apos;altro account Hinthial --- solo un AMICO può diventare guardiano.{" "}
-            <Link href="/friends/protected" className="font-medium text-brand hover:underline">
-              Vedi chi proteggi
-            </Link>
-            .
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight text-brand">
+              Amici
+            </h1>
+            <PageHelp
+              title="Amici"
+              tips={[
+                { icon: "👤", text: "Un nuovo contatto resta una persona privata finché non richiede e accetta l'amicizia." },
+                { icon: "🛡️", text: "Solo un amico può diventare guardiano della tua eredità digitale." },
+                { icon: "🔒", text: "Ogni dato sui tuoi amici resta cifrato come tutto il resto." },
+              ]}
+            />
+          </div>
+          <Link href="/friends/protected" className="mt-1 text-sm font-medium text-brand hover:underline">
+            Vedi chi proteggi
+          </Link>
         </div>
         <Link
           href="/friends/new"

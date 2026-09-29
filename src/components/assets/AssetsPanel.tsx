@@ -11,6 +11,7 @@ import { listReminders } from "@/domain/reminders/repository";
 import { sortAlphabetically } from "@/lib/utils";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
+import { PageHelp } from "@/components/help/PageHelp";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
@@ -165,14 +166,18 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
-        <div className="min-w-0 w-full sm:flex-1">
+        <div className="flex min-w-0 w-full items-start justify-between gap-3 sm:flex-1">
           <h1 className="text-2xl font-semibold tracking-tight text-brand">
             Beni
           </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Censisci beni e contratti (casa, veicoli, assicurazioni, ...) e collega documenti e
-            scadenze da Documenti e Scadenze.
-          </p>
+          <PageHelp
+            title="Beni"
+            tips={[
+              { icon: "🏠", text: "Censisci casa, veicoli, assicurazioni e altro, un bene alla volta." },
+              { icon: "🔗", text: "Documenti e scadenze si collegano a un bene da Archivio e da Scadenze." },
+              { icon: "🏷️", text: "Ogni bene ha una categoria, per ritrovarlo più in fretta." },
+            ]}
+          />
         </div>
         <Link
           href="/assets/new"

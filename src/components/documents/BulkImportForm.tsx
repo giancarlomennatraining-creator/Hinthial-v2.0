@@ -469,7 +469,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
                               {draft.duplicateOf.createdAt
                                 ? `, caricato il ${new Date(draft.duplicateOf.createdAt).toLocaleDateString("it-IT")}`
                                 : " (in questo stesso lotto)"}
-                              --- stesso nome, stessa dimensione.
+                              — stesso nome, stessa dimensione.
                             </span>
                             <button
                               type="button"

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/db/supabase/client";
 import { listProductUpdates } from "@/domain/product-updates/repository";
 import { ListSkeleton } from "@/components/ui/Skeleton";
+import { PageHelp } from "@/components/help/PageHelp";
 import type { ProductUpdateListItem } from "@/domain/product-updates/types";
 
 const PREVIEW_COUNT = 10;
@@ -54,11 +55,16 @@ export function UpdatesPanel() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
+      <div className="flex items-start justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-brand">Novità</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Le modifiche fatte a Hinthial nel tempo, dalla più recente.
-        </p>
+        <PageHelp
+          title="Novità"
+          tips={[
+            { icon: "🆕", text: "Le ultime modifiche a Hinthial, dalla più recente." },
+            { icon: "👁️", text: "“Vedi tutte” mostra l'intero registro, già caricato qui." },
+            { icon: "🔓", text: "Contenuto pubblico, non cifrato: visibile anche prima di sbloccare la master password." },
+          ]}
+        />
       </div>
 
       {error ? (

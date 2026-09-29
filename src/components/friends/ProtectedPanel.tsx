@@ -114,7 +114,7 @@ export function ProtectedPanel() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-brand">Protetti</h1>
         <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
-          Le persone che ti hanno indicato come guardiano --- una persona di fiducia da contattare se
+          Le persone che ti hanno indicato come guardiano — una persona di fiducia da contattare se
           un giorno non dovessero più poter accedere al proprio account.{" "}
           <Link href="/friends" className="font-medium text-brand hover:underline">
             Torna ad Amici
@@ -189,7 +189,7 @@ export function ProtectedPanel() {
                     >
                       <span className="text-sm text-zinc-700 dark:text-zinc-300">
                         🛡️ <strong>{relationship.ownerName}</strong>
-                        {relationship.acceptedAt ? ` --- dal ${formatDate(relationship.acceptedAt)}` : ""}
+                        {relationship.acceptedAt ? ` — dal ${formatDate(relationship.acceptedAt)}` : ""}
                       </span>
                       <button
                         type="button"

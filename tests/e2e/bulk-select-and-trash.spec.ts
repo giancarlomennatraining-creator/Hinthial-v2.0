@@ -74,8 +74,8 @@ test("selezione multipla applica categoria e tag in blocco, poi l'eliminazione i
   await expect(page.getByText("documento-tre.txt")).toBeVisible(); // il terzo non era selezionato, resta
 
   // Il Cestino li mostra entrambi.
-  await page.getByRole("link", { name: "🗑️ Cestino" }).click();
-  await expect(page.getByRole("heading", { name: "🗑️ Cestino" })).toBeVisible();
+  await page.getByRole("link", { name: "Cestino" }).click();
+  await expect(page.getByRole("heading", { name: "Cestino" })).toBeVisible();
   await expect(page.getByText("documento-uno.txt")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("documento-due.txt")).toBeVisible();
   await expect(page.getByText(/giorni rimasti/).first()).toBeVisible();
@@ -92,7 +92,7 @@ test("selezione multipla applica categoria e tag in blocco, poi l'eliminazione i
   await expect(page.getByText("documento-due.txt")).not.toBeVisible();
 
   // Elimina per sempre il secondo, direttamente dal Cestino.
-  await page.getByRole("link", { name: "🗑️ Cestino" }).click();
+  await page.getByRole("link", { name: "Cestino" }).click();
   await expect(page.getByText("documento-due.txt")).toBeVisible({ timeout: 15_000 });
   page.once("dialog", (dialog) => dialog.accept());
   await page

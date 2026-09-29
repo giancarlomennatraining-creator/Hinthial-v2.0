@@ -161,7 +161,7 @@ export function DocumentAttachmentPicker({
             + Allega tutto il fascicolo
           </button>
           <p className="w-full text-xs text-zinc-500 dark:text-zinc-500">
-            Allega i documenti che il fascicolo contiene adesso --- se glielo aggiungi dopo, non
+            Allega i documenti che il fascicolo contiene adesso — se glielo aggiungi dopo, non
             entra da solo qui.
           </p>
         </div>

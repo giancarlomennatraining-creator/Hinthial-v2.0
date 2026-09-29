@@ -83,7 +83,7 @@ export function SharedCapsuleNotificationPopup() {
             {currentShare.openAt ? (
               <>
                 {" "}
-                --- si aprirà il <strong>{formatDateTime(currentShare.openAt)}</strong>
+                — si aprirà il <strong>{formatDateTime(currentShare.openAt)}</strong>
               </>
             ) : null}
             .

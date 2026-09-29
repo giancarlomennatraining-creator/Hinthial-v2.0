@@ -567,7 +567,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
               <>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   {savedDoc.extractedText.length.toLocaleString("it-IT")} caratteri letti
-                  {localProposals.length > 0 ? " --- ecco cosa ho trovato:" : "."}
+                  {localProposals.length > 0 ? " — ecco cosa ho trovato:" : "."}
                 </p>
                 {localProposals.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
@@ -596,7 +596,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
             </p>
             {aiDone ? (
               <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                ✓ Fatto --- trovi la sintesi e le proposte sulla scheda del documento.
+                ✓ Fatto — trovi la sintesi e le proposte sulla scheda del documento.
               </p>
             ) : (
               <AIAnalysisTrigger
@@ -642,7 +642,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         </Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">Nuovo contenuto</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Documenti, immagini, audio, video o una nota scritta al momento --- tutto cifrato sul tuo dispositivo prima
+          Documenti, immagini, audio, video o una nota scritta al momento — tutto cifrato sul tuo dispositivo prima
           di essere salvato.
         </p>
       </div>

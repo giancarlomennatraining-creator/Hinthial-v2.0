@@ -151,7 +151,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
         <div className="min-w-0 w-full sm:flex-1">
           <h1 className="text-2xl font-semibold tracking-tight text-brand">Fascicoli</h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Vicende che attraversano più categorie --- un problema di salute, l&apos;acquisto di una
+            Vicende che attraversano più categorie — un problema di salute, l&apos;acquisto di una
             casa, un incidente. Collega i documenti dal loro form, con &laquo;Fascicolo&raquo;.
           </p>
         </div>

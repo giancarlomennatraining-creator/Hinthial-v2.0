@@ -192,7 +192,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
         </h1>
         {!loading && capsule && capsule.status === "draft" ? (
           <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            Passo {step} di 3 --- {STEP_LABEL[step]}
+            Passo {step} di 3 — {STEP_LABEL[step]}
           </p>
         ) : null}
       </div>
@@ -205,7 +205,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
         </p>
       ) : capsule.status !== "draft" ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          Solo le capsule ancora in bozza sono modificabili --- questa è già stata chiusa.
+          Solo le capsule ancora in bozza sono modificabili — questa è già stata chiusa.
         </p>
       ) : (
         <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">

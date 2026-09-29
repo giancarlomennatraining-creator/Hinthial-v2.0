@@ -21,7 +21,7 @@ const SLIDES: Slide[] = [
     icon: "🗄️",
     title: "Un archivio per tutto",
     description:
-      "Documenti, foto, audio, video e note testuali in un unico posto ordinato, con categorie, tag e scadenze --- niente più cartelle sparse tra email, telefono e cassetti.",
+      "Documenti, foto, audio, video e note testuali in un unico posto ordinato, con categorie, tag e scadenze — niente più cartelle sparse tra email, telefono e cassetti.",
   },
   {
     icon: "🏠",
@@ -33,7 +33,7 @@ const SLIDES: Slide[] = [
     icon: "📦",
     title: "Capsule per le persone che contano",
     description:
-      "Prepara messaggi e contenuti cifrati da lasciare a chi vuoi tu, quando conta davvero --- affidati a uno o più contatti fiduciari.",
+      "Prepara messaggi e contenuti cifrati da lasciare a chi vuoi tu, quando conta davvero — affidati a uno o più contatti fiduciari.",
   },
   {
     icon: "🤖",

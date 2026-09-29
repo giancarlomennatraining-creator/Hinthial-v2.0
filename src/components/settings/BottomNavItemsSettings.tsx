@@ -72,11 +72,11 @@ export function BottomNavItemsSettings() {
     <div className="flex flex-col gap-4">
       <div>
         <p className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          Nella barra --- in quest&apos;ordine
+          Nella barra — in quest&apos;ordine
         </p>
         {selected.length === 0 ? (
           <p className="rounded-md border border-dashed border-zinc-300 px-3 py-2 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-            Nessuna voce scelta --- la barra in basso non compare.
+            Nessuna voce scelta — la barra in basso non compare.
           </p>
         ) : (
           <ul className="flex flex-col gap-1 rounded-md border border-zinc-300 p-1 dark:border-zinc-700">
@@ -170,7 +170,7 @@ export function BottomNavItemsSettings() {
       ) : null}
 
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        Fino a {MAX_BOTTOM_NAV_ITEMS} voci --- le altre restano nel menu con le 3 lineette.
+        Fino a {MAX_BOTTOM_NAV_ITEMS} voci — le altre restano nel menu con le 3 lineette.
       </p>
       {error ? (
         <p role="alert" className="text-xs text-red-600 dark:text-red-400">

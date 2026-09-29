@@ -10,6 +10,26 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-29 (6)
+
+### Pannello Aiuto di Hinthia (concept ibrido) su nove pagine, pulizia del trattino "---", icona cestino rimossa dai titoli
+
+**Cosa fa:** tre interventi, dopo aver visto i concept del pannello Aiuto e aver scelto l'ibrido (Concept C):
+
+1. **Il pannello Aiuto arriva su Dashboard, Hinthia, Scadenze, Beni, Amici, Capsule, Cronologia, Novità e Impostazioni** (una versione per ogni tab: Informazioni utente, Sicurezza, Eredità digitale, Scheda d'emergenza, Categorie, Tag, Aspetto, Attività, Importa/Esporta, Hinthia, Zona pericolosa). Ogni pagina perde il paragrafo descrittivo fisso sotto il titolo, sostituito da un bottone "Aiuto" con l'avatar di Hinthia: apre un pannello laterale (lo stesso pattern di scorrimento di "Attività") con 2-3 consigli statici sempre disponibili ("In breve") e, dove ha senso, un campo per fare una domanda vera a Hinthia. La pagina **Hinthia** (`/ai`) riceve solo la parte statica: essendo già per intero una chat, un secondo campo domanda nel pannello sarebbe ridondante.
+2. **L'icona 🗑️ sparisce dal tab "Cestino" e dal titolo della sua pagina**, in Archivio --- resta solo la parola.
+3. **Il trattino "---" (tre trattini) diventa un vero trattino tipografico (—)** in un giro su tutta l'app: era già così in centinaia di punti, dove funziona benissimo nei commenti del codice ma nei testi rivolti all'utente il browser lo mostrava alla lettera, tre trattini, non un em-dash.
+
+**Note tecniche:** nuovo componente condiviso `src/components/help/PageHelp.tsx` --- il trigger e il pannello in uno solo, `tips` (array statico) più `chatEnabled` (default `true`, `false` per `/ai`). La domanda vera riusa esattamente il motore già dietro `/ai` (`buildAIContext`, `answerWithClaude`/`mockAIProvider`, lo stesso consenso `masterEnabled && chatConsent`) ma con una conversazione locale al pannello, non condivisa con `AIChatProvider`: si azzera lasciando la pagina, niente cronologia mescolata fra pagine diverse. Il campo domanda si disabilita da sé (un avviso al suo posto) quando la master key non è sbloccata, dato che `buildAIContext` ha bisogno di decifrare il vault --- `useMasterKey()`/`useAIProcessingConsent()` sono già forniti da `AppShell` su ogni pagina, quindi nessuna pagina ha dovuto passare `masterKey` a mano. In `SettingsTabs.tsx` un'unica mappa `TAB_HELP` copre le 13 tab: la maggior parte delle sotto-descrizioni di singoli controlli (es. le sei sezioni di "Aspetto") non sono state toccate --- sono etichette funzionali di un controllo specifico, non il paragrafo che descrive l'intera pagina, la sola cosa che questa richiesta voleva eliminare. In `FriendsPanel.tsx` il link funzionale "Vedi chi proteggi", prima dentro il paragrafo rimosso, resta come riga a parte sotto il titolo.
+
+Il giro sul trattino ha toccato 89 righe in .tsx (testi rivolti all'utente: paragrafi, toast, errori, etichette, persino un paio di nomi di file scaricati) più una in un file .ts (un errore lanciato), individuate scrivendo un piccolo script che esclude i commenti (anche quelli su più righe) --- lasciate intenzionalmente intatte le centinaia di occorrenze rimaste nei commenti del codice, che non sono testo rivolto all'utente.
+
+**Scoperta non cercata, ma da segnalare:** verificando un fallimento e2e ho trovato che `.env.local` ha ora una vera `ANTHROPIC_API_KEY` --- `ai-processing-consent.spec.ts` e `ai-extraction-consent.spec.ts` (pensati per girare senza chiave reale, aspettandosi l'errore "non ancora configurata") non sono più sicuri da eseguire: possono provare a contattare davvero Anthropic. Confermato con `git stash` che il fallimento è preesistente e indipendente da questo lavoro. Non esegui più questi due file finché la chiave resta configurata --- da valutare con l'utente se va rimossa da `.env.local` per i test, o se questi due file vanno riscritti per non dipendere dalla sua assenza.
+
+Verificato: typecheck, lint, build di produzione, e un'ampia batteria di e2e sulle pagine toccate (dashboard, ai, reminders, assets, friends, capsules, categories, danger-zone, audit-log, privacy-panel, digital-legacy-settings, bulk-select-and-trash) --- tutti passano tranne i due fallimenti preesistenti già documentati altrove (OCR di archive-item-detail, celle vuote di table-sort) e i due file AI appena scoperti come non sicuri da eseguire.
+
+---
+
 ## 2026-09-29 (5)
 
 ### Scheda documento --- barra azioni omogenea a sé, pulizia di badge e cornici ridondanti

@@ -98,7 +98,7 @@ export function EmergencyCardPanel({
       <div>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Scheda d&apos;emergenza</h2>
         <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
-          Pochi campi, scritti una volta, cifrati come tutto il resto --- servono solo a generare
+          Pochi campi, scritti una volta, cifrati come tutto il resto — servono solo a generare
           una tessera da stampare e portare nel portafoglio o tenere sul frigorifero, per chi
           presta soccorso quando non puoi parlare tu.
         </p>

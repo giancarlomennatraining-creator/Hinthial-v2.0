@@ -159,7 +159,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
           Contenuti cifrati da lasciare a uno o più destinatari, in condizioni definite da te.
         </p>
         <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          Passo {step} di 3 --- {STEP_LABEL[step]}
+          Passo {step} di 3 — {STEP_LABEL[step]}
         </p>
       </div>
 

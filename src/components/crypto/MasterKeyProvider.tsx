@@ -243,7 +243,7 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
     if (!activeDevice) {
       clearDeviceLockRecord(userId);
       setDeviceLockAvailable(false);
-      throw new Error("Questo dispositivo non è più fidato --- sblocca con la master password.");
+      throw new Error("Questo dispositivo non è più fidato — sblocca con la master password.");
     }
 
     const deviceKey = await deriveDeviceKeyForCredential(record.credentialId);

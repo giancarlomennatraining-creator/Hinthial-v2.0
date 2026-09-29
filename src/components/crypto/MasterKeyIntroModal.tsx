@@ -67,7 +67,7 @@ export function MasterKeyIntroModal({
         </div>
 
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Prima di iniziare, crea la master key che cifra tutto ciò che salvi su Hinthial --- un
+          Prima di iniziare, crea la master key che cifra tutto ciò che salvi su Hinthial — un
           passo separato dalla password del tuo account, che richiede solo un minuto.
         </p>
 

@@ -94,7 +94,7 @@ export function AuditLogPanel() {
       <div>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Attività</h2>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Cosa è successo sul tuo account e quando --- i dettagli di ogni contenuto restano
+          Cosa è successo sul tuo account e quando — i dettagli di ogni contenuto restano
           privati, qui vedi solo il tipo di evento. Imposta i filtri e premi Trova.
         </p>
       </div>

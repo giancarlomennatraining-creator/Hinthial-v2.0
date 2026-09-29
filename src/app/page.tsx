@@ -8,37 +8,37 @@ const STRENGTHS: { icon: string; title: string; description: string }[] = [
     icon: "🔐",
     title: "Zero-knowledge davvero",
     description:
-      "Cifratura basata solo su Web Crypto API, nativa del browser --- nessun algoritmo scritto a mano. La tua master password non lascia mai il tuo dispositivo, nemmeno verso i nostri server.",
+      "Cifratura basata solo su Web Crypto API, nativa del browser — nessun algoritmo scritto a mano. La tua master password non lascia mai il tuo dispositivo, nemmeno verso i nostri server.",
   },
   {
     icon: "🗂️",
     title: "Tutto in un posto solo",
     description:
-      "Documenti, foto, audio, video, note, asset, scadenze e contatti fiduciari --- organizzati, con categorie e tag, e sempre ritrovabili con una ricerca.",
+      "Documenti, foto, audio, video, note, asset, scadenze e contatti fiduciari — organizzati, con categorie e tag, e sempre ritrovabili con una ricerca.",
   },
   {
     icon: "🤖",
     title: "Un assistente che non ti spia",
     description:
-      "Fai domande sui tuoi contenuti e ricevi risposte con le fonti citate --- tutto elaborato sul tuo dispositivo, nulla lascia mai il browser.",
+      "Fai domande sui tuoi contenuti e ricevi risposte con le fonti citate — tutto elaborato sul tuo dispositivo, nulla lascia mai il browser.",
   },
   {
     icon: "📦",
     title: "Capsule per chi conta",
     description:
-      "Prepara messaggi e contenuti cifrati da lasciare alle persone giuste, quando conta davvero --- affidati a uno o più contatti fiduciari.",
+      "Prepara messaggi e contenuti cifrati da lasciare alle persone giuste, quando conta davvero — affidati a uno o più contatti fiduciari.",
   },
   {
     icon: "🌓",
     title: "A modo tuo",
     description:
-      "Tema chiaro, scuro o come il tuo dispositivo; vista a elenco o a tabella per ogni sezione --- le tue preferenze restano impostate ovunque tu acceda.",
+      "Tema chiaro, scuro o come il tuo dispositivo; vista a elenco o a tabella per ogni sezione — le tue preferenze restano impostate ovunque tu acceda.",
   },
   {
     icon: "🧭",
     title: "Costruito un passo alla volta",
     description:
-      "Ogni funzionalità nasce prima semplice e verificata, poi si estende --- funzionante, sicuro, semplice: in quest'ordine, mai il contrario.",
+      "Ogni funzionalità nasce prima semplice e verificata, poi si estende — funzionante, sicuro, semplice: in quest'ordine, mai il contrario.",
   },
 ];
 
@@ -46,12 +46,12 @@ const STEPS: { number: string; title: string; description: string }[] = [
   {
     number: "1",
     title: "Crea il tuo account",
-    description: "Registrati e imposta la tua master password --- la chiave di tutto, che solo tu conosci.",
+    description: "Registrati e imposta la tua master password — la chiave di tutto, che solo tu conosci.",
   },
   {
     number: "2",
     title: "Aggiungi ciò che conta",
-    description: "Documenti, asset, contatti fiduciari, capsule --- tutto cifrato prima ancora di lasciare il tuo dispositivo.",
+    description: "Documenti, asset, contatti fiduciari, capsule — tutto cifrato prima ancora di lasciare il tuo dispositivo.",
   },
   {
     number: "3",
@@ -125,7 +125,7 @@ export default async function Home() {
               </h1>
               <p className="max-w-xl text-base text-zinc-600 dark:text-zinc-400">
                 Metti ordine nella tua vita digitale, proteggi ciò che conta e rendi le informazioni
-                importanti accessibili alle persone giuste quando serve --- il tutto cifrato in modo
+                importanti accessibili alle persone giuste quando serve — il tutto cifrato in modo
                 che solo tu possa leggerlo.
               </p>
 
@@ -163,7 +163,7 @@ export default async function Home() {
               Perché Hinthial
             </h2>
             <p className="max-w-xl text-sm text-zinc-600 dark:text-zinc-400">
-              Non solo un altro posto dove salvare le cose --- un modo diverso di pensare alla
+              Non solo un altro posto dove salvare le cose — un modo diverso di pensare alla
               propria vita digitale.
             </p>
           </div>
@@ -217,7 +217,7 @@ export default async function Home() {
               Pronto a mettere ordine?
             </h2>
             <p className="max-w-md text-sm text-zinc-600 dark:text-zinc-400">
-              Crea il tuo account gratuito --- bastano un minuto e una master password che solo tu
+              Crea il tuo account gratuito — bastano un minuto e una master password che solo tu
               conoscerai.
             </p>
             <Link

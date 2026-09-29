@@ -32,7 +32,7 @@ function extensionFor(mimeType: string): string {
 export function AudioVideoRecorder({
   onRecorded,
   title = "Messaggio audio o video",
-  description = "Registrato dal tuo dispositivo, cifrato come qualsiasi altro contenuto --- nulla lascia il browser finché non salvi.",
+  description = "Registrato dal tuo dispositivo, cifrato come qualsiasi altro contenuto — nulla lascia il browser finché non salvi.",
   confirmLabel = "Aggiungi",
 }: {
   onRecorded: (file: File) => void;
@@ -108,7 +108,7 @@ export function AudioVideoRecorder({
       intervalRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
     } catch {
       setError(
-        "Impossibile accedere a microfono/videocamera --- controlla i permessi del browser.",
+        "Impossibile accedere a microfono/videocamera — controlla i permessi del browser.",
       );
     }
   }
