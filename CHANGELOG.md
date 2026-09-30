@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-30 (18)
+
+### Content Intelligence, PR1 --- il contenuto si legge per pagina (nessun cambiamento visibile)
+
+**Cosa fa:**
+- Quando Hinthial legge un PDF o una foto sul dispositivo, ora tiene il testo **pagina per pagina** (con il numero reale della pagina) invece che come un unico blocco, e registra anche la **lingua** del testo e alcune **informazioni tecniche** del file (numero di pagine, dimensioni dell'immagine, titolo/autore/data di creazione dichiarati dal PDF, marca e modello della fotocamera, data di scatto).
+- Della posizione GPS di una foto si registra soltanto *se c'è*, mai le coordinate.
+- Per chi usa l'app nulla cambia: ricerca, testo mostrato e analisi di Claude funzionano come prima. È la base per le PR successive (analisi a blocchi con citazione della pagina, salvataggio cifrato, interfaccia).
+
+**Note tecniche:** nuovo tipo `ExtractedContent` (`text`, `language`, `segments`, `technical`, `extraction`) in `src/domain/extraction/types.ts`; `TextExtractor.extract()` diventa `extractContent()`. `extractText()` mantiene firma e risultato (`(await extractContent())?.text`), quindi i chiamanti esistenti non cambiano; `text` è identico a prima (pagine unite da una riga vuota, normalizzate, tetto `MAX_EXTRACTED_CHARS`), mentre i segmenti non sono tagliati dal tetto (che riguarda la sola ricerca). Le pagine senza testo non producono segmenti e non scorrono la numerazione. Moduli nuovi: `content.ts` (composizione), `language.ts` (stopword it/en/fr/de/es, null se incerta), `technical.ts` (PNG/JPEG/GIF/BMP/WebP-VP8X, EXIF, Info PDF). Nessuna migration, nessuna variabile d'ambiente, nessuna modifica all'AI.
+
+**Limiti noti:** l'OCR vero non gira in jsdom, quindi il ramo `ocrTextExtractor.extractContent` è coperto solo dal typecheck e dalla verifica manuale; il test `main-nav.test.tsx` fallisce già prima di questa PR (cerca un link "AI" che ora si chiama "Hinthia").
+
+---
+
 ## 2026-09-30 (17)
 
 ### Ambiente v3 avviabile anche in locale (`npm run dev:v3`)

@@ -1,6 +1,6 @@
 import { ocrTextExtractor } from "@/domain/extraction/ocr-extractor";
 import { pdfTextExtractor } from "@/domain/extraction/pdf-extractor";
-import type { ExtractionProgress, TextExtractor } from "@/domain/extraction/types";
+import type { ExtractedContent, ExtractionProgress, TextExtractor } from "@/domain/extraction/types";
 
 /**
  * I motori disponibili, in ordine di verifica. La trascrizione
@@ -15,26 +15,35 @@ export function canExtractText(mimeType: string): boolean {
 }
 
 /**
- * Il testo del contenuto, o null se non c'è nulla da estrarre o se
- * l'estrazione fallisce.
+ * Il contenuto letto (testo, segmenti per pagina, ispezione tecnica), o
+ * null se il tipo non ha un motore o se la lettura fallisce.
  *
  * **Non lancia mai**, di proposito: l'estrazione è un di più: un PDF
  * malformato, un worker che non parte o un file protetto da password
  * non devono impedire di salvare il documento. Nel peggiore dei casi si
  * perde la ricerca dentro quel file, non il file.
  */
+export async function extractContent(
+  bytes: Uint8Array,
+  mimeType: string,
+  onProgress?: ExtractionProgress,
+): Promise<ExtractedContent | null> {
+  const extractor = EXTRACTORS.find((candidate) => candidate.supports(mimeType));
+  if (!extractor) return null;
+
+  try {
+    return await extractor.extractContent(bytes, mimeType, onProgress);
+  } catch (error) {
+    console.warn(`[extraction] ${extractor.name} non è riuscito a leggere il contenuto:`, error);
+    return null;
+  }
+}
+
+/** Solo il testo (ciò che va in `extractedText`), o null se non c'è nulla da estrarre. Non lancia mai. */
 export async function extractText(
   bytes: Uint8Array,
   mimeType: string,
   onProgress?: ExtractionProgress,
 ): Promise<string | null> {
-  const extractor = EXTRACTORS.find((candidate) => candidate.supports(mimeType));
-  if (!extractor) return null;
-
-  try {
-    return await extractor.extract(bytes, mimeType, onProgress);
-  } catch (error) {
-    console.warn(`[extraction] ${extractor.name} non è riuscito a leggere il contenuto:`, error);
-    return null;
-  }
+  return (await extractContent(bytes, mimeType, onProgress))?.text ?? null;
 }
