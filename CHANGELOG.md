@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-30 (17)
+
+### Ambiente v3 avviabile anche in locale (`npm run dev:v3`)
+
+**Cosa fa:**
+- Con `npm run dev:v3` l'app gira sul PC (https://localhost:3000) collegata al progetto Supabase **v3**, senza toccare il database di sviluppo della v2. `npm run dev:https` continua a usare il Supabase di sviluppo.
+- Passando da un ambiente all'altro la cache di sviluppo viene svuotata da sola, così l'app non resta collegata al database dell'ambiente precedente.
+
+**Note tecniche:** `scripts/dev-v3.mjs` carica `.env.v3.local` in `process.env` (che ha la precedenza su `.env.local`) e avvia `next dev` in HTTPS; `--env-file` non è usabile perché Next lo rifiuta nei processi figli (`NODE_OPTIONS`). `scripts/env-target.mjs`, eseguito nei `predev*`, svuota `.next` quando cambia l'ambiente (marcatore `.next/.env-target`), perché le `NEXT_PUBLIC_*` sono incorporate nella cache. `.env.v3.local` (ignorato da git) contiene ora anche APP_URL locale, Resend, Google Drive, Anthropic e un `CRON_SECRET` proprio.
+
+Verificato: il codice compilato da `dev:v3` contiene il riferimento al Supabase v3 e nessuno a quello di sviluppo.
+
+---
+
 ## 2026-09-30 (16)
 
 ### Inserimento contenuto: niente striscia sotto il "1" e momento "salvato" prima dei passi di Hinthial
