@@ -79,6 +79,13 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
     "aria-current",
     "page",
   );
+  // Il tasto Aiuto c'è anche qui, e in Cestino, come in Contenuti.
+  await page.getByRole("button", { name: "Aiuto" }).click();
+  await expect(page.getByRole("dialog", { name: "Aiuto — Fascicoli" })).toBeVisible();
+  await page.getByRole("button", { name: "Chiudi" }).click();
+  await page.getByRole("link", { name: "Cestino", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Aiuto" })).toBeVisible();
+  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
   await page.getByRole("link", { name: "+ Nuovo fascicolo" }).click();
   await page.getByLabel("Titolo").fill("Intervento al ginocchio");
   await page.getByLabel("Descrizione").fill("Visita, esami e intervento del 2026.");

@@ -16,6 +16,7 @@ import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
 import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
 import { useListViewPreferences } from "@/components/layout/ListViewPreferencesProvider";
 import { ArchiveTabs } from "@/components/documents/ArchiveTabs";
+import { PageHelp } from "@/components/help/PageHelp";
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -146,7 +147,18 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex items-start justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-brand">Archivio</h1>
+        <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight text-brand">Archivio</h1>
+          <PageHelp
+            title="Fascicoli"
+            tips={[
+              { icon: "📂", text: "Un fascicolo raggruppa più contenuti di una stessa vicenda, anche di categorie diverse." },
+              { icon: "➕", text: "Crea un fascicolo nuovo, poi collegaci i documenti dalla loro scheda." },
+              { icon: "🗂️", text: "Segna un fascicolo come chiuso quando la vicenda è finita: resta consultabile." },
+              { icon: "🔗", text: "Eliminare un fascicolo non elimina i documenti: vengono solo scollegati." },
+            ]}
+          />
+        </div>
         <Link
           href="/dossiers/new"
           className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"

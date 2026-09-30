@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-30 (12)
+
+### Archivio: il tasto Aiuto anche in Fascicoli e Cestino
+
+**Cosa fa:** il tasto "Aiuto" (con Hinthia) che c'era solo in Contenuti compare ora anche nelle schede Fascicoli e Cestino, accanto al titolo "Archivio", con consigli propri di ciascuna (cosa raggruppa un fascicolo, come funziona il ripristino e la rimozione definitiva).
+
+**Note tecniche:** `PageHelp` aggiunto in `DossiersPanel.tsx` (titolo "Fascicoli") e `TrashPanel.tsx` (titolo "Cestino"), stessa posizione che ha in `DocumentsPanel.tsx`. I paragrafi descrittivi sotto le schede restano. `dossiers.spec.ts` verifica il pannello in Fascicoli e la presenza del tasto in Cestino.
+
+Verificato: typecheck, lint, e2e su fascicoli e cestino — passano.
+
 ## 2026-09-30 (11)
 
 ### Benvenuto dopo il login: wordmark, barra di caricamento, dissolvenza sulla Dashboard

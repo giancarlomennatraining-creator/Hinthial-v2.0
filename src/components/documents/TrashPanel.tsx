@@ -6,6 +6,7 @@ import { deleteDocument, listTrashedDocuments, restoreDocuments } from "@/domain
 import { daysRemaining } from "@/domain/documents/trash";
 import { formatDate } from "@/lib/format";
 import { ArchiveTabs } from "@/components/documents/ArchiveTabs";
+import { PageHelp } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { DocumentListItem } from "@/domain/documents/types";
@@ -193,7 +194,17 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight text-brand">Archivio</h1>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight text-brand">Archivio</h1>
+        <PageHelp
+          title="Cestino"
+          tips={[
+            { icon: "🗑️", text: "Qui finiscono i documenti eliminati, prima di sparire per sempre." },
+            { icon: "↩️", text: "Ripristina un documento per rimetterlo nell'archivio, singolo o più insieme." },
+            { icon: "⏳", text: "Dopo il periodo scelto in Impostazioni → Aspetto viene rimosso definitivamente." },
+          ]}
+        />
+      </div>
 
       <ArchiveTabs />
 
