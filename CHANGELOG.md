@@ -10,6 +10,48 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-30 (15)
+
+### Inserimento di un contenuto a fisarmonica fluida, in cinque passi
+
+**Cosa fa:**
+- Il form "Nuovo contenuto" è ora una **scheda unica a fisarmonica**: il passo completato diventa una spunta verde (il segno si disegna), la linea di collegamento si riempie di verde, il passo si ripiega in un riepilogo con "Modifica" e il successivo si apre in modo fluido. Con `prefers-reduced-motion` niente animazioni.
+- Il terzo passo si chiama **"Dettagli"** (era "Aiutaci a ritrovarlo"): categoria, bene collegato, fascicoli, tag e note, come prima.
+- Dopo il salvataggio la pagina non cambia più struttura: i primi tre passi restano visibili ma bloccati, sotto la riga "Salvato. Da qui in poi lavora Hinthial." si apre il passo **4 "Lettura dal dispositivo"** (caratteri letti e proposte trovate) e poi il **5 "Analisi di Hinthia"** (facoltativo). In fondo restano "Vai alla scheda del documento" e "Torna all'archivio".
+- Su smartphone la linea di collegamento non c'è e il contenuto dei passi occupa tutta la larghezza.
+
+**Note tecniche:** `AccordionStep` usa `grid-template-rows` 0fr→1fr (classi `.step-body/.step-inner/.step-check-path/.step-line-fill` in `globals.css`); il contenuto resta montato per la durata della chiusura (`inert` intanto) e poi si smonta. La riga "Aggiungi all'archivio / Annulla" sotto la scheda resta prima del salvataggio. Il test `archive-accept-all` ora aspetta "Letto sul dispositivo" prima di salvare: senza, il numero di informazioni trovate dipendeva da chi arrivava prima tra lettura e click (2 o 3). Tutti gli e2e che cliccavano "Aiutaci a ritrovarlo" usano "Dettagli"; `archive-title-and-mobile-add` verifica passi 4 e 5.
+
+Verificato: typecheck, lint, e2e archive-title-and-mobile-add, archive-accept-all, archive-create-reads-file, document-categorization, assets, categories, dossiers, tags, reminders, capsules, onboarding-checklist, onboarding-status, list-filters, privacy-panel — passano.
+
+## 2026-09-30 (14)
+
+### Titolo in inserimento e modifica, "+" su smartphone con le scelte del desktop, form di inserimento impilato, Fascicoli/Cestino senza testo descrittivo
+
+**Cosa fa:**
+- In Archivio, le viste **Fascicolo** e **Cestino** non hanno più il paragrafo descrittivo sotto i tab: ci pensa il tasto Aiuto (che già riporta, per il Cestino, il periodo di conservazione).
+- **Titolo**: in inserimento compare subito (non solo dopo aver scelto il file) anche per il caricamento di un file, e c'è ora anche per audio/video registrati (vuoto = nome della registrazione; l'estensione si conserva). Nella **Scheda** di un documento c'è un campo "Titolo" in cima: si modifica e si salva con "Salva modifiche" (un titolo vuoto non si salva).
+- Su smartphone il **"+" blu dell'Archivio** non porta più direttamente a "Carica un file": apre le stesse scelte del tasto desktop (Carica un file, Registra audio/video, Scrivi una nota, Importa più file insieme).
+- Su smartphone, nella schermata di inserimento, i pulsanti in fondo (Continua, Aggiungi all'archivio, Annulla, Scatta foto) occupano tutta la riga e stanno uno sotto l'altro, come già i campi; da tablet in su restano com'erano.
+
+**Note tecniche:** `MobileAddFab` accetta un `menu` opzionale (voci `href/label/icon/separated`, `role="menu"`, chiusura al click fuori); gli altri usi (Beni, Capsule, ...) restano un semplice link. `DocumentsPanel` condivide con il tasto desktop la stessa lista `ADD_CONTENT_ITEMS`. `DocumentMetadataInput.title` (opzionale) fa ricifrare `encrypted_filename` in `updateDocumentMetadata`; il titolo di un documento è il suo nome file, quindi cambiarlo non tocca il contenuto. Nuovo `archive-title-and-mobile-add.spec.ts`.
+
+Verificato: typecheck, lint, e2e archive-title-and-mobile-add, archive-accept-all, dossiers, bulk-select-and-trash, archive, archive-proposals, ai, document-categorization — passano. `archive-item-detail` "la scheda ricava data, emittente e scadenza" continua a fallire come prima (già noto).
+
+## 2026-09-30 (13)
+
+### Scheda documento: "Chiedi a Hinthia", "Accetta tutto", voci modificabili per tipo di dato, Scheda impilata su smartphone
+
+**Cosa fa:**
+- La tab "Analisi con Hinthia" si chiama ora **"Chiedi a Hinthia"**.
+- Nella tab Scheda compare, quando ci sono informazioni trovate (dal dispositivo o da Hinthia), un riquadro "Hinthia ha trovato N informazioni da aggiungere alla Scheda" con il tasto **Accetta tutto**: le accetta in un colpo e un solo "Annulla" le rimette tutte com'erano.
+- Le voci libere che finiscono in Scheda (numero polizza, data di nascita, ...) non sono più solo lette: si modificano come gli altri campi e si salvano con "Salva modifiche". Una data si sceglie dal calendario, il resto è testo. Anche il "Modifica" di una proposta usa il calendario quando il valore è una data.
+- Su smartphone Categoria, Bene collegato, Scadenza, Fascicoli (select e bottone) stanno uno sotto l'altro a tutta larghezza; da tablet in su restano affiancati.
+
+**Note tecniche:** "Accetta tutto" tiene una sola proposta per tipo (per "campo": per chiave; vince la prima, locale prima di Hinthia) ed esegue `acceptProposal` in sequenza, annullando in ordine inverso. Il tipo di una voce libera non è salvato: `inferFieldInputType` (`domain/structured-fields/value-type.ts`) lo deduce dal valore salvato (data YYYY-MM-DD valida → `type="date"`), e il prompt di lettura chiede ora a Claude di scrivere le date in quel formato. `updateDocumentMetadata` accetta `structuredFields` opzionale (sostituisce l'insieme, le voci svuotate si eliminano); `ArchiveItemDetail` le risincronizza da `doc` chiave per chiave. Nuovo `archive-accept-all.spec.ts` (lettura di Hinthia simulata con `page.route`, nessuna chiamata reale).
+
+Verificato: typecheck, lint, build, e2e archive-accept-all, archive-proposals, archive-thumbnails, document-categorization — passano. `archive-item-detail` "la scheda ricava data, emittente e scadenza" fallisce già senza queste modifiche (verificato con stash): da indagare a parte. Non eseguiti ai-content-analysis/ai-extraction-consent (chiave API reale).
+
 ## 2026-09-30 (12)
 
 ### Archivio: il tasto Aiuto anche in Fascicoli e Cestino

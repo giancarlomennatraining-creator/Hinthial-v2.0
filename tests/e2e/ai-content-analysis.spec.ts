@@ -69,7 +69,7 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
     mimeType: "application/pdf",
     buffer: buildPdf("Polizza responsabilita civile"),
   });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.getByLabel("Categoria").selectOption({ label: "🛡️ Assicurazioni" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
@@ -77,8 +77,8 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
 
   await page.getByRole("link", { name: /polizza\.pdf/ }).click();
   await expect(page).toHaveURL(/\/archive\/[0-9a-f-]+$/, { timeout: 15_000 });
-  // Il trigger di analisi vive nella tab "Analisi con Hinthia" (v. feedback utente), non più fisso a sinistra.
-  await page.getByRole("tab", { name: "Analisi con Hinthia" }).click();
+  // Il trigger di analisi vive nella tab "Chiedi a Hinthia" (v. feedback utente), non più fisso a sinistra.
+  await page.getByRole("tab", { name: "Chiedi a Hinthia" }).click();
 
   // Senza consenso generale/di funzione, il bottone non compare --- solo il rimando alle Impostazioni.
   await expect(page.getByText("Chiedi a Hinthia di leggere questo documento")).toBeVisible();
@@ -110,7 +110,7 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
   // Torna al documento: cancello e funzione attivi, ma la categoria non ancora --- compare la scelta a tre.
   await page.goto("/archive");
   await page.getByRole("link", { name: /polizza\.pdf/ }).click();
-  await page.getByRole("tab", { name: "Analisi con Hinthia" }).click();
+  await page.getByRole("tab", { name: "Chiedi a Hinthia" }).click();
   await expect(page.getByRole("button", { name: "Solo questa volta" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Abilita questa categoria per 30 giorni" })).toBeVisible();
 
@@ -124,8 +124,8 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
   // Escludere il documento nasconde il bottone e resta impostato dopo un refresh.
   await page.getByLabel(/Escludi questo documento dall'analisi di Hinthia/).check();
   await page.reload();
-  // Il reload azzera la tab attiva sulla scheda: si riapre "Analisi con Hinthia" per ritrovare il trigger.
-  await page.getByRole("tab", { name: "Analisi con Hinthia" }).click();
+  // Il reload azzera la tab attiva sulla scheda: si riapre "Chiedi a Hinthia" per ritrovare il trigger.
+  await page.getByRole("tab", { name: "Chiedi a Hinthia" }).click();
   await expect(page.getByText("Questo documento è escluso dall'analisi di Hinthia")).toBeVisible();
   await expect(page.getByRole("button", { name: "Solo questa volta" })).toHaveCount(0);
 

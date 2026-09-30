@@ -114,7 +114,8 @@ export function DocumentMetadataFields({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-3">
+      {/* Su smartphone le voci stanno una sotto l'altra, a tutta larghezza (v. feedback utente); da sm in su tornano affiancate. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <div className="flex flex-col gap-1">
           <label
             htmlFor={`${idPrefix}-category`}
@@ -126,7 +127,7 @@ export function DocumentMetadataFields({
             id={`${idPrefix}-category`}
             value={value.categoryId}
             onChange={(e) => handleCategoryChange(e.target.value)}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
           >
             <option value="">Nessuna categoria</option>
             {categories.map((category) => (
@@ -150,7 +151,7 @@ export function DocumentMetadataFields({
             value={value.relatedAssetId}
             onChange={(e) => onChange({ ...value, relatedAssetId: e.target.value })}
             disabled={!value.categoryId}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 disabled:opacity-50 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
           >
             <option value="">{value.categoryId ? "Nessuno" : "Scegli prima una categoria"}</option>
             {filteredAssets.map((asset) => (
@@ -175,7 +176,7 @@ export function DocumentMetadataFields({
               type="date"
               value={value.expiresAt}
               onChange={(e) => onChange({ ...value, expiresAt: e.target.value })}
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             />
             {hints?.expiresAt}
           </div>
@@ -190,12 +191,12 @@ export function DocumentMetadataFields({
         >
           Fascicoli
         </label>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <select
             id={`${idPrefix}-dossier`}
             value={dossierToAdd}
             onChange={(e) => setDossierToAdd(e.target.value)}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
           >
             <option value="">Aggiungi a un fascicolo…</option>
             {pickableDossiers.map((dossier) => (
@@ -209,7 +210,7 @@ export function DocumentMetadataFields({
             type="button"
             disabled={!dossierToAdd}
             onClick={handleAddDossier}
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 sm:w-auto dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
           >
             + Aggiungi fascicolo
           </button>

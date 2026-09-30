@@ -58,7 +58,7 @@ test("un nome file con parole chiave riconoscibili riceve una categoria suggerit
   await row.getByRole("link", { name: /polizza-assicurazione-auto\.txt/ }).click();
   await expect(page).toHaveURL(/\/archive\/[^/]+$/, { timeout: 15_000 });
   // exact: la tab di default è "Scheda", quindi qui l'unica ambiguità possibile sarebbe stata con la
-  // checkbox di esclusione dall'analisi di Hinthia --- ma quella vive nella tab "Analisi con Hinthia"
+  // checkbox di esclusione dall'analisi di Hinthia --- ma quella vive nella tab "Chiedi a Hinthia"
   // (v. feedback utente), non montata insieme a "Scheda": lasciato comunque per chiarezza.
   await page.getByLabel("Categoria", { exact: true }).selectOption({ label: "🏠 Casa" });
   await page.getByRole("button", { name: "Salva modifiche" }).click();

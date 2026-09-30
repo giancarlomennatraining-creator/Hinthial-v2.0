@@ -106,7 +106,7 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
     buffer: buildPdf(["Ospedale San Giovanni", "Referto di visita ortopedica", "Emesso il 14 marzo 2026"]),
   });
   await page.getByText("Letto sul dispositivo").waitFor({ timeout: 45_000 });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.getByLabel("Fascicoli").selectOption({ label: "📂 Intervento al ginocchio" });
   await page.getByRole("button", { name: "+ Aggiungi fascicolo" }).click();
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
@@ -191,7 +191,7 @@ test("un documento può stare in più di un fascicolo insieme (FASE 20c)", async
     mimeType: "text/plain",
     buffer: Buffer.from("RSSMRA80A01H501U"),
   });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.getByLabel("Fascicoli").selectOption({ label: "📂 Acquisto casa" });
   await page.getByRole("button", { name: "+ Aggiungi fascicolo" }).click();
   await page.getByLabel("Fascicoli").selectOption({ label: "📂 Problema di salute" });

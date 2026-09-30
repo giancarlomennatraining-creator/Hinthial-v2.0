@@ -208,11 +208,6 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       <ArchiveTabs />
 
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        Un documento eliminato resta qui, recuperabile, per il periodo scelto in Impostazioni →
-        Aspetto — poi viene rimosso per sempre.
-      </p>
-
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {error}

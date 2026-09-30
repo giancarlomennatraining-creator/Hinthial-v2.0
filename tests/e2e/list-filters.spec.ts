@@ -78,7 +78,7 @@ test("la ricerca e il filtro per categoria funzionano in Beni e Archivio", async
     mimeType: "text/plain",
     buffer: Buffer.from("polizza di prova"),
   });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.locator("#upload-category").selectOption({ label: "🛡️ Assicurazioni" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
@@ -95,7 +95,7 @@ test("la ricerca e il filtro per categoria funzionano in Beni e Archivio", async
     mimeType: "text/plain",
     buffer: Buffer.from("contratto di prova"),
   });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.locator("#upload-category").selectOption({ label: "🏠 Casa" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();

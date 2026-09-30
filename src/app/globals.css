@@ -244,3 +244,86 @@ h6 {
     opacity: 0.75;
   }
 }
+
+/*
+ * Inserimento di un contenuto a fisarmonica fluida (v. CreateArchiveItemForm): il passo che si apre cresce in
+ * altezza (grid-template-rows 0fr -> 1fr) e il contenuto compare un istante dopo; il cerchio del passo
+ * completato diventa un segno di spunta che si disegna, e la linea di collegamento si riempie di verde.
+ * Regole CSS e non utility Tailwind: keyframe e transizione di grid-template-rows non hanno un equivalente pratico.
+ */
+.step-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.step-body[data-open="true"] {
+  grid-template-rows: 1fr;
+  animation: step-expand 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.step-inner {
+  min-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.step-body[data-open="true"] > .step-inner {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.4s ease 0.2s,
+    transform 0.4s ease 0.2s;
+  animation: step-fade 0.4s ease 0.2s backwards;
+}
+@keyframes step-expand {
+  from {
+    grid-template-rows: 0fr;
+  }
+  to {
+    grid-template-rows: 1fr;
+  }
+}
+@keyframes step-fade {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.step-check-path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 0;
+  animation: step-check-draw 0.4s ease-out 0.05s backwards;
+}
+@keyframes step-check-draw {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.step-line-fill {
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.5s ease;
+}
+.step-line-fill[data-done="true"] {
+  transform: scaleY(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .step-body,
+  .step-body[data-open="true"],
+  .step-body[data-open="true"] > .step-inner,
+  .step-inner,
+  .step-check-path,
+  .step-line-fill {
+    animation: none;
+    transition: none;
+  }
+}

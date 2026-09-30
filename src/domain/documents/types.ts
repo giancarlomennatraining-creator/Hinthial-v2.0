@@ -51,6 +51,10 @@ export interface DocumentMetadataInput {
   notes: string;
   tags: string[];
   issuer: string;
+  /** Voci libere della Scheda (v. domain/structured-fields): se presente sostituisce l'intero insieme, se omesso non lo tocca. */
+  structuredFields?: Record<string, string>;
+  /** Nuovo titolo (il nome del contenuto): se presente e non vuoto lo rinomina, se omesso non lo tocca. */
+  title?: string;
 }
 
 /** Distinta da `DocumentMetadataInput.notes` --- qui titolo/corpo SONO il contenuto, cifrati come un file (v. createTextNote). */

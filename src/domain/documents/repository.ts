@@ -442,7 +442,7 @@ export async function updateTextNoteContent(
   await removeEncryptedPayload(supabase, doc.storagePath).catch(() => {});
 }
 
-/** Aggiorna categoria/scadenza/note/tag/emittente --- mai il file o il nome. Ricifra notes/tags/issuer con la Master Key. */
+/** Aggiorna titolo/categoria/scadenza/note/tag/emittente --- mai il contenuto del file. Ricifra notes/tags/issuer (e il titolo, se cambia) con la Master Key. */
 export async function updateDocumentMetadata(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
@@ -455,6 +455,19 @@ export async function updateDocumentMetadata(
     encryptOptionalText(masterKey, metadata.issuer),
   ]);
 
+  let structuredUpdate: { encrypted_structured_fields: string | null } | undefined;
+  if (metadata.structuredFields) {
+    const nonEmpty = Object.fromEntries(
+      Object.entries(metadata.structuredFields).filter(([, value]) => value.trim() !== ""),
+    );
+    structuredUpdate = { encrypted_structured_fields: await encryptStructuredFields(masterKey, nonEmpty) };
+  }
+
+  const newTitle = metadata.title?.trim();
+  const titleUpdate = newTitle
+    ? { encrypted_filename: serializeEnvelope(await encryptBytes(masterKey, utf8ToBytes(newTitle))) }
+    : undefined;
+
   const { error } = await supabase
     .from("documents")
     .update({
@@ -464,6 +477,8 @@ export async function updateDocumentMetadata(
       encrypted_notes: encryptedNotes,
       encrypted_tags: encryptedTags,
       encrypted_issuer: encryptedIssuer,
+      ...structuredUpdate,
+      ...titleUpdate,
     })
     .eq("id", documentId);
 

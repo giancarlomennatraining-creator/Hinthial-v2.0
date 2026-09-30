@@ -19,7 +19,7 @@ Leggi il testo di UN documento dell'utente e restituisci SOLO un oggetto JSON, s
 Regole non negoziabili:
 - Ogni "source" (in expiry/issuer/category/fields) deve essere una citazione ESATTA, copiata parola per parola dal testo fornito --- non riassumere, non parafrasare. Se non trovi una citazione esatta per un campo, omettilo.
 - "category.id" deve essere uno degli id nell'elenco categorie fornito, mai un id inventato o un nome.
-- "fields" sono fatti puntuali che scadenza/emittente/categoria non coprono (numero di polizza, targa, luogo di nascita, ...). Preferisci sempre una chiave già presente nel "vocabolario noto" fornito, quando il campo trovato corrisponde davvero a quel significato; proponi una chiave nuova solo se nessuna di quelle note si adatta. "key" in snake_case, "label" leggibile in italiano.
+- "fields" sono fatti puntuali che scadenza/emittente/categoria non coprono (numero di polizza, targa, luogo di nascita, ...). Preferisci sempre una chiave già presente nel "vocabolario noto" fornito, quando il campo trovato corrisponde davvero a quel significato; proponi una chiave nuova solo se nessuna di quelle note si adatta. "key" in snake_case, "label" leggibile in italiano. Se il valore di un campo è una data (data di nascita, di emissione, ...), scrivilo sempre come YYYY-MM-DD.
 - "synthesis" è una sintesi in prosa di 2-4 frasi su cosa dice il documento nel suo insieme --- qualitativa: non deve ripetere uno per uno i valori già in expiry/issuer/category/fields.
 - Nel dubbio, ometti il campo: un campo mancante costa meno di uno sbagliato.
 - Se il documento non contiene nulla di utile, rispondi {"expiry": [], "issuer": [], "category": null, "fields": [], "synthesis": null}.`;

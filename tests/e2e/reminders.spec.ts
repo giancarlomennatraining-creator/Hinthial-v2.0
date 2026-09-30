@@ -85,7 +85,7 @@ test("aggiunge scadenza, tag e note a un documento e li vede in dashboard", asyn
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.locator("#upload-tags").fill("fattura, 2026");
   await page.locator("#upload-notes").fill("Nota di prova");
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();

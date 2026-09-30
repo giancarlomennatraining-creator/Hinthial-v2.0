@@ -259,7 +259,7 @@ test("collega un documento già presente in Archivio a una capsula, selezionando
     mimeType: "text/plain",
     buffer: Buffer.from(documentContent, "utf-8"),
   });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.locator("#upload-category").selectOption({ label: "📄 Contratti" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
@@ -362,7 +362,7 @@ test("allega un intero fascicolo a una capsula in un colpo solo", async ({ page 
       mimeType: "text/plain",
       buffer: Buffer.from(`${name} --- ${Date.now()}`, "utf-8"),
     });
-    await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+    await page.getByRole("button", { name: "Dettagli" }).click();
     await page.getByLabel("Fascicoli").selectOption({ label: "📂 Trasloco" });
     await page.getByRole("button", { name: "+ Aggiungi fascicolo" }).click();
     await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
@@ -430,7 +430,7 @@ test("chiudere una capsula copia il contenuto collegato al suo interno; l'origin
     mimeType: "text/plain",
     buffer: Buffer.from(documentContent, "utf-8"),
   });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.locator("#upload-category").selectOption({ label: "📄 Contratti" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();

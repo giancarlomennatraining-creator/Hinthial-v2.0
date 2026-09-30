@@ -61,7 +61,7 @@ test("Impostazioni > Privacy mostra dati reali dell'account e non richiede la ma
     mimeType: "text/plain",
     buffer: Buffer.from("polizza di prova"),
   });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.locator("#upload-category").selectOption({ label: "🛡️ Assicurazioni" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();

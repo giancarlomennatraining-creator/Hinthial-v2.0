@@ -30,7 +30,7 @@ import type { DossierListItem } from "@/domain/dossiers/types";
 import { saveBytesAsFile } from "@/lib/download";
 import { formatDate, formatSize } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
-import { MobileAddFab } from "@/components/ui/MobileAddFab";
+import { MobileAddFab, type MobileAddFabMenuItem } from "@/components/ui/MobileAddFab";
 import { PageHelp } from "@/components/help/PageHelp";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
@@ -46,6 +46,13 @@ import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { useToast } from "@/components/ui/ToastProvider";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+const ADD_CONTENT_ITEMS: MobileAddFabMenuItem[] = [
+  { href: "/archive/new", label: "Carica un file", icon: "📄" },
+  { href: "/archive/new?mode=record", label: "Registra audio/video", icon: "🎬" },
+  { href: "/archive/new?mode=note", label: "Scrivi una nota", icon: "📝" },
+  { href: "/archive/import", label: "Importa più file insieme", icon: "📥", separated: true },
+];
 
 function expiryStatus(expiresAt: string | null): "none" | "overdue" | "soon" | "ok" {
   if (!expiresAt) return "none";
@@ -612,39 +619,19 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
               aria-label="Aggiungi contenuto"
               className="absolute top-full right-0 z-10 mt-1 w-56 overflow-hidden rounded-md border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
             >
-              <Link
-                href="/archive/new"
-                role="menuitem"
-                onClick={() => setAddMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
-              >
-                <span aria-hidden="true">📄</span> Carica un file
-              </Link>
-              <Link
-                href="/archive/new?mode=record"
-                role="menuitem"
-                onClick={() => setAddMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
-              >
-                <span aria-hidden="true">🎬</span> Registra audio/video
-              </Link>
-              <Link
-                href="/archive/new?mode=note"
-                role="menuitem"
-                onClick={() => setAddMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
-              >
-                <span aria-hidden="true">📝</span> Scrivi una nota
-              </Link>
-              <div className="my-1 border-t border-zinc-100 dark:border-zinc-900" />
-              <Link
-                href="/archive/import"
-                role="menuitem"
-                onClick={() => setAddMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
-              >
-                <span aria-hidden="true">📥</span> Importa più file insieme
-              </Link>
+              {ADD_CONTENT_ITEMS.map((item) => (
+                <div key={item.href}>
+                  {item.separated ? <div className="my-1 border-t border-zinc-100 dark:border-zinc-900" /> : null}
+                  <Link
+                    href={item.href}
+                    role="menuitem"
+                    onClick={() => setAddMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  >
+                    <span aria-hidden="true">{item.icon}</span> {item.label}
+                  </Link>
+                </div>
+              ))}
             </div>
           ) : null}
         </div>
@@ -652,7 +639,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       <ArchiveTabs />
 
-      <MobileAddFab href="/archive/new" label="Aggiungi contenuto" />
+      <MobileAddFab href="/archive/new" label="Aggiungi contenuto" menu={ADD_CONTENT_ITEMS} />
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">

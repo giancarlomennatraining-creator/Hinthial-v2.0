@@ -110,7 +110,7 @@ test("scegliendo il file, Hinthial lo legge e precompila il form", async ({ page
   await expect(page.getByText("Titolo suggerito da Hinthial")).toBeVisible();
 
   // 3. Categoria e bene, riconosciuti dalla targa dentro il documento --- nel passo successivo (v. Concept C).
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await expect(page.getByLabel("Bene collegato")).toHaveValue(/.+/);
   await expect(page.getByText("Riconosciuto nel documento")).toBeVisible();
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { formatDate } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
 import type { Category } from "@/domain/categories/types";
+import { inferFieldInputType } from "@/domain/structured-fields/value-type";
 import type { Proposal, ProposalKind } from "@/domain/proposals/types";
 
 /**
@@ -110,12 +111,13 @@ export function ProposalsSection({
 
             {isEditing ? (
               <div className="flex flex-wrap items-center gap-2">
-                {proposal.kind === "expiry" ? (
+                {proposal.kind === "expiry" ||
+                (proposal.kind === "field" && inferFieldInputType(proposal.value) === "date") ? (
                   <input
                     type="date"
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
-                    aria-label="Scadenza da impostare"
+                    aria-label={`${kindLabel(proposal)} da impostare`}
                     className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
                   />
                 ) : proposal.kind === "issuer" || proposal.kind === "field" ? (

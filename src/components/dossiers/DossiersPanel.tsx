@@ -169,11 +169,6 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       <ArchiveTabs />
 
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        Vicende che attraversano più categorie — un problema di salute, l&apos;acquisto di una
-        casa, un incidente. Collega i documenti dal loro form, con &laquo;Fascicolo&raquo;.
-      </p>
-
       <MobileAddFab href="/dossiers/new" label="Nuovo fascicolo" />
 
       {error ? (

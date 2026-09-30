@@ -49,7 +49,7 @@ test("l'assistente AI risponde su beni/documenti collegati per categoria e segna
     mimeType: "text/plain",
     buffer: Buffer.from("polizza di prova"),
   });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.locator("#upload-category").selectOption({ label: "🛡️ Assicurazioni" });
   await page.locator("#upload-asset").selectOption({ label: "Auto Panda" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();

@@ -19,6 +19,7 @@ import { listAssets } from "@/domain/assets/repository";
 import { listCategories, grantCategoryAIExtractionTemporarily } from "@/domain/categories/repository";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
 import { listFieldVocabulary, type FieldVocabularyEntry } from "@/domain/structured-fields/vocabulary";
+import { inferFieldInputType } from "@/domain/structured-fields/value-type";
 import { listDossiers } from "@/domain/dossiers/repository";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import { readingStateFor } from "@/domain/extraction/reading-state";
@@ -26,6 +27,7 @@ import { extractStructuredFields } from "@/domain/extraction/structured-fields";
 import { buildProposals } from "@/domain/proposals/build";
 import {
   acceptProposal,
+  type AcceptedProposal,
   listProposalRejections,
   rejectProposal,
   undoAcceptance,
@@ -67,7 +69,7 @@ import type { Category } from "@/domain/categories/types";
  * confusione): niente più `/archive/[id]/edit`, i campi della Scheda sono sempre modificabili qui, un "Salva
  * modifiche" li mette via. Mostra anche cosa Hinthial ha estratto dal file, a dimostrazione che resta sul
  * dispositivo. Niente più tab "Proposte" a sé: quello che c'è da accettare/rifiutare vive dentro "Letto dal
- * dispositivo" (locale) o "Analisi con Hinthia" (Claude), a seconda di dove viene. Niente sezioni vuote per fasi
+ * dispositivo" (locale) o "Chiedi a Hinthia" (Claude), a seconda di dove viene. Niente sezioni vuote per fasi
  * future --- sembrerebbero quasi finite e non lo sono.
  */
 export function ArchiveItemDetail({
@@ -118,7 +120,7 @@ export function ArchiveItemDetail({
   // Testo letto potenzialmente lungo: se ne mostra un pezzo, il resto solo a richiesta.
   const [fullText, setFullText] = useState(false);
 
-  // Scheda / Letto dal dispositivo / Analisi con Hinthia: quale delle tre tab è attiva a destra --- "Proposte"
+  // Scheda / Letto dal dispositivo / Chiedi a Hinthia: quale delle tre tab è attiva a destra --- "Proposte"
   // non esiste più come tab a sé (v. feedback utente): quello che c'è da accettare vive già dentro una delle
   // due letture. Si azzera su "scheda" a ogni apertura della pagina, come fullText --- nessuna persistenza
   // necessaria; "scheda" di default perché prima era sempre visibile a sinistra, mai dietro un click.
@@ -130,6 +132,34 @@ export function ArchiveItemDetail({
   // uno: un ricalcolo unico sovrascriverebbe una modifica in corso su un ALTRO campo non toccato dalla proposta.
   const [fields, setFields] = useState<DocumentMetadataFieldsValue | null>(null);
   const [savingFields, setSavingFields] = useState(false);
+
+  // Voci libere della Scheda (numero polizza, data di nascita, ...), modificabili come gli altri campi e salvate
+  // con "Salva modifiche". Si risincronizzano da `doc` chiave per chiave, non in blocco: dopo un'accettazione
+  // cambia solo quella chiave, e una modifica in corso su un'altra non va sovrascritta.
+  // Titolo (il nome del contenuto), modificabile in Scheda e salvato con "Salva modifiche". `null` finché il documento non è caricato.
+  const [titleValue, setTitleValue] = useState<string | null>(null);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- risincronizza il titolo da `doc` (cambia solo dopo un salvataggio o un ricaricamento).
+    setTitleValue(doc?.filename ?? null);
+  }, [doc?.filename]);
+
+  const [structuredValues, setStructuredValues] = useState<Record<string, string> | null>(null);
+  const prevStructuredRef = useRef<Record<string, string>>({});
+  useEffect(() => {
+    const next = doc?.structuredFields ?? {};
+    const prev = prevStructuredRef.current;
+    prevStructuredRef.current = next;
+    setStructuredValues((current) => {
+      if (current === null) return { ...next };
+      const merged = { ...current };
+      for (const key of new Set([...Object.keys(prev), ...Object.keys(next)])) {
+        if (prev[key] === next[key]) continue;
+        if (next[key] === undefined) delete merged[key];
+        else merged[key] = next[key];
+      }
+      return merged;
+    });
+  }, [doc?.structuredFields]);
 
   // Sincronizzano UN campo alla volta da `doc` a `fields` quando una proposta lo scrive --- mai un ricalcolo
   // unico dell'intero oggetto, che sovrascriverebbe una modifica in corso su un campo diverso (v. commento sopra).
@@ -333,6 +363,33 @@ export function ArchiveItemDetail({
     });
   }
 
+  /** Una sola proposta per tipo (per "campo": per chiave) --- con più candidati della stessa cosa vince la prima, non si sovrascrive in sequenza. */
+  function handleAcceptAll(candidates: Proposal[]) {
+    if (!doc || candidates.length === 0) return;
+    void runProposalAction(async (ownerId) => {
+      const accepted: AcceptedProposal[] = [];
+      try {
+        for (const proposal of candidates) {
+          accepted.push(await acceptProposal(supabase, masterKey, ownerId, doc, proposal, proposal.value));
+        }
+      } catch (err) {
+        if (accepted.length > 0) await refresh();
+        throw err;
+      }
+      return {
+        message:
+          accepted.length === 1 ? "1 informazione aggiunta alla Scheda." : `${accepted.length} informazioni aggiunte alla Scheda.`,
+        onUndo: () =>
+          void runProposalAction(async (undoOwnerId) => {
+            for (const item of [...accepted].reverse()) {
+              await undoAcceptance(supabase, masterKey, undoOwnerId, doc.id, item);
+            }
+            return { message: "Annullato.", onUndo: () => setUndoable(null) };
+          }),
+      };
+    });
+  }
+
   function handleRejectProposal(proposal: Proposal) {
     if (!doc) return;
     void runProposalAction(async (ownerId) => {
@@ -370,7 +427,7 @@ export function ArchiveItemDetail({
         await refresh();
       }
       // Senza, l'utente non si accorgerebbe che qualcosa è successo: niente più tab "Proposte" a sé, quello che
-      // Hinthia ha trovato vive già in "Analisi con Hinthia".
+      // Hinthia ha trovato vive già in "Chiedi a Hinthia".
       setActiveTab("analysis");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Hinthia.");
@@ -393,6 +450,10 @@ export function ArchiveItemDetail({
   /** Fusione Scheda/Modifica: non più una pagina a parte (v. EditArchiveItemForm, ora rimossa). */
   async function handleSaveFields() {
     if (!fields) return;
+    if (titleValue !== null && titleValue.trim() === "") {
+      setError("Il titolo non può essere vuoto.");
+      return;
+    }
     setSavingFields(true);
     setError(null);
     try {
@@ -404,6 +465,8 @@ export function ArchiveItemDetail({
         notes: fields.notes,
         tags: parseTagsInput(fields.tagsInput),
         issuer: fields.issuer,
+        ...(structuredDirty && structuredValues ? { structuredFields: structuredValues } : {}),
+        ...(titleDirty && titleValue !== null ? { title: titleValue } : {}),
       });
       await refresh();
       showToast("Modifiche salvate.");
@@ -476,7 +539,23 @@ export function ArchiveItemDetail({
   // Disabilita "Salva modifiche" quando non c'è nulla da salvare --- confronto per valore, non per riferimento:
   // `fields` è un oggetto nuovo a ogni onChange anche quando il contenuto torna uguale (es. una proposta accettata
   // e poi risincronizzata dagli effect sopra).
-  const fieldsDirty = fields !== null && JSON.stringify(fields) !== JSON.stringify(documentToFields(doc));
+  const structuredDirty =
+    structuredValues !== null &&
+    normalizeStructuredFields(structuredValues) !== normalizeStructuredFields(doc.structuredFields);
+  const titleDirty = titleValue !== null && titleValue.trim() !== doc.filename;
+  const fieldsDirty =
+    (fields !== null && JSON.stringify(fields) !== JSON.stringify(documentToFields(doc))) ||
+    structuredDirty ||
+    titleDirty;
+
+  // "Accetta tutto": una sola proposta per tipo (per "campo": per chiave) --- v. handleAcceptAll.
+  const seenProposalSlots = new Set<string>();
+  const acceptAllCandidates = proposals.filter((proposal) => {
+    const slot = proposal.kind === "field" ? `field:${proposal.fieldKey}` : proposal.kind;
+    if (seenProposalSlots.has(slot)) return false;
+    seenProposalSlots.add(slot);
+    return true;
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -651,7 +730,7 @@ export function ArchiveItemDetail({
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
                 }`}
               >
-                Analisi con Hinthia{aiProposals.length > 0 ? ` · ${aiProposals.length}` : ""}
+                Chiedi a Hinthia{aiProposals.length > 0 ? ` · ${aiProposals.length}` : ""}
               </button>
             </div>
 
@@ -679,6 +758,41 @@ export function ArchiveItemDetail({
               <div id="tabpanel-scheda" role="tabpanel" aria-labelledby="tab-scheda" className="flex flex-col gap-3">
                 {/* Fusione Scheda/Modifica (v. feedback utente): niente più una pagina /edit a parte, i campi
                     sono sempre modificabili qui --- un "Salva modifiche" li mette via quando ce n'è bisogno. */}
+                {acceptAllCandidates.length > 0 ? (
+                  <div
+                    role="group"
+                    aria-label="Informazioni trovate da Hinthia"
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/20 bg-brand/5 px-3 py-2"
+                  >
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                      {acceptAllCandidates.length === 1
+                        ? "Hinthia ha trovato 1 informazione da aggiungere alla Scheda."
+                        : `Hinthia ha trovato ${acceptAllCandidates.length} informazioni da aggiungere alla Scheda.`}
+                    </p>
+                    <button
+                      type="button"
+                      disabled={proposalBusy}
+                      onClick={() => handleAcceptAll(acceptAllCandidates)}
+                      className="rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                    >
+                      Accetta tutto
+                    </button>
+                  </div>
+                ) : null}
+                {titleValue !== null ? (
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="scheda-title" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                      Titolo
+                    </label>
+                    <input
+                      id="scheda-title"
+                      type="text"
+                      value={titleValue}
+                      onChange={(e) => setTitleValue(e.target.value)}
+                      className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                    />
+                  </div>
+                ) : null}
                 {fields ? (
                   <DocumentMetadataFields
                     idPrefix="scheda"
@@ -689,17 +803,27 @@ export function ArchiveItemDetail({
                     onChange={setFields}
                   />
                 ) : null}
-                {Object.keys(doc.structuredFields).length > 0 ? (
-                  <dl className="grid gap-x-6 gap-y-2 border-t border-zinc-100 pt-3 text-sm sm:grid-cols-[10rem_1fr] dark:border-zinc-900">
-                    {Object.entries(doc.structuredFields).map(([key, value]) => (
-                      <Field
-                        key={key}
-                        label={fieldVocabulary.find((v) => v.fieldKey === key)?.label ?? key}
-                      >
-                        {value}
-                      </Field>
-                    ))}
-                  </dl>
+                {structuredValues && Object.keys(structuredValues).length > 0 ? (
+                  <div className="flex flex-col gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-900">
+                    {Object.entries(structuredValues).map(([key, value]) => {
+                      const inputId = `scheda-field-${key}`;
+                      return (
+                        <div key={key} className="flex flex-col gap-1">
+                          <label htmlFor={inputId} className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                            {fieldVocabulary.find((v) => v.fieldKey === key)?.label ?? key}
+                          </label>
+                          {/* Il tipo segue il dato salvato, non quello che si sta digitando: una data si sceglie dal calendario. */}
+                          <input
+                            id={inputId}
+                            type={inferFieldInputType(doc.structuredFields[key] ?? value)}
+                            value={value}
+                            onChange={(e) => setStructuredValues({ ...structuredValues, [key]: e.target.value })}
+                            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : null}
               </div>
             ) : activeTab === "reading" ? (
@@ -774,12 +898,12 @@ export function ArchiveItemDetail({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <>
-      <dt className="text-zinc-500 dark:text-zinc-400">{label}</dt>
-      <dd className="mb-1 text-zinc-900 sm:mb-0 dark:text-zinc-100">{children}</dd>
-    </>
+/** Confronto per valore, senza voci vuote né ordine: una voce svuotata equivale a una rimossa. */
+function normalizeStructuredFields(fields: Record<string, string>): string {
+  return JSON.stringify(
+    Object.entries(fields)
+      .filter(([, value]) => value.trim() !== "")
+      .sort(([a], [b]) => a.localeCompare(b)),
   );
 }
 

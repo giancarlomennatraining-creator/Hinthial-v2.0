@@ -67,7 +67,7 @@ test("crea un bene e vi collega un documento e una scadenza", async ({ page }) =
   // Il passo 3 va aperto PRIMA di scegliere il file: "contratto-affitto.txt" fa scattare il
   // suggerimento automatico della categoria (v. heuristicCategorizer), che altrimenti riempirebbe
   // il campo prima ancora di questo controllo sullo stato vuoto/disabilitato.
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   // Senza categoria selezionata, il menu del bene è vuoto/disabilitato.
   await expect(page.locator("#upload-asset")).toBeDisabled();
   await expect(page.locator("#upload-asset")).not.toContainText("Casa di Via Roma");
@@ -160,7 +160,7 @@ test("la categoria filtra i beni nei documenti, il bene filtra i documenti nelle
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.locator("#upload-category").selectOption({ label: "🏠 Casa" });
   await expect(page.locator("#upload-asset")).toContainText("Appartamento");
   await expect(page.locator("#upload-asset")).not.toContainText("Fiat Panda");
@@ -180,7 +180,7 @@ test("la categoria filtra i beni nei documenti, il bene filtra i documenti nelle
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.locator("#upload-category").selectOption({ label: "🚗 Veicoli" });
   await expect(page.locator("#upload-asset")).toContainText("Fiat Panda");
   await expect(page.locator("#upload-asset")).not.toContainText("Appartamento");

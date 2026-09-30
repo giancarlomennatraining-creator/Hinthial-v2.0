@@ -54,7 +54,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await expect(page.locator("#upload-category")).toContainText("🎯 Hobby");
 
   // Modifica: rinomina la categoria personalizzata.
@@ -80,7 +80,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
     mimeType: "text/plain",
     buffer: Buffer.from("contenuto di prova"),
   });
-  await page.getByRole("button", { name: "Aiutaci a ritrovarlo" }).click();
+  await page.getByRole("button", { name: "Dettagli" }).click();
   await page.locator("#upload-category").selectOption({ label: "🎯 Hobby e sport" });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
