@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
 import {
@@ -165,6 +165,7 @@ function FileReadingStatus({ reading }: { reading: ReadingState }) {
 export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { masterEnabled, extractionConsent } = useAIProcessingConsent();
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -229,6 +230,20 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
+
+  // "?mode=" (v. DocumentsPanel.tsx, menu "+ Aggiungi contenuto"): apre già sul passo 2 nella modalità
+  // scelta dal menu, invece di richiederla di nuovo qui. Un ref, non solo un check su `mode`, perché "upload"
+  // è anche il primo valore che l'utente può scegliere da sé al passo 1 --- non deve essere ri-applicato a ogni render.
+  const appliedInitialModeRef = useRef(false);
+  useEffect(() => {
+    if (appliedInitialModeRef.current) return;
+    appliedInitialModeRef.current = true;
+    const requested = searchParams.get("mode");
+    if (requested !== "upload" && requested !== "record" && requested !== "note") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMode(requested);
+    setActiveStep(2);
+  }, [searchParams]);
 
   function handleModeChange(next: CreationMode) {
     setMode(next);

@@ -10,6 +10,52 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-30 (11)
+
+### Benvenuto dopo il login: wordmark, barra di caricamento, dissolvenza sulla Dashboard
+
+**Cosa fa:** subito dopo un accesso (password, codice a 6 cifre o codice di backup) compare per circa 3 secondi una schermata con solo il wordmark di Hinthial al centro e una barra che si riempie sotto; a barra piena la schermata sfuma in mezzo secondo e appare la Dashboard. Si vede una volta sola per accesso: un refresh o un ritorno alla Dashboard più tardi non la mostrano di nuovo. Chi ha attiva la riduzione del movimento vede la barra già piena.
+
+**Note tecniche:** nuovo `LoginSplash.tsx`; `auth/actions.ts` porta a `/dashboard?justLoggedIn=1` (`signIn`, `signUp` senza conferma email, `verifyMfaCode`); `DashboardPanel.tsx` legge il parametro una volta e lo toglie dall'URL con `router.replace` in un effetto. La Dashboard è già montata sotto l'overlay: la sfumatura rivela, non ricarica. Durata della barra (keyframe `login-splash-fill` in `globals.css`) e `LOADING_MS` in `LoginSplash.tsx` vanno cambiate insieme. Il redirect di guardia in `/login/mfa` resta a `/dashboard`: non è un accesso. Per i test e2e, che fanno decine di login e sarebbero bloccati dall'overlay, `DISABLE_LOGIN_SPLASH=1` (impostato in `playwright.config.ts`) fa tornare i redirect a `/dashboard` semplice; il nuovo `login-splash.spec.ts` apre `/dashboard?justLoggedIn=1` e verifica comparsa, scomparsa e assenza dopo un refresh.
+
+Verificato: typecheck, lint, build di produzione, e2e su login-splash, auth-shell, dashboard-layout, mfa, archive, capsules — tutti passano (auth-shell alla seconda esecuzione: flake noto del modale "Più tardi").
+
+## 2026-09-29 (10)
+
+### Capsule: "Le mie / Condivise con me" nello stile dei tab di Archivio
+
+**Cosa fa:** l'interruttore "Le mie" / "Condivise con me" in Capsule — prima due pulsanti a pillola — ha ora lo stesso stile a barra sottolineata dei tab di Archivio (Contenuti/Fascicolo/Cestino). Il titolo "Capsule" era già sopra e già fisso, quindi non è cambiato.
+
+**Note tecniche:** `CapsulesPanel.tsx` — restano `<button>` con stato locale (`activeTab`), non `<Link>` come in `ArchiveTabs.tsx` (qui sono due viste della stessa pagina, non due route): `role="tab"` + `aria-selected` al posto di `aria-pressed`, stessa classe di `border-b-2`/colore di `ArchiveTabs.tsx`. Aggiornato l'unico test e2e che selezionava il vecchio `role="button"`.
+
+Verificato: typecheck, lint, build di produzione, e2e su Capsule (creazione, condivisione, registrazione, anteprima) — tutti passano.
+
+---
+
+## 2026-09-29 (9)
+
+### Archivio: il titolo torna sopra le schede, e resta sempre "Archivio"
+
+**Cosa fa:** in Archivio, Fascicolo e Cestino il titolo della pagina era sotto le schede (Contenuti/Fascicolo/Cestino) e cambiava testo a seconda della scheda ("Archivio", "Fascicoli", "Cestino"). Ora è sopra le schede e resta sempre "Archivio" — sono le schede stesse a dire dove ci si trova, il titolo identifica la sezione nel suo insieme.
+
+**Note tecniche:** in `DocumentsPanel.tsx`, `DossiersPanel.tsx` e `TrashPanel.tsx` la riga del titolo (con il bottone azione di ciascuna scheda, dove c'è: "+ Aggiungi contenuto" / "+ Nuovo fascicolo") è passata sopra `<ArchiveTabs />`; il testo descrittivo che stava sotto il vecchio titolo di Fascicolo e Cestino resta, ma sotto le schede, senza più un'intestazione propria. Aggiornati i 3 test e2e che controllavano ancora "Fascicoli"/"Cestino" come intestazione.
+
+Verificato: typecheck, lint, build di produzione, e2e su Archivio/Fascicolo/Cestino, import in blocco, capsule e tag — tutti passano.
+
+---
+
+## 2026-09-29 (8)
+
+### Archivio: "+ Aggiungi contenuto" e "Importa più file insieme" uniti in un solo bottone
+
+**Cosa fa:** in Archivio, il bottone "+ Aggiungi contenuto" e il link secondario "Importa più file insieme" (prima due elementi separati nella stessa riga del titolo) sono diventati un solo bottone con una freccia, che apre un menu con quattro scelte: **Carica un file**, **Registra audio/video**, **Scrivi una nota**, **Importa più file insieme**. Le prime tre aprono la pagina "Nuovo contenuto" già sul passo giusto, invece di lasciar scegliere di nuovo la modalità lì dentro.
+
+**Note tecniche:** il menu vive in `DocumentsPanel.tsx` (stesso pattern a tendina di `UserMenu.tsx`: stato locale, chiusura al click fuori). `CreateArchiveItemForm.tsx` legge un parametro opzionale `?mode=upload|record|note` all'apertura (una volta sola, con un ref di guardia) per preselezionare il passo 1 --- il comportamento di sempre (nessuna modalità pre-scelta) resta invariato quando si arriva da "Carica un file" o direttamente su `/archive/new` senza parametro.
+
+Verificato: typecheck, lint, build di produzione. Aggiornati ~30 file di test e2e che cliccavano il vecchio link "+ Aggiungi contenuto" per navigare direttamente (ora prima aprono il menu, poi scelgono "Carica un file" o "Importa più file insieme"); corretta anche una collisione in `bulk-select-and-trash.spec.ts` dove una query generica su "Aggiungi" intercettava per sbaglio anche il nuovo bottone. Il sottoinsieme di test coinvolti (Archivio, import in blocco, capsule, tag) passa per intero.
+
+---
+
 ## 2026-09-29 (7)
 
 ### Pannello Aiuto: arrivato anche in Archivio, corretto il posizionamento in Cronologia

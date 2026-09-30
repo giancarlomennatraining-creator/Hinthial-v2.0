@@ -67,7 +67,8 @@ test("configura la cifratura, carica, apre e cancella un documento", async ({
   await expect(page.getByText("Ancora nulla in archivio")).toBeVisible();
 
   // --- Upload (pagina dedicata) ---
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   const fileContent = `contenuto di test --- ${Date.now()}`;
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.

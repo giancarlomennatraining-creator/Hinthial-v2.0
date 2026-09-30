@@ -189,6 +189,29 @@ h6 {
 }
 
 /*
+ * Barra del benvenuto dopo il login (v. LoginSplash.tsx) --- si riempie in 3s, la stessa durata del
+ * setTimeout in LoginSplash.tsx che fa scattare il fade: le due vanno cambiate insieme.
+ */
+.login-splash-bar {
+  width: 0%;
+  animation: login-splash-fill 3s linear forwards;
+}
+@keyframes login-splash-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-splash-bar {
+    animation: none;
+    width: 100%;
+  }
+}
+
+/*
  * "Hinthia sta scrivendo" (v. AIPanel): tre puntini mentre si aspetta
  * la risposta, invece di un'attesa muta --- segnala che la domanda è
  * partita davvero. Stesso motivo di sopra per una regola CSS invece di

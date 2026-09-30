@@ -249,7 +249,8 @@ test("collega un documento già presente in Archivio a una capsula, selezionando
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   const documentContent = `contratto di prova --- ${Date.now()}`;
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
@@ -352,7 +353,8 @@ test("allega un intero fascicolo a una capsula in un colpo solo", async ({ page 
 
   for (const name of ["contratto-affitto.txt", "verbale-consegna.txt"]) {
     await page.getByRole("link", { name: "Contenuti", exact: true }).click();
-    await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+    await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+    await page.getByRole("menuitem", { name: "Carica un file" }).click();
     // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
     await page.getByRole("radio", { name: /Carica un file/ }).click();
     await page.setInputFiles('input[type="file"]', {
@@ -418,7 +420,8 @@ test("chiudere una capsula copia il contenuto collegato al suo interno; l'origin
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   const documentContent = `polizza di prova --- ${Date.now()}`;
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();

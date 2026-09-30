@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { AlertTriangleIcon, CheckCircleIcon } from "@/components/icons/nav-icons";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
+import { LoginSplash } from "@/components/dashboard/LoginSplash";
 import { SharedCapsuleNotificationPopup } from "@/components/dashboard/SharedCapsuleNotificationPopup";
 import { FriendRequestNotificationPopup } from "@/components/dashboard/FriendRequestNotificationPopup";
 import { PageHelp } from "@/components/help/PageHelp";
@@ -22,9 +25,19 @@ import { PageHelp } from "@/components/help/PageHelp";
  */
 export function DashboardPanel({ displayName }: { displayName: string }) {
   const { status } = useMasterKey();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // "?justLoggedIn=1" arriva da signIn/signUp/verifyMfaCode (v. auth/actions.ts) --- letto una sola volta
+  // all'apertura, poi subito tolto dall'URL: un refresh o un ritorno alla Dashboard più tardi non lo rivede più.
+  const [showSplash, setShowSplash] = useState(() => searchParams.get("justLoggedIn") === "1");
+  useEffect(() => {
+    if (showSplash) router.replace("/dashboard");
+  }, [showSplash, router]);
 
   return (
     <div className="flex flex-col gap-6">
+      {showSplash ? <LoginSplash onDone={() => setShowSplash(false)} /> : null}
       <div>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-brand">

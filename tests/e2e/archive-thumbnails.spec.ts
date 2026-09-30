@@ -67,7 +67,8 @@ test("l'anteprima di un PDF appena caricato viene dalla miniatura, non dal file 
   await createConfirmedTestUser(user);
   await signInAndSetUpVault(page, user.email, user.password);
 
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
@@ -97,7 +98,8 @@ test("l'anteprima di una foto appena caricata viene dalla miniatura", async ({ p
   await createConfirmedTestUser(user);
   await signInAndSetUpVault(page, user.email, user.password);
 
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', "tests/e2e/fixtures/ocr-referto.png");
@@ -125,7 +127,8 @@ test("un contenuto caricato prima delle miniature la ricava rileggendolo, e la v
   await createConfirmedTestUser(user);
   await signInAndSetUpVault(page, user.email, user.password);
 
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {

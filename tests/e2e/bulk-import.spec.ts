@@ -71,7 +71,8 @@ test("due file con lo stesso emittente propongono un fascicolo, importati insiem
 
   await signInAndSetUpVault(page);
 
-  await page.getByRole("link", { name: "Importa più file insieme" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Importa più file insieme" }).click();
   await expect(page.getByRole("heading", { name: "Importa più file insieme" })).toBeVisible();
 
   await page.getByLabel("Scegli i file da importare").setInputFiles([
@@ -119,7 +120,7 @@ test("due file con lo stesso emittente propongono un fascicolo, importati insiem
   // Il fascicolo è nato, con dentro le due bollette --- non il biglietto.
   await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
   await expect(page).toHaveURL(/\/dossiers$/, { timeout: 15_000 });
-  await expect(page.getByRole("heading", { name: "Fascicoli" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
   await page.getByRole("link", { name: /ENEL ENERGIA S\.p\.A\./ }).click();
   const cronologia = page.getByRole("region", { name: "Cronologia" });
   await expect(cronologia.getByRole("link", { name: /Bolletta luce gennaio/ })).toBeVisible();

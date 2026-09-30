@@ -69,7 +69,7 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   await signInAndSetUpVault(page);
 
   await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Fascicoli" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
   // La scheda "Fascicolo" è quella attiva adesso, "Contenuti" no.
   await expect(page.getByRole("link", { name: "Fascicolo", exact: true })).toHaveAttribute(
     "aria-current",
@@ -89,7 +89,8 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
 
   // Il collegamento si fa dal form del documento, non da qui.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
@@ -173,7 +174,8 @@ test("un documento può stare in più di un fascicolo insieme (FASE 20c)", async
   // Un documento "a corredo" di entrambe: il caso reale che ha motivato il passaggio da un fascicolo solo a più insieme.
   await page.getByRole("link", { name: "Contenuti", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page).toHaveURL(/\/archive\/new$/, { timeout: 15_000 });
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();

@@ -50,7 +50,8 @@ test("la dashboard mostra i contatori per sezione e i tre riquadri anche a vault
   await expect(page.getByText("Barca")).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();

@@ -8,6 +8,11 @@ import { verifyAndConsumeBackupCode } from "@/domain/mfa/repository";
 import { clearMfaVerifiedViaBackupCode, markMfaVerifiedViaBackupCode } from "@/lib/auth/mfa-bypass";
 import type { AuthActionState } from "@/lib/auth/action-state";
 
+// Il benvenuto (v. LoginSplash) dura ~3,5 s e copre la pagina: i test e2e, che fanno decine di login, lo spengono con DISABLE_LOGIN_SPLASH=1 (v. playwright.config.ts).
+function dashboardAfterLogin(): string {
+  return process.env.DISABLE_LOGIN_SPLASH === "1" ? "/dashboard" : "/dashboard?justLoggedIn=1";
+}
+
 function translateAuthError(message: string): string {
   const normalized = message.toLowerCase();
 
@@ -80,7 +85,7 @@ export async function signUp(
   const signUpContext = await getRequestContext();
   await logAuditEvent(supabase, data.user.id, "login", { method: "password", ...signUpContext });
 
-  redirect("/dashboard");
+  redirect(dashboardAfterLogin());
 }
 
 export async function signIn(
@@ -119,7 +124,7 @@ export async function signIn(
   const signInContext = await getRequestContext();
   await logAuditEvent(supabase, data.user.id, "login", { method: "password", ...signInContext });
 
-  redirect("/dashboard");
+  redirect(dashboardAfterLogin());
 }
 
 export async function verifyMfaCode(
@@ -147,7 +152,7 @@ export async function verifyMfaCode(
   if (await verifyAndConsumeBackupCode(supabase, user.id, code)) {
     await markMfaVerifiedViaBackupCode();
     await logAuditEvent(supabase, user.id, "login", { method: "backup_code", ...mfaContext });
-    redirect("/dashboard");
+    redirect(dashboardAfterLogin());
   }
 
   const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
@@ -161,7 +166,7 @@ export async function verifyMfaCode(
     const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
     if (!error) {
       await logAuditEvent(supabase, user.id, "login", { method: "totp", ...mfaContext });
-      redirect("/dashboard");
+      redirect(dashboardAfterLogin());
     }
   }
 

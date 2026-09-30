@@ -35,7 +35,8 @@ test("due file identici nello stesso lotto vengono segnalati come possibile dupl
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Importa più file insieme" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Importa più file insieme" }).click();
   await expect(page.getByRole("heading", { name: "Importa più file insieme" })).toBeVisible();
 
   const sameContent = Buffer.from("stesso contenuto, stesso nome, stessa dimensione");

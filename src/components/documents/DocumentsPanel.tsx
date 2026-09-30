@@ -100,6 +100,8 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [trashRetentionDays, setTrashRetentionDays] = useState(15);
   const [bulkPopover, setBulkPopover] = useState<"category" | "tag" | "dossier" | null>(null);
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const addMenuRef = useRef<HTMLDivElement>(null);
   const [bulkTagInput, setBulkTagInput] = useState("");
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -183,6 +185,18 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
       if (playerUrl) URL.revokeObjectURL(playerUrl);
     };
   }, [playerUrl]);
+
+  // Menu "+ Aggiungi contenuto" (v. UserMenu.tsx per lo stesso pattern): si chiude a un click fuori da bottone e pannello.
+  useEffect(() => {
+    if (!addMenuOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (addMenuRef.current && !addMenuRef.current.contains(event.target as Node)) {
+        setAddMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [addMenuOpen]);
 
   async function handleOpen(doc: DocumentListItem) {
     setBusyDocId(doc.id);
@@ -562,8 +576,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
-      <ArchiveTabs />
-
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="min-w-0 w-full sm:flex-1">
           <div className="flex items-start justify-between gap-3">
@@ -580,20 +592,65 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
               ]}
             />
           </div>
-          {/* Una porta secondaria, non un bottone: caricare un file resta l'azione principale. */}
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            <Link href="/archive/import" className="text-brand hover:underline">
-              Importa più file insieme
-            </Link>
-          </p>
         </div>
-        <Link
-          href="/archive/new"
-          className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
-        >
-          + Aggiungi contenuto
-        </Link>
+        <div ref={addMenuRef} className="relative hidden shrink-0 sm:block">
+          <button
+            type="button"
+            onClick={() => setAddMenuOpen((v) => !v)}
+            aria-expanded={addMenuOpen}
+            aria-haspopup="menu"
+            className="flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          >
+            + Aggiungi contenuto
+            <span aria-hidden="true" className="text-xs">
+              {addMenuOpen ? "▴" : "▾"}
+            </span>
+          </button>
+          {addMenuOpen ? (
+            <div
+              role="menu"
+              aria-label="Aggiungi contenuto"
+              className="absolute top-full right-0 z-10 mt-1 w-56 overflow-hidden rounded-md border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
+            >
+              <Link
+                href="/archive/new"
+                role="menuitem"
+                onClick={() => setAddMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              >
+                <span aria-hidden="true">📄</span> Carica un file
+              </Link>
+              <Link
+                href="/archive/new?mode=record"
+                role="menuitem"
+                onClick={() => setAddMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              >
+                <span aria-hidden="true">🎬</span> Registra audio/video
+              </Link>
+              <Link
+                href="/archive/new?mode=note"
+                role="menuitem"
+                onClick={() => setAddMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              >
+                <span aria-hidden="true">📝</span> Scrivi una nota
+              </Link>
+              <div className="my-1 border-t border-zinc-100 dark:border-zinc-900" />
+              <Link
+                href="/archive/import"
+                role="menuitem"
+                onClick={() => setAddMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              >
+                <span aria-hidden="true">📥</span> Importa più file insieme
+              </Link>
+            </div>
+          ) : null}
+        </div>
       </div>
+
+      <ArchiveTabs />
 
       <MobileAddFab href="/archive/new" label="Aggiungi contenuto" />
 

@@ -127,7 +127,7 @@ test("chiudere e condividere una capsula la rende apribile dal destinatario coll
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Capsule" })).toBeVisible();
 
-  await page.getByRole("button", { name: /Condivise con me/ }).click();
+  await page.getByRole("tab", { name: /Condivise con me/ }).click();
   const sharedItem = page.locator("li", { hasText: `Da ${fullName(owner)}` });
   await expect(sharedItem).toBeVisible({ timeout: 15_000 });
 

@@ -31,7 +31,8 @@ test("scrive una nota testuale, la riapre e ne modifica il contenuto in linea", 
 
   await loginAndSetUpEncryption(page);
 
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
 
   // Il passo 1 (tipo di contenuto) parte aperto e senza scelta --- va scelta esplicitamente (v. feedback utente).
@@ -78,7 +79,8 @@ test("un'immagine caricata ha un player inline, oltre al download", async ({ pag
     "base64",
   );
 
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();

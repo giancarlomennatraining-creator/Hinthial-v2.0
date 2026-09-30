@@ -34,7 +34,8 @@ test("gestisce i tag: aggregazione con merge, rinomina, eliminazione, e il filtr
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   // Primo documento: tag "Casa" e "Lavoro".
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
@@ -52,7 +53,8 @@ test("gestisce i tag: aggregazione con merge, rinomina, eliminazione, e il filtr
 
   // Secondo documento: tag "casa" (stessa parola, maiuscole diverse) ---
   // deve confluire nello stesso tag del primo, non crearne un secondo.
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "documento-due.txt",
@@ -67,7 +69,8 @@ test("gestisce i tag: aggregazione con merge, rinomina, eliminazione, e il filtr
   await expect(page.getByText("documento-due.txt")).toBeVisible({ timeout: 15_000 });
 
   // Terzo documento: nessun tag --- controllo per il filtro più sotto.
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
     name: "documento-tre.txt",

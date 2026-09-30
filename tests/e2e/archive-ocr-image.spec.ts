@@ -37,7 +37,8 @@ test("la ricerca in Archivio trova una foto per una parola scritta dentro l'imma
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   // Il nome del file non dice nulla: tutto ciò che serve a ritrovarlo è dentro i pixel.
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', "tests/e2e/fixtures/ocr-referto.png");
@@ -95,7 +96,8 @@ test("la ricerca in Archivio trova un PDF scansionato, che di testo non ne ha", 
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', "tests/e2e/fixtures/ocr-scansione.pdf");

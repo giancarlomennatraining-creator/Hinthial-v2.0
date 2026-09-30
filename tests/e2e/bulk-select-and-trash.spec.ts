@@ -39,7 +39,8 @@ test("selezione multipla applica categoria e tag in blocco, poi l'eliminazione i
   await signInAndSetUpVault(page);
 
   // Tre contenuti, per avere di che selezionare in blocco.
-  await page.getByRole("link", { name: "Importa più file insieme" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Importa più file insieme" }).click();
   await page.getByLabel("Scegli i file da importare").setInputFiles([
     { name: "documento-uno.txt", mimeType: "text/plain", buffer: Buffer.from("primo documento di prova") },
     { name: "documento-due.txt", mimeType: "text/plain", buffer: Buffer.from("secondo documento di prova") },
@@ -59,7 +60,7 @@ test("selezione multipla applica categoria e tag in blocco, poi l'eliminazione i
   // Tag in blocco.
   await page.getByRole("button", { name: "🏷️ Tag" }).click();
   await page.getByLabel("Nuovo tag per i documenti selezionati").fill("prova-bulk");
-  await page.getByRole("button", { name: "Aggiungi" }).click();
+  await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
   await expect(page.getByText("3 selezionati")).not.toBeVisible({ timeout: 15_000 }); // la selezione si svuota a fine operazione
   await expect(page.getByText("prova-bulk").first()).toBeVisible();
 
@@ -75,7 +76,7 @@ test("selezione multipla applica categoria e tag in blocco, poi l'eliminazione i
 
   // Il Cestino li mostra entrambi.
   await page.getByRole("link", { name: "Cestino" }).click();
-  await expect(page.getByRole("heading", { name: "Cestino" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
   await expect(page.getByText("documento-uno.txt")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("documento-due.txt")).toBeVisible();
   await expect(page.getByText(/giorni rimasti/).first()).toBeVisible();

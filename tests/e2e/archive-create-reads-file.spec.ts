@@ -84,7 +84,8 @@ test("scegliendo il file, Hinthial lo legge e precompila il form", async ({ page
   await expect(page).toHaveURL(/\/assets$/, { timeout: 20_000 });
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
 
@@ -126,7 +127,8 @@ test("il segno «suggerito» sparisce appena l'utente tocca il campo", async ({ 
 
   await signInAndUnlock(page);
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
 

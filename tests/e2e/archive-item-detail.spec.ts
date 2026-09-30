@@ -72,7 +72,8 @@ test("la scheda di un documento mostra il testo che Hinthial ci ha letto dentro"
   await createConfirmedTestUser(user);
   await signInAndSetUpVault(page, user.email, user.password);
 
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
@@ -123,7 +124,8 @@ test("la scheda ricava data, emittente e scadenza dal testo del documento", asyn
   await createConfirmedTestUser(user);
   await signInAndSetUpVault(page, user.email, user.password);
 
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', "tests/e2e/fixtures/ocr-scansione.pdf");
@@ -166,7 +168,8 @@ test("la scheda dice quando un contenuto non è ancora stato letto, e lo legge",
   await createConfirmedTestUser(user);
   await signInAndSetUpVault(page, user.email, user.password);
 
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {

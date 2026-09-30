@@ -145,16 +145,8 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
-      <ArchiveTabs />
-
-      <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
-        <div className="min-w-0 w-full sm:flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-brand">Fascicoli</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Vicende che attraversano più categorie — un problema di salute, l&apos;acquisto di una
-            casa, un incidente. Collega i documenti dal loro form, con &laquo;Fascicolo&raquo;.
-          </p>
-        </div>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight text-brand">Archivio</h1>
         <Link
           href="/dossiers/new"
           className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
@@ -162,6 +154,13 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
           + Nuovo fascicolo
         </Link>
       </div>
+
+      <ArchiveTabs />
+
+      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        Vicende che attraversano più categorie — un problema di salute, l&apos;acquisto di una
+        casa, un incidente. Collega i documenti dal loro form, con &laquo;Fascicolo&raquo;.
+      </p>
 
       <MobileAddFab href="/dossiers/new" label="Nuovo fascicolo" />
 

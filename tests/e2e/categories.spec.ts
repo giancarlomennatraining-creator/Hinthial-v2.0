@@ -49,7 +49,8 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   ).toBeVisible({ timeout: 45_000 });
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
@@ -69,7 +70,8 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
 
   // Carica un documento con quella categoria, per testare l'avviso di eliminazione.
   await page.getByRole("link", { name: "Archivio" }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();

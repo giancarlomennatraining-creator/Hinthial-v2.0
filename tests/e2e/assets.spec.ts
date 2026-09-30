@@ -59,7 +59,8 @@ test("crea un bene e vi collega un documento e una scadenza", async ({ page }) =
   // Carica un contenuto e collegalo al bene. Il menu del bene è filtrato
   // dalla categoria: va scelta prima, altrimenti resta vuoto/disabilitato.
   await page.getByRole("link", { name: "Archivio" }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
@@ -149,7 +150,8 @@ test("la categoria filtra i beni nei documenti, il bene filtra i documenti nelle
   // Archivio: selezionare la categoria "Casa" filtra il menu del bene alla
   // sola "Appartamento" (non mostra "Fiat Panda").
   await page.getByRole("link", { name: "Archivio" }).click();
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
@@ -168,7 +170,8 @@ test("la categoria filtra i beni nei documenti, il bene filtra i documenti nelle
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible({ timeout: 15_000 });
 
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();

@@ -15,7 +15,7 @@ import {
 } from "@/domain/capsules/repository";
 import { downloadDocument } from "@/domain/documents/repository";
 import { getCapsuleCountdownVisible } from "@/domain/profile/repository";
-import { sortAlphabetically } from "@/lib/utils";
+import { cn, sortAlphabetically } from "@/lib/utils";
 import { saveBytesAsFile } from "@/lib/download";
 import { contentKindFor, CONTENT_KIND_ICON, isTranscribable } from "@/lib/content-kind";
 import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
@@ -393,29 +393,34 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       <MobileAddFab href="/capsules/new" label="Aggiungi capsula" />
 
-      {/* "Condivise con me" è una scheda qui dentro, non una voce di menu a parte. */}
-      <div className="flex w-fit gap-1 rounded-lg border border-zinc-200 p-1 dark:border-zinc-800">
+      {/* Stesso stile a barra sottolineata dei tab di Archivio (v. ArchiveTabs.tsx) --- qui però sono due viste
+          della stessa pagina, non due route: <button role="tab"> con stato locale, non <Link>. */}
+      <div role="tablist" aria-label="Sezioni delle capsule" className="flex gap-1 border-b border-zinc-200 dark:border-zinc-800">
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "mine"}
           onClick={() => setActiveTab("mine")}
-          aria-pressed={activeTab === "mine"}
-          className={
+          className={cn(
+            "-mb-px rounded-t-lg border-b-2 px-3 py-2 text-sm font-medium transition-colors",
             activeTab === "mine"
-              ? "rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white"
-              : "rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
-          }
+              ? "border-brand text-brand"
+              : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
+          )}
         >
           Le mie
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "shared"}
           onClick={() => setActiveTab("shared")}
-          aria-pressed={activeTab === "shared"}
-          className={
+          className={cn(
+            "-mb-px rounded-t-lg border-b-2 px-3 py-2 text-sm font-medium transition-colors",
             activeTab === "shared"
-              ? "rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white"
-              : "rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
-          }
+              ? "border-brand text-brand"
+              : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
+          )}
         >
           Condivise con me{sharedCapsules.length > 0 ? ` (${sharedCapsules.length})` : ""}
         </button>

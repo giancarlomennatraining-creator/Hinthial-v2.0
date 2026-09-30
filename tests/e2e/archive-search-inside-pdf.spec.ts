@@ -60,7 +60,8 @@ test("la ricerca in Archivio trova un PDF per una parola scritta solo dentro il 
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   // Il nome del file non contiene "cardiologia": quella parola vive solo dentro il PDF.
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
@@ -122,7 +123,8 @@ test("i documenti caricati prima della FASE 17 si recuperano dal banner in Archi
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  await page.getByRole("link", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
   await page.setInputFiles('input[type="file"]', {
