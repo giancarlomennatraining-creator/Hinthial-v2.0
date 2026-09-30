@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-09-30 (16)
+
+### Inserimento contenuto: niente striscia sotto il "1" e momento "salvato" prima dei passi di Hinthial
+
+**Cosa fa:**
+- Quando si apre "Nuovo contenuto" e c'è solo il primo passo, sotto il cerchio "1" non parte più la linea verde/grigia che finiva contro la cornice del pannello: la linea compare solo se c'è un passo successivo.
+- Dopo "Aggiungi all'archivio" i passi 1-3 diventano spunte verdi e sotto i Dettagli compare per circa due secondi il momento **"Salvato e cifrato sul tuo dispositivo"** (cerchio verde che rimbalza con un anello che si espande e il segno che si disegna); poi si ripiega, compare la riga "Da qui in poi lavora Hinthial." e si apre il passo 4 "Lettura dal dispositivo", seguito dal 5 "Analisi di Hinthia". Con `prefers-reduced-motion` niente animazioni.
+
+**Note tecniche:** `step 1` riceve `last={!mode}`; nuovo componente `SavedMoment` (stessa meccanica `.step-body` degli altri passi) pilotato dallo stato `savedMoment` (timer di 1,8 s), durante il quale il passo 4 resta "todo"; keyframe `saved-pop`/`saved-ring` in `globals.css`. Nessun test e2e modificato: `archive-title-and-mobile-add` e `archive-accept-all` passano invariati (l'attesa di default di 5 s copre la pausa).
+
+Verificato: typecheck, lint, e2e archive-title-and-mobile-add, archive-accept-all; controllo visivo con screenshot.
+
+---
+
 ## 2026-09-30 (15)
 
 ### Inserimento di un contenuto a fisarmonica fluida, in cinque passi

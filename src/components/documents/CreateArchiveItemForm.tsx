@@ -136,6 +136,32 @@ function AccordionCard({ children }: { children: React.ReactNode }) {
 }
 
 /**
+ * Il momento "salvato" tra i Dettagli e i passi di Hinthial: si apre, mostra il cerchio verde con l'anello che si
+ * espande, poi si ripiega (`open` torna false) lasciando il posto al passo successivo.
+ */
+function SavedMoment({ open }: { open: boolean }) {
+  return (
+    <div className="step-body" data-open={open ? "true" : "false"}>
+      <div className="step-inner" inert={!open}>
+        <div
+          role="status"
+          className="flex items-center gap-3 px-5 py-3.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400"
+        >
+          <span className="saved-pop relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+            <span
+              aria-hidden="true"
+              className="saved-ring absolute inset-0 rounded-full border-2 border-emerald-500"
+            />
+            <StepCheck />
+          </span>
+          Salvato e cifrato sul tuo dispositivo
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Concept A "Fisarmonica fluida" (v. Artifact discusso con l'utente): un passo alla volta, il completato si riduce
  * a un riepilogo con "Modifica" e il cerchio diventa una spunta verde, il successivo si apre in modo fluido.
  * `locked`: il passo è già stato salvato, si vede ma non si riapre. `separator`: una riga di testo prima del passo.
@@ -334,6 +360,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   // Concept D: dopo il salvataggio, il documento appena creato e i passi su cosa farne --- invece del ritorno
   // diretto all'archivio. `null` = form ancora in corso.
   const [savedDoc, setSavedDoc] = useState<DocumentListItem | null>(null);
+  const [savedMoment, setSavedMoment] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiDone, setAiDone] = useState(false);
 
@@ -365,6 +392,13 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
+
+  // Il momento "salvato" dura un istante, poi si apre "Lettura dal dispositivo".
+  useEffect(() => {
+    if (!savedMoment) return;
+    const id = setTimeout(() => setSavedMoment(false), 1800);
+    return () => clearTimeout(id);
+  }, [savedMoment]);
 
   // "?mode=" (v. DocumentsPanel.tsx, menu "+ Aggiungi contenuto"): apre già sul passo 2 nella modalità
   // scelta dal menu, invece di richiederla di nuovo qui. Un ref, non solo un check su `mode`, perché "upload"
@@ -602,6 +636,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       const created = documents.find((d) => d.id === newId) ?? null;
       if (created) {
         setSavedDoc(created);
+        setSavedMoment(true);
         setActiveStep(4);
       } else {
         // Non dovrebbe succedere, ma senza il documento non c'è niente da mostrare nei passi.
@@ -786,6 +821,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
               step={1}
               state={preSaveState(1)}
               locked={savedDoc !== null}
+              last={!mode}
               title="Cosa vuoi aggiungere?"
               summary={
                 mode ? (
@@ -1076,12 +1112,13 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
 
                 {savedDoc ? (
                   <>
+                    <SavedMoment open={savedMoment} />
                     <AccordionStep
                       step={4}
-                      state={stepState(4)}
+                      state={savedMoment ? "todo" : stepState(4)}
                       title="Lettura dal dispositivo"
-                      summary={step4Summary}
-                      separator="Salvato. Da qui in poi lavora Hinthial."
+                      summary={savedMoment ? undefined : step4Summary}
+                      separator="Da qui in poi lavora Hinthial."
                       onOpen={() => setActiveStep(4)}
                     >
                       {readingState === "own-text" ? (
