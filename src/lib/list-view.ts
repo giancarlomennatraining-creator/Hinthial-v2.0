@@ -13,7 +13,6 @@ export type ListSection =
   | "assets"
   | "friends"
   | "capsules"
-  | "timeline"
   | "dossiers";
 
 export type ListViewMode = "list" | "table";
@@ -26,7 +25,6 @@ export const LIST_SECTIONS: ListSection[] = [
   "assets",
   "friends",
   "capsules",
-  "timeline",
   "dossiers",
 ];
 
@@ -36,7 +34,6 @@ export const LIST_SECTION_LABEL: Record<ListSection, string> = {
   assets: "Beni",
   friends: "Amici",
   capsules: "Capsule",
-  timeline: "Cronologia",
   dossiers: "Fascicoli",
 };
 

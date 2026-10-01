@@ -91,16 +91,6 @@ export function DossierIcon(props: IconProps) {
   );
 }
 
-export function TimelineIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <path d="M3 12a9 9 0 1 0 3-6.7" />
-      <polyline points="3 4 3 9 8 9" />
-      <path d="M12 8v4l3 2" />
-    </svg>
-  );
-}
-
 /**
  * La faccia di HINTHIA ridotta a glifo, al posto delle due stelline cliché dell'IA. Non l'avatar a colori: a 19px
  * una PNG non si leggerebbe e ignorerebbe lo stato attivo/hover. Occhi curvati più del previsto: a questa misura un

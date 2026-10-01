@@ -10,6 +10,19 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-02 (30)
+
+### Tolta la pagina Cronologia
+
+**Cosa fa:**
+- Sparisce la voce **Cronologia** dal menu e la pagina `/timeline` (l'elenco di documenti, beni, scadenze, amici e capsule per data di creazione, raggruppato per mese). La storia delle azioni è in **Impostazioni > Attività**.
+- Resta la cronologia **dentro un fascicolo** (i suoi documenti per data).
+- In Impostazioni > Aspetto non c'è più l'interruttore elenco/tabella per Cronologia.
+
+**Note tecniche:** rimossi `TimelinePanel`, `lib/timeline.ts`, l'icona e i relativi test (unit ed e2e). Una eventuale preferenza `timeline` già salvata in `profiles.list_view_preferences` viene ignorata dal parser, senza migrazione.
+
+---
+
 ## 2026-10-01 (29)
 
 ### Registro eventi ridisegnato: tutto in Impostazioni > Attività, con filtri
