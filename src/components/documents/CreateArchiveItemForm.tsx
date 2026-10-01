@@ -42,6 +42,7 @@ import {
   analyzeDocumentWithClaude,
   planAnalysis,
   type AIAnalysisScope,
+  type AnalysisProgress,
 } from "@/domain/ai/analyze-document";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
@@ -364,6 +365,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const [savedDoc, setSavedDoc] = useState<DocumentListItem | null>(null);
   const [savedMoment, setSavedMoment] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
+  const [aiProgress, setAiProgress] = useState<AnalysisProgress | null>(null);
   const [aiDone, setAiDone] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -677,6 +679,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         savedDoc,
         categories,
         scope,
+        { onProgress: setAiProgress },
       );
       if (fields.synthesis) {
         await saveAISynthesis(
@@ -697,6 +700,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       );
     } finally {
       setAiBusy(false);
+      setAiProgress(null);
     }
   }
 
@@ -1209,6 +1213,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                           categoryEnabled={categoryEnabledForAI}
                           excluded={savedDoc.aiExtractionExcluded}
                           busy={aiBusy}
+                          progress={aiProgress}
                           onAnalyze={handleAnalyzeWithClaude}
                           onToggleExcluded={handleToggleAIExclusion}
                         />

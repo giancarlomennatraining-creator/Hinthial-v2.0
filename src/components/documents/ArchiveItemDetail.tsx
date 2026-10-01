@@ -39,6 +39,7 @@ import {
   planAnalysis,
   buildAIProposals,
   type AIAnalysisScope,
+  type AnalysisProgress,
   type AIExtractedFields,
 } from "@/domain/ai/analyze-document";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
@@ -116,6 +117,7 @@ export function ArchiveItemDetail({
   // locali (v. buildAIProposals), così accettare/rifiutare le filtra allo stesso modo, automaticamente.
   const [aiFields, setAiFields] = useState<AIExtractedFields | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
+  const [aiProgress, setAiProgress] = useState<AnalysisProgress | null>(null);
   // Etichette dei campi eterogenei già registrati (v. domain/structured-fields) --- per mostrare "Numero polizza" e non la chiave grezza in Scheda.
   const [fieldVocabulary, setFieldVocabulary] = useState<FieldVocabularyEntry[]>([]);
 
@@ -421,7 +423,7 @@ export function ArchiveItemDetail({
         await grantCategoryAIExtractionTemporarily(supabase, doc.categoryId, 30);
         await refresh();
       }
-      const extracted = await analyzeDocumentWithClaude(doc, categories, scope);
+      const extracted = await analyzeDocumentWithClaude(doc, categories, scope, { onProgress: setAiProgress });
       setAiFields(extracted);
       if (extracted.synthesis) {
         // Non è una proposta: sostituisce sempre l'ultima lettura, come extractedText/Rileggi per il testo locale.
@@ -435,6 +437,7 @@ export function ArchiveItemDetail({
       setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Hinthia.");
     } finally {
       setAiBusy(false);
+      setAiProgress(null);
     }
   }
 
@@ -858,6 +861,7 @@ export function ArchiveItemDetail({
                   categoryEnabled={categoryEnabledForAI}
                   excluded={doc.aiExtractionExcluded}
                   busy={aiBusy}
+                  progress={aiProgress}
                   onAnalyze={handleAnalyzeWithClaude}
                   onToggleExcluded={handleToggleAIExclusion}
                 />

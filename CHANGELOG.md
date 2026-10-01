@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-01 (20)
+
+### Content Intelligence, PR2 --- ritocchi dopo la prova: avanzamento della lettura e categoria più affidabile
+
+**Cosa fa:**
+- Con un documento lungo, mentre Hinthia legge compare ora una **barra di avanzamento** con "Leggo la parte X di N…" e, alla fine, "Letto tutto: preparo la sintesi…". Prima, dopo la conferma, la pagina non mostrava nulla. Vale sia sulla scheda del documento sia nel wizard di creazione. Un documento breve (una sola parte) resta com'è: solo "Sto leggendo…".
+- La **categoria** proposta per un documento in più parti non è più quella del primo blocco (una copertina o un indice potevano fuorviare), ma quella proposta dal maggior numero di parti; a parità vince la più vicina all'inizio. Inoltre a Hinthia viene chiesto di scegliere la categoria per il tipo di documento nel suo insieme e non per una parola isolata, e di non proporne nessuna se non è davvero adatta o se il blocco non basta per deciderlo.
+
+**Note tecniche:** `analyzeDocumentWithClaude` accetta `onProgress` (fasi `reading`/`merging`), mostrato da `AIAnalysisTrigger`; il voto sulla categoria sta in `domain/ai/analysis/merge.ts`, il testo del prompt in `lib/ai/claude-analysis-provider.ts`. Test aggiunti in `tests/unit/ai/analyze-document.test.ts` (avanzamento a due parti, a una parte, voto della categoria).
+
+**Limite noto:** la categoria dipende anche da come l'utente ha chiamato le sue categorie: a Hinthia arrivano solo i nomi. Se i risultati restano imprecisi, il passo successivo è dare a ogni categoria una breve descrizione.
+
+---
+
 ## 2026-10-01 (19)
 
 ### Content Intelligence, PR2 --- analisi di Hinthia a blocchi, con la provenienza di ogni lettura

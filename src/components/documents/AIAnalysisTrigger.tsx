@@ -1,7 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import type { AIAnalysisScope } from "@/domain/ai/analyze-document";
+import type { AIAnalysisScope, AnalysisProgress } from "@/domain/ai/analyze-document";
+
+/** Più parti = un documento lungo: solo lì ha senso dire a che punto si è. */
+function ProgressStatus({ progress }: { progress: AnalysisProgress | null }) {
+  if (!progress || progress.total < 2) return null;
+  const merging = progress.phase === "merging";
+  const done = merging ? progress.total : progress.current - 1;
+  const percent = Math.round((done / progress.total) * 100);
+  return (
+    <div role="status" aria-live="polite" className="flex w-full max-w-sm flex-col gap-1">
+      <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        {merging
+          ? `Letto tutto (${progress.total} parti): preparo la sintesi…`
+          : `Leggo la parte ${progress.current} di ${progress.total}…`}
+      </p>
+      <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={progress.total}
+        aria-valuenow={done}
+        aria-label="Avanzamento della lettura"
+        className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
+      >
+        <div className="h-full rounded-full bg-brand transition-all duration-300" style={{ width: `${percent}%` }} />
+      </div>
+    </div>
+  );
+}
 
 /**
  * FASE 22: il bottone che manda per davvero il testo di un documento a Claude --- niente di automatico, un clic
@@ -15,6 +42,7 @@ export function AIAnalysisTrigger({
   categoryEnabled,
   excluded,
   busy,
+  progress = null,
   onAnalyze,
   onToggleExcluded,
 }: {
@@ -26,6 +54,8 @@ export function AIAnalysisTrigger({
   categoryEnabled: boolean;
   excluded: boolean;
   busy: boolean;
+  /** Dove è arrivata la lettura mentre `busy`: serve per i documenti lunghi, in più parti. */
+  progress?: AnalysisProgress | null;
   onAnalyze: (scope: AIAnalysisScope) => void;
   onToggleExcluded: (next: boolean) => void;
 }) {
@@ -93,6 +123,8 @@ export function AIAnalysisTrigger({
           </Link>
         </div>
       )}
+
+      {busy ? <ProgressStatus progress={progress} /> : null}
 
       <label className="mt-1 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
         <input

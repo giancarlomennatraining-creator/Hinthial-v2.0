@@ -36,9 +36,18 @@ export interface AIExtractedFields {
   coverage: { blocksAnalyzed: number; blocksTotal: number; truncated: boolean };
 }
 
+/** Dove è arrivata la lettura: `current` è la parte in corso (da 1), `total` il numero di parti; "merging" = sintesi finale. */
+export interface AnalysisProgress {
+  phase: "reading" | "merging";
+  current: number;
+  total: number;
+}
+
 export interface AnalyzeOptions {
   /** I segmenti per pagina letti sul dispositivo, se disponibili: danno una provenienza per pagina. Senza, il testo si divide in sezioni. */
   segments?: ContentSegment[] | null;
+  /** Chiamata prima di ogni richiesta, così la pagina può mostrare a che punto è un documento lungo. */
+  onProgress?: (progress: AnalysisProgress) => void;
 }
 
 /**
@@ -122,7 +131,9 @@ export async function analyzeDocumentWithClaude(
   let documentType: AnalysisDocumentType | null = null;
   const validated: ValidatedBlock[] = [];
 
-  for (const block of prepared.blocks) {
+  const total = prepared.blocks.length;
+  for (const [index, block] of prepared.blocks.entries()) {
+    options?.onProgress?.({ phase: "reading", current: index + 1, total });
     const data = (await postAnalyze({
       mode: "block",
       documentId: doc.id,
@@ -144,6 +155,7 @@ export async function analyzeDocumentWithClaude(
 
   let synthesis: string | null = merged.partialSyntheses[0] ?? null;
   if (merged.partialSyntheses.length > 1) {
+    options?.onProgress?.({ phase: "merging", current: total, total });
     try {
       const data = (await postAnalyze({
         mode: "merge",

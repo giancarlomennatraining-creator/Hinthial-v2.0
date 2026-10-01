@@ -291,6 +291,62 @@ describe("analisi a più blocchi", () => {
     expect(fields.synthesis).toBe("Prima parte. Seconda parte.");
   });
 
+  it("segnala l'avanzamento prima di ogni parte e poi la fusione", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(blockReply({ synthesis: "Prima parte." }))
+      .mockResolvedValueOnce(blockReply({ documentType: null, synthesis: "Seconda parte." }))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ synthesis: "Insieme." }) });
+    vi.stubGlobal("fetch", fetchSpy);
+    const onProgress = vi.fn();
+
+    await analyzeDocumentWithClaude(doc(), CATEGORIES, "once", { segments: SEGMENTS, onProgress });
+
+    expect(onProgress.mock.calls.map(([p]) => p)).toEqual([
+      { phase: "reading", current: 1, total: 2 },
+      { phase: "reading", current: 2, total: 2 },
+      { phase: "merging", current: 2, total: 2 },
+    ]);
+  });
+
+  it("un documento breve segnala una sola parte e nessuna fusione", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(blockReply({})));
+    const onProgress = vi.fn();
+
+    await analyzeDocumentWithClaude(doc(), CATEGORIES, "once", { onProgress });
+
+    expect(onProgress.mock.calls.map(([p]) => p)).toEqual([{ phase: "reading", current: 1, total: 1 }]);
+  });
+
+  it("la categoria è quella proposta da più parti, non quella della prima", async () => {
+    const categories: Category[] = [
+      ...CATEGORIES,
+      { id: "cat-casa", name: "Casa", icon: "🏠", aiExtractionEnabled: true, aiExtractionEnabledUntil: null },
+    ];
+    const threePages: ContentSegment[] = [
+      { id: "p1", kind: "page", index: 1, text: `Numero polizza: IT-4471-2027\n${LONG_PAGE}` },
+      { id: "p2", kind: "page", index: 2, text: `${LONG_PAGE}\nContratto di locazione.` },
+      { id: "p3", kind: "page", index: 3, text: `${LONG_PAGE}\nCanone di locazione mensile.` },
+    ];
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(
+        blockReply({ category: { id: "cat-assicurazioni", segmentId: "p1", quote: "Numero polizza: IT-4471-2027" } }),
+      )
+      .mockResolvedValueOnce(
+        blockReply({ documentType: null, category: { id: "cat-casa", segmentId: "p2", quote: "Contratto di locazione." } }),
+      )
+      .mockResolvedValueOnce(
+        blockReply({ documentType: null, category: { id: "cat-casa", segmentId: "p3", quote: "Canone di locazione mensile." } }),
+      )
+      .mockResolvedValue({ ok: true, json: async () => ({ synthesis: null }) });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const fields = await analyzeDocumentWithClaude(doc(), categories, "once", { segments: threePages });
+
+    expect(fields.category?.value).toBe("cat-casa");
+  });
+
   it("privacy: ogni richiesta porta solo il blocco, mai più del tetto, e mai il nome del file", async () => {
     const fetchSpy = vi.fn().mockResolvedValue(blockReply({}));
     vi.stubGlobal("fetch", fetchSpy);
