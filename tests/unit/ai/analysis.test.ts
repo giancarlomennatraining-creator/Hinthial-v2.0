@@ -125,6 +125,18 @@ describe("controllo di forma dell'output", () => {
     expect(parseBlockAnalysis({ fields: {} })).toBeNull();
   });
 
+  it("rimette in forma un elenco o una categoria restituiti come testo JSON", () => {
+    const parsed = parseBlockAnalysis({
+      expiry: JSON.stringify([{ value: "2027-06-03", segmentId: "p1", quote: "q" }]),
+      issuer: [],
+      category: JSON.stringify([{ id: "c", segmentId: "p1", quote: "q" }]),
+      fields: "[]",
+    });
+    expect(parsed?.expiry).toHaveLength(1);
+    expect(parsed?.category).toEqual({ id: "c", segmentId: "p1", quote: "q" });
+    expect(parsed?.fields).toEqual([]);
+  });
+
   it("elenchi assenti valgono vuoti, sintesi vuota vale null", () => {
     expect(parseBlockAnalysis({ synthesis: "  " })).toEqual({
       documentType: null,
@@ -302,11 +314,13 @@ describe("provider Claude (server)", () => {
 
   it("senza tool_use o con output malformato lancia AnalysisOutputError: mai accettato", async () => {
     const p = await provider();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    create.mockResolvedValueOnce({ content: [{ type: "text", text: '{"expiry": []}' }] });
+    create.mockResolvedValue({ content: [{ type: "text", text: '{"expiry": []}' }] });
     await expect(p.analyzeBlock(input)).rejects.toBeInstanceOf(AnalysisOutputError);
+    expect(create).toHaveBeenCalledTimes(2);
 
-    create.mockResolvedValueOnce({ content: [{ type: "tool_use", name: "report_block_analysis", input: { expiry: "domani" } }] });
+    create.mockResolvedValue({ content: [{ type: "tool_use", name: "report_block_analysis", input: { expiry: "domani" } }] });
     await expect(p.analyzeBlock(input)).rejects.toBeInstanceOf(AnalysisOutputError);
   });
 

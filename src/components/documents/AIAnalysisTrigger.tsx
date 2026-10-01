@@ -1,31 +1,37 @@
 "use client";
 
 import Link from "next/link";
+import { Spinner } from "@/components/ui/Spinner";
 import type { AIAnalysisScope, AnalysisProgress, SavedAnalysisState } from "@/domain/ai/analyze-document";
 
-/** Più parti = un documento lungo: solo lì ha senso dire a che punto si è. */
+/** Sempre un segnale che la lettura è in corso; per i documenti lunghi, in più parti, anche a che punto si è. */
 function ProgressStatus({ progress }: { progress: AnalysisProgress | null }) {
-  if (!progress || progress.total < 2) return null;
-  const merging = progress.phase === "merging";
-  const done = merging ? progress.total : progress.current - 1;
-  const percent = Math.round((done / progress.total) * 100);
+  const multiPart = !!progress && progress.total >= 2;
+  const merging = progress?.phase === "merging";
+  const done = multiPart ? (merging ? progress.total : progress.current - 1) : 0;
+  const percent = multiPart ? Math.round((done / progress.total) * 100) : 0;
   return (
     <div role="status" aria-live="polite" className="flex w-full max-w-sm flex-col gap-1">
-      <p className="text-xs text-zinc-600 dark:text-zinc-400">
-        {merging
-          ? `Letto tutto (${progress.total} parti): preparo la sintesi…`
-          : `Leggo la parte ${progress.current} di ${progress.total}…`}
+      <p className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+        <Spinner />
+        {!multiPart
+          ? "Hinthia sta leggendo il documento…"
+          : merging
+            ? `Letto tutto (${progress.total} parti): preparo la sintesi…`
+            : `Leggo la parte ${progress.current} di ${progress.total}…`}
       </p>
-      <div
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={progress.total}
-        aria-valuenow={done}
-        aria-label="Avanzamento della lettura"
-        className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
-      >
-        <div className="h-full rounded-full bg-brand transition-all duration-300" style={{ width: `${percent}%` }} />
-      </div>
+      {multiPart ? (
+        <div
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={progress.total}
+          aria-valuenow={done}
+          aria-label="Avanzamento della lettura"
+          className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
+        >
+          <div className="h-full rounded-full bg-brand transition-all duration-300" style={{ width: `${percent}%` }} />
+        </div>
+      ) : null}
     </div>
   );
 }

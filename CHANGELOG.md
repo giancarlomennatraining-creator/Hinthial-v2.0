@@ -19,6 +19,10 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 - Nella scheda "Chiedi a Hinthia" **Rileggi da capo** è un pulsante con il bordo, non più un link piccolo: è un'azione che costa una lettura.
 - Se Hinthia ha già letto un documento, le **proposte calcolate sul dispositivo** (scheda "Letto dal dispositivo") non vengono più mostrate, perché quelle di Hinthia sono più affidabili; resta una riga che lo spiega, con il collegamento a "Chiedi a Hinthia". Per i documenti che Hinthia non ha letto non cambia nulla: lì le regole locali sono l'unica via, e restano interamente sul dispositivo.
 
+- Se Hinthia ha già letto il documento, anche **"Cosa ne ho ricavato"** (i valori chiave-valore ricavati sul dispositivo) non viene più mostrato; resta "Cosa ho letto", cioè il testo.
+- **Indicatore di attività** (nuovo `Spinner`): "Rileggi" in "Letto dal dispositivo" mostra ora una barra di avanzamento con la percentuale; "Chiedi a Hinthia" / "Rileggi da capo" mostra sempre "Hinthia sta leggendo il documento…" (prima, per i documenti brevi, in una sola parte, non appariva nulla).
+- **"Risposta di Hinthia non valida" meno frequente:** l'output del modello che arriva come testo JSON invece che come struttura viene rimesso in forma, e se è comunque fuori schema si riprova una volta. Il server registra (solo forma e `stop_reason`, mai contenuti) perché una risposta è stata scartata.
+
 **Note tecniche:** `ArchiveItemDetail` separa `localCandidates` (sempre calcolate) da `localProposals` (vuote se `doc.contentAnalysis` esiste); "Cosa ne ho ricavato" continua a filtrare contro i candidati locali, così i valori già proposti non ricompaiono come semplici fatti. Il test e2e `archive.spec.ts` cerca ora la voce "Scarica".
 
 ---

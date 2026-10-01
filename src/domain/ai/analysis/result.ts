@@ -26,7 +26,20 @@ function parseFieldEvidence(value: unknown): RawFieldEvidence | null {
   return { ...evidence, key: value.key, label: value.label };
 }
 
-function parseCategory(value: unknown): RawCategoryEvidence | null {
+/** Un modello piccolo a volte restituisce un elenco o un oggetto come testo JSON invece che come struttura: lo si rimette in forma. */
+function unwrapJsonText(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  const text = value.trim();
+  if (!text.startsWith("[") && !text.startsWith("{")) return value;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return value;
+  }
+}
+
+function parseCategory(rawValue: unknown): RawCategoryEvidence | null {
+  const value = unwrapJsonText(rawValue);
   const candidate = Array.isArray(value) ? value[0] : value;
   if (!isRecord(candidate)) return null;
   if (!isNonEmptyString(candidate.id) || !isNonEmptyString(candidate.segmentId) || !isNonEmptyString(candidate.quote)) {
@@ -35,7 +48,8 @@ function parseCategory(value: unknown): RawCategoryEvidence | null {
   return { id: candidate.id, segmentId: candidate.segmentId, quote: candidate.quote };
 }
 
-function parseList<T>(value: unknown, parseItem: (item: unknown) => T | null): T[] | null {
+function parseList<T>(rawValue: unknown, parseItem: (item: unknown) => T | null): T[] | null {
+  const value = unwrapJsonText(rawValue);
   if (value === undefined || value === null) return [];
   if (!Array.isArray(value)) return null;
   return value.map(parseItem).filter((item): item is T => item !== null);

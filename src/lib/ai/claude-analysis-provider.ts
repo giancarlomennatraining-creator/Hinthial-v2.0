@@ -18,6 +18,7 @@ const MODELS = ANALYSIS_MODELS;
 
 const BLOCK_MAX_TOKENS = 4096;
 const MERGE_MAX_TOKENS = 700;
+const BLOCK_ATTEMPTS = 2;
 const TOOL_NAME = "report_block_analysis";
 
 const BLOCK_SYSTEM_PROMPT = `Sei il motore di lettura di Hinthial, un'app personale di gestione della vita digitale.
@@ -97,6 +98,14 @@ function buildTool(askDocumentType: boolean): Anthropic.Tool {
   };
 }
 
+/** I tipi dei campi di primo livello dell'output (es. "fields:string"), senza i valori. */
+function describeShape(input: unknown): string {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return Array.isArray(input) ? "array" : typeof input;
+  return Object.entries(input as Record<string, unknown>)
+    .map(([key, value]) => `${key}:${Array.isArray(value) ? "array" : value === null ? "null" : typeof value}`)
+    .join(",");
+}
+
 function describeTypes(): string {
   return ANALYSIS_DOCUMENT_TYPES.map((id) => `- ${id}: ${ANALYSIS_SCHEMAS[id].description}`).join("\n");
 }
@@ -135,19 +144,28 @@ export function createClaudeAnalysisProvider(apiKey: string): AnalysisProvider {
 
   return {
     async analyzeBlock(input: AnalyzeBlockInput): Promise<RawBlockAnalysis> {
-      const response = await client.messages.create({
-        model: MODELS.block,
-        max_tokens: BLOCK_MAX_TOKENS,
-        system: BLOCK_SYSTEM_PROMPT,
-        tools: [buildTool(input.documentType === null)],
-        tool_choice: { type: "tool", name: TOOL_NAME },
-        messages: [{ role: "user", content: buildBlockMessage(input) }],
-      });
+      // Un output fuori forma è raro e di solito non si ripete: un secondo tentativo costa poco e evita di fermare la lettura.
+      for (let attempt = 1; attempt <= BLOCK_ATTEMPTS; attempt += 1) {
+        const response = await client.messages.create({
+          model: MODELS.block,
+          max_tokens: BLOCK_MAX_TOKENS,
+          system: BLOCK_SYSTEM_PROMPT,
+          tools: [buildTool(input.documentType === null)],
+          tool_choice: { type: "tool", name: TOOL_NAME },
+          messages: [{ role: "user", content: buildBlockMessage(input) }],
+        });
 
-      const toolUse = response.content.find((block) => block.type === "tool_use");
-      const parsed = toolUse ? parseBlockAnalysis(toolUse.input) : null;
-      if (!parsed) throw new AnalysisOutputError();
-      return parsed;
+        const toolUse = response.content.find((block) => block.type === "tool_use");
+        const parsed = toolUse ? parseBlockAnalysis(toolUse.input) : null;
+        if (parsed) return parsed;
+
+        // Solo la forma, mai il contenuto: serve a capire perché il modello ha risposto fuori schema.
+        console.warn(
+          `[analyze] output non valido (tentativo ${attempt}/${BLOCK_ATTEMPTS}), stop_reason=${response.stop_reason}, ` +
+            `tool_use=${toolUse ? "sì" : "no"}, forma=${describeShape(toolUse?.input)}`,
+        );
+      }
+      throw new AnalysisOutputError();
     },
 
     async mergeSyntheses(partials: string[]): Promise<string | null> {

@@ -70,6 +70,7 @@ import { saveBytesAsFile } from "@/lib/download";
 import { formatDate, formatSize } from "@/lib/format";
 import { renderPdfFirstPage } from "@/lib/pdf";
 import { useToast } from "@/components/ui/ToastProvider";
+import { Spinner } from "@/components/ui/Spinner";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
@@ -902,10 +903,10 @@ export function ArchiveItemDetail({
                   onAccept={handleAcceptProposal}
                   onReject={handleRejectProposal}
                 />
-                {hinthiaHasRead && localCandidates.length > 0 ? (
+                {hinthiaHasRead && (localCandidates.length > 0 || structuredFields.length > 0) ? (
                   <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                    Hinthia ha già letto questo documento: le sue proposte sono più affidabili di quelle calcolate sul
-                    dispositivo, che per questo non vengono mostrate.{" "}
+                    Hinthia ha già letto questo documento: quello che ha trovato è più affidabile di ciò che si ricava
+                    sul dispositivo, che per questo non viene mostrato.{" "}
                     <button
                       type="button"
                       onClick={() => setActiveTab("analysis")}
@@ -915,7 +916,7 @@ export function ArchiveItemDetail({
                     </button>
                   </p>
                 ) : null}
-                <StructuredFieldsSection fields={structuredFields} />
+                {hinthiaHasRead ? null : <StructuredFieldsSection fields={structuredFields} />}
                 <ReadingSection
                   doc={doc}
                   reading={reading}
@@ -1094,6 +1095,28 @@ function ReadingSection({
           ) : null}
         </>
       )}
+
+      {busy ? (
+        <div role="status" aria-live="polite" className="flex flex-col gap-1.5">
+          <p className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <Spinner />
+            Lettura del documento sul dispositivo… {Math.round((rereading ?? 0) * 100)}%
+          </p>
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round((rereading ?? 0) * 100)}
+            aria-label="Avanzamento della lettura sul dispositivo"
+            className="h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
+          >
+            <div
+              className="h-full rounded-full bg-brand transition-all duration-300"
+              style={{ width: `${Math.round((rereading ?? 0) * 100)}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
 
       {reading === "cannot" ? null : (
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
