@@ -16,6 +16,9 @@ import {
   updateDocumentAIExtractionExclusion,
   updateDocumentMetadata,
 } from "@/domain/documents/repository";
+import { loadDocumentSegments } from "@/domain/documents/segments";
+import type { ContentSegment } from "@/domain/extraction/types";
+import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories, grantCategoryAIExtractionTemporarily } from "@/domain/categories/repository";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
@@ -190,9 +193,14 @@ export function ArchiveItemDetail({
   // Ciò che Hinthia ha già letto vale ancora per il testo di adesso? Serve a scegliere tra "chiedi", "riprendi" e "già letto".
   const savedAnalysisSource = doc?.contentAnalysis ?? null;
   const savedAnalysisText = doc?.extractedText ?? "";
+  // Le pagine lette, se ci sono: l'impronta della lettura dipende dalla fonte (pagine o sezioni), quindi si aspetta che siano caricate.
+  const { segments: pageSegments, ready: segmentsReady } = useDocumentSegments(supabase, masterKey, doc);
   useEffect(() => {
+    if (!segmentsReady) return;
     let cancelled = false;
-    inspectSavedAnalysis({ extractedText: savedAnalysisText, contentAnalysis: savedAnalysisSource }, masterKey)
+    inspectSavedAnalysis({ extractedText: savedAnalysisText, contentAnalysis: savedAnalysisSource }, masterKey, {
+      segments: pageSegments,
+    })
       .then((state) => {
         if (!cancelled) setSavedAnalysis(state);
       })
@@ -202,7 +210,7 @@ export function ArchiveItemDetail({
     return () => {
       cancelled = true;
     };
-  }, [savedAnalysisSource, savedAnalysisText, masterKey]);
+  }, [savedAnalysisSource, savedAnalysisText, masterKey, pageSegments, segmentsReady]);
 
   // Contatore di richieste --- v. EditArchiveItemForm (StrictMode invoca l'effetto due volte al mount).
   const latestRequestRef = useRef(0);
@@ -435,10 +443,19 @@ export function ArchiveItemDetail({
   async function handleAnalyzeWithClaude(scope: AIAnalysisScope, options?: { force?: boolean }) {
     if (!doc) return;
     const force = options?.force === true;
+    // Le pagine e lo stato della lettura salvata si rileggono qui, non dallo stato: se il click arriva prima che il
+    // caricamento finisca, uno stato ancora "none" farebbe ripartire (e pagare) una lettura già completa.
+    let segments: ContentSegment[] | null;
+    let saved: SavedAnalysisState;
+    try {
+      segments = await loadDocumentSegments(supabase, masterKey, doc).catch(() => null);
+      saved = force ? { kind: "none" } : await inspectSavedAnalysis(doc, masterKey, { segments });
+    } catch {
+      return;
+    }
     // Con una lettura già salvata che vale ancora, "Chiedi" riprende da dove era arrivata; "Rileggi da capo" riparte.
-    const saved = force ? ({ kind: "none" } as const) : savedAnalysis;
     if (saved.kind === "complete") return;
-    if (!window.confirm(analysisConfirmMessage(planAnalysis(doc), saved))) {
+    if (!window.confirm(analysisConfirmMessage(planAnalysis(doc, { segments }), saved))) {
       return;
     }
 
@@ -452,6 +469,7 @@ export function ArchiveItemDetail({
         await refresh();
       }
       const extracted = await analyzeDocumentWithClaude(doc, categories, scope, {
+        segments,
         onProgress: setAiProgress,
         signal: abort.signal,
         force,

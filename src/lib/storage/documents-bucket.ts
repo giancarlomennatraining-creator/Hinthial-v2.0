@@ -14,6 +14,11 @@ export function documentThumbnailPath(storagePath: string): string {
   return storagePath.replace(/\.json$/, "-thumb.json");
 }
 
+/** I segmenti per pagina del testo letto, accanto al file (stessa idea della miniatura: derivato dal percorso, nessuna colonna). Mai nell'esportazione. */
+export function documentSegmentsPath(storagePath: string): string {
+  return storagePath.replace(/\.json$/, "-segments.json");
+}
+
 export async function uploadEncryptedPayload(
   supabase: SupabaseClient<Database>,
   path: string,
@@ -50,6 +55,23 @@ export async function uploadEncryptedThumbnail(
 
   if (error) {
     throw new Error(`Impossibile salvare la miniatura: ${error.message}`);
+  }
+}
+
+/** Come uploadEncryptedThumbnail (`upsert: true`: dato derivato e idempotente, una "Rileggi" lo riscrive) ma per i segmenti. */
+export async function uploadEncryptedSegments(
+  supabase: SupabaseClient<Database>,
+  path: string,
+  serializedEnvelope: string,
+): Promise<void> {
+  const { error } = await supabase.storage
+    .from(ENCRYPTED_DOCUMENTS_BUCKET)
+    .upload(path, new Blob([serializedEnvelope], { type: "application/json" }), {
+      upsert: true,
+    });
+
+  if (error) {
+    throw new Error(`Impossibile salvare le pagine lette: ${error.message}`);
   }
 }
 

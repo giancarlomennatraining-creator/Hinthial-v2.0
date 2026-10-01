@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-01 (23)
+
+### Content Intelligence, PR3 (passo B) --- Hinthia cita la pagina, e le pagine lette si salvano cifrate
+
+**Cosa fa:** quando carichi un PDF o un'immagine, le pagine lette sul dispositivo vengono conservate (cifrate, come tutto il resto) e Hinthia le usa per dire **da quale pagina** viene ogni informazione ("pagina 3", con la frase citata) invece di una generica "sezione". I documenti caricati prima non hanno le pagine: per loro c'è **Rileggi**, che le ricostruisce. Le pagine non entrano nell'esportazione e spariscono con il documento: eliminazione definitiva, svuotamento del Cestino, "Cancella tutto" (ora anche per i documenti già nel Cestino, che prima lasciavano i file in Storage) e cancellazione dell'account.
+
+**Attenzione:** le letture di Hinthia già salvate su un documento con le pagine diventano "da rifare" alla prima apertura, perché la fonte del testo è cambiata (pagine invece di sezioni): il pulsante lo dice prima di spendere qualcosa.
+
+**Note tecniche:** blob `{storagePath}-segments.json` (`documentSegmentsPath`), cifrato con la Master Key, nessuna migration né colonna; `src/domain/documents/segments.ts` (cifratura, validazione contro `extractedText`, salvataggio/lettura/rimozione best-effort). Se i segmenti non ricompongono esattamente il testo salvato non si usano e l'analisi ricade sulle sezioni. `ArchiveItemDetail` e `CreateArchiveItemForm` li caricano con `useDocumentSegments` e, al click su "Chiedi a Hinthia", rileggono pagine e stato della lettura salvata invece di fidarsi dello stato (evita di rifare e pagare una lettura completa se il caricamento non era ancora finito). `wipeVault` ora legge i percorsi con una query leggera su tutti i documenti dell'utente (Cestino incluso). Test in `tests/unit/documents/segments.test.ts`.
+
+---
+
 ## 2026-10-01 (22)
 
 ### Content Intelligence, PR3 --- "Accetta tutto" anche nella tab di Hinthia

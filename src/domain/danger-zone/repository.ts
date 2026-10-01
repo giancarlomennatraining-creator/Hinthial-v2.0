@@ -1,8 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
-import { listDocuments } from "@/domain/documents/repository";
 import { listCapsules } from "@/domain/capsules/repository";
-import { documentThumbnailPath, removeEncryptedPayloads } from "@/lib/storage/documents-bucket";
+import {
+  documentSegmentsPath,
+  documentThumbnailPath,
+  removeEncryptedPayloads,
+} from "@/lib/storage/documents-bucket";
 import {
   capsuleAttachmentStoragePath,
   removeEncryptedCapsulePayloads,
@@ -20,14 +23,21 @@ export async function wipeVault(
   masterKey: CryptoKey,
   ownerId: string,
 ): Promise<void> {
-  const [documents, capsules] = await Promise.all([
-    listDocuments(supabase, masterKey),
+  // Anche i documenti nel Cestino (listDocuments li escluderebbe, lasciando i loro file in Storage), e senza decifrare nulla: servono solo i percorsi.
+  const [{ data: documentRows, error: documentsReadError }, capsules] = await Promise.all([
+    supabase.from("documents").select("storage_path, has_thumbnail").eq("owner_id", ownerId),
     listCapsules(supabase, masterKey),
   ]);
+  if (documentsReadError) {
+    throw new Error(`Impossibile leggere l'archivio: ${documentsReadError.message}`);
+  }
 
-  const documentPaths = documents.flatMap((d) =>
-    d.hasThumbnail ? [d.storagePath, documentThumbnailPath(d.storagePath)] : [d.storagePath],
-  );
+  // I segmenti non hanno una colonna: il loro percorso si deriva da quello del file, e un oggetto assente non dà errore.
+  const documentPaths = (documentRows ?? []).flatMap((row) => [
+    row.storage_path,
+    documentSegmentsPath(row.storage_path),
+    ...(row.has_thumbnail ? [documentThumbnailPath(row.storage_path)] : []),
+  ]);
   const capsuleAttachmentPaths = capsules.flatMap((c) =>
     c.attachments.map((a) => capsuleAttachmentStoragePath(ownerId, c.id, a.id)),
   );

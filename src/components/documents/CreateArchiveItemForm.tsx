@@ -29,7 +29,10 @@ import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
 import { listDossiers } from "@/domain/dossiers/repository";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import { heuristicCategorizer } from "@/domain/categorizer/heuristic-provider";
-import { canExtractText, extractText } from "@/domain/extraction/extract-text";
+import { canExtractText, extractContent } from "@/domain/extraction/extract-text";
+import type { ContentSegment } from "@/domain/extraction/types";
+import { loadDocumentSegments } from "@/domain/documents/segments";
+import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
 import {
   extractStructuredFields,
   type StructuredField,
@@ -376,9 +379,13 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
 
   const savedAnalysisSource = savedDoc?.contentAnalysis ?? null;
   const savedAnalysisText = savedDoc?.extractedText ?? "";
+  const { segments: pageSegments, ready: segmentsReady } = useDocumentSegments(supabase, masterKey, savedDoc);
   useEffect(() => {
+    if (!segmentsReady) return;
     let cancelled = false;
-    inspectSavedAnalysis({ extractedText: savedAnalysisText, contentAnalysis: savedAnalysisSource }, masterKey)
+    inspectSavedAnalysis({ extractedText: savedAnalysisText, contentAnalysis: savedAnalysisSource }, masterKey, {
+      segments: pageSegments,
+    })
       .then((state) => {
         if (!cancelled) setSavedAnalysis(state);
       })
@@ -388,7 +395,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     return () => {
       cancelled = true;
     };
-  }, [savedAnalysisSource, savedAnalysisText, masterKey]);
+  }, [savedAnalysisSource, savedAnalysisText, masterKey, pageSegments, segmentsReady]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -504,11 +511,12 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     setReading({ status: "reading", progress: null });
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const text = await extractText(bytes, mimeType, (progress) => {
+      const content = await extractContent(bytes, mimeType, (progress) => {
         if (token !== readingTokenRef.current) return;
         setReading({ status: "reading", progress });
         setReadProgress(progress);
       });
+      const text = content?.text ?? null;
 
       // Un altro file è stato scelto nel frattempo: risultato vecchio, non tocca niente (v. readingPromiseRef).
       if (token === readingTokenRef.current) {
@@ -517,7 +525,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         applySuggestions(file, text ?? "", fields);
       }
 
-      return { text, attempted: true };
+      return { text, segments: content?.segments, attempted: true };
     } catch {
       // Leggere è un di più: un file illeggibile non deve impedire di salvarlo.
       if (token === readingTokenRef.current)
@@ -682,10 +690,18 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   async function handleAnalyzeWithClaude(scope: AIAnalysisScope, options?: { force?: boolean }) {
     if (!savedDoc) return;
     const force = options?.force === true;
-    const saved = force ? ({ kind: "none" } as const) : savedAnalysis;
+    // Lettura salvata e pagine si rileggono qui, non dallo stato: v. ArchiveItemDetail.handleAnalyzeWithClaude.
+    let segments: ContentSegment[] | null;
+    let saved: SavedAnalysisState;
+    try {
+      segments = await loadDocumentSegments(supabase, masterKey, savedDoc).catch(() => null);
+      saved = force ? { kind: "none" } : await inspectSavedAnalysis(savedDoc, masterKey, { segments });
+    } catch {
+      return;
+    }
     if (saved.kind === "complete") return;
     if (
-      !window.confirm(analysisConfirmMessage(planAnalysis(savedDoc), saved))
+      !window.confirm(analysisConfirmMessage(planAnalysis(savedDoc, { segments }), saved))
     ) {
       return;
     }
@@ -707,6 +723,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         categories,
         scope,
         {
+          segments,
           onProgress: setAiProgress,
           signal: abort.signal,
           force,

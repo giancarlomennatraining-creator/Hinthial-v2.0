@@ -7,7 +7,8 @@ import { createClient } from "@/lib/db/supabase/client";
 import { listDocuments, uploadDocument } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { createDossier, listDossiers } from "@/domain/dossiers/repository";
-import { canExtractText, extractText } from "@/domain/extraction/extract-text";
+import { canExtractText, extractContent } from "@/domain/extraction/extract-text";
+import type { ContentSegment } from "@/domain/extraction/types";
 import { extractStructuredFields } from "@/domain/extraction/structured-fields";
 import { heuristicCategorizer } from "@/domain/categorizer/heuristic-provider";
 import { groupByIssuer, type ImportGroup } from "@/domain/bulk-import/grouping";
@@ -32,6 +33,7 @@ interface DraftFile {
   id: string;
   file: File;
   text: string | null;
+  segments: ContentSegment[];
   /** "" --- usa il nome del file. */
   title: string;
   /** "" --- nessuna categoria. */
@@ -83,14 +85,18 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
     for (const [index, { file, folderHint }] of toRead.entries()) {
       const mimeType = file.type || "application/octet-stream";
       let text: string | null = null;
+      let segments: ContentSegment[] = [];
       if (canExtractText(mimeType)) {
         const bytes = new Uint8Array(await file.arrayBuffer());
-        text = await extractText(bytes, mimeType);
+        const content = await extractContent(bytes, mimeType);
+        text = content?.text ?? null;
+        segments = content?.segments ?? [];
       }
       read.push({
         id: crypto.randomUUID(),
         file,
         text,
+        segments,
         title: "",
         categoryId: "",
         folderHint,
@@ -230,7 +236,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
           try {
             await uploadDocument(supabase, masterKey, user.id, draft.file, metadata, {
               title: draft.title || undefined,
-              extraction: { text: draft.text, attempted: canExtractText(draft.file.type || "") },
+              extraction: { text: draft.text, segments: draft.segments, attempted: canExtractText(draft.file.type || "") },
             });
             imported++;
           } catch {

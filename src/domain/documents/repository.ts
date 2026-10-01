@@ -30,7 +30,9 @@ import {
 import { computePurgeAt } from "@/domain/documents/trash";
 import { listDossierIdsForDocuments, replaceDocumentDossierLinks } from "@/domain/dossiers/repository";
 import { NOTE_MIME_TYPE } from "@/lib/content-kind";
-import { canExtractText, extractText } from "@/domain/extraction/extract-text";
+import { canExtractText, extractContent } from "@/domain/extraction/extract-text";
+import type { ContentSegment } from "@/domain/extraction/types";
+import { removeDocumentSegments, saveDocumentSegments } from "@/domain/documents/segments";
 import { canHaveThumbnail, createThumbnail } from "@/lib/thumbnail";
 import type {
   DocumentListItem,
@@ -47,6 +49,8 @@ export type UploadPhaseListener = (phase: UploadPhase, progress: number | null) 
 /** FASE 19b: una lettura già fatta al momento della scelta del file, per non rileggere al salvataggio. `attempted: false` = si è salvato mentre leggeva ancora, `extracted_at` resta nullo (recuperato da "Leggili ora", FASE 17b). */
 export interface PriorExtraction {
   text: string | null;
+  /** Le pagine lette, per la provenienza dell'analisi di Hinthia: se mancano si salva solo il testo. */
+  segments?: ContentSegment[];
   attempted: boolean;
 }
 
@@ -307,16 +311,20 @@ export async function uploadDocument(
 
   // FASE 17: testo estratto qui, mentre il contenuto è ancora in chiaro in memoria --- best-effort, un fallimento non blocca il salvataggio. `onPhase` riporta l'avanzamento (utile sull'OCR); se il form l'ha già letto (PriorExtraction) si riusa quel risultato.
   let extractedText: string | null;
+  let segments: ContentSegment[] = [];
   let attempted: boolean;
   if (extraction) {
     extractedText = extraction.text;
+    segments = extraction.segments ?? [];
     attempted = extraction.attempted;
   } else {
     attempted = canExtractText(mimeType);
     if (attempted) onPhase?.("reading", null);
-    extractedText = await extractText(plaintext, mimeType, (fraction) =>
+    const content = await extractContent(plaintext, mimeType, (fraction) =>
       onPhase?.("reading", fraction),
     );
+    extractedText = content?.text ?? null;
+    segments = content?.segments ?? [];
   }
 
   // Stesso motivo del testo: il contenuto è ancora in chiaro qui, generarla dopo richiederebbe riscaricare il file intero.
@@ -361,6 +369,12 @@ export async function uploadDocument(
     }
   }
 
+  // Stessa regola: best-effort, e solo se c'è testo (i segmenti ne sono la versione per pagina).
+  let hasSegments = false;
+  if (extractedText && segments.length > 0) {
+    hasSegments = await saveDocumentSegments(supabase, masterKey, storagePath, segments);
+  }
+
   const { error } = await supabase.from("documents").insert({
     id: documentId,
     owner_id: ownerId,
@@ -387,6 +401,7 @@ export async function uploadDocument(
     if (hasThumbnail) {
       await removeEncryptedPayload(supabase, documentThumbnailPath(storagePath)).catch(() => {});
     }
+    if (hasSegments) await removeDocumentSegments(supabase, storagePath);
     throw new Error(`Impossibile salvare il documento: ${error.message}`);
   }
 
@@ -662,7 +677,9 @@ export async function extractTextForExistingDocument(
   onProgress?: (fraction: number) => void,
 ): Promise<{ foundText: boolean }> {
   const { bytes } = await downloadDocument(supabase, masterKey, doc);
-  const text = await extractText(bytes, doc.mimeType, onProgress);
+  const content = await extractContent(bytes, doc.mimeType, onProgress);
+  const text = content?.text ?? null;
+  const segments = content?.segments ?? [];
 
   const update: {
     encrypted_extracted_text: string | null;
@@ -701,6 +718,13 @@ export async function extractTextForExistingDocument(
     }
   }
 
+  // Prima della riga, come la miniatura: se la scrittura dei segmenti fallisce il documento resta valido, solo senza pagine.
+  if (text && segments.length > 0) {
+    await saveDocumentSegments(supabase, masterKey, doc.storagePath, segments);
+  } else {
+    await removeDocumentSegments(supabase, doc.storagePath);
+  }
+
   const { error } = await supabase.from("documents").update(update).eq("id", doc.id);
 
   if (error) {
@@ -720,6 +744,7 @@ export async function deleteDocument(
   if (doc.hasThumbnail) {
     await removeEncryptedPayload(supabase, documentThumbnailPath(doc.storagePath)).catch(() => {});
   }
+  await removeDocumentSegments(supabase, doc.storagePath);
 
   const { error } = await supabase.from("documents").delete().eq("id", doc.id);
   if (error) {
