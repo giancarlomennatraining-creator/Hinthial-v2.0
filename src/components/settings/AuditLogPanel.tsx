@@ -9,7 +9,7 @@ import {
   AUDIT_EVENT_CATEGORY_LABEL,
   AUDIT_EVENT_TYPE_CATEGORY,
   AUDIT_EVENT_TYPE_ICON,
-  AUDIT_EVENT_TYPE_LABEL,
+  describeAuditEvent,
   type AuditEventCategory,
 } from "@/domain/audit/labels";
 import type { AuditEventType } from "@/lib/audit/log-event";
@@ -20,6 +20,16 @@ const LOGIN_METHOD_LABEL: Record<string, string> = {
   totp: "App authenticator (TOTP)",
   backup_code: "Codice di backup",
 };
+
+function EventLabel({ event }: { event: AuditEventListItem }) {
+  const { label, detail } = describeAuditEvent(event);
+  return (
+    <>
+      {label}
+      {detail ? <span className="text-zinc-500 dark:text-zinc-400"> · {detail}</span> : null}
+    </>
+  );
+}
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("it-IT", {
@@ -202,7 +212,7 @@ export function AuditLogPanel() {
                 >
                   <td className="flex items-center gap-2 p-3 text-zinc-700 dark:text-zinc-300">
                     <span aria-hidden="true">{AUDIT_EVENT_TYPE_ICON[event.type]}</span>
-                    {AUDIT_EVENT_TYPE_LABEL[event.type]}
+                    <EventLabel event={event} />
                   </td>
                   <td className="p-3 text-zinc-500 dark:text-zinc-400">{formatDateTime(event.createdAt)}</td>
                 </tr>
@@ -218,7 +228,7 @@ export function AuditLogPanel() {
             <div className="flex items-start justify-between gap-4">
               <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
                 <span aria-hidden="true">{AUDIT_EVENT_TYPE_ICON[selected.type]}</span>{" "}
-                {AUDIT_EVENT_TYPE_LABEL[selected.type]}
+                <EventLabel event={selected} />
               </h3>
               <button
                 type="button"

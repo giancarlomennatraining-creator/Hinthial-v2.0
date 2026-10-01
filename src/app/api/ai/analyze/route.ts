@@ -42,8 +42,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Richiesta non valida." }, { status: 400 });
   }
 
-  const { documentId, mode, block, partials, documentType, categories, scope } = (body ?? {}) as {
+  const { documentId, mode, block, partials, documentType, categories, scope, reread } = (body ?? {}) as {
     documentId?: unknown;
+    reread?: unknown;
     mode?: unknown;
     block?: unknown;
     partials?: unknown;
@@ -155,7 +156,7 @@ export async function POST(request: NextRequest) {
   }
 
   const provider = createClaudeAnalysisProvider(apiKey);
-  const auditMetadata = { category: categoryName, scope: scope as "category" | "temporary" | "once", documentId };
+  const auditMetadata = { category: categoryName, scope: scope as "category" | "temporary" | "once", documentId, reread: reread === true };
 
   try {
     if (blockInput) {

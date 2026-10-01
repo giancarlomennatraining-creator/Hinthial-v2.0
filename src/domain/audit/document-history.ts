@@ -15,6 +15,7 @@ export function summarizeDocumentHistory(events: AuditEventListItem[], max: numb
       previous &&
       previous.type === "ai_extraction_used" &&
       event.type === "ai_extraction_used" &&
+      Boolean(previous.metadata?.reread) === Boolean(event.metadata?.reread) &&
       Date.parse(previous.createdAt) - Date.parse(event.createdAt) <= COLLAPSE_WINDOW_MS
     ) {
       continue;

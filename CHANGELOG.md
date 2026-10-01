@@ -15,9 +15,12 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 ### Cronologia per documento
 
 **Cosa fa:**
-- Nella **Scheda** di ogni contenuto dell'Archivio compare la sezione **Cronologia**: le ultime azioni fatte su quel contenuto (aggiunto, modificato, scaricato, testo letto sul dispositivo, letto da Hinthia, proposta accettata/rifiutata/annullata, spostato nel cestino, ripristinato), ognuna con data e ora. Più letture di Hinthia ravvicinate (una per blocco di testo) compaiono come una sola.
+- Nel dettaglio di ogni contenuto dell'Archivio compare la scheda **Cronologia** (dopo "Chiedi a Hinthia"): le ultime azioni fatte su quel contenuto (aggiunto, modificato, scaricato, testo letto sul dispositivo, letto da Hinthia, proposta accettata/rifiutata/annullata, spostato nel cestino, ripristinato), ognuna con data e ora. Più letture di Hinthia ravvicinate (una per blocco di testo) compaiono come una sola.
 - **"Vedi tutto"** apre Impostazioni > Attività, il registro completo. Impostazioni ora accetta `?tab=` per aprirsi su una scheda precisa.
-- Nessun nome di file né valore compare nella cronologia: solo il tipo di azione e la data.
+- Le proposte dicono **quale** proposta riguardavano (Scadenza, Categoria, Emittente, o il nome del campo), così più "Proposta accettata" di fila non sono più indistinguibili; vale anche per Impostazioni > Attività.
+- La lettura di Hinthia distingue **"Documento letto"** (prima volta) da **"Documento riletto"** (Rileggi da capo / nuova lettura di un documento già letto).
+- Gli eventi registrati prima di questa modifica restano con la dicitura generica.
+- Nessun nome di file né valore compare nella cronologia: solo il tipo di azione, il tipo/nome di campo del vocabolario e la data. Nessuna nuova migrazione.
 
 **Note tecniche:** gli eventi su un contenuto portano `documentId` (UUID, identificativo tecnico) nei metadati di `audit_events`; la cronologia legge con `metadata->>documentId`. Tre nuovi tipi evento (`document_updated`, `document_downloaded`, `document_text_read`): migration additiva `20261002000000_document_history_events.sql` (ricrea il check constraint e aggiunge un indice parziale sul documentId). Cestino/ripristino registrano una riga per documento. Gli eventi precedenti a questa versione non hanno `documentId` e non compaiono nella cronologia del documento. La migration va applicata al database v3 prima di usare la funzione (senza, i nuovi eventi vengono scartati in silenzio, come ogni errore di audit).
 

@@ -1,4 +1,4 @@
-import type { AuditEventType } from "@/lib/audit/log-event";
+import type { AuditEventMetadata, AuditEventType } from "@/lib/audit/log-event";
 
 export type AuditEventCategory = "access" | "content" | "friends" | "security" | "digital-legacy";
 
@@ -179,3 +179,39 @@ export const AUDIT_EVENT_CATEGORIES: AuditEventCategory[] = [
   "security",
   "digital-legacy",
 ];
+
+const PROPOSAL_KIND_LABEL = {
+  expiry: "Scadenza",
+  category: "Categoria",
+  issuer: "Emittente",
+} as const;
+
+/**
+ * Etichetta di un evento così com'è stato registrato: la lettura di Hinthia distingue "letto" da "riletto", le
+ * proposte dicono su quale campo. `fieldLabels` traduce le chiavi dei campi liberi nelle etichette del vocabolario
+ * (senza, si mostra la chiave). Mai valori: nei metadati non ce ne sono.
+ */
+export function describeAuditEvent(
+  event: { type: AuditEventType; metadata: AuditEventMetadata | null },
+  fieldLabels?: Record<string, string>,
+): { label: string; detail: string | null } {
+  const metadata = event.metadata;
+  if (event.type === "ai_extraction_used" && metadata?.reread) {
+    return { label: "Documento riletto da Hinthia", detail: null };
+  }
+  if (
+    (event.type === "proposal_accepted" ||
+      event.type === "proposal_rejected" ||
+      event.type === "proposal_undone") &&
+    metadata?.proposalKind
+  ) {
+    const detail =
+      metadata.proposalKind === "field"
+        ? metadata.fieldKey
+          ? (fieldLabels?.[metadata.fieldKey] ?? metadata.fieldKey)
+          : "Campo"
+        : PROPOSAL_KIND_LABEL[metadata.proposalKind];
+    return { label: AUDIT_EVENT_TYPE_LABEL[event.type], detail };
+  }
+  return { label: AUDIT_EVENT_TYPE_LABEL[event.type], detail: null };
+}

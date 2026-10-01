@@ -67,6 +67,12 @@ export interface AuditEventMetadata {
   scope?: "category" | "temporary" | "once";
   /** Cronologia per documento: UUID del contenuto a cui l'evento si riferisce --- identificativo tecnico, mai nome o contenuto. */
   documentId?: string;
+  /** Eventi proposal_*: quale campo riguardava la proposta ("expiry", "category", "issuer", "field") --- mai il valore. */
+  proposalKind?: "expiry" | "category" | "issuer" | "field";
+  /** Eventi proposal_* su un campo libero: la chiave normalizzata (già in chiaro nel vocabolario), mai il valore. */
+  fieldKey?: string;
+  /** ai_extraction_used: vero se il documento era già stato letto da Hinthia (rilettura), falso alla prima lettura. */
+  reread?: boolean;
 }
 
 /**

@@ -72,6 +72,8 @@ export interface AnalyzeOptions {
   signal?: AbortSignal;
   /** "Rileggi da capo": ignora la lettura salvata e rilegge tutto. */
   force?: boolean;
+  /** Il documento era già stato letto da Hinthia prima di questa lettura: finisce così nella cronologia ("riletto" e non "letto"). */
+  reread?: boolean;
 }
 
 /** Lanciato quando l'utente interrompe una lettura: non è un guasto, e ciò che è già stato letto resta salvato. */
@@ -280,6 +282,7 @@ export async function analyzeDocumentWithClaude(
           mode: "block",
           documentId: doc.id,
           scope,
+          reread: options?.reread === true,
           categories: categoryOptions,
           documentType: state.documentType,
           block: prepared.blocks[index],
@@ -308,7 +311,7 @@ export async function analyzeDocumentWithClaude(
       options?.onProgress?.({ phase: "merging", current: total, total });
       try {
         const data = (await postAnalyze(
-          { mode: "merge", documentId: doc.id, scope, partials: merged.partialSyntheses },
+          { mode: "merge", documentId: doc.id, scope, reread: options?.reread === true, partials: merged.partialSyntheses },
           signal,
         )) as { synthesis?: unknown } | null;
         state.synthesis =

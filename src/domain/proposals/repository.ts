@@ -126,7 +126,11 @@ export async function acceptProposal(
       await registerFieldVocabulary(supabase, ownerId, fieldKey, proposal.fieldLabel);
     }
 
-    await logAuditEvent(supabase, ownerId, "proposal_accepted", { documentId: doc.id });
+    await logAuditEvent(supabase, ownerId, "proposal_accepted", {
+      documentId: doc.id,
+      proposalKind: "field",
+      fieldKey,
+    });
     return { kind: "field", fieldKey, previousValue };
   }
 
@@ -142,7 +146,7 @@ export async function acceptProposal(
   }
 
   // In Attività resta traccia del *tipo*, mai del valore: gli audit non devono contenere contenuti.
-  await logAuditEvent(supabase, ownerId, "proposal_accepted", { documentId: doc.id });
+  await logAuditEvent(supabase, ownerId, "proposal_accepted", { documentId: doc.id, proposalKind: proposal.kind });
 
   return { kind: proposal.kind, previousValue };
 }
@@ -164,7 +168,7 @@ export async function undoAcceptance(
     if (error) {
       throw new Error(`Impossibile annullare: ${error.message}`);
     }
-    await logAuditEvent(supabase, ownerId, "proposal_undone", { documentId });
+    await logAuditEvent(supabase, ownerId, "proposal_undone", { documentId, proposalKind: "field", fieldKey });
     return;
   }
 
@@ -177,7 +181,7 @@ export async function undoAcceptance(
     throw new Error(`Impossibile annullare: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "proposal_undone", { documentId });
+  await logAuditEvent(supabase, ownerId, "proposal_undone", { documentId, proposalKind: accepted.kind });
 }
 
 /**
@@ -211,7 +215,11 @@ export async function rejectProposal(
     throw new Error(`Impossibile registrare il rifiuto: ${error?.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "proposal_rejected", { documentId });
+  await logAuditEvent(supabase, ownerId, "proposal_rejected", {
+    documentId,
+    proposalKind: proposal.kind,
+    ...(proposal.fieldKey ? { fieldKey: proposal.fieldKey } : {}),
+  });
 
   return data.id;
 }
@@ -221,14 +229,26 @@ export async function undoRejection(
   supabase: SupabaseClient<Database>,
   ownerId: string,
   rejectionId: string,
-  documentId?: string,
+  /** Per la cronologia del documento: a quale documento e proposta si riferisce l'annullamento. */
+  context?: { documentId: string; kind: ProposalKind; fieldKey?: string },
 ): Promise<void> {
   const { error } = await supabase.from("proposal_rejections").delete().eq("id", rejectionId);
   if (error) {
     throw new Error(`Impossibile annullare: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "proposal_undone", documentId ? { documentId } : undefined);
+  await logAuditEvent(
+    supabase,
+    ownerId,
+    "proposal_undone",
+    context
+      ? {
+          documentId: context.documentId,
+          proposalKind: context.kind,
+          ...(context.fieldKey ? { fieldKey: context.fieldKey } : {}),
+        }
+      : undefined,
+  );
 }
 
 /** Rifiuti già espressi, decifrati --- il confronto con le proposte nuove avviene sul client, unico posto possibile. */
