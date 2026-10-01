@@ -1,6 +1,7 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 import { openRowMenu } from "./row-actions";
+import { closeGlobalSearch, searchGlobally } from "./search-helpers";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -61,10 +62,10 @@ test("trascrizione di un audio in Archivio: il motore automatico non è ancora d
   });
 
   // Ricercabile: il file si trova per una parola presente solo nella trascrizione, non nel nome.
-  const searchInput = page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…");
-  await searchInput.fill("cassaforte");
-  await expect(row).toBeVisible();
-  await searchInput.fill("");
+  const dialog = await searchGlobally(page, "cassaforte");
+  await expect(dialog.getByRole("button", { name: /messaggio\.mp3/ })).toBeVisible();
+  await expect(dialog.getByText("Trascrizione", { exact: true })).toBeVisible();
+  await closeGlobalSearch(page);
 
   // Riaprendola, il testo mostrato è quello salvato.
   await openRowMenu(row);

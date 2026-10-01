@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, resetDocumentExtraction, uniqueTestUser } from "./test-users";
+import { closeGlobalSearch, searchGlobally } from "./search-helpers";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -74,28 +75,34 @@ test("la ricerca in Archivio trova un PDF per una parola scritta solo dentro il 
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
   await expect(page.getByText("scan_0012.pdf")).toBeVisible({ timeout: 20_000 });
 
-  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("cardiologia");
-  await expect(page.getByText("scan_0012.pdf")).toBeVisible();
+  const dialog = await searchGlobally(page, "cardiologia");
+  await expect(dialog.getByRole("button", { name: /scan_0012\.pdf/ })).toBeVisible();
 
   // Una parola che non compare da nessuna parte non deve trovare nulla: altrimenti il test passerebbe anche con una ricerca rotta.
-  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("ortopedia");
-  await expect(page.getByText("scan_0012.pdf")).not.toBeVisible();
+  await searchGlobally(page, "ortopedia");
+  await expect(dialog.getByRole("button", { name: /scan_0012\.pdf/ })).toHaveCount(0);
 
   // Il risultato spiega PERCHÉ è comparso: lo spezzone di testo attorno alla parola trovata.
-  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("cardiologia");
-  await expect(page.locator("mark").first()).toHaveText("cardiologia");
-  await expect(page.getByText(/Referto visita/)).toBeVisible();
+  await searchGlobally(page, "cardiologia");
+  await expect(dialog.locator("mark").first()).toHaveText("cardiologia");
+  await expect(dialog.getByText(/Referto visita/)).toBeVisible();
+  await expect(dialog.getByText("Nel testo")).toBeVisible();
 
   // Cercando per NOME lo spezzone non serve: il motivo è già evidente.
-  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("scan_0012");
-  await expect(page.getByText("scan_0012.pdf")).toBeVisible();
-  await expect(page.locator("mark")).toHaveCount(0);
+  await searchGlobally(page, "scan_0012");
+  await expect(dialog.getByRole("button", { name: /scan_0012\.pdf/ })).toBeVisible();
+  await expect(dialog.getByText("Nel testo")).toHaveCount(0);
 
-  // E lo stesso vale per la ricerca globale, che usa lo stesso motore.
-  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("");
-  await page.keyboard.press("Control+KeyK");
-  await page.getByPlaceholder(/Cerca/).last().fill("Ferrari");
-  await expect(page.getByText("scan_0012.pdf").first()).toBeVisible({ timeout: 10_000 });
+  // Più parole: tutte devono comparire (anche in punti diversi del testo).
+  await searchGlobally(page, "Ferrari cardiologia");
+  await expect(dialog.getByRole("button", { name: /scan_0012\.pdf/ })).toBeVisible();
+  await searchGlobally(page, "Ferrari ortopedia");
+  await expect(dialog.getByRole("button", { name: /scan_0012\.pdf/ })).toHaveCount(0);
+
+  // Cliccando il risultato si apre la scheda del documento.
+  await searchGlobally(page, "Ferrari");
+  await dialog.getByRole("button", { name: /scan_0012\.pdf/ }).click();
+  await expect(page).toHaveURL(/\/archive\/[0-9a-f-]+$/);
 });
 
 test("i documenti caricati prima della FASE 17 si recuperano dal banner in Archivio", async ({
@@ -149,15 +156,15 @@ test("i documenti caricati prima della FASE 17 si recuperano dal banner in Archi
 
   // Ora il banner compare, e la ricerca per contenuto non trova nulla.
   await expect(page.getByRole("button", { name: "Leggili ora" })).toBeVisible({ timeout: 15_000 });
-  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("Manzoni");
-  await expect(page.getByText("vecchio.pdf")).not.toBeVisible();
+  const dialog = await searchGlobally(page, "Manzoni");
+  await expect(dialog.getByText(/Nessun risultato/)).toBeVisible();
+  await closeGlobalSearch(page);
 
   // Si preme "Leggili ora": da quel momento la ricerca lo trova.
-  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("");
   await page.getByRole("button", { name: "Leggili ora" }).click();
   await expect(page.getByText(/Lettura completata/)).toBeVisible({ timeout: 45_000 });
   await expect(page.getByRole("button", { name: "Leggili ora" })).not.toBeVisible();
 
-  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("Manzoni");
-  await expect(page.getByText("vecchio.pdf")).toBeVisible();
+  await searchGlobally(page, "Manzoni");
+  await expect(dialog.getByRole("button", { name: /vecchio\.pdf/ })).toBeVisible();
 });

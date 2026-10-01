@@ -1,31 +1,78 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import { useMountedTransition } from "@/lib/use-mounted-transition";
 import { cn } from "@/lib/utils";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { buildAIContext } from "@/domain/ai/context";
-import { mockAIProvider } from "@/domain/ai/mock-provider";
 import { AI_SOURCE_KIND_LABELS } from "@/domain/ai/labels";
-import type { AIContext, AISource } from "@/domain/ai/types";
+import type { AIContext } from "@/domain/ai/types";
+import {
+  SEARCH_AREAS,
+  countByArea,
+  searchEverything,
+  type SearchArea,
+  type SearchResult,
+  type SnippetOrigin,
+} from "@/domain/search/unified-search";
 
 /**
- * Ricerca globale (Ctrl/Cmd+K): cerca per nome/etichetta su tutto ciò che è già decifrato in memoria (v.
- * domain/ai/context.ts, la stessa base dati dell'Assistente AI), nessuna nuova query. Usa mockAIProvider.search()
- * (corrispondenza diretta, non l'espansione relazionale di retrieve()): qui si cerca un elemento per nome.
+ * Ricerca unificata (Ctrl/Cmd+K): l'unico punto di ricerca dell'app. Cerca per nome, etichette e anche dentro il
+ * testo letto dei documenti, su tutto ciò che è già decifrato in memoria (v. domain/ai/context.ts): nessuna nuova
+ * query, nessun dato lascia il dispositivo. Il filtro per area è un chip, non una pagina diversa.
  */
+
+/** Quanti risultati per area quando si guarda "Tutto"; il resto sta dietro "Mostra tutti". */
+const PER_AREA_IN_ALL = 3;
+
+const ORIGIN_LABELS: Record<SnippetOrigin, string> = {
+  text: "Nel testo",
+  notes: "Nelle note",
+  transcript: "Trascrizione",
+  content: "Nel contenuto",
+};
+
+type AreaFilter = "all" | SearchArea;
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Evidenzia le parole cercate in un testo breve (nome, riga di contesto). */
+function Highlighted({ text, query }: { text: string; query: string }) {
+  const words = query.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return <>{text}</>;
+  const pattern = new RegExp(`(${words.map(escapeRegExp).join("|")})`, "gi");
+  // split con un gruppo di cattura alterna testo normale (indici pari) e corrispondenze (dispari).
+  return (
+    <>
+      {text.split(pattern).map((part, index) =>
+        index % 2 === 1 ? (
+          <mark key={index} className="rounded bg-yellow-200 px-0.5 text-inherit dark:bg-yellow-900 dark:text-yellow-100">
+            {part}
+          </mark>
+        ) : (
+          <Fragment key={index}>{part}</Fragment>
+        ),
+      )}
+    </>
+  );
+}
+
 /** `collapsed`: mostra solo l'icona, senza etichetta/scorciatoia (Ctrl/Cmd+K resta comunque attivo). */
 export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
   const router = useRouter();
   const { status } = useMasterKey();
   const supabase = useRef(createClient()).current;
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const [open, setOpen] = useState(false);
   const { mounted, entered } = useMountedTransition(open, 150);
   const [query, setQuery] = useState("");
+  const [area, setArea] = useState<AreaFilter>("all");
   const [context, setContext] = useState<AIContext | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +81,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
   const close = useCallback(() => {
     setOpen(false);
     setQuery("");
+    setArea("all");
     setActiveIndex(0);
   }, []);
 
@@ -50,12 +98,12 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
     }
   }, [supabase, status]);
 
-  // Il contesto viene caricato solo alla prima apertura, non ad ogni digitazione.
+  // Il contesto viene caricato a ogni apertura (un elemento appena creato o modificato deve essere cercabile), non ad ogni digitazione.
   useEffect(() => {
-    if (!open || context) return;
+    if (!open) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadContext();
-  }, [open, context, loadContext]);
+  }, [open, loadContext]);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -75,39 +123,84 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const results = context && query.trim() ? mockAIProvider.search(query, context) : [];
+  const hasQuery = query.trim().length > 0;
+  const all = context && hasQuery ? searchEverything(query, context) : [];
+  const counts = countByArea(all);
 
-  // Riporta l'evidenziazione al primo risultato al cambio query: aggiustamento di stato durante il render, non un useEffect dedicato.
-  const [queryForActiveIndex, setQueryForActiveIndex] = useState(query);
-  if (query !== queryForActiveIndex) {
-    setQueryForActiveIndex(query);
+  const groups = SEARCH_AREAS.filter((a) => area === "all" || a === area)
+    .map((a) => {
+      const items = all.filter((result) => result.kind === a);
+      return { area: a, items, shown: area === "all" ? items.slice(0, PER_AREA_IN_ALL) : items };
+    })
+    .filter((group) => group.items.length > 0);
+  const visible = groups.flatMap((group) => group.shown);
+
+  // Riporta l'evidenziazione al primo risultato al cambio query o area: aggiustamento di stato durante il render, non un useEffect dedicato.
+  const searchKey = `${area}|${query}`;
+  const [keyForActiveIndex, setKeyForActiveIndex] = useState(searchKey);
+  if (searchKey !== keyForActiveIndex) {
+    setKeyForActiveIndex(searchKey);
     setActiveIndex(0);
   }
 
-  function goTo(source: AISource) {
-    router.push(source.href);
+  useEffect(() => {
+    listRef.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex, searchKey]);
+
+  function goTo(result: SearchResult) {
+    router.push(result.href);
     close();
   }
 
+  function cycleArea(direction: 1 | -1) {
+    const order: AreaFilter[] = ["all", ...SEARCH_AREAS];
+    const next = (order.indexOf(area) + direction + order.length) % order.length;
+    setArea(order[next]);
+  }
+
   function handleInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    if (results.length === 0) return;
+    if (event.key === "Tab") {
+      event.preventDefault();
+      cycleArea(event.shiftKey ? -1 : 1);
+      return;
+    }
+    if (visible.length === 0) return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setActiveIndex((i) => (i + 1) % results.length);
+      setActiveIndex((i) => (i + 1) % visible.length);
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
-      setActiveIndex((i) => (i - 1 + results.length) % results.length);
+      setActiveIndex((i) => (i - 1 + visible.length) % visible.length);
     } else if (event.key === "Enter") {
       event.preventDefault();
-      goTo(results[activeIndex]);
+      goTo(visible[activeIndex]);
     }
   }
 
-  const grouped = new Map<AISource["kind"], AISource[]>();
-  for (const source of results) {
-    const group = grouped.get(source.kind) ?? [];
-    group.push(source);
-    grouped.set(source.kind, group);
+  function chip(value: AreaFilter, label: string, count: number | null) {
+    const pressed = area === value;
+    return (
+      <button
+        key={value}
+        type="button"
+        aria-pressed={pressed}
+        tabIndex={-1}
+        onClick={() => {
+          setArea(value);
+          inputRef.current?.focus();
+        }}
+        className={cn(
+          "inline-flex flex-none items-center gap-1.5 rounded-full px-3 py-1 text-xs",
+          pressed
+            ? "bg-brand/10 font-semibold text-brand"
+            : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
+          count === 0 && !pressed && "opacity-50",
+        )}
+      >
+        {label}
+        {count !== null ? <span className="tabular-nums opacity-70">{count}</span> : null}
+      </button>
+    );
   }
 
   return (
@@ -140,7 +233,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
       {mounted ? (
         <div
           className={cn(
-            "fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[15vh] transition-opacity duration-150",
+            "fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[10vh] transition-opacity duration-150",
             entered ? "opacity-100" : "opacity-0",
           )}
           onClick={close}
@@ -150,7 +243,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
             aria-modal="true"
             aria-label="Ricerca globale"
             onClick={(e) => e.stopPropagation()}
-            className="flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
+            className="flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
           >
             <input
               ref={inputRef}
@@ -158,11 +251,23 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleInputKeyDown}
-              placeholder="Cerca nell'archivio, beni, scadenze, amici, capsule…"
-              className="w-full border-b border-zinc-200 bg-transparent px-4 py-3 text-sm text-zinc-950 outline-none dark:border-zinc-800 dark:text-zinc-50"
+              placeholder="Cerca in archivio, scadenze, beni, amici, capsule…"
+              aria-label="Cerca"
+              autoComplete="off"
+              spellCheck={false}
+              className="w-full border-b border-zinc-200 bg-transparent px-4 py-3.5 text-base text-zinc-950 outline-none dark:border-zinc-800 dark:text-zinc-50"
             />
 
-            <div className="max-h-96 overflow-y-auto p-2">
+            <div
+              role="group"
+              aria-label="Filtra per area"
+              className="flex gap-1.5 overflow-x-auto border-b border-zinc-200 px-3 py-2 dark:border-zinc-800"
+            >
+              {chip("all", "Tutto", hasQuery && context ? all.length : null)}
+              {SEARCH_AREAS.map((a) => chip(a, AI_SOURCE_KIND_LABELS[a], hasQuery && context ? counts[a] : null))}
+            </div>
+
+            <div ref={listRef} className="min-h-[7rem] flex-1 overflow-y-auto p-2">
               {status.kind !== "unlocked" ? (
                 <p className="px-2 py-3 text-sm text-zinc-500 dark:text-zinc-400">
                   Sblocca la cifratura per cercare nei tuoi dati.
@@ -171,39 +276,81 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
                 <p role="alert" className="px-2 py-3 text-sm text-red-600 dark:text-red-400">
                   {error}
                 </p>
-              ) : loading ? (
+              ) : !context && loading ? (
                 <p className="px-2 py-3 text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
-              ) : !query.trim() ? (
+              ) : !hasQuery ? (
                 <p className="px-2 py-3 text-sm text-zinc-500 dark:text-zinc-400">
-                  Digita per cercare per nome tra i tuoi dati.
+                  Scrivi per cercare. Trova per nome, per etichetta e anche dentro il testo letto dei documenti.
                 </p>
-              ) : results.length === 0 ? (
+              ) : visible.length === 0 ? (
                 <p className="px-2 py-3 text-sm text-zinc-500 dark:text-zinc-400">
-                  Nessun risultato per &quot;{query}&quot;.
+                  Nessun risultato per &quot;{query}&quot;
+                  {area !== "all" && all.length > 0
+                    ? ` in ${AI_SOURCE_KIND_LABELS[area]}, ma ce ne sono ${all.length} altrove: prova "Tutto".`
+                    : "."}
                 </p>
               ) : (
                 <ul className="flex flex-col gap-3">
-                  {[...grouped.entries()].map(([kind, items]) => (
-                    <li key={kind}>
-                      <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
-                        {AI_SOURCE_KIND_LABELS[kind]}
-                      </p>
+                  {groups.map((group) => (
+                    <li key={group.area}>
+                      <div className="flex items-baseline justify-between px-2 pb-1">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                          {AI_SOURCE_KIND_LABELS[group.area]}
+                        </p>
+                        {area === "all" && group.items.length > PER_AREA_IN_ALL ? (
+                          <button
+                            type="button"
+                            tabIndex={-1}
+                            onClick={() => {
+                              setArea(group.area);
+                              inputRef.current?.focus();
+                            }}
+                            className="text-xs font-semibold text-brand hover:underline"
+                          >
+                            Mostra tutti ({group.items.length})
+                          </button>
+                        ) : null}
+                      </div>
                       <ul>
-                        {items.map((source) => {
-                          const index = results.indexOf(source);
+                        {group.shown.map((result) => {
+                          const index = visible.indexOf(result);
+                          const active = index === activeIndex;
                           return (
-                            <li key={`${source.kind}:${source.id}`}>
+                            <li key={`${result.kind}:${result.id}`}>
                               <button
                                 type="button"
-                                onClick={() => goTo(source)}
+                                data-active={active}
+                                onClick={() => goTo(result)}
                                 onMouseEnter={() => setActiveIndex(index)}
-                                className={
-                                  index === activeIndex
-                                    ? "block w-full rounded-md bg-brand px-2 py-2 text-left text-sm text-white"
-                                    : "block w-full rounded-md px-2 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
-                                }
+                                className={cn(
+                                  "block w-full rounded-md px-2 py-2 text-left",
+                                  active ? "bg-brand/10" : "hover:bg-zinc-100 dark:hover:bg-zinc-900",
+                                )}
                               >
-                                {source.label}
+                                <span className="block text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+                                  <Highlighted text={result.label} query={query} />
+                                </span>
+                                {result.detail ? (
+                                  <span className="block text-xs text-zinc-500 dark:text-zinc-400">
+                                    <Highlighted text={result.detail} query={query} />
+                                  </span>
+                                ) : null}
+                                {result.snippet && result.snippetOrigin ? (
+                                  <span className="mt-1 flex items-baseline gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                                    <span className="flex-none rounded border border-brand px-1.5 text-[0.65rem] font-semibold text-brand">
+                                      {ORIGIN_LABELS[result.snippetOrigin]}
+                                    </span>
+                                    <span className="min-w-0 truncate">
+                                      {result.snippet.truncatedStart ? "…" : ""}
+                                      {result.snippet.before}
+                                      <mark className="rounded bg-yellow-200 px-0.5 text-inherit dark:bg-yellow-900 dark:text-yellow-100">
+                                        {result.snippet.match}
+                                      </mark>
+                                      {result.snippet.after}
+                                      {result.snippet.truncatedEnd ? "…" : ""}
+                                    </span>
+                                  </span>
+                                ) : null}
                               </button>
                             </li>
                           );
@@ -213,6 +360,14 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
                   ))}
                 </ul>
               )}
+            </div>
+
+            <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-zinc-200 bg-zinc-50 px-4 py-2 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+              <span>↑↓ scegli</span>
+              <span>Tab cambia area</span>
+              <span>Invio apri</span>
+              <span>Esc chiudi</span>
+              <span className="sm:ml-auto">Cerca sul tuo dispositivo, niente esce</span>
             </div>
           </div>
         </div>

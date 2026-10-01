@@ -30,7 +30,6 @@ import { Avatar } from "@/components/ui/Avatar";
 import { listCapsules, syncCapsuleSharesForLinkedFriend } from "@/domain/capsules/repository";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { PageHelp } from "@/components/help/PageHelp";
-import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
 import { Pagination } from "@/components/ui/Pagination";
@@ -187,7 +186,6 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<FriendStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "name", direction: "asc" });
@@ -435,13 +433,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
     setSort((prev) => toggleSort(prev, column));
   }
 
-  const filteredFriends = friends
-    .filter((friend) => {
-      const normalized = query.trim().toLowerCase();
-      if (!normalized) return true;
-      return [friend.name, friend.email, friend.role].join(" ").toLowerCase().includes(normalized);
-    })
-    .filter((friend) => statusFilter === "all" || friend.status === statusFilter);
+  const filteredFriends = friends.filter((friend) => statusFilter === "all" || friend.status === statusFilter);
 
   // Solo la vista a tabella si ordina --- l'elenco resta cronologico.
   const sortedFriends = applySort(filteredFriends, sort, sortValueFor);
@@ -553,7 +545,6 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       ) : (
         <>
           <div className="flex flex-wrap gap-3">
-            <SearchInput value={query} onChange={setQuery} placeholder="Cerca per nome, email o ruolo…" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as FriendStatus | "all")}
@@ -569,7 +560,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
           {filteredFriends.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Nessun amico corrisponde alla ricerca.
+              Nessun amico corrisponde ai filtri.
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">

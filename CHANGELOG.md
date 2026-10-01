@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-01 (25)
+
+### Ricerca unificata (Ctrl+K) --- un solo punto di ricerca, anche dentro il testo letto dei documenti
+
+**Cosa fa:**
+- La ricerca è ora **un solo posto**: la finestra che si apre con **Ctrl+K** (o dal pulsante "Cerca…" nella navigazione). I campi di ricerca sono stati tolti da Archivio, Beni, Scadenze, Amici e Capsule, che mantengono i propri filtri (categoria, stato, tag).
+- La finestra mostra i **chip per area** (Tutto, Archivio, Scadenze, Beni, Amici, Capsule) con il conteggio dei risultati, e i risultati raggruppati per area; in "Tutto" ogni area mostra i primi 3 e un pulsante **Mostra tutti (N)**.
+- Si trova per **nome**, per **etichette** (categoria, emittente, tag, ruolo, email, bene collegato) e **dentro il contenuto**: testo letto dei documenti, note, trascrizioni, contenuto delle capsule. Quando il motivo è nel contenuto compare un frammento con la parola evidenziata e l'origine ("Nel testo", "Nelle note", "Trascrizione", "Nel contenuto").
+- **Tutte le parole digitate devono comparire** (prima bastava una), senza distinguere maiuscole e accenti; i risultati col nome corrispondente vengono prima di quelli per etichetta, e poi di quelli per contenuto.
+- Tastiera: frecce, Invio, Esc, **Tab / Maiusc+Tab** per cambiare area. Se un'area non ha risultati ma altre sì, il messaggio lo dice ("ce ne sono N altrove: prova Tutto").
+- I **Fascicoli** hanno ancora il loro campo di ricerca (non sono coperti dalla ricerca unificata).
+
+**Note tecniche:** nuovo modulo `src/domain/search/unified-search.ts` (funzioni pure: `searchEverything`, `countByArea`), separato da `mockAIProvider.search`, che resta invariato per il pannello AI. Tutto avviene in memoria sul contesto già decifrato (`buildAIContext`, ricaricato a ogni apertura): nessuna nuova query, niente esce dal dispositivo. Nessun "Recenti" persistente: sarebbe testo digitato in chiaro da conservare. Test: `tests/unit/search/unified-search.test.ts` e gli e2e `global-search`, `list-filters`, `archive-search-inside-pdf`, `archive-ocr-image`, `transcription` (con l'helper `tests/e2e/search-helpers.ts`).
+
+---
+
 ## 2026-10-01 (24)
 
 ### Pulizia dell'Archivio e della scheda documento --- "Scarica", "Rileggi da capo" in evidenza, meno rumore dalle proposte locali
