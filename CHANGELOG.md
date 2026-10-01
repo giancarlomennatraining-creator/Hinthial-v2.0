@@ -10,6 +10,23 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-01 (19)
+
+### Content Intelligence, PR2 --- analisi di Hinthia a blocchi, con la provenienza di ogni lettura
+
+**Cosa fa:**
+- Quando chiedi a Hinthia di leggere un documento, ora il testo parte **a parti** (al massimo circa 12.000 caratteri per richiesta) invece che in un colpo solo, quindi anche un documento lungo viene letto per intero e non solo nella parte iniziale. Il messaggio di conferma prima dell'invio dice in quante parti parte; per i documenti molto lunghi avvisa che se ne leggono solo le prime.
+- Ogni cosa che Hinthia ricava (scadenza, emittente, categoria, campi come numero di polizza o importo) porta con sé la **citazione esatta** e il **punto del documento** da cui viene. Una lettura la cui citazione non c'è davvero in quel punto, o il cui valore non è quello che la citazione dice (per esempio una data diversa), viene scartata: come prima, un campo mancante costa meno di uno inventato.
+- Hinthia riconosce il **tipo di documento** (contratto, referto, fattura, bolletta, polizza, altro) e cerca i campi tipici di quel tipo.
+- Per un documento in più parti la sintesi è una sola, fusa dalle sintesi delle singole parti.
+- Cosa vedi oggi: le proposte e la sintesi funzionano come prima. Il punto di provenienza (pagina) e il tipo riconosciuto ancora non si vedono: arrivano con l'interfaccia della PR4.
+
+**Note tecniche:** `src/domain/ai/analysis/` (nuovo): `schemas.ts` (registro statico dei tipi, tipo sconosciuto = `generico`), `blocks.ts` (segmenti, blocchi con marcatori `[[id]]`, `MAX_BLOCK_CHARS` 12.000, `MAX_BLOCKS_PER_DOCUMENT` 20), `result.ts` (controllo di forma dell'output strutturato), `validate.ts` (citazione nel segmento indicato + coerenza valore/citazione, date rilette e confrontate in forma normalizzata), `merge.ts`, `types.ts` (interfaccia `AnalysisProvider`). `src/lib/ai/claude-analysis-provider.ts` è l'unico punto che parla con Anthropic per l'analisi: output via tool use forzato (sostituisce `parseClaudeJson`, rimosso con il suo test), modello per stadio in una costante (oggi Haiku 4.5 per blocchi e fusione). `/api/ai/analyze` ora accetta una richiesta per blocco (`mode: "block"`) o per fusione delle sintesi (`mode: "merge"`), mai un documento intero; i controlli di consenso e il loro ordine sono invariati (503 per chiave mancante resta prima di ogni chiamata). `ai_extraction_used` viene registrato per ogni richiesta che porta contenuto fuori, senza contenuti. La verifica delle citazioni resta sul client, che ha i segmenti. Nessuna migration, nessuna variabile d'ambiente nuova.
+
+**Limiti noti:** finché i segmenti non vengono salvati (PR3), l'analisi di un documento già archiviato ricava le sezioni dal testo e la provenienza è la *sezione*, non la pagina; il codice per la pagina c'è ed è testato. Il tetto di costo per sessione (100 richieste) vive nella pagina aperta: è un freno contro un'analisi lanciata per errore, non una difesa lato server. Se un blocco a metà documento fallisce, l'analisi si interrompe con un errore e le letture dei blocchi precedenti non vengono mostrate. Un campo con lo stesso nome ma valori diversi in punti diversi tiene il primo. Un audit di un documento lungo conta una voce per richiesta. Il test e2e `ai-content-analysis.spec.ts` non è stato rieseguito (richiede la chiave API assente).
+
+---
+
 ## 2026-09-30 (18)
 
 ### Content Intelligence, PR1 --- il contenuto si legge per pagina (nessun cambiamento visibile)

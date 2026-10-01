@@ -38,7 +38,9 @@ import { buildProposals } from "@/domain/proposals/build";
 import type { Proposal } from "@/domain/proposals/types";
 import { suggestAssetFromText } from "@/domain/proposals/asset-match";
 import {
+  analysisConfirmMessage,
   analyzeDocumentWithClaude,
+  planAnalysis,
   type AIAnalysisScope,
 } from "@/domain/ai/analyze-document";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
@@ -656,9 +658,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   async function handleAnalyzeWithClaude(scope: AIAnalysisScope) {
     if (!savedDoc) return;
     if (
-      !window.confirm(
-        "Il testo di questo documento verrà inviato a Hinthia. Continuare?",
-      )
+      !window.confirm(analysisConfirmMessage(planAnalysis(savedDoc)))
     ) {
       return;
     }

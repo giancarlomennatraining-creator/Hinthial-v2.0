@@ -34,7 +34,9 @@ import {
   undoRejection,
 } from "@/domain/proposals/repository";
 import {
+  analysisConfirmMessage,
   analyzeDocumentWithClaude,
+  planAnalysis,
   buildAIProposals,
   type AIAnalysisScope,
   type AIExtractedFields,
@@ -408,7 +410,7 @@ export function ArchiveItemDetail({
   /** FASE 22: unica fase irreversibile del piano --- un contenuto uscito è uscito, quindi un window.confirm prima di ogni invio, qualunque sia lo scope scelto. */
   async function handleAnalyzeWithClaude(scope: AIAnalysisScope) {
     if (!doc) return;
-    if (!window.confirm("Il testo di questo documento verrà inviato a Hinthia. Continuare?")) {
+    if (!window.confirm(analysisConfirmMessage(planAnalysis(doc)))) {
       return;
     }
 
