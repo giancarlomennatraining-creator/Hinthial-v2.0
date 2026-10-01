@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-01 (26)
+
+### Rifiniture alla ricerca, interruttore elenco/tabella a destra, rimossa la sezione "Novità"
+
+**Cosa fa:**
+- Il modale della ricerca (Ctrl+K) ora **oscura tutta la pagina**, comprese le icone dei file in Archivio che prima restavano in primo piano: la finestra è montata direttamente nel `body` e non più dentro la barra di navigazione.
+- Le scorciatoie in fondo al modale (↑ ↓, Tab, Invio, Esc) hanno la **cornice** come i tasti; tolta la frase "Cerca sul tuo dispositivo, niente esce".
+- L'interruttore **elenco/tabella** delle pagine principali è allineato a destra.
+- **Novità eliminata**: voce di menu, pagina `/updates`, componente e codice di dominio. Le preferenze di navigazione già salvate che citano la voce vengono ignorate (il parser scarta gli href non più validi).
+
+**Note tecniche:** le migration `product_updates` e i tipi generati in `src/types/supabase.ts` restano (le migration sono additive e immutabili); la tabella non viene più letta da nessuno.
+
+---
+
 ## 2026-10-01 (25)
 
 ### Ricerca unificata (Ctrl+K) --- un solo punto di ricerca, anche dentro il testo letto dei documenti

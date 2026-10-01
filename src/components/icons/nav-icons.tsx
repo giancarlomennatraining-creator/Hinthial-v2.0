@@ -101,15 +101,6 @@ export function TimelineIcon(props: IconProps) {
   );
 }
 
-export function UpdatesIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <path d="M6 8a6 6 0 0 1 12 0c0 4.5 1.5 6.5 2 7H4c.5-.5 2-2.5 2-7Z" />
-      <path d="M10 20a2 2 0 0 0 4 0" />
-    </svg>
-  );
-}
-
 /**
  * La faccia di HINTHIA ridotta a glifo, al posto delle due stelline cliché dell'IA. Non l'avatar a colori: a 19px
  * una PNG non si leggerebbe e ignorerebbe lo stato attivo/hover. Occhi curvati più del previsto: a questa misura un
