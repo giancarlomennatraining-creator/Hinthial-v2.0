@@ -2,8 +2,19 @@ import type { Category } from "@/domain/categories/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { ContentSegment } from "@/domain/extraction/types";
 import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
-import { prepareAnalysis } from "@/domain/ai/analysis/blocks";
+import { contentFingerprint } from "@/lib/crypto/fingerprint";
+import { prepareAnalysis, type PreparedAnalysis } from "@/domain/ai/analysis/blocks";
 import { mergeBlocks } from "@/domain/ai/analysis/merge";
+import {
+  statusOf,
+  type AnalysisStatus,
+  type PersistedContentAnalysis,
+} from "@/domain/ai/analysis/persisted";
+import {
+  ANALYSIS_MODELS,
+  ANALYSIS_PIPELINE_VERSION,
+  ANALYSIS_SCHEMA_VERSION,
+} from "@/domain/ai/analysis/pipeline";
 import { parseBlockAnalysis } from "@/domain/ai/analysis/result";
 import {
   isAnalysisDocumentType,
@@ -12,7 +23,6 @@ import {
 } from "@/domain/ai/analysis/schemas";
 import {
   validateBlock,
-  type ValidatedBlock,
   type ValidatedEvidence,
   type ValidatedField,
 } from "@/domain/ai/analysis/validate";
@@ -43,11 +53,33 @@ export interface AnalysisProgress {
   total: number;
 }
 
+/** Dove e con che chiave tenere la lettura: senza, l'analisi vive solo finché la pagina è aperta. */
+export interface AnalysisPersistence {
+  masterKey: CryptoKey;
+  /** La lettura già salvata per questo documento, se c'è: se vale ancora si riprende da lì invece di ripartire. */
+  saved: PersistedContentAnalysis | null;
+  /** Chiamata dopo ogni blocco e a fine lettura: il lavoro già pagato non si perde se la pagina si chiude. */
+  save: (analysis: PersistedContentAnalysis, status: AnalysisStatus) => Promise<void>;
+}
+
 export interface AnalyzeOptions {
   /** I segmenti per pagina letti sul dispositivo, se disponibili: danno una provenienza per pagina. Senza, il testo si divide in sezioni. */
   segments?: ContentSegment[] | null;
   /** Chiamata prima di ogni richiesta, così la pagina può mostrare a che punto è un documento lungo. */
   onProgress?: (progress: AnalysisProgress) => void;
+  persistence?: AnalysisPersistence;
+  /** Interrompe la lettura: ciò che è già stato letto resta salvato e si può riprendere. */
+  signal?: AbortSignal;
+  /** "Rileggi da capo": ignora la lettura salvata e rilegge tutto. */
+  force?: boolean;
+}
+
+/** Lanciato quando l'utente interrompe una lettura: non è un guasto, e ciò che è già stato letto resta salvato. */
+export class AnalysisAbortedError extends Error {
+  constructor() {
+    super("Lettura interrotta.");
+    this.name = "AnalysisAbortedError";
+  }
 }
 
 /**
@@ -77,13 +109,82 @@ export interface AnalysisPlan {
   truncated: boolean;
 }
 
+/** Che cosa c'è già di salvato per questo documento, rispetto a ciò che si leggerebbe adesso. */
+export type SavedAnalysisState =
+  | { kind: "none" }
+  /** C'è una lettura, ma di un testo o di una versione della lettura diversi: ripartirebbe da capo. */
+  | { kind: "stale" }
+  /** Interrotta o fermata da un errore: riprende dalla parte `done + 1`. */
+  | { kind: "interrupted"; done: number; total: number }
+  /** Tutte le parti sono lette, manca solo la sintesi finale. */
+  | { kind: "merge-pending" }
+  | { kind: "complete" };
+
+async function fingerprintOf(masterKey: CryptoKey, prepared: PreparedAnalysis): Promise<string> {
+  return contentFingerprint(masterKey, [
+    "analysis:v1",
+    String(ANALYSIS_SCHEMA_VERSION),
+    String(ANALYSIS_PIPELINE_VERSION),
+    ANALYSIS_MODELS.block,
+    ANALYSIS_MODELS.merge,
+    JSON.stringify(prepared.blocks.map((block) => [block.id, block.text])),
+  ]);
+}
+
+function savedStateOf(saved: PersistedContentAnalysis | null, fingerprint: string): SavedAnalysisState {
+  if (!saved) return { kind: "none" };
+  if (saved.fingerprint !== fingerprint) return { kind: "stale" };
+  if (saved.blocks.length < saved.blocksTotal) {
+    return { kind: "interrupted", done: saved.blocks.length, total: saved.blocksTotal };
+  }
+  return saved.mergeDone ? { kind: "complete" } : { kind: "merge-pending" };
+}
+
+/** Prima di chiedere conferma: la lettura salvata vale ancora? Se sì, quanto resta da fare (e se niente, non si spende niente). */
+export async function inspectSavedAnalysis(
+  doc: Pick<DocumentListItem, "extractedText" | "contentAnalysis">,
+  masterKey: CryptoKey,
+  options?: Pick<AnalyzeOptions, "segments">,
+): Promise<SavedAnalysisState> {
+  if (!doc.contentAnalysis) return { kind: "none" };
+  const prepared = prepareAnalysis({ segments: options?.segments, text: doc.extractedText });
+  return savedStateOf(doc.contentAnalysis, await fingerprintOf(masterKey, prepared));
+}
+
+/** I candidati di una lettura salvata, nella forma che la scheda sa già mostrare come proposte. */
+export function extractedFieldsFrom(analysis: PersistedContentAnalysis, categories: { id: string }[]): AIExtractedFields {
+  const merged = mergeBlocks(analysis.blocks);
+  // Una categoria eliminata dopo la lettura non è più una proposta sensata.
+  const category = merged.category && categories.some((c) => c.id === merged.category?.value) ? merged.category : null;
+  return {
+    expiry: merged.expiry,
+    issuer: merged.issuer,
+    category,
+    fields: merged.fields,
+    synthesis: analysis.synthesis,
+    documentType: analysis.documentType ?? "generico",
+    coverage: {
+      blocksAnalyzed: analysis.blocks.length,
+      blocksTotal: analysis.blocksTotalBeforeCap,
+      truncated: analysis.truncated,
+    },
+  };
+}
+
 export function planAnalysis(doc: Pick<DocumentListItem, "extractedText">, options?: AnalyzeOptions): AnalysisPlan {
   const prepared = prepareAnalysis({ segments: options?.segments, text: doc.extractedText });
   return { parts: prepared.blocks.length, truncated: prepared.truncated };
 }
 
 /** Il testo del window.confirm prima dell'invio: dice quanto lavoro parte, perché un contenuto uscito è uscito. */
-export function analysisConfirmMessage(plan: AnalysisPlan): string {
+export function analysisConfirmMessage(plan: AnalysisPlan, saved?: SavedAnalysisState): string {
+  if (saved?.kind === "merge-pending") {
+    return "Hinthia ha già letto tutte le parti: resta da preparare la sintesi finale, e verranno inviate solo le sintesi parziali. Continuare?";
+  }
+  if (saved?.kind === "interrupted") {
+    const left = saved.total - saved.done;
+    return `Hinthia aveva già letto ${saved.done} parti su ${saved.total}. Riprendo da dove si era fermata: il testo delle ${left} restanti verrà inviato a Hinthia. Continuare?`;
+  }
   let message = "Il testo di questo documento verrà inviato a Hinthia";
   if (plan.parts > 1) message += ` in ${plan.parts} parti`;
   message += ". Continuare?";
@@ -95,11 +196,12 @@ export function analysisConfirmMessage(plan: AnalysisPlan): string {
   return message;
 }
 
-async function postAnalyze(body: Record<string, unknown>): Promise<unknown> {
+async function postAnalyze(body: Record<string, unknown>, signal?: AbortSignal): Promise<unknown> {
   const response = await fetch("/api/ai/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal,
   });
 
   if (!response.ok) {
@@ -125,67 +227,109 @@ export async function analyzeDocumentWithClaude(
     throw new Error("Questo documento non ha testo da far leggere a Hinthia.");
   }
 
-  reserveRequests(prepared.blocks.length + (prepared.blocks.length > 1 ? 1 : 0));
+  const persistence = options?.persistence;
+  const signal = options?.signal;
+  const fingerprint = persistence ? await fingerprintOf(persistence.masterKey, prepared) : "";
 
-  const categoryOptions = categories.map((c) => ({ id: c.id, name: c.name }));
-  let documentType: AnalysisDocumentType | null = null;
-  const validated: ValidatedBlock[] = [];
+  const reusable =
+    persistence?.saved && !options?.force && savedStateOf(persistence.saved, fingerprint).kind !== "stale"
+      ? persistence.saved
+      : null;
+
+  const state: PersistedContentAnalysis = reusable
+    ? { ...reusable, blocks: [...reusable.blocks] }
+    : {
+        v: 1,
+        fingerprint,
+        schemaVersion: ANALYSIS_SCHEMA_VERSION,
+        pipelineVersion: ANALYSIS_PIPELINE_VERSION,
+        models: { block: ANALYSIS_MODELS.block, merge: ANALYSIS_MODELS.merge },
+        documentType: null,
+        blocksTotal: prepared.blocks.length,
+        blocksTotalBeforeCap: prepared.blocksTotal,
+        truncated: prepared.truncated,
+        blocks: [],
+        synthesis: null,
+        mergeDone: false,
+        updatedAt: new Date().toISOString(),
+      };
 
   const total = prepared.blocks.length;
-  for (const [index, block] of prepared.blocks.entries()) {
-    options?.onProgress?.({ phase: "reading", current: index + 1, total });
-    const data = (await postAnalyze({
-      mode: "block",
-      documentId: doc.id,
-      scope,
-      categories: categoryOptions,
-      documentType,
-      block,
-    })) as { result?: unknown } | null;
+  // Una lettura già completa non spende niente: si riservano solo le richieste che restano.
+  reserveRequests(total - state.blocks.length + (!state.mergeDone && total > 1 ? 1 : 0));
 
-    const raw = parseBlockAnalysis(data?.result);
-    if (!raw) throw new Error("Risposta di Hinthia non valida.");
-
-    // Il tipo si decide al primo blocco e vale per i successivi: lo schema atteso non cambia a metà documento.
-    documentType ??= isAnalysisDocumentType(raw.documentType) ? raw.documentType : "generico";
-    validated.push(validateBlock(raw, prepared.segments, categories, resolveAnalysisSchema(documentType)));
-  }
-
-  const merged = mergeBlocks(validated);
-
-  let synthesis: string | null = merged.partialSyntheses[0] ?? null;
-  if (merged.partialSyntheses.length > 1) {
-    options?.onProgress?.({ phase: "merging", current: total, total });
-    try {
-      const data = (await postAnalyze({
-        mode: "merge",
-        documentId: doc.id,
-        scope,
-        partials: merged.partialSyntheses,
-      })) as { synthesis?: unknown } | null;
-      synthesis =
-        typeof data?.synthesis === "string" && data.synthesis.trim()
-          ? data.synthesis.trim()
-          : merged.partialSyntheses.join(" ");
-    } catch {
-      // La fusione è un di più: le letture con citazione sono già al sicuro, le sintesi parziali bastano.
-      synthesis = merged.partialSyntheses.join(" ");
-    }
-  }
-
-  return {
-    expiry: merged.expiry,
-    issuer: merged.issuer,
-    category: merged.category,
-    fields: merged.fields,
-    synthesis,
-    documentType: documentType ?? "generico",
-    coverage: {
-      blocksAnalyzed: prepared.blocks.length,
-      blocksTotal: prepared.blocksTotal,
-      truncated: prepared.truncated,
-    },
+  const persist = async (status: AnalysisStatus) => {
+    if (!persistence) return;
+    state.updatedAt = new Date().toISOString();
+    await persistence.save(state, status);
   };
+  const abortIfRequested = async () => {
+    if (!signal?.aborted) return;
+    if (state.blocks.length > 0) await persist("pending");
+    throw new AnalysisAbortedError();
+  };
+
+  const categoryOptions = categories.map((c) => ({ id: c.id, name: c.name }));
+
+  for (let index = state.blocks.length; index < total; index += 1) {
+    await abortIfRequested();
+    options?.onProgress?.({ phase: "reading", current: index + 1, total });
+    try {
+      const data = (await postAnalyze(
+        {
+          mode: "block",
+          documentId: doc.id,
+          scope,
+          categories: categoryOptions,
+          documentType: state.documentType,
+          block: prepared.blocks[index],
+        },
+        signal,
+      )) as { result?: unknown } | null;
+
+      const raw = parseBlockAnalysis(data?.result);
+      if (!raw) throw new Error("Risposta di Hinthia non valida.");
+
+      // Il tipo si decide al primo blocco e vale per i successivi: lo schema atteso non cambia a metà documento.
+      state.documentType ??= isAnalysisDocumentType(raw.documentType) ? raw.documentType : "generico";
+      state.blocks.push(validateBlock(raw, prepared.segments, categories, resolveAnalysisSchema(state.documentType)));
+    } catch (error) {
+      await abortIfRequested();
+      if (state.blocks.length > 0) await persist("failed");
+      throw error;
+    }
+    await persist("pending");
+  }
+
+  if (!state.mergeDone) {
+    const merged = mergeBlocks(state.blocks);
+    if (merged.partialSyntheses.length > 1) {
+      await abortIfRequested();
+      options?.onProgress?.({ phase: "merging", current: total, total });
+      try {
+        const data = (await postAnalyze(
+          { mode: "merge", documentId: doc.id, scope, partials: merged.partialSyntheses },
+          signal,
+        )) as { synthesis?: unknown } | null;
+        state.synthesis =
+          typeof data?.synthesis === "string" && data.synthesis.trim()
+            ? data.synthesis.trim()
+            : merged.partialSyntheses.join(" ");
+        state.mergeDone = true;
+      } catch {
+        await abortIfRequested();
+        // La fusione è un di più: le letture con citazione sono già al sicuro, le sintesi parziali bastano. Resta da
+        // rifare solo questo passo (stato "partial"), non i blocchi.
+        state.synthesis = merged.partialSyntheses.join(" ");
+      }
+    } else {
+      state.synthesis = merged.partialSyntheses[0] ?? null;
+      state.mergeDone = true;
+    }
+    await persist(statusOf(state));
+  }
+
+  return extractedFieldsFrom(state, categories);
 }
 
 /**

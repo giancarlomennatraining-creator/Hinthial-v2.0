@@ -14,6 +14,7 @@ import {
   createTextNote,
   listDocuments,
   saveAISynthesis,
+  saveContentAnalysis,
   updateDocumentAIExtractionExclusion,
   uploadDocument,
   type PriorExtraction,
@@ -38,11 +39,14 @@ import { buildProposals } from "@/domain/proposals/build";
 import type { Proposal } from "@/domain/proposals/types";
 import { suggestAssetFromText } from "@/domain/proposals/asset-match";
 import {
+  AnalysisAbortedError,
   analysisConfirmMessage,
   analyzeDocumentWithClaude,
+  inspectSavedAnalysis,
   planAnalysis,
   type AIAnalysisScope,
   type AnalysisProgress,
+  type SavedAnalysisState,
 } from "@/domain/ai/analyze-document";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
@@ -367,6 +371,24 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const [aiBusy, setAiBusy] = useState(false);
   const [aiProgress, setAiProgress] = useState<AnalysisProgress | null>(null);
   const [aiDone, setAiDone] = useState(false);
+  const aiAbortRef = useRef<AbortController | null>(null);
+  const [savedAnalysis, setSavedAnalysis] = useState<SavedAnalysisState>({ kind: "none" });
+
+  const savedAnalysisSource = savedDoc?.contentAnalysis ?? null;
+  const savedAnalysisText = savedDoc?.extractedText ?? "";
+  useEffect(() => {
+    let cancelled = false;
+    inspectSavedAnalysis({ extractedText: savedAnalysisText, contentAnalysis: savedAnalysisSource }, masterKey)
+      .then((state) => {
+        if (!cancelled) setSavedAnalysis(state);
+      })
+      .catch(() => {
+        if (!cancelled) setSavedAnalysis({ kind: "none" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [savedAnalysisSource, savedAnalysisText, masterKey]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -657,14 +679,19 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   /** Stesso principio di ArchiveItemDetail.handleAnalyzeWithClaude --- qui basta la sintesi: le proposte si accettano sulla scheda, non qui. */
-  async function handleAnalyzeWithClaude(scope: AIAnalysisScope) {
+  async function handleAnalyzeWithClaude(scope: AIAnalysisScope, options?: { force?: boolean }) {
     if (!savedDoc) return;
+    const force = options?.force === true;
+    const saved = force ? ({ kind: "none" } as const) : savedAnalysis;
+    if (saved.kind === "complete") return;
     if (
-      !window.confirm(analysisConfirmMessage(planAnalysis(savedDoc)))
+      !window.confirm(analysisConfirmMessage(planAnalysis(savedDoc), saved))
     ) {
       return;
     }
 
+    const abort = new AbortController();
+    aiAbortRef.current = abort;
     setAiBusy(true);
     setError(null);
     try {
@@ -679,7 +706,16 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         savedDoc,
         categories,
         scope,
-        { onProgress: setAiProgress },
+        {
+          onProgress: setAiProgress,
+          signal: abort.signal,
+          force,
+          persistence: {
+            masterKey,
+            saved: savedDoc.contentAnalysis,
+            save: (analysis, status) => saveContentAnalysis(supabase, masterKey, savedDoc.id, analysis, status),
+          },
+        },
       );
       if (fields.synthesis) {
         await saveAISynthesis(
@@ -693,12 +729,19 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       setSavedDoc(documents.find((d) => d.id === savedDoc.id) ?? savedDoc);
       setAiDone(true);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Impossibile analizzare il documento con Hinthia.",
-      );
+      // Ciò che era già stato letto è salvato: si rilegge il documento perché il bottone proponga di riprendere.
+      const documents = await listDocuments(supabase, masterKey).catch(() => null);
+      const reloaded = documents?.find((d) => d.id === savedDoc.id);
+      if (reloaded) setSavedDoc(reloaded);
+      if (!(err instanceof AnalysisAbortedError)) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Impossibile analizzare il documento con Hinthia.",
+        );
+      }
     } finally {
+      aiAbortRef.current = null;
       setAiBusy(false);
       setAiProgress(null);
     }
@@ -1214,7 +1257,11 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                           excluded={savedDoc.aiExtractionExcluded}
                           busy={aiBusy}
                           progress={aiProgress}
+                          savedState={savedAnalysis}
+                          analyzedAtLabel={savedDoc.analysisUpdatedAt ? formatDate(savedDoc.analysisUpdatedAt) : null}
+                          lastRunFailed={savedDoc.analysisStatus === "failed"}
                           onAnalyze={handleAnalyzeWithClaude}
+                          onAbort={() => aiAbortRef.current?.abort()}
                           onToggleExcluded={handleToggleAIExclusion}
                         />
                       )}

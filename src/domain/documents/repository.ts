@@ -21,6 +21,12 @@ import {
   uploadEncryptedThumbnail,
 } from "@/lib/storage/documents-bucket";
 import { logAuditEvent } from "@/lib/audit/log-event";
+import {
+  isAnalysisStatus,
+  parsePersistedAnalysis,
+  type AnalysisStatus,
+  type PersistedContentAnalysis,
+} from "@/domain/ai/analysis/persisted";
 import { computePurgeAt } from "@/domain/documents/trash";
 import { listDossierIdsForDocuments, replaceDocumentDossierLinks } from "@/domain/dossiers/repository";
 import { NOTE_MIME_TYPE } from "@/lib/content-kind";
@@ -53,7 +59,7 @@ export interface UploadOptions {
 }
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, encrypted_ai_synthesis, ai_synthesis_generated_at, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, encrypted_ai_synthesis, ai_synthesis_generated_at, encrypted_content_analysis, analysis_status, analysis_updated_at, created_at";
 
 type DocumentRow = {
   id: string;
@@ -78,6 +84,9 @@ type DocumentRow = {
   encrypted_structured_fields: string | null;
   encrypted_ai_synthesis: string | null;
   ai_synthesis_generated_at: string | null;
+  encrypted_content_analysis: string | null;
+  analysis_status: string | null;
+  analysis_updated_at: string | null;
   created_at: string;
 };
 
@@ -135,12 +144,36 @@ export async function decryptStructuredFields(
   return result;
 }
 
+/** Un blocco che non si decifra o non si capisce vale "nessuna lettura salvata": l'utente può rileggere, la scheda non si rompe. */
+async function decryptContentAnalysis(
+  masterKey: CryptoKey,
+  serialized: string | null,
+): Promise<PersistedContentAnalysis | null> {
+  if (!serialized) return null;
+  try {
+    const bytes = await decryptBytes(masterKey, parseEnvelope(serialized));
+    return parsePersistedAnalysis(JSON.parse(bytesToUtf8(bytes)));
+  } catch {
+    return null;
+  }
+}
+
 async function toDocumentListItem(
   masterKey: CryptoKey,
   row: DocumentRow,
   dossierIds: string[],
 ): Promise<DocumentListItem> {
-  const [filenameBytes, notes, tags, issuer, transcript, extractedText, structuredFields, aiSynthesis] =
+  const [
+    filenameBytes,
+    notes,
+    tags,
+    issuer,
+    transcript,
+    extractedText,
+    structuredFields,
+    aiSynthesis,
+    contentAnalysis,
+  ] =
     await Promise.all([
       decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
       decryptOptionalText(masterKey, row.encrypted_notes),
@@ -150,6 +183,7 @@ async function toDocumentListItem(
       decryptOptionalText(masterKey, row.encrypted_extracted_text),
       decryptStructuredFields(masterKey, row.encrypted_structured_fields),
       decryptOptionalText(masterKey, row.encrypted_ai_synthesis),
+      decryptContentAnalysis(masterKey, row.encrypted_content_analysis),
     ]);
 
   return {
@@ -177,6 +211,9 @@ async function toDocumentListItem(
     structuredFields,
     aiSynthesis,
     aiSynthesisGeneratedAt: row.ai_synthesis_generated_at,
+    contentAnalysis,
+    analysisStatus: isAnalysisStatus(row.analysis_status) ? row.analysis_status : null,
+    analysisUpdatedAt: row.analysis_updated_at,
   };
 }
 
@@ -532,6 +569,30 @@ export async function saveAISynthesis(
   }
 }
 
+/** Sostituisce l'intera lettura precedente: è la fotografia più recente, salvata dopo ogni blocco così un'interruzione non butta il lavoro già pagato. */
+export async function saveContentAnalysis(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  documentId: string,
+  analysis: PersistedContentAnalysis,
+  status: AnalysisStatus,
+): Promise<void> {
+  const { error } = await supabase
+    .from("documents")
+    .update({
+      encrypted_content_analysis: serializeEnvelope(
+        await encryptBytes(masterKey, utf8ToBytes(JSON.stringify(analysis))),
+      ),
+      analysis_status: status,
+      analysis_updated_at: analysis.updatedAt,
+    })
+    .eq("id", documentId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare la lettura di Hinthia: ${error.message}`);
+  }
+}
+
 /** FASE 22: esclude/riammette un documento dall'analisi Claude --- vince sempre su qualunque consenso di categoria. */
 export async function updateDocumentAIExtractionExclusion(
   supabase: SupabaseClient<Database>,
@@ -603,10 +664,24 @@ export async function extractTextForExistingDocument(
   const { bytes } = await downloadDocument(supabase, masterKey, doc);
   const text = await extractText(bytes, doc.mimeType, onProgress);
 
-  const update: { encrypted_extracted_text: string | null; extracted_at: string; has_thumbnail?: boolean } = {
+  const update: {
+    encrypted_extracted_text: string | null;
+    extracted_at: string;
+    has_thumbnail?: boolean;
+    encrypted_content_analysis?: null;
+    analysis_status?: null;
+    analysis_updated_at?: null;
+  } = {
     encrypted_extracted_text: await encryptOptionalText(masterKey, text ?? ""),
     extracted_at: new Date().toISOString(),
   };
+
+  // Una lettura di Hinthia riguarda il testo di allora: se il testo cambia non vale più, e non va mostrata come attuale.
+  if ((text ?? "") !== doc.extractedText) {
+    update.encrypted_content_analysis = null;
+    update.analysis_status = null;
+    update.analysis_updated_at = null;
+  }
 
   // Backfill della miniatura, quasi a costo zero qui: i byte in chiaro servono già per il testo. Nessuna migrazione forzata su tutto l'archivio, si aggancia solo a "Leggili ora"/"Rileggi".
   if (!doc.hasThumbnail && canHaveThumbnail(doc.mimeType)) {

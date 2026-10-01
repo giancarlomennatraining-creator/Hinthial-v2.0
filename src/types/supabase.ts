@@ -505,6 +505,9 @@ export type Database = {
           encrypted_structured_fields: string | null;
           encrypted_ai_synthesis: string | null;
           ai_synthesis_generated_at: string | null;
+          encrypted_content_analysis: string | null;
+          analysis_status: string | null;
+          analysis_updated_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -533,6 +536,9 @@ export type Database = {
           encrypted_structured_fields?: string | null;
           encrypted_ai_synthesis?: string | null;
           ai_synthesis_generated_at?: string | null;
+          encrypted_content_analysis?: string | null;
+          analysis_status?: string | null;
+          analysis_updated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -561,6 +567,9 @@ export type Database = {
           encrypted_structured_fields?: string | null;
           encrypted_ai_synthesis?: string | null;
           ai_synthesis_generated_at?: string | null;
+          encrypted_content_analysis?: string | null;
+          analysis_status?: string | null;
+          analysis_updated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

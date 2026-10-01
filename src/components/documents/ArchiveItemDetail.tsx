@@ -12,6 +12,7 @@ import {
   extractTextForExistingDocument,
   listDocuments,
   saveAISynthesis,
+  saveContentAnalysis,
   updateDocumentAIExtractionExclusion,
   updateDocumentMetadata,
 } from "@/domain/documents/repository";
@@ -34,13 +35,16 @@ import {
   undoRejection,
 } from "@/domain/proposals/repository";
 import {
+  AnalysisAbortedError,
   analysisConfirmMessage,
   analyzeDocumentWithClaude,
+  extractedFieldsFrom,
+  inspectSavedAnalysis,
   planAnalysis,
   buildAIProposals,
   type AIAnalysisScope,
   type AnalysisProgress,
-  type AIExtractedFields,
+  type SavedAnalysisState,
 } from "@/domain/ai/analyze-document";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { StructuredFieldsSection } from "@/components/documents/StructuredFieldsSection";
@@ -115,8 +119,9 @@ export function ArchiveItemDetail({
 
   // FASE 22: quello che Claude ha letto in questa sessione --- ricalcolato in proposte a ogni render come le
   // locali (v. buildAIProposals), così accettare/rifiutare le filtra allo stesso modo, automaticamente.
-  const [aiFields, setAiFields] = useState<AIExtractedFields | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
+  const aiAbortRef = useRef<AbortController | null>(null);
+  const [savedAnalysis, setSavedAnalysis] = useState<SavedAnalysisState>({ kind: "none" });
   const [aiProgress, setAiProgress] = useState<AnalysisProgress | null>(null);
   // Etichette dei campi eterogenei già registrati (v. domain/structured-fields) --- per mostrare "Numero polizza" e non la chiave grezza in Scheda.
   const [fieldVocabulary, setFieldVocabulary] = useState<FieldVocabularyEntry[]>([]);
@@ -181,6 +186,23 @@ export function ArchiveItemDetail({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- v. sopra.
     setFields((prev) => (prev ? { ...prev, issuer: doc?.issuer ?? "" } : prev));
   }, [doc?.issuer]);
+
+  // Ciò che Hinthia ha già letto vale ancora per il testo di adesso? Serve a scegliere tra "chiedi", "riprendi" e "già letto".
+  const savedAnalysisSource = doc?.contentAnalysis ?? null;
+  const savedAnalysisText = doc?.extractedText ?? "";
+  useEffect(() => {
+    let cancelled = false;
+    inspectSavedAnalysis({ extractedText: savedAnalysisText, contentAnalysis: savedAnalysisSource }, masterKey)
+      .then((state) => {
+        if (!cancelled) setSavedAnalysis(state);
+      })
+      .catch(() => {
+        if (!cancelled) setSavedAnalysis({ kind: "none" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [savedAnalysisSource, savedAnalysisText, masterKey]);
 
   // Contatore di richieste --- v. EditArchiveItemForm (StrictMode invoca l'effetto due volte al mount).
   const latestRequestRef = useRef(0);
@@ -410,12 +432,18 @@ export function ArchiveItemDetail({
   }
 
   /** FASE 22: unica fase irreversibile del piano --- un contenuto uscito è uscito, quindi un window.confirm prima di ogni invio, qualunque sia lo scope scelto. */
-  async function handleAnalyzeWithClaude(scope: AIAnalysisScope) {
+  async function handleAnalyzeWithClaude(scope: AIAnalysisScope, options?: { force?: boolean }) {
     if (!doc) return;
-    if (!window.confirm(analysisConfirmMessage(planAnalysis(doc)))) {
+    const force = options?.force === true;
+    // Con una lettura già salvata che vale ancora, "Chiedi" riprende da dove era arrivata; "Rileggi da capo" riparte.
+    const saved = force ? ({ kind: "none" } as const) : savedAnalysis;
+    if (saved.kind === "complete") return;
+    if (!window.confirm(analysisConfirmMessage(planAnalysis(doc), saved))) {
       return;
     }
 
+    const abort = new AbortController();
+    aiAbortRef.current = abort;
     setAiBusy(true);
     setError(null);
     try {
@@ -423,19 +451,33 @@ export function ArchiveItemDetail({
         await grantCategoryAIExtractionTemporarily(supabase, doc.categoryId, 30);
         await refresh();
       }
-      const extracted = await analyzeDocumentWithClaude(doc, categories, scope, { onProgress: setAiProgress });
-      setAiFields(extracted);
+      const extracted = await analyzeDocumentWithClaude(doc, categories, scope, {
+        onProgress: setAiProgress,
+        signal: abort.signal,
+        force,
+        persistence: {
+          masterKey,
+          saved: doc.contentAnalysis,
+          save: (analysis, status) => saveContentAnalysis(supabase, masterKey, doc.id, analysis, status),
+        },
+      });
       if (extracted.synthesis) {
         // Non è una proposta: sostituisce sempre l'ultima lettura, come extractedText/Rileggi per il testo locale.
         await saveAISynthesis(supabase, masterKey, doc.id, extracted.synthesis);
-        await refresh();
       }
+      await refresh();
       // Senza, l'utente non si accorgerebbe che qualcosa è successo: niente più tab "Proposte" a sé, quello che
       // Hinthia ha trovato vive già in "Chiedi a Hinthia".
       setActiveTab("analysis");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Hinthia.");
+      // refresh() azzera l'errore, quindi prima si rilegge ciò che è stato salvato, poi si mostra l'errore.
+      await refresh();
+      // Interrompere non è un guasto: ciò che era già stato letto è salvato e il bottone propone di riprendere.
+      if (!(err instanceof AnalysisAbortedError)) {
+        setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Hinthia.");
+      }
     } finally {
+      aiAbortRef.current = null;
       setAiBusy(false);
       setAiProgress(null);
     }
@@ -527,7 +569,10 @@ export function ArchiveItemDetail({
   // Che cosa c'è da proporre, tolto ciò che è già impostato e ciò che l'utente ha già scartato (v. domain/proposals/build.ts).
   const localProposals = buildProposals(doc, categories, rejections);
   // FASE 22: ricalcolate a ogni render come le locali, così accettare/rifiutare le filtra automaticamente allo stesso modo.
-  const aiProposals = aiFields ? buildAIProposals(doc, aiFields, rejections) : [];
+  // Vengono dalla lettura salvata, non da uno stato della pagina: sopravvivono al ricaricamento e a un'interruzione.
+  const aiProposals = doc.contentAnalysis
+    ? buildAIProposals(doc, extractedFieldsFrom(doc.contentAnalysis, categories), rejections)
+    : [];
   const proposals = [...localProposals, ...aiProposals];
   const categoryEnabledForAI = category ? isCategoryEnabledForExtraction(category) : false;
 
@@ -862,7 +907,11 @@ export function ArchiveItemDetail({
                   excluded={doc.aiExtractionExcluded}
                   busy={aiBusy}
                   progress={aiProgress}
+                  savedState={savedAnalysis}
+                  analyzedAtLabel={doc.analysisUpdatedAt ? formatDate(doc.analysisUpdatedAt) : null}
+                  lastRunFailed={doc.analysisStatus === "failed"}
                   onAnalyze={handleAnalyzeWithClaude}
+                  onAbort={() => aiAbortRef.current?.abort()}
                   onToggleExcluded={handleToggleAIExclusion}
                 />
                 <ProposalsSection

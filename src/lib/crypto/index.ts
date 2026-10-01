@@ -24,6 +24,7 @@ export * from "@/lib/crypto/device-lock";
 export { encryptBytes, decryptBytes } from "@/lib/crypto/aes-gcm";
 export { generateSymmetricKey, exportKeyRaw, importKeyRaw } from "@/lib/crypto/symmetric-key";
 export { wrapKey, unwrapKey } from "@/lib/crypto/key-wrapping";
+export { contentFingerprint } from "@/lib/crypto/fingerprint";
 export { wipe } from "@/lib/crypto/memory";
 export { randomBytes } from "@/lib/crypto/random";
 export { bytesToBase64, base64ToBytes, utf8ToBytes, bytesToUtf8 } from "@/lib/crypto/codec";

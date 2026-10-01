@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { ANALYSIS_MODELS } from "@/domain/ai/analysis/pipeline";
 import { parseBlockAnalysis } from "@/domain/ai/analysis/result";
 import { ANALYSIS_DOCUMENT_TYPES, ANALYSIS_SCHEMAS, resolveAnalysisSchema } from "@/domain/ai/analysis/schemas";
 import {
@@ -10,12 +11,10 @@ import {
 
 /**
  * Un modello per stadio (spec §12): la lettura dei blocchi e la fusione delle sintesi sono compiti piccoli e
- * ripetuti, quindi il modello più economico basta. Cambiare uno stadio = cambiare una riga qui.
+ * ripetuti, quindi il modello più economico basta. Cambiare uno stadio = cambiare una riga in pipeline.ts, dove
+ * serve anche all'impronta delle letture salvate.
  */
-const MODELS = {
-  block: "claude-haiku-4-5-20251001",
-  merge: "claude-haiku-4-5-20251001",
-} as const;
+const MODELS = ANALYSIS_MODELS;
 
 const BLOCK_MAX_TOKENS = 4096;
 const MERGE_MAX_TOKENS = 700;

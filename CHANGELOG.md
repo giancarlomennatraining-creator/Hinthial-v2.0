@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-01 (21)
+
+### Content Intelligence, PR3 (passo A) --- la lettura di Hinthia si salva, si riprende e non si paga due volte
+
+**Cosa fa:**
+- Ciò che Hinthia legge in un documento **non si perde più** chiudendo o ricaricando la pagina: le proposte, la sintesi e il tipo riconosciuto tornano da soli all'apertura della scheda.
+- Con un documento lungo la lettura si salva **dopo ogni parte**. Se si chiude la pagina, si preme **Interrompi** o c'è un errore, il pulsante diventa "Riprendi la lettura (X di N)" e riparte dalla parte mancante, non dall'inizio.
+- Se la lettura è completa, la scheda dice "Hinthia ha già letto questo documento il …" e **non invia niente** né spende richieste. Se mancava solo la sintesi finale, "Prepara la sintesi finale" rifà solo quel passo.
+- **Rileggi da capo** ignora la lettura salvata e rilegge tutto (anche per i documenti già nell'archivio, che non hanno ancora una lettura salvata). Se il testo del documento cambia, la lettura salvata non vale più e la scheda lo dice.
+
+**Note tecniche:** migration additiva `20261001000000_content_analysis_persistence.sql` (da applicare **prima** del codice: `listDocuments` legge le nuove colonne). `documents.encrypted_content_analysis` è cifrata con la Master Key; `analysis_status` (pending/failed/partial/completed) è l'unica parte in chiaro e non dice nulla del contenuto. L'impronta di idempotenza (testo dei blocchi + versioni di schema/pipeline + modelli) sta *dentro* il blocco cifrato ed è un HMAC-SHA256; la chiave HMAC si deriva dalla Master Key cifrando un'etichetta fissa con IV fisso (costruzione non standard, accettabile perché serve solo a un confronto locale e l'output non lascia il dispositivo). Codice in `domain/ai/analysis/persisted.ts`, `pipeline.ts`, `lib/crypto/fingerprint.ts`, `domain/ai/analyze-document.ts`, `domain/documents/repository.ts` (`saveContentAnalysis`). Test in `tests/unit/ai/persisted-analysis.test.ts`.
+
+**Limite noto:** finché il passo B non salva i segmenti per pagina, i documenti ricavano sezioni dal testo (provenienza = sezione, non pagina); al passo B l'impronta cambierà e servirà un "Rileggi". Cestino, eliminazione definitiva, "Cancella tutto", cancella account ed esportazione non coprono ancora i segmenti (passo B).
+
+---
+
 ## 2026-10-01 (20)
 
 ### Content Intelligence, PR2 --- ritocchi dopo la prova: avanzamento della lettura e categoria più affidabile

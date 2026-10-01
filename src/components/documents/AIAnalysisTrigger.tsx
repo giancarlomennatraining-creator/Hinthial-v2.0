@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { AIAnalysisScope, AnalysisProgress } from "@/domain/ai/analyze-document";
+import type { AIAnalysisScope, AnalysisProgress, SavedAnalysisState } from "@/domain/ai/analyze-document";
 
 /** Più parti = un documento lungo: solo lì ha senso dire a che punto si è. */
 function ProgressStatus({ progress }: { progress: AnalysisProgress | null }) {
@@ -43,7 +43,11 @@ export function AIAnalysisTrigger({
   excluded,
   busy,
   progress = null,
+  savedState = { kind: "none" },
+  analyzedAtLabel = null,
+  lastRunFailed = false,
   onAnalyze,
+  onAbort,
   onToggleExcluded,
 }: {
   masterEnabled: boolean;
@@ -56,10 +60,29 @@ export function AIAnalysisTrigger({
   busy: boolean;
   /** Dove è arrivata la lettura mentre `busy`: serve per i documenti lunghi, in più parti. */
   progress?: AnalysisProgress | null;
-  onAnalyze: (scope: AIAnalysisScope) => void;
+  /** Che cosa c'è già di salvato: una lettura completa non si rifà da sola, una interrotta si riprende. */
+  savedState?: SavedAnalysisState;
+  /** Quando è stata salvata l'ultima lettura, già formattato. */
+  analyzedAtLabel?: string | null;
+  /** L'ultima lettura si è fermata per un errore, non per una scelta dell'utente. */
+  lastRunFailed?: boolean;
+  /** `force` = "Rileggi da capo": ignora la lettura salvata. */
+  onAnalyze: (scope: AIAnalysisScope, options?: { force?: boolean }) => void;
+  onAbort?: () => void;
   onToggleExcluded: (next: boolean) => void;
 }) {
   const consentActive = masterEnabled && extractionConsent;
+  const alreadyRead = savedState.kind === "complete";
+  const resumable = savedState.kind === "interrupted" || savedState.kind === "merge-pending";
+  // "Rileggi da capo" ha lo stesso consenso della prima lettura; senza un permesso di categoria vale "solo questa volta".
+  const rereadScope: AIAnalysisScope = hasCategory && categoryEnabled ? "category" : "once";
+  const primaryLabel = busy
+    ? "Sto leggendo…"
+    : savedState.kind === "interrupted"
+      ? `Riprendi la lettura (${savedState.done} di ${savedState.total})`
+      : savedState.kind === "merge-pending"
+        ? "Prepara la sintesi finale"
+        : "Chiedi a Hinthia";
 
   return (
     <div className="flex flex-col gap-2">
@@ -81,6 +104,11 @@ export function AIAnalysisTrigger({
           </Link>{" "}
           per usare questa funzione.
         </p>
+      ) : alreadyRead ? (
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+          {analyzedAtLabel ? `Hinthia ha già letto questo documento il ${analyzedAtLabel}.` : "Hinthia ha già letto questo documento."}{" "}
+          Quello che ha trovato è qui sotto, senza una nuova lettura.
+        </p>
       ) : hasCategory && categoryEnabled ? (
         <button
           type="button"
@@ -88,7 +116,7 @@ export function AIAnalysisTrigger({
           onClick={() => onAnalyze("category")}
           className="w-fit rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
         >
-          {busy ? "Sto leggendo…" : "Chiedi a Hinthia"}
+          {primaryLabel}
         </button>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
@@ -103,7 +131,7 @@ export function AIAnalysisTrigger({
             onClick={() => onAnalyze("once")}
             className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
           >
-            Solo questa volta
+            {resumable ? primaryLabel : "Solo questa volta"}
           </button>
           {hasCategory ? (
             <button
@@ -124,7 +152,40 @@ export function AIAnalysisTrigger({
         </div>
       )}
 
-      {busy ? <ProgressStatus progress={progress} /> : null}
+      {!excluded && consentActive && !busy && (resumable || savedState.kind === "stale") ? (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          {savedState.kind === "stale"
+            ? "La lettura salvata riguarda una versione precedente: una nuova lettura la sostituisce."
+            : lastRunFailed
+              ? "L'ultima lettura si è fermata per un errore: ciò che era già stato letto è al sicuro."
+              : "L'ultima lettura è stata interrotta: ciò che era già stato letto è al sicuro."}
+        </p>
+      ) : null}
+
+      {busy ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <ProgressStatus progress={progress} />
+          {onAbort ? (
+            <button
+              type="button"
+              onClick={onAbort}
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            >
+              Interrompi
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {!excluded && consentActive && !busy && savedState.kind !== "none" ? (
+        <button
+          type="button"
+          onClick={() => onAnalyze(rereadScope, { force: true })}
+          className="w-fit text-xs text-zinc-500 underline underline-offset-2 hover:text-brand dark:text-zinc-400"
+        >
+          Rileggi da capo
+        </button>
+      ) : null}
 
       <label className="mt-1 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
         <input
