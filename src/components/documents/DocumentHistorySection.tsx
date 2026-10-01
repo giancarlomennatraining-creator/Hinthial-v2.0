@@ -81,38 +81,49 @@ export function DocumentHistorySection({
           Nessuna azione registrata per questo contenuto.
         </p>
       ) : (
-        <ol className="flex flex-col gap-1.5">
-          {events.map((event) => {
-            const { label, detail } = describeAuditEvent(event, fieldLabels);
-            return (
-              <li
-                key={event.id}
-                className="flex items-baseline justify-between gap-3 text-sm"
-              >
-                <span className="flex min-w-0 items-baseline gap-2 text-zinc-800 dark:text-zinc-200">
-                  <span aria-hidden="true">
-                    {AUDIT_EVENT_TYPE_ICON[event.type]}
-                  </span>
-                  <span className="min-w-0">
-                    {label}
-                    {detail ? (
-                      <span className="text-zinc-500 dark:text-zinc-400">
-                        {" "}
-                        · {detail}
+        <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+              <tr>
+                <th scope="col" className="p-3 font-medium">
+                  Attività
+                </th>
+                <th scope="col" className="p-3 font-medium">
+                  Dettaglio
+                </th>
+                <th scope="col" className="p-3 font-medium">
+                  Quando
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              {events.map((event) => {
+                const { label, detail } = describeAuditEvent(
+                  event,
+                  fieldLabels,
+                );
+                return (
+                  <tr key={event.id}>
+                    <td className="p-3 text-zinc-700 dark:text-zinc-300">
+                      <span className="flex items-center gap-2">
+                        <span aria-hidden="true">
+                          {AUDIT_EVENT_TYPE_ICON[event.type]}
+                        </span>
+                        {label}
                       </span>
-                    ) : null}
-                  </span>
-                </span>
-                <time
-                  dateTime={event.createdAt}
-                  className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400"
-                >
-                  {formatDateTime(event.createdAt)}
-                </time>
-              </li>
-            );
-          })}
-        </ol>
+                    </td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      {detail ?? "—"}
+                    </td>
+                    <td className="whitespace-nowrap p-3 text-zinc-500 dark:text-zinc-400">
+                      {formatDateTime(event.createdAt)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );
