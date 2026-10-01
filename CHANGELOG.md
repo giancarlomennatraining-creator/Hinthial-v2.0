@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-01 (22)
+
+### Content Intelligence, PR3 --- "Accetta tutto" anche nella tab di Hinthia
+
+**Cosa fa:** quando Hinthia trova almeno due informazioni da aggiungere (scadenza, emittente, categoria, campi), nella tab di Hinthia compare in cima alle proposte "Hinthia ha trovato N informazioni da aggiungere alla Scheda" con il pulsante **Accetta tutto**. Prima il pulsante esisteva solo nella tab Scheda. Una sola proposta per tipo (per i campi, per chiave); l'azione si può annullare in blocco come quella già esistente.
+
+**Note tecniche:** `ProposalsSection` accetta `acceptAllCount` e `onAcceptAll` (opzionali: le proposte locali non li passano). `onePerSlot` in `ArchiveItemDetail.tsx` è condiviso con la tab Scheda; il pulsante riusa `handleAcceptAll`. Test in `tests/unit/proposals-section.test.tsx`.
+
+---
+
 ## 2026-10-01 (21)
 
 ### Content Intelligence, PR3 (passo A) --- la lettura di Hinthia si salva, si riprende e non si paga due volte

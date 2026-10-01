@@ -51,6 +51,8 @@ export function ProposalsSection({
   busy,
   onAccept,
   onReject,
+  acceptAllCount = 0,
+  onAcceptAll,
 }: {
   proposals: Proposal[];
   categories: Category[];
@@ -58,6 +60,9 @@ export function ProposalsSection({
   /** `value` può differire da `proposal.value`: è il percorso di "Modifica". */
   onAccept: (proposal: Proposal, value: string) => void;
   onReject: (proposal: Proposal) => void;
+  /** Quante informazioni accetterebbe "Accetta tutto" (una per tipo): con meno di due il pulsante non serve. */
+  acceptAllCount?: number;
+  onAcceptAll?: () => void;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -77,6 +82,21 @@ export function ProposalsSection({
 
   return (
     <div className="flex flex-col gap-3">
+      {onAcceptAll && acceptAllCount >= 2 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            Hinthia ha trovato {acceptAllCount} informazioni da aggiungere alla Scheda.
+          </p>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onAcceptAll}
+            className="rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+          >
+            Accetta tutto
+          </button>
+        </div>
+      ) : null}
       {proposals.map((proposal) => {
         const isEditing = editing === proposalKey(proposal);
 

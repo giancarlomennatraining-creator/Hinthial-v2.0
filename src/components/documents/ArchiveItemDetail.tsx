@@ -599,13 +599,8 @@ export function ArchiveItemDetail({
     titleDirty;
 
   // "Accetta tutto": una sola proposta per tipo (per "campo": per chiave) --- v. handleAcceptAll.
-  const seenProposalSlots = new Set<string>();
-  const acceptAllCandidates = proposals.filter((proposal) => {
-    const slot = proposal.kind === "field" ? `field:${proposal.fieldKey}` : proposal.kind;
-    if (seenProposalSlots.has(slot)) return false;
-    seenProposalSlots.add(slot);
-    return true;
-  });
+  const acceptAllCandidates = onePerSlot(proposals);
+  const aiAcceptAllCandidates = onePerSlot(aiProposals);
 
   return (
     <div className="flex flex-col gap-6">
@@ -920,6 +915,8 @@ export function ArchiveItemDetail({
                   busy={proposalBusy}
                   onAccept={handleAcceptProposal}
                   onReject={handleRejectProposal}
+                  acceptAllCount={aiAcceptAllCandidates.length}
+                  onAcceptAll={() => handleAcceptAll(aiAcceptAllCandidates)}
                 />
                 {doc.aiSynthesis ? (
                   <section
@@ -951,6 +948,17 @@ export function ArchiveItemDetail({
       </div>
     </div>
   );
+}
+
+/** Una sola proposta per tipo (per "campo": per chiave) --- con più candidati della stessa cosa vince la prima, non si sovrascrive in sequenza. */
+function onePerSlot(proposals: Proposal[]): Proposal[] {
+  const seen = new Set<string>();
+  return proposals.filter((proposal) => {
+    const slot = proposal.kind === "field" ? `field:${proposal.fieldKey}` : proposal.kind;
+    if (seen.has(slot)) return false;
+    seen.add(slot);
+    return true;
+  });
 }
 
 /** Confronto per valore, senza voci vuote né ordine: una voce svuotata equivale a una rimossa. */
