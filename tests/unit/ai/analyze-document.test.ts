@@ -427,6 +427,16 @@ describe("buildAIProposals", () => {
     for (const p of proposals) expect(p.aiGenerated).toBe(true);
   });
 
+  it("porta la pagina da cui nasce ogni proposta, e niente per le sezioni", () => {
+    const paged: AIExtractedFields = {
+      ...FIELDS,
+      expiry: [{ ...FIELDS.expiry[0], provenance: { segmentId: "p3", page: 3 } }],
+    };
+    const proposals = buildAIProposals(doc(), paged, []);
+    expect(proposals.find((p) => p.kind === "expiry")?.page).toBe(3);
+    expect(proposals.find((p) => p.kind === "issuer")).not.toHaveProperty("page");
+  });
+
   it("non propone su un campo già compilato, come le proposte locali", () => {
     const proposals = buildAIProposals(doc({ expiresAt: "2030-01-01" }), FIELDS, []);
     expect(proposals.some((p) => p.kind === "expiry")).toBe(false);

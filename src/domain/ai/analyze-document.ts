@@ -332,6 +332,11 @@ export async function analyzeDocumentWithClaude(
   return extractedFieldsFrom(state, categories);
 }
 
+/** La pagina di una lettura, se il documento è stato letto per pagine: per le sezioni non c'è nulla da dire. */
+function pageOf(evidence: { provenance: { page: number | null } }): { page?: number } {
+  return evidence.provenance.page === null ? {} : { page: evidence.provenance.page };
+}
+
 /**
  * Stessa logica di filtro di buildProposals (domain/proposals/build.ts) --- niente su campi già compilati, niente
  * già rifiutato, dedup --- ma sui candidati letti da Claude. Non riusa buildProposals: quello resta il percorso
@@ -346,17 +351,23 @@ export function buildAIProposals(
 
   if (!doc.expiresAt) {
     for (const f of fields.expiry) {
-      proposals.push({ kind: "expiry", value: f.value, source: f.source, aiGenerated: true });
+      proposals.push({ kind: "expiry", value: f.value, source: f.source, ...pageOf(f), aiGenerated: true });
     }
   }
 
   if (!doc.categoryId && fields.category) {
-    proposals.push({ kind: "category", value: fields.category.value, source: fields.category.source, aiGenerated: true });
+    proposals.push({
+      kind: "category",
+      value: fields.category.value,
+      source: fields.category.source,
+      ...pageOf(fields.category),
+      aiGenerated: true,
+    });
   }
 
   if (!doc.issuer) {
     for (const f of fields.issuer) {
-      proposals.push({ kind: "issuer", value: f.value, source: f.source, aiGenerated: true });
+      proposals.push({ kind: "issuer", value: f.value, source: f.source, ...pageOf(f), aiGenerated: true });
     }
   }
 
@@ -366,6 +377,7 @@ export function buildAIProposals(
       kind: "field",
       value: f.value,
       source: f.source,
+      ...pageOf(f),
       aiGenerated: true,
       fieldKey: f.key,
       fieldLabel: f.label,

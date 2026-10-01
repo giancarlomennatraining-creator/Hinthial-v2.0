@@ -41,3 +41,16 @@ describe("ProposalsSection, Accetta tutto", () => {
     expect(screen.queryByRole("button", { name: "Accetta tutto" })).not.toBeInTheDocument();
   });
 });
+
+describe("ProposalsSection, pagina di provenienza", () => {
+  it("mostra la pagina solo quando la proposta ne ha una", () => {
+    setup({
+      proposals: [
+        { kind: "expiry", value: "2027-06-03", source: "Valida fino al 3 giugno 2027.", page: 3 },
+        { kind: "issuer", value: "Generali Italia", source: "GENERALI ITALIA S.p.A." },
+      ],
+    });
+    expect(screen.getByText("Pagina 3")).toBeInTheDocument();
+    expect(screen.getAllByText(/^Pagina \d+$/)).toHaveLength(1);
+  });
+});
