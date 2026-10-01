@@ -974,7 +974,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                                   </>
                                 ) : (
                                   <RowMenuItem disabled={busy} onClick={() => handleOpen(doc)}>
-                                    Apri
+                                    Scarica
                                   </RowMenuItem>
                                 )}
                                 {isTranscribable(kind) ? (
@@ -1190,7 +1190,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           </>
                         ) : (
                           <RowMenuItem disabled={busy} onClick={() => handleOpen(doc)}>
-                            Apri
+                            Scarica
                           </RowMenuItem>
                         )}
                         {isTranscribable(kind) ? (

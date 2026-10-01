@@ -84,12 +84,12 @@ test("configura la cifratura, carica, apre e cancella un documento", async ({
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("appunti.txt")).toBeVisible({ timeout: 15_000 });
 
-  // --- Apertura/decrittazione (download) ---
+  // --- Scarico e decrittazione (download) ---
   const row = page.locator("li", { hasText: "appunti.txt" });
   await openRowMenu(row);
   const [download] = await Promise.all([
     page.waitForEvent("download"),
-    page.getByRole("menuitem", { name: "Apri" }).click(),
+    page.getByRole("menuitem", { name: "Scarica" }).click(),
   ]);
   expect(download.suggestedFilename()).toBe("appunti.txt");
   const downloadPath = await download.path();

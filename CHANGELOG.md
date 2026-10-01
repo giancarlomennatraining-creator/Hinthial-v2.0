@@ -10,6 +10,19 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-01 (24)
+
+### Pulizia dell'Archivio e della scheda documento --- "Scarica", "Rileggi da capo" in evidenza, meno rumore dalle proposte locali
+
+**Cosa fa:**
+- Nel menu di ogni riga dell'Archivio la voce per i file è ora **Scarica** invece di "Apri" (scaricava già: il dettaglio si apre dal nome). Per le note resta "Apri/Chiudi", che è l'anteprima in riga.
+- Nella scheda "Chiedi a Hinthia" **Rileggi da capo** è un pulsante con il bordo, non più un link piccolo: è un'azione che costa una lettura.
+- Se Hinthia ha già letto un documento, le **proposte calcolate sul dispositivo** (scheda "Letto dal dispositivo") non vengono più mostrate, perché quelle di Hinthia sono più affidabili; resta una riga che lo spiega, con il collegamento a "Chiedi a Hinthia". Per i documenti che Hinthia non ha letto non cambia nulla: lì le regole locali sono l'unica via, e restano interamente sul dispositivo.
+
+**Note tecniche:** `ArchiveItemDetail` separa `localCandidates` (sempre calcolate) da `localProposals` (vuote se `doc.contentAnalysis` esiste); "Cosa ne ho ricavato" continua a filtrare contro i candidati locali, così i valori già proposti non ricompaiono come semplici fatti. Il test e2e `archive.spec.ts` cerca ora la voce "Scarica".
+
+---
+
 ## 2026-10-01 (23)
 
 ### Content Intelligence, PR3 (passo B) --- Hinthia cita la pagina, e le pagine lette si salvano cifrate

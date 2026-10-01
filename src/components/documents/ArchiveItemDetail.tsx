@@ -585,7 +585,11 @@ export function ArchiveItemDetail({
   const reading = readingStateFor(doc);
   // Calcolati al volo dal testo già decifrato, non salvati: niente da migrare, valgono su tutto l'archivio esistente.
   // Che cosa c'è da proporre, tolto ciò che è già impostato e ciò che l'utente ha già scartato (v. domain/proposals/build.ts).
-  const localProposals = buildProposals(doc, categories, rejections);
+  // Se Hinthia ha già letto il documento le sue proposte sono più affidabili: quelle delle regole locali si nascondono
+  // (restano per i documenti che Hinthia non ha letto, dove sono l'unica via, interamente sul dispositivo).
+  const hinthiaHasRead = doc.contentAnalysis !== null;
+  const localCandidates = buildProposals(doc, categories, rejections);
+  const localProposals = hinthiaHasRead ? [] : localCandidates;
   // FASE 22: ricalcolate a ogni render come le locali, così accettare/rifiutare le filtra automaticamente allo stesso modo.
   // Vengono dalla lettura salvata, non da uno stato della pagina: sopravvivono al ricaricamento e a un'interruzione.
   const aiProposals = doc.contentAnalysis
@@ -598,7 +602,7 @@ export function ArchiveItemDetail({
   // notizia), e il titolo (non applicabile da questa pagina --- vive al caricamento, v. FASE 19b).
   const structuredFields = extractStructuredFields(doc.extractedText).filter((field) => {
     if (field.kind === "title") return false;
-    if (proposals.some((p) => p.kind === field.kind && p.value === field.value)) return false;
+    if ([...localCandidates, ...aiProposals].some((p) => p.kind === field.kind && p.value === field.value)) return false;
     if (field.kind === "expiry" && doc.expiresAt?.slice(0, 10) === field.value) return false;
     if (field.kind === "issuer" && doc.issuer === field.value) return false;
     return true;
@@ -898,6 +902,19 @@ export function ArchiveItemDetail({
                   onAccept={handleAcceptProposal}
                   onReject={handleRejectProposal}
                 />
+                {hinthiaHasRead && localCandidates.length > 0 ? (
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                    Hinthia ha già letto questo documento: le sue proposte sono più affidabili di quelle calcolate sul
+                    dispositivo, che per questo non vengono mostrate.{" "}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("analysis")}
+                      className="underline underline-offset-2 hover:text-brand"
+                    >
+                      Vai a Chiedi a Hinthia
+                    </button>
+                  </p>
+                ) : null}
                 <StructuredFieldsSection fields={structuredFields} />
                 <ReadingSection
                   doc={doc}

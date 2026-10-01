@@ -181,7 +181,7 @@ export function AIAnalysisTrigger({
         <button
           type="button"
           onClick={() => onAnalyze(rereadScope, { force: true })}
-          className="w-fit text-xs text-zinc-500 underline underline-offset-2 hover:text-brand dark:text-zinc-400"
+          className="w-fit rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
         >
           Rileggi da capo
         </button>
