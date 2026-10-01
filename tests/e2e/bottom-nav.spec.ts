@@ -41,6 +41,7 @@ test("la barra fissa in basso mostra le voci di default, si personalizza da Impo
   // Si toglie "Archivio" dall'elenco "Nella barra" e si aggiunge "Beni" da "Altre voci". Viewport da smartphone: Impostazioni è a elenco -> dettaglio.
   await page.goto("/settings");
   await page.getByRole("button", { name: "Aspetto" }).click();
+  await page.getByRole("button", { name: "Barra in basso" }).click();
   await expect(
     page.getByRole("heading", { name: "Barra di navigazione in basso (smartphone)" }),
   ).toBeVisible();
@@ -84,6 +85,7 @@ test("oltre 5 voci scelte, le altre caselle si disabilitano", async ({ page }) =
   // Viewport da smartphone: Impostazioni è a elenco -> dettaglio.
   await page.goto("/settings");
   await page.getByRole("button", { name: "Aspetto" }).click();
+  await page.getByRole("button", { name: "Barra in basso" }).click();
 
   // Le 4 di default sono già selezionate: se ne aggiunge una quinta (il massimo) e una sesta resta disabilitata.
   await Promise.all([
@@ -106,6 +108,7 @@ test("le frecce riordinano le voci nella barra, e l'ordine resta dopo un refresh
 
   await page.goto("/settings");
   await page.getByRole("button", { name: "Aspetto" }).click();
+  await page.getByRole("button", { name: "Barra in basso" }).click();
 
   // Ordine di partenza: Dashboard, Archivio, Scadenze, Capsule. Si sposta "Archivio" in cima con la freccia ▲.
   await Promise.all([
@@ -119,5 +122,6 @@ test("le frecce riordinano le voci nella barra, e l'ordine resta dopo un refresh
 
   await page.reload();
   await page.getByRole("button", { name: "Aspetto" }).click();
+  await page.getByRole("button", { name: "Barra in basso" }).click();
   await expect(links.first()).toHaveText("Archivio");
 });

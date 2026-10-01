@@ -29,7 +29,12 @@ test.describe("smartphone", () => {
     await page.getByRole("button", { name: "Aspetto" }).click();
     await expect(page.getByRole("button", { name: "Informazioni utente" })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Aspetto", exact: true })).toBeVisible();
+    // Aspetto è a due livelli: prima l'elenco delle sue funzioni, poi il corpo di quella scelta.
+    await expect(page.getByRole("heading", { name: "Disposizione del menu" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Disposizione menu" }).click();
     await expect(page.getByRole("heading", { name: "Disposizione del menu" })).toBeVisible();
+    await page.getByRole("button", { name: "Aspetto" }).click();
+    await expect(page.getByRole("button", { name: "Disposizione menu" })).toBeVisible();
     const backButton = page.getByRole("button", { name: "Torna alle impostazioni" });
     await expect(backButton).toBeVisible();
 
@@ -67,6 +72,8 @@ test("da desktop Impostazioni resta a schede, con contenuto sempre visibile a fi
   await expect(page.getByRole("button", { name: "Torna alle impostazioni" })).toHaveCount(0);
 
   await page.getByRole("tab", { name: "Aspetto" }).click();
+  await expect(page.getByRole("heading", { name: "Tema" })).toBeVisible();
+  await page.getByRole("tab", { name: "Disposizione menu" }).click();
   await expect(page.getByRole("heading", { name: "Disposizione del menu" })).toBeVisible();
   // La scheda "Informazioni utente" è ancora lì, a fianco (non sparita
   // come nel dettaglio mobile).

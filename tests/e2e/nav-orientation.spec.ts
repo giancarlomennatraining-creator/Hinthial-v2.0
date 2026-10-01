@@ -26,6 +26,7 @@ test("la disposizione del menu si imposta da Impostazioni > Aspetto, cambia subi
 
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("tab", { name: "Disposizione menu" }).click();
   await expect(page.getByRole("heading", { name: "Disposizione del menu" })).toBeVisible();
   const group = page.getByRole("radiogroup", { name: "Disposizione del menu" });
   await expect(group.getByRole("radio", { name: "Verticale (a sinistra)" })).toHaveAttribute(
@@ -78,6 +79,7 @@ test("la disposizione del menu si imposta da Impostazioni > Aspetto, cambia subi
   // Verticale a destra: la barra torna verticale, ma sul lato opposto.
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("tab", { name: "Disposizione menu" }).click();
   await Promise.all([
     page.waitForResponse(
       (res) => res.url().includes("/profiles") && res.request().method() === "PATCH",

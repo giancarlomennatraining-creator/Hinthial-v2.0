@@ -59,6 +59,7 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
   // Si imposta la vista a tabella da Impostazioni > Aspetto.
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("tab", { name: "Liste" }).click();
   await expect(page.getByRole("heading", { name: "Visualizzazione delle liste" })).toBeVisible();
   const friendsRow = page.getByRole("listitem").filter({ hasText: "Amici" });
   await friendsRow.getByRole("radio", { name: "Vista a tabella" }).click();
@@ -99,6 +100,7 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
 
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("tab", { name: "Liste" }).click();
   await expect(
     page.getByRole("listitem").filter({ hasText: "Amici" }).getByRole("radio", {
       name: "Vista a elenco",

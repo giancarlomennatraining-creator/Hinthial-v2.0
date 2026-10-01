@@ -145,7 +145,7 @@ export function MedicalCardIcon(props: IconProps) {
   );
 }
 
-/** Scheda "Sicurezza" in Impostazioni (stesso lucchetto del badge "zero-knowledge" nella hero). */
+/** Scheda "Autenticazione" in Impostazioni (stesso lucchetto del badge "zero-knowledge" nella hero). */
 export function SecurityIcon(props: IconProps) {
   return (
     <svg {...baseProps(props)}>
@@ -306,6 +306,71 @@ export function TagIcon(props: IconProps) {
     <svg {...baseProps(props)}>
       <path d="M11.5 4H6a2 2 0 0 0-2 2v5.5a2 2 0 0 0 .6 1.4l8.5 8.5a2 2 0 0 0 2.8 0l5-5a2 2 0 0 0 0-2.8l-8.5-8.5A2 2 0 0 0 11.5 4z" />
       <circle cx="7.5" cy="8.5" r="1.4" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** Tema chiaro/scuro (Impostazioni > Aspetto) --- cerchio con metà piena. */
+export function ThemeIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Disposizione del menu: finestra con la barra laterale a sinistra. */
+export function SidebarLayoutIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <line x1="9.5" y1="4.5" x2="9.5" y2="19.5" />
+    </svg>
+  );
+}
+
+/** Voci del menu principale: elenco puntato. */
+export function MenuListIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <line x1="9" y1="7" x2="20" y2="7" />
+      <line x1="9" y1="12" x2="20" y2="12" />
+      <line x1="9" y1="17" x2="20" y2="17" />
+      <circle cx="5" cy="7" r="0.6" />
+      <circle cx="5" cy="12" r="0.6" />
+      <circle cx="5" cy="17" r="0.6" />
+    </svg>
+  );
+}
+
+/** Smartphone: app authenticator (il codice vive sul telefono). */
+export function SmartphoneIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <rect x="7" y="3" width="10" height="18" rx="2" />
+      <line x1="11" y1="18" x2="13" y2="18" />
+    </svg>
+  );
+}
+
+/** Barra di navigazione in basso su smartphone: telefono con la barra al fondo. */
+export function BottomBarIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <rect x="6.5" y="3" width="11" height="18" rx="2" />
+      <line x1="6.5" y1="16.5" x2="17.5" y2="16.5" />
+    </svg>
+  );
+}
+
+/** Visualizzazione delle liste: elenco a righe in una tabella. */
+export function ListViewIcon(props: IconProps) {
+  return (
+    <svg {...baseProps(props)}>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <line x1="3.5" y1="10" x2="20.5" y2="10" />
+      <line x1="3.5" y1="14.5" x2="20.5" y2="14.5" />
     </svg>
   );
 }

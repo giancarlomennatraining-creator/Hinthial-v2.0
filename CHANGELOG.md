@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-02 (31)
+
+### Menu Impostazioni a due livelli (Autenticazione e Aspetto)
+
+**Cosa fa:**
+- Le voci che raccolgono più funzioni ora le mostrano come **sottovoci con icona**: una funzione alla volta, a tutta larghezza.
+- **Autenticazione** (prima "Sicurezza", che ripeteva il nome del gruppo): App Authenticator e Dispositivi fidati.
+- **Aspetto**: Tema, Disposizione menu, Voci del menu, Barra in basso, Liste, Capsule, Archivio.
+- Da computer le sottovoci compaiono sotto la voce aperta; da smartphone la voce apre prima l'elenco delle sue funzioni, poi la funzione scelta, con il tasto indietro che risale di un livello.
+- Le due liste di "Voci del menu" e "Barra in basso" si affiancano su schermi larghi.
+- Le voci con una sola funzione restano com'erano.
+
+**Note tecniche:** `TabDef.sections` in `SettingsTabs.tsx`; link diretti con `?tab=appearance&section=theme` (una sezione inesistente ricade sulla prima, `?tab=` da solo resta valido). Il pannello dei codici di backup resta dentro App Authenticator. Test e2e aggiornati ai nuovi nomi e al passaggio in più dei sottomenu.
+
+---
+
 ## 2026-10-02 (30)
 
 ### Tolta la pagina Cronologia

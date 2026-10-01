@@ -6,6 +6,7 @@ export default async function SettingsPage({
 }: {
   searchParams: Promise<{
     tab?: string;
+    section?: string;
     from?: string;
     to?: string;
     area?: string;
@@ -16,7 +17,7 @@ export default async function SettingsPage({
   }>;
 }) {
   const user = await getCurrentUser();
-  const { tab, ...activityParams } = await searchParams;
+  const { tab, section, ...activityParams } = await searchParams;
 
   return (
     <div className="flex flex-col gap-8">
@@ -35,6 +36,7 @@ export default async function SettingsPage({
         avatarUrl={user?.avatarUrl ?? null}
         birthDate={user?.birthDate ?? null}
         initialTab={tab}
+        initialSection={section}
         activityParams={activityParams}
       />
     </div>
