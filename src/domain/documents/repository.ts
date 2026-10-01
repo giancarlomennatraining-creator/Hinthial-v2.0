@@ -20,7 +20,7 @@ import {
   uploadEncryptedPayload,
   uploadEncryptedThumbnail,
 } from "@/lib/storage/documents-bucket";
-import { logAuditEvent } from "@/lib/audit/log-event";
+import { logAuditEvent, type AuditEventMetadata } from "@/lib/audit/log-event";
 import {
   isAnalysisStatus,
   parsePersistedAnalysis,
@@ -492,7 +492,7 @@ export async function updateTextNoteContent(
   }
 
   await removeEncryptedPayload(supabase, doc.storagePath).catch(() => {});
-  await logAuditEvent(supabase, ownerId, "document_updated", { documentId: doc.id });
+  await logAuditEvent(supabase, ownerId, "document_updated", { documentId: doc.id, change: "note" });
 }
 
 /** Aggiorna titolo/categoria/scadenza/note/tag/emittente --- mai il contenuto del file. Ricifra notes/tags/issuer (e il titolo, se cambia) con la Master Key. */
@@ -544,7 +544,19 @@ export async function updateDocumentMetadata(
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Devi essere autenticato.");
   await replaceDocumentDossierLinks(supabase, user.id, documentId, metadata.dossierIds);
-  await logAuditEvent(supabase, user.id, "document_updated", { documentId });
+  await logAuditEvent(supabase, user.id, "document_updated", { documentId, change: "details" });
+}
+
+/** Traccia nella cronologia del documento un salvataggio che non passa da updateDocumentMetadata. */
+async function logDocumentChange(
+  supabase: SupabaseClient<Database>,
+  documentId: string,
+  metadata: Pick<AuditEventMetadata, "change" | "excluded">,
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) await logAuditEvent(supabase, user.id, "document_updated", { documentId, ...metadata });
 }
 
 /** Scritto a mano oggi (v. domain/transcription); un motore reale in futuro cambierebbe solo cosa riempie il campo, non questa funzione. */
@@ -564,6 +576,8 @@ export async function updateDocumentTranscript(
   if (error) {
     throw new Error(`Impossibile salvare la trascrizione: ${error.message}`);
   }
+
+  await logDocumentChange(supabase, documentId, { change: "transcript" });
 }
 
 /** Sostituisce sempre il valore precedente --- non è una proposta (nessun accetta/modifica/rifiuta), solo l'ultima lettura d'insieme di Claude, come extractedText/extractedAt per il testo locale. */
@@ -584,6 +598,8 @@ export async function saveAISynthesis(
   if (error) {
     throw new Error(`Impossibile salvare la sintesi: ${error.message}`);
   }
+
+  await logDocumentChange(supabase, documentId, { change: "ai_reading" });
 }
 
 /** Sostituisce l'intera lettura precedente: è la fotografia più recente, salvata dopo ogni blocco così un'interruzione non butta il lavoro già pagato. */
@@ -624,6 +640,8 @@ export async function updateDocumentAIExtractionExclusion(
   if (error) {
     throw new Error(`Impossibile salvare l'esclusione: ${error.message}`);
   }
+
+  await logDocumentChange(supabase, documentId, { change: "ai_exclusion", excluded });
 }
 
 /** `null` se il tipo non ha miniatura, il documento è pre-esistente, o l'upload a suo tempo è fallito --- chi chiama ricade sul file intero. */
@@ -736,7 +754,10 @@ export async function extractTextForExistingDocument(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user) await logAuditEvent(supabase, user.id, "document_text_read", { documentId: doc.id });
+  if (user) await logAuditEvent(supabase, user.id, "document_text_read", {
+      documentId: doc.id,
+      reread: doc.extractedAt !== null,
+    });
 
   return { foundText: Boolean(text) };
 }

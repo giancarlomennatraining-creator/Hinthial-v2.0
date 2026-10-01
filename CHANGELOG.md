@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-01 (28)
+
+### Cronologia del contenuto completa; Attività solo per il resto
+
+**Cosa fa:**
+- La scheda **Cronologia** di un contenuto registra anche i **salvataggi**: dettagli della scheda, testo della nota, trascrizione, esclusione da Hinthia (escluso/riammesso) e lettura di Hinthia salvata. Il dettaglio dice quale.
+- La **rilettura sul dispositivo** compare come "Testo riletto sul dispositivo", distinta dalla prima lettura ("Testo letto sul dispositivo").
+- Gli eventi legati a un contenuto compaiono **solo** nella sua Cronologia; **Impostazioni > Attività** mostra gli eventi non collegati a un contenuto (accessi, sicurezza, amici, capsule, ecc.). Il link "Vedi tutto" nella Cronologia è stato tolto.
+
+**Note tecniche:**
+- Nessuna nuova migrazione: i salvataggi usano `document_updated` con `change` (e `excluded`) nei metadati; la rilettura usa `reread` su `document_text_read`. Mai nomi o valori.
+- `listAuditEvents` esclude le righe con `metadata->>documentId`; gli eventi registrati prima della Cronologia per documento non hanno quell'id e restano visibili in Attività. Anche le letture di Hinthia (`ai_extraction_used`) sono ora solo nella Cronologia del contenuto.
+
+---
+
 ## 2026-10-01 (27)
 
 ### Cronologia per documento

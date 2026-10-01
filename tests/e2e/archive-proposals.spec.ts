@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -184,10 +184,10 @@ test("modificare una proposta prima di accettarla", async ({ page }) => {
   await expect(page.getByLabel("Scadenza")).toHaveValue("2028-01-15", { timeout: 20_000 });
 });
 
-test("le scelte sulle proposte restano in Attività", async ({ page }) => {
+test("le scelte sulle proposte restano nella Cronologia del contenuto", async ({ page }) => {
   test.slow();
 
-  const user = await setUpWithPolizza(page);
+  await setUpWithPolizza(page);
 
   await page
     .getByRole("tabpanel", { name: "Letto dal dispositivo" })
@@ -198,12 +198,7 @@ test("le scelte sulle proposte restano in Attività", async ({ page }) => {
   await page.getByRole("tab", { name: "Scheda" }).click();
   await expect(page.getByLabel("Scadenza")).toHaveValue("2027-06-03", { timeout: 20_000 });
 
-  // Ogni scrittura automatica deve lasciare traccia.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  // exact: senza, "Impostazioni" ambiguo con il link "Impostazioni → Hinthia" di AIAnalysisTrigger (FASE 22).
-  await page.getByRole("link", { name: "Impostazioni", exact: true }).click();
-  await page.getByRole("tab", { name: "Attività" }).click();
-  await page.getByRole("button", { name: "Trova" }).click();
-
+  // Ogni scrittura automatica deve lasciare traccia, nella Cronologia del contenuto (non in Impostazioni > Attività).
+  await page.getByRole("tab", { name: "Cronologia" }).click();
   await expect(page.getByText("Proposta accettata").first()).toBeVisible({ timeout: 30_000 });
 });

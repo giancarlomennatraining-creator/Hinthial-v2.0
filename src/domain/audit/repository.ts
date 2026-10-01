@@ -19,6 +19,8 @@ export async function listAuditEvents(
   let request = supabase
     .from("audit_events")
     .select("id, event_type, created_at, metadata")
+    // Gli eventi legati a un contenuto stanno solo nella Cronologia del contenuto (v. listDocumentAuditEvents).
+    .is("metadata->>documentId", null)
     .order("created_at", { ascending: false });
 
   if (query.startDate) {

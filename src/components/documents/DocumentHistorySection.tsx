@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
 import { listDocumentAuditEvents } from "@/domain/audit/repository";
 import { summarizeDocumentHistory } from "@/domain/audit/document-history";
@@ -24,7 +23,7 @@ function formatDateTime(iso: string): string {
 }
 
 /**
- * Le ultime azioni fatte su questo contenuto, dal registro Attività (v. domain/audit): solo tipo di azione e data,
+ * Le ultime azioni fatte su questo contenuto, dal registro eventi (v. domain/audit): solo tipo di azione e data,
  * mai nomi o valori. `version` cambia quando il documento si ricarica dopo un'azione, e fa rileggere l'elenco.
  */
 export function DocumentHistorySection({
@@ -58,17 +57,9 @@ export function DocumentHistorySection({
 
   return (
     <section aria-label="Cronologia" className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          Cronologia
-        </h2>
-        <Link
-          href="/settings?tab=activity"
-          className="text-xs font-medium text-brand underline-offset-2 hover:underline"
-        >
-          Vedi tutto
-        </Link>
-      </div>
+      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+        Cronologia
+      </h2>
 
       {failed ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">

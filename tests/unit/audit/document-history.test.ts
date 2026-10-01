@@ -78,6 +78,29 @@ describe("describeAuditEvent", () => {
     expect(describeAuditEvent({ type: "proposal_accepted", metadata }).detail).toBe("targa");
   });
 
+  it("distingue il testo letto dal testo riletto sul dispositivo", () => {
+    expect(describeAuditEvent({ type: "document_text_read", metadata: { reread: false } }).label).toBe(
+      "Testo letto sul dispositivo",
+    );
+    expect(describeAuditEvent({ type: "document_text_read", metadata: { reread: true } }).label).toBe(
+      "Testo riletto sul dispositivo",
+    );
+  });
+
+  it("indica quale salvataggio è stato fatto", () => {
+    expect(describeAuditEvent({ type: "document_updated", metadata: { change: "transcript" } })).toEqual({
+      label: "Contenuto modificato",
+      detail: "Trascrizione",
+    });
+    expect(describeAuditEvent({ type: "document_updated", metadata: { change: "ai_reading" } }).detail).toBe(
+      "Lettura di Hinthia salvata",
+    );
+    expect(
+      describeAuditEvent({ type: "document_updated", metadata: { change: "ai_exclusion", excluded: true } }).detail,
+    ).toBe("Esclusione da Hinthia: escluso");
+    expect(describeAuditEvent({ type: "document_updated", metadata: null }).detail).toBeNull();
+  });
+
   it("senza metadati (eventi vecchi) resta l'etichetta generica", () => {
     expect(describeAuditEvent({ type: "proposal_accepted", metadata: null })).toEqual({
       label: "Proposta accettata",

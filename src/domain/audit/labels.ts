@@ -180,6 +180,14 @@ export const AUDIT_EVENT_CATEGORIES: AuditEventCategory[] = [
   "digital-legacy",
 ];
 
+const DOCUMENT_CHANGE_LABEL = {
+  details: "Dettagli",
+  note: "Testo della nota",
+  transcript: "Trascrizione",
+  ai_exclusion: "Esclusione da Hinthia",
+  ai_reading: "Lettura di Hinthia salvata",
+} as const;
+
 const PROPOSAL_KIND_LABEL = {
   expiry: "Scadenza",
   category: "Categoria",
@@ -198,6 +206,16 @@ export function describeAuditEvent(
   const metadata = event.metadata;
   if (event.type === "ai_extraction_used" && metadata?.reread) {
     return { label: "Documento riletto da Hinthia", detail: null };
+  }
+  if (event.type === "document_text_read" && metadata?.reread) {
+    return { label: "Testo riletto sul dispositivo", detail: null };
+  }
+  if (event.type === "document_updated" && metadata?.change) {
+    const base = AUDIT_EVENT_TYPE_LABEL.document_updated;
+    if (metadata.change === "ai_exclusion") {
+      return { label: base, detail: `${DOCUMENT_CHANGE_LABEL.ai_exclusion}: ${metadata.excluded ? "escluso" : "riammesso"}` };
+    }
+    return { label: base, detail: DOCUMENT_CHANGE_LABEL[metadata.change] };
   }
   if (
     (event.type === "proposal_accepted" ||

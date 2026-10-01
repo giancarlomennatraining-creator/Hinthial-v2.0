@@ -89,8 +89,9 @@ test("Impostazioni > Attività si interroga con filtri (data e tipo) e apre il d
   // per pochi secondi dopo l'azione appena fatta, altrimenti crea
   // un'ambiguità con la riga omonima nella tabella qui sotto.
   const table = page.getByRole("table");
-  await expect(table.getByText("Contenuto aggiunto all'archivio")).toBeVisible({ timeout: 10_000 });
-  await expect(table.getByText("Amico aggiunto")).toBeVisible();
+  await expect(table.getByText("Amico aggiunto")).toBeVisible({ timeout: 10_000 });
+  // Le azioni su un contenuto stanno solo nella sua scheda Cronologia, non qui.
+  await expect(table.getByText("Contenuto aggiunto all'archivio")).not.toBeVisible();
 
   await page.getByRole("checkbox", { name: "Amici" }).check();
   await page.getByRole("button", { name: "Trova" }).click();
