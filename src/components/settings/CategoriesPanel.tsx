@@ -11,6 +11,7 @@ import {
 } from "@/domain/categories/repository";
 import type { Category } from "@/domain/categories/types";
 import { IconPicker } from "@/components/ui/IconPicker";
+import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 
 const DEFAULT_ICON = "📁";
 
@@ -20,6 +21,8 @@ const DEFAULT_ICON = "📁";
  */
 export function CategoriesPanel() {
   const supabase = useRef(createClient()).current;
+  // Serve solo a cifrare il nome nell'evento di eliminazione, quando il vault è sbloccato.
+  const { status } = useMasterKey();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,7 +152,13 @@ export function CategoriesPanel() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
 
-      await deleteCategory(supabase, user.id, category.id);
+      await deleteCategory(
+        supabase,
+        status.kind === "unlocked" ? status.masterKey : null,
+        user.id,
+        category.id,
+        category.name,
+      );
       setCategories((prev) => prev.filter((c) => c.id !== category.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile eliminare la categoria.");

@@ -8,7 +8,7 @@ import {
   serializeEnvelope,
   utf8ToBytes,
 } from "@/lib/crypto";
-import { logAuditEvent } from "@/lib/audit/log-event";
+import { logAuditEvent, type AuditEntityRef } from "@/lib/audit/log-event";
 import { decryptStructuredFields, encryptStructuredFields } from "@/domain/documents/repository";
 import { registerFieldVocabulary } from "@/domain/structured-fields/vocabulary";
 import type { DocumentListItem } from "@/domain/documents/types";
@@ -126,11 +126,13 @@ export async function acceptProposal(
       await registerFieldVocabulary(supabase, ownerId, fieldKey, proposal.fieldLabel);
     }
 
-    await logAuditEvent(supabase, ownerId, "proposal_accepted", {
-      documentId: doc.id,
-      proposalKind: "field",
-      fieldKey,
-    });
+    await logAuditEvent(
+      supabase,
+      ownerId,
+      "proposal_accepted",
+      { proposalKind: "field", fieldKey },
+      documentRef(doc.id),
+    );
     return { kind: "field", fieldKey, previousValue };
   }
 
@@ -146,7 +148,7 @@ export async function acceptProposal(
   }
 
   // In Attività resta traccia del *tipo*, mai del valore: gli audit non devono contenere contenuti.
-  await logAuditEvent(supabase, ownerId, "proposal_accepted", { documentId: doc.id, proposalKind: proposal.kind });
+  await logAuditEvent(supabase, ownerId, "proposal_accepted", { proposalKind: proposal.kind }, documentRef(doc.id));
 
   return { kind: proposal.kind, previousValue };
 }
@@ -168,7 +170,13 @@ export async function undoAcceptance(
     if (error) {
       throw new Error(`Impossibile annullare: ${error.message}`);
     }
-    await logAuditEvent(supabase, ownerId, "proposal_undone", { documentId, proposalKind: "field", fieldKey });
+    await logAuditEvent(
+      supabase,
+      ownerId,
+      "proposal_undone",
+      { proposalKind: "field", fieldKey },
+      documentRef(documentId),
+    );
     return;
   }
 
@@ -181,7 +189,7 @@ export async function undoAcceptance(
     throw new Error(`Impossibile annullare: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "proposal_undone", { documentId, proposalKind: accepted.kind });
+  await logAuditEvent(supabase, ownerId, "proposal_undone", { proposalKind: accepted.kind }, documentRef(documentId));
 }
 
 /**
@@ -215,11 +223,16 @@ export async function rejectProposal(
     throw new Error(`Impossibile registrare il rifiuto: ${error?.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "proposal_rejected", {
-    documentId,
-    proposalKind: proposal.kind,
-    ...(proposal.fieldKey ? { fieldKey: proposal.fieldKey } : {}),
-  });
+  await logAuditEvent(
+    supabase,
+    ownerId,
+    "proposal_rejected",
+    {
+      proposalKind: proposal.kind,
+      ...(proposal.fieldKey ? { fieldKey: proposal.fieldKey } : {}),
+    },
+    documentRef(documentId),
+  );
 
   return data.id;
 }
@@ -243,12 +256,16 @@ export async function undoRejection(
     "proposal_undone",
     context
       ? {
-          documentId: context.documentId,
           proposalKind: context.kind,
           ...(context.fieldKey ? { fieldKey: context.fieldKey } : {}),
         }
       : undefined,
+    context ? documentRef(context.documentId) : undefined,
   );
+}
+
+function documentRef(id: string): AuditEntityRef {
+  return { type: "document", id };
 }
 
 /** Rifiuti già espressi, decifrati --- il confronto con le proposte nuove avviene sul client, unico posto possibile. */

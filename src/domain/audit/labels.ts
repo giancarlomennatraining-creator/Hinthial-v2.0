@@ -1,6 +1,15 @@
-import type { AuditEventMetadata, AuditEventType } from "@/lib/audit/log-event";
+import type { AuditEntityType, AuditEventMetadata, AuditEventType } from "@/lib/audit/log-event";
 
-export type AuditEventCategory = "access" | "content" | "friends" | "security" | "digital-legacy";
+/** Le aree del registro: raggruppano i tipi di evento nel filtro di Impostazioni > Attività. */
+export type AuditEventCategory =
+  | "access"
+  | "security"
+  | "archive"
+  | "assets"
+  | "capsules"
+  | "friends"
+  | "digital-legacy"
+  | "hinthia";
 
 export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   login: "Accesso effettuato",
@@ -13,12 +22,17 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   document_created: "Contenuto aggiunto all'archivio",
   document_deleted: "Contenuto eliminato dall'archivio",
   asset_created: "Bene aggiunto",
+  asset_updated: "Bene modificato",
   asset_deleted: "Bene eliminato",
   capsule_created: "Capsula creata",
+  capsule_updated: "Capsula modificata",
   capsule_deleted: "Capsula eliminata",
   category_created: "Categoria creata",
+  category_updated: "Categoria modificata",
   category_deleted: "Categoria eliminata",
   friend_added: "Amico aggiunto",
+  friend_updated: "Amico modificato",
+  friend_deleted: "Amico eliminato",
   vault_wiped: "Vault svuotato",
   ai_chat_used: "Domanda inviata a Hinthia",
   ai_extraction_used: "Documento letto da Hinthia",
@@ -47,6 +61,7 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   proposal_rejected: "Proposta rifiutata",
   proposal_undone: "Proposta annullata",
   dossier_created: "Fascicolo creato",
+  dossier_updated: "Fascicolo modificato",
   dossier_deleted: "Fascicolo eliminato",
   document_trashed: "Contenuto spostato nel cestino",
   document_restored: "Contenuto ripristinato dal cestino",
@@ -67,12 +82,17 @@ export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
   document_created: "📄",
   document_deleted: "🗑️",
   asset_created: "💼",
+  asset_updated: "✏️",
   asset_deleted: "🗑️",
   capsule_created: "⏳",
+  capsule_updated: "✏️",
   capsule_deleted: "🗑️",
   category_created: "🏷️",
+  category_updated: "✏️",
   category_deleted: "🗑️",
   friend_added: "🤝",
+  friend_updated: "✏️",
+  friend_deleted: "🗑️",
   vault_wiped: "⚠️",
   ai_chat_used: "🤖",
   ai_extraction_used: "🔒",
@@ -101,6 +121,7 @@ export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
   proposal_rejected: "🙅",
   proposal_undone: "↩️",
   dossier_created: "🗂️",
+  dossier_updated: "✏️",
   dossier_deleted: "🗑️",
   document_trashed: "🗑️",
   document_restored: "♻️",
@@ -118,20 +139,43 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
   mfa_enrolled: "security",
   mfa_removed: "security",
   backup_codes_generated: "security",
-  document_created: "content",
-  document_deleted: "content",
-  asset_created: "content",
-  asset_deleted: "content",
-  capsule_created: "content",
-  capsule_deleted: "content",
-  category_created: "content",
-  category_deleted: "content",
-  friend_added: "friends",
   vault_wiped: "security",
-  ai_chat_used: "security",
-  ai_extraction_used: "security",
   trusted_device_registered: "security",
   trusted_device_revoked: "security",
+  document_created: "archive",
+  document_deleted: "archive",
+  document_trashed: "archive",
+  document_restored: "archive",
+  document_purged: "archive",
+  document_updated: "archive",
+  document_downloaded: "archive",
+  document_text_read: "archive",
+  proposal_accepted: "archive",
+  proposal_rejected: "archive",
+  proposal_undone: "archive",
+  dossier_created: "archive",
+  dossier_updated: "archive",
+  dossier_deleted: "archive",
+  category_created: "archive",
+  category_updated: "archive",
+  category_deleted: "archive",
+  asset_created: "assets",
+  asset_updated: "assets",
+  asset_deleted: "assets",
+  capsule_created: "capsules",
+  capsule_updated: "capsules",
+  capsule_deleted: "capsules",
+  friend_added: "friends",
+  friend_updated: "friends",
+  friend_deleted: "friends",
+  friend_request_sent: "friends",
+  friend_request_accepted: "friends",
+  friend_request_rejected: "friends",
+  guardian_role_requested: "friends",
+  guardian_role_accepted: "friends",
+  guardian_role_rejected: "friends",
+  guardian_role_revoked: "friends",
+  guardian_role_resigned: "friends",
   digital_legacy_reminder_sent: "digital-legacy",
   digital_legacy_grace_period_started: "digital-legacy",
   digital_legacy_awaiting_guardians: "digital-legacy",
@@ -143,42 +187,47 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
   digital_legacy_formal_verification_started: "digital-legacy",
   digital_legacy_final_wait_started: "digital-legacy",
   digital_legacy_triggered: "digital-legacy",
-  friend_request_sent: "friends",
-  friend_request_accepted: "friends",
-  friend_request_rejected: "friends",
-  guardian_role_requested: "friends",
-  guardian_role_accepted: "friends",
-  guardian_role_rejected: "friends",
-  guardian_role_revoked: "friends",
-  guardian_role_resigned: "friends",
-  proposal_accepted: "content",
-  proposal_rejected: "content",
-  proposal_undone: "content",
-  dossier_created: "content",
-  dossier_deleted: "content",
-  document_trashed: "content",
-  document_restored: "content",
-  document_purged: "content",
-  document_updated: "content",
-  document_downloaded: "content",
-  document_text_read: "content",
+  ai_chat_used: "hinthia",
+  ai_extraction_used: "hinthia",
 };
 
 export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {
   access: "Accessi",
-  content: "Contenuti",
-  friends: "Amici",
   security: "Sicurezza",
+  archive: "Archivio",
+  assets: "Beni",
+  capsules: "Capsule",
+  friends: "Amici",
   "digital-legacy": "Eredità digitale",
+  hinthia: "Hinthia",
 };
 
 export const AUDIT_EVENT_CATEGORIES: AuditEventCategory[] = [
   "access",
-  "content",
-  "friends",
   "security",
+  "archive",
+  "assets",
+  "capsules",
+  "friends",
   "digital-legacy",
+  "hinthia",
 ];
+
+export const AUDIT_ENTITY_TYPE_LABEL: Record<AuditEntityType, string> = {
+  document: "Contenuto",
+  asset: "Bene",
+  friend: "Amico",
+  capsule: "Capsula",
+  dossier: "Fascicolo",
+  category: "Categoria",
+};
+
+/** Tutti i tipi di evento di un'area, nell'ordine delle etichette. */
+export function auditEventTypesOf(category: AuditEventCategory): AuditEventType[] {
+  return (Object.keys(AUDIT_EVENT_TYPE_CATEGORY) as AuditEventType[]).filter(
+    (type) => AUDIT_EVENT_TYPE_CATEGORY[type] === category,
+  );
+}
 
 const DOCUMENT_CHANGE_LABEL = {
   details: "Dettagli",

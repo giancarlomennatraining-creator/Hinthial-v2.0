@@ -156,7 +156,8 @@ export async function POST(request: NextRequest) {
   }
 
   const provider = createClaudeAnalysisProvider(apiKey);
-  const auditMetadata = { category: categoryName, scope: scope as "category" | "temporary" | "once", documentId, reread: reread === true };
+  const auditMetadata = { category: categoryName, scope: scope as "category" | "temporary" | "once", reread: reread === true };
+  const auditEntity = { type: "document" as const, id: documentId };
 
   try {
     if (blockInput) {
@@ -175,12 +176,12 @@ export async function POST(request: NextRequest) {
       });
 
       // Traccia che il contenuto è davvero uscito, con che permesso --- mai il testo o il nome del file.
-      await logAuditEvent(supabase, user.id, "ai_extraction_used", auditMetadata);
+      await logAuditEvent(supabase, user.id, "ai_extraction_used", auditMetadata, auditEntity);
       return NextResponse.json({ result });
     }
 
     const synthesis = await provider.mergeSyntheses(partialSyntheses);
-    await logAuditEvent(supabase, user.id, "ai_extraction_used", auditMetadata);
+    await logAuditEvent(supabase, user.id, "ai_extraction_used", auditMetadata, auditEntity);
     return NextResponse.json({ synthesis });
   } catch (err) {
     if (err instanceof AnalysisOutputError) {

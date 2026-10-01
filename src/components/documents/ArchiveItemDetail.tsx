@@ -54,7 +54,6 @@ import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvi
 import { StructuredFieldsSection } from "@/components/documents/StructuredFieldsSection";
 import { ProposalsSection, type UndoableAction } from "@/components/documents/ProposalsSection";
 import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
-import { DocumentHistorySection } from "@/components/documents/DocumentHistorySection";
 import {
   DocumentMetadataFields,
   documentToFields,
@@ -139,7 +138,7 @@ export function ArchiveItemDetail({
   // non esiste più come tab a sé (v. feedback utente): quello che c'è da accettare vive già dentro una delle
   // due letture. Si azzera su "scheda" a ogni apertura della pagina, come fullText --- nessuna persistenza
   // necessaria; "scheda" di default perché prima era sempre visibile a sinistra, mai dietro un click.
-  const [activeTab, setActiveTab] = useState<"scheda" | "reading" | "analysis" | "history">("scheda");
+  const [activeTab, setActiveTab] = useState<"scheda" | "reading" | "analysis">("scheda");
 
   // Fusione Scheda/Modifica: i metadati modificabili, sempre live qui (mai una pagina a parte). `null` finché
   // il documento non è ancora caricato. Le proposte (Scadenza/Categoria/Emittente) scrivono direttamente su `doc`
@@ -808,22 +807,13 @@ export function ArchiveItemDetail({
               >
                 Chiedi a Hinthia{aiProposals.length > 0 ? ` · ${aiProposals.length}` : ""}
               </button>
-              <button
-                type="button"
-                role="tab"
-                id="tab-history"
-                aria-selected={activeTab === "history"}
-                aria-controls="tabpanel-history"
-                onClick={() => setActiveTab("history")}
-                className={`rounded-t-md px-3 py-2 text-sm font-medium ${
-                  activeTab === "history"
-                    ? "border-b-2 border-brand text-brand"
-                    : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
-                }`}
-              >
-                Cronologia
-              </button>
             </div>
+            <Link
+              href={`/settings?tab=activity&entity=document:${doc.id}`}
+              className="self-start text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+            >
+              Vedi attività di questo contenuto →
+            </Link>
 
             {/* L'annullamento resta visibile a cambio tab: una sola istanza sopra i pannelli, non una per tab.
                 aria-label distinto dal toast globale (v. ToastProvider): entrambi sono role="status". */}
@@ -949,7 +939,7 @@ export function ArchiveItemDetail({
                   onReread={handleReread}
                 />
               </div>
-            ) : activeTab === "analysis" ? (
+            ) : (
               <div id="tabpanel-analysis" role="tabpanel" aria-labelledby="tab-analysis" className="flex flex-col gap-6">
                 {/* Il trigger vive qui, non più fisso a sinistra (v. feedback utente): "Analisi con Hinthia" è
                     sia dove si chiede la lettura sia dove ne arriva il risultato. */}
@@ -999,14 +989,6 @@ export function ArchiveItemDetail({
                     Non hai ancora chiesto a Hinthia di leggere questo documento.
                   </p>
                 )}
-              </div>
-            ) : (
-              <div id="tabpanel-history" role="tabpanel" aria-labelledby="tab-history" className="flex flex-col gap-3">
-                <DocumentHistorySection
-                  documentId={doc.id}
-                  version={doc}
-                  fieldLabels={Object.fromEntries(fieldVocabulary.map((v) => [v.fieldKey, v.label]))}
-                />
               </div>
             )}
           </div>

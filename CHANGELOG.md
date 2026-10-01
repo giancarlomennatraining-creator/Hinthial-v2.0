@@ -10,6 +10,28 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-01 (29)
+
+### Registro eventi ridisegnato: tutto in Impostazioni > Attività, con filtri
+
+**Cosa fa:**
+- **Ogni evento su un elemento** (contenuti dell'Archivio, Beni, Amici, Capsule, Fascicoli, Categorie) è registrato **agganciato a quell'elemento**. Gli eventi di sistema (accessi, sicurezza, dispositivi fidati, eredità digitale) restano senza elemento. Le Scadenze sono derivate e non hanno eventi propri.
+- **Impostazioni > Attività** è l'unico posto dove si consulta il registro: tabella **impaginata dal server** (20/50/100 righe per pagina), caricata subito, con colonna **Elemento** (nome in chiaro a vault sbloccato; per un elemento eliminato definitivamente, il suo titolo con "(eliminato)").
+- **Form di filtro**: periodo (da/a e scorciatoie "Ultimi 7/30 giorni"), area, tipo di evento a scelta multipla (ristretto all'area), elemento scelto da un elenco. I filtri attivi compaiono come chip rimovibili, con "Azzera filtri", e **vivono nell'URL** (si condividono, resistono al ricarica).
+- Clic su una riga: pannello di dettaglio, con "Mostra tutte le attività di questo elemento".
+- La scheda **Cronologia** nel dettaglio di un contenuto è stata tolta; al suo posto il link "Vedi attività di questo contenuto →" apre Attività già filtrata.
+- Le letture di Hinthia tornano visibili in Attività.
+- Se la scrittura di un evento fallisce compare un avviso, invece di perderlo in silenzio.
+- Si riparte da zero: gli eventi precedenti sono stati cancellati.
+
+**Note tecniche:**
+- Migrazione `20261003000000_audit_entity_events.sql` (da applicare al DB v3: **svuota** `audit_events`, toglie il CHECK sui tipi, aggiunge `entity_type`, `entity_id`, `encrypted_label` e gli indici; rende superata `20261002000000`). I tipi di evento sono validati nel codice (`AuditEventType`).
+- Zero-knowledge: il server vede solo tipo, metadati tecnici e riferimento (tipo + id). Il titolo cifrato con la master key sta in `encrypted_label` solo negli eventi di eliminazione definitiva. Il server non può cercare per nome: si sceglie l'elemento da un elenco decifrato nel browser e si filtra per id.
+- `logAuditEvent(supabase, ownerId, type, metadata?, entity?)` restituisce un booleano ed emette `hinthial:audit-write-failed` su errore. Filtri in `domain/audit/filters.ts` (parse/serializzazione dell'URL, tolleranti a parametri non validi).
+- Rimossi `DocumentHistorySection`, `document-history.ts` e il relativo test.
+
+---
+
 ## 2026-10-01 (28)
 
 ### Cronologia del contenuto completa; Attività solo per il resto

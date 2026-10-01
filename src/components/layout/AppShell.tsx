@@ -14,6 +14,7 @@ import { OnboardingWidgetVisibilityProvider } from "@/components/layout/Onboardi
 import { AIChatProvider } from "@/components/ai/AIChatProvider";
 import { AIProcessingConsentProvider } from "@/components/ai/AIProcessingConsentProvider";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { AuditWriteFailedNotice } from "@/components/audit/AuditWriteFailedNotice";
 import { cn } from "@/lib/utils";
 import type { NavOrientation } from "@/lib/nav-orientation";
 import type { BottomNavItems } from "@/lib/bottom-nav";
@@ -65,6 +66,7 @@ export function AppShell({
     <ToastProvider>
     <MasterKeyProvider>
       <MasterKeyIntroModal userId={userId} initialSeen={initialMasterKeyIntroSeen} />
+      <AuditWriteFailedNotice />
       <NavOrientationProvider userId={userId} initialOrientation={initialNavOrientation}>
         <BottomNavItemsProvider userId={userId} initialItems={initialBottomNavItems}>
         <MainNavItemsProvider userId={userId} initialItems={initialMainNavItems}>

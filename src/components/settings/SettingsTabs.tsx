@@ -11,6 +11,7 @@ import { PrivacyPanel } from "@/components/settings/PrivacyPanel";
 import { MfaSettingsPanel } from "@/components/settings/MfaSettingsPanel";
 import { DeviceLockPanel } from "@/components/settings/DeviceLockPanel";
 import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
+import type { AuditFilterParams } from "@/domain/audit/filters";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
 import { TagsSettingsPanel } from "@/components/settings/TagsSettingsPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
@@ -139,7 +140,7 @@ const TAB_HELP: Record<Tab, HelpTip[]> = {
   ],
   activity: [
     { icon: "📜", text: "Il registro di ogni accesso e azione sensibile sul tuo account." },
-    { icon: "🔍", text: "Filtra per data o per tipo di evento." },
+    { icon: "🔍", text: "Filtra per periodo, area, tipo di evento o singolo elemento: i filtri restano nell'indirizzo della pagina." },
   ],
   "import-export": [
     { icon: "📤", text: "Esporta tutti i tuoi dati in un unico archivio cifrato." },
@@ -165,6 +166,7 @@ export function SettingsTabs({
   avatarUrl,
   birthDate,
   initialTab,
+  activityParams,
 }: {
   userId: string;
   firstName: string;
@@ -175,6 +177,8 @@ export function SettingsTabs({
   birthDate: string | null;
   /** Da `?tab=` (es. il link "Vedi tutto" della cronologia di un documento): ignorato se non è una scheda esistente. */
   initialTab?: string;
+  /** Filtri iniziali di Attività, da `?from=&entity=...` (es. il link "Vedi attività di questo contenuto" da un documento). */
+  activityParams?: AuditFilterParams;
 }) {
   const startTab = TABS.find((t) => t.id === initialTab)?.id ?? null;
   const [tab, setTab] = useState<Tab>(startTab ?? "user-info");
@@ -368,8 +372,8 @@ export function SettingsTabs({
       );
     }
     if (activeTab === "activity") {
-      // Registro tecnico in chiaro: non richiede la master key.
-      return <AuditLogPanel />;
+      // Il registro è in chiaro: non richiede la master key (con vault sbloccato mostra anche i nomi degli elementi).
+      return <AuditLogPanel initialParams={activityParams} />;
     }
     if (activeTab === "import-export") {
       // ImportExportTabs gestisce da sé le proprie sotto-schede e il proprio RequireMasterKey.

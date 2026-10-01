@@ -4,10 +4,19 @@ import { SettingsTabs } from "@/components/settings/SettingsTabs";
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{
+    tab?: string;
+    from?: string;
+    to?: string;
+    area?: string;
+    types?: string;
+    entity?: string;
+    size?: string;
+    page?: string;
+  }>;
 }) {
   const user = await getCurrentUser();
-  const { tab } = await searchParams;
+  const { tab, ...activityParams } = await searchParams;
 
   return (
     <div className="flex flex-col gap-8">
@@ -26,6 +35,7 @@ export default async function SettingsPage({
         avatarUrl={user?.avatarUrl ?? null}
         birthDate={user?.birthDate ?? null}
         initialTab={tab}
+        activityParams={activityParams}
       />
     </div>
   );

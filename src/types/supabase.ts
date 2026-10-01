@@ -71,7 +71,13 @@ type AuditEventTypeColumn =
   | "document_purged"
   | "document_updated"
   | "document_downloaded"
-  | "document_text_read";
+  | "document_text_read"
+  | "asset_updated"
+  | "friend_updated"
+  | "friend_deleted"
+  | "capsule_updated"
+  | "dossier_updated"
+  | "category_updated";
 
 type FriendStatusColumn = "active" | "revoked";
 
@@ -223,6 +229,9 @@ export type Database = {
           owner_id: string;
           event_type: AuditEventTypeColumn;
           metadata: Json | null;
+          entity_type: "document" | "asset" | "friend" | "capsule" | "dossier" | "category" | null;
+          entity_id: string | null;
+          encrypted_label: string | null;
           created_at: string;
         };
         Insert: {
@@ -230,6 +239,9 @@ export type Database = {
           owner_id: string;
           event_type: AuditEventTypeColumn;
           metadata?: Json | null;
+          entity_type?: "document" | "asset" | "friend" | "capsule" | "dossier" | "category" | null;
+          entity_id?: string | null;
+          encrypted_label?: string | null;
           created_at?: string;
         };
         Update: {
@@ -237,6 +249,9 @@ export type Database = {
           owner_id?: string;
           event_type?: AuditEventTypeColumn;
           metadata?: Json | null;
+          entity_type?: "document" | "asset" | "friend" | "capsule" | "dossier" | "category" | null;
+          entity_id?: string | null;
+          encrypted_label?: string | null;
           created_at?: string;
         };
         Relationships: [

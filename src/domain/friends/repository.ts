@@ -8,7 +8,7 @@ import {
   utf8ToBytes,
   bytesToUtf8,
 } from "@/lib/crypto";
-import { logAuditEvent } from "@/lib/audit/log-event";
+import { logAuditEvent, logAuditEventForCurrentUser } from "@/lib/audit/log-event";
 import {
   avatarPublicUrl,
   friendAvatarStoragePath,
@@ -143,7 +143,7 @@ export async function createFriend(
     throw new Error(`Impossibile aggiungere l'amico: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "friend_added");
+  await logAuditEvent(supabase, ownerId, "friend_added", undefined, { type: "friend", id: data.id });
   return { id: data.id };
 }
 
@@ -177,6 +177,8 @@ export async function updateFriend(
   if (error) {
     throw new Error(`Impossibile aggiornare l'amico: ${error.message}`);
   }
+
+  await logAuditEventForCurrentUser(supabase, "friend_updated", undefined, { type: "friend", id: friendId });
 }
 
 /** Oggi solo "Revoca" (active -> revoked) lo usa --- non concede/revoca alcun accesso reale (FASE 7 è solo struttura dati). */
@@ -193,11 +195,20 @@ export async function setFriendStatus(
 }
 
 export async function deleteFriend(supabase: SupabaseClient<Database>, friendId: string): Promise<void> {
+  // Il nome è già cifrato nella riga: lo si copia nell'evento, per riconoscere l'amico dopo l'eliminazione.
+  const { data: nameRow } = await supabase.from("friends").select("encrypted_name").eq("id", friendId).maybeSingle();
+
   const { error } = await supabase.from("friends").delete().eq("id", friendId);
 
   if (error) {
     throw new Error(`Impossibile eliminare l'amico: ${error.message}`);
   }
+
+  await logAuditEventForCurrentUser(supabase, "friend_deleted", undefined, {
+    type: "friend",
+    id: friendId,
+    encryptedLabel: nameRow?.encrypted_name,
+  });
 }
 
 /** Stesso schema di profile/repository.ts updateAvatar --- vince sempre sulla foto reale dell'account collegato, quando c'è. */

@@ -3,7 +3,7 @@ import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users"
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("Impostazioni > Attività si interroga con filtri (data e tipo) e apre il dettaglio di un evento", async ({
+test("Impostazioni > Attività si interroga con filtri (area, elemento) e apre il dettaglio di un evento", async ({
   page,
 }) => {
   test.slow();
@@ -18,33 +18,39 @@ test("Impostazioni > Attività si interroga con filtri (data e tipo) e apre il d
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   // Il login stesso è già un evento --- consultabile subito, senza
-  // sbloccare la cifratura (è un registro tecnico in chiaro). Niente
-  // caricamento automatico: serve premere "Trova".
+  // sbloccare la cifratura (è un registro tecnico in chiaro). L'elenco si
+  // carica da solo, senza premere nulla.
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await page.getByRole("tab", { name: "Attività" }).click();
 
-  await expect(page.getByText("Imposta i filtri che ti interessano")).toBeVisible();
-  await page.getByRole("button", { name: "Trova" }).click();
-  await expect(page.getByText("Accesso effettuato")).toBeVisible();
+  // Le schede di Impostazioni possono montare il pannello due volte (mobile/desktop): si lavora su ciò che si vede.
+  const table = () => page.getByRole("table").filter({ visible: true });
+  const area = () => page.getByLabel("Area").filter({ visible: true });
+  await expect(table().getByText("Accesso effettuato")).toBeVisible();
 
   // Il metodo di login è tra i dettagli, visibili aprendo la riga.
-  await page.getByText("Accesso effettuato").click();
+  await table().getByText("Accesso effettuato").click();
   const detail = page.getByRole("dialog", { name: "Dettaglio attività" });
   await expect(detail).toBeVisible();
   await expect(detail.getByText("Password")).toBeVisible();
   await page.getByRole("button", { name: "Chiudi" }).click();
   await expect(detail).not.toBeVisible();
 
-  // Il filtro per categoria (scelta multipla) funziona in entrambe le direzioni.
-  await page.getByRole("checkbox", { name: "Contenuti" }).check();
-  await page.getByRole("button", { name: "Trova" }).click();
-  await expect(page.getByText("Nessuna attività trovata con questi filtri.")).toBeVisible();
-  await page.getByRole("checkbox", { name: "Contenuti" }).uncheck();
-  await page.getByRole("checkbox", { name: "Accessi" }).check();
-  await page.getByRole("button", { name: "Trova" }).click();
-  await expect(page.getByText("Accesso effettuato")).toBeVisible();
-  await page.getByRole("checkbox", { name: "Accessi" }).uncheck();
+  // Il filtro per area funziona in entrambe le direzioni, vive nell'URL e si azzera con un clic.
+  await area().selectOption({ label: "Archivio" });
+  await expect(page.getByText("Nessuna attività trovata con questi filtri.").filter({ visible: true })).toBeVisible();
+  await area().selectOption({ label: "Accessi" });
+  await expect(table().getByText("Accesso effettuato")).toBeVisible();
+  await expect(page).toHaveURL(/area=access/);
+
+  await page.reload();
+  await expect(area()).toHaveValue("access");
+  await expect(table().getByText("Accesso effettuato")).toBeVisible();
+
+  await page.getByRole("button", { name: "Azzera filtri" }).filter({ visible: true }).click();
+  await expect(area()).toHaveValue("");
+  await expect(page).not.toHaveURL(/area=/);
 
   // Configurare la cifratura e aggiungere un contenuto/bene/contatto
   // registrano a loro volta un evento --- verificabile tornando qui.
@@ -83,18 +89,15 @@ test("Impostazioni > Attività si interroga con filtri (data e tipo) e apre il d
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await page.getByRole("tab", { name: "Attività" }).click();
-  await page.getByRole("button", { name: "Trova" }).click();
-  // Scope alla tabella --- non a getByText su tutta la pagina: il popup
-  // di conferma "Amico aggiunto." (v. ToastProvider), ancora visibile
-  // per pochi secondi dopo l'azione appena fatta, altrimenti crea
-  // un'ambiguità con la riga omonima nella tabella qui sotto.
-  const table = page.getByRole("table");
-  await expect(table.getByText("Amico aggiunto")).toBeVisible({ timeout: 10_000 });
-  // Le azioni su un contenuto stanno solo nella sua scheda Cronologia, non qui.
-  await expect(table.getByText("Contenuto aggiunto all'archivio")).not.toBeVisible();
 
-  await page.getByRole("checkbox", { name: "Amici" }).check();
-  await page.getByRole("button", { name: "Trova" }).click();
-  await expect(table.getByText("Amico aggiunto")).toBeVisible();
-  await expect(table.getByText("Contenuto aggiunto all'archivio")).not.toBeVisible();
+  // Ora anche le azioni sui contenuti stanno qui, ciascuna agganciata al proprio elemento.
+  await expect(table().getByText("Amico aggiunto")).toBeVisible({ timeout: 10_000 });
+  await expect(table().getByText("Contenuto aggiunto all'archivio")).toBeVisible();
+  // Con il vault sbloccato la colonna Elemento mostra il nome in chiaro.
+  await expect(table().getByText("Maria Rossi")).toBeVisible({ timeout: 10_000 });
+
+  // Scegliere un elemento dall'elenco lascia solo i suoi eventi.
+  await page.getByLabel("Elemento").filter({ visible: true }).selectOption({ label: "Maria Rossi" });
+  await expect(table().getByText("Amico aggiunto")).toBeVisible();
+  await expect(table().getByText("Contenuto aggiunto all'archivio")).not.toBeVisible();
 });

@@ -20,7 +20,7 @@ import {
   uploadEncryptedPayload,
   uploadEncryptedThumbnail,
 } from "@/lib/storage/documents-bucket";
-import { logAuditEvent, type AuditEventMetadata } from "@/lib/audit/log-event";
+import { logAuditEvent, type AuditEntityRef, type AuditEventMetadata } from "@/lib/audit/log-event";
 import {
   isAnalysisStatus,
   parsePersistedAnalysis,
@@ -405,7 +405,7 @@ export async function uploadDocument(
     throw new Error(`Impossibile salvare il documento: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_created", { documentId });
+  await logAuditEvent(supabase, ownerId, "document_created", undefined, documentRef(documentId));
   await replaceDocumentDossierLinks(supabase, ownerId, documentId, metadata.dossierIds);
   return documentId;
 }
@@ -454,7 +454,7 @@ export async function createTextNote(
     throw new Error(`Impossibile salvare la nota: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_created", { documentId });
+  await logAuditEvent(supabase, ownerId, "document_created", undefined, documentRef(documentId));
   await replaceDocumentDossierLinks(supabase, ownerId, documentId, metadata.dossierIds);
   return documentId;
 }
@@ -492,7 +492,7 @@ export async function updateTextNoteContent(
   }
 
   await removeEncryptedPayload(supabase, doc.storagePath).catch(() => {});
-  await logAuditEvent(supabase, ownerId, "document_updated", { documentId: doc.id, change: "note" });
+  await logAuditEvent(supabase, ownerId, "document_updated", { change: "note" }, documentRef(doc.id));
 }
 
 /** Aggiorna titolo/categoria/scadenza/note/tag/emittente --- mai il contenuto del file. Ricifra notes/tags/issuer (e il titolo, se cambia) con la Master Key. */
@@ -544,7 +544,7 @@ export async function updateDocumentMetadata(
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Devi essere autenticato.");
   await replaceDocumentDossierLinks(supabase, user.id, documentId, metadata.dossierIds);
-  await logAuditEvent(supabase, user.id, "document_updated", { documentId, change: "details" });
+  await logAuditEvent(supabase, user.id, "document_updated", { change: "details" }, documentRef(documentId));
 }
 
 /** Traccia nella cronologia del documento un salvataggio che non passa da updateDocumentMetadata. */
@@ -556,7 +556,11 @@ async function logDocumentChange(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user) await logAuditEvent(supabase, user.id, "document_updated", { documentId, ...metadata });
+  if (user) await logAuditEvent(supabase, user.id, "document_updated", metadata, documentRef(documentId));
+}
+
+function documentRef(id: string, encryptedLabel?: string): AuditEntityRef {
+  return { type: "document", id, encryptedLabel };
 }
 
 /** Scritto a mano oggi (v. domain/transcription); un motore reale in futuro cambierebbe solo cosa riempie il campo, non questa funzione. */
@@ -754,10 +758,15 @@ export async function extractTextForExistingDocument(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user) await logAuditEvent(supabase, user.id, "document_text_read", {
-      documentId: doc.id,
-      reread: doc.extractedAt !== null,
-    });
+  if (user) {
+    await logAuditEvent(
+      supabase,
+      user.id,
+      "document_text_read",
+      { reread: doc.extractedAt !== null },
+      documentRef(doc.id),
+    );
+  }
 
   return { foundText: Boolean(text) };
 }
@@ -768,6 +777,13 @@ export async function deleteDocument(
   ownerId: string,
   doc: Pick<DocumentListItem, "id" | "storagePath" | "hasThumbnail">,
 ): Promise<void> {
+  // Il titolo è già cifrato nella riga: lo si copia nell'evento (serve a riconoscere il contenuto dopo l'eliminazione, senza la master key).
+  const { data: titleRow } = await supabase
+    .from("documents")
+    .select("encrypted_filename")
+    .eq("id", doc.id)
+    .maybeSingle();
+
   await removeEncryptedPayload(supabase, doc.storagePath);
   if (doc.hasThumbnail) {
     await removeEncryptedPayload(supabase, documentThumbnailPath(doc.storagePath)).catch(() => {});
@@ -779,7 +795,13 @@ export async function deleteDocument(
     throw new Error(`Impossibile eliminare il documento: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_purged", { documentId: doc.id });
+  await logAuditEvent(
+    supabase,
+    ownerId,
+    "document_purged",
+    undefined,
+    documentRef(doc.id, titleRow?.encrypted_filename),
+  );
 }
 
 /** Una sola UPDATE per tutti gli id, nessun file toccato. `purgeAt` si calcola UNA VOLTA qui (v. migrazione 20260923000000: non si ricalcola più avanti). */
@@ -804,7 +826,7 @@ export async function moveDocumentsToTrash(
   }
 
   for (const documentId of documentIds) {
-    await logAuditEvent(supabase, ownerId, "document_trashed", { documentId });
+    await logAuditEvent(supabase, ownerId, "document_trashed", undefined, documentRef(documentId));
   }
 }
 
@@ -826,7 +848,7 @@ export async function restoreDocuments(
   }
 
   for (const documentId of documentIds) {
-    await logAuditEvent(supabase, ownerId, "document_restored", { documentId });
+    await logAuditEvent(supabase, ownerId, "document_restored", undefined, documentRef(documentId));
   }
 }
 
@@ -838,5 +860,5 @@ export async function logDocumentDownloaded(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user) await logAuditEvent(supabase, user.id, "document_downloaded", { documentId });
+  if (user) await logAuditEvent(supabase, user.id, "document_downloaded", undefined, documentRef(documentId));
 }

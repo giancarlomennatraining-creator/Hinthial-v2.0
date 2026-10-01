@@ -218,7 +218,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
 
-      await deleteCapsule(supabase, user.id, capsule);
+      await deleteCapsule(supabase, masterKey, user.id, capsule);
       setCapsules((prev) => prev.filter((c) => c.id !== capsule.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile eliminare la capsula.");

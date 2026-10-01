@@ -45,7 +45,10 @@ function fakeSupabase() {
         },
       }),
     },
-    from: () => ({ delete: () => ({ eq: async () => ({ error: null }) }) }),
+    from: () => ({
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { encrypted_filename: "cifrato" }, error: null }) }) }),
+      delete: () => ({ eq: async () => ({ error: null }) }),
+    }),
   };
   return { supabase: supabase as never, objects, removed };
 }

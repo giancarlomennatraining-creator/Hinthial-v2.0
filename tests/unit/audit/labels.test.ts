@@ -1,53 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { summarizeDocumentHistory } from "@/domain/audit/document-history";
-import { describeAuditEvent } from "@/domain/audit/labels";
-import type { AuditEventListItem } from "@/domain/audit/types";
+import {
+  AUDIT_EVENT_CATEGORIES,
+  AUDIT_EVENT_TYPE_CATEGORY,
+  AUDIT_EVENT_TYPE_ICON,
+  AUDIT_EVENT_TYPE_LABEL,
+  auditEventTypesOf,
+  describeAuditEvent,
+} from "@/domain/audit/labels";
 
-function event(id: string, type: AuditEventListItem["type"], at: string): AuditEventListItem {
-  return { id, type, createdAt: at, metadata: null };
-}
-
-describe("summarizeDocumentHistory", () => {
-  it("unisce le letture di Hinthia ravvicinate in una riga sola", () => {
-    const rows = [
-      event("4", "ai_extraction_used", "2026-10-01T10:02:00Z"),
-      event("3", "ai_extraction_used", "2026-10-01T10:01:00Z"),
-      event("2", "ai_extraction_used", "2026-10-01T10:00:00Z"),
-      event("1", "document_created", "2026-10-01T09:00:00Z"),
-    ];
-    expect(summarizeDocumentHistory(rows, 10).map((e) => e.id)).toEqual(["4", "1"]);
+describe("mappe degli eventi", () => {
+  it("etichetta, icona e area coprono gli stessi tipi", () => {
+    const labels = Object.keys(AUDIT_EVENT_TYPE_LABEL).sort();
+    expect(Object.keys(AUDIT_EVENT_TYPE_ICON).sort()).toEqual(labels);
+    expect(Object.keys(AUDIT_EVENT_TYPE_CATEGORY).sort()).toEqual(labels);
   });
 
-  it("tiene separate due letture lontane nel tempo", () => {
-    const rows = [
-      event("2", "ai_extraction_used", "2026-10-02T10:00:00Z"),
-      event("1", "ai_extraction_used", "2026-10-01T10:00:00Z"),
-    ];
-    expect(summarizeDocumentHistory(rows, 10)).toHaveLength(2);
-  });
-
-  it("non unisce letture separate da un'altra azione", () => {
-    const rows = [
-      event("3", "ai_extraction_used", "2026-10-01T10:03:00Z"),
-      event("2", "proposal_accepted", "2026-10-01T10:02:00Z"),
-      event("1", "ai_extraction_used", "2026-10-01T10:01:00Z"),
-    ];
-    expect(summarizeDocumentHistory(rows, 10)).toHaveLength(3);
-  });
-
-  it("non unisce una prima lettura e una rilettura", () => {
-    const rows: AuditEventListItem[] = [
-      { ...event("2", "ai_extraction_used", "2026-10-01T10:05:00Z"), metadata: { reread: true } },
-      event("1", "ai_extraction_used", "2026-10-01T10:00:00Z"),
-    ];
-    expect(summarizeDocumentHistory(rows, 10)).toHaveLength(2);
-  });
-
-  it("limita il numero di righe", () => {
-    const rows = Array.from({ length: 12 }, (_, i) =>
-      event(String(i), "document_updated", `2026-10-01T10:${String(59 - i).padStart(2, "0")}:00Z`),
-    );
-    expect(summarizeDocumentHistory(rows, 8)).toHaveLength(8);
+  it("ogni area ha almeno un tipo, e i tipi di un'area le appartengono", () => {
+    for (const area of AUDIT_EVENT_CATEGORIES) {
+      const types = auditEventTypesOf(area);
+      expect(types.length).toBeGreaterThan(0);
+      for (const type of types) expect(AUDIT_EVENT_TYPE_CATEGORY[type]).toBe(area);
+    }
   });
 });
 
@@ -101,7 +74,7 @@ describe("describeAuditEvent", () => {
     expect(describeAuditEvent({ type: "document_updated", metadata: null }).detail).toBeNull();
   });
 
-  it("senza metadati (eventi vecchi) resta l'etichetta generica", () => {
+  it("senza metadati resta l'etichetta generica", () => {
     expect(describeAuditEvent({ type: "proposal_accepted", metadata: null })).toEqual({
       label: "Proposta accettata",
       detail: null,

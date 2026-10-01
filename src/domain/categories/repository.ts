@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
-import { logAuditEvent } from "@/lib/audit/log-event";
+import { logAuditEvent, logAuditEventForCurrentUser } from "@/lib/audit/log-event";
+import { encryptAuditLabel } from "@/lib/audit/label";
 import type { Category, CategoryInput } from "@/domain/categories/types";
 
 /**
@@ -43,7 +44,7 @@ export async function createCategory(
     throw new Error(`Impossibile creare la categoria: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "category_created");
+  await logAuditEvent(supabase, ownerId, "category_created", undefined, { type: "category", id });
 
   return id;
 }
@@ -61,6 +62,8 @@ export async function updateCategory(
   if (error) {
     throw new Error(`Impossibile aggiornare la categoria: ${error.message}`);
   }
+
+  await logAuditEventForCurrentUser(supabase, "category_updated", undefined, { type: "category", id: categoryId });
 }
 
 /** Impostazioni > Intelligenza artificiale: consenso permanente per categoria (FASE 22). */
@@ -137,12 +140,14 @@ export async function countCategoryUsage(
 /**
  * Deletes a category. Any document/asset that referenced it is not
  * deleted --- category_id there is ON DELETE SET NULL, so they just
- * become uncategorized.
+ * become uncategorized. `categoryName` finisce nell'evento solo cifrato con la master key.
  */
 export async function deleteCategory(
   supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey | null,
   ownerId: string,
   categoryId: string,
+  categoryName: string,
 ): Promise<void> {
   const { error } = await supabase.from("categories").delete().eq("id", categoryId);
 
@@ -150,7 +155,11 @@ export async function deleteCategory(
     throw new Error(`Impossibile eliminare la categoria: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "category_deleted");
+  await logAuditEvent(supabase, ownerId, "category_deleted", undefined, {
+    type: "category",
+    id: categoryId,
+    encryptedLabel: masterKey ? await encryptAuditLabel(masterKey, categoryName) : undefined,
+  });
 }
 
 /** Stessa lista di seed_default_categories() (v. supabase/migrations, FASE 2) --- qui per ripristinarla anche a un utente già esistente (v. domain/danger-zone, "Cancella tutto"), non solo a uno nuovo. */
