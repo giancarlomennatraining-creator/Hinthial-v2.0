@@ -8,6 +8,7 @@ import { bytesToUtf8 } from "@/lib/crypto";
 import {
   deleteDocument,
   downloadDocument,
+  logDocumentDownloaded,
   downloadThumbnail,
   extractTextForExistingDocument,
   listDocuments,
@@ -53,6 +54,7 @@ import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvi
 import { StructuredFieldsSection } from "@/components/documents/StructuredFieldsSection";
 import { ProposalsSection, type UndoableAction } from "@/components/documents/ProposalsSection";
 import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
+import { DocumentHistorySection } from "@/components/documents/DocumentHistorySection";
 import {
   DocumentMetadataFields,
   documentToFields,
@@ -324,6 +326,7 @@ export function ArchiveItemDetail({
     try {
       const { filename, mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
       saveBytesAsFile(bytes, filename, mimeType);
+      void logDocumentDownloaded(supabase, doc.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile aprire il contenuto.");
     } finally {
@@ -433,7 +436,7 @@ export function ArchiveItemDetail({
         message: "Non te lo richiederò più.",
         onUndo: () =>
           void runProposalAction(async (undoOwnerId) => {
-            await undoRejection(supabase, undoOwnerId, rejectionId);
+            await undoRejection(supabase, undoOwnerId, rejectionId, doc.id);
             return { message: "Annullato.", onUndo: () => setUndoable(null) };
           }),
       };
@@ -893,6 +896,7 @@ export function ArchiveItemDetail({
                     })}
                   </div>
                 ) : null}
+                <DocumentHistorySection documentId={doc.id} version={doc} />
               </div>
             ) : activeTab === "reading" ? (
               <div id="tabpanel-reading" role="tabpanel" aria-labelledby="tab-reading" className="flex flex-col gap-6">

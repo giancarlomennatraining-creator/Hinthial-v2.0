@@ -50,7 +50,10 @@ export type AuditEventType =
   | "dossier_deleted"
   | "document_trashed"
   | "document_restored"
-  | "document_purged";
+  | "document_purged"
+  | "document_updated"
+  | "document_downloaded"
+  | "document_text_read";
 
 /** Metadati tecnici facoltativi per un evento: mai contenuti, nomi file/amico o altro dato del vault, solo dettagli sul "come". */
 export interface AuditEventMetadata {
@@ -62,6 +65,8 @@ export interface AuditEventMetadata {
   category?: string | null;
   /** FASE 22 (ai_extraction_used): con quale permesso la chiamata è stata autorizzata --- "cosa è uscito, quando e perché" della spec. */
   scope?: "category" | "temporary" | "once";
+  /** Cronologia per documento: UUID del contenuto a cui l'evento si riferisce --- identificativo tecnico, mai nome o contenuto. */
+  documentId?: string;
 }
 
 /**

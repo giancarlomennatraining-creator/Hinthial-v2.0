@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
   }
 
   const provider = createClaudeAnalysisProvider(apiKey);
-  const auditMetadata = { category: categoryName, scope: scope as "category" | "temporary" | "once" };
+  const auditMetadata = { category: categoryName, scope: scope as "category" | "temporary" | "once", documentId };
 
   try {
     if (blockInput) {

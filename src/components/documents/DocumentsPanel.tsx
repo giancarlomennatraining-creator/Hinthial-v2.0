@@ -8,6 +8,7 @@ import { bytesToUtf8 } from "@/lib/crypto";
 import {
   documentsAwaitingExtraction,
   downloadDocument,
+  logDocumentDownloaded,
   extractTextForExistingDocument,
   listDocuments,
   moveDocumentsToTrash,
@@ -186,6 +187,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     try {
       const { filename, mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
       saveBytesAsFile(bytes, filename, mimeType);
+      void logDocumentDownloaded(supabase, doc.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile aprire il contenuto.");
     } finally {

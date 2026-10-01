@@ -47,3 +47,31 @@ export async function listAuditEvents(
     metadata: (row.metadata as AuditEventMetadata | null) ?? null,
   }));
 }
+
+/**
+ * Le ultime azioni fatte su un singolo contenuto (v. ArchiveItemDetail, sezione "Cronologia"). Filtra sul
+ * `documentId` nei metadati --- un identificativo tecnico, mai nome o contenuto del file.
+ */
+export async function listDocumentAuditEvents(
+  supabase: SupabaseClient<Database>,
+  documentId: string,
+  limit = 60,
+): Promise<AuditEventListItem[]> {
+  const { data, error } = await supabase
+    .from("audit_events")
+    .select("id, event_type, created_at, metadata")
+    .eq("metadata->>documentId", documentId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw new Error(`Impossibile caricare la cronologia: ${error.message}`);
+  }
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    type: row.event_type,
+    createdAt: row.created_at,
+    metadata: (row.metadata as AuditEventMetadata | null) ?? null,
+  }));
+}

@@ -126,7 +126,7 @@ export async function acceptProposal(
       await registerFieldVocabulary(supabase, ownerId, fieldKey, proposal.fieldLabel);
     }
 
-    await logAuditEvent(supabase, ownerId, "proposal_accepted");
+    await logAuditEvent(supabase, ownerId, "proposal_accepted", { documentId: doc.id });
     return { kind: "field", fieldKey, previousValue };
   }
 
@@ -142,7 +142,7 @@ export async function acceptProposal(
   }
 
   // In Attività resta traccia del *tipo*, mai del valore: gli audit non devono contenere contenuti.
-  await logAuditEvent(supabase, ownerId, "proposal_accepted");
+  await logAuditEvent(supabase, ownerId, "proposal_accepted", { documentId: doc.id });
 
   return { kind: proposal.kind, previousValue };
 }
@@ -164,7 +164,7 @@ export async function undoAcceptance(
     if (error) {
       throw new Error(`Impossibile annullare: ${error.message}`);
     }
-    await logAuditEvent(supabase, ownerId, "proposal_undone");
+    await logAuditEvent(supabase, ownerId, "proposal_undone", { documentId });
     return;
   }
 
@@ -177,7 +177,7 @@ export async function undoAcceptance(
     throw new Error(`Impossibile annullare: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "proposal_undone");
+  await logAuditEvent(supabase, ownerId, "proposal_undone", { documentId });
 }
 
 /**
@@ -211,7 +211,7 @@ export async function rejectProposal(
     throw new Error(`Impossibile registrare il rifiuto: ${error?.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "proposal_rejected");
+  await logAuditEvent(supabase, ownerId, "proposal_rejected", { documentId });
 
   return data.id;
 }
@@ -221,13 +221,14 @@ export async function undoRejection(
   supabase: SupabaseClient<Database>,
   ownerId: string,
   rejectionId: string,
+  documentId?: string,
 ): Promise<void> {
   const { error } = await supabase.from("proposal_rejections").delete().eq("id", rejectionId);
   if (error) {
     throw new Error(`Impossibile annullare: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "proposal_undone");
+  await logAuditEvent(supabase, ownerId, "proposal_undone", documentId ? { documentId } : undefined);
 }
 
 /** Rifiuti già espressi, decifrati --- il confronto con le proposte nuove avviene sul client, unico posto possibile. */

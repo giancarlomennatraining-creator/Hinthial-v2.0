@@ -68,7 +68,10 @@ type AuditEventTypeColumn =
   | "dossier_deleted"
   | "document_trashed"
   | "document_restored"
-  | "document_purged";
+  | "document_purged"
+  | "document_updated"
+  | "document_downloaded"
+  | "document_text_read";
 
 type FriendStatusColumn = "active" | "revoked";
 

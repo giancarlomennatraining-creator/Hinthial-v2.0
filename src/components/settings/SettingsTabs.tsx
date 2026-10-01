@@ -164,6 +164,7 @@ export function SettingsTabs({
   avatarPath,
   avatarUrl,
   birthDate,
+  initialTab,
 }: {
   userId: string;
   firstName: string;
@@ -172,13 +173,16 @@ export function SettingsTabs({
   avatarPath: string | null;
   avatarUrl: string | null;
   birthDate: string | null;
+  /** Da `?tab=` (es. il link "Vedi tutto" della cronologia di un documento): ignorato se non è una scheda esistente. */
+  initialTab?: string;
 }) {
-  const [tab, setTab] = useState<Tab>("user-info");
+  const startTab = TABS.find((t) => t.id === initialTab)?.id ?? null;
+  const [tab, setTab] = useState<Tab>(startTab ?? "user-info");
   // Il contenuto dissolve verso la scheda scelta invece di sostituirsi di scatto; il tasto (che usa `tab`, non `displayedTab`) risponde subito al click.
   const { displayed: displayedTab, visible: tabContentVisible } = useCrossfade(tab, 150);
 
   // Mobile: elenco delle voci -> dettaglio di una sola, indipendente dal layout desktop (`md:hidden`/`hidden md:flex`). `null` = mostra l'elenco.
-  const [mobileSection, setMobileSection] = useState<Tab | null>(null);
+  const [mobileSection, setMobileSection] = useState<Tab | null>(startTab);
   const mobileView: Tab | "list" = mobileSection ?? "list";
   const { displayed: displayedMobileView, visible: mobileViewVisible } = useCrossfade(mobileView, 150);
 

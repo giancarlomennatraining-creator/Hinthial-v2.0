@@ -405,7 +405,7 @@ export async function uploadDocument(
     throw new Error(`Impossibile salvare il documento: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_created");
+  await logAuditEvent(supabase, ownerId, "document_created", { documentId });
   await replaceDocumentDossierLinks(supabase, ownerId, documentId, metadata.dossierIds);
   return documentId;
 }
@@ -454,7 +454,7 @@ export async function createTextNote(
     throw new Error(`Impossibile salvare la nota: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_created");
+  await logAuditEvent(supabase, ownerId, "document_created", { documentId });
   await replaceDocumentDossierLinks(supabase, ownerId, documentId, metadata.dossierIds);
   return documentId;
 }
@@ -492,6 +492,7 @@ export async function updateTextNoteContent(
   }
 
   await removeEncryptedPayload(supabase, doc.storagePath).catch(() => {});
+  await logAuditEvent(supabase, ownerId, "document_updated", { documentId: doc.id });
 }
 
 /** Aggiorna titolo/categoria/scadenza/note/tag/emittente --- mai il contenuto del file. Ricifra notes/tags/issuer (e il titolo, se cambia) con la Master Key. */
@@ -543,6 +544,7 @@ export async function updateDocumentMetadata(
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Devi essere autenticato.");
   await replaceDocumentDossierLinks(supabase, user.id, documentId, metadata.dossierIds);
+  await logAuditEvent(supabase, user.id, "document_updated", { documentId });
 }
 
 /** Scritto a mano oggi (v. domain/transcription); un motore reale in futuro cambierebbe solo cosa riempie il campo, non questa funzione. */
@@ -731,6 +733,11 @@ export async function extractTextForExistingDocument(
     throw new Error(`Impossibile salvare il testo estratto: ${error.message}`);
   }
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) await logAuditEvent(supabase, user.id, "document_text_read", { documentId: doc.id });
+
   return { foundText: Boolean(text) };
 }
 
@@ -751,7 +758,7 @@ export async function deleteDocument(
     throw new Error(`Impossibile eliminare il documento: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_purged");
+  await logAuditEvent(supabase, ownerId, "document_purged", { documentId: doc.id });
 }
 
 /** Una sola UPDATE per tutti gli id, nessun file toccato. `purgeAt` si calcola UNA VOLTA qui (v. migrazione 20260923000000: non si ricalcola più avanti). */
@@ -775,7 +782,9 @@ export async function moveDocumentsToTrash(
     throw new Error(`Impossibile spostare nel cestino: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_trashed");
+  for (const documentId of documentIds) {
+    await logAuditEvent(supabase, ownerId, "document_trashed", { documentId });
+  }
 }
 
 /** Ripristina uno o più documenti dal Cestino --- torna come prima, nessun altro campo viene toccato. */
@@ -795,5 +804,18 @@ export async function restoreDocuments(
     throw new Error(`Impossibile ripristinare: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_restored");
+  for (const documentId of documentIds) {
+    await logAuditEvent(supabase, ownerId, "document_restored", { documentId });
+  }
+}
+
+/** Traccia nella cronologia del documento che è stato scaricato --- chiamata dai punti in cui lo sceglie l'utente, non da `downloadDocument` (usato anche per anteprime ed esportazioni). */
+export async function logDocumentDownloaded(
+  supabase: SupabaseClient<Database>,
+  documentId: string,
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) await logAuditEvent(supabase, user.id, "document_downloaded", { documentId });
 }

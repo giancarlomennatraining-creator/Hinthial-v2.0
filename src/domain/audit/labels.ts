@@ -51,6 +51,9 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   document_trashed: "Contenuto spostato nel cestino",
   document_restored: "Contenuto ripristinato dal cestino",
   document_purged: "Contenuto eliminato per sempre",
+  document_updated: "Contenuto modificato",
+  document_downloaded: "Contenuto scaricato",
+  document_text_read: "Testo letto sul dispositivo",
 };
 
 export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
@@ -102,6 +105,9 @@ export const AUDIT_EVENT_TYPE_ICON: Record<AuditEventType, string> = {
   document_trashed: "🗑️",
   document_restored: "♻️",
   document_purged: "🔥",
+  document_updated: "✏️",
+  document_downloaded: "⬇️",
+  document_text_read: "👁️",
 };
 
 export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategory> = {
@@ -153,6 +159,9 @@ export const AUDIT_EVENT_TYPE_CATEGORY: Record<AuditEventType, AuditEventCategor
   document_trashed: "content",
   document_restored: "content",
   document_purged: "content",
+  document_updated: "content",
+  document_downloaded: "content",
+  document_text_read: "content",
 };
 
 export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {

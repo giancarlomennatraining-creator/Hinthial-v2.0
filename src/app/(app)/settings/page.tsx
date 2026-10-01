@@ -1,8 +1,13 @@
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const user = await getCurrentUser();
+  const { tab } = await searchParams;
 
   return (
     <div className="flex flex-col gap-8">
@@ -20,6 +25,7 @@ export default async function SettingsPage() {
         avatarPath={user?.avatarPath ?? null}
         avatarUrl={user?.avatarUrl ?? null}
         birthDate={user?.birthDate ?? null}
+        initialTab={tab}
       />
     </div>
   );
