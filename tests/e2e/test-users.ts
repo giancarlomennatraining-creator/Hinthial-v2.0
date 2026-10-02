@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { TOTP } from "otpauth";
 
 export interface TestUser {
   firstName: string;
@@ -153,4 +154,30 @@ export async function deleteUserByEmail(email: string): Promise<void> {
 
     if (data.users.length < perPage) return;
   }
+}
+
+/** Attiva l'MFA TOTP per un utente di prova, come farebbe lui dalle Impostazioni, e restituisce il segreto per generare i codici. */
+export async function enrollTotpForTestUser(user: TestUser): Promise<string> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !anonKey) throw new Error("Supabase non configurato per i test.");
+
+  const client = createClient(url, anonKey, { auth: { persistSession: false } });
+  const signedIn = await client.auth.signInWithPassword({ email: user.email, password: user.password });
+  if (signedIn.error) throw new Error(`Accesso di prova fallito: ${signedIn.error.message}`);
+  const enrolled = await client.auth.mfa.enroll({ factorType: "totp" });
+  if (enrolled.error) throw new Error(`Registrazione MFA fallita: ${enrolled.error.message}`);
+  const challenge = await client.auth.mfa.challenge({ factorId: enrolled.data.id });
+  if (challenge.error) throw new Error(challenge.error.message);
+  const verified = await client.auth.mfa.verify({
+    factorId: enrolled.data.id,
+    challengeId: challenge.data.id,
+    code: totpCode(enrolled.data.totp.secret),
+  });
+  if (verified.error) throw new Error(`Verifica MFA fallita: ${verified.error.message}`);
+  return enrolled.data.totp.secret;
+}
+
+export function totpCode(secret: string): string {
+  return new TOTP({ secret }).generate();
 }

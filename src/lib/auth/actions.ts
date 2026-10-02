@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/server";
+import { createAdminClient } from "@/lib/db/supabase/admin";
 import { logAuditEvent, logFailedLoginAttempt } from "@/lib/audit/log-event";
 import { getRequestContext } from "@/lib/http/request-context";
 import { verifyAndConsumeBackupCode } from "@/domain/mfa/repository";
@@ -30,6 +31,9 @@ function translateAuthError(message: string): string {
   }
   if (normalized.includes("token") && (normalized.includes("expired") || normalized.includes("invalid"))) {
     return "Codice non valido o scaduto. Richiedine uno nuovo.";
+  }
+  if (normalized.includes("aal2") || normalized.includes("insufficient_aal")) {
+    return "Per cambiare la password serve la verifica in due passaggi.";
   }
   if (normalized.includes("different from the old password") || normalized.includes("same_password")) {
     return "La nuova password deve essere diversa da quella attuale.";
@@ -227,6 +231,24 @@ export async function verifyPasswordResetOtp(
   redirect("/forgot-password/new");
 }
 
+/** Il secondo fattore di chi ha l'MFA: un codice di backup (consumato) o un codice TOTP (che porta la sessione ad aal2). Null se nessuno lo accetta. */
+async function verifySecondFactor(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  code: string,
+): Promise<"backup" | "totp" | null> {
+  if (await verifyAndConsumeBackupCode(supabase, userId, code)) return "backup";
+
+  const { data: factorsData, error } = await supabase.auth.mfa.listFactors();
+  if (error) return null;
+  // Un codice non dichiara per quale dispositivo è stato generato: si prova su ognuno dei fattori.
+  for (const factor of factorsData.totp) {
+    const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
+    if (!verifyError) return "totp";
+  }
+  return null;
+}
+
 export async function resetPassword(
   _prevState: AuthActionState,
   formData: FormData,
@@ -254,7 +276,29 @@ export async function resetPassword(
     return { error: "Sessione di recupero scaduta. Ricomincia la procedura." };
   }
 
-  const { error } = await supabase.auth.updateUser({ password });
+  // Chi ha l'MFA attiva deve provarla anche qui: Supabase rifiuta il cambio password a una sessione solo aal1, e il solo
+  // codice ricevuto per email non deve bastare a prendere un account protetto da due fattori. Il codice si controlla
+  // QUI, nella stessa richiesta che cambia la password: un "già verificato" tenuto altrove (un cookie) si potrebbe falsificare.
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  let changeWithAdminApi = false;
+  if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+    const code = String(formData.get("code") ?? "").trim();
+    if (!code) {
+      return { error: "Inserisci il codice a 6 cifre della tua app authenticator o un codice di backup." };
+    }
+    const factor = await verifySecondFactor(supabase, user.id, code);
+    if (!factor) {
+      await logAuditEvent(supabase, user.id, "mfa_challenge_failed");
+      return { error: "Codice non valido. Riprova." };
+    }
+    // Un codice di backup non fa salire la sessione ad aal2 (v. mfa-bypass.ts): la password si cambia con l'API admin,
+    // dopo aver verificato sia il codice ricevuto per email (sessione di recupero) sia il codice di backup.
+    changeWithAdminApi = factor === "backup";
+  }
+
+  const { error } = changeWithAdminApi
+    ? await createAdminClient().auth.admin.updateUserById(user.id, { password })
+    : await supabase.auth.updateUser({ password });
   if (error) {
     return { error: translateAuthError(error.message) };
   }

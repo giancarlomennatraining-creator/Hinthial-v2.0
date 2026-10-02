@@ -1,72 +1,21 @@
-"use client";
+import { createClient } from "@/lib/db/supabase/server";
+import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
 
-import { useActionState, useState } from "react";
-import { resetPassword } from "@/lib/auth/actions";
-import { initialAuthActionState } from "@/lib/auth/action-state";
-import { TextField } from "@/components/ui/TextField";
-import { PasswordStrengthMeter } from "@/components/ui/PasswordStrengthMeter";
+/**
+ * Ultimo passo del recupero password. Chi ha l'autenticazione a due fattori deve provarla anche qui (v. resetPassword
+ * in lib/auth/actions.ts): lo si legge dalla sessione di recupero, che a questo punto è solo aal1.
+ */
+export default async function NewPasswordPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default function NewPasswordPage() {
-  const [state, formAction, pending] = useActionState(
-    resetPassword,
-    initialAuthActionState,
-  );
-  const [password, setPassword] = useState("");
-  // Controllato come il primo: React svuota i campi non controllati dopo ogni invio, e un campo vuoto e `required` bloccherebbe il nuovo tentativo senza dire perché.
-  const [confirmPassword, setConfirmPassword] = useState("");
+  let requiresMfa = false;
+  if (user) {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    requiresMfa = !!aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2";
+  }
 
-  return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-brand">
-          Imposta una nuova password
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Codice verificato. Scegli una nuova password per il tuo account.
-        </p>
-      </div>
-
-      <form action={formAction} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <TextField
-            id="password"
-            name="password"
-            label="Nuova password"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            variant="halo"
-            required
-          />
-          <PasswordStrengthMeter password={password} />
-        </div>
-        <TextField
-          id="confirmPassword"
-          name="confirmPassword"
-          label="Conferma nuova password"
-          type="password"
-          autoComplete="new-password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          variant="halo"
-          required
-        />
-
-        {state.error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-            {state.error}
-          </p>
-        ) : null}
-
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
-        >
-          {pending ? "Salvataggio…" : "Salva nuova password"}
-        </button>
-      </form>
-    </div>
-  );
+  return <NewPasswordForm requiresMfa={requiresMfa} />;
 }

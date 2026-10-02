@@ -10,6 +10,19 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-02 (39)
+
+### Reset della password per chi ha la verifica in due passaggi
+
+**Cosa fa:**
+- Chi ha attivato l'**autenticazione a due fattori** ora può reimpostare la password: nella pagina "Imposta una nuova password" compare anche il campo **"Codice a 6 cifre o di backup"**, da compilare con il codice dell'app authenticator o con uno dei codici di backup. Chi non ha l'MFA non vede niente di diverso.
+- Prima, per questi account, il reset finiva sempre con "La password non è stata accettata": Supabase rifiuta il cambio password a una sessione ottenuta solo con il codice ricevuto per email.
+- Un codice sbagliato non cambia la password e non svuota i campi. Il codice ricevuto per email da solo non basta più a prendere un account protetto da due fattori.
+
+**Note tecniche:** il secondo fattore si verifica nella stessa richiesta che cambia la password (`resetPassword`, `verifySecondFactor`), senza un "già verificato" tenuto in un cookie, che si potrebbe falsificare. Con un codice TOTP la sessione sale ad aal2 e la password si cambia normalmente; un codice di backup non fa salire l'AAL (v. `mfa-bypass.ts`), quindi in quel caso si usa l'API admin (`updateUserById`) dopo aver verificato sia il codice email sia quello di backup. Il codice di backup si consuma prima del cambio: se questo fallisce, il codice è perso. La pagina è ora un componente server (`new/page.tsx`) che legge se serve l'MFA e un form client (`NewPasswordForm`). Nuovo test e2e con un utente MFA; il percorso con il codice di backup non ha un test e2e. Nessuna migrazione.
+
+---
+
 ## 2026-10-02 (38)
 
 ### Reset della password: la conferma resta compilata e gli errori sono chiari
