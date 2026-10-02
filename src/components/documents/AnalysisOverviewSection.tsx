@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PdfPageExcerpt } from "@/components/documents/PdfPageExcerpt";
 import { prepareAnalysis } from "@/domain/ai/analysis/blocks";
 import type { AnalysisOverview, OverviewFact } from "@/domain/ai/analysis/overview";
 import { splitAroundQuote } from "@/domain/ai/analysis/source";
@@ -11,7 +12,7 @@ import { formatDate } from "@/lib/format";
  * "Cosa ha letto Hinthia": il tipo del documento e i dati ricavati, ognuno con da dove viene (la pagina) e la frase
  * del documento che lo prova. Mai il JSON della lettura: solo righe leggibili. Un dato "Nella Scheda" è tuo (l'hai
  * accettato o scritto); uno "Letto da Hinthia" è ancora solo una lettura, da rivedere tra le proposte. La pagina si
- * apre sul testo letto, con la frase evidenziata.
+ * apre sulla pagina originale del PDF (o sul testo letto) con la frase evidenziata.
  */
 
 function displayValue(fact: OverviewFact): string {
@@ -55,15 +56,52 @@ function SourceExcerptView({ text, quote }: { text: string; quote: string }) {
   );
 }
 
+/** Il punto d'origine di un dato: per un PDF la pagina originale con la frase evidenziata, altrimenti (o a richiesta) il testo letto. */
+function FactSource({
+  fact,
+  text,
+  loadPdfBytes,
+}: {
+  fact: OverviewFact;
+  text: string;
+  loadPdfBytes?: () => Promise<Uint8Array>;
+}) {
+  const [showText, setShowText] = useState(false);
+  const page = fact.provenance.page;
+  const excerpt = <SourceExcerptView text={text} quote={fact.quote} />;
+
+  if (!loadPdfBytes || page === null) return excerpt;
+
+  return (
+    <div className="flex flex-col gap-1">
+      {showText ? (
+        excerpt
+      ) : (
+        <PdfPageExcerpt loadBytes={loadPdfBytes} page={page} quote={fact.quote} fallback={excerpt} />
+      )}
+      <button
+        type="button"
+        onClick={() => setShowText(!showText)}
+        className="self-start text-xs text-brand underline-offset-2 hover:underline"
+      >
+        {showText ? "Mostra la pagina originale" : "Mostra il testo letto"}
+      </button>
+    </div>
+  );
+}
+
 export function AnalysisOverviewSection({
   overview,
   segments,
   text,
+  loadPdfBytes,
 }: {
   overview: AnalysisOverview;
   /** Le pagine lette (null per un documento letto prima delle pagine: allora si usano le sezioni del testo). */
   segments: ContentSegment[] | null;
   text: string;
+  /** Solo per un PDF: i byte del file decifrato, per mostrare la pagina originale. Senza, si vede solo il testo letto. */
+  loadPdfBytes?: () => Promise<Uint8Array>;
 }) {
   const { coverage } = overview;
   const [openFactId, setOpenFactId] = useState<string | null>(null);
@@ -120,7 +158,11 @@ export function AnalysisOverviewSection({
               </p>
               <p className="text-xs text-zinc-500 italic dark:text-zinc-400">&ldquo;{fact.quote}&rdquo;</p>
               {openFactId === fact.id ? (
-                <SourceExcerptView text={sourceText.get(fact.provenance.segmentId) ?? ""} quote={fact.quote} />
+                <FactSource
+                  fact={fact}
+                  text={sourceText.get(fact.provenance.segmentId) ?? ""}
+                  loadPdfBytes={loadPdfBytes}
+                />
               ) : null}
             </li>
           ))}

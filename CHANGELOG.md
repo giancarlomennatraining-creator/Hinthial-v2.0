@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-02 (34)
+
+### Content Intelligence: la pagina originale del PDF con la frase evidenziata
+
+**Cosa fa:**
+- Per un PDF, cliccando **"pagina N"** nel riquadro "Cosa ha letto Hinthia" si apre la **pagina originale del documento**, disegnata com'è (impaginazione, immagini), con la **frase che prova il dato evidenziata** e la pagina scorsa fino a lì.
+- Un link sotto la pagina permette di passare al **testo letto** (quello inviato a Hinthia) e di tornare alla pagina.
+- Se la frase non si riesce a indicare sulla pagina (per esempio una scansione letta con l'OCR), la pagina si vede comunque, con una nota che rimanda al testo letto. Se la pagina non si può disegnare, si vede il testo letto come prima.
+- Per immagini, note e documenti letti senza pagine resta il testo letto.
+
+**Note tecniche:** il file si decifra e si disegna sul dispositivo con lo stesso pdf.js dell'anteprima (`renderPdfPageWithText` in `lib/pdf.ts`), quindi nulla esce dal dispositivo. `locateQuote` e `highlightRects` (`domain/ai/analysis/page-highlight.ts`) cercano la frase tra gli elementi di testo della pagina ignorando spazi e maiuscole e la posizionano in percentuale dell'immagine, proporzionalmente ai caratteri dentro ogni elemento: l'evidenziazione è un'approssimazione e il testo ruotato non è evidenziato. I byte del PDF si scaricano una sola volta per tutte le pagine aperte. Nessuna migrazione.
+
+---
+
 ## 2026-10-02 (33)
 
 ### Content Intelligence: "Cosa ha letto Hinthia" con tipo, dati e pagina d'origine

@@ -326,6 +326,21 @@ export function ArchiveItemDetail({
     }
   }, [supabase, masterKey, doc]);
 
+  // I byte del PDF decifrato, scaricati una volta sola per tutte le pagine che si aprono dalla lettura di Hinthia.
+  const pdfBytesRef = useRef<Promise<Uint8Array> | null>(null);
+  const loadPdfBytes = useCallback(() => {
+    if (!doc) return Promise.reject(new Error("Contenuto non disponibile."));
+    if (!pdfBytesRef.current) {
+      pdfBytesRef.current = downloadDocument(supabase, masterKey, doc)
+        .then(({ bytes }) => bytes)
+        .catch((err) => {
+          pdfBytesRef.current = null;
+          throw err;
+        });
+    }
+    return pdfBytesRef.current;
+  }, [supabase, masterKey, doc]);
+
   useEffect(() => {
     if (!doc || !autoPreview) return;
     if (previewUrl || noteBody !== null || previewLoading || previewUnavailable) return;
@@ -991,7 +1006,12 @@ export function ArchiveItemDetail({
                   onAcceptAll={() => handleAcceptAll(aiAcceptAllCandidates)}
                 />
                 {analysisOverview ? (
-                  <AnalysisOverviewSection overview={analysisOverview} segments={pageSegments} text={doc.extractedText} />
+                  <AnalysisOverviewSection
+                    overview={analysisOverview}
+                    segments={pageSegments}
+                    text={doc.extractedText}
+                    loadPdfBytes={isPdf ? loadPdfBytes : undefined}
+                  />
                 ) : null}
                 {doc.aiSynthesis ? (
                   <section
