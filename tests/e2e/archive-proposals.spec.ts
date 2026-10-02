@@ -141,18 +141,18 @@ test("un rifiuto viene ricordato e sopravvive al ricaricamento", async ({ page }
 
   const proposte = page.getByRole("tabpanel", { name: "Letto dal dispositivo" });
   await expect(proposte).toContainText("Scadenza");
-  // 3 proposte (scadenza/categoria/emittente): il conteggio, non il testo, distingue una proposta accettabile
+  // 2 proposte (scadenza/emittente: la categoria è già stata salvata col documento al caricamento): il conteggio, non il testo, distingue una proposta accettabile
   // dal fatto grezzo che "Cosa ne ho ricavato" mostra comunque --- rifiutare una proposta non fa sparire il
   // valore da lì, lo rende di nuovo visibile come informazione (v. ArchiveItemDetail.tsx, filtro structuredFields).
   const accetta = proposte.getByRole("button", { name: "Accetta" });
-  await expect(accetta).toHaveCount(3);
+  await expect(accetta).toHaveCount(2);
 
   await proposte.getByRole("button", { name: "No, grazie" }).first().click();
   // L'annullamento è condiviso sopra le tab (v. ArchiveItemDetail.tsx), non dentro il pannello.
   await expect(page.getByRole("status", { name: "Ultima proposta" })).toContainText(
     "Non te lo richiederò più",
   );
-  await expect(accetta).toHaveCount(2);
+  await expect(accetta).toHaveCount(1);
 
   // La prova vera: il rifiuto è cifrato nel database, e per restare valido dev'essere riletto e decifrato al caricamento successivo.
   await page.reload();
@@ -161,9 +161,9 @@ test("un rifiuto viene ricordato e sopravvive al ricaricamento", async ({ page }
   // Il reload azzera la tab attiva su "Scheda" (v. ArchiveItemDetail.tsx): si riapre "Letto dal dispositivo".
   await page.getByRole("tab", { name: "Letto dal dispositivo" }).click();
 
-  // La proposta di categoria resta (rifiutarne una non è rifiutarle tutte), ma la scadenza rifiutata non deve tornare.
+  // La proposta dell'emittente resta (rifiutarne una non è rifiutarle tutte), ma la scadenza rifiutata non deve tornare.
   await expect(proposte).toBeVisible({ timeout: 30_000 });
-  await expect(accetta).toHaveCount(2);
+  await expect(accetta).toHaveCount(1);
 });
 
 test("modificare una proposta prima di accettarla", async ({ page }) => {

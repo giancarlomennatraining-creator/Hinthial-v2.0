@@ -45,7 +45,9 @@ test("scrive una nota testuale, la riapre e ne modifica il contenuto in linea", 
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   const row = page.locator("li", { hasText: "Combinazione cassaforte" });
   await expect(row).toBeVisible({ timeout: 15_000 });
-  await expect(row.getByText("📝 Combinazione cassaforte")).toBeVisible();
+  // L'icona e il nome sono due elementi distinti nella riga (v. ContentTypeIcon).
+  await expect(row.getByText("📝")).toBeVisible();
+  await expect(row.getByText("Combinazione cassaforte")).toBeVisible();
 
   // Apre la nota: il testo scritto in precedenza è decifrato e mostrato in linea.
   await openRowMenu(row);
@@ -95,7 +97,8 @@ test("un'immagine caricata ha un player inline, oltre al download", async ({ pag
 
   const row = page.locator("li", { hasText: "foto.png" });
   await expect(row).toBeVisible({ timeout: 15_000 });
-  await expect(row.getByText("🖼️ foto.png")).toBeVisible();
+  await expect(row.getByText("🖼️")).toBeVisible();
+  await expect(row.getByText("foto.png")).toBeVisible();
 
   // Il player è nascosto finché non lo si apre; "Scarica" resta sempre disponibile nel menu, a fianco.
   await expect(row.locator("img")).not.toBeVisible();

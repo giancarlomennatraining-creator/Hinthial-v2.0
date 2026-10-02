@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -25,8 +25,7 @@ test("cancello generale, estrazione avanzata per categoria, trascrizione e avvis
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await page.goto("/settings");
   await page.getByRole("tab", { name: "Hinthia" }).click();
   await expect(page.getByRole("heading", { name: "Hinthia" })).toBeVisible();
 
@@ -67,8 +66,10 @@ test("cancello generale, estrazione avanzata per categoria, trascrizione e avvis
 
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/categories") && res.request().method() === "PATCH"),
-    saluteCheckbox.check(),
+    // click e non check(): la categoria si spunta solo a salvataggio avvenuto (v. AIConsentSettings.handleCategoryToggle), non subito.
+    saluteCheckbox.click(),
   ]);
+  await expect(saluteCheckbox).toBeChecked();
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     alertsCheckbox.check(),
