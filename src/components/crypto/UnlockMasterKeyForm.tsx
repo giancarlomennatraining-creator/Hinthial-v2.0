@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useState, type FormEvent } from "react";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { FingerprintIcon, SecurityIcon, UnlockedIcon } from "@/components/icons/nav-icons";
@@ -122,10 +123,9 @@ export function UnlockMasterKeyForm() {
             >
               Master password
             </label>
-            <input
+            <PasswordInput
               id="masterPassword"
               name="masterPassword"
-              type="password"
               autoComplete="current-password"
               required
               className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-950 outline-none focus:border-brand focus:ring-1 focus:ring-brand dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"

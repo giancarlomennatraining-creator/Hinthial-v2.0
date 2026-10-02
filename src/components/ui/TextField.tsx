@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes } from "react";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { cn } from "@/lib/utils";
 
 type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
@@ -14,7 +15,9 @@ type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   variant?: "default" | "halo";
 };
 
-export function TextField({ label, id, variant = "default", ...inputProps }: TextFieldProps) {
+export function TextField({ label, id, variant = "default", type, ...inputProps }: TextFieldProps) {
+  // Un campo password ha sempre l'occhio per mostrare i caratteri.
+  const Input = type === "password" ? PasswordInput : "input";
   return (
     <div className="flex w-full flex-col gap-1.5">
       <label
@@ -23,8 +26,9 @@ export function TextField({ label, id, variant = "default", ...inputProps }: Tex
       >
         {label}
       </label>
-      <input
+      <Input
         id={id}
+        {...(type === "password" ? {} : { type })}
         className={cn(
           "w-full text-sm text-zinc-950 outline-none dark:bg-zinc-950 dark:text-zinc-50",
           variant === "halo"
