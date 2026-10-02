@@ -31,6 +31,7 @@ export default function LoginPage() {
           type="email"
           autoComplete="email"
           variant="halo"
+          defaultValue={state.email ?? ""}
           required
         />
         <TextField

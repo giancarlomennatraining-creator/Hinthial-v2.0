@@ -31,8 +31,17 @@ function translateAuthError(message: string): string {
   if (normalized.includes("token") && (normalized.includes("expired") || normalized.includes("invalid"))) {
     return "Codice non valido o scaduto. Richiedine uno nuovo.";
   }
-  if (normalized.includes("password")) {
+  if (normalized.includes("different from the old password") || normalized.includes("same_password")) {
+    return "La nuova password deve essere diversa da quella attuale.";
+  }
+  if (normalized.includes("weak") || normalized.includes("pwned") || normalized.includes("easy to guess")) {
+    return "Questa password è troppo debole o compare in elenchi di password rubate: scegline un'altra.";
+  }
+  if (normalized.includes("at least") || normalized.includes("characters")) {
     return "La password non rispetta i requisiti minimi (almeno 6 caratteri).";
+  }
+  if (normalized.includes("password")) {
+    return "La password non è stata accettata: scegline un'altra.";
   }
   if (normalized.includes("rate limit")) {
     return "Troppi tentativi. Riprova tra qualche minuto.";
@@ -96,7 +105,7 @@ export async function signIn(
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) {
-    return { error: "Inserisci email e password." };
+    return { error: "Inserisci email e password.", email };
   }
 
   const supabase = await createClient();
@@ -109,7 +118,7 @@ export async function signIn(
   if (error) {
     // Nessuna sessione ancora: RLS richiede auth.uid() = owner_id, quindi passa da una funzione dedicata.
     await logFailedLoginAttempt(supabase, email);
-    return { error: translateAuthError(error.message) };
+    return { error: translateAuthError(error.message), email };
   }
 
   // Un cookie di una sessione precedente non deve valere per questa: altrimenti un solo codice di backup disattiverebbe l'MFA per sempre su questo browser.

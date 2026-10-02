@@ -12,6 +12,8 @@ export default function NewPasswordPage() {
     initialAuthActionState,
   );
   const [password, setPassword] = useState("");
+  // Controllato come il primo: React svuota i campi non controllati dopo ogni invio, e un campo vuoto e `required` bloccherebbe il nuovo tentativo senza dire perché.
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,6 +47,8 @@ export default function NewPasswordPage() {
           label="Conferma nuova password"
           type="password"
           autoComplete="new-password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
           variant="halo"
           required
         />
