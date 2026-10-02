@@ -1,5 +1,6 @@
 "use client";
 
+import { mimeTypeOfFile } from "@/lib/file-mime";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -83,7 +84,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
     // Uno alla volta, non in parallelo: dieci file insieme su un telefono, alcuni con OCR, lo farebbero solo arrancare.
     const read: DraftFile[] = [];
     for (const [index, { file, folderHint }] of toRead.entries()) {
-      const mimeType = file.type || "application/octet-stream";
+      const mimeType = mimeTypeOfFile(file);
       let text: string | null = null;
       let segments: ContentSegment[] = [];
       if (canExtractText(mimeType)) {
@@ -236,7 +237,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
           try {
             await uploadDocument(supabase, masterKey, user.id, draft.file, metadata, {
               title: draft.title || undefined,
-              extraction: { text: draft.text, segments: draft.segments, attempted: canExtractText(draft.file.type || "") },
+              extraction: { text: draft.text, segments: draft.segments, attempted: canExtractText(mimeTypeOfFile(draft.file)) },
             });
             imported++;
           } catch {

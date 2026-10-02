@@ -1,3 +1,4 @@
+import { docxTextExtractor } from "@/domain/extraction/docx-extractor";
 import { ocrTextExtractor } from "@/domain/extraction/ocr-extractor";
 import { pdfTextExtractor } from "@/domain/extraction/pdf-extractor";
 import type { ExtractedContent, ExtractionProgress, TextExtractor } from "@/domain/extraction/types";
@@ -7,7 +8,7 @@ import type { ExtractedContent, ExtractionProgress, TextExtractor } from "@/doma
  * (audio/video) si aggiunge qui nel passo successivo della FASE 17,
  * senza toccare chi chiama.
  */
-const EXTRACTORS: TextExtractor[] = [pdfTextExtractor, ocrTextExtractor];
+const EXTRACTORS: TextExtractor[] = [pdfTextExtractor, docxTextExtractor, ocrTextExtractor];
 
 /** Se esiste un motore capace di leggere questo tipo di contenuto. */
 export function canExtractText(mimeType: string): boolean {

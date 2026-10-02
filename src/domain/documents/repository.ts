@@ -1,3 +1,4 @@
+import { mimeTypeOfFile } from "@/lib/file-mime";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 import {
@@ -307,7 +308,7 @@ export async function uploadDocument(
 ): Promise<string> {
   const { title, extraction, onPhase } = options;
   const plaintext = new Uint8Array(await file.arrayBuffer());
-  const mimeType = file.type || "application/octet-stream";
+  const mimeType = mimeTypeOfFile(file);
 
   // FASE 17: testo estratto qui, mentre il contenuto è ancora in chiaro in memoria --- best-effort, un fallimento non blocca il salvataggio. `onPhase` riporta l'avanzamento (utile sull'OCR); se il form l'ha già letto (PriorExtraction) si riusa quel risultato.
   let extractedText: string | null;

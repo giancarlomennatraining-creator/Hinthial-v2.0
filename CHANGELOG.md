@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-02 (35)
+
+### Content Intelligence: i documenti Word (.docx) si leggono sul dispositivo
+
+**Cosa fa:**
+- Un file **Word (.docx)** caricato in Archivio viene **letto sul dispositivo**, come un PDF: il testo entra nella ricerca e può essere analizzato con Hinthia ("Chiedi a Hinthia"), che ne ricava tipo, scadenza, emittente, campi ed eventi.
+- Si legge tutto il testo del documento: paragrafi, **tabelle** (una riga per riga, celle separate da " | "), **intestazioni e piè di pagina** (dove spesso c'è l'emittente). Il testo cancellato con le revisioni non conta.
+- Un DOCX non ha pagine fisse, quindi la provenienza di un dato dice **"nel testo"** invece di "pagina N", e non c'è la pagina originale da mostrare: si vede il testo letto con la frase evidenziata.
+- I documenti Word già salvati prima risultano **"da leggere"** e si leggono con "Rileggi" come gli altri.
+- Un file Word che arriva dal browser **senza tipo** (succede dove Word non è installato) viene riconosciuto dall'estensione.
+- Un file rovinato, protetto da password o non Word semplicemente non produce testo: si salva comunque.
+
+**Note tecniche:** nessuna libreria nuova. `lib/zip.ts` legge l'indice dello ZIP e apre le voci con `DecompressionStream` (con tetto di 30 MB per voce, controllato su ciò che esce davvero, contro gli archivi costruiti per esplodere in memoria; niente ZIP64 né cifratura). `domain/extraction/docx-extractor.ts` legge `word/document.xml`, intestazioni e piè di pagina e `docProps/core.xml` (titolo, autore, data dichiarati dal file). `lib/file-mime.ts` (`mimeTypeOfFile`) sostituisce `file.type || "application/octet-stream"` in caricamento singolo, multiplo e nel repository. Solo `.docx`: il vecchio `.doc`, XLSX e PPTX restano fuori (MVP-2). Nessuna migrazione.
+
+---
+
 ## 2026-10-02 (34)
 
 ### Content Intelligence: la pagina originale del PDF con la frase evidenziata

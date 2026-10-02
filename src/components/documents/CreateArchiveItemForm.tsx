@@ -1,5 +1,6 @@
 "use client";
 
+import { mimeTypeOfFile } from "@/lib/file-mime";
 import {
   useCallback,
   useEffect,
@@ -492,7 +493,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   /** FASE 19b: legge il file e precompila --- niente di tuo da sovrascrivere ancora, vedere il valore e premere Salva È il consenso (diverso da ProposalsSection, dove il campo può essere già tuo). */
   async function readPickedFile(file: File): Promise<PriorExtraction> {
     const token = ++readingTokenRef.current;
-    const mimeType = file.type || "application/octet-stream";
+    const mimeType = mimeTypeOfFile(file);
 
     if (!canExtractText(mimeType)) {
       setReading({ status: "skipped" });
