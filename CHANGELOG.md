@@ -10,6 +10,42 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-02 (38)
+
+### Reset della password: la conferma resta compilata e gli errori sono chiari
+
+**Cosa fa:**
+- Nella pagina "Imposta una nuova password", se qualcosa non va (per esempio la conferma non coincide) **entrambi i campi restano compilati**: prima la conferma si svuotava e un nuovo clic su "Salva nuova password" non faceva niente, perché il campo era obbligatorio e vuoto.
+- I messaggi sono più precisi: "La nuova password deve essere diversa da quella attuale", "Questa password è troppo debole o compare in elenchi di password rubate", "almeno 6 caratteri" solo quando è davvero quello il motivo. Prima qualunque errore che nominava la password diceva "almeno 6 caratteri".
+
+**Note tecniche:** il campo di conferma è controllato come il primo (React 19 svuota i campi non controllati dopo ogni invio di una Server Action). `translateAuthError` distingue "different from the old password", password debole/compromessa e lunghezza minima. Due nuovi test e2e in `password-reset.spec.ts`. Nessuna migrazione.
+
+---
+
+## 2026-10-02 (37)
+
+### Occhio per mostrare la password
+
+**Cosa fa:**
+- Ogni campo password ha un **occhio** a destra che mostra o nasconde i caratteri: login, registrazione, nuova password dopo il reset, master password (creazione, sblocco, conferma), approvazione di un nuovo dispositivo, blocco del dispositivo, cancellazione e azzeramento dell'account.
+- Parte sempre nascosto e ogni campo ha il suo occhio; premerlo non invia il form. Il pulsante si legge come "Mostra caratteri" / "Nascondi caratteri".
+
+**Note tecniche:** nuovo componente `PasswordInput` (`components/ui`), usato da `TextField` quando `type="password"` e direttamente nei tre campi che non usavano `TextField`. Il padding a destra è inline perché `cn()` non risolve i conflitti tra utility Tailwind. Il nome del pulsante evita la parola "password" per non essere trovato da chi cerca il campo (`getByLabel("Password")` negli e2e). Nessuna migrazione.
+
+---
+
+## 2026-10-02 (36)
+
+### Login: dopo una password sbagliata l'email resta nel campo
+
+**Cosa fa:**
+- Se sbagli la password al login, **l'email resta scritta** e basta riscrivere la password. Prima tutti e due i campi si svuotavano: premendo di nuovo "Accedi" senza riscrivere non partiva niente (i campi sono obbligatori) e sembrava che il login fosse bloccato.
+- La password si svuota comunque, per scelta.
+
+**Note tecniche:** non era un blocco del secondo invio, come si sospettava: riprodotto con Playwright, un secondo invio con i campi riscritti arrivava alla dashboard. La causa era il reset dei campi che React 19 fa dopo ogni Server Action. `signIn` restituisce l'email inviata nello stato di errore (`AuthActionState.email`) e la pagina di login la usa come `defaultValue`. Nuovo test e2e `login-retry.spec.ts`. Nessuna migrazione.
+
+---
+
 ## 2026-10-02 (35)
 
 ### Content Intelligence: i documenti Word (.docx) si leggono sul dispositivo

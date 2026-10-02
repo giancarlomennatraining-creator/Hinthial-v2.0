@@ -71,3 +71,45 @@ test("un codice OTP non valido mostra un errore", async ({ page }) => {
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(page).toHaveURL(/\/forgot-password\/verify/);
 });
+
+test("se la conferma non coincide i campi restano compilati e si corregge senza riscrivere tutto", async ({ page }) => {
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+  const otp = await generateRecoveryOtp(user.email);
+
+  await page.goto(`/forgot-password/verify?email=${encodeURIComponent(user.email)}`);
+  await page.getByLabel("Codice di verifica").fill(otp);
+  await page.getByRole("button", { name: "Verifica codice" }).click();
+  await expect(page).toHaveURL(/\/forgot-password\/new$/);
+
+  const newPassword = "NuovaPassword123!";
+  await page.getByLabel("Nuova password", { exact: true }).fill(newPassword);
+  await page.getByLabel("Conferma nuova password").fill("NuovaPassword999!");
+  await page.getByRole("button", { name: "Salva nuova password" }).click();
+
+  await expect(page.getByText("Le password non coincidono.")).toBeVisible();
+  // React svuota i campi non controllati dopo l'invio: la conferma deve restare, altrimenti un nuovo clic non parte.
+  await expect(page.getByLabel("Nuova password", { exact: true })).toHaveValue(newPassword);
+  await expect(page.getByLabel("Conferma nuova password")).toHaveValue("NuovaPassword999!");
+
+  await page.getByLabel("Conferma nuova password").fill(newPassword);
+  await page.getByRole("button", { name: "Salva nuova password" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+test("riusare la password attuale dà un messaggio chiaro", async ({ page }) => {
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+  const otp = await generateRecoveryOtp(user.email);
+
+  await page.goto(`/forgot-password/verify?email=${encodeURIComponent(user.email)}`);
+  await page.getByLabel("Codice di verifica").fill(otp);
+  await page.getByRole("button", { name: "Verifica codice" }).click();
+  await expect(page).toHaveURL(/\/forgot-password\/new$/);
+
+  await page.getByLabel("Nuova password", { exact: true }).fill(user.password);
+  await page.getByLabel("Conferma nuova password").fill(user.password);
+  await page.getByRole("button", { name: "Salva nuova password" }).click();
+
+  await expect(page.getByText("La nuova password deve essere diversa da quella attuale.")).toBeVisible();
+});

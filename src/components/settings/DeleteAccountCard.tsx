@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
@@ -103,14 +104,13 @@ export function DeleteAccountCard() {
               >
                 Master password
               </label>
-              <input
+              <PasswordInput
                 id="delete-master-password"
-                type="password"
                 value={masterPassword}
                 onChange={(e) => setMasterPassword(e.target.value)}
                 autoComplete="current-password"
                 disabled={busy}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
               />
             </div>
 
