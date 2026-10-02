@@ -69,7 +69,9 @@ describe("AES-256-GCM encrypt/decrypt", () => {
     const envelope = await encryptBytes(key, large);
     const decrypted = await decryptBytes(key, envelope);
 
-    expect(decrypted).toEqual(large);
+    // Non `toEqual`: confrontare 4 milioni di elementi uno a uno con l'asserzione di vitest richiede secondi.
+    expect(decrypted.length).toBe(large.length);
+    expect(Buffer.from(decrypted).equals(Buffer.from(large))).toBe(true);
   }, 20_000);
 
   it("handles empty plaintext", async () => {

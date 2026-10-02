@@ -87,13 +87,19 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
       throw new Error(`Impossibile creare il collegamento amico/guardiano: ${friendError.message}`);
     }
 
-    // Direttamente in "awaiting_guardians" (v. doc comment del file). state_entered_at "ora": evita il reset "accesso dopo l'inizio dello stato".
+    // Direttamente in "awaiting_guardians" (v. doc comment del file). state_entered_at poco dopo l'ultimo accesso: evita il reset "accesso dopo l'inizio dello stato".
+    // L'orario dell'accesso lo scrive il server di Supabase, il cui orologio può essere avanti di qualche frazione di secondo rispetto a quello di questo computer: con `new Date()` il test passava o falliva a seconda della velocità della preparazione.
+    const { data: ownerAuth, error: ownerAuthError } = await admin.auth.admin.getUserById(ownerId);
+    if (ownerAuthError || !ownerAuth.user?.last_sign_in_at) {
+      throw new Error(`Impossibile leggere l'ultimo accesso del proprietario: ${ownerAuthError?.message}`);
+    }
+    const stateEnteredAt = new Date(Math.max(Date.now(), new Date(ownerAuth.user.last_sign_in_at).getTime()) + 1000);
     const { error: profileError } = await admin
       .from("profiles")
       .update({
         digital_legacy_enabled: true,
         digital_legacy_state: "awaiting_guardians",
-        digital_legacy_state_entered_at: new Date().toISOString(),
+        digital_legacy_state_entered_at: stateEnteredAt.toISOString(),
       })
       .eq("id", ownerId);
     if (profileError) {
