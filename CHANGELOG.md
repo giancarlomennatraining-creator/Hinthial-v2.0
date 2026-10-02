@@ -10,6 +10,302 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-02 (35)
+
+### Content Intelligence: i documenti Word (.docx) si leggono sul dispositivo
+
+**Cosa fa:**
+- Un file **Word (.docx)** caricato in Archivio viene **letto sul dispositivo**, come un PDF: il testo entra nella ricerca e può essere analizzato con Hinthia ("Chiedi a Hinthia"), che ne ricava tipo, scadenza, emittente, campi ed eventi.
+- Si legge tutto il testo del documento: paragrafi, **tabelle** (una riga per riga, celle separate da " | "), **intestazioni e piè di pagina** (dove spesso c'è l'emittente). Il testo cancellato con le revisioni non conta.
+- Un DOCX non ha pagine fisse, quindi la provenienza di un dato dice **"nel testo"** invece di "pagina N", e non c'è la pagina originale da mostrare: si vede il testo letto con la frase evidenziata.
+- I documenti Word già salvati prima risultano **"da leggere"** e si leggono con "Rileggi" come gli altri.
+- Un file Word che arriva dal browser **senza tipo** (succede dove Word non è installato) viene riconosciuto dall'estensione.
+- Un file rovinato, protetto da password o non Word semplicemente non produce testo: si salva comunque.
+
+**Note tecniche:** nessuna libreria nuova. `lib/zip.ts` legge l'indice dello ZIP e apre le voci con `DecompressionStream` (con tetto di 30 MB per voce, controllato su ciò che esce davvero, contro gli archivi costruiti per esplodere in memoria; niente ZIP64 né cifratura). `domain/extraction/docx-extractor.ts` legge `word/document.xml`, intestazioni e piè di pagina e `docProps/core.xml` (titolo, autore, data dichiarati dal file). `lib/file-mime.ts` (`mimeTypeOfFile`) sostituisce `file.type || "application/octet-stream"` in caricamento singolo, multiplo e nel repository. Solo `.docx`: il vecchio `.doc`, XLSX e PPTX restano fuori (MVP-2). Nessuna migrazione.
+
+---
+
+## 2026-10-02 (34)
+
+### Content Intelligence: la pagina originale del PDF con la frase evidenziata
+
+**Cosa fa:**
+- Per un PDF, cliccando **"pagina N"** nel riquadro "Cosa ha letto Hinthia" si apre la **pagina originale del documento**, disegnata com'è (impaginazione, immagini), con la **frase che prova il dato evidenziata** e la pagina scorsa fino a lì.
+- Un link sotto la pagina permette di passare al **testo letto** (quello inviato a Hinthia) e di tornare alla pagina.
+- Se la frase non si riesce a indicare sulla pagina (per esempio una scansione letta con l'OCR), la pagina si vede comunque, con una nota che rimanda al testo letto. Se la pagina non si può disegnare, si vede il testo letto come prima.
+- Per immagini, note e documenti letti senza pagine resta il testo letto.
+
+**Note tecniche:** il file si decifra e si disegna sul dispositivo con lo stesso pdf.js dell'anteprima (`renderPdfPageWithText` in `lib/pdf.ts`), quindi nulla esce dal dispositivo. `locateQuote` e `highlightRects` (`domain/ai/analysis/page-highlight.ts`) cercano la frase tra gli elementi di testo della pagina ignorando spazi e maiuscole e la posizionano in percentuale dell'immagine, proporzionalmente ai caratteri dentro ogni elemento: l'evidenziazione è un'approssimazione e il testo ruotato non è evidenziato. I byte del PDF si scaricano una sola volta per tutte le pagine aperte. Nessuna migrazione.
+
+---
+
+## 2026-10-02 (33)
+
+### Content Intelligence: "Cosa ha letto Hinthia" con tipo, dati e pagina d'origine
+
+**Cosa fa:**
+- In "Chiedi a Hinthia", sotto le proposte, un nuovo riquadro **"Cosa ha letto Hinthia"** mostra il **tipo di documento** riconosciuto (contratto, polizza assicurativa, fattura... oppure "Documento generico", senza fingere di averlo riconosciuto) e tutti i dati ricavati: categoria, scadenza, emittente, campi del tipo, eventi da ricordare.
+- Ogni dato dice **da dove viene**: etichetta **"Letto da Hinthia"** se è solo una lettura, **"Nella Scheda"** (o **"In Scadenze"** per un evento) se l'hai già fatto tuo, più la frase del documento che lo prova.
+- La **pagina d'origine è cliccabile**: "pagina 2" apre il testo letto di quella pagina con la frase evidenziata (per i documenti letti senza pagine, "nel testo" apre la sezione). Se il testo è cambiato dopo la lettura, resta una semplice etichetta.
+- Una nota ricorda che ogni dato è stato controllato nel testo del documento e, se il documento è molto lungo, quante parti sono state lette su quante.
+- La **sintesi** è ora marcata **"Generata da Hinthia"**, con l'avviso che è un riassunto e non una citazione.
+
+**Sulla confidenza:** il modello non restituisce un punteggio e non ne inventiamo uno: un dato compare solo se la sua citazione è stata ritrovata nel testo, altrimenti viene scartato. La "confidenza" mostrata è questa verifica.
+
+**Note tecniche:** `buildAnalysisOverview` (`domain/ai/analysis/overview.ts`) costruisce il modello di visualizzazione dalla lettura salvata; `splitAroundQuote` (`source.ts`) trova la frase nel testo con la stessa tolleranza agli spazi della validazione; `AnalysisOverviewSection` riusa `prepareAnalysis` per ritrovare i segmenti per id. Nessuna migrazione.
+
+---
+
+## 2026-10-02 (32)
+
+### Content Intelligence: gli eventi con data diventano promemoria in Scadenze
+
+**Cosa fa:**
+- Quando Claude legge un documento ora cerca anche gli **eventi con una data futura da ricordare** (un appuntamento, una visita, un rinnovo da disdire): ognuno compare tra le Proposte come "Da ricordare", con titolo breve, data e la pagina da cui viene.
+- Il pulsante **Aggiungi a Scadenze** crea la scadenza collegata al documento; "Annulla" la rimuove. Si può correggere la data prima di aggiungere, o rifiutare l'evento (non ricompare).
+- Non vengono proposti gli eventi già passati né quelli la cui data è già in Scadenze per quel documento. Le date di emissione, stipula o decorrenza e la scadenza del documento stesso non sono eventi.
+- Gli eventi non entrano in "Accetta tutto": ognuno si aggiunge di proposito.
+- Per verificarli valgono le stesse regole di tutta la lettura: la citazione deve comparire nel testo indicato e la data deve essere coerente con essa, altrimenti l'evento viene scartato.
+- Il registro attività riporta "Evento verso Scadenze" senza mai scrivere il contenuto.
+
+**Da sapere:**
+- I documenti già letti risultano **da rileggere** (la versione della lettura è salita a 2): gli eventi compaiono dopo una nuova lettura.
+- Due eventi nello stesso giorno vengono fusi in uno.
+
+**Note tecniche:** `ProposalKind` "event" con `eventTitle`; `RawEventEvidence`/`ValidatedEvent`; `ANALYSIS_PIPELINE_VERSION = 2`; `createReminder` restituisce l'id; `listDocumentReminderDates` per l'esclusione dei duplicati. **Migrazione da applicare:** `20261004000000_proposal_rejections_event_kind.sql` (senza, rifiutare un evento fallisce).
+
+---
+
+## 2026-10-02 (31)
+
+### Menu Impostazioni a due livelli (Autenticazione e Aspetto)
+
+**Cosa fa:**
+- Le voci che raccolgono più funzioni ora le mostrano come **sottovoci con icona**: una funzione alla volta, a tutta larghezza.
+- **Autenticazione** (prima "Sicurezza", che ripeteva il nome del gruppo): App Authenticator e Dispositivi fidati.
+- **Aspetto**: Tema, Disposizione menu, Voci del menu, Barra in basso, Liste, Capsule, Archivio.
+- Da computer le sottovoci compaiono sotto la voce aperta; da smartphone la voce apre prima l'elenco delle sue funzioni, poi la funzione scelta, con il tasto indietro che risale di un livello.
+- Le due liste di "Voci del menu" e "Barra in basso" si affiancano su schermi larghi.
+- Le voci con una sola funzione restano com'erano.
+
+**Note tecniche:** `TabDef.sections` in `SettingsTabs.tsx`; link diretti con `?tab=appearance&section=theme` (una sezione inesistente ricade sulla prima, `?tab=` da solo resta valido). Il pannello dei codici di backup resta dentro App Authenticator. Test e2e aggiornati ai nuovi nomi e al passaggio in più dei sottomenu.
+
+---
+
+## 2026-10-02 (30)
+
+### Tolta la pagina Cronologia
+
+**Cosa fa:**
+- Sparisce la voce **Cronologia** dal menu e la pagina `/timeline` (l'elenco di documenti, beni, scadenze, amici e capsule per data di creazione, raggruppato per mese). La storia delle azioni è in **Impostazioni > Attività**.
+- Resta la cronologia **dentro un fascicolo** (i suoi documenti per data).
+- In Impostazioni > Aspetto non c'è più l'interruttore elenco/tabella per Cronologia.
+
+**Note tecniche:** rimossi `TimelinePanel`, `lib/timeline.ts`, l'icona e i relativi test (unit ed e2e). Una eventuale preferenza `timeline` già salvata in `profiles.list_view_preferences` viene ignorata dal parser, senza migrazione.
+
+---
+
+## 2026-10-01 (29)
+
+### Registro eventi ridisegnato: tutto in Impostazioni > Attività, con filtri
+
+**Cosa fa:**
+- **Ogni evento su un elemento** (contenuti dell'Archivio, Beni, Amici, Capsule, Fascicoli, Categorie) è registrato **agganciato a quell'elemento**. Gli eventi di sistema (accessi, sicurezza, dispositivi fidati, eredità digitale) restano senza elemento. Le Scadenze sono derivate e non hanno eventi propri.
+- **Impostazioni > Attività** è l'unico posto dove si consulta il registro: tabella **impaginata dal server** (20/50/100 righe per pagina), caricata subito, con colonna **Elemento** (nome in chiaro a vault sbloccato; per un elemento eliminato definitivamente, il suo titolo con "(eliminato)").
+- **Form di filtro**: periodo (da/a e scorciatoie "Ultimi 7/30 giorni"), area, tipo di evento a scelta multipla (ristretto all'area), elemento scelto da un elenco. I filtri attivi compaiono come chip rimovibili, con "Azzera filtri", e **vivono nell'URL** (si condividono, resistono al ricarica).
+- Clic su una riga: pannello di dettaglio, con "Mostra tutte le attività di questo elemento".
+- La scheda **Cronologia** nel dettaglio di un contenuto è stata tolta; al suo posto il link "Vedi attività di questo contenuto →" apre Attività già filtrata.
+- Le letture di Hinthia tornano visibili in Attività.
+- Se la scrittura di un evento fallisce compare un avviso, invece di perderlo in silenzio.
+- Si riparte da zero: gli eventi precedenti sono stati cancellati.
+
+**Note tecniche:**
+- Migrazione `20261003000000_audit_entity_events.sql` (da applicare al DB v3: **svuota** `audit_events`, toglie il CHECK sui tipi, aggiunge `entity_type`, `entity_id`, `encrypted_label` e gli indici; rende superata `20261002000000`). I tipi di evento sono validati nel codice (`AuditEventType`).
+- Zero-knowledge: il server vede solo tipo, metadati tecnici e riferimento (tipo + id). Il titolo cifrato con la master key sta in `encrypted_label` solo negli eventi di eliminazione definitiva. Il server non può cercare per nome: si sceglie l'elemento da un elenco decifrato nel browser e si filtra per id.
+- `logAuditEvent(supabase, ownerId, type, metadata?, entity?)` restituisce un booleano ed emette `hinthial:audit-write-failed` su errore. Filtri in `domain/audit/filters.ts` (parse/serializzazione dell'URL, tolleranti a parametri non validi).
+- Rimossi `DocumentHistorySection`, `document-history.ts` e il relativo test.
+
+---
+
+## 2026-10-01 (28)
+
+### Cronologia del contenuto completa; Attività solo per il resto
+
+**Cosa fa:**
+- La scheda **Cronologia** di un contenuto registra anche i **salvataggi**: dettagli della scheda, testo della nota, trascrizione, esclusione da Hinthia (escluso/riammesso) e lettura di Hinthia salvata. Il dettaglio dice quale.
+- La **rilettura sul dispositivo** compare come "Testo riletto sul dispositivo", distinta dalla prima lettura ("Testo letto sul dispositivo").
+- Gli eventi legati a un contenuto compaiono **solo** nella sua Cronologia; **Impostazioni > Attività** mostra gli eventi non collegati a un contenuto (accessi, sicurezza, amici, capsule, ecc.). Il link "Vedi tutto" nella Cronologia è stato tolto.
+
+**Note tecniche:**
+- Nessuna nuova migrazione: i salvataggi usano `document_updated` con `change` (e `excluded`) nei metadati; la rilettura usa `reread` su `document_text_read`. Mai nomi o valori.
+- `listAuditEvents` esclude le righe con `metadata->>documentId`; gli eventi registrati prima della Cronologia per documento non hanno quell'id e restano visibili in Attività. Anche le letture di Hinthia (`ai_extraction_used`) sono ora solo nella Cronologia del contenuto.
+
+---
+
+## 2026-10-01 (27)
+
+### Cronologia per documento
+
+**Cosa fa:**
+- Nel dettaglio di ogni contenuto dell'Archivio compare la scheda **Cronologia** (dopo "Chiedi a Hinthia"): le ultime azioni fatte su quel contenuto (aggiunto, modificato, scaricato, testo letto sul dispositivo, letto da Hinthia, proposta accettata/rifiutata/annullata, spostato nel cestino, ripristinato), ognuna con data e ora. Più letture di Hinthia ravvicinate (una per blocco di testo) compaiono come una sola.
+- **"Vedi tutto"** apre Impostazioni > Attività, il registro completo. Impostazioni ora accetta `?tab=` per aprirsi su una scheda precisa.
+- Le proposte dicono **quale** proposta riguardavano (Scadenza, Categoria, Emittente, o il nome del campo), così più "Proposta accettata" di fila non sono più indistinguibili; vale anche per Impostazioni > Attività.
+- La lettura di Hinthia distingue **"Documento letto"** (prima volta) da **"Documento riletto"** (Rileggi da capo / nuova lettura di un documento già letto).
+- Gli eventi registrati prima di questa modifica restano con la dicitura generica.
+- Nessun nome di file né valore compare nella cronologia: solo il tipo di azione, il tipo/nome di campo del vocabolario e la data. Nessuna nuova migrazione.
+
+**Note tecniche:** gli eventi su un contenuto portano `documentId` (UUID, identificativo tecnico) nei metadati di `audit_events`; la cronologia legge con `metadata->>documentId`. Tre nuovi tipi evento (`document_updated`, `document_downloaded`, `document_text_read`): migration additiva `20261002000000_document_history_events.sql` (ricrea il check constraint e aggiunge un indice parziale sul documentId). Cestino/ripristino registrano una riga per documento. Gli eventi precedenti a questa versione non hanno `documentId` e non compaiono nella cronologia del documento. La migration va applicata al database v3 prima di usare la funzione (senza, i nuovi eventi vengono scartati in silenzio, come ogni errore di audit).
+
+---
+
+## 2026-10-01 (26)
+
+### Rifiniture alla ricerca, interruttore elenco/tabella a destra, rimossa la sezione "Novità"
+
+**Cosa fa:**
+- Il modale della ricerca (Ctrl+K) ora **oscura tutta la pagina**, comprese le icone dei file in Archivio che prima restavano in primo piano: la finestra è montata direttamente nel `body` e non più dentro la barra di navigazione.
+- Le scorciatoie in fondo al modale (↑ ↓, Tab, Invio, Esc) hanno la **cornice** come i tasti; tolta la frase "Cerca sul tuo dispositivo, niente esce".
+- L'interruttore **elenco/tabella** delle pagine principali è allineato a destra.
+- **Novità eliminata**: voce di menu, pagina `/updates`, componente e codice di dominio. Le preferenze di navigazione già salvate che citano la voce vengono ignorate (il parser scarta gli href non più validi).
+
+**Note tecniche:** le migration `product_updates` e i tipi generati in `src/types/supabase.ts` restano (le migration sono additive e immutabili); la tabella non viene più letta da nessuno.
+
+---
+
+## 2026-10-01 (25)
+
+### Ricerca unificata (Ctrl+K) --- un solo punto di ricerca, anche dentro il testo letto dei documenti
+
+**Cosa fa:**
+- La ricerca è ora **un solo posto**: la finestra che si apre con **Ctrl+K** (o dal pulsante "Cerca…" nella navigazione). I campi di ricerca sono stati tolti da Archivio, Beni, Scadenze, Amici e Capsule, che mantengono i propri filtri (categoria, stato, tag).
+- La finestra mostra i **chip per area** (Tutto, Archivio, Scadenze, Beni, Amici, Capsule) con il conteggio dei risultati, e i risultati raggruppati per area; in "Tutto" ogni area mostra i primi 3 e un pulsante **Mostra tutti (N)**.
+- Si trova per **nome**, per **etichette** (categoria, emittente, tag, ruolo, email, bene collegato) e **dentro il contenuto**: testo letto dei documenti, note, trascrizioni, contenuto delle capsule. Quando il motivo è nel contenuto compare un frammento con la parola evidenziata e l'origine ("Nel testo", "Nelle note", "Trascrizione", "Nel contenuto").
+- **Tutte le parole digitate devono comparire** (prima bastava una), senza distinguere maiuscole e accenti; i risultati col nome corrispondente vengono prima di quelli per etichetta, e poi di quelli per contenuto.
+- Tastiera: frecce, Invio, Esc, **Tab / Maiusc+Tab** per cambiare area. Se un'area non ha risultati ma altre sì, il messaggio lo dice ("ce ne sono N altrove: prova Tutto").
+- I **Fascicoli** hanno ancora il loro campo di ricerca (non sono coperti dalla ricerca unificata).
+
+**Note tecniche:** nuovo modulo `src/domain/search/unified-search.ts` (funzioni pure: `searchEverything`, `countByArea`), separato da `mockAIProvider.search`, che resta invariato per il pannello AI. Tutto avviene in memoria sul contesto già decifrato (`buildAIContext`, ricaricato a ogni apertura): nessuna nuova query, niente esce dal dispositivo. Nessun "Recenti" persistente: sarebbe testo digitato in chiaro da conservare. Test: `tests/unit/search/unified-search.test.ts` e gli e2e `global-search`, `list-filters`, `archive-search-inside-pdf`, `archive-ocr-image`, `transcription` (con l'helper `tests/e2e/search-helpers.ts`).
+
+---
+
+## 2026-10-01 (24)
+
+### Pulizia dell'Archivio e della scheda documento --- "Scarica", "Rileggi da capo" in evidenza, meno rumore dalle proposte locali
+
+**Cosa fa:**
+- Nel menu di ogni riga dell'Archivio la voce per i file è ora **Scarica** invece di "Apri" (scaricava già: il dettaglio si apre dal nome). Per le note resta "Apri/Chiudi", che è l'anteprima in riga.
+- Nella scheda "Chiedi a Hinthia" **Rileggi da capo** è un pulsante con il bordo, non più un link piccolo: è un'azione che costa una lettura.
+- Se Hinthia ha già letto un documento, le **proposte calcolate sul dispositivo** (scheda "Letto dal dispositivo") non vengono più mostrate, perché quelle di Hinthia sono più affidabili; resta una riga che lo spiega, con il collegamento a "Chiedi a Hinthia". Per i documenti che Hinthia non ha letto non cambia nulla: lì le regole locali sono l'unica via, e restano interamente sul dispositivo.
+
+- Se Hinthia ha già letto il documento, anche **"Cosa ne ho ricavato"** (i valori chiave-valore ricavati sul dispositivo) non viene più mostrato; resta "Cosa ho letto", cioè il testo.
+- **Indicatore di attività** (nuovo `Spinner`): "Rileggi" in "Letto dal dispositivo" mostra ora una barra di avanzamento con la percentuale; "Chiedi a Hinthia" / "Rileggi da capo" mostra sempre "Hinthia sta leggendo il documento…" (prima, per i documenti brevi, in una sola parte, non appariva nulla).
+- **"Risposta di Hinthia non valida" meno frequente:** l'output del modello che arriva come testo JSON invece che come struttura viene rimesso in forma, e se è comunque fuori schema si riprova una volta. Il server registra (solo forma e `stop_reason`, mai contenuti) perché una risposta è stata scartata.
+
+**Note tecniche:** `ArchiveItemDetail` separa `localCandidates` (sempre calcolate) da `localProposals` (vuote se `doc.contentAnalysis` esiste); "Cosa ne ho ricavato" continua a filtrare contro i candidati locali, così i valori già proposti non ricompaiono come semplici fatti. Il test e2e `archive.spec.ts` cerca ora la voce "Scarica".
+
+---
+
+## 2026-10-01 (23)
+
+### Content Intelligence, PR3 (passo B) --- Hinthia cita la pagina, e le pagine lette si salvano cifrate
+
+**Cosa fa:** quando carichi un PDF o un'immagine, le pagine lette sul dispositivo vengono conservate (cifrate, come tutto il resto) e Hinthia le usa per dire **da quale pagina** viene ogni informazione ("pagina 3", con la frase citata) invece di una generica "sezione". I documenti caricati prima non hanno le pagine: per loro c'è **Rileggi**, che le ricostruisce. Le pagine non entrano nell'esportazione e spariscono con il documento: eliminazione definitiva, svuotamento del Cestino, "Cancella tutto" (ora anche per i documenti già nel Cestino, che prima lasciavano i file in Storage) e cancellazione dell'account.
+
+**Dove si vede:** accanto alla citazione di ogni proposta di Hinthia compare il badge "Pagina N" (solo se il documento è stato letto per pagine; per le sezioni non compare). Nella prima versione del passo B la pagina veniva calcolata e salvata ma non mostrata: corretto con `Proposal.page` e `ProposalsSection`.
+
+**Attenzione:** le letture di Hinthia già salvate su un documento con le pagine diventano "da rifare" alla prima apertura, perché la fonte del testo è cambiata (pagine invece di sezioni): il pulsante lo dice prima di spendere qualcosa.
+
+**Note tecniche:** blob `{storagePath}-segments.json` (`documentSegmentsPath`), cifrato con la Master Key, nessuna migration né colonna; `src/domain/documents/segments.ts` (cifratura, validazione contro `extractedText`, salvataggio/lettura/rimozione best-effort). Se i segmenti non ricompongono esattamente il testo salvato non si usano e l'analisi ricade sulle sezioni. `ArchiveItemDetail` e `CreateArchiveItemForm` li caricano con `useDocumentSegments` e, al click su "Chiedi a Hinthia", rileggono pagine e stato della lettura salvata invece di fidarsi dello stato (evita di rifare e pagare una lettura completa se il caricamento non era ancora finito). `wipeVault` ora legge i percorsi con una query leggera su tutti i documenti dell'utente (Cestino incluso). Test in `tests/unit/documents/segments.test.ts`.
+
+---
+
+## 2026-10-01 (22)
+
+### Content Intelligence, PR3 --- "Accetta tutto" anche nella tab di Hinthia
+
+**Cosa fa:** quando Hinthia trova almeno due informazioni da aggiungere (scadenza, emittente, categoria, campi), nella tab di Hinthia compare in cima alle proposte "Hinthia ha trovato N informazioni da aggiungere alla Scheda" con il pulsante **Accetta tutto**. Prima il pulsante esisteva solo nella tab Scheda. Una sola proposta per tipo (per i campi, per chiave); l'azione si può annullare in blocco come quella già esistente.
+
+**Note tecniche:** `ProposalsSection` accetta `acceptAllCount` e `onAcceptAll` (opzionali: le proposte locali non li passano). `onePerSlot` in `ArchiveItemDetail.tsx` è condiviso con la tab Scheda; il pulsante riusa `handleAcceptAll`. Test in `tests/unit/proposals-section.test.tsx`.
+
+---
+
+## 2026-10-01 (21)
+
+### Content Intelligence, PR3 (passo A) --- la lettura di Hinthia si salva, si riprende e non si paga due volte
+
+**Cosa fa:**
+- Ciò che Hinthia legge in un documento **non si perde più** chiudendo o ricaricando la pagina: le proposte, la sintesi e il tipo riconosciuto tornano da soli all'apertura della scheda.
+- Con un documento lungo la lettura si salva **dopo ogni parte**. Se si chiude la pagina, si preme **Interrompi** o c'è un errore, il pulsante diventa "Riprendi la lettura (X di N)" e riparte dalla parte mancante, non dall'inizio.
+- Se la lettura è completa, la scheda dice "Hinthia ha già letto questo documento il …" e **non invia niente** né spende richieste. Se mancava solo la sintesi finale, "Prepara la sintesi finale" rifà solo quel passo.
+- **Rileggi da capo** ignora la lettura salvata e rilegge tutto (anche per i documenti già nell'archivio, che non hanno ancora una lettura salvata). Se il testo del documento cambia, la lettura salvata non vale più e la scheda lo dice.
+
+**Note tecniche:** migration additiva `20261001000000_content_analysis_persistence.sql` (da applicare **prima** del codice: `listDocuments` legge le nuove colonne). `documents.encrypted_content_analysis` è cifrata con la Master Key; `analysis_status` (pending/failed/partial/completed) è l'unica parte in chiaro e non dice nulla del contenuto. L'impronta di idempotenza (testo dei blocchi + versioni di schema/pipeline + modelli) sta *dentro* il blocco cifrato ed è un HMAC-SHA256; la chiave HMAC si deriva dalla Master Key cifrando un'etichetta fissa con IV fisso (costruzione non standard, accettabile perché serve solo a un confronto locale e l'output non lascia il dispositivo). Codice in `domain/ai/analysis/persisted.ts`, `pipeline.ts`, `lib/crypto/fingerprint.ts`, `domain/ai/analyze-document.ts`, `domain/documents/repository.ts` (`saveContentAnalysis`). Test in `tests/unit/ai/persisted-analysis.test.ts`.
+
+**Limite noto:** finché il passo B non salva i segmenti per pagina, i documenti ricavano sezioni dal testo (provenienza = sezione, non pagina); al passo B l'impronta cambierà e servirà un "Rileggi". Cestino, eliminazione definitiva, "Cancella tutto", cancella account ed esportazione non coprono ancora i segmenti (passo B).
+
+---
+
+## 2026-10-01 (20)
+
+### Content Intelligence, PR2 --- ritocchi dopo la prova: avanzamento della lettura e categoria più affidabile
+
+**Cosa fa:**
+- Con un documento lungo, mentre Hinthia legge compare ora una **barra di avanzamento** con "Leggo la parte X di N…" e, alla fine, "Letto tutto: preparo la sintesi…". Prima, dopo la conferma, la pagina non mostrava nulla. Vale sia sulla scheda del documento sia nel wizard di creazione. Un documento breve (una sola parte) resta com'è: solo "Sto leggendo…".
+- La **categoria** proposta per un documento in più parti non è più quella del primo blocco (una copertina o un indice potevano fuorviare), ma quella proposta dal maggior numero di parti; a parità vince la più vicina all'inizio. Inoltre a Hinthia viene chiesto di scegliere la categoria per il tipo di documento nel suo insieme e non per una parola isolata, e di non proporne nessuna se non è davvero adatta o se il blocco non basta per deciderlo.
+
+**Note tecniche:** `analyzeDocumentWithClaude` accetta `onProgress` (fasi `reading`/`merging`), mostrato da `AIAnalysisTrigger`; il voto sulla categoria sta in `domain/ai/analysis/merge.ts`, il testo del prompt in `lib/ai/claude-analysis-provider.ts`. Test aggiunti in `tests/unit/ai/analyze-document.test.ts` (avanzamento a due parti, a una parte, voto della categoria).
+
+**Limite noto:** la categoria dipende anche da come l'utente ha chiamato le sue categorie: a Hinthia arrivano solo i nomi. Se i risultati restano imprecisi, il passo successivo è dare a ogni categoria una breve descrizione.
+
+---
+
+## 2026-10-01 (19)
+
+### Content Intelligence, PR2 --- analisi di Hinthia a blocchi, con la provenienza di ogni lettura
+
+**Cosa fa:**
+- Quando chiedi a Hinthia di leggere un documento, ora il testo parte **a parti** (al massimo circa 12.000 caratteri per richiesta) invece che in un colpo solo, quindi anche un documento lungo viene letto per intero e non solo nella parte iniziale. Il messaggio di conferma prima dell'invio dice in quante parti parte; per i documenti molto lunghi avvisa che se ne leggono solo le prime.
+- Ogni cosa che Hinthia ricava (scadenza, emittente, categoria, campi come numero di polizza o importo) porta con sé la **citazione esatta** e il **punto del documento** da cui viene. Una lettura la cui citazione non c'è davvero in quel punto, o il cui valore non è quello che la citazione dice (per esempio una data diversa), viene scartata: come prima, un campo mancante costa meno di uno inventato.
+- Hinthia riconosce il **tipo di documento** (contratto, referto, fattura, bolletta, polizza, altro) e cerca i campi tipici di quel tipo.
+- Per un documento in più parti la sintesi è una sola, fusa dalle sintesi delle singole parti.
+- Cosa vedi oggi: le proposte e la sintesi funzionano come prima. Il punto di provenienza (pagina) e il tipo riconosciuto ancora non si vedono: arrivano con l'interfaccia della PR4.
+
+**Note tecniche:** `src/domain/ai/analysis/` (nuovo): `schemas.ts` (registro statico dei tipi, tipo sconosciuto = `generico`), `blocks.ts` (segmenti, blocchi con marcatori `[[id]]`, `MAX_BLOCK_CHARS` 12.000, `MAX_BLOCKS_PER_DOCUMENT` 20), `result.ts` (controllo di forma dell'output strutturato), `validate.ts` (citazione nel segmento indicato + coerenza valore/citazione, date rilette e confrontate in forma normalizzata), `merge.ts`, `types.ts` (interfaccia `AnalysisProvider`). `src/lib/ai/claude-analysis-provider.ts` è l'unico punto che parla con Anthropic per l'analisi: output via tool use forzato (sostituisce `parseClaudeJson`, rimosso con il suo test), modello per stadio in una costante (oggi Haiku 4.5 per blocchi e fusione). `/api/ai/analyze` ora accetta una richiesta per blocco (`mode: "block"`) o per fusione delle sintesi (`mode: "merge"`), mai un documento intero; i controlli di consenso e il loro ordine sono invariati (503 per chiave mancante resta prima di ogni chiamata). `ai_extraction_used` viene registrato per ogni richiesta che porta contenuto fuori, senza contenuti. La verifica delle citazioni resta sul client, che ha i segmenti. Nessuna migration, nessuna variabile d'ambiente nuova.
+
+**Limiti noti:** finché i segmenti non vengono salvati (PR3), l'analisi di un documento già archiviato ricava le sezioni dal testo e la provenienza è la *sezione*, non la pagina; il codice per la pagina c'è ed è testato. Il tetto di costo per sessione (100 richieste) vive nella pagina aperta: è un freno contro un'analisi lanciata per errore, non una difesa lato server. Se un blocco a metà documento fallisce, l'analisi si interrompe con un errore e le letture dei blocchi precedenti non vengono mostrate. Un campo con lo stesso nome ma valori diversi in punti diversi tiene il primo. Un audit di un documento lungo conta una voce per richiesta. Il test e2e `ai-content-analysis.spec.ts` non è stato rieseguito (richiede la chiave API assente).
+
+---
+
+## 2026-09-30 (18)
+
+### Content Intelligence, PR1 --- il contenuto si legge per pagina (nessun cambiamento visibile)
+
+**Cosa fa:**
+- Quando Hinthial legge un PDF o una foto sul dispositivo, ora tiene il testo **pagina per pagina** (con il numero reale della pagina) invece che come un unico blocco, e registra anche la **lingua** del testo e alcune **informazioni tecniche** del file (numero di pagine, dimensioni dell'immagine, titolo/autore/data di creazione dichiarati dal PDF, marca e modello della fotocamera, data di scatto).
+- Della posizione GPS di una foto si registra soltanto *se c'è*, mai le coordinate.
+- Per chi usa l'app nulla cambia: ricerca, testo mostrato e analisi di Claude funzionano come prima. È la base per le PR successive (analisi a blocchi con citazione della pagina, salvataggio cifrato, interfaccia).
+
+**Note tecniche:** nuovo tipo `ExtractedContent` (`text`, `language`, `segments`, `technical`, `extraction`) in `src/domain/extraction/types.ts`; `TextExtractor.extract()` diventa `extractContent()`. `extractText()` mantiene firma e risultato (`(await extractContent())?.text`), quindi i chiamanti esistenti non cambiano; `text` è identico a prima (pagine unite da una riga vuota, normalizzate, tetto `MAX_EXTRACTED_CHARS`), mentre i segmenti non sono tagliati dal tetto (che riguarda la sola ricerca). Le pagine senza testo non producono segmenti e non scorrono la numerazione. Moduli nuovi: `content.ts` (composizione), `language.ts` (stopword it/en/fr/de/es, null se incerta), `technical.ts` (PNG/JPEG/GIF/BMP/WebP-VP8X, EXIF, Info PDF). Nessuna migration, nessuna variabile d'ambiente, nessuna modifica all'AI.
+
+**Limiti noti:** l'OCR vero non gira in jsdom, quindi il ramo `ocrTextExtractor.extractContent` è coperto solo dal typecheck e dalla verifica manuale; il test `main-nav.test.tsx` fallisce già prima di questa PR (cerca un link "AI" che ora si chiama "Hinthia").
+
+---
+
+## 2026-09-30 (17)
+
+### Ambiente v3 avviabile anche in locale (`npm run dev:v3`)
+
+**Cosa fa:**
+- Con `npm run dev:v3` l'app gira sul PC (https://localhost:3000) collegata al progetto Supabase **v3**, senza toccare il database di sviluppo della v2. `npm run dev:https` continua a usare il Supabase di sviluppo.
+- Passando da un ambiente all'altro la cache di sviluppo viene svuotata da sola, così l'app non resta collegata al database dell'ambiente precedente.
+
+**Note tecniche:** `scripts/dev-v3.mjs` carica `.env.v3.local` in `process.env` (che ha la precedenza su `.env.local`) e avvia `next dev` in HTTPS; `--env-file` non è usabile perché Next lo rifiuta nei processi figli (`NODE_OPTIONS`). `scripts/env-target.mjs`, eseguito nei `predev*`, svuota `.next` quando cambia l'ambiente (marcatore `.next/.env-target`), perché le `NEXT_PUBLIC_*` sono incorporate nella cache. `.env.v3.local` (ignorato da git) contiene ora anche APP_URL locale, Resend, Google Drive, Anthropic e un `CRON_SECRET` proprio.
+
+Verificato: il codice compilato da `dev:v3` contiene il riferimento al Supabase v3 e nessuno a quello di sviluppo.
+
+---
+
 ## 2026-09-30 (16)
 
 ### Inserimento contenuto: niente striscia sotto il "1" e momento "salvato" prima dei passi di Hinthial

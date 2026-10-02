@@ -28,3 +28,9 @@ export const DEVICE_LOCK_HKDF_INFO = "hinthial:device-lock:v1";
  * PBKDF2/di un envelope, che DEVONO essere unici per ogni segreto, questo resta deliberatamente lo stesso.
  */
 export const DEVICE_LOCK_PRF_SALT_LABEL = "hinthial:device-lock:prf-salt:v1";
+
+/**
+ * Etichetta cifrata (con un IV fisso, v. lib/crypto/fingerprint.ts) per ricavare dalla Master Key non esportabile una
+ * chiave HMAC a sé: la chiave dell'impronta di idempotenza non è mai la Master Key stessa.
+ */
+export const CONTENT_FINGERPRINT_LABEL = "hinthial:content-fingerprint:v1:key-derivation";

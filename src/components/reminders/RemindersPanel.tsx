@@ -7,7 +7,6 @@ import { createClient } from "@/lib/db/supabase/client";
 import { deleteReminder, listReminders, setReminderCompleted } from "@/domain/reminders/repository";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { PageHelp } from "@/components/help/PageHelp";
-import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
 import { Pagination } from "@/components/ui/Pagination";
@@ -71,7 +70,6 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "completed", direction: "asc" });
@@ -142,21 +140,11 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
     );
   }
 
-  const filteredReminders = reminders
-    .filter((r) => {
-      const normalized = query.trim().toLowerCase();
-      if (!normalized) return true;
-      const haystack = [r.title, r.relatedDocumentFilename, r.relatedAssetName]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(normalized);
-    })
-    .filter((r) => {
-      if (statusFilter === "pending") return !r.completed;
-      if (statusFilter === "completed") return r.completed;
-      return true;
-    });
+  const filteredReminders = reminders.filter((r) => {
+    if (statusFilter === "pending") return !r.completed;
+    if (statusFilter === "completed") return r.completed;
+    return true;
+  });
 
   function handleExportAll() {
     const ics = buildIcsCalendar(
@@ -224,7 +212,6 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
       ) : (
         <>
           <div className="flex flex-wrap gap-3">
-            <SearchInput value={query} onChange={setQuery} placeholder="Cerca per titolo…" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
@@ -249,7 +236,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
 
           {filteredReminders.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Nessuna scadenza corrisponde alla ricerca.
+              Nessuna scadenza corrisponde ai filtri.
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">

@@ -8,7 +8,7 @@ import {
   utf8ToBytes,
   bytesToUtf8,
 } from "@/lib/crypto";
-import { logAuditEvent } from "@/lib/audit/log-event";
+import { logAuditEvent, logAuditEventForCurrentUser } from "@/lib/audit/log-event";
 import type { DossierInput, DossierListItem, DossierStatus } from "@/domain/dossiers/types";
 
 const DOSSIER_COLUMNS =
@@ -93,7 +93,7 @@ export async function createDossier(
     throw new Error(`Impossibile creare il fascicolo: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "dossier_created");
+  await logAuditEvent(supabase, ownerId, "dossier_created", undefined, { type: "dossier", id });
 
   return id;
 }
@@ -121,6 +121,8 @@ export async function updateDossier(
   if (error) {
     throw new Error(`Impossibile aggiornare il fascicolo: ${error.message}`);
   }
+
+  await logAuditEventForCurrentUser(supabase, "dossier_updated", undefined, { type: "dossier", id: dossierId });
 }
 
 /** Azione a sé, un solo clic (stesso schema di setReminderCompleted) --- `closed_at` si azzera riaprendo. */
@@ -145,13 +147,20 @@ export async function deleteDossier(
   ownerId: string,
   dossierId: string,
 ): Promise<void> {
+  // Il titolo è già cifrato nella riga: lo si copia nell'evento, per riconoscere il fascicolo dopo l'eliminazione.
+  const { data: titleRow } = await supabase.from("dossiers").select("encrypted_title").eq("id", dossierId).maybeSingle();
+
   const { error } = await supabase.from("dossiers").delete().eq("id", dossierId);
 
   if (error) {
     throw new Error(`Impossibile eliminare il fascicolo: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "dossier_deleted");
+  await logAuditEvent(supabase, ownerId, "dossier_deleted", undefined, {
+    type: "dossier",
+    id: dossierId,
+    encryptedLabel: titleRow?.encrypted_title,
+  });
 }
 
 /** FASE 20c: tabella ponte `document_dossiers` letta in un colpo solo per un insieme di documenti, non una query a testa. Id in chiaro, nessuna decifratura. */

@@ -141,8 +141,11 @@ test("la scheda ricava data, emittente e scadenza dal testo del documento", asyn
   const ricavato = page.getByRole("region", { name: "Cosa ne ho ricavato" });
   await expect(ricavato).toBeVisible({ timeout: 30_000 });
 
-  // "AZIENDA OSPEDALIERA DI GUBBIO" è l'intestazione, non il titolo del documento (che deve essere scartato).
-  await expect(ricavato).toContainText("AZIENDA OSPEDALIERA DI GUBBIO");
+  // "AZIENDA OSPEDALIERA DI GUBBIO" è l'intestazione, non il titolo del documento (che deve essere scartato): è
+  // un'informazione identica a una proposta, quindi si vede fra le proposte e non in "Cosa ne ho ricavato".
+  await expect(page.getByRole("tabpanel", { name: "Letto dal dispositivo" })).toContainText(
+    "AZIENDA OSPEDALIERA DI GUBBIO",
+  );
   await expect(ricavato).toContainText("14 mar 2026");
 
   // La scadenza viene da "Si consiglia controllo tra dodici mesi" più la data del prelievo, e vive fra le

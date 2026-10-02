@@ -1,6 +1,7 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 import { openRowMenu } from "./row-actions";
+import { closeGlobalSearch, searchGlobally } from "./search-helpers";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -28,7 +29,7 @@ async function loginAndSetUpEncryption(page: import("@playwright/test").Page) {
   return user;
 }
 
-test("la ricerca e il filtro per categoria funzionano in Beni e Archivio", async ({ page }) => {
+test("la ricerca globale e il filtro per categoria funzionano in Beni e Archivio", async ({ page }) => {
   test.slow();
 
   await loginAndSetUpEncryption(page);
@@ -50,21 +51,17 @@ test("la ricerca e il filtro per categoria funzionano in Beni e Archivio", async
   await expect(page.getByText("Appartamento")).toBeVisible();
   await expect(page.getByText("Fiat Panda")).toBeVisible();
 
-  // Ricerca testuale.
-  await page.getByPlaceholder("Cerca per nome…").fill("panda");
-  await expect(page.getByText("Fiat Panda")).toBeVisible();
-  await expect(page.getByText("Appartamento")).not.toBeVisible();
-  await page.getByPlaceholder("Cerca per nome…").fill("");
+  // Ricerca: le aree non hanno più il proprio campo, c'è la ricerca globale.
+  await expect(page.getByPlaceholder("Cerca per nome…")).toHaveCount(0);
+  const assetsSearch = await searchGlobally(page, "panda");
+  await expect(assetsSearch.getByRole("button", { name: /Fiat Panda/ })).toBeVisible();
+  await expect(assetsSearch.getByRole("button", { name: /Appartamento/ })).toHaveCount(0);
+  await closeGlobalSearch(page);
 
   // Filtro per categoria.
   await page.getByLabel("Filtra per categoria").selectOption({ label: "🏠 Casa" });
   await expect(page.getByText("Appartamento")).toBeVisible();
   await expect(page.getByText("Fiat Panda")).not.toBeVisible();
-
-  // Nessun risultato: messaggio esplicito, non una lista vuota muta.
-  await page.getByLabel("Filtra per categoria").selectOption({ label: "Tutte le categorie" });
-  await page.getByPlaceholder("Cerca per nome…").fill("xyzxyz");
-  await expect(page.getByText("Nessun bene corrisponde alla ricerca.")).toBeVisible();
 
   // Archivio: stesso pattern (ricerca per nome + filtro categoria).
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
@@ -102,17 +99,18 @@ test("la ricerca e il filtro per categoria funzionano in Beni e Archivio", async
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible({ timeout: 15_000 });
 
-  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("polizza");
-  await expect(page.getByText("polizza.txt")).toBeVisible();
-  await expect(page.getByText("contratto-affitto.txt")).not.toBeVisible();
-  await page.getByPlaceholder("Cerca per nome, tag, note o dentro i documenti…").fill("");
+  await expect(page.getByPlaceholder(/Cerca per nome, tag, note/)).toHaveCount(0);
+  const archiveSearch = await searchGlobally(page, "polizza");
+  await expect(archiveSearch.getByRole("button", { name: /polizza\.txt/ })).toBeVisible();
+  await expect(archiveSearch.getByRole("button", { name: /contratto-affitto\.txt/ })).toHaveCount(0);
+  await closeGlobalSearch(page);
 
   await page.getByLabel("Filtra per categoria").selectOption({ label: "🏠 Casa" });
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible();
   await expect(page.getByText("polizza.txt")).not.toBeVisible();
 });
 
-test("la ricerca e il filtro per stato funzionano in Scadenze, Amici e Capsule", async ({
+test("la ricerca globale e il filtro per stato funzionano in Scadenze, Amici e Capsule", async ({
   page,
 }) => {
   test.slow();
@@ -143,10 +141,10 @@ test("la ricerca e il filtro per stato funzionano in Scadenze, Amici e Capsule",
     .click();
   await expect(page.getByText("Rinnovo passaporto")).toHaveClass(/line-through/);
 
-  await page.getByPlaceholder("Cerca per titolo…").fill("passaporto");
-  await expect(page.getByText("Rinnovo passaporto")).toBeVisible();
-  await expect(page.getByText("Revisione auto")).not.toBeVisible();
-  await page.getByPlaceholder("Cerca per titolo…").fill("");
+  const remindersSearch = await searchGlobally(page, "passaporto");
+  await expect(remindersSearch.getByRole("button", { name: /Rinnovo passaporto/ })).toBeVisible();
+  await expect(remindersSearch.getByRole("button", { name: /Revisione auto/ })).toHaveCount(0);
+  await closeGlobalSearch(page);
 
   await page.getByLabel("Filtra per stato").selectOption({ label: "Completate" });
   await expect(page.getByText("Rinnovo passaporto")).toBeVisible();
@@ -181,10 +179,10 @@ test("la ricerca e il filtro per stato funzionano in Scadenze, Amici e Capsule",
     page.getByRole("listitem").filter({ hasText: "Luca Bianchi" }).getByText("Revocato"),
   ).toBeVisible();
 
-  await page.getByPlaceholder("Cerca per nome, email o ruolo…").fill("avvocato");
-  await expect(page.getByText("Luca Bianchi")).toBeVisible();
-  await expect(page.getByText("Maria Rossi")).not.toBeVisible();
-  await page.getByPlaceholder("Cerca per nome, email o ruolo…").fill("");
+  const friendsSearch = await searchGlobally(page, "avvocato");
+  await expect(friendsSearch.getByRole("button", { name: /Luca Bianchi/ })).toBeVisible();
+  await expect(friendsSearch.getByRole("button", { name: /Maria Rossi/ })).toHaveCount(0);
+  await closeGlobalSearch(page);
 
   await page.getByLabel("Filtra per stato").selectOption({ label: "Attivi" });
   await expect(page.getByText("Maria Rossi")).toBeVisible();
@@ -218,10 +216,10 @@ test("la ricerca e il filtro per stato funzionano in Scadenze, Amici e Capsule",
     page.getByRole("listitem").filter({ hasText: "Per Maria" }).getByText("Chiusa"),
   ).toBeVisible();
 
-  await page.getByPlaceholder("Cerca per titolo o contenuto…").fill("ricordi");
-  await expect(page.getByText("Ricordi di famiglia")).toBeVisible();
-  await expect(page.getByText("Per Maria")).not.toBeVisible();
-  await page.getByPlaceholder("Cerca per titolo o contenuto…").fill("");
+  const capsulesSearch = await searchGlobally(page, "ricordi");
+  await expect(capsulesSearch.getByRole("button", { name: /Ricordi di famiglia/ })).toBeVisible();
+  await expect(capsulesSearch.getByRole("button", { name: /Per Maria/ })).toHaveCount(0);
+  await closeGlobalSearch(page);
 
   await page.getByLabel("Filtra per stato").selectOption({ label: "Chiusa" });
   await expect(page.getByText("Per Maria")).toBeVisible();

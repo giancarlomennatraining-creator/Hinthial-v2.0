@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { searchGlobally } from "./search-helpers";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -39,12 +40,13 @@ test("la ricerca globale trova un bene per nome e ci porta alla sua pagina", asy
   const dialog = page.getByRole("dialog", { name: "Ricerca globale" });
   await expect(dialog).toBeVisible();
 
-  const input = page.getByPlaceholder("Cerca nell'archivio, beni, scadenze, amici, capsule…");
+  const input = dialog.getByLabel("Cerca", { exact: true });
   await expect(input).toBeFocused();
   await input.fill("panda");
 
-  await expect(dialog.getByText("Beni", { exact: true })).toBeVisible();
-  await dialog.getByRole("button", { name: "Auto Panda" }).click();
+  // I chip mostrano i conteggi per area: il bene trovato è uno.
+  await expect(dialog.getByRole("button", { name: /^Beni\s*1$/ })).toBeVisible();
+  await dialog.getByRole("button", { name: /Auto Panda/ }).click();
 
   await expect(page).toHaveURL(/\/assets$/);
   await expect(dialog).not.toBeVisible();
@@ -56,7 +58,15 @@ test("la ricerca globale trova un bene per nome e ci porta alla sua pagina", asy
   await expect(dialog).not.toBeVisible();
 
   // Nessuna corrispondenza: messaggio esplicito, non una lista vuota muta.
-  await page.getByRole("button", { name: /Cerca/ }).click();
-  await page.getByPlaceholder("Cerca nell'archivio, beni, scadenze, amici, capsule…").fill("xyzxyz");
-  await expect(page.getByText('Nessun risultato per "xyzxyz".')).toBeVisible();
+  await searchGlobally(page, "xyzxyz");
+  await expect(dialog.getByText('Nessun risultato per "xyzxyz".')).toBeVisible();
+
+  // Tutte le parole devono comparire: una parola che non c'è esclude il bene.
+  await searchGlobally(page, "panda zzzzzz");
+  await expect(dialog.getByText(/Nessun risultato per/)).toBeVisible();
+
+  // Filtro per area: in un'area senza risultati il messaggio rimanda a "Tutto".
+  await searchGlobally(page, "panda");
+  await dialog.getByRole("button", { name: /^Amici/ }).click();
+  await expect(dialog.getByText(/ma ce ne sono 1 altrove/)).toBeVisible();
 });

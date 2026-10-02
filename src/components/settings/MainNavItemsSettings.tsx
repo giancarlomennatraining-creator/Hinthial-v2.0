@@ -62,7 +62,7 @@ export function MainNavItemsSettings() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="grid items-start gap-4 lg:grid-cols-2">
       <div>
         <p className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
           Visibili — in quest&apos;ordine
@@ -154,12 +154,12 @@ export function MainNavItemsSettings() {
         </div>
       ) : null}
 
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="text-xs text-zinc-500 lg:col-span-2 dark:text-zinc-400">
         Una voce nascosta qui non compare più nel menu principale — resta comunque raggiungibile
         dalla dashboard o dalla ricerca.
       </p>
       {error ? (
-        <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="text-xs text-red-600 lg:col-span-2 dark:text-red-400">
           Preferenza non salvata.
         </p>
       ) : null}

@@ -1,5 +1,12 @@
 import type { Worker as TesseractWorker } from "tesseract.js";
-import { normalizeExtractedText, type ExtractionProgress, type TextExtractor } from "@/domain/extraction/types";
+import { buildExtractedContent } from "@/domain/extraction/content";
+import { inspectImage } from "@/domain/extraction/technical";
+import {
+  normalizeExtractedText,
+  type ExtractedContent,
+  type ExtractionProgress,
+  type TextExtractor,
+} from "@/domain/extraction/types";
 
 /** FASE 17c: OCR delle immagini, tutto sul dispositivo --- anche i file del motore arrivano dal nostro dominio, non da una CDN (v. scripts/sync-ocr-assets.mjs). */
 
@@ -14,6 +21,9 @@ const OCR_MIME_TYPES = new Set([
 
 /** Solo italiano --- v. scripts/sync-ocr-assets.mjs per il perché. */
 const OCR_LANGUAGES = "ita";
+
+/** Registrata con ogni risultato: va cambiata quando cambiano motore o lingua, perché lo stesso file potrebbe leggersi diversamente. */
+const OCR_ENGINE_VERSION = "tesseract.js-7-ita-lstm";
 
 /** Serviti da noi, non dalla CDN di default di tesseract.js --- copiati in `public/ocr/` prima di dev/build/e2e. */
 const OCR_PATHS = {
@@ -110,12 +120,19 @@ export const ocrTextExtractor: TextExtractor = {
     return OCR_MIME_TYPES.has(mimeType);
   },
 
-  async extract(
+  async extractContent(
     bytes: Uint8Array,
     mimeType: string,
     onProgress?: ExtractionProgress,
-  ): Promise<string | null> {
+  ): Promise<ExtractedContent> {
     // Blob, non byte grezzi: la decodifica JPEG/PNG del browser è molto più rapida di quella di tesseract.js.
-    return recognizeImage(new Blob([bytes as BlobPart], { type: mimeType }), onProgress);
+    const text = await recognizeImage(new Blob([bytes as BlobPart], { type: mimeType }), onProgress);
+
+    return buildExtractedContent({
+      // Un'immagine è una pagina sola.
+      pages: text ? [{ index: 1, text }] : [],
+      technical: { ...inspectImage(bytes, mimeType), pageCount: 1, pagesRead: 1 },
+      extraction: { extractor: "tesseract", version: OCR_ENGINE_VERSION, ocr: true },
+    });
   },
 };

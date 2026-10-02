@@ -11,6 +11,7 @@ import { PrivacyPanel } from "@/components/settings/PrivacyPanel";
 import { MfaSettingsPanel } from "@/components/settings/MfaSettingsPanel";
 import { DeviceLockPanel } from "@/components/settings/DeviceLockPanel";
 import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
+import type { AuditFilterParams } from "@/domain/audit/filters";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
 import { TagsSettingsPanel } from "@/components/settings/TagsSettingsPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
@@ -25,20 +26,29 @@ import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { ImportExportTabs } from "@/components/import-export/ImportExportTabs";
 import { AIConsentSettings } from "@/components/settings/AIConsentSettings";
 import { PageHelp, type HelpTip } from "@/components/help/PageHelp";
-import type { ComponentType, SVGProps } from "react";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 import {
   ActivityIcon,
   AIIcon,
   AlertTriangleIcon,
+  ArchiveIcon,
+  BottomBarIcon,
+  CapsuleIcon,
   CategoryIcon,
   ChecklistIcon,
   EyeIcon,
+  FingerprintIcon,
   HeartIcon,
   ImportExportIcon,
+  ListViewIcon,
   MedicalCardIcon,
+  MenuListIcon,
   SecurityIcon,
+  SidebarLayoutIcon,
   SlidersIcon,
+  SmartphoneIcon,
   TagIcon,
+  ThemeIcon,
   UserIcon,
 } from "@/components/icons/nav-icons";
 
@@ -57,10 +67,21 @@ type Tab =
   | "ai"
   | "danger-zone";
 
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
+
+/** Secondo livello: una funzione di una voce (es. "Tema" dentro "Aspetto"). Il suo `id` vale solo dentro la voce che la contiene. */
+interface SectionDef {
+  id: string;
+  label: string;
+  icon: IconComponent;
+}
+
 interface TabDef {
   id: Tab;
   label: string;
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  icon: IconComponent;
+  /** Se presente la voce è un contenitore: mostra una sola funzione alla volta (la prima, finché non se ne sceglie un'altra). */
+  sections?: SectionDef[];
 }
 
 /** Raggruppate in macro-aree (11 voci piatte erano difficili da scorrere); `label: null` per le due voci pensate per restare da sole, fuori da ogni cartella: "Informazioni utente" in cima, "Zona pericolosa" in fondo. */
@@ -69,7 +90,15 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
   {
     label: "Sicurezza",
     tabs: [
-      { id: "security", label: "Sicurezza", icon: SecurityIcon },
+      {
+        id: "security",
+        label: "Autenticazione",
+        icon: SecurityIcon,
+        sections: [
+          { id: "authenticator", label: "App Authenticator", icon: SmartphoneIcon },
+          { id: "trusted-devices", label: "Dispositivi fidati", icon: FingerprintIcon },
+        ],
+      },
       { id: "digital-legacy", label: "Eredità digitale", icon: HeartIcon },
       { id: "emergency-card", label: "Scheda d'emergenza", icon: MedicalCardIcon },
       { id: "activity", label: "Attività", icon: ActivityIcon },
@@ -88,7 +117,20 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
   {
     label: "Personalizzazione",
     tabs: [
-      { id: "appearance", label: "Aspetto", icon: SlidersIcon },
+      {
+        id: "appearance",
+        label: "Aspetto",
+        icon: SlidersIcon,
+        sections: [
+          { id: "theme", label: "Tema", icon: ThemeIcon },
+          { id: "nav-layout", label: "Disposizione menu", icon: SidebarLayoutIcon },
+          { id: "nav-items", label: "Voci del menu", icon: MenuListIcon },
+          { id: "bottom-bar", label: "Barra in basso", icon: BottomBarIcon },
+          { id: "lists", label: "Liste", icon: ListViewIcon },
+          { id: "capsules", label: "Capsule", icon: CapsuleIcon },
+          { id: "archive", label: "Archivio", icon: ArchiveIcon },
+        ],
+      },
       { id: "onboarding", label: "Onboarding", icon: ChecklistIcon },
     ],
   },
@@ -97,6 +139,70 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
 ];
 
 const TABS: TabDef[] = TAB_GROUPS.flatMap((group) => group.tabs);
+
+/** Chiave di una vista: la voce da sola, oppure `voce/funzione`; è ciò che le dissolvenze confrontano. */
+function viewKey(tab: Tab, section: string | null): string {
+  return section ? `${tab}/${section}` : tab;
+}
+
+function parseViewKey(key: string): { tab: Tab; section: string | null } {
+  const [tab, section] = key.split("/");
+  return { tab: tab as Tab, section: section ?? null };
+}
+
+/** Titolo, descrizione e corpo di una funzione: il corpo occupa tutta la larghezza disponibile della pagina. */
+function FunctionBlock({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <div>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{title}</h2>
+        {description ? <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{description}</p> : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/** Riga di un elenco mobile (voce o funzione): icona, nome, freccia. */
+function MobileRow({
+  icon: Icon,
+  label,
+  danger,
+  onClick,
+}: {
+  icon: IconComponent;
+  label: string;
+  danger?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
+      >
+        <Icon
+          width={20}
+          height={20}
+          className={cn("shrink-0", danger ? "text-red-600 dark:text-red-400" : "text-brand")}
+        />
+        <span className={cn("flex-1", danger ? "text-red-600 dark:text-red-400" : undefined)}>{label}</span>
+        <span aria-hidden="true" className="text-zinc-400 dark:text-zinc-600">
+          ›
+        </span>
+      </button>
+    </li>
+  );
+}
 
 /** Consigli statici per il pannello Aiuto di ogni tab (v. feedback utente: niente più testo descrittivo fisso
  * sotto ogni titolo). Un pannello per tab, non uno per Impostazioni intera: il contenuto cambia con `tab`. */
@@ -139,7 +245,7 @@ const TAB_HELP: Record<Tab, HelpTip[]> = {
   ],
   activity: [
     { icon: "📜", text: "Il registro di ogni accesso e azione sensibile sul tuo account." },
-    { icon: "🔍", text: "Filtra per data o per tipo di evento." },
+    { icon: "🔍", text: "Filtra per periodo, area, tipo di evento o singolo elemento: i filtri restano nell'indirizzo della pagina." },
   ],
   "import-export": [
     { icon: "📤", text: "Esporta tutti i tuoi dati in un unico archivio cifrato." },
@@ -164,6 +270,9 @@ export function SettingsTabs({
   avatarPath,
   avatarUrl,
   birthDate,
+  initialTab,
+  initialSection,
+  activityParams,
 }: {
   userId: string;
   firstName: string;
@@ -172,18 +281,38 @@ export function SettingsTabs({
   avatarPath: string | null;
   avatarUrl: string | null;
   birthDate: string | null;
+  /** Da `?tab=` (es. il link "Vedi tutto" della cronologia di un documento): ignorato se non è una scheda esistente. */
+  initialTab?: string;
+  /** Da `?section=`: la funzione di una voce a due livelli (es. `?tab=appearance&section=theme`); ignorata se non esiste in quella voce. */
+  initialSection?: string;
+  /** Filtri iniziali di Attività, da `?from=&entity=...` (es. il link "Vedi attività di questo contenuto" da un documento). */
+  activityParams?: AuditFilterParams;
 }) {
-  const [tab, setTab] = useState<Tab>("user-info");
-  // Il contenuto dissolve verso la scheda scelta invece di sostituirsi di scatto; il tasto (che usa `tab`, non `displayedTab`) risponde subito al click.
-  const { displayed: displayedTab, visible: tabContentVisible } = useCrossfade(tab, 150);
+  const startTabDef = TABS.find((t) => t.id === initialTab) ?? null;
+  const startTab = startTabDef?.id ?? null;
+  const startSection = startTabDef?.sections?.find((s) => s.id === initialSection)?.id ?? null;
+  const [tab, setTab] = useState<Tab>(startTab ?? "user-info");
+  // Desktop: una voce a due livelli mostra sempre una funzione (la prima, se non se n'è scelta un'altra).
+  const [section, setSection] = useState<string | null>(startSection ?? startTabDef?.sections?.[0]?.id ?? null);
+  // Il contenuto dissolve verso la scheda scelta invece di sostituirsi di scatto; il tasto (che usa `tab`/`section`, non la vista mostrata) risponde subito al click.
+  const { displayed: displayedKey, visible: tabContentVisible } = useCrossfade(viewKey(tab, section), 150);
+  const displayedView = parseViewKey(displayedKey);
 
-  // Mobile: elenco delle voci -> dettaglio di una sola, indipendente dal layout desktop (`md:hidden`/`hidden md:flex`). `null` = mostra l'elenco.
-  const [mobileSection, setMobileSection] = useState<Tab | null>(null);
-  const mobileView: Tab | "list" = mobileSection ?? "list";
-  const { displayed: displayedMobileView, visible: mobileViewVisible } = useCrossfade(mobileView, 150);
+  function selectTab(def: TabDef) {
+    setTab(def.id);
+    setSection(def.sections?.[0]?.id ?? null);
+  }
+
+  // Mobile: elenco delle voci -> (per le voci a due livelli, elenco delle funzioni ->) dettaglio, indipendente dal layout desktop (`md:hidden`/`hidden md:flex`). `null` = mostra l'elenco.
+  const [mobileSection, setMobileSection] = useState<Tab | null>(startTab);
+  const [mobileSub, setMobileSub] = useState<string | null>(startSection);
+  const mobileKey = mobileSection === null ? "list" : viewKey(mobileSection, mobileSub);
+  const { displayed: displayedMobileKey, visible: mobileViewVisible } = useCrossfade(mobileKey, 150);
+  const displayedMobile = displayedMobileKey === "list" ? null : parseViewKey(displayedMobileKey);
+  const displayedMobileTab = displayedMobile ? (TABS.find((t) => t.id === displayedMobile.tab) ?? null) : null;
 
   /** Il contenuto di una scheda --- condiviso tra il layout desktop (schede + contenuto sempre insieme) e il dettaglio mobile (una voce alla volta), così le due navigazioni indipendenti non duplicano la logica di quale pannello mostrare. */
-  function renderPanel(activeTab: Tab) {
+  function renderPanel(activeTab: Tab, activeSection: string | null) {
     if (activeTab === "user-info") {
       return (
         <UserInfoPanel
@@ -217,23 +346,17 @@ export function SettingsTabs({
     }
     if (activeTab === "security") {
       // Layer di identità (login), non di cifratura: non richiede la master key. "Dispositivi fidati" la sblocca da sé nel proprio modulo, per non forzare uno sblocco solo per vedere lo stato dell'MFA.
-      return (
-        <div className="flex flex-col gap-10">
-          <MfaSettingsPanel userId={userId} />
-          <div className="flex flex-col gap-4 border-t border-zinc-200 pt-10 dark:border-zinc-800">
-            <div>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                Dispositivi fidati
-              </h2>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Sblocca il vault con l&apos;impronta o Face ID su questo dispositivo, invece della
-                master password.
-              </p>
-            </div>
+      if (activeSection === "trusted-devices") {
+        return (
+          <FunctionBlock
+            title="Dispositivi fidati"
+            description="Sblocca il vault con l'impronta o Face ID su questo dispositivo, invece della master password."
+          >
             <DeviceLockPanel userId={userId} />
-          </div>
-        </div>
-      );
+          </FunctionBlock>
+        );
+      }
+      return <MfaSettingsPanel userId={userId} />;
     }
     if (activeTab === "digital-legacy") {
       // Solo parametri, nessun dato cifrato coinvolto: non richiede la master key.
@@ -274,98 +397,72 @@ export function SettingsTabs({
       return <RequireMasterKey>{(masterKey) => <TagsSettingsPanel masterKey={masterKey} />}</RequireMasterKey>;
     }
     if (activeTab === "appearance") {
-      return (
-        // A due colonne da lg in su, una sola sotto dove non ci sarebbe spazio per restare leggibili affiancate.
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Tema</h2>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Scegli l&apos;aspetto dell&apos;app, o lascia che segua le impostazioni del tuo
-                dispositivo.
-              </p>
-            </div>
-            <ThemeToggle />
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                Disposizione del menu
-              </h2>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Barra laterale a sinistra o a destra, oppure barra orizzontale in alto — la
-                scelta resta la stessa su tutti i tuoi dispositivi.
-              </p>
-            </div>
+      if (activeSection === "nav-layout") {
+        return (
+          <FunctionBlock
+            title="Disposizione del menu"
+            description="Barra laterale a sinistra o a destra, oppure barra orizzontale in alto — la scelta resta la stessa su tutti i tuoi dispositivi."
+          >
             <NavOrientationSettings />
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                Voci del menu principale
-              </h2>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Scegli quali voci mostrare nel menu di navigazione, e in che ordine.
-              </p>
-            </div>
+          </FunctionBlock>
+        );
+      }
+      if (activeSection === "nav-items") {
+        return (
+          <FunctionBlock
+            title="Voci del menu principale"
+            description="Scegli quali voci mostrare nel menu di navigazione, e in che ordine."
+          >
             <MainNavItemsSettings />
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                Barra di navigazione in basso (smartphone)
-              </h2>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Scegli quali voci mostrare sempre in basso su smartphone — le altre restano
-                comunque raggiungibili dal menu con le 3 lineette.
-              </p>
-            </div>
+          </FunctionBlock>
+        );
+      }
+      if (activeSection === "bottom-bar") {
+        return (
+          <FunctionBlock
+            title="Barra di navigazione in basso (smartphone)"
+            description="Scegli quali voci mostrare sempre in basso su smartphone — le altre restano comunque raggiungibili dal menu con le 3 lineette."
+          >
             <BottomNavItemsSettings />
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                Visualizzazione delle liste
-              </h2>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Elenco o tabella impaginata, per ogni sezione — la scelta resta la stessa su
-                tutti i tuoi dispositivi, e puoi cambiarla anche direttamente da ogni sezione.
-                Su schermi stretti si mostra comunque sempre l&apos;elenco, dove la tabella non
-                avrebbe spazio per restare leggibile.
-              </p>
-            </div>
+          </FunctionBlock>
+        );
+      }
+      if (activeSection === "lists") {
+        return (
+          <FunctionBlock
+            title="Visualizzazione delle liste"
+            description="Elenco o tabella impaginata, per ogni sezione — la scelta resta la stessa su tutti i tuoi dispositivi, e puoi cambiarla anche direttamente da ogni sezione. Su schermi stretti si mostra comunque sempre l'elenco, dove la tabella non avrebbe spazio per restare leggibile."
+          >
             <ListViewSettings />
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Capsule</h2>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Elementi visivi propri di questa sezione.
-              </p>
-            </div>
+          </FunctionBlock>
+        );
+      }
+      if (activeSection === "capsules") {
+        return (
+          <FunctionBlock title="Capsule" description="Elementi visivi propri di questa sezione.">
             <CapsuleCountdownSettings />
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Archivio</h2>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Elementi visivi propri di questa sezione.
-              </p>
-            </div>
+          </FunctionBlock>
+        );
+      }
+      if (activeSection === "archive") {
+        return (
+          <FunctionBlock title="Archivio" description="Elementi visivi propri di questa sezione.">
             <TrashRetentionSettings />
-          </div>
-        </div>
+          </FunctionBlock>
+        );
+      }
+      return (
+        <FunctionBlock
+          title="Tema"
+          description="Scegli l'aspetto dell'app, o lascia che segua le impostazioni del tuo dispositivo."
+        >
+          <ThemeToggle />
+        </FunctionBlock>
       );
     }
     if (activeTab === "activity") {
-      // Registro tecnico in chiaro: non richiede la master key.
-      return <AuditLogPanel />;
+      // Il registro è in chiaro: non richiede la master key (con vault sbloccato mostra anche i nomi degli elementi).
+      return <AuditLogPanel initialParams={activityParams} />;
     }
     if (activeTab === "import-export") {
       // ImportExportTabs gestisce da sé le proprie sotto-schede e il proprio RequireMasterKey.
@@ -377,9 +474,14 @@ export function SettingsTabs({
     );
   }
 
+  const mobileBackLabel = displayedMobile?.section && displayedMobileTab ? displayedMobileTab.label : "Torna alle impostazioni";
+  // La funzione di una voce a due livelli porta già il proprio titolo nel corpo; la voce senza funzioni, e l'elenco delle sue funzioni, hanno il titolo qui.
+  const mobileIsFunction = displayedMobile?.section != null;
+  const mobileIsFunctionList = displayedMobileTab?.sections != null && !mobileIsFunction;
+
   return (
     <>
-      {/* Mobile: elenco delle voci -> dettaglio di una sola, con un tasto per tornare indietro. */}
+      {/* Mobile: elenco delle voci -> (elenco delle funzioni ->) dettaglio, con un tasto per tornare indietro. */}
       <div className="md:hidden">
         <div
           className={cn(
@@ -387,7 +489,7 @@ export function SettingsTabs({
             mobileViewVisible ? "opacity-100" : "opacity-0",
           )}
         >
-          {displayedMobileView === "list" ? (
+          {displayedMobile === null || displayedMobileTab === null ? (
             // Un blocco per gruppo: il nome del gruppo vive sopra e fuori dal proprio blocco.
             <div className="flex flex-col gap-6">
               {TAB_GROUPS.map((group, groupIndex) => (
@@ -399,33 +501,16 @@ export function SettingsTabs({
                   ) : null}
                   <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
                     {group.tabs.map((t) => (
-                      <li key={t.id}>
-                        <button
-                          type="button"
-                          onClick={() => setMobileSection(t.id)}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
-                        >
-                          <t.icon
-                            width={20}
-                            height={20}
-                            className={cn(
-                              "shrink-0",
-                              t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand",
-                            )}
-                          />
-                          <span
-                            className={cn(
-                              "flex-1",
-                              t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : undefined,
-                            )}
-                          >
-                            {t.label}
-                          </span>
-                          <span aria-hidden="true" className="text-zinc-400 dark:text-zinc-600">
-                            ›
-                          </span>
-                        </button>
-                      </li>
+                      <MobileRow
+                        key={t.id}
+                        icon={t.icon}
+                        label={t.label}
+                        danger={t.id === "danger-zone"}
+                        onClick={() => {
+                          setMobileSub(null);
+                          setMobileSection(t.id);
+                        }}
+                      />
                     ))}
                   </ul>
                 </div>
@@ -433,29 +518,39 @@ export function SettingsTabs({
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              <button
-                type="button"
-                onClick={() => setMobileSection(null)}
-                className="flex items-center gap-1.5 self-start text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-              >
-                <span aria-hidden="true">←</span> Torna alle impostazioni
-              </button>
               <div className="flex items-start justify-between gap-3">
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                  {TABS.find((t) => t.id === displayedMobileView)?.label}
-                </h2>
-                <PageHelp
-                  title={TABS.find((t) => t.id === displayedMobileView)?.label ?? ""}
-                  tips={TAB_HELP[displayedMobileView]}
-                />
+                <button
+                  type="button"
+                  onClick={() => (mobileSub ? setMobileSub(null) : setMobileSection(null))}
+                  className="flex items-center gap-1.5 self-start text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+                >
+                  <span aria-hidden="true">←</span> {mobileBackLabel}
+                </button>
+                {mobileIsFunction ? (
+                  <PageHelp title={displayedMobileTab.label} tips={TAB_HELP[displayedMobileTab.id]} />
+                ) : null}
               </div>
-              {renderPanel(displayedMobileView)}
+              {mobileIsFunction ? null : (
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{displayedMobileTab.label}</h2>
+                  <PageHelp title={displayedMobileTab.label} tips={TAB_HELP[displayedMobileTab.id]} />
+                </div>
+              )}
+              {mobileIsFunctionList ? (
+                <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+                  {displayedMobileTab.sections?.map((sec) => (
+                    <MobileRow key={sec.id} icon={sec.icon} label={sec.label} onClick={() => setMobileSub(sec.id)} />
+                  ))}
+                </ul>
+              ) : (
+                renderPanel(displayedMobile.tab, displayedMobile.section)
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Desktop: schede laterali + contenuto, sempre visibili insieme. */}
+      {/* Desktop: schede laterali (con le funzioni sotto la voce aperta) + contenuto, sempre visibili insieme. */}
       <div className="hidden md:flex md:gap-10">
         <div
           role="tablist"
@@ -475,32 +570,67 @@ export function SettingsTabs({
                 </p>
               ) : null}
               {group.tabs.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={tab === t.id}
-                  onClick={() => setTab(t.id)}
-                  className={cn(
-                    "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
-                    tab === t.id
-                      ? t.id === "danger-zone"
-                        ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                        : "bg-brand/10 text-brand"
-                      : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
-                  )}
-                >
-                  {/* Icona sempre blu a prescindere dallo stato attivo/inattivo, eccetto "Zona pericolosa" nel proprio colore di avviso. */}
-                  <t.icon
-                    width={20}
-                    height={20}
+                <div key={t.id} className="flex flex-col gap-1">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === t.id}
+                    aria-expanded={t.sections ? tab === t.id : undefined}
+                    onClick={() => selectTab(t)}
                     className={cn(
-                      "shrink-0",
-                      t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand",
+                      "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
+                      tab === t.id
+                        ? t.id === "danger-zone"
+                          ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                          : "bg-brand/10 text-brand"
+                        : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
                     )}
-                  />
-                  {t.label}
-                </button>
+                  >
+                    {/* Icona sempre blu a prescindere dallo stato attivo/inattivo, eccetto "Zona pericolosa" nel proprio colore di avviso. */}
+                    <t.icon
+                      width={20}
+                      height={20}
+                      className={cn(
+                        "shrink-0",
+                        t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand",
+                      )}
+                    />
+                    <span className="flex-1">{t.label}</span>
+                    {t.sections ? (
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "text-zinc-400 transition-transform dark:text-zinc-600",
+                          tab === t.id ? "rotate-90" : undefined,
+                        )}
+                      >
+                        ›
+                      </span>
+                    ) : null}
+                  </button>
+                  {t.sections && tab === t.id ? (
+                    <div className="ml-5 flex flex-col gap-0.5 border-l border-zinc-200 pl-2 dark:border-zinc-800">
+                      {t.sections.map((sec) => (
+                        <button
+                          key={sec.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={section === sec.id}
+                          onClick={() => setSection(sec.id)}
+                          className={cn(
+                            "flex items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                            section === sec.id
+                              ? "bg-brand/10 text-brand"
+                              : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
+                          )}
+                        >
+                          <sec.icon width={16} height={16} className="shrink-0 text-brand" />
+                          {sec.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               ))}
             </div>
           ))}
@@ -513,9 +643,12 @@ export function SettingsTabs({
           )}
         >
           <div className="mb-4 flex justify-end">
-            <PageHelp title={TABS.find((t) => t.id === displayedTab)?.label ?? ""} tips={TAB_HELP[displayedTab]} />
+            <PageHelp
+              title={TABS.find((t) => t.id === displayedView.tab)?.label ?? ""}
+              tips={TAB_HELP[displayedView.tab]}
+            />
           </div>
-          {renderPanel(displayedTab)}
+          {renderPanel(displayedView.tab, displayedView.section)}
         </div>
       </div>
     </>

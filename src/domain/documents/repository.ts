@@ -1,3 +1,4 @@
+import { mimeTypeOfFile } from "@/lib/file-mime";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 import {
@@ -20,11 +21,19 @@ import {
   uploadEncryptedPayload,
   uploadEncryptedThumbnail,
 } from "@/lib/storage/documents-bucket";
-import { logAuditEvent } from "@/lib/audit/log-event";
+import { logAuditEvent, type AuditEntityRef, type AuditEventMetadata } from "@/lib/audit/log-event";
+import {
+  isAnalysisStatus,
+  parsePersistedAnalysis,
+  type AnalysisStatus,
+  type PersistedContentAnalysis,
+} from "@/domain/ai/analysis/persisted";
 import { computePurgeAt } from "@/domain/documents/trash";
 import { listDossierIdsForDocuments, replaceDocumentDossierLinks } from "@/domain/dossiers/repository";
 import { NOTE_MIME_TYPE } from "@/lib/content-kind";
-import { canExtractText, extractText } from "@/domain/extraction/extract-text";
+import { canExtractText, extractContent } from "@/domain/extraction/extract-text";
+import type { ContentSegment } from "@/domain/extraction/types";
+import { removeDocumentSegments, saveDocumentSegments } from "@/domain/documents/segments";
 import { canHaveThumbnail, createThumbnail } from "@/lib/thumbnail";
 import type {
   DocumentListItem,
@@ -41,6 +50,8 @@ export type UploadPhaseListener = (phase: UploadPhase, progress: number | null) 
 /** FASE 19b: una lettura già fatta al momento della scelta del file, per non rileggere al salvataggio. `attempted: false` = si è salvato mentre leggeva ancora, `extracted_at` resta nullo (recuperato da "Leggili ora", FASE 17b). */
 export interface PriorExtraction {
   text: string | null;
+  /** Le pagine lette, per la provenienza dell'analisi di Hinthia: se mancano si salva solo il testo. */
+  segments?: ContentSegment[];
   attempted: boolean;
 }
 
@@ -53,7 +64,7 @@ export interface UploadOptions {
 }
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, encrypted_ai_synthesis, ai_synthesis_generated_at, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, encrypted_ai_synthesis, ai_synthesis_generated_at, encrypted_content_analysis, analysis_status, analysis_updated_at, created_at";
 
 type DocumentRow = {
   id: string;
@@ -78,6 +89,9 @@ type DocumentRow = {
   encrypted_structured_fields: string | null;
   encrypted_ai_synthesis: string | null;
   ai_synthesis_generated_at: string | null;
+  encrypted_content_analysis: string | null;
+  analysis_status: string | null;
+  analysis_updated_at: string | null;
   created_at: string;
 };
 
@@ -135,12 +149,36 @@ export async function decryptStructuredFields(
   return result;
 }
 
+/** Un blocco che non si decifra o non si capisce vale "nessuna lettura salvata": l'utente può rileggere, la scheda non si rompe. */
+async function decryptContentAnalysis(
+  masterKey: CryptoKey,
+  serialized: string | null,
+): Promise<PersistedContentAnalysis | null> {
+  if (!serialized) return null;
+  try {
+    const bytes = await decryptBytes(masterKey, parseEnvelope(serialized));
+    return parsePersistedAnalysis(JSON.parse(bytesToUtf8(bytes)));
+  } catch {
+    return null;
+  }
+}
+
 async function toDocumentListItem(
   masterKey: CryptoKey,
   row: DocumentRow,
   dossierIds: string[],
 ): Promise<DocumentListItem> {
-  const [filenameBytes, notes, tags, issuer, transcript, extractedText, structuredFields, aiSynthesis] =
+  const [
+    filenameBytes,
+    notes,
+    tags,
+    issuer,
+    transcript,
+    extractedText,
+    structuredFields,
+    aiSynthesis,
+    contentAnalysis,
+  ] =
     await Promise.all([
       decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
       decryptOptionalText(masterKey, row.encrypted_notes),
@@ -150,6 +188,7 @@ async function toDocumentListItem(
       decryptOptionalText(masterKey, row.encrypted_extracted_text),
       decryptStructuredFields(masterKey, row.encrypted_structured_fields),
       decryptOptionalText(masterKey, row.encrypted_ai_synthesis),
+      decryptContentAnalysis(masterKey, row.encrypted_content_analysis),
     ]);
 
   return {
@@ -177,6 +216,9 @@ async function toDocumentListItem(
     structuredFields,
     aiSynthesis,
     aiSynthesisGeneratedAt: row.ai_synthesis_generated_at,
+    contentAnalysis,
+    analysisStatus: isAnalysisStatus(row.analysis_status) ? row.analysis_status : null,
+    analysisUpdatedAt: row.analysis_updated_at,
   };
 }
 
@@ -266,20 +308,24 @@ export async function uploadDocument(
 ): Promise<string> {
   const { title, extraction, onPhase } = options;
   const plaintext = new Uint8Array(await file.arrayBuffer());
-  const mimeType = file.type || "application/octet-stream";
+  const mimeType = mimeTypeOfFile(file);
 
   // FASE 17: testo estratto qui, mentre il contenuto è ancora in chiaro in memoria --- best-effort, un fallimento non blocca il salvataggio. `onPhase` riporta l'avanzamento (utile sull'OCR); se il form l'ha già letto (PriorExtraction) si riusa quel risultato.
   let extractedText: string | null;
+  let segments: ContentSegment[] = [];
   let attempted: boolean;
   if (extraction) {
     extractedText = extraction.text;
+    segments = extraction.segments ?? [];
     attempted = extraction.attempted;
   } else {
     attempted = canExtractText(mimeType);
     if (attempted) onPhase?.("reading", null);
-    extractedText = await extractText(plaintext, mimeType, (fraction) =>
+    const content = await extractContent(plaintext, mimeType, (fraction) =>
       onPhase?.("reading", fraction),
     );
+    extractedText = content?.text ?? null;
+    segments = content?.segments ?? [];
   }
 
   // Stesso motivo del testo: il contenuto è ancora in chiaro qui, generarla dopo richiederebbe riscaricare il file intero.
@@ -324,6 +370,12 @@ export async function uploadDocument(
     }
   }
 
+  // Stessa regola: best-effort, e solo se c'è testo (i segmenti ne sono la versione per pagina).
+  let hasSegments = false;
+  if (extractedText && segments.length > 0) {
+    hasSegments = await saveDocumentSegments(supabase, masterKey, storagePath, segments);
+  }
+
   const { error } = await supabase.from("documents").insert({
     id: documentId,
     owner_id: ownerId,
@@ -350,10 +402,11 @@ export async function uploadDocument(
     if (hasThumbnail) {
       await removeEncryptedPayload(supabase, documentThumbnailPath(storagePath)).catch(() => {});
     }
+    if (hasSegments) await removeDocumentSegments(supabase, storagePath);
     throw new Error(`Impossibile salvare il documento: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_created");
+  await logAuditEvent(supabase, ownerId, "document_created", undefined, documentRef(documentId));
   await replaceDocumentDossierLinks(supabase, ownerId, documentId, metadata.dossierIds);
   return documentId;
 }
@@ -402,7 +455,7 @@ export async function createTextNote(
     throw new Error(`Impossibile salvare la nota: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_created");
+  await logAuditEvent(supabase, ownerId, "document_created", undefined, documentRef(documentId));
   await replaceDocumentDossierLinks(supabase, ownerId, documentId, metadata.dossierIds);
   return documentId;
 }
@@ -440,6 +493,7 @@ export async function updateTextNoteContent(
   }
 
   await removeEncryptedPayload(supabase, doc.storagePath).catch(() => {});
+  await logAuditEvent(supabase, ownerId, "document_updated", { change: "note" }, documentRef(doc.id));
 }
 
 /** Aggiorna titolo/categoria/scadenza/note/tag/emittente --- mai il contenuto del file. Ricifra notes/tags/issuer (e il titolo, se cambia) con la Master Key. */
@@ -491,6 +545,23 @@ export async function updateDocumentMetadata(
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Devi essere autenticato.");
   await replaceDocumentDossierLinks(supabase, user.id, documentId, metadata.dossierIds);
+  await logAuditEvent(supabase, user.id, "document_updated", { change: "details" }, documentRef(documentId));
+}
+
+/** Traccia nella cronologia del documento un salvataggio che non passa da updateDocumentMetadata. */
+async function logDocumentChange(
+  supabase: SupabaseClient<Database>,
+  documentId: string,
+  metadata: Pick<AuditEventMetadata, "change" | "excluded">,
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) await logAuditEvent(supabase, user.id, "document_updated", metadata, documentRef(documentId));
+}
+
+function documentRef(id: string, encryptedLabel?: string): AuditEntityRef {
+  return { type: "document", id, encryptedLabel };
 }
 
 /** Scritto a mano oggi (v. domain/transcription); un motore reale in futuro cambierebbe solo cosa riempie il campo, non questa funzione. */
@@ -510,6 +581,8 @@ export async function updateDocumentTranscript(
   if (error) {
     throw new Error(`Impossibile salvare la trascrizione: ${error.message}`);
   }
+
+  await logDocumentChange(supabase, documentId, { change: "transcript" });
 }
 
 /** Sostituisce sempre il valore precedente --- non è una proposta (nessun accetta/modifica/rifiuta), solo l'ultima lettura d'insieme di Claude, come extractedText/extractedAt per il testo locale. */
@@ -530,6 +603,32 @@ export async function saveAISynthesis(
   if (error) {
     throw new Error(`Impossibile salvare la sintesi: ${error.message}`);
   }
+
+  await logDocumentChange(supabase, documentId, { change: "ai_reading" });
+}
+
+/** Sostituisce l'intera lettura precedente: è la fotografia più recente, salvata dopo ogni blocco così un'interruzione non butta il lavoro già pagato. */
+export async function saveContentAnalysis(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  documentId: string,
+  analysis: PersistedContentAnalysis,
+  status: AnalysisStatus,
+): Promise<void> {
+  const { error } = await supabase
+    .from("documents")
+    .update({
+      encrypted_content_analysis: serializeEnvelope(
+        await encryptBytes(masterKey, utf8ToBytes(JSON.stringify(analysis))),
+      ),
+      analysis_status: status,
+      analysis_updated_at: analysis.updatedAt,
+    })
+    .eq("id", documentId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare la lettura di Hinthia: ${error.message}`);
+  }
 }
 
 /** FASE 22: esclude/riammette un documento dall'analisi Claude --- vince sempre su qualunque consenso di categoria. */
@@ -546,6 +645,8 @@ export async function updateDocumentAIExtractionExclusion(
   if (error) {
     throw new Error(`Impossibile salvare l'esclusione: ${error.message}`);
   }
+
+  await logDocumentChange(supabase, documentId, { change: "ai_exclusion", excluded });
 }
 
 /** `null` se il tipo non ha miniatura, il documento è pre-esistente, o l'upload a suo tempo è fallito --- chi chiama ricade sul file intero. */
@@ -601,12 +702,28 @@ export async function extractTextForExistingDocument(
   onProgress?: (fraction: number) => void,
 ): Promise<{ foundText: boolean }> {
   const { bytes } = await downloadDocument(supabase, masterKey, doc);
-  const text = await extractText(bytes, doc.mimeType, onProgress);
+  const content = await extractContent(bytes, doc.mimeType, onProgress);
+  const text = content?.text ?? null;
+  const segments = content?.segments ?? [];
 
-  const update: { encrypted_extracted_text: string | null; extracted_at: string; has_thumbnail?: boolean } = {
+  const update: {
+    encrypted_extracted_text: string | null;
+    extracted_at: string;
+    has_thumbnail?: boolean;
+    encrypted_content_analysis?: null;
+    analysis_status?: null;
+    analysis_updated_at?: null;
+  } = {
     encrypted_extracted_text: await encryptOptionalText(masterKey, text ?? ""),
     extracted_at: new Date().toISOString(),
   };
+
+  // Una lettura di Hinthia riguarda il testo di allora: se il testo cambia non vale più, e non va mostrata come attuale.
+  if ((text ?? "") !== doc.extractedText) {
+    update.encrypted_content_analysis = null;
+    update.analysis_status = null;
+    update.analysis_updated_at = null;
+  }
 
   // Backfill della miniatura, quasi a costo zero qui: i byte in chiaro servono già per il testo. Nessuna migrazione forzata su tutto l'archivio, si aggancia solo a "Leggili ora"/"Rileggi".
   if (!doc.hasThumbnail && canHaveThumbnail(doc.mimeType)) {
@@ -626,10 +743,30 @@ export async function extractTextForExistingDocument(
     }
   }
 
+  // Prima della riga, come la miniatura: se la scrittura dei segmenti fallisce il documento resta valido, solo senza pagine.
+  if (text && segments.length > 0) {
+    await saveDocumentSegments(supabase, masterKey, doc.storagePath, segments);
+  } else {
+    await removeDocumentSegments(supabase, doc.storagePath);
+  }
+
   const { error } = await supabase.from("documents").update(update).eq("id", doc.id);
 
   if (error) {
     throw new Error(`Impossibile salvare il testo estratto: ${error.message}`);
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    await logAuditEvent(
+      supabase,
+      user.id,
+      "document_text_read",
+      { reread: doc.extractedAt !== null },
+      documentRef(doc.id),
+    );
   }
 
   return { foundText: Boolean(text) };
@@ -641,17 +778,31 @@ export async function deleteDocument(
   ownerId: string,
   doc: Pick<DocumentListItem, "id" | "storagePath" | "hasThumbnail">,
 ): Promise<void> {
+  // Il titolo è già cifrato nella riga: lo si copia nell'evento (serve a riconoscere il contenuto dopo l'eliminazione, senza la master key).
+  const { data: titleRow } = await supabase
+    .from("documents")
+    .select("encrypted_filename")
+    .eq("id", doc.id)
+    .maybeSingle();
+
   await removeEncryptedPayload(supabase, doc.storagePath);
   if (doc.hasThumbnail) {
     await removeEncryptedPayload(supabase, documentThumbnailPath(doc.storagePath)).catch(() => {});
   }
+  await removeDocumentSegments(supabase, doc.storagePath);
 
   const { error } = await supabase.from("documents").delete().eq("id", doc.id);
   if (error) {
     throw new Error(`Impossibile eliminare il documento: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_purged");
+  await logAuditEvent(
+    supabase,
+    ownerId,
+    "document_purged",
+    undefined,
+    documentRef(doc.id, titleRow?.encrypted_filename),
+  );
 }
 
 /** Una sola UPDATE per tutti gli id, nessun file toccato. `purgeAt` si calcola UNA VOLTA qui (v. migrazione 20260923000000: non si ricalcola più avanti). */
@@ -675,7 +826,9 @@ export async function moveDocumentsToTrash(
     throw new Error(`Impossibile spostare nel cestino: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_trashed");
+  for (const documentId of documentIds) {
+    await logAuditEvent(supabase, ownerId, "document_trashed", undefined, documentRef(documentId));
+  }
 }
 
 /** Ripristina uno o più documenti dal Cestino --- torna come prima, nessun altro campo viene toccato. */
@@ -695,5 +848,18 @@ export async function restoreDocuments(
     throw new Error(`Impossibile ripristinare: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "document_restored");
+  for (const documentId of documentIds) {
+    await logAuditEvent(supabase, ownerId, "document_restored", undefined, documentRef(documentId));
+  }
+}
+
+/** Traccia nella cronologia del documento che è stato scaricato --- chiamata dai punti in cui lo sceglie l'utente, non da `downloadDocument` (usato anche per anteprime ed esportazioni). */
+export async function logDocumentDownloaded(
+  supabase: SupabaseClient<Database>,
+  documentId: string,
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) await logAuditEvent(supabase, user.id, "document_downloaded", undefined, documentRef(documentId));
 }

@@ -1,3 +1,5 @@
+import type { AnalysisStatus, PersistedContentAnalysis } from "@/domain/ai/analysis/persisted";
+
 /** `filename`/`notes`/`tags` già decifrati client-side; `wrappedDocumentKey`/`storagePath` restano opachi per evitare un secondo fetch. */
 export interface DocumentListItem {
   id: string;
@@ -39,6 +41,11 @@ export interface DocumentListItem {
   aiSynthesis: string;
   /** Quando aiSynthesis è stata generata --- null se il documento non è mai stato letto da Claude. */
   aiSynthesisGeneratedAt: string | null;
+  /** L'ultima lettura di Hinthia --- blocchi con citazione e provenienza, impronta, ripresa. null se mai letto o se il blocco cifrato non si legge più. */
+  contentAnalysis: PersistedContentAnalysis | null;
+  /** Stato grossolano in chiaro --- null se mai letto. */
+  analysisStatus: AnalysisStatus | null;
+  analysisUpdatedAt: string | null;
 }
 
 /** Fields collected at upload time, in addition to the file itself. */

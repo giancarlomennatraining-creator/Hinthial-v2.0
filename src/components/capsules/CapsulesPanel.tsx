@@ -24,7 +24,6 @@ import { CapsulePreview } from "@/components/capsules/CapsulePreview";
 import { SharedCapsuleViewer } from "@/components/capsules/SharedCapsuleViewer";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { PageHelp } from "@/components/help/PageHelp";
-import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
 import { Pagination } from "@/components/ui/Pagination";
@@ -92,7 +91,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [busyAttachment, setBusyAttachment] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<CapsuleStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "title", direction: "asc" });
@@ -220,7 +218,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
 
-      await deleteCapsule(supabase, user.id, capsule);
+      await deleteCapsule(supabase, masterKey, user.id, capsule);
       setCapsules((prev) => prev.filter((c) => c.id !== capsule.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile eliminare la capsula.");
@@ -345,14 +343,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     setSort((prev) => toggleSort(prev, column));
   }
 
-  const filteredCapsules = capsules
-    .filter((capsule) => {
-      const normalized = query.trim().toLowerCase();
-      if (!normalized) return true;
-      const transcripts = capsule.attachments.map((a) => a.transcript ?? "");
-      return [capsule.title, capsule.content, ...transcripts].join(" ").toLowerCase().includes(normalized);
-    })
-    .filter((capsule) => statusFilter === "all" || capsule.status === statusFilter);
+  const filteredCapsules = capsules.filter((capsule) => statusFilter === "all" || capsule.status === statusFilter);
 
   // Solo la vista a tabella si ordina --- l'elenco resta cronologico.
   const sortedCapsules = applySort(filteredCapsules, sort, sortValueFor);
@@ -501,7 +492,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       ) : (
         <>
           <div className="flex flex-wrap gap-3">
-            <SearchInput value={query} onChange={setQuery} placeholder="Cerca per titolo o contenuto…" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as CapsuleStatus | "all")}
@@ -518,7 +508,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
 
           {filteredCapsules.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Nessuna capsula corrisponde alla ricerca.
+              Nessuna capsula corrisponde ai filtri.
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">

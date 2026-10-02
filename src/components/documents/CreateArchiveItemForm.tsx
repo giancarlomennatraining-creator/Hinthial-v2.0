@@ -1,5 +1,6 @@
 "use client";
 
+import { mimeTypeOfFile } from "@/lib/file-mime";
 import {
   useCallback,
   useEffect,
@@ -14,6 +15,7 @@ import {
   createTextNote,
   listDocuments,
   saveAISynthesis,
+  saveContentAnalysis,
   updateDocumentAIExtractionExclusion,
   uploadDocument,
   type PriorExtraction,
@@ -28,7 +30,10 @@ import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
 import { listDossiers } from "@/domain/dossiers/repository";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import { heuristicCategorizer } from "@/domain/categorizer/heuristic-provider";
-import { canExtractText, extractText } from "@/domain/extraction/extract-text";
+import { canExtractText, extractContent } from "@/domain/extraction/extract-text";
+import type { ContentSegment } from "@/domain/extraction/types";
+import { loadDocumentSegments } from "@/domain/documents/segments";
+import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
 import {
   extractStructuredFields,
   type StructuredField,
@@ -38,8 +43,14 @@ import { buildProposals } from "@/domain/proposals/build";
 import type { Proposal } from "@/domain/proposals/types";
 import { suggestAssetFromText } from "@/domain/proposals/asset-match";
 import {
+  AnalysisAbortedError,
+  analysisConfirmMessage,
   analyzeDocumentWithClaude,
+  inspectSavedAnalysis,
+  planAnalysis,
   type AIAnalysisScope,
+  type AnalysisProgress,
+  type SavedAnalysisState,
 } from "@/domain/ai/analyze-document";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
@@ -362,7 +373,30 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const [savedDoc, setSavedDoc] = useState<DocumentListItem | null>(null);
   const [savedMoment, setSavedMoment] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
+  const [aiProgress, setAiProgress] = useState<AnalysisProgress | null>(null);
   const [aiDone, setAiDone] = useState(false);
+  const aiAbortRef = useRef<AbortController | null>(null);
+  const [savedAnalysis, setSavedAnalysis] = useState<SavedAnalysisState>({ kind: "none" });
+
+  const savedAnalysisSource = savedDoc?.contentAnalysis ?? null;
+  const savedAnalysisText = savedDoc?.extractedText ?? "";
+  const { segments: pageSegments, ready: segmentsReady } = useDocumentSegments(supabase, masterKey, savedDoc);
+  useEffect(() => {
+    if (!segmentsReady) return;
+    let cancelled = false;
+    inspectSavedAnalysis({ extractedText: savedAnalysisText, contentAnalysis: savedAnalysisSource }, masterKey, {
+      segments: pageSegments,
+    })
+      .then((state) => {
+        if (!cancelled) setSavedAnalysis(state);
+      })
+      .catch(() => {
+        if (!cancelled) setSavedAnalysis({ kind: "none" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [savedAnalysisSource, savedAnalysisText, masterKey, pageSegments, segmentsReady]);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -459,7 +493,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   /** FASE 19b: legge il file e precompila --- niente di tuo da sovrascrivere ancora, vedere il valore e premere Salva È il consenso (diverso da ProposalsSection, dove il campo può essere già tuo). */
   async function readPickedFile(file: File): Promise<PriorExtraction> {
     const token = ++readingTokenRef.current;
-    const mimeType = file.type || "application/octet-stream";
+    const mimeType = mimeTypeOfFile(file);
 
     if (!canExtractText(mimeType)) {
       setReading({ status: "skipped" });
@@ -478,11 +512,12 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     setReading({ status: "reading", progress: null });
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const text = await extractText(bytes, mimeType, (progress) => {
+      const content = await extractContent(bytes, mimeType, (progress) => {
         if (token !== readingTokenRef.current) return;
         setReading({ status: "reading", progress });
         setReadProgress(progress);
       });
+      const text = content?.text ?? null;
 
       // Un altro file è stato scelto nel frattempo: risultato vecchio, non tocca niente (v. readingPromiseRef).
       if (token === readingTokenRef.current) {
@@ -491,7 +526,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         applySuggestions(file, text ?? "", fields);
       }
 
-      return { text, attempted: true };
+      return { text, segments: content?.segments, attempted: true };
     } catch {
       // Leggere è un di più: un file illeggibile non deve impedire di salvarlo.
       if (token === readingTokenRef.current)
@@ -653,16 +688,27 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   /** Stesso principio di ArchiveItemDetail.handleAnalyzeWithClaude --- qui basta la sintesi: le proposte si accettano sulla scheda, non qui. */
-  async function handleAnalyzeWithClaude(scope: AIAnalysisScope) {
+  async function handleAnalyzeWithClaude(scope: AIAnalysisScope, options?: { force?: boolean }) {
     if (!savedDoc) return;
+    const force = options?.force === true;
+    // Lettura salvata e pagine si rileggono qui, non dallo stato: v. ArchiveItemDetail.handleAnalyzeWithClaude.
+    let segments: ContentSegment[] | null;
+    let saved: SavedAnalysisState;
+    try {
+      segments = await loadDocumentSegments(supabase, masterKey, savedDoc).catch(() => null);
+      saved = force ? { kind: "none" } : await inspectSavedAnalysis(savedDoc, masterKey, { segments });
+    } catch {
+      return;
+    }
+    if (saved.kind === "complete") return;
     if (
-      !window.confirm(
-        "Il testo di questo documento verrà inviato a Hinthia. Continuare?",
-      )
+      !window.confirm(analysisConfirmMessage(planAnalysis(savedDoc, { segments }), saved))
     ) {
       return;
     }
 
+    const abort = new AbortController();
+    aiAbortRef.current = abort;
     setAiBusy(true);
     setError(null);
     try {
@@ -677,6 +723,17 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         savedDoc,
         categories,
         scope,
+        {
+          segments,
+          onProgress: setAiProgress,
+          signal: abort.signal,
+          force,
+          persistence: {
+            masterKey,
+            saved: savedDoc.contentAnalysis,
+            save: (analysis, status) => saveContentAnalysis(supabase, masterKey, savedDoc.id, analysis, status),
+          },
+        },
       );
       if (fields.synthesis) {
         await saveAISynthesis(
@@ -690,13 +747,21 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       setSavedDoc(documents.find((d) => d.id === savedDoc.id) ?? savedDoc);
       setAiDone(true);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Impossibile analizzare il documento con Hinthia.",
-      );
+      // Ciò che era già stato letto è salvato: si rilegge il documento perché il bottone proponga di riprendere.
+      const documents = await listDocuments(supabase, masterKey).catch(() => null);
+      const reloaded = documents?.find((d) => d.id === savedDoc.id);
+      if (reloaded) setSavedDoc(reloaded);
+      if (!(err instanceof AnalysisAbortedError)) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Impossibile analizzare il documento con Hinthia.",
+        );
+      }
     } finally {
+      aiAbortRef.current = null;
       setAiBusy(false);
+      setAiProgress(null);
     }
   }
 
@@ -1209,7 +1274,12 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                           categoryEnabled={categoryEnabledForAI}
                           excluded={savedDoc.aiExtractionExcluded}
                           busy={aiBusy}
+                          progress={aiProgress}
+                          savedState={savedAnalysis}
+                          analyzedAtLabel={savedDoc.analysisUpdatedAt ? formatDate(savedDoc.analysisUpdatedAt) : null}
+                          lastRunFailed={savedDoc.analysisStatus === "failed"}
                           onAnalyze={handleAnalyzeWithClaude}
+                          onAbort={() => aiAbortRef.current?.abort()}
                           onToggleExcluded={handleToggleAIExclusion}
                         />
                       )}

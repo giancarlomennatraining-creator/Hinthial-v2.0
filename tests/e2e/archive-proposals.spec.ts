@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -141,18 +141,18 @@ test("un rifiuto viene ricordato e sopravvive al ricaricamento", async ({ page }
 
   const proposte = page.getByRole("tabpanel", { name: "Letto dal dispositivo" });
   await expect(proposte).toContainText("Scadenza");
-  // 3 proposte (scadenza/categoria/emittente): il conteggio, non il testo, distingue una proposta accettabile
+  // 2 proposte (scadenza/emittente: la categoria è già stata salvata col documento al caricamento): il conteggio, non il testo, distingue una proposta accettabile
   // dal fatto grezzo che "Cosa ne ho ricavato" mostra comunque --- rifiutare una proposta non fa sparire il
   // valore da lì, lo rende di nuovo visibile come informazione (v. ArchiveItemDetail.tsx, filtro structuredFields).
   const accetta = proposte.getByRole("button", { name: "Accetta" });
-  await expect(accetta).toHaveCount(3);
+  await expect(accetta).toHaveCount(2);
 
   await proposte.getByRole("button", { name: "No, grazie" }).first().click();
   // L'annullamento è condiviso sopra le tab (v. ArchiveItemDetail.tsx), non dentro il pannello.
   await expect(page.getByRole("status", { name: "Ultima proposta" })).toContainText(
     "Non te lo richiederò più",
   );
-  await expect(accetta).toHaveCount(2);
+  await expect(accetta).toHaveCount(1);
 
   // La prova vera: il rifiuto è cifrato nel database, e per restare valido dev'essere riletto e decifrato al caricamento successivo.
   await page.reload();
@@ -161,9 +161,9 @@ test("un rifiuto viene ricordato e sopravvive al ricaricamento", async ({ page }
   // Il reload azzera la tab attiva su "Scheda" (v. ArchiveItemDetail.tsx): si riapre "Letto dal dispositivo".
   await page.getByRole("tab", { name: "Letto dal dispositivo" }).click();
 
-  // La proposta di categoria resta (rifiutarne una non è rifiutarle tutte), ma la scadenza rifiutata non deve tornare.
+  // La proposta dell'emittente resta (rifiutarne una non è rifiutarle tutte), ma la scadenza rifiutata non deve tornare.
   await expect(proposte).toBeVisible({ timeout: 30_000 });
-  await expect(accetta).toHaveCount(2);
+  await expect(accetta).toHaveCount(1);
 });
 
 test("modificare una proposta prima di accettarla", async ({ page }) => {
@@ -184,10 +184,10 @@ test("modificare una proposta prima di accettarla", async ({ page }) => {
   await expect(page.getByLabel("Scadenza")).toHaveValue("2028-01-15", { timeout: 20_000 });
 });
 
-test("le scelte sulle proposte restano in Attività", async ({ page }) => {
+test("le scelte sulle proposte restano in Impostazioni > Attività, filtrabili per contenuto", async ({ page }) => {
   test.slow();
 
-  const user = await setUpWithPolizza(page);
+  await setUpWithPolizza(page);
 
   await page
     .getByRole("tabpanel", { name: "Letto dal dispositivo" })
@@ -198,12 +198,10 @@ test("le scelte sulle proposte restano in Attività", async ({ page }) => {
   await page.getByRole("tab", { name: "Scheda" }).click();
   await expect(page.getByLabel("Scadenza")).toHaveValue("2027-06-03", { timeout: 20_000 });
 
-  // Ogni scrittura automatica deve lasciare traccia.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  // exact: senza, "Impostazioni" ambiguo con il link "Impostazioni → Hinthia" di AIAnalysisTrigger (FASE 22).
-  await page.getByRole("link", { name: "Impostazioni", exact: true }).click();
-  await page.getByRole("tab", { name: "Attività" }).click();
-  await page.getByRole("button", { name: "Trova" }).click();
-
-  await expect(page.getByText("Proposta accettata").first()).toBeVisible({ timeout: 30_000 });
+  // Ogni scrittura automatica deve lasciare traccia in Attività, raggiungibile dal contenuto con il filtro già impostato.
+  await page.getByRole("link", { name: /Vedi attività di questo contenuto/ }).click();
+  await expect(page).toHaveURL(/\/settings\?tab=activity&entity=document(:|%3A)/, { timeout: 15_000 });
+  await expect(page.getByRole("table").filter({ visible: true }).getByText("Proposta accettata").first()).toBeVisible({
+    timeout: 30_000,
+  });
 });

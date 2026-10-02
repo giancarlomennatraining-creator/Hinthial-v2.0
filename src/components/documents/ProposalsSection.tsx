@@ -20,6 +20,7 @@ const KIND_LABEL: Record<ProposalKind, string> = {
   category: "Categoria",
   issuer: "Emittente",
   field: "Campo",
+  event: "Da ricordare",
 };
 
 const KIND_ICON: Record<ProposalKind, string> = {
@@ -27,6 +28,7 @@ const KIND_ICON: Record<ProposalKind, string> = {
   category: "🏷️",
   issuer: "🏛️",
   field: "🧩",
+  event: "📅",
 };
 
 /** Per "field" l'etichetta viene dal vocabolario (es. "Numero polizza"), non dal generico "Campo" --- più informativa. */
@@ -51,6 +53,8 @@ export function ProposalsSection({
   busy,
   onAccept,
   onReject,
+  acceptAllCount = 0,
+  onAcceptAll,
 }: {
   proposals: Proposal[];
   categories: Category[];
@@ -58,6 +62,9 @@ export function ProposalsSection({
   /** `value` può differire da `proposal.value`: è il percorso di "Modifica". */
   onAccept: (proposal: Proposal, value: string) => void;
   onReject: (proposal: Proposal) => void;
+  /** Quante informazioni accetterebbe "Accetta tutto" (una per tipo): con meno di due il pulsante non serve. */
+  acceptAllCount?: number;
+  onAcceptAll?: () => void;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -71,12 +78,28 @@ export function ProposalsSection({
 
   function displayValue(proposal: Proposal): string {
     if (proposal.kind === "expiry") return formatDate(proposal.value);
+    if (proposal.kind === "event") return `${proposal.eventTitle ?? "Evento"}, ${formatDate(proposal.value)}`;
     if (proposal.kind === "issuer" || proposal.kind === "field") return proposal.value;
     return categories.find((c) => c.id === proposal.value)?.name ?? proposal.value;
   }
 
   return (
     <div className="flex flex-col gap-3">
+      {onAcceptAll && acceptAllCount >= 2 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            Hinthia ha trovato {acceptAllCount} informazioni da aggiungere alla Scheda.
+          </p>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onAcceptAll}
+            className="rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+          >
+            Accetta tutto
+          </button>
+        </div>
+      ) : null}
       {proposals.map((proposal) => {
         const isEditing = editing === proposalKey(proposal);
 
@@ -104,6 +127,11 @@ export function ProposalsSection({
                   ) : null}
                 </p>
                 <p className="mt-0.5 text-xs text-zinc-500 italic dark:text-zinc-400">
+                  {proposal.page ? (
+                    <span className="mr-1.5 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 not-italic dark:bg-zinc-800 dark:text-zinc-300">
+                      Pagina {proposal.page}
+                    </span>
+                  ) : null}
                   {proposal.source}
                 </p>
               </div>
@@ -112,6 +140,7 @@ export function ProposalsSection({
             {isEditing ? (
               <div className="flex flex-wrap items-center gap-2">
                 {proposal.kind === "expiry" ||
+                proposal.kind === "event" ||
                 (proposal.kind === "field" && inferFieldInputType(proposal.value) === "date") ? (
                   <input
                     type="date"
@@ -169,7 +198,7 @@ export function ProposalsSection({
                   onClick={() => onAccept(proposal, proposal.value)}
                   className="rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
                 >
-                  Accetta
+                  {proposal.kind === "event" ? "Aggiungi a Scadenze" : "Accetta"}
                 </button>
                 <button
                   type="button"

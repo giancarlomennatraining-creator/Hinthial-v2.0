@@ -28,6 +28,7 @@ import {
 import { downloadDocument, getDocumentsByIds } from "@/domain/documents/repository";
 import { getFriendsByIds, getLinkedFriendPublicKey } from "@/domain/friends/repository";
 import { logAuditEvent } from "@/lib/audit/log-event";
+import { encryptAuditLabel } from "@/lib/audit/label";
 import { notifyCapsuleShared } from "@/lib/capsules/actions";
 import type {
   CapsuleAccessCondition,
@@ -240,7 +241,7 @@ export async function createCapsule(
     throw new Error(`Impossibile creare la capsula: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "capsule_created");
+  await logAuditEvent(supabase, ownerId, "capsule_created", undefined, { type: "capsule", id: capsuleId });
 }
 
 /** Aggiorna una capsula ancora draft, ricifrando l'intero payload; `removedAttachments` viene rimosso da Storage solo dopo il salvataggio, non prima. */
@@ -299,6 +300,8 @@ export async function updateCapsule(
       removedAttachments.map((a) => capsuleAttachmentStoragePath(ownerId, capsuleId, a.id)),
     ).catch(() => {});
   }
+
+  await logAuditEvent(supabase, ownerId, "capsule_updated", undefined, { type: "capsule", id: capsuleId });
 }
 
 /** Chiude una capsula (draft -> ready, irreversibile): ogni Archivio collegato viene copiato con una Document Key propria, così la capsula non dipende più dagli originali. Tutto o niente: un fallimento a metà rimuove le copie e lascia la capsula com'era. */
@@ -690,9 +693,13 @@ export async function downloadCapsuleAttachment(
 
 export async function deleteCapsule(
   supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
   ownerId: string,
-  capsule: Pick<CapsuleListItem, "id" | "attachments">,
+  capsule: Pick<CapsuleListItem, "id" | "title" | "attachments">,
 ): Promise<void> {
+  // Il titolo sta dentro il payload cifrato: lo si cifra di nuovo per l'evento, per riconoscere la capsula dopo l'eliminazione.
+  const encryptedLabel = await encryptAuditLabel(masterKey, capsule.title);
+
   await removeEncryptedCapsulePayloads(
     supabase,
     capsule.attachments.map((a) => capsuleAttachmentStoragePath(ownerId, capsule.id, a.id)),
@@ -703,5 +710,9 @@ export async function deleteCapsule(
     throw new Error(`Impossibile eliminare la capsula: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "capsule_deleted");
+  await logAuditEvent(supabase, ownerId, "capsule_deleted", undefined, {
+    type: "capsule",
+    id: capsule.id,
+    encryptedLabel,
+  });
 }

@@ -29,8 +29,7 @@ describe("MainNav", () => {
       "Beni",
       "Amici",
       "Capsule",
-      "Cronologia",
-      "AI",
+      "Hinthia",
     ]) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     }

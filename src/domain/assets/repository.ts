@@ -8,7 +8,7 @@ import {
   utf8ToBytes,
   bytesToUtf8,
 } from "@/lib/crypto";
-import { logAuditEvent } from "@/lib/audit/log-event";
+import { logAuditEvent, logAuditEventForCurrentUser } from "@/lib/audit/log-event";
 import type { AssetInput, AssetListItem } from "@/domain/assets/types";
 
 const ASSET_COLUMNS = "id, encrypted_name, category_id, created_at";
@@ -72,7 +72,7 @@ export async function createAsset(
     throw new Error(`Impossibile creare il bene: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "asset_created");
+  await logAuditEvent(supabase, ownerId, "asset_created", undefined, { type: "asset", id });
 
   return id;
 }
@@ -96,6 +96,8 @@ export async function updateAsset(
   if (error) {
     throw new Error(`Impossibile aggiornare il bene: ${error.message}`);
   }
+
+  await logAuditEventForCurrentUser(supabase, "asset_updated", undefined, { type: "asset", id: assetId });
 }
 
 export async function deleteAsset(
@@ -103,11 +105,18 @@ export async function deleteAsset(
   ownerId: string,
   assetId: string,
 ): Promise<void> {
+  // Il nome è già cifrato nella riga: lo si copia nell'evento, per riconoscere il bene dopo l'eliminazione.
+  const { data: nameRow } = await supabase.from("assets").select("encrypted_name").eq("id", assetId).maybeSingle();
+
   const { error } = await supabase.from("assets").delete().eq("id", assetId);
 
   if (error) {
     throw new Error(`Impossibile eliminare il bene: ${error.message}`);
   }
 
-  await logAuditEvent(supabase, ownerId, "asset_deleted");
+  await logAuditEvent(supabase, ownerId, "asset_deleted", undefined, {
+    type: "asset",
+    id: assetId,
+    encryptedLabel: nameRow?.encrypted_name,
+  });
 }

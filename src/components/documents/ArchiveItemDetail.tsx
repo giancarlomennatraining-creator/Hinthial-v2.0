@@ -8,13 +8,18 @@ import { bytesToUtf8 } from "@/lib/crypto";
 import {
   deleteDocument,
   downloadDocument,
+  logDocumentDownloaded,
   downloadThumbnail,
   extractTextForExistingDocument,
   listDocuments,
   saveAISynthesis,
+  saveContentAnalysis,
   updateDocumentAIExtractionExclusion,
   updateDocumentMetadata,
 } from "@/domain/documents/repository";
+import { loadDocumentSegments } from "@/domain/documents/segments";
+import type { ContentSegment } from "@/domain/extraction/types";
+import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories, grantCategoryAIExtractionTemporarily } from "@/domain/categories/repository";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
@@ -34,15 +39,24 @@ import {
   undoRejection,
 } from "@/domain/proposals/repository";
 import {
+  AnalysisAbortedError,
+  analysisConfirmMessage,
   analyzeDocumentWithClaude,
+  extractedFieldsFrom,
+  inspectSavedAnalysis,
+  planAnalysis,
   buildAIProposals,
   type AIAnalysisScope,
-  type AIExtractedFields,
+  type AnalysisProgress,
+  type SavedAnalysisState,
 } from "@/domain/ai/analyze-document";
+import { listDocumentReminderDates, localDateKey } from "@/domain/reminders/repository";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { StructuredFieldsSection } from "@/components/documents/StructuredFieldsSection";
 import { ProposalsSection, type UndoableAction } from "@/components/documents/ProposalsSection";
 import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
+import { AnalysisOverviewSection } from "@/components/documents/AnalysisOverviewSection";
+import { buildAnalysisOverview } from "@/domain/ai/analysis/overview";
 import {
   DocumentMetadataFields,
   documentToFields,
@@ -60,6 +74,7 @@ import { saveBytesAsFile } from "@/lib/download";
 import { formatDate, formatSize } from "@/lib/format";
 import { renderPdfFirstPage } from "@/lib/pdf";
 import { useToast } from "@/components/ui/ToastProvider";
+import { Spinner } from "@/components/ui/Spinner";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
@@ -109,11 +124,16 @@ export function ArchiveItemDetail({
   const [rejections, setRejections] = useState<ProposalRejection[]>([]);
   const [undoable, setUndoable] = useState<UndoableAction | null>(null);
   const [proposalBusy, setProposalBusy] = useState(false);
+  // Le scadenze già collegate a questo documento (solo i giorni): un evento letto che c'è già non si ripropone.
+  const [reminderDates, setReminderDates] = useState<string[]>([]);
+  const [today] = useState(() => localDateKey(new Date().toISOString()));
 
   // FASE 22: quello che Claude ha letto in questa sessione --- ricalcolato in proposte a ogni render come le
   // locali (v. buildAIProposals), così accettare/rifiutare le filtra allo stesso modo, automaticamente.
-  const [aiFields, setAiFields] = useState<AIExtractedFields | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
+  const aiAbortRef = useRef<AbortController | null>(null);
+  const [savedAnalysis, setSavedAnalysis] = useState<SavedAnalysisState>({ kind: "none" });
+  const [aiProgress, setAiProgress] = useState<AnalysisProgress | null>(null);
   // Etichette dei campi eterogenei già registrati (v. domain/structured-fields) --- per mostrare "Numero polizza" e non la chiave grezza in Scheda.
   const [fieldVocabulary, setFieldVocabulary] = useState<FieldVocabularyEntry[]>([]);
 
@@ -178,6 +198,28 @@ export function ArchiveItemDetail({
     setFields((prev) => (prev ? { ...prev, issuer: doc?.issuer ?? "" } : prev));
   }, [doc?.issuer]);
 
+  // Ciò che Hinthia ha già letto vale ancora per il testo di adesso? Serve a scegliere tra "chiedi", "riprendi" e "già letto".
+  const savedAnalysisSource = doc?.contentAnalysis ?? null;
+  const savedAnalysisText = doc?.extractedText ?? "";
+  // Le pagine lette, se ci sono: l'impronta della lettura dipende dalla fonte (pagine o sezioni), quindi si aspetta che siano caricate.
+  const { segments: pageSegments, ready: segmentsReady } = useDocumentSegments(supabase, masterKey, doc);
+  useEffect(() => {
+    if (!segmentsReady) return;
+    let cancelled = false;
+    inspectSavedAnalysis({ extractedText: savedAnalysisText, contentAnalysis: savedAnalysisSource }, masterKey, {
+      segments: pageSegments,
+    })
+      .then((state) => {
+        if (!cancelled) setSavedAnalysis(state);
+      })
+      .catch(() => {
+        if (!cancelled) setSavedAnalysis({ kind: "none" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [savedAnalysisSource, savedAnalysisText, masterKey, pageSegments, segmentsReady]);
+
   // Contatore di richieste --- v. EditArchiveItemForm (StrictMode invoca l'effetto due volte al mount).
   const latestRequestRef = useRef(0);
 
@@ -185,14 +227,22 @@ export function ArchiveItemDetail({
     const requestId = ++latestRequestRef.current;
     setError(null);
     try {
-      const [documents, assetsResult, categoriesResult, dossiersResult, rejectionsResult, vocabularyResult] =
-        await Promise.all([
+      const [
+        documents,
+        assetsResult,
+        categoriesResult,
+        dossiersResult,
+        rejectionsResult,
+        vocabularyResult,
+        reminderDatesResult,
+      ] = await Promise.all([
           listDocuments(supabase, masterKey),
           listAssets(supabase, masterKey),
           listCategories(supabase),
           listDossiers(supabase, masterKey),
           listProposalRejections(supabase, masterKey, documentId),
           listFieldVocabulary(supabase),
+          listDocumentReminderDates(supabase, documentId),
         ]);
       if (requestId !== latestRequestRef.current) return;
       const found = documents.find((d) => d.id === documentId) ?? null;
@@ -203,6 +253,7 @@ export function ArchiveItemDetail({
       setDossiers(dossiersResult);
       setRejections(rejectionsResult);
       setFieldVocabulary(vocabularyResult);
+      setReminderDates(reminderDatesResult);
     } catch (err) {
       if (requestId !== latestRequestRef.current) return;
       setError(err instanceof Error ? err.message : "Impossibile caricare il contenuto.");
@@ -275,6 +326,21 @@ export function ArchiveItemDetail({
     }
   }, [supabase, masterKey, doc]);
 
+  // I byte del PDF decifrato, scaricati una volta sola per tutte le pagine che si aprono dalla lettura di Hinthia.
+  const pdfBytesRef = useRef<Promise<Uint8Array> | null>(null);
+  const loadPdfBytes = useCallback(() => {
+    if (!doc) return Promise.reject(new Error("Contenuto non disponibile."));
+    if (!pdfBytesRef.current) {
+      pdfBytesRef.current = downloadDocument(supabase, masterKey, doc)
+        .then(({ bytes }) => bytes)
+        .catch((err) => {
+          pdfBytesRef.current = null;
+          throw err;
+        });
+    }
+    return pdfBytesRef.current;
+  }, [supabase, masterKey, doc]);
+
   useEffect(() => {
     if (!doc || !autoPreview) return;
     if (previewUrl || noteBody !== null || previewLoading || previewUnavailable) return;
@@ -289,6 +355,7 @@ export function ArchiveItemDetail({
     try {
       const { filename, mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
       saveBytesAsFile(bytes, filename, mimeType);
+      void logDocumentDownloaded(supabase, doc.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile aprire il contenuto.");
     } finally {
@@ -347,7 +414,9 @@ export function ArchiveItemDetail({
       const accepted = await acceptProposal(supabase, masterKey, ownerId, doc, proposal, value);
       return {
         message:
-          proposal.kind === "expiry"
+          proposal.kind === "event"
+            ? `Aggiunta in Scadenze: ${proposal.eventTitle ?? "evento"}, ${formatDate(value)}.`
+            : proposal.kind === "expiry"
             ? `Scadenza impostata al ${formatDate(value)}.`
             : proposal.kind === "issuer"
               ? "Emittente impostato."
@@ -398,7 +467,11 @@ export function ArchiveItemDetail({
         message: "Non te lo richiederò più.",
         onUndo: () =>
           void runProposalAction(async (undoOwnerId) => {
-            await undoRejection(supabase, undoOwnerId, rejectionId);
+            await undoRejection(supabase, undoOwnerId, rejectionId, {
+              documentId: doc.id,
+              kind: proposal.kind,
+              fieldKey: proposal.fieldKey,
+            });
             return { message: "Annullato.", onUndo: () => setUndoable(null) };
           }),
       };
@@ -406,12 +479,27 @@ export function ArchiveItemDetail({
   }
 
   /** FASE 22: unica fase irreversibile del piano --- un contenuto uscito è uscito, quindi un window.confirm prima di ogni invio, qualunque sia lo scope scelto. */
-  async function handleAnalyzeWithClaude(scope: AIAnalysisScope) {
+  async function handleAnalyzeWithClaude(scope: AIAnalysisScope, options?: { force?: boolean }) {
     if (!doc) return;
-    if (!window.confirm("Il testo di questo documento verrà inviato a Hinthia. Continuare?")) {
+    const force = options?.force === true;
+    // Le pagine e lo stato della lettura salvata si rileggono qui, non dallo stato: se il click arriva prima che il
+    // caricamento finisca, uno stato ancora "none" farebbe ripartire (e pagare) una lettura già completa.
+    let segments: ContentSegment[] | null;
+    let saved: SavedAnalysisState;
+    try {
+      segments = await loadDocumentSegments(supabase, masterKey, doc).catch(() => null);
+      saved = force ? { kind: "none" } : await inspectSavedAnalysis(doc, masterKey, { segments });
+    } catch {
+      return;
+    }
+    // Con una lettura già salvata che vale ancora, "Chiedi" riprende da dove era arrivata; "Rileggi da capo" riparte.
+    if (saved.kind === "complete") return;
+    if (!window.confirm(analysisConfirmMessage(planAnalysis(doc, { segments }), saved))) {
       return;
     }
 
+    const abort = new AbortController();
+    aiAbortRef.current = abort;
     setAiBusy(true);
     setError(null);
     try {
@@ -419,20 +507,37 @@ export function ArchiveItemDetail({
         await grantCategoryAIExtractionTemporarily(supabase, doc.categoryId, 30);
         await refresh();
       }
-      const extracted = await analyzeDocumentWithClaude(doc, categories, scope);
-      setAiFields(extracted);
+      const extracted = await analyzeDocumentWithClaude(doc, categories, scope, {
+        segments,
+        onProgress: setAiProgress,
+        signal: abort.signal,
+        force,
+        reread: doc.aiSynthesisGeneratedAt !== null,
+        persistence: {
+          masterKey,
+          saved: doc.contentAnalysis,
+          save: (analysis, status) => saveContentAnalysis(supabase, masterKey, doc.id, analysis, status),
+        },
+      });
       if (extracted.synthesis) {
         // Non è una proposta: sostituisce sempre l'ultima lettura, come extractedText/Rileggi per il testo locale.
         await saveAISynthesis(supabase, masterKey, doc.id, extracted.synthesis);
-        await refresh();
       }
+      await refresh();
       // Senza, l'utente non si accorgerebbe che qualcosa è successo: niente più tab "Proposte" a sé, quello che
       // Hinthia ha trovato vive già in "Chiedi a Hinthia".
       setActiveTab("analysis");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Hinthia.");
+      // refresh() azzera l'errore, quindi prima si rilegge ciò che è stato salvato, poi si mostra l'errore.
+      await refresh();
+      // Interrompere non è un guasto: ciò che era già stato letto è salvato e il bottone propone di riprendere.
+      if (!(err instanceof AnalysisAbortedError)) {
+        setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Hinthia.");
+      }
     } finally {
+      aiAbortRef.current = null;
       setAiBusy(false);
+      setAiProgress(null);
     }
   }
 
@@ -520,9 +625,22 @@ export function ArchiveItemDetail({
   const reading = readingStateFor(doc);
   // Calcolati al volo dal testo già decifrato, non salvati: niente da migrare, valgono su tutto l'archivio esistente.
   // Che cosa c'è da proporre, tolto ciò che è già impostato e ciò che l'utente ha già scartato (v. domain/proposals/build.ts).
-  const localProposals = buildProposals(doc, categories, rejections);
+  // Se Hinthia ha già letto il documento le sue proposte sono più affidabili: quelle delle regole locali si nascondono
+  // (restano per i documenti che Hinthia non ha letto, dove sono l'unica via, interamente sul dispositivo).
+  const hinthiaHasRead = doc.contentAnalysis !== null;
+  const localCandidates = buildProposals(doc, categories, rejections);
+  const localProposals = hinthiaHasRead ? [] : localCandidates;
   // FASE 22: ricalcolate a ogni render come le locali, così accettare/rifiutare le filtra automaticamente allo stesso modo.
-  const aiProposals = aiFields ? buildAIProposals(doc, aiFields, rejections) : [];
+  // Vengono dalla lettura salvata, non da uno stato della pagina: sopravvivono al ricaricamento e a un'interruzione.
+  const aiProposals = doc.contentAnalysis
+    ? buildAIProposals(doc, extractedFieldsFrom(doc.contentAnalysis, categories), rejections, {
+        today,
+        existingDates: reminderDates,
+      })
+    : [];
+  const analysisOverview = doc.contentAnalysis
+    ? buildAnalysisOverview(doc.contentAnalysis, doc, categories, reminderDates)
+    : null;
   const proposals = [...localProposals, ...aiProposals];
   const categoryEnabledForAI = category ? isCategoryEnabledForExtraction(category) : false;
 
@@ -530,7 +648,7 @@ export function ArchiveItemDetail({
   // notizia), e il titolo (non applicabile da questa pagina --- vive al caricamento, v. FASE 19b).
   const structuredFields = extractStructuredFields(doc.extractedText).filter((field) => {
     if (field.kind === "title") return false;
-    if (proposals.some((p) => p.kind === field.kind && p.value === field.value)) return false;
+    if ([...localCandidates, ...aiProposals].some((p) => p.kind === field.kind && p.value === field.value)) return false;
     if (field.kind === "expiry" && doc.expiresAt?.slice(0, 10) === field.value) return false;
     if (field.kind === "issuer" && doc.issuer === field.value) return false;
     return true;
@@ -549,13 +667,8 @@ export function ArchiveItemDetail({
     titleDirty;
 
   // "Accetta tutto": una sola proposta per tipo (per "campo": per chiave) --- v. handleAcceptAll.
-  const seenProposalSlots = new Set<string>();
-  const acceptAllCandidates = proposals.filter((proposal) => {
-    const slot = proposal.kind === "field" ? `field:${proposal.fieldKey}` : proposal.kind;
-    if (seenProposalSlots.has(slot)) return false;
-    seenProposalSlots.add(slot);
-    return true;
-  });
+  const acceptAllCandidates = onePerSlot(proposals);
+  const aiAcceptAllCandidates = onePerSlot(aiProposals);
 
   return (
     <div className="flex flex-col gap-6">
@@ -733,6 +846,12 @@ export function ArchiveItemDetail({
                 Chiedi a Hinthia{aiProposals.length > 0 ? ` · ${aiProposals.length}` : ""}
               </button>
             </div>
+            <Link
+              href={`/settings?tab=activity&entity=document:${doc.id}`}
+              className="self-start text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+            >
+              Vedi attività di questo contenuto →
+            </Link>
 
             {/* L'annullamento resta visibile a cambio tab: una sola istanza sopra i pannelli, non una per tab.
                 aria-label distinto dal toast globale (v. ToastProvider): entrambi sono role="status". */}
@@ -835,7 +954,20 @@ export function ArchiveItemDetail({
                   onAccept={handleAcceptProposal}
                   onReject={handleRejectProposal}
                 />
-                <StructuredFieldsSection fields={structuredFields} />
+                {hinthiaHasRead && (localCandidates.length > 0 || structuredFields.length > 0) ? (
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                    Hinthia ha già letto questo documento: quello che ha trovato è più affidabile di ciò che si ricava
+                    sul dispositivo, che per questo non viene mostrato.{" "}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("analysis")}
+                      className="underline underline-offset-2 hover:text-brand"
+                    >
+                      Vai a Chiedi a Hinthia
+                    </button>
+                  </p>
+                ) : null}
+                {hinthiaHasRead ? null : <StructuredFieldsSection fields={structuredFields} />}
                 <ReadingSection
                   doc={doc}
                   reading={reading}
@@ -856,7 +988,12 @@ export function ArchiveItemDetail({
                   categoryEnabled={categoryEnabledForAI}
                   excluded={doc.aiExtractionExcluded}
                   busy={aiBusy}
+                  progress={aiProgress}
+                  savedState={savedAnalysis}
+                  analyzedAtLabel={doc.analysisUpdatedAt ? formatDate(doc.analysisUpdatedAt) : null}
+                  lastRunFailed={doc.analysisStatus === "failed"}
                   onAnalyze={handleAnalyzeWithClaude}
+                  onAbort={() => aiAbortRef.current?.abort()}
                   onToggleExcluded={handleToggleAIExclusion}
                 />
                 <ProposalsSection
@@ -865,7 +1002,17 @@ export function ArchiveItemDetail({
                   busy={proposalBusy}
                   onAccept={handleAcceptProposal}
                   onReject={handleRejectProposal}
+                  acceptAllCount={aiAcceptAllCandidates.length}
+                  onAcceptAll={() => handleAcceptAll(aiAcceptAllCandidates)}
                 />
+                {analysisOverview ? (
+                  <AnalysisOverviewSection
+                    overview={analysisOverview}
+                    segments={pageSegments}
+                    text={doc.extractedText}
+                    loadPdfBytes={isPdf ? loadPdfBytes : undefined}
+                  />
+                ) : null}
                 {doc.aiSynthesis ? (
                   <section
                     aria-label="Analisi con Hinthia"
@@ -875,11 +1022,15 @@ export function ArchiveItemDetail({
                       {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
                       <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-5 w-5 shrink-0 rounded-full" />
                       Analisi con Hinthia
+                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-normal text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
+                        Generata da Hinthia
+                      </span>
                     </h2>
                     <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">{doc.aiSynthesis}</p>
                     {doc.aiSynthesisGeneratedAt ? (
                       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Letta il {formatDate(doc.aiSynthesisGeneratedAt)}
+                        Letta il {formatDate(doc.aiSynthesisGeneratedAt)}. È un riassunto scritto da Hinthia, non una
+                        citazione del documento: può contenere imprecisioni.
                       </p>
                     ) : null}
                   </section>
@@ -896,6 +1047,19 @@ export function ArchiveItemDetail({
       </div>
     </div>
   );
+}
+
+/** Una sola proposta per tipo (per "campo": per chiave) --- con più candidati della stessa cosa vince la prima, non si sovrascrive in sequenza. */
+function onePerSlot(proposals: Proposal[]): Proposal[] {
+  const seen = new Set<string>();
+  return proposals.filter((proposal) => {
+    // Un evento non scrive nella Scheda: non entra in "Accetta tutto", che aggiunge solo informazioni alla Scheda.
+    if (proposal.kind === "event") return false;
+    const slot = proposal.kind === "field" ? `field:${proposal.fieldKey}` : proposal.kind;
+    if (seen.has(slot)) return false;
+    seen.add(slot);
+    return true;
+  });
 }
 
 /** Confronto per valore, senza voci vuote né ordine: una voce svuotata equivale a una rimossa. */
@@ -996,6 +1160,28 @@ function ReadingSection({
           ) : null}
         </>
       )}
+
+      {busy ? (
+        <div role="status" aria-live="polite" className="flex flex-col gap-1.5">
+          <p className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <Spinner />
+            Lettura del documento sul dispositivo… {Math.round((rereading ?? 0) * 100)}%
+          </p>
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round((rereading ?? 0) * 100)}
+            aria-label="Avanzamento della lettura sul dispositivo"
+            className="h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
+          >
+            <div
+              className="h-full rounded-full bg-brand transition-all duration-300"
+              style={{ width: `${Math.round((rereading ?? 0) * 100)}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
 
       {reading === "cannot" ? null : (
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">

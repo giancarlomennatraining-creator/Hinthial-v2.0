@@ -68,7 +68,16 @@ type AuditEventTypeColumn =
   | "dossier_deleted"
   | "document_trashed"
   | "document_restored"
-  | "document_purged";
+  | "document_purged"
+  | "document_updated"
+  | "document_downloaded"
+  | "document_text_read"
+  | "asset_updated"
+  | "friend_updated"
+  | "friend_deleted"
+  | "capsule_updated"
+  | "dossier_updated"
+  | "category_updated";
 
 type FriendStatusColumn = "active" | "revoked";
 
@@ -220,6 +229,9 @@ export type Database = {
           owner_id: string;
           event_type: AuditEventTypeColumn;
           metadata: Json | null;
+          entity_type: "document" | "asset" | "friend" | "capsule" | "dossier" | "category" | null;
+          entity_id: string | null;
+          encrypted_label: string | null;
           created_at: string;
         };
         Insert: {
@@ -227,6 +239,9 @@ export type Database = {
           owner_id: string;
           event_type: AuditEventTypeColumn;
           metadata?: Json | null;
+          entity_type?: "document" | "asset" | "friend" | "capsule" | "dossier" | "category" | null;
+          entity_id?: string | null;
+          encrypted_label?: string | null;
           created_at?: string;
         };
         Update: {
@@ -234,6 +249,9 @@ export type Database = {
           owner_id?: string;
           event_type?: AuditEventTypeColumn;
           metadata?: Json | null;
+          entity_type?: "document" | "asset" | "friend" | "capsule" | "dossier" | "category" | null;
+          entity_id?: string | null;
+          encrypted_label?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -505,6 +523,9 @@ export type Database = {
           encrypted_structured_fields: string | null;
           encrypted_ai_synthesis: string | null;
           ai_synthesis_generated_at: string | null;
+          encrypted_content_analysis: string | null;
+          analysis_status: string | null;
+          analysis_updated_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -533,6 +554,9 @@ export type Database = {
           encrypted_structured_fields?: string | null;
           encrypted_ai_synthesis?: string | null;
           ai_synthesis_generated_at?: string | null;
+          encrypted_content_analysis?: string | null;
+          analysis_status?: string | null;
+          analysis_updated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -561,6 +585,9 @@ export type Database = {
           encrypted_structured_fields?: string | null;
           encrypted_ai_synthesis?: string | null;
           ai_synthesis_generated_at?: string | null;
+          encrypted_content_analysis?: string | null;
+          analysis_status?: string | null;
+          analysis_updated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

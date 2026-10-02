@@ -80,25 +80,51 @@ export async function listReminders(
   return Promise.all((data ?? []).map((row) => toReminderListItem(masterKey, row as ReminderRow)));
 }
 
+/** Restituisce l'id della scadenza creata: serve a chi deve poterla annullare (v. proposte di evento). */
 export async function createReminder(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
   ownerId: string,
   input: ReminderInput,
-): Promise<void> {
+): Promise<string> {
   const encryptedTitle = await encryptBytes(masterKey, utf8ToBytes(input.title));
 
-  const { error } = await supabase.from("reminders").insert({
-    owner_id: ownerId,
-    encrypted_title: serializeEnvelope(encryptedTitle),
-    due_at: input.dueAt,
-    related_document_id: input.relatedDocumentId,
-    related_asset_id: input.relatedAssetId,
-  });
+  const { data, error } = await supabase
+    .from("reminders")
+    .insert({
+      owner_id: ownerId,
+      encrypted_title: serializeEnvelope(encryptedTitle),
+      due_at: input.dueAt,
+      related_document_id: input.relatedDocumentId,
+      related_asset_id: input.relatedAssetId,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Impossibile creare la scadenza: ${error?.message}`);
+  }
+  return data.id;
+}
+
+/** Il giorno di calendario (`YYYY-MM-DD`, nel fuso dell'utente) di un istante: una scadenza delle 09:00 è "quel giorno". */
+export function localDateKey(iso: string): string {
+  const date = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** I giorni delle scadenze già collegate a un documento: basta a sapere se un evento letto è già in Scadenze, senza decifrare i titoli. */
+export async function listDocumentReminderDates(
+  supabase: SupabaseClient<Database>,
+  documentId: string,
+): Promise<string[]> {
+  const { data, error } = await supabase.from("reminders").select("due_at").eq("related_document_id", documentId);
 
   if (error) {
-    throw new Error(`Impossibile creare la scadenza: ${error.message}`);
+    throw new Error(`Impossibile caricare le scadenze del documento: ${error.message}`);
   }
+  return (data ?? []).map((row) => localDateKey(row.due_at));
 }
 
 export async function setReminderCompleted(

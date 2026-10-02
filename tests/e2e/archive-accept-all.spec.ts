@@ -96,34 +96,50 @@ test("Accetta tutto aggiunge in un colpo ciò che Hinthia ha trovato, le voci re
 }) => {
   test.slow();
 
-  await page.route("**/api/ai/analyze", (route) =>
-    route.fulfill({
+  // Formato attuale della route (v. api/ai/analyze): `result` per un blocco, `synthesis` per la fusione. Ogni dato porta
+  // il segmento d'origine e la citazione, che la validazione ritrova nel testo letto (la polizza ha una sola pagina).
+  // Dopo la lettura di Hinthia le proposte locali non compaiono più: scadenza ed emittente vanno quindi dati anche qui.
+  await page.route("**/api/ai/analyze", (route) => {
+    const request = route.request().postDataJSON() as { mode?: string };
+    return route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({
-        result: {
-          expiry: [],
-          issuer: [],
-          category: null,
-          fields: [
-            {
-              key: "numero_polizza",
-              label: "Numero polizza",
-              value: "ABC12345",
-              source: "Numero polizza ABC12345",
+      body: JSON.stringify(
+        request.mode === "merge"
+          ? { synthesis: null }
+          : {
+              result: {
+                documentType: "polizza",
+                expiry: [
+                  { value: "2027-06-03", segmentId: "p1", quote: "Valida fino al 3 giugno 2027" },
+                ],
+                issuer: [
+                  { value: "GENERALI ITALIA S.p.A.", segmentId: "p1", quote: "GENERALI ITALIA S.p.A." },
+                ],
+                category: null,
+                fields: [
+                  {
+                    key: "numero_polizza",
+                    label: "Numero polizza",
+                    value: "ABC12345",
+                    segmentId: "p1",
+                    quote: "Numero polizza ABC12345",
+                  },
+                  {
+                    key: "data_di_nascita",
+                    label: "Data di nascita",
+                    value: "1990-05-12",
+                    segmentId: "p1",
+                    quote: "Data di nascita 1990-05-12",
+                  },
+                ],
+                events: [],
+                synthesis: null,
+              },
             },
-            {
-              key: "data_di_nascita",
-              label: "Data di nascita",
-              value: "1990-05-12",
-              source: "Data di nascita 1990-05-12",
-            },
-          ],
-          synthesis: null,
-        },
-      }),
-    }),
-  );
+      ),
+    });
+  });
 
   await openPolizza(page);
 
@@ -163,7 +179,7 @@ test("Accetta tutto aggiunge in un colpo ciò che Hinthia ha trovato, le voci re
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Solo questa volta" }).click();
   await expect(
-    page.getByRole("tab", { name: "Chiedi a Hinthia · 2" }),
+    page.getByRole("tab", { name: "Chiedi a Hinthia · 4" }),
   ).toBeVisible({ timeout: 15_000 });
 
   await page.getByRole("tab", { name: "Scheda" }).click();

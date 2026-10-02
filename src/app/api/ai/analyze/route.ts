@@ -1,9 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/db/supabase/server";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
-import { parseClaudeJson } from "@/lib/ai/parse-claude-json";
+import { createClaudeAnalysisProvider } from "@/lib/ai/claude-analysis-provider";
+import { MAX_BLOCK_CHARS, MAX_BLOCKS_PER_DOCUMENT } from "@/domain/ai/analysis/blocks";
+import { isAnalysisDocumentType } from "@/domain/ai/analysis/schemas";
+import { AnalysisOutputError } from "@/domain/ai/analysis/types";
 
 /**
  * FASE 22: unico punto di contatto tra Hinthial e Anthropic per l'analisi vera di un documento (non solo la Chat,
@@ -12,17 +14,6 @@ import { parseClaudeJson } from "@/lib/ai/parse-claude-json";
  * categoria abilitata (permanente o temporanea, salvo scope "once"), esclusione del documento --- quest'ultima
  * vince sempre, anche su "once".
  */
-
-const SYSTEM_PROMPT = `Sei il motore di lettura di Hinthial, un'app personale di gestione della vita digitale.
-Leggi il testo di UN documento dell'utente e restituisci SOLO un oggetto JSON, senza testo attorno né blocchi markdown, con questa forma esatta:
-{"expiry": [{"value": "YYYY-MM-DD", "source": "citazione verbatim dal testo"}], "issuer": [{"value": "nome di chi ha emesso il documento", "source": "citazione verbatim"}], "category": {"id": "uno degli id di categoria forniti", "source": "citazione verbatim"} | null, "fields": [{"key": "numero_polizza", "label": "Numero polizza", "value": "...", "source": "citazione verbatim"}], "synthesis": "..." | null}
-Regole non negoziabili:
-- Ogni "source" (in expiry/issuer/category/fields) deve essere una citazione ESATTA, copiata parola per parola dal testo fornito --- non riassumere, non parafrasare. Se non trovi una citazione esatta per un campo, omettilo.
-- "category.id" deve essere uno degli id nell'elenco categorie fornito, mai un id inventato o un nome.
-- "fields" sono fatti puntuali che scadenza/emittente/categoria non coprono (numero di polizza, targa, luogo di nascita, ...). Preferisci sempre una chiave già presente nel "vocabolario noto" fornito, quando il campo trovato corrisponde davvero a quel significato; proponi una chiave nuova solo se nessuna di quelle note si adatta. "key" in snake_case, "label" leggibile in italiano. Se il valore di un campo è una data (data di nascita, di emissione, ...), scrivilo sempre come YYYY-MM-DD.
-- "synthesis" è una sintesi in prosa di 2-4 frasi su cosa dice il documento nel suo insieme --- qualitativa: non deve ripetere uno per uno i valori già in expiry/issuer/category/fields.
-- Nel dubbio, ometti il campo: un campo mancante costa meno di uno sbagliato.
-- Se il documento non contiene nulla di utile, rispondi {"expiry": [], "issuer": [], "category": null, "fields": [], "synthesis": null}.`;
 
 interface CategoryOption {
   id: string;
@@ -51,9 +42,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Richiesta non valida." }, { status: 400 });
   }
 
-  const { documentId, text, categories, scope } = (body ?? {}) as {
+  const { documentId, mode, block, partials, documentType, categories, scope, reread } = (body ?? {}) as {
     documentId?: unknown;
-    text?: unknown;
+    reread?: unknown;
+    mode?: unknown;
+    block?: unknown;
+    partials?: unknown;
+    documentType?: unknown;
     categories?: unknown;
     scope?: unknown;
   };
@@ -61,14 +56,45 @@ export async function POST(request: NextRequest) {
   if (typeof documentId !== "string" || !documentId) {
     return NextResponse.json({ error: "Documento mancante." }, { status: 400 });
   }
-  if (typeof text !== "string" || !text.trim()) {
-    return NextResponse.json({ error: "Testo del documento mancante." }, { status: 400 });
-  }
-  if (!Array.isArray(categories) || !categories.every(isCategoryOption)) {
-    return NextResponse.json({ error: "Elenco categorie non valido." }, { status: 400 });
-  }
   if (scope !== "category" && scope !== "temporary" && scope !== "once") {
     return NextResponse.json({ error: "Scope non valido." }, { status: 400 });
+  }
+  if (mode !== "block" && mode !== "merge") {
+    return NextResponse.json({ error: "Richiesta non valida." }, { status: 400 });
+  }
+
+  // Una richiesta = un pezzo di lavoro piccolo e limitato (un blocco, o le sintesi da fondere): il server non
+  // accetta mai un documento intero, così nemmeno un client modificato può farne partire uno enorme.
+  let blockInput: { id: string; segmentIds: string[]; text: string } | null = null;
+  let partialSyntheses: string[] = [];
+  if (mode === "block") {
+    const b = (block ?? {}) as Record<string, unknown>;
+    if (
+      typeof b.id !== "string" ||
+      typeof b.text !== "string" ||
+      !b.text.trim() ||
+      !Array.isArray(b.segmentIds) ||
+      !b.segmentIds.every((id) => typeof id === "string")
+    ) {
+      return NextResponse.json({ error: "Testo del documento mancante." }, { status: 400 });
+    }
+    if (b.text.length > MAX_BLOCK_CHARS) {
+      return NextResponse.json({ error: "Blocco troppo grande." }, { status: 400 });
+    }
+    blockInput = { id: b.id, segmentIds: b.segmentIds as string[], text: b.text };
+    if (!Array.isArray(categories) || !categories.every(isCategoryOption)) {
+      return NextResponse.json({ error: "Elenco categorie non valido." }, { status: 400 });
+    }
+  } else {
+    if (
+      !Array.isArray(partials) ||
+      partials.length === 0 ||
+      partials.length > MAX_BLOCKS_PER_DOCUMENT ||
+      !partials.every((p) => typeof p === "string" && p.trim() && p.length <= 4_000)
+    ) {
+      return NextResponse.json({ error: "Richiesta non valida." }, { status: 400 });
+    }
+    partialSyntheses = partials as string[];
   }
 
   // Cancello: funzione (v. api/ai/chat/route.ts, stesso schema a due controlli).
@@ -129,52 +155,38 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Vocabolario noto dell'utente, come suggerimento --- governa la scrittura (accettare registra una chiave nuova,
-  // v. domain/proposals/repository.ts), non il ragionamento: Claude può sempre proporne una diversa se serve.
-  const { data: vocabularyRows } = await supabase
-    .from("structured_field_vocabulary")
-    .select("field_key, label")
-    .order("label");
-  const vocabulary = vocabularyRows ?? [];
+  const provider = createClaudeAnalysisProvider(apiKey);
+  const auditMetadata = { category: categoryName, scope: scope as "category" | "temporary" | "once", reread: reread === true };
+  const auditEntity = { type: "document" as const, id: documentId };
 
   try {
-    const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: `Categorie disponibili (usa solo questi id):\n${categories
-            .map((c) => `- ${c.id}: ${c.name}`)
-            .join("\n")}\n\nVocabolario noto per i campi (preferiscilo quando puoi):\n${
-            vocabulary.length > 0
-              ? vocabulary.map((v) => `- ${v.field_key}: ${v.label}`).join("\n")
-              : "(vuoto, nessun campo registrato finora)"
-          }\n\nTesto del documento:\n${text.slice(0, 200_000)}`,
-        },
-      ],
-    });
+    if (blockInput) {
+      // Vocabolario noto dell'utente, come suggerimento --- governa la scrittura (accettare registra una chiave nuova,
+      // v. domain/proposals/repository.ts), non il ragionamento: Claude può sempre proporne una diversa se serve.
+      const { data: vocabularyRows } = await supabase
+        .from("structured_field_vocabulary")
+        .select("field_key, label")
+        .order("label");
 
-    const textBlock = response.content.find((block) => block.type === "text");
-    const raw = textBlock?.text ?? "{}";
+      const result = await provider.analyzeBlock({
+        block: blockInput,
+        categories: categories as CategoryOption[],
+        vocabulary: vocabularyRows ?? [],
+        documentType: isAnalysisDocumentType(documentType) ? documentType : null,
+      });
 
-    let parsed: unknown;
-    try {
-      parsed = parseClaudeJson(raw);
-    } catch {
-      return NextResponse.json({ error: "Risposta di Hinthia non interpretabile." }, { status: 502 });
+      // Traccia che il contenuto è davvero uscito, con che permesso --- mai il testo o il nome del file.
+      await logAuditEvent(supabase, user.id, "ai_extraction_used", auditMetadata, auditEntity);
+      return NextResponse.json({ result });
     }
 
-    // Traccia che il contenuto è davvero uscito, con che permesso --- mai il testo o il nome del file.
-    await logAuditEvent(supabase, user.id, "ai_extraction_used", {
-      category: categoryName,
-      scope: scope as "category" | "temporary" | "once",
-    });
-
-    return NextResponse.json({ result: parsed });
+    const synthesis = await provider.mergeSyntheses(partialSyntheses);
+    await logAuditEvent(supabase, user.id, "ai_extraction_used", auditMetadata, auditEntity);
+    return NextResponse.json({ synthesis });
   } catch (err) {
+    if (err instanceof AnalysisOutputError) {
+      return NextResponse.json({ error: "Risposta di Hinthia non valida." }, { status: 502 });
+    }
     const message = err instanceof Error ? err.message : "Errore sconosciuto.";
     return NextResponse.json({ error: `Impossibile contattare Hinthia: ${message}` }, { status: 502 });
   }

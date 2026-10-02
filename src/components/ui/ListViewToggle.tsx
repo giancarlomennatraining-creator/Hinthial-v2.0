@@ -38,7 +38,7 @@ export function ListViewToggle({
   }
 
   return (
-    <div className={cn("items-center gap-2", hideOnMobile ? "hidden md:flex" : "flex")}>
+    <div className={cn("items-center gap-2", hideOnMobile ? "hidden md:ml-auto md:flex" : "flex")}>
       <div
         role="radiogroup"
         aria-label="Modalità di visualizzazione"

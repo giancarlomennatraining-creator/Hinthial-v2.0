@@ -8,6 +8,7 @@ import { bytesToUtf8 } from "@/lib/crypto";
 import {
   documentsAwaitingExtraction,
   downloadDocument,
+  logDocumentDownloaded,
   extractTextForExistingDocument,
   listDocuments,
   moveDocumentsToTrash,
@@ -17,7 +18,6 @@ import {
 } from "@/domain/documents/repository";
 import { getTrashRetentionDays } from "@/domain/profile/repository";
 import { listIncludesTag } from "@/domain/documents/tags";
-import { findTextSnippet, flattenForSearch } from "@/lib/text-snippet";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { listDossiers, replaceDocumentDossierLinks } from "@/domain/dossiers/repository";
@@ -32,7 +32,6 @@ import { formatDate, formatSize } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
 import { MobileAddFab, type MobileAddFabMenuItem } from "@/components/ui/MobileAddFab";
 import { PageHelp } from "@/components/help/PageHelp";
-import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { ListViewToggle } from "@/components/ui/ListViewToggle";
 import { Pagination } from "@/components/ui/Pagination";
@@ -64,28 +63,6 @@ function expiryStatus(expiresAt: string | null): "none" | "overdue" | "soon" | "
 
 type SortColumn = "name" | "category" | "asset" | "size" | "createdAt" | "expiresAt";
 
-/** Perché questo documento è comparso tra i risultati: solo se la parola cercata sta dentro il file e non nel nome (altrimenti il motivo è già sotto gli occhi). */
-function ContentSnippet({ doc, query }: { doc: DocumentListItem; query: string }) {
-  const normalized = query.trim();
-  if (!normalized) return null;
-  if (doc.filename.toLowerCase().includes(normalized.toLowerCase())) return null;
-
-  const snippet = findTextSnippet(doc.extractedText, normalized);
-  if (!snippet) return null;
-
-  return (
-    <p className="mt-0.5 truncate text-xs text-zinc-500 italic dark:text-zinc-400">
-      {snippet.truncatedStart ? "…" : ""}
-      {snippet.before}
-      <mark className="rounded bg-yellow-200 px-0.5 not-italic dark:bg-yellow-900 dark:text-yellow-100">
-        {snippet.match}
-      </mark>
-      {snippet.after}
-      {snippet.truncatedEnd ? "…" : ""}
-    </p>
-  );
-}
-
 /** "Archivio": documenti, immagini, audio, video e note testuali nella stessa lista con gli stessi attributi. Immagini/audio/video hanno un player inline (v. lib/content-kind.ts); una nota si apre e si modifica qui stesso. */
 export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
@@ -110,7 +87,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
   const [bulkTagInput, setBulkTagInput] = useState("");
-  const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   // Impostato cliccando un tag sul documento --- un solo tag alla volta, niente menu a tendina.
   const [tagFilter, setTagFilter] = useState<string | null>(null);
@@ -211,6 +187,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     try {
       const { filename, mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
       saveBytesAsFile(bytes, filename, mimeType);
+      void logDocumentDownloaded(supabase, doc.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile aprire il contenuto.");
     } finally {
@@ -555,18 +532,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     );
   }
 
-  function matchesQuery(doc: DocumentListItem): boolean {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return true;
-    // flattenForSearch: il testo estratto conserva gli a capo, senza appiattirlo una frase a cavallo di due righe non si troverebbe.
-    const haystack = flattenForSearch(
-      [doc.filename, doc.notes, doc.transcript, doc.extractedText, ...doc.tags].join(" "),
-    ).toLowerCase();
-    return haystack.includes(normalized);
-  }
-
   const filteredDocuments = documents
-    .filter(matchesQuery)
     .filter((doc) => !categoryFilter || doc.categoryId === categoryFilter)
     .filter((doc) => !tagFilter || listIncludesTag(doc.tags, tagFilter));
 
@@ -593,7 +559,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
               title="Archivio"
               tips={[
                 { icon: "➕", text: "Aggiungi un contenuto nuovo, o trascinalo qui sopra." },
-                { icon: "🔍", text: "Cerca per nome, tag, note — o dentro ai documenti stessi." },
+                { icon: "🔍", text: "Premi Ctrl+K per cercare in tutto Hinthial: per nome, tag, note — o dentro ai documenti stessi." },
                 { icon: "🏷️", text: "Filtra per categoria dal menu in alto." },
                 { icon: "📂", text: "Passa a “Fascicolo” per raggruppare più contenuti insieme." },
               ]}
@@ -690,11 +656,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
           ) : null}
 
           <div className="flex flex-wrap gap-3">
-            <SearchInput
-              value={query}
-              onChange={setQuery}
-              placeholder="Cerca per nome, tag, note o dentro i documenti…"
-            />
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
@@ -831,7 +792,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
           {filteredDocuments.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Nessun contenuto corrisponde alla ricerca.
+              Nessun contenuto corrisponde ai filtri.
             </p>
           ) : viewMode === "table" ? (
             <div className="flex flex-col gap-3">
@@ -923,7 +884,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                                 <ContentTypeIcon kind={kind} inDossier={doc.dossierIds.length > 0} />
                                 <span className="truncate">{doc.filename}</span>
                               </Link>
-                              <ContentSnippet doc={doc} query={query} />
                             </td>
                             <td className="hidden p-3 text-zinc-600 @lg:table-cell dark:text-zinc-400">
                               {category ? `${category.icon} ${category.name}` : "—"}
@@ -974,7 +934,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                                   </>
                                 ) : (
                                   <RowMenuItem disabled={busy} onClick={() => handleOpen(doc)}>
-                                    Apri
+                                    Scarica
                                   </RowMenuItem>
                                 )}
                                 {isTranscribable(kind) ? (
@@ -1132,7 +1092,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           <ContentTypeIcon kind={kind} inDossier={doc.dossierIds.length > 0} />
                           <span className="truncate">{doc.filename}</span>
                         </Link>
-                        <ContentSnippet doc={doc} query={query} />
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
                           {category ? `${category.icon} ${category.name} · ` : ""}
                           {asset ? `🔗 ${asset.name} · ` : ""}
@@ -1190,7 +1149,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           </>
                         ) : (
                           <RowMenuItem disabled={busy} onClick={() => handleOpen(doc)}>
-                            Apri
+                            Scarica
                           </RowMenuItem>
                         )}
                         {isTranscribable(kind) ? (

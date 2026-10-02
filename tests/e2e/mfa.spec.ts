@@ -27,7 +27,7 @@ test("attivare l'autenticazione a due fattori richiede il codice al login succes
 
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
-  await page.getByRole("tab", { name: "Sicurezza" }).click();
+  await page.getByRole("tab", { name: "Autenticazione" }).click();
   await expect(page.getByText("Non attiva")).toBeVisible();
 
   // Attivazione: nome del dispositivo, QR, codice a mano da inserire
@@ -86,7 +86,7 @@ test("attivare l'autenticazione a due fattori richiede il codice al login succes
   // Rimuovere il dispositivo disattiva di nuovo l'MFA.
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
-  await page.getByRole("tab", { name: "Sicurezza" }).click();
+  await page.getByRole("tab", { name: "Autenticazione" }).click();
   await expect(page.getByText("Telefono di test")).toBeVisible();
   await page.getByRole("button", { name: "Rimuovi" }).click();
   await expect(page.getByText("Non attiva")).toBeVisible({ timeout: 10_000 });
