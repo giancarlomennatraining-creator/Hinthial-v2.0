@@ -5,7 +5,7 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 /**
  * FASE 22: consenso a tre assi (funzione, già coperto da ai-processing-consent.spec.ts; categoria; singolo
- * contenuto). Non serve una vera ANTHROPIC_API_KEY: con tutti i consensi attivi ma la chiave non configurata, la
+ * contenuto). Non serve una vera ANTHROPIC_API_KEY: la risposta "non configurata" della
  * route risponde con lo stesso errore chiaro già usato dalla Chat (v. api/ai/analyze/route.ts).
  */
 
@@ -108,22 +108,41 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
   await expect(assicurazioniToggle).not.toBeChecked();
 
   // Torna al documento: cancello e funzione attivi, ma la categoria non ancora --- compare la scelta a tre.
+  // goto ricarica la pagina: la Master Key torna bloccata e va sbloccata.
   await page.goto("/archive");
+  await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await page.getByRole("link", { name: /polizza\.pdf/ }).click();
   await page.getByRole("tab", { name: "Chiedi a Hinthia" }).click();
   await expect(page.getByRole("button", { name: "Solo questa volta" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Abilita questa categoria per 30 giorni" })).toBeVisible();
 
-  // "Solo questa volta" chiede conferma, poi arriva davvero alla route server-side (nessuna vera ANTHROPIC_API_KEY in test).
+  // "Solo questa volta" chiede conferma, poi arriva alla route server-side, che senza chiave risponde "non configurata".
+  // La route risponde "non configurata" come farebbe senza ANTHROPIC_API_KEY: simulata, così il test non dipende dalla
+  // chiave presente nell'ambiente (con una chiave vera la domanda andrebbe davvero ad Anthropic).
+  await page.route("**/api/ai/analyze", (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Hinthia non è ancora configurata su questo server." }),
+    }),
+  );
   page.once("dialog", (dialog) => dialog.accept());
+  const analyzeRequest = page.waitForRequest("**/api/ai/analyze");
   await page.getByRole("button", { name: "Solo questa volta" }).click();
+  await analyzeRequest;
   await expect(
     page.getByText("Hinthia non è ancora configurata su questo server."),
   ).toBeVisible({ timeout: 15_000 });
 
   // Escludere il documento nasconde il bottone e resta impostato dopo un refresh.
-  await page.getByLabel(/Escludi questo documento dall'analisi di Hinthia/).check();
+  // click e non check(): l'esclusione si spunta a salvataggio avvenuto, non subito.
+  const excludeCheckbox = page.getByLabel(/Escludi questo documento dall'analisi di Hinthia/);
+  await excludeCheckbox.click();
+  await expect(excludeCheckbox).toBeChecked();
   await page.reload();
+  await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   // Il reload azzera la tab attiva sulla scheda: si riapre "Chiedi a Hinthia" per ritrovare il trigger.
   await page.getByRole("tab", { name: "Chiedi a Hinthia" }).click();
   await expect(page.getByText("Questo documento è escluso dall'analisi di Hinthia")).toBeVisible();
@@ -134,7 +153,8 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
   await page.getByRole("tab", { name: "Hinthia" }).click();
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/categories") && res.request().method() === "PATCH"),
-    page.getByRole("checkbox", { name: "🛡️ Assicurazioni" }).check(),
+    // click e non check(): la categoria si spunta solo a salvataggio avvenuto, non subito.
+    page.getByRole("checkbox", { name: "🛡️ Assicurazioni" }).click(),
   ]);
   await page.reload();
   await page.getByRole("tab", { name: "Hinthia" }).click();

@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -71,16 +71,26 @@ test("il consenso all'AI reale ha un cancello generale (Impostazioni > Hinthia) 
   await panel.getByRole("button", { name: "Chiudi" }).click();
   await expect(panel).not.toBeVisible();
 
-  // Senza una vera chiave configurata, la domanda arriva comunque alla route server-side, che risponde con un errore chiaro.
+  // La domanda arriva alla route server-side, che senza chiave configurata risponde con un errore chiaro.
+  // La route risponde "non configurata" come farebbe senza ANTHROPIC_API_KEY: simulata, così il test non dipende dalla
+  // chiave presente nell'ambiente (con una chiave vera la domanda andrebbe davvero ad Anthropic).
+  await page.route("**/api/ai/chat", (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Hinthia non è ancora configurata su questo server." }),
+    }),
+  );
   await page.getByLabel("Fai una domanda").fill("Quali assicurazioni ho?");
+  const chatRequest = page.waitForRequest("**/api/ai/chat");
   await page.getByRole("button", { name: "Invia" }).click();
+  await chatRequest;
   await expect(
     page.getByText("Hinthia non è ancora configurata su questo server."),
   ).toBeVisible({ timeout: 15_000 });
 
   // Stesso stato, visibile e modificabile anche da Impostazioni: non una copia separata, lo stesso componente.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await page.goto("/settings");
   await page.getByRole("tab", { name: "Hinthia" }).click();
   await expect(page.getByRole("heading", { name: "Hinthia" })).toBeVisible();
   const settingsMasterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Hinthia" });
@@ -104,7 +114,10 @@ test("il consenso all'AI reale ha un cancello generale (Impostazioni > Hinthia) 
   await expect(settingsMasterSwitch).toHaveAttribute("aria-checked", "false");
 
   // Tornando sulla pagina Hinthia, il pannello mostra lo stesso stato spento.
+  // Dopo il refresh la Master Key è bloccata: la pagina Hinthia chiede di sbloccarla.
   await page.getByRole("link", { name: "Hinthia", exact: true }).click();
+  await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await page.getByRole("button", { name: "Configura Hinthia" }).click();
   await expect(masterSwitch).toHaveAttribute("aria-checked", "false");
   await expect(chatCheckbox).toBeDisabled();
