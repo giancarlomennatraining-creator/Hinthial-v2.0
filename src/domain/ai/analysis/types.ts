@@ -31,6 +31,11 @@ export interface RawFieldEvidence extends RawEvidence {
   label: string;
 }
 
+/** Un evento con una data (rinnovo, pagamento, visita...): il `value` è la data, il `title` dice di che cosa si tratta. */
+export interface RawEventEvidence extends RawEvidence {
+  title: string;
+}
+
 export interface RawCategoryEvidence {
   id: string;
   segmentId: string;
@@ -45,6 +50,8 @@ export interface RawBlockAnalysis {
   issuer: RawEvidence[];
   category: RawCategoryEvidence | null;
   fields: RawFieldEvidence[];
+  /** Date future da ricordare, diverse dalla scadenza del documento (che ha un posto suo). */
+  events: RawEventEvidence[];
   /** Lettura d'insieme del blocco: derivata, non ha una citazione. */
   synthesis: string | null;
 }

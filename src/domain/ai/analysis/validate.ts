@@ -22,16 +22,25 @@ export interface ValidatedField extends ValidatedEvidence {
   label: string;
 }
 
+/** Un evento con data: `value` è la data (YYYY-MM-DD), `title` è come si chiamerà la scadenza. */
+export interface ValidatedEvent extends ValidatedEvidence {
+  title: string;
+}
+
 export interface ValidatedBlock {
   expiry: ValidatedEvidence[];
   issuer: ValidatedEvidence[];
   category: ValidatedEvidence | null;
   fields: ValidatedField[];
+  events: ValidatedEvent[];
   /** Derivata: una lettura d'insieme, mai presentata come citazione. */
   synthesis: string | null;
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Il titolo di una scadenza è una riga, non un paragrafo: oltre questo, il modello ha riassunto invece di nominare. */
+const MAX_EVENT_TITLE_LENGTH = 80;
 
 /**
  * Una citazione che non compare nel testo non è una lettura, è un'invenzione. Confronto tollerante agli spazi come
@@ -115,11 +124,19 @@ export function validateBlock(
     return provenance ? [{ key, label: item.label.trim(), value: item.value.trim(), source: item.quote, provenance }] : [];
   });
 
+  const events = raw.events.flatMap((item): ValidatedEvent[] => {
+    const title = item.title.trim().replace(/\s+/g, " ");
+    if (!title || title.length > MAX_EVENT_TITLE_LENGTH) return [];
+    const provenance = checkEvidence(item, "date", byId);
+    return provenance ? [{ title, value: item.value.trim(), source: item.quote, provenance }] : [];
+  });
+
   return {
     expiry: evidenceOf(raw.expiry, "date"),
     issuer: evidenceOf(raw.issuer, "text"),
     category,
     fields,
+    events,
     synthesis: raw.synthesis,
   };
 }

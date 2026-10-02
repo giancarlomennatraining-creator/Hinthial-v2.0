@@ -96,6 +96,7 @@ describe("parsePersistedAnalysis e statusOf", () => {
         issuer: [],
         category: null,
         fields: [{ key: "k", label: "K", value: "v", source: "q", provenance: { segmentId: "p1", page: null } }],
+        events: [{ title: "Rinnovo", value: "2027-05-01", source: "q", provenance: { segmentId: "p2", page: 2 } }],
         synthesis: "s",
       },
     ],
@@ -107,6 +108,18 @@ describe("parsePersistedAnalysis e statusOf", () => {
   it("rilegge ciò che è stato scritto, anche dopo un giro per JSON", () => {
     const analysis = valid();
     expect(parsePersistedAnalysis(JSON.parse(JSON.stringify(analysis)))).toEqual(analysis);
+  });
+
+  it("una lettura salvata prima degli eventi si rilegge, con nessun evento", () => {
+    const old = JSON.parse(JSON.stringify(valid()));
+    delete old.blocks[0].events;
+    expect(parsePersistedAnalysis(old)?.blocks[0].events).toEqual([]);
+  });
+
+  it("un evento malformato rende illeggibile la lettura salvata", () => {
+    const broken = JSON.parse(JSON.stringify(valid()));
+    broken.blocks[0].events = [{ value: "2027-05-01" }];
+    expect(parsePersistedAnalysis(broken)).toBeNull();
   });
 
   it("un blocco cifrato che non si capisce vale 'nessuna lettura', non un errore", () => {

@@ -29,6 +29,7 @@ Regole non negoziabili:
 - "value" deve essere ciò che la citazione dice. Le date vanno scritte come YYYY-MM-DD (la citazione resta com'è nel testo). Gli importi e gli identificativi, come nella citazione.
 - "category.id" deve essere uno degli id forniti, mai un nome o un id inventato. La categoria risponde a "che tipo di documento è nel suo insieme?" (per esempio una bolletta della luce va in una categoria di utenze o casa, non in "finanza" solo perché cita importi): scegli per significato, non per una parola isolata o una menzione marginale, e usa come citazione il passaggio che meglio rivela il tipo di documento (titolo, intestazione, oggetto). Se nessuna categoria fornita è davvero adatta, o questo blocco non basta per deciderlo (indice, note a margine, allegati), non proporne nessuna.
 - "fields" sono fatti puntuali che scadenza ed emittente non coprono. Preferisci una chiave del "vocabolario noto" o dei "campi attesi" quando il significato corrisponde davvero; proponi una chiave nuova (snake_case) solo se nessuna si adatta.
+- "events" sono date da ricordare nel futuro che NON sono la scadenza del documento (quella va in "expiry"): una rata o un pagamento da fare, un termine di disdetta o di rinnovo, un appuntamento, una visita di controllo, un'udienza. "title" è un nome breve e riconoscibile (es. "Rinnovo polizza auto", "Visita di controllo"), non una frase. Non riportare date di emissione, di stipula o di decorrenza: sono fatti del documento, non cose da ricordare. Se una data va dedotta con un calcolo (es. "entro 30 giorni dalla firma"), ometti l'evento.
 - "synthesis" è una sintesi in prosa di 1-3 frasi di ciò che dice QUESTO blocco, senza ripetere i valori già riportati altrove.
 - Nel dubbio, ometti: un campo mancante costa meno di uno sbagliato. Se il blocco non contiene nulla di utile, restituisci elenchi vuoti.`;
 
@@ -78,9 +79,21 @@ function buildTool(askDocumentType: boolean): Anthropic.Tool {
         required: ["key", "label", "value", "segmentId", "quote"],
       },
     },
+    events: {
+      type: "array",
+      description: "Date future da ricordare (pagamenti, rinnovi, appuntamenti), diverse dalla scadenza del documento.",
+      items: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Nome breve dell'evento, in italiano." },
+          ...EVIDENCE_PROPERTIES,
+        },
+        required: ["title", "value", "segmentId", "quote"],
+      },
+    },
     synthesis: { type: "string", description: "Sintesi in prosa di questo blocco." },
   };
-  const required = ["expiry", "issuer", "category", "fields", "synthesis"];
+  const required = ["expiry", "issuer", "category", "fields", "events", "synthesis"];
 
   if (askDocumentType) {
     properties.documentType = {

@@ -1,10 +1,11 @@
-import type { ValidatedBlock, ValidatedEvidence, ValidatedField } from "@/domain/ai/analysis/validate";
+import type { ValidatedBlock, ValidatedEvent, ValidatedEvidence, ValidatedField } from "@/domain/ai/analysis/validate";
 
 export interface MergedAnalysis {
   expiry: ValidatedEvidence[];
   issuer: ValidatedEvidence[];
   category: ValidatedEvidence | null;
   fields: ValidatedField[];
+  events: ValidatedEvent[];
   /** Sintesi parziali dei blocchi, in ordine: da fondere in una sola (un solo blocco = nessuna fusione necessaria). */
   partialSyntheses: string[];
 }
@@ -50,6 +51,8 @@ export function mergeBlocks(blocks: ValidatedBlock[]): MergedAnalysis {
     issuer: uniqueBy(blocks.flatMap((b) => b.issuer), (e) => e.value.toLowerCase()),
     category: pickCategory(blocks),
     fields: uniqueBy(blocks.flatMap((b) => b.fields), (f) => f.key),
+    // Un evento è identificato dalla data: lo stesso giorno citato in più punti, anche con parole diverse, è una sola scadenza.
+    events: uniqueBy(blocks.flatMap((b) => b.events), (e) => e.value),
     partialSyntheses: blocks.map((b) => b.synthesis).filter((s): s is string => !!s),
   };
 }

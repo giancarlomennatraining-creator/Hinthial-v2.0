@@ -85,7 +85,7 @@ export interface AuditEventMetadata {
   /** FASE 22 (ai_extraction_used): con quale permesso la chiamata è stata autorizzata --- "cosa è uscito, quando e perché" della spec. */
   scope?: "category" | "temporary" | "once";
   /** Eventi proposal_*: quale campo riguardava la proposta ("expiry", "category", "issuer", "field") --- mai il valore. */
-  proposalKind?: "expiry" | "category" | "issuer" | "field";
+  proposalKind?: "expiry" | "category" | "issuer" | "field" | "event";
   /** Eventi proposal_* su un campo libero: la chiave normalizzata (già in chiaro nel vocabolario), mai il valore. */
   fieldKey?: string;
   /** ai_extraction_used / document_text_read: vero se il documento era già stato letto (rilettura), falso alla prima lettura. */

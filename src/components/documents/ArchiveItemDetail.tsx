@@ -50,10 +50,13 @@ import {
   type AnalysisProgress,
   type SavedAnalysisState,
 } from "@/domain/ai/analyze-document";
+import { listDocumentReminderDates, localDateKey } from "@/domain/reminders/repository";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { StructuredFieldsSection } from "@/components/documents/StructuredFieldsSection";
 import { ProposalsSection, type UndoableAction } from "@/components/documents/ProposalsSection";
 import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
+import { AnalysisOverviewSection } from "@/components/documents/AnalysisOverviewSection";
+import { buildAnalysisOverview } from "@/domain/ai/analysis/overview";
 import {
   DocumentMetadataFields,
   documentToFields,
@@ -121,6 +124,9 @@ export function ArchiveItemDetail({
   const [rejections, setRejections] = useState<ProposalRejection[]>([]);
   const [undoable, setUndoable] = useState<UndoableAction | null>(null);
   const [proposalBusy, setProposalBusy] = useState(false);
+  // Le scadenze già collegate a questo documento (solo i giorni): un evento letto che c'è già non si ripropone.
+  const [reminderDates, setReminderDates] = useState<string[]>([]);
+  const [today] = useState(() => localDateKey(new Date().toISOString()));
 
   // FASE 22: quello che Claude ha letto in questa sessione --- ricalcolato in proposte a ogni render come le
   // locali (v. buildAIProposals), così accettare/rifiutare le filtra allo stesso modo, automaticamente.
@@ -221,14 +227,22 @@ export function ArchiveItemDetail({
     const requestId = ++latestRequestRef.current;
     setError(null);
     try {
-      const [documents, assetsResult, categoriesResult, dossiersResult, rejectionsResult, vocabularyResult] =
-        await Promise.all([
+      const [
+        documents,
+        assetsResult,
+        categoriesResult,
+        dossiersResult,
+        rejectionsResult,
+        vocabularyResult,
+        reminderDatesResult,
+      ] = await Promise.all([
           listDocuments(supabase, masterKey),
           listAssets(supabase, masterKey),
           listCategories(supabase),
           listDossiers(supabase, masterKey),
           listProposalRejections(supabase, masterKey, documentId),
           listFieldVocabulary(supabase),
+          listDocumentReminderDates(supabase, documentId),
         ]);
       if (requestId !== latestRequestRef.current) return;
       const found = documents.find((d) => d.id === documentId) ?? null;
@@ -239,6 +253,7 @@ export function ArchiveItemDetail({
       setDossiers(dossiersResult);
       setRejections(rejectionsResult);
       setFieldVocabulary(vocabularyResult);
+      setReminderDates(reminderDatesResult);
     } catch (err) {
       if (requestId !== latestRequestRef.current) return;
       setError(err instanceof Error ? err.message : "Impossibile caricare il contenuto.");
@@ -384,7 +399,9 @@ export function ArchiveItemDetail({
       const accepted = await acceptProposal(supabase, masterKey, ownerId, doc, proposal, value);
       return {
         message:
-          proposal.kind === "expiry"
+          proposal.kind === "event"
+            ? `Aggiunta in Scadenze: ${proposal.eventTitle ?? "evento"}, ${formatDate(value)}.`
+            : proposal.kind === "expiry"
             ? `Scadenza impostata al ${formatDate(value)}.`
             : proposal.kind === "issuer"
               ? "Emittente impostato."
@@ -601,8 +618,14 @@ export function ArchiveItemDetail({
   // FASE 22: ricalcolate a ogni render come le locali, così accettare/rifiutare le filtra automaticamente allo stesso modo.
   // Vengono dalla lettura salvata, non da uno stato della pagina: sopravvivono al ricaricamento e a un'interruzione.
   const aiProposals = doc.contentAnalysis
-    ? buildAIProposals(doc, extractedFieldsFrom(doc.contentAnalysis, categories), rejections)
+    ? buildAIProposals(doc, extractedFieldsFrom(doc.contentAnalysis, categories), rejections, {
+        today,
+        existingDates: reminderDates,
+      })
     : [];
+  const analysisOverview = doc.contentAnalysis
+    ? buildAnalysisOverview(doc.contentAnalysis, doc, categories, reminderDates)
+    : null;
   const proposals = [...localProposals, ...aiProposals];
   const categoryEnabledForAI = category ? isCategoryEnabledForExtraction(category) : false;
 
@@ -967,6 +990,9 @@ export function ArchiveItemDetail({
                   acceptAllCount={aiAcceptAllCandidates.length}
                   onAcceptAll={() => handleAcceptAll(aiAcceptAllCandidates)}
                 />
+                {analysisOverview ? (
+                  <AnalysisOverviewSection overview={analysisOverview} segments={pageSegments} text={doc.extractedText} />
+                ) : null}
                 {doc.aiSynthesis ? (
                   <section
                     aria-label="Analisi con Hinthia"
@@ -976,11 +1002,15 @@ export function ArchiveItemDetail({
                       {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
                       <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-5 w-5 shrink-0 rounded-full" />
                       Analisi con Hinthia
+                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-normal text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
+                        Generata da Hinthia
+                      </span>
                     </h2>
                     <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">{doc.aiSynthesis}</p>
                     {doc.aiSynthesisGeneratedAt ? (
                       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Letta il {formatDate(doc.aiSynthesisGeneratedAt)}
+                        Letta il {formatDate(doc.aiSynthesisGeneratedAt)}. È un riassunto scritto da Hinthia, non una
+                        citazione del documento: può contenere imprecisioni.
                       </p>
                     ) : null}
                   </section>
@@ -1003,6 +1033,8 @@ export function ArchiveItemDetail({
 function onePerSlot(proposals: Proposal[]): Proposal[] {
   const seen = new Set<string>();
   return proposals.filter((proposal) => {
+    // Un evento non scrive nella Scheda: non entra in "Accetta tutto", che aggiunge solo informazioni alla Scheda.
+    if (proposal.kind === "event") return false;
     const slot = proposal.kind === "field" ? `field:${proposal.fieldKey}` : proposal.kind;
     if (seen.has(slot)) return false;
     seen.add(slot);

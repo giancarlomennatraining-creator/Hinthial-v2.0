@@ -20,6 +20,7 @@ const KIND_LABEL: Record<ProposalKind, string> = {
   category: "Categoria",
   issuer: "Emittente",
   field: "Campo",
+  event: "Da ricordare",
 };
 
 const KIND_ICON: Record<ProposalKind, string> = {
@@ -27,6 +28,7 @@ const KIND_ICON: Record<ProposalKind, string> = {
   category: "🏷️",
   issuer: "🏛️",
   field: "🧩",
+  event: "📅",
 };
 
 /** Per "field" l'etichetta viene dal vocabolario (es. "Numero polizza"), non dal generico "Campo" --- più informativa. */
@@ -76,6 +78,7 @@ export function ProposalsSection({
 
   function displayValue(proposal: Proposal): string {
     if (proposal.kind === "expiry") return formatDate(proposal.value);
+    if (proposal.kind === "event") return `${proposal.eventTitle ?? "Evento"}, ${formatDate(proposal.value)}`;
     if (proposal.kind === "issuer" || proposal.kind === "field") return proposal.value;
     return categories.find((c) => c.id === proposal.value)?.name ?? proposal.value;
   }
@@ -137,6 +140,7 @@ export function ProposalsSection({
             {isEditing ? (
               <div className="flex flex-wrap items-center gap-2">
                 {proposal.kind === "expiry" ||
+                proposal.kind === "event" ||
                 (proposal.kind === "field" && inferFieldInputType(proposal.value) === "date") ? (
                   <input
                     type="date"
@@ -194,7 +198,7 @@ export function ProposalsSection({
                   onClick={() => onAccept(proposal, proposal.value)}
                   className="rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
                 >
-                  Accetta
+                  {proposal.kind === "event" ? "Aggiungi a Scadenze" : "Accetta"}
                 </button>
                 <button
                   type="button"

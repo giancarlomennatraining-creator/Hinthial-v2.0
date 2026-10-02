@@ -23,6 +23,7 @@ import {
 } from "@/domain/ai/analysis/schemas";
 import {
   validateBlock,
+  type ValidatedEvent,
   type ValidatedEvidence,
   type ValidatedField,
 } from "@/domain/ai/analysis/validate";
@@ -38,6 +39,8 @@ export interface AIExtractedFields {
   category: ValidatedEvidence | null;
   /** Campi eterogeni aperti (numero polizza, targa, ...) --- chiave già normalizzata. */
   fields: ValidatedField[];
+  /** Date da ricordare (pagamenti, rinnovi, appuntamenti): diventano proposte verso Scadenze. */
+  events: ValidatedEvent[];
   /** Sintesi/descrizione in prosa --- derivata: è per natura una lettura d'insieme, non ha una citazione e non passa dalla verifica. null se non fornita. */
   synthesis: string | null;
   /** Il tipo che il modello ha riconosciuto, ricondotto al registro (sconosciuto = "generico"). */
@@ -163,6 +166,7 @@ export function extractedFieldsFrom(analysis: PersistedContentAnalysis, categori
     issuer: merged.issuer,
     category,
     fields: merged.fields,
+    events: merged.events,
     synthesis: analysis.synthesis,
     documentType: analysis.documentType ?? "generico",
     coverage: {
@@ -340,6 +344,14 @@ function pageOf(evidence: { provenance: { page: number | null } }): { page?: num
   return evidence.provenance.page === null ? {} : { page: evidence.provenance.page };
 }
 
+/** Ciò che serve a decidere quali eventi proporre: senza, gli eventi non si propongono (non si sa cosa c'è già in Scadenze). */
+export interface EventProposalContext {
+  /** Oggi, `YYYY-MM-DD` nel fuso dell'utente. */
+  today: string;
+  /** Le date (`YYYY-MM-DD`, fuso dell'utente) delle scadenze già collegate a questo documento. */
+  existingDates: string[];
+}
+
 /**
  * Stessa logica di filtro di buildProposals (domain/proposals/build.ts) --- niente su campi già compilati, niente
  * già rifiutato, dedup --- ma sui candidati letti da Claude. Non riusa buildProposals: quello resta il percorso
@@ -349,6 +361,7 @@ export function buildAIProposals(
   doc: Pick<DocumentListItem, "expiresAt" | "issuer" | "categoryId" | "structuredFields">,
   fields: AIExtractedFields,
   rejections: ProposalRejection[],
+  events?: EventProposalContext,
 ): Proposal[] {
   const proposals: Proposal[] = [];
 
@@ -385,6 +398,14 @@ export function buildAIProposals(
       fieldKey: f.key,
       fieldLabel: f.label,
     });
+  }
+
+  if (events) {
+    for (const f of fields.events) {
+      // Una data passata non è più una scadenza da ricordare; una già in Scadenze per questo documento è già stata raccolta.
+      if (f.value < events.today || events.existingDates.includes(f.value)) continue;
+      proposals.push({ kind: "event", value: f.value, source: f.source, ...pageOf(f), aiGenerated: true, eventTitle: f.title });
+    }
   }
 
   const deduped = proposals.filter(

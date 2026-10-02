@@ -241,6 +241,7 @@ const PROPOSAL_KIND_LABEL = {
   expiry: "Scadenza",
   category: "Categoria",
   issuer: "Emittente",
+  event: "Evento verso Scadenze",
 } as const;
 
 /**

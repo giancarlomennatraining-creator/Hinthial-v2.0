@@ -2,6 +2,7 @@ import { isAnalysisDocumentType, type AnalysisDocumentType } from "@/domain/ai/a
 import type {
   Provenance,
   ValidatedBlock,
+  ValidatedEvent,
   ValidatedEvidence,
   ValidatedField,
 } from "@/domain/ai/analysis/validate";
@@ -71,6 +72,12 @@ function parseField(value: unknown): ValidatedField | null {
   return { ...evidence, key: value.key, label: value.label };
 }
 
+function parseEvent(value: unknown): ValidatedEvent | null {
+  const evidence = parseEvidence(value);
+  if (!evidence || !isRecord(value) || !isString(value.title)) return null;
+  return { ...evidence, title: value.title };
+}
+
 function parseList<T>(value: unknown, parse: (item: unknown) => T | null): T[] | null {
   if (!Array.isArray(value)) return null;
   const items = value.map(parse);
@@ -82,11 +89,14 @@ function parseBlock(value: unknown): ValidatedBlock | null {
   const expiry = parseList(value.expiry, parseEvidence);
   const issuer = parseList(value.issuer, parseEvidence);
   const fields = parseList(value.fields, parseField);
-  if (!expiry || !issuer || !fields) return null;
+  // Le letture salvate prima degli eventi non ce l'hanno: valgono "nessun evento" (e comunque la loro impronta non
+  // coincide più, v. ANALYSIS_PIPELINE_VERSION, quindi la scheda le propone da rileggere).
+  const events = value.events === undefined ? [] : parseList(value.events, parseEvent);
+  if (!expiry || !issuer || !fields || !events) return null;
   const category = value.category === null ? null : parseEvidence(value.category);
   if (value.category !== null && !category) return null;
   if (value.synthesis !== null && !isString(value.synthesis)) return null;
-  return { expiry, issuer, category, fields, synthesis: value.synthesis as string | null };
+  return { expiry, issuer, category, fields, events, synthesis: value.synthesis as string | null };
 }
 
 /**

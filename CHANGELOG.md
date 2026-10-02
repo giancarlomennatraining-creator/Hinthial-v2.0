@@ -10,6 +10,43 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-02 (33)
+
+### Content Intelligence: "Cosa ha letto Hinthia" con tipo, dati e pagina d'origine
+
+**Cosa fa:**
+- In "Chiedi a Hinthia", sotto le proposte, un nuovo riquadro **"Cosa ha letto Hinthia"** mostra il **tipo di documento** riconosciuto (contratto, polizza assicurativa, fattura... oppure "Documento generico", senza fingere di averlo riconosciuto) e tutti i dati ricavati: categoria, scadenza, emittente, campi del tipo, eventi da ricordare.
+- Ogni dato dice **da dove viene**: etichetta **"Letto da Hinthia"** se è solo una lettura, **"Nella Scheda"** (o **"In Scadenze"** per un evento) se l'hai già fatto tuo, più la frase del documento che lo prova.
+- La **pagina d'origine è cliccabile**: "pagina 2" apre il testo letto di quella pagina con la frase evidenziata (per i documenti letti senza pagine, "nel testo" apre la sezione). Se il testo è cambiato dopo la lettura, resta una semplice etichetta.
+- Una nota ricorda che ogni dato è stato controllato nel testo del documento e, se il documento è molto lungo, quante parti sono state lette su quante.
+- La **sintesi** è ora marcata **"Generata da Hinthia"**, con l'avviso che è un riassunto e non una citazione.
+
+**Sulla confidenza:** il modello non restituisce un punteggio e non ne inventiamo uno: un dato compare solo se la sua citazione è stata ritrovata nel testo, altrimenti viene scartato. La "confidenza" mostrata è questa verifica.
+
+**Note tecniche:** `buildAnalysisOverview` (`domain/ai/analysis/overview.ts`) costruisce il modello di visualizzazione dalla lettura salvata; `splitAroundQuote` (`source.ts`) trova la frase nel testo con la stessa tolleranza agli spazi della validazione; `AnalysisOverviewSection` riusa `prepareAnalysis` per ritrovare i segmenti per id. Nessuna migrazione.
+
+---
+
+## 2026-10-02 (32)
+
+### Content Intelligence: gli eventi con data diventano promemoria in Scadenze
+
+**Cosa fa:**
+- Quando Claude legge un documento ora cerca anche gli **eventi con una data futura da ricordare** (un appuntamento, una visita, un rinnovo da disdire): ognuno compare tra le Proposte come "Da ricordare", con titolo breve, data e la pagina da cui viene.
+- Il pulsante **Aggiungi a Scadenze** crea la scadenza collegata al documento; "Annulla" la rimuove. Si può correggere la data prima di aggiungere, o rifiutare l'evento (non ricompare).
+- Non vengono proposti gli eventi già passati né quelli la cui data è già in Scadenze per quel documento. Le date di emissione, stipula o decorrenza e la scadenza del documento stesso non sono eventi.
+- Gli eventi non entrano in "Accetta tutto": ognuno si aggiunge di proposito.
+- Per verificarli valgono le stesse regole di tutta la lettura: la citazione deve comparire nel testo indicato e la data deve essere coerente con essa, altrimenti l'evento viene scartato.
+- Il registro attività riporta "Evento verso Scadenze" senza mai scrivere il contenuto.
+
+**Da sapere:**
+- I documenti già letti risultano **da rileggere** (la versione della lettura è salita a 2): gli eventi compaiono dopo una nuova lettura.
+- Due eventi nello stesso giorno vengono fusi in uno.
+
+**Note tecniche:** `ProposalKind` "event" con `eventTitle`; `RawEventEvidence`/`ValidatedEvent`; `ANALYSIS_PIPELINE_VERSION = 2`; `createReminder` restituisce l'id; `listDocumentReminderDates` per l'esclusione dei duplicati. **Migrazione da applicare:** `20261004000000_proposal_rejections_event_kind.sql` (senza, rifiutare un evento fallisce).
+
+---
+
 ## 2026-10-02 (31)
 
 ### Menu Impostazioni a due livelli (Autenticazione e Aspetto)

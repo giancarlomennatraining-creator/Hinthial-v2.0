@@ -416,10 +416,46 @@ describe("buildAIProposals", () => {
         provenance: PROV,
       },
     ],
+    events: [],
     synthesis: "Una sintesi qualunque.",
     documentType: "polizza",
     coverage: { blocksAnalyzed: 1, blocksTotal: 1, truncated: false },
   };
+
+  describe("eventi verso Scadenze", () => {
+    const withEvents: AIExtractedFields = {
+      ...FIELDS,
+      events: [
+        { title: "Rinnovo polizza", value: "2027-06-03", source: "rinnovo entro il 3 giugno 2027", provenance: { segmentId: "p4", page: 4 } },
+        { title: "Visita passata", value: "2026-01-10", source: "visita del 10 gennaio 2026", provenance: PROV },
+        { title: "Già in Scadenze", value: "2027-08-01", source: "pagamento al 1 agosto 2027", provenance: PROV },
+      ],
+    };
+    const context = { today: "2026-10-02", existingDates: ["2027-08-01"] };
+
+    it("propone solo gli eventi futuri e non già in Scadenze, con titolo e pagina", () => {
+      const events = buildAIProposals(doc(), withEvents, [], context).filter((p) => p.kind === "event");
+      expect(events).toEqual([
+        {
+          kind: "event",
+          value: "2027-06-03",
+          source: "rinnovo entro il 3 giugno 2027",
+          page: 4,
+          aiGenerated: true,
+          eventTitle: "Rinnovo polizza",
+        },
+      ]);
+    });
+
+    it("senza il contesto delle scadenze non propone eventi", () => {
+      expect(buildAIProposals(doc(), withEvents, []).some((p) => p.kind === "event")).toBe(false);
+    });
+
+    it("un evento rifiutato non torna", () => {
+      const rejections = [{ id: "r1", kind: "event" as const, value: "2027-06-03" }];
+      expect(buildAIProposals(doc(), withEvents, rejections, context).some((p) => p.kind === "event")).toBe(false);
+    });
+  });
 
   it("marca ogni proposta come aiGenerated", () => {
     const proposals = buildAIProposals(doc(), FIELDS, []);

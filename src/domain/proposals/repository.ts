@@ -11,6 +11,7 @@ import {
 import { logAuditEvent, type AuditEntityRef } from "@/lib/audit/log-event";
 import { decryptStructuredFields, encryptStructuredFields } from "@/domain/documents/repository";
 import { registerFieldVocabulary } from "@/domain/structured-fields/vocabulary";
+import { createReminder, deleteReminder } from "@/domain/reminders/repository";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { Proposal, ProposalKind, ProposalRejection } from "@/domain/proposals/types";
 
@@ -32,6 +33,13 @@ export interface AcceptedProposal {
   fieldKey?: string;
   /** Il valore che il campo aveva **prima**: null se era vuoto. */
   previousValue: string | null;
+  /** Solo per kind "event": la scadenza creata, da eliminare se si annulla. */
+  reminderId?: string;
+}
+
+/** Un evento letto è un giorno, non un'ora: la scadenza si fissa alle 9 del mattino (fuso dell'utente), un orario ragionevole per un promemoria. */
+function reminderDueAt(date: string): string {
+  return new Date(`${date}T09:00:00`).toISOString();
 }
 
 /** null/vuoto in -> null out, come encryptOptionalText in documents/repository.ts. */
@@ -110,6 +118,21 @@ export async function acceptProposal(
   proposal: Proposal,
   value: string,
 ): Promise<AcceptedProposal> {
+  if (proposal.kind === "event") {
+    const title = proposal.eventTitle?.trim();
+    if (!title) throw new Error("Proposta di evento senza titolo.");
+
+    // Non tocca il documento: crea una scadenza in Scadenze, collegata ad esso.
+    const reminderId = await createReminder(supabase, masterKey, ownerId, {
+      title,
+      dueAt: reminderDueAt(value),
+      relatedDocumentId: doc.id,
+      relatedAssetId: null,
+    });
+    await logAuditEvent(supabase, ownerId, "proposal_accepted", { proposalKind: "event" }, documentRef(doc.id));
+    return { kind: "event", previousValue: null, reminderId };
+  }
+
   if (proposal.kind === "field") {
     const fieldKey = proposal.fieldKey;
     if (!fieldKey) throw new Error("Proposta di campo senza chiave.");
@@ -161,6 +184,13 @@ export async function undoAcceptance(
   documentId: string,
   accepted: AcceptedProposal,
 ): Promise<void> {
+  if (accepted.kind === "event") {
+    if (!accepted.reminderId) throw new Error("Annullamento di un evento senza scadenza.");
+    await deleteReminder(supabase, accepted.reminderId);
+    await logAuditEvent(supabase, ownerId, "proposal_undone", { proposalKind: "event" }, documentRef(documentId));
+    return;
+  }
+
   if (accepted.kind === "field") {
     const fieldKey = accepted.fieldKey;
     if (!fieldKey) throw new Error("Annullamento di un campo senza chiave.");

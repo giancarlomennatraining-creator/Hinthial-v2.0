@@ -3,7 +3,8 @@
  * (v. persisted.ts). Si alza a mano quando cambia il prompt, lo schema dei campi o la validazione.
  */
 export const ANALYSIS_SCHEMA_VERSION = 1;
-export const ANALYSIS_PIPELINE_VERSION = 1;
+/** 2: la lettura ricava anche gli eventi con data (verso Scadenze). Le letture salvate con la 1 risultano da rileggere. */
+export const ANALYSIS_PIPELINE_VERSION = 2;
 
 export const ANALYSIS_MODELS = {
   block: "claude-haiku-4-5-20251001",

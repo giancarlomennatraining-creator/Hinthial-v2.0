@@ -1,6 +1,7 @@
 import type {
   RawBlockAnalysis,
   RawCategoryEvidence,
+  RawEventEvidence,
   RawEvidence,
   RawFieldEvidence,
 } from "@/domain/ai/analysis/types";
@@ -24,6 +25,12 @@ function parseFieldEvidence(value: unknown): RawFieldEvidence | null {
   if (!evidence || !isRecord(value)) return null;
   if (!isNonEmptyString(value.key) || !isNonEmptyString(value.label)) return null;
   return { ...evidence, key: value.key, label: value.label };
+}
+
+function parseEventEvidence(value: unknown): RawEventEvidence | null {
+  const evidence = parseEvidence(value);
+  if (!evidence || !isRecord(value) || !isNonEmptyString(value.title)) return null;
+  return { ...evidence, title: value.title };
 }
 
 /** Un modello piccolo a volte restituisce un elenco o un oggetto come testo JSON invece che come struttura: lo si rimette in forma. */
@@ -66,7 +73,8 @@ export function parseBlockAnalysis(raw: unknown): RawBlockAnalysis | null {
   const expiry = parseList(raw.expiry, parseEvidence);
   const issuer = parseList(raw.issuer, parseEvidence);
   const fields = parseList(raw.fields, parseFieldEvidence);
-  if (!expiry || !issuer || !fields) return null;
+  const events = parseList(raw.events, parseEventEvidence);
+  if (!expiry || !issuer || !fields || !events) return null;
 
   return {
     documentType: isNonEmptyString(raw.documentType) ? raw.documentType : null,
@@ -74,6 +82,7 @@ export function parseBlockAnalysis(raw: unknown): RawBlockAnalysis | null {
     issuer,
     category: parseCategory(raw.category),
     fields,
+    events,
     synthesis: isNonEmptyString(raw.synthesis) ? raw.synthesis.trim() : null,
   };
 }
