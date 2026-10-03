@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getLocalUserId } from "@/lib/auth/local-user";
 import { createClient } from "@/lib/db/supabase/client";
 import {
   acceptFriendRequest,
@@ -33,15 +34,13 @@ export function FriendRequestNotificationPopup({ masterKey }: { masterKey: Crypt
     let cancelled = false;
     (async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) {
+        const currentUserId = await getLocalUserId(supabase);
+        if (!currentUserId) {
           if (!cancelled) setQueue([]);
           return;
         }
-        if (!cancelled) setUserId(user.id);
-        const incoming = await listIncomingFriendRequests(supabase, user.id);
+        if (!cancelled) setUserId(currentUserId);
+        const incoming = await listIncomingFriendRequests(supabase, currentUserId);
         if (!cancelled) setQueue(incoming);
       } catch {
         // Silenzioso --- un popup di cortesia non deve mai bloccare la dashboard.

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { getLocalUserId } from "@/lib/auth/local-user";
 import { createClient } from "@/lib/db/supabase/client";
 import {
   setupMasterKey,
@@ -100,20 +101,19 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
 
     (async () => {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
+      // Solo per sapere se la cassaforte esiste: l'id dalla sessione locale, senza un viaggio di rete in più a ogni apertura.
+      const userId = await getLocalUserId(supabase);
+      if (!userId || cancelled) return;
 
       const { data } = await supabase
         .from("encryption_setup")
         .select("owner_id")
-        .eq("owner_id", user.id)
+        .eq("owner_id", userId)
         .maybeSingle();
 
       if (!cancelled) {
         setStatus(data ? { kind: "locked" } : { kind: "not-set-up" });
-        setDeviceLockAvailable(getDeviceLockRecord(user.id) !== null);
+        setDeviceLockAvailable(getDeviceLockRecord(userId) !== null);
       }
     })();
 

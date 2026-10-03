@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getLocalUserId } from "@/lib/auth/local-user";
 import type { Database } from "@/types/supabase";
 import {
   encryptBytes,
@@ -102,16 +103,14 @@ export async function listCapsules(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
 ): Promise<CapsuleListItem[]> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
+  const userId = await getLocalUserId(supabase);
+  if (!userId) return [];
 
   // Filtro esplicito, non solo RLS: esiste anche una policy che ammette le capsule condivise CON questo utente, non sue.
   const { data, error } = await supabase
     .from("capsules")
     .select(CAPSULE_COLUMNS)
-    .eq("owner_id", user.id)
+    .eq("owner_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -512,16 +511,14 @@ export async function syncCapsuleSharesForLinkedFriend(
 export async function listCapsulesSharedWithMe(
   supabase: SupabaseClient<Database>,
 ): Promise<SharedCapsuleListItem[]> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
+  const userId = await getLocalUserId(supabase);
+  if (!userId) return [];
 
   // Filtro esplicito: la policy RLS ammette sia proprietario sia destinatario, senza questo un condivisore la ritroverebbe qui.
   const { data: shares, error: sharesError } = await supabase
     .from("capsule_shares")
     .select("capsule_id, owner_id, shared_at, dismissed_at")
-    .eq("recipient_user_id", user.id)
+    .eq("recipient_user_id", userId)
     .order("shared_at", { ascending: false });
 
   if (sharesError) {

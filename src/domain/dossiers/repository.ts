@@ -189,6 +189,25 @@ export async function listDossierIdsForDocuments(
   return map;
 }
 
+/**
+ * Tutti i collegamenti documento-fascicolo dell'utente (le regole di accesso mostrano solo i suoi), per leggerli in
+ * parallelo all'elenco dei documenti invece che dopo, con un viaggio di rete in più: con `in(ids)` bisognava aspettare
+ * di conoscere gli id.
+ */
+export async function listAllDossierLinks(supabase: SupabaseClient<Database>): Promise<Map<string, string[]>> {
+  const map = new Map<string, string[]>();
+  const { data, error } = await supabase.from("document_dossiers").select("document_id, dossier_id");
+  if (error) {
+    throw new Error(`Impossibile caricare i collegamenti ai fascicoli: ${error.message}`);
+  }
+  for (const row of data ?? []) {
+    const existing = map.get(row.document_id);
+    if (existing) existing.push(row.dossier_id);
+    else map.set(row.document_id, [row.dossier_id]);
+  }
+  return map;
+}
+
 /** Cancella e reinserisce l'intero insieme invece di calcolare un diff --- pochi fascicoli a documento, non vale la complessità. */
 export async function replaceDocumentDossierLinks(
   supabase: SupabaseClient<Database>,
