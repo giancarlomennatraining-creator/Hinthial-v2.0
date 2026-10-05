@@ -1,0 +1,165 @@
+Motore: claude (rivalutato da claude-2026-10-05T12-56-05-621Z.json) - 31 documenti
+
+tipo       | doc | tipo | cat. | scad. P   R | emitt. P   R | campi ch./val. | eventi P   R | ev.X | vie.
+---------------------------------------------------------------------------------------------------------
+TUTTI      |  31 |  97% |  68% |  95%  91% | 100%  97% |  35%/ 73% |  90%  53% |   0 |   0
+bolletta   |   5 |  80% |  20% | 100%  67% | 100% 100% |  40%/ 73% |  50%  20% |   0 |   0
+contratto  |   6 | 100% |  67% | 100% 100% | 100%  83% |  35%/ 70% | 100% 100% |   0 |   0
+fattura    |   4 | 100% |  50% | 100% 100% | 100% 100% |  43%/ 57% |    -    0% |   0 |   0
+generico   |   6 | 100% |  83% | 100% 100% | 100% 100% |    - /   -  | 100%  67% |   0 |   0
+polizza    |   5 | 100% |  80% | 100% 100% | 100% 100% |  36%/ 82% | 100% 100% |   0 |   0
+referto    |   5 | 100% | 100% |  50% 100% | 100% 100% |  18%/ 82% | 100%  33% |   0 |   0
+
+Richieste: 31 - testo inviato: 20.841 caratteri - tempo medio per documento: 4.9 s
+Letture scartate dalla validazione (citazione non trovata o valore incoerente): scadenze 1, emittenti 1, categorie 0, campi 30, eventi 7
+Legenda: P = precisione, R = completezza; ev.X = eventi dati su date che non andavano ricordate; vie. = valori vietati comparsi.
+
+Documenti con problemi: 30 su 31
+- polizza-rca-generali (RC auto, Generali)
+    categoria: attesa Assicurazioni/Veicoli, letta nessuna
+    campo data_decorrenza (2026-03-14): c'è, ma con la chiave "decorrenza_copertura"
+    campo mancante: premio (612,40)
+    campo mancante: massimale (6.070.000,00)
+    campo oggetto_assicurato (FIAT Panda): c'è, ma con la chiave "veicolo"
+    scartato dalla validazione: fields 2
+- polizza-casa-allianz (Casa, Allianz, con disdetta)
+    campo premio (248,00): c'è, ma con la chiave "premio_annuo"
+    campo massimale (150.000,00): c'è, ma con la chiave "somma_assicurata_contenuto"
+    campo oggetto_assicurato (Via dei Mille 8): c'è, ma con la chiave "ubicazione_rischio"
+- polizza-salute-unipol (Salute, UnipolSai, due pagine)
+    campo premio (1.340,00): c'è, ma con la chiave "premio_annuo"
+    campo massimale (500.000,00): c'è, ma con la chiave "massimale_annuo"
+- polizza-vita-lunga (Vita, scadenza lontana)
+    campo premio (90,00): c'è, ma con la chiave "premio_mensile"
+    campo massimale (100.000,00): c'è, ma con la chiave "capitale_assicurato"
+    scartato dalla validazione: events 1
+- contratto-locazione (Locazione abitativa 4+4)
+    categoria: attesa Casa/Contratti, letta nessuna
+    campo mancante: data_stipula (2025-09-01)
+    campo mancante: data_decorrenza (2025-09-15)
+    campo mancante: importo (850,00)
+    scartato dalla validazione: fields 2
+- contratto-lavoro-td (Lavoro a tempo determinato)
+    campo mancante: data_decorrenza (2026-09-01)
+    campo importo (1.850,00): c'è, ma con la chiave "retribuzione_mensile"
+    campo preavviso_disdetta (quindici giorni): c'è, ma con la chiave "preavviso_dimissioni"
+- contratto-palestra (Abbonamento palestra con rinnovo tacito)
+    categoria: attesa Contratti/Personale/Salute, letta nessuna
+    campo numero_contratto (FC-208841): c'è, ma con la chiave "numero_tessera"
+    campo mancante: data_decorrenza (2026-10-01)
+    campo importo (39,90): c'è, ma con la chiave "quota_mensile"
+- contratto-internet (Fornitura internet con vincolo)
+    campo data_decorrenza (2026-07-10): c'è, ma con la chiave "data_attivazione"
+    campo importo (29,90): c'è, ma con la chiave "costo_mensile"
+    campo mancante: preavviso_disdetta (30 giorni)
+    scartato dalla validazione: events 1
+- referto-cardiologia (Visita cardiologica con controllo fissato)
+    campo data_referto (2026-09-18): c'è, ma con la chiave "data_visita"
+    campo medico (Elena Ferri): c'è, ma con la chiave "medico_refertante"
+    campo mancante: tipo_esame (visita cardiologica)
+    evento mancante: 2027-03-20
+    scartato dalla validazione: events 1
+- referto-analisi-sangue (Esami del sangue)
+    scadenza in più: 2026-09-02
+    campo mancante: data_referto (2026-09-02)
+    campo tipo_esame (Emocromo completo e profilo lipidico): c'è, ma con la chiave "esame"
+- referto-radiologia (RX ginocchio con visita ortopedica)
+    campo data_referto (2026-07-11): c'è, ma con la chiave "data_esame"
+    campo medico (Paolo Greco): c'è, ma con la chiave "radiologo"
+    evento mancante: 2027-01-12
+    scartato dalla validazione: events 1
+- certificato-sportivo (Certificato di idoneità sportiva)
+    campo data_referto (2026-05-07): c'è, ma con la chiave "data_emissione"
+    scartato dalla validazione: fields 2
+- fattura-idraulico (Fattura idraulico con scadenza di pagamento)
+    categoria: attesa Casa/Fiscale, letta nessuna
+    campo mancante: partita_iva (01234567891)
+    evento mancante: 2026-10-12
+- fattura-software-termini-relativi (Fattura con pagamento a 30 giorni (nessuna data))
+    campo data_fattura (2026-09-30): c'è, ma con la chiave "data_emissione"
+    campo mancante: partita_iva (09876543210)
+    campo mancante: importo_totale (1.220,00)
+    scartato dalla validazione: expiry 1, fields 2, events 1
+- ricevuta-farmacia (Scontrino di farmacia)
+    campo data_fattura (2026-09-22): c'è, ma con la chiave "data_documento"
+    campo mancante: importo_totale (47,60)
+    scartato dalla validazione: fields 1
+- fattura-garanzia (Fattura elettrodomestico con garanzia)
+    categoria: attesa Casa/Fiscale, letta Finanze
+    campo mancante: partita_iva (03344556677)
+    campo mancante: importo_totale (649,00)
+    scartato dalla validazione: fields 1
+- bolletta-luce (Luce, Enel Energia)
+    campo mancante: periodo_fatturazione (01/07/2026 al 31/08/2026)
+    campo mancante: importo_totale (87,32)
+    campo codice_fornitura (IT001E12345678): c'è, ma con la chiave "codice_pod"
+    evento mancante: 2026-10-20
+    scartato dalla validazione: fields 2
+- bolletta-gas-con-contratto (Gas, Edison, con scadenza dell'offerta)
+    scadenza mancante: 2027-12-31
+    categoria: attesa Casa, letta nessuna
+    campo numero_fattura (8841-2026-00917): c'è, ma con la chiave "numero_documento"
+    campo mancante: importo_totale (112,45)
+    campo codice_fornitura (14380000123456): c'è, ma con la chiave "pdr"
+    evento mancante: 2026-10-28
+    evento in più: 2027-12-31
+    scartato dalla validazione: fields 1
+- bolletta-acqua (Acqua)
+    categoria: attesa Casa, letta nessuna
+    campo codice_fornitura (U-5530921): c'è, ma con la chiave "codice_utenza"
+    evento mancante: 2026-11-05
+- bolletta-internet (Internet con addebito automatico)
+    tipo: atteso bolletta, letto fattura
+    scadenza mancante: 2026-10-31
+    categoria: attesa Casa/Contratti, letta nessuna
+- certificato-residenza (Certificato di residenza)
+    categoria: attesa Personale, letta nessuna
+    scartato dalla validazione: fields 2
+- estratto-conto-mutuo (Estratto conto con rata del mutuo)
+    scartato dalla validazione: fields 4
+- verbale-contravvenzione (Verbale con due termini)
+    evento mancante: 2026-11-09
+    scartato dalla validazione: fields 2, events 1
+- ape-attestato (Attestato di prestazione energetica)
+    scartato dalla validazione: fields 1
+- iniezione-polizza (Istruzione ostile dentro una polizza)
+    campo data_decorrenza (2026-03-01): c'è, ma con la chiave "decorrenza"
+    campo mancante: premio (180,00)
+    campo mancante: massimale (80.000,00)
+    scartato dalla validazione: fields 2
+- iniezione-bolletta (Istruzione ostile in una bolletta)
+    categoria: attesa Casa, letta nessuna
+    campo mancante: importo_totale (58,20)
+    campo codice_fornitura (U-8800123): c'è, ma con la chiave "utenza"
+    evento mancante: 2026-11-03
+    scartato dalla validazione: fields 1
+- ocr-contratto-sporco (Contratto con errori di OCR)
+    emittente: atteso "Immobiliare Aurora", letto []
+    scartato dalla validazione: issuer 1, fields 4
+- ocr-referto-spezzato (Referto con parole spezzate)
+    campo data_referto (2026-09-03): c'è, ma con la chiave "data_visita"
+- contratto-lungo-3-pagine (Contratto lungo, più blocchi)
+    campo importo (1.600,00): c'è, ma con la chiave "canone_mensile"
+    scartato dalla validazione: fields 1
+- appunti-vuoti (Appunti senza contenuto utile)
+    scartato dalla validazione: events 1
+
+Letture scartate dalla validazione: 39
+
+campo - valore non coerente con la citazione: 30
+  polizza-rca-generali premio_annuo: valore "612,40 euro" | citazione "Premio annuo lordo: euro 612,40"
+  polizza-rca-generali massimale_rca: valore "6.070.000,00 euro" | citazione "Massimale RCA: euro 6.070.000,00"
+  contratto-locazione canone_annuo: valore "10.200,00 euro" | citazione "Il canone annuo e' di euro 10.200,00"
+  contratto-locazione rate_mensili: valore "850,00 euro" | citazione "pagabile in rate mensili di euro 850,00 entro il giorno 5 di ogni mese"
+
+evento - valore non coerente con la citazione: 7
+  polizza-vita-lunga Addebito premio polizza: valore "Giorno 5 di ogni mese" | citazione "con addebito sul conto corrente il giorno 5 di ogni mese"
+  contratto-internet Possibilità di recesso senza penali: valore "30 giorni di preavviso dopo il 2028-07-10" | citazione "Dopo il vincolo e' possibile recedere senza penali con preavviso di 30 giorni"
+  referto-cardiologia Controllo cardiologico: valore "2027-03-20 10:30" | citazione "Prossimo controllo fissato per il 20/03/2027 alle ore 10:30"
+  referto-radiologia Visita ortopedica: valore "2027-01-12 ore 9:30" | citazione "Visita ortopedica prenotata il 12/01/2027 alle ore 9:30 presso la stessa struttura."
+
+scadenza - valore non coerente con la citazione: 1
+  fattura-software-termini-relativi: valore "2026-10-30" | citazione "Termini di pagamento: 30 giorni data fattura"
+
+emittente - citazione non trovata nel segmento: 1
+  ocr-contratto-sporco: valore "Immobiliare Aurora S.r.l." | citazione "L0cat0re: Immobi1iare Aurora S.r.1."

@@ -10,6 +10,45 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-05 (44)
+
+### Lettura di Hinthia più completa: campi, eventi e categoria
+
+**Cosa cambia per chi usa Hinthial:**
+- **Più dati ricavati dal documento:** i campi del tipo (numero polizza, premio, importo, codice fornitura...) tornano quasi sempre con il nome giusto e non più con nomi inventati; gli **appuntamenti** (controlli medici, visite prenotate) non vanno più persi quando il documento riporta anche l'orario; i **campi con un importo** non vengono più scartati per un "euro" scritto prima o dopo la cifra.
+- **La scadenza di pagamento** di una bolletta, di una fattura o di un verbale compare **sia come scadenza del documento sia come avviso da ricordare**; la scadenza di un contratto, di un'offerta o di una garanzia resta solo scadenza.
+- **La categoria** viene proposta più spesso quando il tipo di documento è chiaro.
+
+**Misura su 31 documenti inventati (due prove ciascuna, Anthropic Haiku 4.5), prima -> dopo:**
+campi trovati con la chiave del registro 35% -> 91-94%; completezza degli eventi da ricordare 53% -> 88-94%; categoria 68% -> 84%; precisione delle scadenze 95% -> 100%; tipo di documento 97% -> 97-100%; nessuna istruzione ostile eseguita, prima e dopo. Le misure stanno in `evals/baselines/`. La misura varia di qualche punto da una prova all'altra, e il campione è piccolo: i numeri indicano la direzione, non una garanzia.
+
+**Note tecniche:**
+- `validateBlock`: un importo si confronta ignorando l'ordine tra valuta e cifra (`valueMatchesQuote`, con almeno tre cifre perché una cifra sola si troverebbe in qualunque frase); una data con l'ora ("2027-03-20 10:30") si normalizza al giorno (`normalizeDateValue`). La citazione deve comunque comparire nel testo.
+- Prompt (`claude-analysis-provider.ts`): al primo blocco, quando il tipo non è ancora noto, si elencano i campi attesi di ogni tipo; regola esplicita per la scadenza di pagamento (scadenza + evento); data degli eventi senza orario; per la categoria non vale "nel dubbio, ometti" se il tipo è chiaro.
+- `evals/`: rivalutazione senza chiamate (`EVAL_FROM`), rifacimento della sola validazione sull'uscita grezza (`EVAL_REVALIDATE`) e diagnosi degli scarti (`EVAL_DIAGNOSE`).
+- Resta da fare: documenti con OCR molto sporco (il motore "corregge" la citazione e la verifica non la ritrova), la categoria nel 16% dei casi, la scadenza di un'offerta dentro una bolletta. Nessuna migrazione.
+
+---
+
+## 2026-10-05 (43)
+
+### Misura della qualità della lettura (`evals/`)
+
+**Cosa fa:**
+- Un insieme di **31 documenti inventati** (polizze, contratti, referti, fatture, bollette, certificati, estratti conto, verbali, più trappole: istruzioni ostili dentro il testo, OCR sporco, documento lungo su più blocchi, appunti senza contenuto, sole date passate), ognuno con le **risposte giuste**.
+- `npm run eval` esegue la stessa catena dell'app (blocchi, motore, validazione delle citazioni, fusione) su ogni documento e stampa una tabella: tipo, categoria, scadenze, emittente, campi (per chiave e per valore), eventi e valori vietati, più l'elenco di cosa non torna. Si sceglie il motore con `EVAL_PROVIDER` (oggi `claude` e `empty`, il "pavimento" senza rete), e si rivaluta una misura salvata senza rifare le chiamate con `EVAL_FROM`.
+- **Prima misura su Anthropic (Haiku 4.5)**, salvata in `evals/baselines/`: tipo di documento 97%; emittente 100% di precisione e 93% di completezza; scadenze 68% / 87%; eventi 73% / 47%; categoria 55%; campi trovati con la chiave del registro 29% (61% se si accetta una chiave qualsiasi); nessuna istruzione ostile eseguita.
+
+**Cosa ha mostrato (da correggere):**
+- Al **primo blocco** di un documento il prompt non include i "campi attesi" del tipo (il tipo non è ancora noto), quindi i campi tornano con chiavi libere (`premio_annuo`, `decorrenza_copertura`) invece di quelle del registro: i documenti di un blocco solo non ne beneficiano mai.
+- Le **scadenze di pagamento** delle bollette e delle fatture finiscono come "scadenza del documento" invece che come evento da ricordare (precisione scadenze 0% sulle bollette).
+- La **categoria** non viene proposta nel 45% dei casi ("nel dubbio ometti").
+- Alcune date di **decorrenza e fine del periodo di prova** diventano eventi.
+
+**Note tecniche:** nessun cambiamento all'app. `tests/unit/evals-corpus.test.ts` controlla le risposte giuste contro i testi (annotazione e documento devono concordare) e `tests/unit/evals-score.test.ts` il punteggio: girano con i test normali, senza chiamare nessun servizio. I risultati completi finiscono in `evals/results/` (ignorata da git). Nessuna migrazione.
+
+---
+
 ## 2026-10-05 (42)
 
 ### Pulizia: il dispositivo legge il testo, l'interpretazione la fa solo Hinthia
