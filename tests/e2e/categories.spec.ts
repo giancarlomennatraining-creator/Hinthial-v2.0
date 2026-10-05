@@ -7,6 +7,11 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 // differenza di Archivio/Scadenze/Beni, /settings è accessibile subito
 // dopo il login, senza passare da RequireMasterKey.
 
+/** Il nome di una categoria nell'elenco di Impostazioni: lo stesso testo compare anche come opzione dei menu per tipo di documento. */
+function categoryName(page: import("@playwright/test").Page, text: string) {
+  return page.locator("li > p", { hasText: text });
+}
+
 test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione", async ({
   page,
 }) => {
@@ -29,15 +34,15 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   await expect(page.getByRole("heading", { name: "Categorie" })).toBeVisible();
 
   // Le 10 categorie iniziali (seminate alla registrazione) sono già lì.
-  await expect(page.getByText("👤 Personale")).toBeVisible();
-  await expect(page.getByText("🏠 Casa")).toBeVisible();
-  await expect(page.getByText("📦 Altro")).toBeVisible();
+  await expect(categoryName(page, "👤 Personale")).toBeVisible();
+  await expect(categoryName(page, "🏠 Casa")).toBeVisible();
+  await expect(categoryName(page, "📦 Altro")).toBeVisible();
 
   // Creazione di una categoria personalizzata.
   await page.getByLabel("Icona").fill("🎯");
   await page.getByLabel("Nome").fill("Hobby");
   await page.getByRole("button", { name: "Aggiungi categoria" }).click();
-  await expect(page.getByText("🎯 Hobby")).toBeVisible({ timeout: 10_000 });
+  await expect(categoryName(page, "🎯 Hobby")).toBeVisible({ timeout: 10_000 });
 
   // La nuova categoria è disponibile anche dove si scelgono le categorie.
   await page.getByRole("link", { name: "Archivio" }).click();
@@ -65,7 +70,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   const nameField = page.locator('[id^="edit-"][id$="-name"]');
   await nameField.fill("Hobby e sport");
   await page.getByRole("button", { name: "Salva" }).click();
-  await expect(page.getByText("🎯 Hobby e sport")).toBeVisible({ timeout: 10_000 });
+  await expect(categoryName(page, "🎯 Hobby e sport")).toBeVisible({ timeout: 10_000 });
 
   // Carica un documento con quella categoria, per testare l'avviso di eliminazione.
   await page.getByRole("link", { name: "Archivio" }).click();
@@ -105,7 +110,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
     .locator("li", { hasText: "🎯 Hobby e sport" })
     .getByRole("button", { name: "Elimina" })
     .click();
-  await expect(page.getByText("🎯 Hobby e sport")).not.toBeVisible({ timeout: 10_000 });
+  await expect(categoryName(page, "🎯 Hobby e sport")).not.toBeVisible({ timeout: 10_000 });
   expect(dialogMessage).toContain("1 documento");
   expect(dialogMessage).toContain("NON verranno cancellati");
 
@@ -150,5 +155,5 @@ test("il campo Icona propone una lista di icone selezionabili al click", async (
 
   await page.getByLabel("Nome").fill("Viaggi");
   await page.getByRole("button", { name: "Aggiungi categoria" }).click();
-  await expect(page.getByText("🎨 Viaggi")).toBeVisible({ timeout: 10_000 });
+  await expect(categoryName(page, "🎨 Viaggi")).toBeVisible({ timeout: 10_000 });
 });

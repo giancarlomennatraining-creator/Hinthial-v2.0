@@ -35,7 +35,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await page.getByLabel("Icona").fill("🎯");
   await page.getByLabel("Nome").fill("Hobby");
   await page.getByRole("button", { name: "Aggiungi categoria" }).click();
-  await expect(page.getByText("🎯 Hobby")).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator("li > p", { hasText: "🎯 Hobby" })).toBeVisible({ timeout: 10_000 });
 
   // Un contenuto in Archivio.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
@@ -138,9 +138,9 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("link", { name: "Impostazioni" }).click();
   await page.getByRole("tab", { name: "Categorie" }).click();
-  await expect(page.getByText("👤 Personale")).toBeVisible();
-  await expect(page.getByText("📦 Altro")).toBeVisible();
-  await expect(page.getByText("🎯 Hobby")).not.toBeVisible();
+  await expect(page.locator("li > p", { hasText: "👤 Personale" })).toBeVisible();
+  await expect(page.locator("li > p", { hasText: "📦 Altro" })).toBeVisible();
+  await expect(page.locator("li > p", { hasText: "🎯 Hobby" })).not.toBeVisible();
 
   // La scadenza resta --- solo scollegata dal bene ormai cancellato.
   await page.getByRole("link", { name: "Scadenze" }).click();
