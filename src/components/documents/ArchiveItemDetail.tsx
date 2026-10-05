@@ -28,8 +28,6 @@ import { inferFieldInputType } from "@/domain/structured-fields/value-type";
 import { listDossiers } from "@/domain/dossiers/repository";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import { readingStateFor } from "@/domain/extraction/reading-state";
-import { extractStructuredFields } from "@/domain/extraction/structured-fields";
-import { buildProposals } from "@/domain/proposals/build";
 import {
   acceptProposal,
   type AcceptedProposal,
@@ -52,7 +50,6 @@ import {
 } from "@/domain/ai/analyze-document";
 import { listDocumentReminderDates, localDateKey } from "@/domain/reminders/repository";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
-import { StructuredFieldsSection } from "@/components/documents/StructuredFieldsSection";
 import { ProposalsSection, type UndoableAction } from "@/components/documents/ProposalsSection";
 import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
 import { AnalysisOverviewSection } from "@/components/documents/AnalysisOverviewSection";
@@ -622,14 +619,7 @@ export function ArchiveItemDetail({
 
   const category = categories.find((c) => c.id === doc.categoryId);
   const reading = readingStateFor(doc);
-  // Calcolati al volo dal testo già decifrato, non salvati: niente da migrare, valgono su tutto l'archivio esistente.
-  // Che cosa c'è da proporre, tolto ciò che è già impostato e ciò che l'utente ha già scartato (v. domain/proposals/build.ts).
-  // Se Hinthia ha già letto il documento le sue proposte sono più affidabili: quelle delle regole locali si nascondono
-  // (restano per i documenti che Hinthia non ha letto, dove sono l'unica via, interamente sul dispositivo).
-  const hinthiaHasRead = doc.contentAnalysis !== null;
-  const localCandidates = buildProposals(doc, categories, rejections);
-  const localProposals = hinthiaHasRead ? [] : localCandidates;
-  // FASE 22: ricalcolate a ogni render come le locali, così accettare/rifiutare le filtra automaticamente allo stesso modo.
+  // Ricalcolate a ogni render: accettare o rifiutare una proposta la filtra automaticamente, senza stato a parte.
   // Vengono dalla lettura salvata, non da uno stato della pagina: sopravvivono al ricaricamento e a un'interruzione.
   const aiProposals = doc.contentAnalysis
     ? buildAIProposals(doc, extractedFieldsFrom(doc.contentAnalysis, categories), rejections, {
@@ -640,18 +630,8 @@ export function ArchiveItemDetail({
   const analysisOverview = doc.contentAnalysis
     ? buildAnalysisOverview(doc.contentAnalysis, doc, categories, reminderDates)
     : null;
-  const proposals = [...localProposals, ...aiProposals];
+  const proposals = aiProposals;
   const categoryEnabledForAI = category ? isCategoryEnabledForExtraction(category) : false;
-
-  // "Cosa ne ho ricavato" esclude: ciò che è già una proposta identica, ciò che è già nella scheda (non più una
-  // notizia), e il titolo (non applicabile da questa pagina --- vive al caricamento, v. FASE 19b).
-  const structuredFields = extractStructuredFields(doc.extractedText).filter((field) => {
-    if (field.kind === "title") return false;
-    if ([...localCandidates, ...aiProposals].some((p) => p.kind === field.kind && p.value === field.value)) return false;
-    if (field.kind === "expiry" && doc.expiresAt?.slice(0, 10) === field.value) return false;
-    if (field.kind === "issuer" && doc.issuer === field.value) return false;
-    return true;
-  });
 
   // Disabilita "Salva modifiche" quando non c'è nulla da salvare --- confronto per valore, non per riferimento:
   // `fields` è un oggetto nuovo a ogni onChange anche quando il contenuto torna uguale (es. una proposta accettata
@@ -827,7 +807,7 @@ export function ArchiveItemDetail({
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
                 }`}
               >
-                Letto dal dispositivo{localProposals.length > 0 ? ` · ${localProposals.length}` : ""}
+                Letto dal dispositivo
               </button>
               <button
                 type="button"
@@ -946,27 +926,6 @@ export function ArchiveItemDetail({
               </div>
             ) : activeTab === "reading" ? (
               <div id="tabpanel-reading" role="tabpanel" aria-labelledby="tab-reading" className="flex flex-col gap-6">
-                <ProposalsSection
-                  proposals={localProposals}
-                  categories={categories}
-                  busy={proposalBusy}
-                  onAccept={handleAcceptProposal}
-                  onReject={handleRejectProposal}
-                />
-                {hinthiaHasRead && (localCandidates.length > 0 || structuredFields.length > 0) ? (
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                    Hinthia ha già letto questo documento: quello che ha trovato è più affidabile di ciò che si ricava
-                    sul dispositivo, che per questo non viene mostrato.{" "}
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("analysis")}
-                      className="underline underline-offset-2 hover:text-brand"
-                    >
-                      Vai a Chiedi a Hinthia
-                    </button>
-                  </p>
-                ) : null}
-                {hinthiaHasRead ? null : <StructuredFieldsSection fields={structuredFields} />}
                 <ReadingSection
                   doc={doc}
                   reading={reading}

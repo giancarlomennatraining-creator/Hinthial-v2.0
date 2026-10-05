@@ -1,5 +1,5 @@
 import { flattenForSearch } from "@/lib/text-snippet";
-import { findDateContext } from "@/domain/extraction/structured-fields";
+import { findDateContext } from "@/domain/extraction/date-context";
 import { normalizeFieldKey } from "@/domain/structured-fields/normalize";
 import type { AnalysisSchema, AnalysisValueType } from "@/domain/ai/analysis/schemas";
 import type { AnalysisSegment, RawBlockAnalysis } from "@/domain/ai/analysis/types";

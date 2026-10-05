@@ -64,9 +64,7 @@ test("crea un bene e vi collega un documento e una scadenza", async ({ page }) =
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
   // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
-  // Il passo 3 va aperto PRIMA di scegliere il file: "contratto-affitto.txt" fa scattare il
-  // suggerimento automatico della categoria (v. heuristicCategorizer), che altrimenti riempirebbe
-  // il campo prima ancora di questo controllo sullo stato vuoto/disabilitato.
+  // Il passo 3 si apre prima di scegliere il file, per controllare lo stato vuoto/disabilitato del menu del bene.
   await page.getByRole("button", { name: "Dettagli" }).click();
   // Senza categoria selezionata, il menu del bene è vuoto/disabilitato.
   await expect(page.locator("#upload-asset")).toBeDisabled();

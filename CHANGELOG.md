@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-05 (42)
+
+### Pulizia: il dispositivo legge il testo, l'interpretazione la fa solo Hinthia
+
+**Cosa cambia:**
+- Il dispositivo **estrae il testo** (PDF, OCR, Word) e lo conserva, ma **non lo interpreta più con regole proprie**: niente più scadenza, emittente, titolo o categoria ricavati da parole chiave, niente "Cosa ne ho ricavato", niente proposte locali, niente suggerimenti automatici al caricamento (titolo, categoria, bene).
+- Scadenza, emittente, categoria, campi ed eventi arrivano solo da **"Chiedi a Hinthia"** (con il tuo consenso), con la citazione e la pagina d'origine. Il meccanismo delle proposte (accetta, rifiuta, annulla, "Accetta tutto") resta.
+- **Senza Hinthia** la scheda mostra il testo letto e la ricerca funziona, ma non propone nulla da sola.
+- **Importazione multipla:** i file si raggruppano per **nome** ("bolletta-luce-01.pdf" e "bolletta-luce-02.pdf" propongono un fascicolo "Bolletta luce"); i nomi generici (`scan_0012.pdf`, `IMG_3041.jpg`) non si raggruppano. La categoria si propone solo dalla cartella di Google Drive, se coincide.
+- **Cronologia di un fascicolo:** ordinata per data di caricamento (non più per la data letta nel documento).
+
+**Note tecniche:** eliminati `extraction/structured-fields`, `proposals/build`, `proposals/asset-match`, il categorizzatore a parole chiave e `StructuredFieldsSection` (circa 1.100 righe) con i loro test; `findDateContext`, che serve alla validazione dell'analisi di Hinthia, è in `extraction/date-context`. Nessuna migrazione e nessun dato toccato: campi accettati, analisi, vocabolario e rifiuti restano. Tag `pre-interpretazione-locale` sul commit precedente per recuperare le regole (partenza possibile per un'ontologia). Gli e2e delle proposte passano ora dall'analisi simulata (`tests/e2e/hinthia.ts`).
+
+---
+
 ## 2026-10-05 (41)
 
 ### Elenchi più leggeri, contesto condiviso e test più affidabili

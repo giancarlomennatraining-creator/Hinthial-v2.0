@@ -1,6 +1,6 @@
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentSummary } from "@/domain/documents/types";
 
-/** FASE 25: rilevamento duplicati in import massivo --- stessa disciplina di groupByIssuer, corrispondenza esatta (nome+dimensione), mai vaga. */
+/** FASE 25: rilevamento duplicati in import massivo --- stessa disciplina di groupByFilename, corrispondenza esatta (nome+dimensione), mai vaga. */
 
 export interface DuplicateMatch {
   /** Il nome del documento già presente (o dell'altro file di questo stesso lotto) con cui coincide. */
@@ -12,7 +12,7 @@ export interface DuplicateMatch {
 /** Un elemento per posizione in `files`, o `null`. Confronta con l'archivio esistente e con i file precedenti nello stesso lotto. */
 export function detectDuplicates<F extends { file: File }>(
   files: F[],
-  existingDocuments: DocumentListItem[],
+  existingDocuments: Pick<DocumentSummary, "filename" | "size" | "createdAt">[],
 ): (DuplicateMatch | null)[] {
   const results: (DuplicateMatch | null)[] = [];
 

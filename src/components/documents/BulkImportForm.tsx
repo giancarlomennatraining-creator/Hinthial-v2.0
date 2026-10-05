@@ -5,14 +5,12 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
-import { listDocuments, uploadDocument } from "@/domain/documents/repository";
+import { listDocumentSummaries, uploadDocument } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { createDossier, listDossiers } from "@/domain/dossiers/repository";
 import { canExtractText, extractContent } from "@/domain/extraction/extract-text";
 import type { ContentSegment } from "@/domain/extraction/types";
-import { extractStructuredFields } from "@/domain/extraction/structured-fields";
-import { heuristicCategorizer } from "@/domain/categorizer/heuristic-provider";
-import { groupByIssuer, type ImportGroup } from "@/domain/bulk-import/grouping";
+import { groupByFilename, type ImportGroup } from "@/domain/bulk-import/grouping";
 import { detectDuplicates } from "@/domain/bulk-import/duplicates";
 import { GoogleDriveBrowser } from "@/components/documents/GoogleDriveBrowser";
 import { sortAlphabetically } from "@/lib/utils";
@@ -25,7 +23,7 @@ const GOOGLE_DRIVE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID;
 
 /**
  * Import massivo: molti file in una volta, con un riepilogo per gruppi invece di una conferma per file. I gruppi sono
- * file con lo stesso emittente (v. domain/bulk-import/grouping.ts) --- deterministico, mai una somiglianza vaga. Scope
+ * file con lo stesso nome a meno di numeri e date (v. domain/bulk-import/grouping.ts) --- deterministico, mai una somiglianza vaga. Scope
  * deliberatamente più stretto del caricamento singolo (v. CreateArchiveItemForm): niente bene collegato né scadenza
  * per singolo file, aggiungibili dopo dalla scheda del documento.
  */
@@ -109,28 +107,15 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
 
     try {
       const [existingDocuments, categoriesResult, existingDossiers] = await Promise.all([
-        listDocuments(supabase, masterKey),
+        listDocumentSummaries(supabase, masterKey),
         listCategories(supabase),
         listDossiers(supabase, masterKey),
       ]);
       setCategories(categoriesResult);
 
-      // Suggerimenti per file, stessa logica di applySuggestions in CreateArchiveItemForm, ma qui contano solo categoria e raggruppamento.
+      // L'unico suggerimento di categoria è il nome della cartella Google Drive da cui arriva il file, se coincide con una categoria.
       for (const draft of read) {
-        if (draft.text) {
-          const suggestion = heuristicCategorizer.suggestCategoryFromContent(
-            draft.file.name,
-            draft.text,
-            categoriesResult,
-          );
-          if (suggestion) draft.categoryId = suggestion;
-
-          const title = extractStructuredFields(draft.text).find((f) => f.kind === "title")?.value;
-          if (title) draft.title = title;
-        }
-
-        // Il nome della cartella conta solo se il contenuto non ha già suggerito una categoria (indizio più debole).
-        if (!draft.categoryId && draft.folderHint) {
+        if (draft.folderHint) {
           const folderHint = draft.folderHint;
           const match = categoriesResult.find((c) => c.name.toLowerCase() === folderHint.toLowerCase());
           if (match) draft.categoryId = match.id;
@@ -144,7 +129,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
         draft.duplicateOf = duplicates[i];
       });
 
-      const computedGroups = groupByIssuer(read, existingDocuments, existingDossiers);
+      const computedGroups = groupByFilename(read, existingDocuments, existingDossiers);
       setGroups(computedGroups);
       // Le proposte partono selezionate: sono raggruppamenti evidenti, l'utente le disattiva se non le vuole.
       setGroupLink(computedGroups.map((g) => Boolean(g.existingDossier || g.proposedDossierTitle)));
@@ -286,7 +271,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
           Importa più file insieme
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Scegli tutti i file insieme: Hinthial li legge, li raggruppa per emittente e ti mostra
+          Scegli tutti i file insieme: Hinthial li legge, li raggruppa per nome e ti mostra
           un riepilogo, non una conferma per ciascuno.
         </p>
       </div>
@@ -357,7 +342,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
             const hasProposal = Boolean(group.existingDossier || group.proposedDossierTitle);
             return (
               <div
-                key={group.issuer ?? `senza-emittente-${groupIndex}`}
+                key={group.label ?? `senza-nome-${groupIndex}`}
                 className={
                   hasProposal
                     ? "flex flex-col gap-3 rounded-2xl border border-brand/30 bg-brand/5 p-4"
@@ -382,12 +367,12 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
                           Questi {group.files.length}{" "}
                           {group.files.length === 1 ? "documento" : "documenti"} sembrano
                           appartenere a &laquo;{group.existingDossier.title}&raquo; (stesso
-                          emittente: {group.issuer}). Aggiungerli?
+                          nome: {group.label}). Aggiungerli?
                         </>
                       ) : (
                         <>
-                          Questi {group.files.length} documenti hanno lo stesso emittente (
-                          {group.issuer}) e sembrano la stessa vicenda. Vuoi creare il fascicolo{" "}
+                          Questi {group.files.length} documenti hanno lo stesso nome (
+                          {group.label}) e sembrano la stessa vicenda. Vuoi creare il fascicolo{" "}
                           <input
                             type="text"
                             value={newDossierTitles[groupIndex]}
@@ -439,7 +424,7 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-zinc-700 dark:text-zinc-300">{draft.file.name}</p>
                             {wasSuggested ? (
-                              <p className="text-xs text-brand">✨ categoria suggerita dal contenuto</p>
+                              <p className="text-xs text-brand">✨ categoria suggerita dalla cartella</p>
                             ) : null}
                           </div>
                           <input

@@ -70,12 +70,12 @@ async function signInAndUnlock(page: import("@playwright/test").Page) {
   return user;
 }
 
-test("scegliendo il file, Hinthial lo legge e precompila il form", async ({ page }) => {
+test("scegliendo il file, Hinthial lo legge sul dispositivo ma non compila nessun campo", async ({ page }) => {
   test.slow();
 
   await signInAndUnlock(page);
 
-  // Un bene con la targa nel nome: è l'aggancio più forte che esista, perché una targa è unica.
+  // Un bene con la targa nel nome: prima era l'aggancio più forte per riconoscere il documento, ora non si abbina da solo.
   await page.getByRole("link", { name: "Beni", exact: true }).click();
   await page.getByRole("link", { name: "+ Crea bene" }).click();
   await page.getByLabel("Nome").fill("Fiat Panda AB123CD");
@@ -86,63 +86,30 @@ test("scegliendo il file, Hinthial lo legge e precompila il form", async ({ page
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
   await page.getByRole("menuitem", { name: "Carica un file" }).click();
-  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
   await page.getByRole("radio", { name: /Carica un file/ }).click();
 
-  // Il nome del file non dice niente: tutto quello che comparirà viene
-  // da dentro il documento.
   await page.setInputFiles('input[type="file"]', {
     name: "scan_0012.pdf",
     mimeType: "application/pdf",
     buffer: buildPdf(POLIZZA),
   });
 
-  // 1. La lettura avviene QUI, senza aver premuto Salva --- un segno accanto al file, non più un riquadro a sé
-  // (scadenza ed emittente non si chiedono più qui: emergono come proposta dopo il salvataggio, v. archive-item-detail.spec.ts).
+  // La lettura avviene QUI, senza aver premuto Salva: il testo si salva col documento (ricerca, analisi di Hinthia).
   await expect(page.getByText("Letto sul dispositivo")).toBeVisible({ timeout: 45_000 });
 
-  // 2. Il titolo è proposto, non imposto: sostituirlo d'ufficio violerebbe la stessa regola delle proposte sulla scheda.
+  // Ma non decide niente al posto tuo: né titolo, né categoria, né bene collegato.
   await expect(page.getByLabel("Titolo")).toHaveValue("");
-  await page.getByRole("button", { name: /Usa il titolo che ho ricavato/ }).click();
-  await expect(page.getByLabel("Titolo")).toHaveValue(
-    "Polizza responsabilita civile --- GENERALI ITALIA S.p.A..pdf",
-  );
-  await expect(page.getByText("Titolo suggerito da Hinthial")).toBeVisible();
-
-  // 3. Categoria e bene, riconosciuti dalla targa dentro il documento --- nel passo successivo (v. Concept C).
+  await expect(page.getByRole("button", { name: /Usa il titolo che ho ricavato/ })).toHaveCount(0);
   await page.getByRole("button", { name: "Dettagli" }).click();
-  await expect(page.getByLabel("Bene collegato")).toHaveValue(/.+/);
-  await expect(page.getByText("Riconosciuto nel documento")).toBeVisible();
+  await expect(page.getByLabel("Bene collegato")).toHaveValue("");
+  await expect(page.getByLabel("Categoria")).toHaveValue("");
+  await expect(page.getByText("Riconosciuto nel documento")).toHaveCount(0);
+  await expect(page.getByText("Suggerita da Hinthial")).toHaveCount(0);
 
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });
 
-  // Salvato col titolo proposto, non col nome del file.
-  await expect(page.getByText(/Polizza responsabilita civile/)).toBeVisible({ timeout: 20_000 });
-});
-
-test("il segno «suggerito» sparisce appena l'utente tocca il campo", async ({ page }) => {
-  test.slow();
-
-  await signInAndUnlock(page);
-  await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
-  await page.getByRole("menuitem", { name: "Carica un file" }).click();
-  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
-  await page.getByRole("radio", { name: /Carica un file/ }).click();
-
-  await page.setInputFiles('input[type="file"]', {
-    name: "scan_0012.pdf",
-    mimeType: "application/pdf",
-    buffer: buildPdf(POLIZZA),
-  });
-  await page
-    .getByRole("button", { name: /Usa il titolo che ho ricavato/ })
-    .click({ timeout: 45_000 });
-  await expect(page.getByText("Titolo suggerito da Hinthial")).toBeVisible();
-
-  // Da quando ci metti mano il valore è tuo, continuare a chiamarlo "suggerito" sarebbe falso.
-  await page.getByLabel("Titolo").fill("Polizza auto 2027");
-  await expect(page.getByText("Titolo suggerito da Hinthial")).not.toBeVisible();
+  // Salvato col nome del file, dal momento che non c'è un titolo scelto.
+  await expect(page.getByRole("link", { name: /scan_0012\.pdf/ })).toBeVisible({ timeout: 20_000 });
 });
