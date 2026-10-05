@@ -19,6 +19,8 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 - **La scadenza di pagamento** di una bolletta, di una fattura o di un verbale compare **sia come scadenza del documento sia come avviso da ricordare**; la scadenza di un contratto, di un'offerta o di una garanzia resta solo scadenza.
 - **La categoria** viene proposta più spesso quando il tipo di documento è chiaro.
 
+**I documenti già letti vanno riletti:** la versione della lettura è passata da 2 a 3, quindi la scheda li propone "da rileggere" ("Rileggi da capo") e solo allora compaiono le novità. Senza questo passaggio una lettura salvata prima restava valida e non mostrava gli avvisi da ricordare.
+
 **Misura su 31 documenti inventati (due prove ciascuna, Anthropic Haiku 4.5), prima -> dopo:**
 campi trovati con la chiave del registro 35% -> 91-94%; completezza degli eventi da ricordare 53% -> 88-94%; categoria 68% -> 84%; precisione delle scadenze 95% -> 100%; tipo di documento 97% -> 97-100%; nessuna istruzione ostile eseguita, prima e dopo. Le misure stanno in `evals/baselines/`. La misura varia di qualche punto da una prova all'altra, e il campione è piccolo: i numeri indicano la direzione, non una garanzia.
 
