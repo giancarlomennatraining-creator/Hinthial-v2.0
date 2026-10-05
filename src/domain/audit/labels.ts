@@ -242,6 +242,7 @@ const PROPOSAL_KIND_LABEL = {
   category: "Categoria",
   issuer: "Emittente",
   event: "Evento verso Scadenze",
+  asset: "Collegamento a un bene",
 } as const;
 
 /**

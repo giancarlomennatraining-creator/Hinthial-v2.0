@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatDate } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
+import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
 import { inferFieldInputType } from "@/domain/structured-fields/value-type";
 import type { Proposal, ProposalKind } from "@/domain/proposals/types";
@@ -21,6 +22,7 @@ const KIND_LABEL: Record<ProposalKind, string> = {
   issuer: "Emittente",
   field: "Campo",
   event: "Da ricordare",
+  asset: "Bene",
 };
 
 const KIND_ICON: Record<ProposalKind, string> = {
@@ -29,6 +31,7 @@ const KIND_ICON: Record<ProposalKind, string> = {
   issuer: "🏛️",
   field: "🧩",
   event: "📅",
+  asset: "🔗",
 };
 
 /** Per "field" l'etichetta viene dal vocabolario (es. "Numero polizza"), non dal generico "Campo" --- più informativa. */
@@ -50,6 +53,7 @@ export interface UndoableAction {
 export function ProposalsSection({
   proposals,
   categories,
+  assets = [],
   busy,
   onAccept,
   onReject,
@@ -58,6 +62,8 @@ export function ProposalsSection({
 }: {
   proposals: Proposal[];
   categories: Category[];
+  /** I beni, per mostrare il nome di quello proposto e per scegliere un altro in "Modifica". */
+  assets?: AssetListItem[];
   busy: boolean;
   /** `value` può differire da `proposal.value`: è il percorso di "Modifica". */
   onAccept: (proposal: Proposal, value: string) => void;
@@ -80,6 +86,7 @@ export function ProposalsSection({
     if (proposal.kind === "expiry") return formatDate(proposal.value);
     if (proposal.kind === "event") return `${proposal.eventTitle ?? "Evento"}, ${formatDate(proposal.value)}`;
     if (proposal.kind === "issuer" || proposal.kind === "field") return proposal.value;
+    if (proposal.kind === "asset") return assets.find((a) => a.id === proposal.value)?.name ?? "Bene";
     return categories.find((c) => c.id === proposal.value)?.name ?? proposal.value;
   }
 
@@ -157,6 +164,19 @@ export function ProposalsSection({
                     aria-label={`${kindLabel(proposal)} da impostare`}
                     className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
                   />
+                ) : proposal.kind === "asset" ? (
+                  <select
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    aria-label="Bene da collegare"
+                    className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                  >
+                    {sortAlphabetically(assets, (a) => a.name).map((asset) => (
+                      <option key={asset.id} value={asset.id}>
+                        {asset.name}
+                      </option>
+                    ))}
+                  </select>
                 ) : (
                   <select
                     value={draft}
@@ -198,7 +218,7 @@ export function ProposalsSection({
                   onClick={() => onAccept(proposal, proposal.value)}
                   className="rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
                 >
-                  {proposal.kind === "event" ? "Aggiungi a Scadenze" : "Accetta"}
+                  {proposal.kind === "event" ? "Aggiungi a Scadenze" : proposal.kind === "asset" ? "Collega" : "Accetta"}
                 </button>
                 <button
                   type="button"

@@ -51,19 +51,21 @@ async function encryptIssuerValue(masterKey: CryptoKey, value: string | null): P
 /** Unione esplicita, non chiave calcolata --- TypeScript non verificherebbe una chiave dinamica, e qui un refuso scriverebbe nel campo sbagliato. */
 type DocumentsTableUpdate = Database["public"]["Tables"]["documents"]["Update"];
 
-/** Solo per i tre kind a colonna dedicata --- "field" ha il proprio percorso, v. mergeStructuredField. */
+/** Solo per i kind a colonna dedicata --- "field" ha il proprio percorso, v. mergeStructuredField. */
 async function updateFor(
   masterKey: CryptoKey,
-  kind: "expiry" | "category" | "issuer",
+  kind: "expiry" | "category" | "issuer" | "asset",
   value: string | null,
-): Promise<Pick<DocumentsTableUpdate, "expires_at" | "category_id" | "encrypted_issuer">> {
+): Promise<Pick<DocumentsTableUpdate, "expires_at" | "category_id" | "encrypted_issuer" | "related_asset_id">> {
   if (kind === "expiry") return { expires_at: value };
+  if (kind === "asset") return { related_asset_id: value };
   if (kind === "category") return { category_id: value };
   return { encrypted_issuer: await encryptIssuerValue(masterKey, value) };
 }
 
-function currentValue(doc: DocumentListItem, kind: "expiry" | "category" | "issuer"): string | null {
+function currentValue(doc: DocumentListItem, kind: "expiry" | "category" | "issuer" | "asset"): string | null {
   if (kind === "expiry") return doc.expiresAt;
+  if (kind === "asset") return doc.relatedAssetId;
   if (kind === "category") return doc.categoryId;
   return doc.issuer || null;
 }

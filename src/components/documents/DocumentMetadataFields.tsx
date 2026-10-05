@@ -80,13 +80,15 @@ export function DocumentMetadataFields({
   // Fascicolo da aggiungere, scelto nel select ma non ancora confermato col bottone "+ Aggiungi fascicolo".
   const [dossierToAdd, setDossierToAdd] = useState("");
 
-  // La categoria filtra i beni proposti: senza categoria selezionata, nessun bene è proponibile.
-  const filteredAssets = value.categoryId
-    ? sortAlphabetically(
-        assets.filter((asset) => asset.categoryId === value.categoryId),
-        (asset) => asset.name,
-      )
-    : [];
+  // La categoria filtra i beni proposti: senza categoria selezionata, nessun bene è proponibile. Il bene già collegato
+  // resta sempre scelto e visibile: può esserlo stato da una proposta di Hinthia, anche di un'altra categoria.
+  const filteredAssets = sortAlphabetically(
+    assets.filter(
+      (asset) => asset.id === value.relatedAssetId || (value.categoryId !== "" && asset.categoryId === value.categoryId),
+    ),
+    (asset) => asset.name,
+  );
+  const assetPickable = Boolean(value.categoryId) || Boolean(value.relatedAssetId);
 
   const pickableDossiers = sortAlphabetically(
     dossiers.filter((dossier) => !value.dossierIds.includes(dossier.id)),
@@ -150,10 +152,10 @@ export function DocumentMetadataFields({
             id={`${idPrefix}-asset`}
             value={value.relatedAssetId}
             onChange={(e) => onChange({ ...value, relatedAssetId: e.target.value })}
-            disabled={!value.categoryId}
+            disabled={!assetPickable}
             className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 disabled:opacity-50 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
           >
-            <option value="">{value.categoryId ? "Nessuno" : "Scegli prima una categoria"}</option>
+            <option value="">{assetPickable ? "Nessuno" : "Scegli prima una categoria"}</option>
             {filteredAssets.map((asset) => (
               <option key={asset.id} value={asset.id}>
                 {asset.name}

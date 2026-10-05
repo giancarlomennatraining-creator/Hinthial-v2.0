@@ -155,4 +155,40 @@ describe.runIf(canRun)("proposte di campo generico (kind \"field\") contro il da
 
     await expect(rejectProposal(userClient, masterKey, userId, documentId, proposal)).resolves.toBeTypeOf("string");
   });
+
+  describe("collegamento a un bene (kind \"asset\")", () => {
+    let assetId = "";
+
+    beforeAll(async () => {
+      assetId = crypto.randomUUID();
+      const { error } = await admin.from("assets").insert({ id: assetId, owner_id: userId, encrypted_name: "unused" });
+      if (error) throw new Error(`Impossibile creare il bene di test: ${error.message}`);
+    });
+
+    async function relatedAsset(): Promise<string | null> {
+      const { data } = await userClient.from("documents").select("related_asset_id").eq("id", documentId).single();
+      return data!.related_asset_id;
+    }
+
+    it("accettare collega il documento al bene, annullare lo scollega", async () => {
+      const proposal: Proposal = { kind: "asset", value: assetId, source: "Stessa targa di un documento già collegato." };
+      const doc = { id: documentId, relatedAssetId: null } as DocumentListItem;
+
+      const accepted = await acceptProposal(userClient, masterKey, userId, doc, proposal, proposal.value);
+      expect(accepted).toEqual({ kind: "asset", previousValue: null });
+      expect(await relatedAsset()).toBe(assetId);
+
+      await undoAcceptance(userClient, masterKey, userId, documentId, accepted);
+      expect(await relatedAsset()).toBeNull();
+    });
+
+    it("rifiutare registra un rifiuto cifrato (serve la migrazione che ammette il tipo \"asset\")", async () => {
+      const proposal: Proposal = { kind: "asset", value: assetId, source: "Stessa targa di un documento già collegato." };
+
+      const rejectionId = await rejectProposal(userClient, masterKey, userId, documentId, proposal);
+      const rejections = await listProposalRejections(userClient, masterKey, documentId);
+
+      expect(rejections).toContainEqual({ id: rejectionId, kind: "asset", fieldKey: undefined, value: assetId });
+    });
+  });
 });

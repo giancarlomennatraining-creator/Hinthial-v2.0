@@ -29,6 +29,7 @@ import {
   type PersistedContentAnalysis,
 } from "@/domain/ai/analysis/persisted";
 import { computePurgeAt } from "@/domain/documents/trash";
+import type { LinkedDocumentFields } from "@/domain/assets/link-proposal";
 import {
   listAllDossierLinks,
   listDossierIdsForDocuments,
@@ -352,6 +353,35 @@ export async function getDocumentById(
   if (!data) return null;
 
   return toDocumentListItem(masterKey, data, dossierIdsByDocument.get(id) ?? []);
+}
+
+/**
+ * I campi salvati dei documenti già collegati a un bene (tranne quello dato): da qui il bene "impara" le sue targhe e i
+ * suoi numeri di polizza, v. domain/assets/link-proposal. Si decifrano solo nome e campi, non il resto del documento.
+ */
+export async function listAssetLinkedFields(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  excludeDocumentId: string,
+): Promise<LinkedDocumentFields[]> {
+  const { data, error } = await supabase
+    .from("documents")
+    .select("id, encrypted_filename, related_asset_id, encrypted_structured_fields")
+    .not("related_asset_id", "is", null)
+    .neq("id", excludeDocumentId)
+    .is("deleted_at", null);
+
+  if (error) {
+    throw new Error(`Impossibile caricare i documenti collegati ai beni: ${error.message}`);
+  }
+
+  return Promise.all(
+    (data ?? []).map(async (row) => ({
+      filename: bytesToUtf8(await decryptBytes(masterKey, parseEnvelope(row.encrypted_filename))),
+      assetId: row.related_asset_id as string,
+      fields: await decryptStructuredFields(masterKey, row.encrypted_structured_fields),
+    })),
+  );
 }
 
 /** Solo i documenti nel Cestino --- v. moveDocumentsToTrash/restoreDocuments. Ordinati dal più recente eliminato, non da quando erano stati creati. */

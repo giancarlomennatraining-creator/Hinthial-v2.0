@@ -10,6 +10,25 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-05 (49)
+
+### Hinthial propone il bene a cui collegare un documento
+
+**Cosa fa:**
+- Se un documento ha la **stessa targa, lo stesso numero di polizza, di contratto o lo stesso codice di fornitura** di un documento che hai già collegato a un bene, nella scheda compare la proposta **"Bene: Fiat Panda"**, con il motivo (*"Stesso numero di polizza (RCA-998877) di «Polizza 2026.pdf», già collegato a Fiat Panda"*).
+- Tre risposte, come per le altre proposte: **Collega**, **Modifica** (scegli un altro bene) o **No, grazie** (non ricompare). Dopo "Collega" c'è **Annulla**.
+- Non devi compilare nessuna scheda del bene: il bene "impara" dai documenti che hai già collegato. Il confronto avviene sul tuo dispositivo, senza inviare nulla fuori.
+- Non collega mai da solo e non entra in "Accetta tutto".
+- Il campo "Bene collegato" della Scheda ora mostra sempre il bene scelto, anche se è di un'altra categoria rispetto al documento.
+
+**Note tecniche:**
+- `src/domain/assets/link-proposal.ts` (puro): solo uguaglianza esatta su identificativi normalizzati (maiuscole, solo lettere e cifre, almeno 4 caratteri), stessa chiave su entrambi i lati, e solo se i documenti trovati portano a **un solo** bene; con due beni in conflitto non propone niente. Un numero di fattura o di verbale non collega mai.
+- Il bene impara dai **campi salvati nella Scheda** dei documenti già collegati (`listAssetLinkedFields`: decifra solo nome e campi): un numero letto da Hinthia ma non accettato sul documento già collegato non conta. Nessun cambiamento al prompt né alla lettura, quindi nessun bump di `ANALYSIS_PIPELINE_VERSION`.
+- Nuovo tipo di proposta `asset` (`value` = id del bene). **Migrazione `20261005010000_proposal_rejections_asset_kind.sql`**: allarga il vincolo dei rifiuti; senza, "No, grazie" sulla proposta del bene non si registra.
+- Test: unità del confronto e della sezione, integrazione (accetta/annulla/rifiuta contro il database) ed e2e `asset-link-proposal.spec.ts`.
+
+---
+
 ## 2026-10-05 (48)
 
 ### La categoria proposta per tipo di documento si sceglie dalle Impostazioni

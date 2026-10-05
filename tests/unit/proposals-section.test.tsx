@@ -54,3 +54,37 @@ describe("ProposalsSection, pagina di provenienza", () => {
     expect(screen.getAllByText(/^Pagina \d+$/)).toHaveLength(1);
   });
 });
+
+describe("ProposalsSection, collegamento a un bene", () => {
+  const ASSETS = [
+    { id: "a-panda", name: "Fiat Panda", categoryId: null, createdAt: "2026-01-01" },
+    { id: "a-casa", name: "Casa di Roma", categoryId: null, createdAt: "2026-01-02" },
+  ];
+  const PROPOSAL: Proposal = {
+    kind: "asset",
+    value: "a-panda",
+    source: 'Stessa targa (AB123CD) di "Polizza RCA.pdf", già collegato a Fiat Panda.',
+  };
+
+  it("mostra il nome del bene e il motivo, e il pulsante dice Collega", () => {
+    const onAccept = vi.fn();
+    render(
+      <ProposalsSection proposals={[PROPOSAL]} categories={[]} assets={ASSETS} busy={false} onAccept={onAccept} onReject={vi.fn()} />,
+    );
+    expect(screen.getByText("Fiat Panda")).toBeInTheDocument();
+    expect(screen.getByText(/Stessa targa \(AB123CD\)/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Collega" }));
+    expect(onAccept).toHaveBeenCalledWith(PROPOSAL, "a-panda");
+  });
+
+  it("Modifica permette di scegliere un altro bene", () => {
+    const onAccept = vi.fn();
+    render(
+      <ProposalsSection proposals={[PROPOSAL]} categories={[]} assets={ASSETS} busy={false} onAccept={onAccept} onReject={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Modifica" }));
+    fireEvent.change(screen.getByLabelText("Bene da collegare"), { target: { value: "a-casa" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salva" }));
+    expect(onAccept).toHaveBeenCalledWith(PROPOSAL, "a-casa");
+  });
+});

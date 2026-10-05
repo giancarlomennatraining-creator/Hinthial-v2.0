@@ -12,6 +12,7 @@ import {
   downloadThumbnail,
   extractTextForExistingDocument,
   getDocumentById,
+  listAssetLinkedFields,
   saveAISynthesis,
   saveContentAnalysis,
   updateDocumentAIExtractionExclusion,
@@ -20,6 +21,7 @@ import {
 import { loadDocumentSegments } from "@/domain/documents/segments";
 import type { ContentSegment } from "@/domain/extraction/types";
 import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
+import { buildAssetProposal, type LinkedDocumentFields } from "@/domain/assets/link-proposal";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories, grantCategoryAIExtractionTemporarily } from "@/domain/categories/repository";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
@@ -123,6 +125,8 @@ export function ArchiveItemDetail({
 
   // Proposte, rifiuti già espressi e ultima azione annullabile.
   const [rejections, setRejections] = useState<ProposalRejection[]>([]);
+  /** I documenti già collegati a un bene, con i loro campi: da qui si propone il bene di questo documento. */
+  const [linkedFields, setLinkedFields] = useState<LinkedDocumentFields[]>([]);
   const [undoable, setUndoable] = useState<UndoableAction | null>(null);
   const [proposalBusy, setProposalBusy] = useState(false);
   // Le scadenze già collegate a questo documento (solo i giorni): un evento letto che c'è già non si ripropone.
@@ -199,6 +203,10 @@ export function ArchiveItemDetail({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- v. sopra.
     setFields((prev) => (prev ? { ...prev, issuer: doc?.issuer ?? "" } : prev));
   }, [doc?.issuer]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- v. sopra: il bene collegato da una proposta.
+    setFields((prev) => (prev ? { ...prev, relatedAssetId: doc?.relatedAssetId ?? "" } : prev));
+  }, [doc?.relatedAssetId]);
 
   // Ciò che Hinthia ha già letto vale ancora per il testo di adesso? Serve a scegliere tra "chiedi", "riprendi" e "già letto".
   const savedAnalysisSource = doc?.contentAnalysis ?? null;
@@ -238,6 +246,7 @@ export function ArchiveItemDetail({
         vocabularyResult,
         reminderDatesResult,
         typeCategoriesResult,
+        linkedFieldsResult,
       ] = await Promise.all([
           getDocumentById(supabase, masterKey, documentId),
           listAssets(supabase, masterKey),
@@ -248,6 +257,8 @@ export function ArchiveItemDetail({
           listDocumentReminderDates(supabase, documentId),
           // Una preferenza, non un dato della pagina: se non si legge (tabella non ancora presente) valgono le predefinite.
           listTypeCategoryOverrides(supabase).catch((): TypeCategoryOverrides => ({})),
+          // Un suggerimento in più: se non si legge, la pagina funziona lo stesso, solo senza la proposta del bene.
+          listAssetLinkedFields(supabase, masterKey, documentId).catch((): LinkedDocumentFields[] => []),
         ]);
       if (requestId !== latestRequestRef.current) return;
       setDoc(found);
@@ -259,6 +270,7 @@ export function ArchiveItemDetail({
       setFieldVocabulary(vocabularyResult);
       setReminderDates(reminderDatesResult);
       setTypeCategories(typeCategoriesResult);
+      setLinkedFields(linkedFieldsResult);
     } catch (err) {
       if (requestId !== latestRequestRef.current) return;
       setError(err instanceof Error ? err.message : "Impossibile caricare il contenuto.");
@@ -421,6 +433,8 @@ export function ArchiveItemDetail({
         message:
           proposal.kind === "event"
             ? `Aggiunta in Scadenze: ${proposal.eventTitle ?? "evento"}, ${formatDate(value)}.`
+            : proposal.kind === "asset"
+            ? `Collegato a ${assets.find((a) => a.id === value)?.name ?? "un bene"}.`
             : proposal.kind === "expiry"
             ? `Scadenza impostata al ${formatDate(value)}.`
             : proposal.kind === "issuer"
@@ -631,12 +645,22 @@ export function ArchiveItemDetail({
   // Ricalcolate a ogni render: accettare o rifiutare una proposta la filtra automaticamente, senza stato a parte.
   // Vengono dalla lettura salvata, non da uno stato della pagina: sopravvivono al ricaricamento e a un'interruzione.
   const aiFields = doc.contentAnalysis ? extractedFieldsFrom(doc.contentAnalysis, categories, typeCategories) : null;
-  const aiProposals = aiFields
-    ? buildAIProposals(doc, aiFields, rejections, {
-        today,
-        existingDates: reminderDates,
-      })
-    : [];
+  const assetProposal = buildAssetProposal({
+    doc,
+    readFields: aiFields?.fields.map((f) => ({ key: f.key, value: f.value })) ?? [],
+    linked: linkedFields,
+    assets,
+    rejections,
+  });
+  const aiProposals = [
+    ...(aiFields
+      ? buildAIProposals(doc, aiFields, rejections, {
+          today,
+          existingDates: reminderDates,
+        })
+      : []),
+    ...(assetProposal ? [assetProposal] : []),
+  ];
   const pastEvents = aiFields ? pastEventsOf(aiFields, today) : [];
   const analysisOverview = doc.contentAnalysis
     ? buildAnalysisOverview(doc.contentAnalysis, doc, categories, reminderDates)
@@ -968,6 +992,7 @@ export function ArchiveItemDetail({
                 <ProposalsSection
                   proposals={aiProposals}
                   categories={categories}
+                  assets={assets}
                   busy={proposalBusy}
                   onAccept={handleAcceptProposal}
                   onReject={handleRejectProposal}
@@ -1024,7 +1049,8 @@ function onePerSlot(proposals: Proposal[]): Proposal[] {
   const seen = new Set<string>();
   return proposals.filter((proposal) => {
     // Un evento non scrive nella Scheda: non entra in "Accetta tutto", che aggiunge solo informazioni alla Scheda.
-    if (proposal.kind === "event") return false;
+    // Il collegamento a un bene tocca un'altra cosa dell'utente: si conferma da solo, con "Collega".
+    if (proposal.kind === "event" || proposal.kind === "asset") return false;
     const slot = proposal.kind === "field" ? `field:${proposal.fieldKey}` : proposal.kind;
     if (seen.has(slot)) return false;
     seen.add(slot);
