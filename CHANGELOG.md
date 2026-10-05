@@ -10,6 +10,25 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-05 (43)
+
+### Misura della qualità della lettura (`evals/`)
+
+**Cosa fa:**
+- Un insieme di **31 documenti inventati** (polizze, contratti, referti, fatture, bollette, certificati, estratti conto, verbali, più trappole: istruzioni ostili dentro il testo, OCR sporco, documento lungo su più blocchi, appunti senza contenuto, sole date passate), ognuno con le **risposte giuste**.
+- `npm run eval` esegue la stessa catena dell'app (blocchi, motore, validazione delle citazioni, fusione) su ogni documento e stampa una tabella: tipo, categoria, scadenze, emittente, campi (per chiave e per valore), eventi e valori vietati, più l'elenco di cosa non torna. Si sceglie il motore con `EVAL_PROVIDER` (oggi `claude` e `empty`, il "pavimento" senza rete), e si rivaluta una misura salvata senza rifare le chiamate con `EVAL_FROM`.
+- **Prima misura su Anthropic (Haiku 4.5)**, salvata in `evals/baselines/`: tipo di documento 97%; emittente 100% di precisione e 93% di completezza; scadenze 68% / 87%; eventi 73% / 47%; categoria 55%; campi trovati con la chiave del registro 29% (61% se si accetta una chiave qualsiasi); nessuna istruzione ostile eseguita.
+
+**Cosa ha mostrato (da correggere):**
+- Al **primo blocco** di un documento il prompt non include i "campi attesi" del tipo (il tipo non è ancora noto), quindi i campi tornano con chiavi libere (`premio_annuo`, `decorrenza_copertura`) invece di quelle del registro: i documenti di un blocco solo non ne beneficiano mai.
+- Le **scadenze di pagamento** delle bollette e delle fatture finiscono come "scadenza del documento" invece che come evento da ricordare (precisione scadenze 0% sulle bollette).
+- La **categoria** non viene proposta nel 45% dei casi ("nel dubbio ometti").
+- Alcune date di **decorrenza e fine del periodo di prova** diventano eventi.
+
+**Note tecniche:** nessun cambiamento all'app. `tests/unit/evals-corpus.test.ts` controlla le risposte giuste contro i testi (annotazione e documento devono concordare) e `tests/unit/evals-score.test.ts` il punteggio: girano con i test normali, senza chiamare nessun servizio. I risultati completi finiscono in `evals/results/` (ignorata da git). Nessuna migrazione.
+
+---
+
 ## 2026-10-05 (42)
 
 ### Pulizia: il dispositivo legge il testo, l'interpretazione la fa solo Hinthia
