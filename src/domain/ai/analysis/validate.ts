@@ -71,7 +71,25 @@ export function valueMatchesQuote(value: string, quote: string, valueType: Analy
     return ISO_DATE.test(value.trim()) && findDateContext(quote, value.trim()) !== null;
   }
   const wanted = alphanumeric(value);
-  return wanted.length > 0 && alphanumeric(quote).includes(wanted);
+  const haystack = alphanumeric(quote);
+  if (wanted.length > 0 && haystack.includes(wanted)) return true;
+
+  // "612,40 euro" per una citazione che dice "euro 612,40": l'ordine tra valuta e cifra non cambia l'importo. Si toglie
+  // la valuta dal valore e si cerca la cifra (almeno tre caratteri: una cifra sola si troverebbe in qualunque frase).
+  const bare = alphanumeric(value.replace(CURRENCY, " "));
+  return bare !== wanted && bare.length >= 3 && haystack.includes(bare);
+}
+
+const CURRENCY = /€|\b(?:euro|eur)\b/gi;
+
+/**
+ * Il modello può scrivere una data con l'ora ("2027-03-20 10:30", "2027-01-12 ore 9:30"): ciò che si ricorda è il
+ * giorno. Se il valore inizia con una data ISO seguita da altro, resta solo la data; altrimenti non si tocca.
+ */
+export function normalizeDateValue(value: string): string {
+  const trimmed = value.trim();
+  const match = /^(\d{4}-\d{2}-\d{2})(?!\d)/.exec(trimmed);
+  return match ? match[1] : trimmed;
 }
 
 function checkEvidence(
@@ -100,8 +118,9 @@ export function validateBlock(
 
   const evidenceOf = (list: RawBlockAnalysis["expiry"], valueType: AnalysisValueType): ValidatedEvidence[] =>
     list.flatMap((item) => {
-      const provenance = checkEvidence(item, valueType, byId);
-      return provenance ? [{ value: item.value.trim(), source: item.quote, provenance }] : [];
+      const value = valueType === "date" ? normalizeDateValue(item.value) : item.value.trim();
+      const provenance = checkEvidence({ ...item, value }, valueType, byId);
+      return provenance ? [{ value, source: item.quote, provenance }] : [];
     });
 
   let category: ValidatedEvidence | null = null;
@@ -120,15 +139,17 @@ export function validateBlock(
     const key = normalizeFieldKey(item.key);
     if (!key) return [];
     const valueType = schema.fields.find((f) => f.key === key)?.valueType ?? "text";
-    const provenance = checkEvidence(item, valueType, byId);
-    return provenance ? [{ key, label: item.label.trim(), value: item.value.trim(), source: item.quote, provenance }] : [];
+    const value = valueType === "date" ? normalizeDateValue(item.value) : item.value.trim();
+    const provenance = checkEvidence({ ...item, value }, valueType, byId);
+    return provenance ? [{ key, label: item.label.trim(), value, source: item.quote, provenance }] : [];
   });
 
   const events = raw.events.flatMap((item): ValidatedEvent[] => {
     const title = item.title.trim().replace(/\s+/g, " ");
     if (!title || title.length > MAX_EVENT_TITLE_LENGTH) return [];
-    const provenance = checkEvidence(item, "date", byId);
-    return provenance ? [{ title, value: item.value.trim(), source: item.quote, provenance }] : [];
+    const value = normalizeDateValue(item.value);
+    const provenance = checkEvidence({ ...item, value }, "date", byId);
+    return provenance ? [{ title, value, source: item.quote, provenance }] : [];
   });
 
   return {

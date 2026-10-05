@@ -7,7 +7,7 @@ import { EVAL_CATEGORIES } from "./run-analysis";
 import { createEvalProvider } from "./providers";
 import { formatReport, type DocResult } from "./report";
 import { runAnalysis } from "./run-analysis";
-import type { RawBlockAnalysis } from "@/domain/ai/analysis/types";
+import type { AnalysisProvider, RawBlockAnalysis } from "@/domain/ai/analysis/types";
 import { scoreDocument } from "./score";
 
 /**
@@ -22,6 +22,8 @@ const ONLY = process.env.EVAL_ONLY?.split(",").map((id) => id.trim()).filter(Boo
 const CONCURRENCY = Number(process.env.EVAL_CONCURRENCY ?? 3);
 /** Un file di risultati già salvato: si rivaluta senza rifare le chiamate al motore (utile cambiando il punteggio). */
 const FROM = process.env.EVAL_FROM;
+/** Con EVAL_FROM: rifà la validazione sull'uscita grezza salvata (senza chiamare il motore), per misurare un cambiamento alla validazione. */
+const REVALIDATE = Boolean(process.env.EVAL_REVALIDATE);
 
 describe(`misura della lettura (${PROVIDER})`, () => {
   it(
@@ -31,10 +33,28 @@ describe(`misura della lettura (${PROVIDER})`, () => {
 
       if (FROM) {
         const saved = JSON.parse(fs.readFileSync(FROM, "utf-8")) as { provider: string; results: DocResult[] };
-        const rescored = documents.flatMap((document) => {
-          const old = saved.results.find((r) => r.id === document.id);
-          return old ? [{ ...old, type: document.gold.type, score: scoreDocument(document.gold, old.prediction) }] : [];
-        });
+        const rescored: DocResult[] = [];
+        for (const document of documents) {
+          const old = saved.results.find((r) => r.id === document.id) as (DocResult & { raw?: RawBlockAnalysis[] }) | undefined;
+          if (!old) continue;
+          let { prediction, discarded } = old;
+          if (REVALIDATE && old.raw) {
+            // Il motore "risponde" con ciò che aveva già risposto: cambia solo la validazione.
+            let call = 0;
+            const replay: AnalysisProvider = {
+              async analyzeBlock() {
+                return (old.raw as RawBlockAnalysis[])[call++];
+              },
+              async mergeSyntheses() {
+                return null;
+              },
+            };
+            const rerun = await runAnalysis(document, replay);
+            prediction = rerun.prediction;
+            discarded = rerun.discarded;
+          }
+          rescored.push({ ...old, type: document.gold.type, prediction, discarded, score: scoreDocument(document.gold, prediction) });
+        }
         let report = formatReport(`${saved.provider} (rivalutato da ${path.basename(FROM)})`, documents, rescored);
         if (process.env.EVAL_DIAGNOSE) {
           // Perché la validazione scarta le letture del motore: serve l'uscita grezza, salvata dalle misure recenti.

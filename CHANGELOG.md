@@ -10,6 +10,26 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-05 (44)
+
+### Lettura di Hinthia più completa: campi, eventi e categoria
+
+**Cosa cambia per chi usa Hinthial:**
+- **Più dati ricavati dal documento:** i campi del tipo (numero polizza, premio, importo, codice fornitura...) tornano quasi sempre con il nome giusto e non più con nomi inventati; gli **appuntamenti** (controlli medici, visite prenotate) non vanno più persi quando il documento riporta anche l'orario; i **campi con un importo** non vengono più scartati per un "euro" scritto prima o dopo la cifra.
+- **La scadenza di pagamento** di una bolletta, di una fattura o di un verbale compare **sia come scadenza del documento sia come avviso da ricordare**; la scadenza di un contratto, di un'offerta o di una garanzia resta solo scadenza.
+- **La categoria** viene proposta più spesso quando il tipo di documento è chiaro.
+
+**Misura su 31 documenti inventati (due prove ciascuna, Anthropic Haiku 4.5), prima -> dopo:**
+campi trovati con la chiave del registro 35% -> 91-94%; completezza degli eventi da ricordare 53% -> 88-94%; categoria 68% -> 84%; precisione delle scadenze 95% -> 100%; tipo di documento 97% -> 97-100%; nessuna istruzione ostile eseguita, prima e dopo. Le misure stanno in `evals/baselines/`. La misura varia di qualche punto da una prova all'altra, e il campione è piccolo: i numeri indicano la direzione, non una garanzia.
+
+**Note tecniche:**
+- `validateBlock`: un importo si confronta ignorando l'ordine tra valuta e cifra (`valueMatchesQuote`, con almeno tre cifre perché una cifra sola si troverebbe in qualunque frase); una data con l'ora ("2027-03-20 10:30") si normalizza al giorno (`normalizeDateValue`). La citazione deve comunque comparire nel testo.
+- Prompt (`claude-analysis-provider.ts`): al primo blocco, quando il tipo non è ancora noto, si elencano i campi attesi di ogni tipo; regola esplicita per la scadenza di pagamento (scadenza + evento); data degli eventi senza orario; per la categoria non vale "nel dubbio, ometti" se il tipo è chiaro.
+- `evals/`: rivalutazione senza chiamate (`EVAL_FROM`), rifacimento della sola validazione sull'uscita grezza (`EVAL_REVALIDATE`) e diagnosi degli scarti (`EVAL_DIAGNOSE`).
+- Resta da fare: documenti con OCR molto sporco (il motore "corregge" la citazione e la verifica non la ritrova), la categoria nel 16% dei casi, la scadenza di un'offerta dentro una bolletta. Nessuna migrazione.
+
+---
+
 ## 2026-10-05 (43)
 
 ### Misura della qualità della lettura (`evals/`)

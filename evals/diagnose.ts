@@ -1,6 +1,6 @@
 import { resolveAnalysisSchema, type AnalysisValueType } from "@/domain/ai/analysis/schemas";
 import type { RawBlockAnalysis } from "@/domain/ai/analysis/types";
-import { quoteAppearsIn, valueMatchesQuote } from "@/domain/ai/analysis/validate";
+import { normalizeDateValue, quoteAppearsIn, valueMatchesQuote } from "@/domain/ai/analysis/validate";
 import { normalizeFieldKey } from "@/domain/structured-fields/normalize";
 import type { EvalDocument } from "./types";
 
@@ -24,7 +24,8 @@ function judge(
   const text = segments.get(item.segmentId);
   if (text === undefined) return "segmento sconosciuto";
   if (!quoteAppearsIn(text, item.quote)) return "citazione non trovata nel segmento";
-  if (!valueMatchesQuote(item.value, item.quote, valueType)) return "valore non coerente con la citazione";
+  const value = valueType === "date" ? normalizeDateValue(item.value) : item.value.trim();
+  if (!valueMatchesQuote(value, item.quote, valueType)) return "valore non coerente con la citazione";
   return null;
 }
 
