@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getLocalUserId } from "@/lib/auth/local-user";
 import { createClient } from "@/lib/db/supabase/client";
 import { bytesToUtf8 } from "@/lib/crypto";
 import {
@@ -134,21 +135,20 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [categoriesResult, assetsResult, dossiersResult, documentsResult] = await Promise.all([
+      // Tutto in parallelo: prima la conservazione del cestino arrivava dopo, con un `getUser()` e una query in fila, e la pagina restava in caricamento fino ad allora.
+      const userId = await getLocalUserId(supabase);
+      const [categoriesResult, assetsResult, dossiersResult, documentsResult, trashDays] = await Promise.all([
         listCategories(supabase),
         listAssets(supabase, masterKey),
         listDossiers(supabase, masterKey),
         listDocuments(supabase, masterKey),
+        userId ? getTrashRetentionDays(supabase, userId) : Promise.resolve(null),
       ]);
       setCategories(categoriesResult);
       setAssets(assetsResult);
       setDossiers(dossiersResult);
       setDocuments(documentsResult);
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) setTrashRetentionDays(await getTrashRetentionDays(supabase, user.id));
+      if (trashDays !== null) setTrashRetentionDays(trashDays);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare l'archivio.");
     } finally {

@@ -29,7 +29,11 @@ import {
   type PersistedContentAnalysis,
 } from "@/domain/ai/analysis/persisted";
 import { computePurgeAt } from "@/domain/documents/trash";
-import { listDossierIdsForDocuments, replaceDocumentDossierLinks } from "@/domain/dossiers/repository";
+import {
+  listAllDossierLinks,
+  listDossierIdsForDocuments,
+  replaceDocumentDossierLinks,
+} from "@/domain/dossiers/repository";
 import { NOTE_MIME_TYPE } from "@/lib/content-kind";
 import { canExtractText, extractContent } from "@/domain/extraction/extract-text";
 import type { ContentSegment } from "@/domain/extraction/types";
@@ -234,22 +238,43 @@ export async function listDocuments(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
 ): Promise<DocumentListItem[]> {
-  const { data, error } = await supabase
-    .from("documents")
-    .select(DOCUMENT_COLUMNS)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+  // I collegamenti ai fascicoli si leggono insieme ai documenti, non dopo: un viaggio di rete in meno a ogni caricamento.
+  const [{ data, error }, dossierIdsByDocument] = await Promise.all([
+    supabase
+      .from("documents")
+      .select(DOCUMENT_COLUMNS)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
+    listAllDossierLinks(supabase),
+  ]);
 
   if (error) {
     throw new Error(`Impossibile caricare i documenti: ${error.message}`);
   }
 
   const rows = data ?? [];
-  const dossierIdsByDocument = await listDossierIdsForDocuments(supabase, rows.map((row) => row.id));
-
   return Promise.all(
     rows.map((row) => toDocumentListItem(masterKey, row, dossierIdsByDocument.get(row.id) ?? [])),
   );
+}
+
+/** Un solo documento, per la sua scheda: non serve scaricare e decifrare tutti gli altri. `null` se non esiste, è nel Cestino o non è dell'utente. */
+export async function getDocumentById(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  id: string,
+): Promise<DocumentListItem | null> {
+  const [{ data, error }, dossierIdsByDocument] = await Promise.all([
+    supabase.from("documents").select(DOCUMENT_COLUMNS).eq("id", id).is("deleted_at", null).maybeSingle(),
+    listDossierIdsForDocuments(supabase, [id]),
+  ]);
+
+  if (error) {
+    throw new Error(`Impossibile caricare il documento: ${error.message}`);
+  }
+  if (!data) return null;
+
+  return toDocumentListItem(masterKey, data, dossierIdsByDocument.get(id) ?? []);
 }
 
 /** Solo i documenti nel Cestino --- v. moveDocumentsToTrash/restoreDocuments. Ordinati dal più recente eliminato, non da quando erano stati creati. */

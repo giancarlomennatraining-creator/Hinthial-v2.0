@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-03 (40)
+
+### Più veloce: meno chiamate in fila al database
+
+**Cosa fa:**
+- L'**Archivio** si apre in circa un terzo del tempo (da circa 0,9 s a circa 0,3 s nella misura fatta con 4 documenti): i dati arrivano tutti insieme invece che in coda.
+- La **scheda di un documento** non scarica più tutti gli altri documenti per mostrarne uno solo: con 4 documenti si passa da 27 KB a 1 KB trasferiti, e il vantaggio cresce con l'archivio.
+- La **Dashboard** fa 9 richieste invece di 14.
+- Le funzioni di Vercel girano ora a Dublino, accanto al database (Irlanda), e non più a Washington.
+
+**Note tecniche:** `getLocalUserId` (`lib/auth/local-user.ts`) legge l'utente dalla sessione già nel browser invece di `auth.getUser()`, che a ogni chiamata interroga il server di autenticazione; usato solo sul percorso di caricamento (avvio della cassaforte, archivio, capsule, notifica delle richieste di amicizia), non nelle azioni che scrivono, che mantengono `getUser()`. `listDocuments` legge i collegamenti ai fascicoli in parallelo (`listAllDossierLinks`) e non dopo; nuovo `getDocumentById` per la scheda. `DocumentsPanel` carica anche la conservazione del cestino in parallelo. Misure con un test e2e temporaneo (4 PDF, navigazioni a cassaforte sbloccata). Non toccato: l'elenco scarica ancora testo letto e analisi di tutti i documenti, e il contesto completo viene ancora costruito più volte (barra laterale, dashboard, ricerca): non pesa con pochi documenti. Nessuna migrazione.
+
+---
+
 ## 2026-10-02 (39)
 
 ### Reset della password per chi ha la verifica in due passaggi

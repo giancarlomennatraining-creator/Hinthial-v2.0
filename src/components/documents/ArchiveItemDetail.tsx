@@ -11,7 +11,7 @@ import {
   logDocumentDownloaded,
   downloadThumbnail,
   extractTextForExistingDocument,
-  listDocuments,
+  getDocumentById,
   saveAISynthesis,
   saveContentAnalysis,
   updateDocumentAIExtractionExclusion,
@@ -228,7 +228,7 @@ export function ArchiveItemDetail({
     setError(null);
     try {
       const [
-        documents,
+        found,
         assetsResult,
         categoriesResult,
         dossiersResult,
@@ -236,7 +236,7 @@ export function ArchiveItemDetail({
         vocabularyResult,
         reminderDatesResult,
       ] = await Promise.all([
-          listDocuments(supabase, masterKey),
+          getDocumentById(supabase, masterKey, documentId),
           listAssets(supabase, masterKey),
           listCategories(supabase),
           listDossiers(supabase, masterKey),
@@ -245,7 +245,6 @@ export function ArchiveItemDetail({
           listDocumentReminderDates(supabase, documentId),
         ]);
       if (requestId !== latestRequestRef.current) return;
-      const found = documents.find((d) => d.id === documentId) ?? null;
       setDoc(found);
       setFields((prev) => prev ?? (found ? documentToFields(found) : null));
       setAssets(assetsResult);
