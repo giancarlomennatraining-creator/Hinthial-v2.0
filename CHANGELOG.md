@@ -10,6 +10,19 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-05 (48)
+
+### La categoria proposta per tipo di documento si sceglie dalle Impostazioni
+
+**Cosa fa:**
+- In **Impostazioni > Categorie**, sotto l'elenco, c'è la sezione **"Categoria proposta per tipo di documento"**: per ogni tipo (polizza, bolletta, contratto, referto, fattura, verbale, certificato, estratto conto, generico) scegli quale categoria Hinthia deve proporre quando legge un documento di quel tipo e il modello non ne dà una.
+- Le scelte sono tre: **una tua categoria** (per esempio le bollette in "Utenze"), **"Nessuna categoria"** (per quel tipo non si propone niente) oppure **"Predefinita"** (la corrispondenza di prima: la polizza in "Assicurazioni", la bolletta in "Casa"...). Si può scegliere una categoria anche per i tipi che non ne hanno una predefinita, come i verbali.
+- Vale subito, anche sui documenti già letti, e la proposta resta sempre da accettare. Se elimini la categoria scelta, per quel tipo torna la predefinita.
+
+**Note tecniche:** nuova tabella `document_type_categories` (migrazione `20261005000000`, additiva): una riga per tipo, `category_id` null = nessuna categoria, in chiaro come le categorie, con le regole di accesso del proprietario (la categoria scelta deve essere sua). `defaultCategoryFor` accetta le scelte (`TypeCategoryOverrides`); la scheda del documento le legge insieme agli altri dati e, se la tabella non è ancora presente, usa le predefinite senza errori. Test unitari del pannello e della logica, e un e2e (`type-categories.spec.ts`).
+
+---
+
 ## 2026-10-05 (47)
 
 ### La categoria si ricava anche dal tipo di documento

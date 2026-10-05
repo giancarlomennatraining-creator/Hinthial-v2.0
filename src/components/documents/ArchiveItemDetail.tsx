@@ -51,6 +51,8 @@ import {
 } from "@/domain/ai/analyze-document";
 import { listDocumentReminderDates, localDateKey } from "@/domain/reminders/repository";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
+import { listTypeCategoryOverrides } from "@/domain/categories/type-categories";
+import type { TypeCategoryOverrides } from "@/domain/ai/analysis/category-defaults";
 import { PastEventsNotice } from "@/components/documents/PastEventsNotice";
 import { ProposalsSection, type UndoableAction } from "@/components/documents/ProposalsSection";
 import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
@@ -125,6 +127,7 @@ export function ArchiveItemDetail({
   const [proposalBusy, setProposalBusy] = useState(false);
   // Le scadenze già collegate a questo documento (solo i giorni): un evento letto che c'è già non si ripropone.
   const [reminderDates, setReminderDates] = useState<string[]>([]);
+  const [typeCategories, setTypeCategories] = useState<TypeCategoryOverrides>({});
   const [today] = useState(() => localDateKey(new Date().toISOString()));
 
   // FASE 22: quello che Claude ha letto in questa sessione --- ricalcolato in proposte a ogni render come le
@@ -234,6 +237,7 @@ export function ArchiveItemDetail({
         rejectionsResult,
         vocabularyResult,
         reminderDatesResult,
+        typeCategoriesResult,
       ] = await Promise.all([
           getDocumentById(supabase, masterKey, documentId),
           listAssets(supabase, masterKey),
@@ -242,6 +246,8 @@ export function ArchiveItemDetail({
           listProposalRejections(supabase, masterKey, documentId),
           listFieldVocabulary(supabase),
           listDocumentReminderDates(supabase, documentId),
+          // Una preferenza, non un dato della pagina: se non si legge (tabella non ancora presente) valgono le predefinite.
+          listTypeCategoryOverrides(supabase).catch((): TypeCategoryOverrides => ({})),
         ]);
       if (requestId !== latestRequestRef.current) return;
       setDoc(found);
@@ -252,6 +258,7 @@ export function ArchiveItemDetail({
       setRejections(rejectionsResult);
       setFieldVocabulary(vocabularyResult);
       setReminderDates(reminderDatesResult);
+      setTypeCategories(typeCategoriesResult);
     } catch (err) {
       if (requestId !== latestRequestRef.current) return;
       setError(err instanceof Error ? err.message : "Impossibile caricare il contenuto.");
@@ -623,7 +630,7 @@ export function ArchiveItemDetail({
   const reading = readingStateFor(doc);
   // Ricalcolate a ogni render: accettare o rifiutare una proposta la filtra automaticamente, senza stato a parte.
   // Vengono dalla lettura salvata, non da uno stato della pagina: sopravvivono al ricaricamento e a un'interruzione.
-  const aiFields = doc.contentAnalysis ? extractedFieldsFrom(doc.contentAnalysis, categories) : null;
+  const aiFields = doc.contentAnalysis ? extractedFieldsFrom(doc.contentAnalysis, categories, typeCategories) : null;
   const aiProposals = aiFields
     ? buildAIProposals(doc, aiFields, rejections, {
         today,

@@ -4,7 +4,7 @@ import type { ContentSegment } from "@/domain/extraction/types";
 import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
 import { contentFingerprint } from "@/lib/crypto/fingerprint";
 import { prepareAnalysis, type PreparedAnalysis } from "@/domain/ai/analysis/blocks";
-import { defaultCategoryFor } from "@/domain/ai/analysis/category-defaults";
+import { defaultCategoryFor, type TypeCategoryOverrides } from "@/domain/ai/analysis/category-defaults";
 import { mergeBlocks } from "@/domain/ai/analysis/merge";
 import {
   statusOf,
@@ -161,6 +161,8 @@ export async function inspectSavedAnalysis(
 export function extractedFieldsFrom(
   analysis: PersistedContentAnalysis,
   categories: { id: string; name?: string }[],
+  /** Le scelte dell'utente su quale categoria proporre per tipo (v. Impostazioni > Categorie). */
+  typeCategories?: TypeCategoryOverrides,
 ): AIExtractedFields {
   const merged = mergeBlocks(analysis.blocks);
   // Una categoria eliminata dopo la lettura non è più una proposta sensata.
@@ -168,7 +170,7 @@ export function extractedFieldsFrom(
 
   // Se il motore non ha proposto una categoria, quella che di norma va con il tipo del documento (v. category-defaults.ts).
   if (!category) {
-    const byType = defaultCategoryFor(analysis.documentType, categories);
+    const byType = defaultCategoryFor(analysis.documentType, categories, typeCategories);
     if (byType) {
       category = {
         derived: true,

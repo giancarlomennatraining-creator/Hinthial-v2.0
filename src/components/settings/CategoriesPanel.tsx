@@ -10,6 +10,7 @@ import {
   updateCategory,
 } from "@/domain/categories/repository";
 import type { Category } from "@/domain/categories/types";
+import { DocumentTypeCategoriesPanel } from "@/components/settings/DocumentTypeCategoriesPanel";
 import { IconPicker } from "@/components/ui/IconPicker";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 
@@ -311,6 +312,8 @@ export function CategoriesPanel() {
           })}
         </ul>
       )}
+
+      {loading ? null : <DocumentTypeCategoriesPanel categories={categories} />}
     </div>
   );
 }

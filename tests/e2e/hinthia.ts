@@ -86,12 +86,17 @@ export interface MockedReading {
   fields?: boolean;
   /** Propone la categoria "Assicurazioni" (se esiste tra quelle inviate). */
   category?: boolean;
+  /** Il tipo di documento che il motore dichiara (default: polizza con categoria, generico senza). */
+  documentType?: string;
   /** Eventi da ricordare restituiti dal motore: la data deve comparire nel testo del documento. */
   events?: { value: string; title: string; quote: string }[];
 }
 
 /** Risponde alla route di analisi con una lettura fissa, nel formato attuale (v. api/ai/analyze): `result` per un blocco, `synthesis` per la fusione. */
-export async function mockHinthiaReading(page: Page, { fields = false, category = true, events = [] }: MockedReading = {}) {
+export async function mockHinthiaReading(
+  page: Page,
+  { fields = false, category = true, events = [], documentType }: MockedReading = {},
+) {
   await page.route("**/api/ai/analyze", (route) => {
     const request = route.request().postDataJSON() as { mode?: string; categories?: { id: string; name: string }[] };
     if (request.mode === "merge") {
@@ -101,7 +106,7 @@ export async function mockHinthiaReading(page: Page, { fields = false, category 
     const result = {
       // Con un tipo noto l'app propone da sola la categoria che gli corrisponde (v. category-defaults.ts): per i test che
       // vogliono "nessuna categoria" il tipo è generico.
-      documentType: category ? "polizza" : "generico",
+      documentType: documentType ?? (category ? "polizza" : "generico"),
       expiry: [{ value: "2027-06-03", segmentId: "p1", quote: "Valida fino al 3 giugno 2027" }],
       issuer: [{ value: "GENERALI ITALIA S.p.A.", segmentId: "p1", quote: "GENERALI ITALIA S.p.A." }],
       category:
