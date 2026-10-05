@@ -31,7 +31,7 @@ import {
 /** FASE 22: con quale permesso si autorizza l'invio del testo a Claude --- v. AIAnalysisTrigger.tsx. */
 export type AIAnalysisScope = "category" | "temporary" | "once";
 
-/** Candidati validati --- stessa forma di StructuredField (domain/extraction/structured-fields.ts), ma da Claude, ognuno con la sua provenienza. */
+/** Candidati validati letti da Claude, ognuno con la sua provenienza. */
 export interface AIExtractedFields {
   /** Ogni voce ha `source` (la citazione, verificata) e `provenance` (il segmento, e la pagina se il documento ne ha). */
   expiry: ValidatedEvidence[];
@@ -353,9 +353,7 @@ export interface EventProposalContext {
 }
 
 /**
- * Stessa logica di filtro di buildProposals (domain/proposals/build.ts) --- niente su campi già compilati, niente
- * già rifiutato, dedup --- ma sui candidati letti da Claude. Non riusa buildProposals: quello resta il percorso
- * locale, testato, invariato; questo è un percorso a parte per candidati con una provenienza diversa.
+ * Le proposte dai candidati letti da Claude: niente su campi già compilati, niente già rifiutato, dedup.
  */
 export function buildAIProposals(
   doc: Pick<DocumentListItem, "expiresAt" | "issuer" | "categoryId" | "structuredFields">,

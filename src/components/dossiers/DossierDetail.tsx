@@ -6,12 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import { deleteDossier, listDossiers, setDossierStatus } from "@/domain/dossiers/repository";
 import { buildDossierTimeline } from "@/domain/dossiers/timeline";
-import { listDocuments } from "@/domain/documents/repository";
+import { listDocumentSummaries } from "@/domain/documents/repository";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { formatDate } from "@/lib/format";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { DossierListItem } from "@/domain/dossiers/types";
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentSummary } from "@/domain/documents/types";
 
 /**
  * La scheda di un fascicolo: titolo, descrizione, stato, e la sua cronologia (i documenti collegati, in ordine di
@@ -25,7 +25,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
   const showToast = useToast();
 
   const [dossier, setDossier] = useState<DossierListItem | null>(null);
-  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
+  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -38,7 +38,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
     try {
       const [dossiers, documentsResult] = await Promise.all([
         listDossiers(supabase, masterKey),
-        listDocuments(supabase, masterKey),
+        listDocumentSummaries(supabase, masterKey),
       ]);
       if (requestId !== latestRequestRef.current) return;
       setDossier(dossiers.find((d) => d.id === dossierId) ?? null);
@@ -199,7 +199,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
-            {timeline.map(({ document, date, dateIsFromDocument }) => (
+            {timeline.map(({ document, date }) => (
               <li key={document.id} className="flex items-center justify-between gap-3 py-2">
                 <Link
                   href={`/archive/${document.id}`}
@@ -209,7 +209,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
                 </Link>
                 <span
                   className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400"
-                  title={dateIsFromDocument ? "Data letta nel documento" : "Data di caricamento"}
+                  title="Data di caricamento"
                 >
                   {formatDate(date)}
                 </span>

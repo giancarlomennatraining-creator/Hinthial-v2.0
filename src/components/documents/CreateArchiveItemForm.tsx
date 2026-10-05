@@ -29,19 +29,11 @@ import {
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
 import { listDossiers } from "@/domain/dossiers/repository";
 import type { DossierListItem } from "@/domain/dossiers/types";
-import { heuristicCategorizer } from "@/domain/categorizer/heuristic-provider";
 import { canExtractText, extractContent } from "@/domain/extraction/extract-text";
 import type { ContentSegment } from "@/domain/extraction/types";
 import { loadDocumentSegments } from "@/domain/documents/segments";
 import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
-import {
-  extractStructuredFields,
-  type StructuredField,
-} from "@/domain/extraction/structured-fields";
 import { readingStateFor } from "@/domain/extraction/reading-state";
-import { buildProposals } from "@/domain/proposals/build";
-import type { Proposal } from "@/domain/proposals/types";
-import { suggestAssetFromText } from "@/domain/proposals/asset-match";
 import {
   AnalysisAbortedError,
   analysisConfirmMessage,
@@ -78,22 +70,6 @@ type ReadingState =
   | { status: "reading"; progress: number | null }
   | { status: "skipped" }
   | { status: "done"; text: string | null };
-
-/** I valori messi da Hinthial, per distinguerli da quelli scritti a mano. */
-interface Suggested {
-  title?: string;
-  categoryId?: string;
-  relatedAssetId?: string;
-}
-
-/** Il segno accanto a un campo riempito da Hinthial. */
-function SuggestedHint({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="line-clamp-2 max-w-[16rem] text-xs text-zinc-500 dark:text-zinc-400">
-      <span className="text-brand">✨</span> {children}
-    </p>
-  );
-}
 
 const MODE_LABEL: Record<CreationMode, string> = {
   upload: "Carica un file",
@@ -359,7 +335,6 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const [reading, setReading] = useState<ReadingState>({ status: "idle" });
   const [title, setTitle] = useState("");
   /** Cosa ha messo Hinthial --- sparisce appena l'utente tocca il campo, da quel momento il valore è suo. */
-  const [suggested, setSuggested] = useState<Suggested>({});
   // Identifica il file in lettura: se ne scegli un altro prima che finisca, il risultato vecchio non deve sovrascrivere.
   const readingTokenRef = useRef(0);
   // La lettura in corso, per poterla aspettare al salvataggio se non ha ancora finito (v. extractionForSave).
@@ -462,14 +437,12 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     readingTokenRef.current++;
     setReading({ status: "idle" });
     setTitle("");
-    setSuggested({});
     setMetadata(EMPTY_METADATA_FIELDS);
   }
 
   function pickFile(file: File | null) {
     setPickedFile(file);
-    // Non si azzerano titolo/categoria/bene/fascicolo/tag/note ("non si tocca ciò che è già compilato") --- solo il segno "suggerito", legato al file precedente.
-    setSuggested({});
+    // Non si azzerano titolo/categoria/bene/fascicolo/tag/note: ciò che è già compilato non si tocca.
     if (file) {
       readingPromiseRef.current = readPickedFile(file);
     } else {
@@ -490,22 +463,13 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     pickFile(event.dataTransfer.files?.[0] ?? null);
   }
 
-  /** FASE 19b: legge il file e precompila --- niente di tuo da sovrascrivere ancora, vedere il valore e premere Salva È il consenso (diverso da ProposalsSection, dove il campo può essere già tuo). */
+  /** Legge il testo del file sul dispositivo, per salvarlo con il contenuto (ricerca, analisi di Hinthia). Non compila nessun campo. */
   async function readPickedFile(file: File): Promise<PriorExtraction> {
     const token = ++readingTokenRef.current;
     const mimeType = mimeTypeOfFile(file);
 
     if (!canExtractText(mimeType)) {
       setReading({ status: "skipped" });
-      // Niente testo da leggere: resta il nome del file, l'unico indizio disponibile.
-      const fromFilename = heuristicCategorizer.suggestCategory(
-        file.name,
-        categories,
-      );
-      if (fromFilename) {
-        setMetadata((prev) => ({ ...prev, categoryId: fromFilename }));
-        setSuggested({ categoryId: fromFilename });
-      }
       return { text: null, attempted: false };
     }
 
@@ -521,9 +485,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
 
       // Un altro file è stato scelto nel frattempo: risultato vecchio, non tocca niente (v. readingPromiseRef).
       if (token === readingTokenRef.current) {
-        const fields = text ? extractStructuredFields(text) : [];
         setReading({ status: "done", text });
-        applySuggestions(file, text ?? "", fields);
       }
 
       return { text, segments: content?.segments, attempted: true };
@@ -533,48 +495,6 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         setReading({ status: "done", text: null });
       return { text: null, attempted: false };
     }
-  }
-
-  /** Riempie i campi che Hinthial è riuscito a ricavare, e se lo segna. Scadenza/emittente non sono più qui: emergono come proposta dopo il salvataggio (v. passi post-salvataggio), non vanno indovinati prima. */
-  function applySuggestions(
-    file: File,
-    text: string,
-    fields: StructuredField[],
-  ) {
-    const next: Suggested = {};
-
-    // Il titolo si PROPONE, non si precompila --- unico campo che ha già sempre un valore (il nome del file), sostituirlo d'ufficio sarebbe scorretto.
-    const proposedTitle = fields.find((f) => f.kind === "title")?.value;
-    if (proposedTitle) {
-      // L'estensione si conserva, altrimenti il sistema operativo non saprebbe più con cosa aprirlo.
-      const extension = file.name.includes(".")
-        ? file.name.slice(file.name.lastIndexOf("."))
-        : "";
-      next.title = `${proposedTitle}${extension}`;
-    }
-
-    // Il bene ha la precedenza sulle parole chiave: una targa o polizza non è un indizio, è una certezza.
-    const asset = suggestAssetFromText(text, assets);
-    const categoryId = asset?.categoryId
-      ? asset.categoryId
-      : heuristicCategorizer.suggestCategoryFromContent(
-          file.name,
-          text,
-          categories,
-        );
-
-    if (categoryId) {
-      next.categoryId = categoryId;
-      if (asset && asset.categoryId === categoryId)
-        next.relatedAssetId = asset.id;
-    }
-
-    setSuggested(next);
-    setMetadata((prev) => ({
-      ...prev,
-      categoryId: next.categoryId ?? prev.categoryId,
-      relatedAssetId: next.relatedAssetId ?? prev.relatedAssetId,
-    }));
   }
 
   // "📷 Scatta foto" riusa la stessa casella file con `capture` impostato un istante prima (ignorato sui dispositivi che non lo supportano) --- un solo <input type="file"> nel DOM.
@@ -817,18 +737,6 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     ? isCategoryEnabledForExtraction(aiCategory)
     : false;
   const readingState = savedDoc ? readingStateFor(savedDoc) : null;
-  // Nessun rifiuto ancora possibile su un documento appena nato: lo stesso meccanismo della scheda, senza cronologia.
-  const localProposals: Proposal[] = savedDoc
-    ? buildProposals(savedDoc, categories, [])
-    : [];
-
-  function proposalChipLabel(p: Proposal): string {
-    if (p.kind === "expiry") return `📅 Scadenza — ${formatDate(p.value)}`;
-    if (p.kind === "issuer") return `🏛️ Emittente — ${p.value}`;
-    const cat = categories.find((c) => c.id === p.value);
-    return `🗂️ Categoria — ${cat ? `${cat.icon} ${cat.name}` : p.value}`;
-  }
-
   const step4Summary = savedDoc
     ? readingState === "text"
       ? `${savedDoc.extractedText.length.toLocaleString("it-IT")} caratteri letti`
@@ -1034,24 +942,9 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                           }
                           className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
                         />
-                        {suggested.title && title === suggested.title ? (
-                          <SuggestedHint>
-                            Titolo suggerito da Hinthial
-                          </SuggestedHint>
-                        ) : suggested.title ? (
-                          <button
-                            type="button"
-                            onClick={() => setTitle(suggested.title!)}
-                            className="self-start text-left text-xs text-brand underline-offset-2 hover:underline"
-                          >
-                            ✨ Usa il titolo che ho ricavato: &laquo;
-                            {suggested.title}&raquo;
-                          </button>
-                        ) : (
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            Lascia vuoto per usare il nome del file.
-                          </p>
-                        )}
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                          Lascia vuoto per usare il nome del file.
+                        </p>
                       </div>
                     </div>
                   ) : mode === "record" ? (
@@ -1154,20 +1047,6 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                     // Scadenza ed emittente non si chiedono più qui: emergono come proposta dopo il salvataggio (v. passi post-salvataggio).
                     showExpiry={false}
                     showIssuer={false}
-                    hints={{
-                      categoryId:
-                        suggested.categoryId &&
-                        metadata.categoryId === suggested.categoryId ? (
-                          <SuggestedHint>Suggerita da Hinthial</SuggestedHint>
-                        ) : null,
-                      relatedAssetId:
-                        suggested.relatedAssetId &&
-                        metadata.relatedAssetId === suggested.relatedAssetId ? (
-                          <SuggestedHint>
-                            Riconosciuto nel documento
-                          </SuggestedHint>
-                        ) : null,
-                    }}
                   />
                 </AccordionStep>
 
@@ -1205,23 +1084,8 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                             {savedDoc.extractedText.length.toLocaleString(
                               "it-IT",
                             )}{" "}
-                            caratteri letti
-                            {localProposals.length > 0
-                              ? " — ecco cosa ho trovato:"
-                              : "."}
+                            caratteri letti.
                           </p>
-                          {localProposals.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {localProposals.map((p, i) => (
-                                <span
-                                  key={i}
-                                  className="rounded-lg bg-brand/10 px-3 py-1.5 text-xs font-medium text-brand"
-                                >
-                                  {proposalChipLabel(p)}
-                                </span>
-                              ))}
-                            </div>
-                          ) : null}
                           <Link
                             href={`/archive/${savedDoc.id}`}
                             className="w-fit text-sm font-medium text-brand underline-offset-2 hover:underline"

@@ -116,8 +116,8 @@ test("la scheda di un documento mostra il testo che Hinthial ci ha letto dentro"
   ).toBeVisible();
 });
 
-// Il documento è la scansione: nessun livello di testo, quindi tutto qui è passato per OCR e riconoscimento degli schemi.
-test("la scheda ricava data, emittente e scadenza dal testo del documento", async ({ page }) => {
+// Il documento è la scansione: nessun livello di testo, quindi tutto qui è passato per l'OCR.
+test("la scheda mostra il testo letto dall'OCR e non ricava niente da sola", async ({ page }) => {
   test.setTimeout(180_000);
 
   const user = uniqueTestUser();
@@ -135,29 +135,18 @@ test("la scheda ricava data, emittente e scadenza dal testo del documento", asyn
 
   await page.getByRole("link", { name: /ocr-scansione\.pdf/ }).click();
 
-  // "Cosa ne ho ricavato" vive sotto "Letto dal dispositivo" (v. Concept 1); niente più una tab "Proposte" a
-  // sé (v. feedback utente): le proposte locali vivono nella stessa tab.
+  // Il testo letto dall'OCR c'è, intero, nella tab "Letto dal dispositivo"...
   await openTab(page, "Letto dal dispositivo");
-  const ricavato = page.getByRole("region", { name: "Cosa ne ho ricavato" });
-  await expect(ricavato).toBeVisible({ timeout: 30_000 });
-
-  // "AZIENDA OSPEDALIERA DI GUBBIO" è l'intestazione, non il titolo del documento (che deve essere scartato): è
-  // un'informazione identica a una proposta, quindi si vede fra le proposte e non in "Cosa ne ho ricavato".
-  await expect(page.getByRole("tabpanel", { name: "Letto dal dispositivo" })).toContainText(
-    "AZIENDA OSPEDALIERA DI GUBBIO",
-  );
-  await expect(ricavato).toContainText("14 mar 2026");
-
-  // La scadenza viene da "Si consiglia controllo tra dodici mesi" più la data del prelievo, e vive fra le
-  // proposte, non qui --- stessa tab: è una proposta locale, non di Hinthia.
   const tabpanel = page.getByRole("tabpanel", { name: "Letto dal dispositivo" });
-  await expect(tabpanel).toContainText("14 mar 2027");
-  await expect(tabpanel).toContainText("calcolata da Hinthial");
-  await expect(ricavato).not.toContainText("14 mar 2027");
+  await expect(page.getByTestId("extracted-text")).toContainText("AZIENDA OSPEDALIERA DI GUBBIO", { timeout: 30_000 });
+  await expect(page.getByTestId("extracted-text")).toContainText("14 marzo 2026");
 
-  // E soprattutto: non ha scritto niente: la scheda resta vuota --- ora sulla sua tab (v. feedback utente),
-  // non più fissa a sinistra.
-  await expect(ricavato).toContainText("non ho cambiato niente");
+  // ...ma il dispositivo non lo interpreta: niente proposte né riquadro "Cosa ne ho ricavato". Scadenza, emittente e
+  // categoria arrivano solo se chiedi a Hinthia di leggere il documento.
+  await expect(tabpanel.getByRole("button", { name: "Accetta", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Cosa ne ho ricavato" })).toHaveCount(0);
+
+  // E non ha scritto niente: la scheda resta vuota.
   await openTab(page, "Scheda");
   await expect(page.getByLabel("Scadenza")).toHaveValue("");
 });

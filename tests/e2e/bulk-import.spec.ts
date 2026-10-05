@@ -5,8 +5,8 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 //
 // FASE 21 --- import massivo: molti file in una volta, con un riepilogo
 // per gruppi. Qui si prova il percorso vero: due file con lo stesso
-// emittente propongono un fascicolo nuovo (il "raggruppamento evidente"
-// del piano), un terzo file senza emittente riconoscibile resta da
+// nome (a meno di numeri e date) propongono un fascicolo nuovo (il "raggruppamento evidente"
+// del piano), un terzo file con un nome diverso resta da
 // solo; si importa tutto con un clic e si verifica che il fascicolo sia
 // nato con dentro i documenti giusti.
 
@@ -64,7 +64,7 @@ async function signInAndSetUpVault(page: import("@playwright/test").Page) {
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 }
 
-test("due file con lo stesso emittente propongono un fascicolo, importati insieme a un terzo senza gruppo", async ({
+test("due file con lo stesso nome propongono un fascicolo, importati insieme a un terzo senza gruppo", async ({
   page,
 }) => {
   test.slow();
@@ -77,53 +77,48 @@ test("due file con lo stesso emittente propongono un fascicolo, importati insiem
 
   await page.getByLabel("Scegli i file da importare").setInputFiles([
     {
-      name: "bolletta-gennaio.pdf",
+      name: "bolletta-luce-01.pdf",
       mimeType: "application/pdf",
       buffer: buildPdf(["ENEL ENERGIA S.p.A.", "Bolletta luce gennaio", "Totale 50,00"]),
     },
     {
-      name: "bolletta-febbraio.pdf",
+      name: "bolletta-luce-02.pdf",
       mimeType: "application/pdf",
       buffer: buildPdf(["ENEL ENERGIA S.p.A.", "Bolletta luce febbraio", "Totale 55,00"]),
     },
     {
       name: "biglietto-treno.txt",
       mimeType: "text/plain",
-      buffer: Buffer.from("Biglietto del treno, nessun emittente riconoscibile qui dentro."),
+      buffer: Buffer.from("Biglietto del treno."),
     },
   ]);
 
   // Il riepilogo per gruppi: la proposta di un fascicolo nuovo per le
   // due bollette, già selezionata (è un raggruppamento evidente).
-  const proposal = page.getByText(/hanno lo stesso emittente/, { exact: false });
+  const proposal = page.getByText(/hanno lo stesso nome/, { exact: false });
   await expect(proposal).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("bolletta-gennaio.pdf")).toBeVisible();
-  await expect(page.getByText("bolletta-febbraio.pdf")).toBeVisible();
+  await expect(page.getByText("bolletta-luce-01.pdf")).toBeVisible();
+  await expect(page.getByText("bolletta-luce-02.pdf")).toBeVisible();
   await expect(page.getByText("biglietto-treno.txt")).toBeVisible();
 
-  // Il titolo proposto per il fascicolo nuovo è l'emittente stesso.
-  await expect(page.locator('input[value="ENEL ENERGIA S.p.A."]')).toBeVisible();
+  // Il titolo proposto per il fascicolo nuovo è il nome comune dei file.
+  await expect(page.locator('input[value="Bolletta luce"]')).toBeVisible();
 
   await page.getByRole("button", { name: "Importa tutto" }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 60_000 });
 
-  // Le due bollette prendono il titolo che Hinthial ha ricavato dal
-  // contenuto (FASE 19b), non il nome del file --- lo stesso
-  // comportamento del caricamento singolo. Il biglietto, che non ha un
-  // titolo riconoscibile, mantiene il proprio nome.
-  await expect(page.getByRole("link", { name: /Bolletta luce gennaio/ })).toBeVisible({
-    timeout: 15_000,
-  });
-  await expect(page.getByRole("link", { name: /Bolletta luce febbraio/ })).toBeVisible();
+  // I documenti si chiamano come i file: il contenuto non decide più il titolo.
+  await expect(page.getByRole("link", { name: /bolletta-luce-01\.pdf/ })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("link", { name: /bolletta-luce-02\.pdf/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /biglietto-treno\.txt/ })).toBeVisible();
 
   // Il fascicolo è nato, con dentro le due bollette --- non il biglietto.
   await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
   await expect(page).toHaveURL(/\/dossiers$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
-  await page.getByRole("link", { name: /ENEL ENERGIA S\.p\.A\./ }).click();
+  await page.getByRole("link", { name: /Bolletta luce/ }).click();
   const cronologia = page.getByRole("region", { name: "Cronologia" });
-  await expect(cronologia.getByRole("link", { name: /Bolletta luce gennaio/ })).toBeVisible();
-  await expect(cronologia.getByRole("link", { name: /Bolletta luce febbraio/ })).toBeVisible();
+  await expect(cronologia.getByRole("link", { name: /bolletta-luce-01/ })).toBeVisible();
+  await expect(cronologia.getByRole("link", { name: /bolletta-luce-02/ })).toBeVisible();
   await expect(cronologia.getByText(/biglietto-treno/)).not.toBeVisible();
 });

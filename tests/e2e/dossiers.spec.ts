@@ -127,11 +127,11 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   });
   await page.getByRole("link", { name: /Intervento al ginocchio/ }).click();
 
-  // La cronologia del fascicolo: il documento c'è, con la data letta dentro (14 mar 2026, non la data di caricamento).
+  // La cronologia del fascicolo: il documento c'è, con la sua data di caricamento.
   await expect(page.getByRole("heading", { name: /Intervento al ginocchio/ })).toBeVisible();
   const cronologia = page.getByRole("region", { name: "Cronologia" });
   await expect(cronologia.getByRole("link", { name: /referto-visita\.pdf/ })).toBeVisible();
-  await expect(cronologia).toContainText("14 mar 2026");
+  await expect(cronologia).toContainText(/\d{1,2} [a-zà-ù]{3} \d{4}/);
 
   // Chiudere e riaprire: un clic, non un form.
   await page.getByRole("button", { name: "Chiudi fascicolo" }).click();

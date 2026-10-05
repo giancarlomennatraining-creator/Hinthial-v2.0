@@ -23,7 +23,7 @@ export interface Proposal {
   page?: number;
   /** Vero se il valore è calcolato e non letto (es. "controllo tra 12 mesi" + data documento) --- chi accetta deve saperlo. */
   derived?: boolean;
-  /** FASE 22: vero se il candidato viene da Claude (analisi esplicita, consenso a parte) e non dalle regole locali di FASE 18. */
+  /** Vero se il candidato viene da Claude (analisi esplicita, consenso a parte). */
   aiGenerated?: boolean;
   /** Solo per kind "field": la chiave normalizzata (v. normalizeFieldKey) --- dove il valore va scritto. */
   fieldKey?: string;

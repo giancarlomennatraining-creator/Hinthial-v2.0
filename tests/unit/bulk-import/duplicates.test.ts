@@ -1,6 +1,6 @@
 /**
  * FASE 25 --- il rilevamento duplicati durante un import massivo. Come
- * groupByIssuer, testato soprattutto sui casi in cui deve tacere: nomi
+ * groupByFilename, testato soprattutto sui casi in cui deve tacere: nomi
  * simili ma dimensioni diverse, o viceversa, non sono un duplicato.
  */
 import { describe, expect, it } from "vitest";
