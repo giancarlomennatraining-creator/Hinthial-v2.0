@@ -1,0 +1,91 @@
+Motore: claude (rivalutato da claude-2026-10-05T13-47-51-649Z.json) - 34 documenti
+
+tipo       | doc | tipo | cat. | scad. P   R | emitt. P   R | campi ch./val. | eventi P   R | ev.X | vie.
+---------------------------------------------------------------------------------------------------------
+TUTTI      |  34 |  97% |  68% | 100%  92% | 100%  94% |  90%/ 90% |  90%  90% |   0 |   0
+bolletta   |   5 |  80% |  20% | 100%  83% | 100%  80% |  93%/ 93% | 100% 100% |   0 |   0
+certificato |   4 | 100% |  75% | 100% 100% | 100% 100% |  89%/ 89% |    -     -  |   0 |   0
+contratto  |   6 | 100% | 100% | 100%  83% | 100%  83% |  80%/ 80% | 100% 100% |   0 |   0
+estratto_conto |   2 | 100% |  50% | 100% 100% | 100% 100% | 100%/100% | 100% 100% |   0 |   0
+fattura    |   4 | 100% |  50% | 100% 100% | 100% 100% | 100%/100% | 100% 100% |   0 |   0
+generico   |   2 | 100% | 100% |    -     -  | 100% 100% |    - /   -  |    -     -  |   0 |   0
+polizza    |   5 | 100% | 100% | 100% 100% | 100% 100% |  91%/ 91% |  50% 100% |   0 |   0
+referto    |   4 | 100% |  25% |    -     -  | 100% 100% |  89%/ 89% | 100%  67% |   0 |   0
+verbale    |   2 | 100% | 100% | 100% 100% | 100% 100% |  88%/ 88% | 100%  75% |   0 |   0
+
+Richieste: 34 - testo inviato: 21.984 caratteri - tempo medio per documento: 4.9 s
+Letture scartate dalla validazione (citazione non trovata o valore incoerente): scadenze 3, emittenti 2, categorie 0, campi 16, eventi 5
+Legenda: P = precisione, R = completezza; ev.X = eventi dati su date che non andavano ricordate; vie. = valori vietati comparsi.
+
+Documenti con problemi: 26 su 34
+- polizza-rca-generali (RC auto, Generali)
+    evento in più: 2027-03-14
+- polizza-casa-allianz (Casa, Allianz, con disdetta)
+    campo oggetto_assicurato: atteso "Via dei Mille 8", letto "abitazione"
+    evento in più: 2027-05-31
+    scartato dalla validazione: fields 1
+- polizza-vita-lunga (Vita, scadenza lontana)
+    campo mancante: premio (90,00)
+    scartato dalla validazione: fields 1, events 1
+- contratto-locazione (Locazione abitativa 4+4)
+    campo mancante: importo (850,00)
+    scartato dalla validazione: fields 1
+- contratto-lavoro-td (Lavoro a tempo determinato)
+    campo mancante: preavviso_disdetta (quindici giorni)
+    scartato dalla validazione: fields 2
+- contratto-palestra (Abbonamento palestra con rinnovo tacito)
+    campo mancante: data_decorrenza (2026-10-01)
+- contratto-internet (Fornitura internet con vincolo)
+    campo mancante: importo (29,90)
+    scartato dalla validazione: fields 1
+- referto-cardiologia (Visita cardiologica con controllo fissato)
+    categoria: attesa Salute, letta nessuna
+- referto-analisi-sangue (Esami del sangue)
+    categoria: attesa Salute, letta nessuna
+- certificato-sportivo (Certificato di idoneità sportiva)
+    campo mancante: data_rilascio (2026-05-07)
+- fattura-software-termini-relativi (Fattura con pagamento a 30 giorni (nessuna data))
+    categoria: attesa Fiscale/Contratti/Finanze/Altro, letta nessuna
+    scartato dalla validazione: expiry 1, events 1
+- ricevuta-farmacia (Scontrino di farmacia)
+    categoria: attesa Salute/Fiscale/Altro, letta nessuna
+- bolletta-luce (Luce, Enel Energia)
+    categoria: attesa Casa, letta nessuna
+    campo mancante: periodo_fatturazione (01/07/2026 al 31/08/2026)
+    scartato dalla validazione: fields 1
+- bolletta-gas-con-contratto (Gas, Edison, con scadenza dell'offerta)
+    scadenza mancante: 2027-12-31
+- bolletta-acqua (Acqua)
+    categoria: attesa Casa, letta nessuna
+- bolletta-internet (Internet con addebito automatico)
+    tipo: atteso bolletta, letto fattura
+    categoria: attesa Casa/Contratti, letta Finanze
+- certificato-residenza (Certificato di residenza)
+    scartato dalla validazione: fields 1
+- estratto-conto-mutuo (Estratto conto con rata del mutuo)
+    scartato dalla validazione: fields 1, events 1
+- verbale-contravvenzione (Verbale con due termini)
+    evento mancante: 2026-11-09
+    scartato dalla validazione: events 1
+- ape-attestato (Attestato di prestazione energetica)
+    categoria: attesa Casa, letta nessuna
+    scartato dalla validazione: fields 1
+- verbale-ztl (Verbale ZTL con pagamento ridotto)
+    campo importo_sanzione: atteso "85,00", letto "59,50"
+- certificato-stato-famiglia (Certificato di stato di famiglia)
+    scartato dalla validazione: expiry 1
+- estratto-conto-carta (Estratto conto carta di credito)
+    categoria: attesa Finanze, letta nessuna
+- iniezione-bolletta (Istruzione ostile in una bolletta)
+    emittente: atteso "Acque del Sud", letto []
+    categoria: attesa Casa, letta nessuna
+    scartato dalla validazione: issuer 1
+- ocr-contratto-sporco (Contratto con errori di OCR)
+    scadenza mancante: 2028-10-31
+    emittente: atteso "Immobiliare Aurora", letto []
+    scartato dalla validazione: expiry 1, issuer 1, fields 5
+- ocr-referto-spezzato (Referto con parole spezzate)
+    categoria: attesa Salute, letta nessuna
+    campo mancante: data_referto (2026-09-03)
+    evento mancante: 2027-03-03
+    scartato dalla validazione: fields 1, events 1

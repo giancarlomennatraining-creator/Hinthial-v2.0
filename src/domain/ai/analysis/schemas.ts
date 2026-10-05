@@ -22,7 +22,17 @@ export interface AnalysisSchema {
   fields: SchemaField[];
 }
 
-export const ANALYSIS_DOCUMENT_TYPES = ["contratto", "referto", "fattura", "bolletta", "polizza", "generico"] as const;
+export const ANALYSIS_DOCUMENT_TYPES = [
+  "contratto",
+  "referto",
+  "fattura",
+  "bolletta",
+  "polizza",
+  "verbale",
+  "certificato",
+  "estratto_conto",
+  "generico",
+] as const;
 
 export type AnalysisDocumentType = (typeof ANALYSIS_DOCUMENT_TYPES)[number];
 
@@ -89,6 +99,38 @@ export const ANALYSIS_SCHEMAS: Record<AnalysisDocumentType, AnalysisSchema> = {
       { key: "premio", label: "Premio", valueType: "amount" },
       { key: "massimale", label: "Massimale", valueType: "amount" },
       { key: "oggetto_assicurato", label: "Oggetto assicurato", valueType: "text" },
+    ],
+  },
+  verbale: {
+    id: "verbale",
+    label: "Verbale o sanzione",
+    description: "verbale di accertamento di una violazione, multa o sanzione amministrativa (codice della strada, tributi)",
+    fields: [
+      { key: "numero_verbale", label: "Numero verbale", valueType: "identifier" },
+      { key: "data_violazione", label: "Data della violazione", valueType: "date" },
+      { key: "importo_sanzione", label: "Importo della sanzione", valueType: "amount" },
+      { key: "targa", label: "Targa", valueType: "identifier" },
+    ],
+  },
+  certificato: {
+    id: "certificato",
+    label: "Certificato o attestato",
+    description: "certificato o attestato rilasciato da un ente (residenza, stato di famiglia, prestazione energetica, abitabilita')",
+    fields: [
+      { key: "numero_certificato", label: "Numero o codice del certificato", valueType: "identifier" },
+      { key: "data_rilascio", label: "Data di rilascio", valueType: "date" },
+      { key: "intestatario", label: "Intestatario", valueType: "text" },
+    ],
+  },
+  estratto_conto: {
+    id: "estratto_conto",
+    label: "Estratto conto",
+    description: "estratto conto bancario o di carta di credito, con saldo e movimenti di un periodo",
+    fields: [
+      { key: "periodo", label: "Periodo di riferimento", valueType: "text" },
+      { key: "iban", label: "IBAN o numero del conto", valueType: "identifier" },
+      { key: "saldo_iniziale", label: "Saldo iniziale", valueType: "amount" },
+      { key: "saldo_finale", label: "Saldo finale", valueType: "amount" },
     ],
   },
   generico: {

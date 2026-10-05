@@ -1,9 +1,6 @@
 import type { EvalDocument } from "../types";
 
-/**
- * Documenti che il registro degli schemi non ha ancora come tipo (certificati, estratti conto, verbali): oggi il tipo
- * giusto è "generico". Servono a vedere cosa un'ontologia più ricca dovrebbe coprire.
- */
+/** Certificati, estratti conto e verbali: i tipi aggiunti al registro dopo la prima misura (prima erano "generico"). */
 export const generici: EvalDocument[] = [
   {
     id: "certificato-residenza",
@@ -16,7 +13,15 @@ Il presente certificato e' rilasciato per uso amministrativo.
 Napoli, 14/09/2026
 Protocollo n. 2026/0045512`,
     ],
-    gold: { type: "generico", expiry: [], issuer: "Comune di Napoli", category: ["Personale"], fields: {}, events: [], notEvents: ["2026-09-14", "1985-04-05"] },
+    gold: {
+      type: "certificato",
+      expiry: [],
+      issuer: "Comune di Napoli",
+      category: ["Personale"],
+      fields: { numero_certificato: "2026/0045512", data_rilascio: "2026-09-14" },
+      events: [],
+      notEvents: ["2026-09-14", "1985-04-05"],
+    },
     note: "Il certificato non dichiara una scadenza: nessuna deve essere dedotta.",
   },
   {
@@ -33,7 +38,15 @@ Movimenti principali: stipendio euro 1.920,00 (ogni 27 del mese); rata mutuo eur
 
 Avviso: la prossima rata del mutuo sara' addebitata il 05/11/2026.`,
     ],
-    gold: { type: "generico", expiry: [], issuer: "Banca Meridionale", category: ["Finanze"], fields: {}, events: ["2026-11-05"], notEvents: ["2026-07-01", "2026-09-30"] },
+    gold: {
+      type: "estratto_conto",
+      expiry: [],
+      issuer: "Banca Meridionale",
+      category: ["Finanze"],
+      fields: { iban: "IT60 X054 2811 1010 0000 0123 456", saldo_iniziale: "4.215,30", saldo_finale: "3.870,12" },
+      events: ["2026-11-05"],
+      notEvents: ["2026-07-01", "2026-09-30"],
+    },
     note: "I giorni del mese ('ogni 5') non sono date; solo l'avviso ha una data esplicita.",
   },
   {
@@ -51,11 +64,11 @@ Entro il 09/11/2026 e' possibile pagare euro 42,00 con bonifico o PagoPA.
 Ricorso: entro 60 giorni dalla notifica al Prefetto o entro 30 giorni al Giudice di Pace, cioe' entro il 10/10/2026.`,
     ],
     gold: {
-      type: "generico",
+      type: "verbale",
       expiry: ["2026-11-09"],
       issuer: "Comune di Torre del Greco",
       category: ["Veicoli", "Fiscale", "Personale", "Altro"],
-      fields: {},
+      fields: { numero_verbale: "PL/2026/033120", data_violazione: "2026-08-02", importo_sanzione: "42,00", targa: "GH482XP" },
       events: ["2026-11-09", "2026-10-10"],
       notEvents: ["2026-08-02", "2026-09-10"],
     },
@@ -73,6 +86,14 @@ Classe energetica: D - EPgl,nren 118,4 kWh/m2 anno
 Data di emissione: 14/06/2026
 Validita': 10 anni. Il certificato e' valido fino al 14/06/2036.`,
     ],
-    gold: { type: "generico", expiry: ["2036-06-14"], issuer: "Studio Tecnico Ing. Gallo", category: ["Casa"], fields: {}, events: [], notEvents: ["2026-06-14"] },
+    gold: {
+      type: "certificato",
+      expiry: ["2036-06-14"],
+      issuer: "Studio Tecnico Ing. Gallo",
+      category: ["Casa"],
+      fields: { numero_certificato: "APE-NA-2026-004412", data_rilascio: "2026-06-14" },
+      events: [],
+      notEvents: ["2026-06-14"],
+    },
   },
 ];

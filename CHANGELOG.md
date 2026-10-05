@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-05 (46)
+
+### Tre tipi di documento in più: verbali, certificati ed estratti conto
+
+**Cosa cambia:**
+- Hinthia riconosce ora anche i **verbali e le sanzioni** (numero verbale, data della violazione, importo, targa), i **certificati e gli attestati** (numero o codice, data di rilascio, intestatario: residenza, stato di famiglia, prestazione energetica, idoneità) e gli **estratti conto** (periodo, IBAN, saldo iniziale e finale). Prima finivano tutti in "Documento generico", senza campi.
+- Nel riquadro "Cosa ha letto Hinthia" il tipo compare con il suo nome (per esempio "Verbale o sanzione") e i campi con i nomi giusti.
+- **I documenti già letti risultano "da rileggere"** (versione della lettura 4): solo dopo la rilettura compaiono i nuovi tipi.
+
+**Misura su 34 documenti inventati (tre in più di prima, due prove):** tipo di documento 94-97% (tutti i nuovi tipi riconosciuti); campi trovati con la chiave giusta 88-90% (verbali 88-100%, certificati 89-100%, estratti conto 71-100%); scadenze 100% di precisione; eventi 90% di precisione e completezza. La categoria resta il punto più instabile: 68-91% con gli stessi documenti da una prova all'altra.
+
+**Note tecniche:** i tipi stanno nel registro degli schemi (`schemas.ts`); il prompt e l'interfaccia li leggono da lì, senza altro codice. `ANALYSIS_PIPELINE_VERSION` = 4. Il corpus di misura passa a 34 documenti (`evals/corpus/tipi-nuovi.ts`); un certificato di idoneità sportiva, prima "referto", è ora un certificato. Nessuna migrazione.
+
+---
+
 ## 2026-10-05 (45)
 
 ### Hinthia dice quando una data da ricordare è già passata

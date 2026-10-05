@@ -98,11 +98,11 @@ Napoli, 07/05/2026
 Il medico: Dott. Carlo Esposito`,
     ],
     gold: {
-      type: "referto",
+      type: "certificato",
       expiry: ["2027-05-06"],
       issuer: "ASL Napoli 1",
       category: ["Salute"],
-      fields: { data_referto: "2026-05-07", medico: "Carlo Esposito" },
+      fields: { data_rilascio: "2026-05-07", intestatario: "Fontana Matteo" },
       events: [],
       notEvents: ["2026-05-07", "2008-08-15"],
     },
