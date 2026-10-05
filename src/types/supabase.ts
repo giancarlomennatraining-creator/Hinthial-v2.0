@@ -615,6 +615,42 @@ export type Database = {
           },
         ];
       };
+      document_type_categories: {
+        Row: {
+          owner_id: string;
+          document_type: string;
+          category_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          owner_id: string;
+          document_type: string;
+          category_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          owner_id?: string;
+          document_type?: string;
+          category_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "document_type_categories_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "document_type_categories_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       document_dossiers: {
         Row: {
           document_id: string;
