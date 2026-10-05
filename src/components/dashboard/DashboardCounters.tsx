@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
-import type { AIContext } from "@/domain/ai/types";
+import type { SummaryContext } from "@/domain/ai/types";
 import { ArchiveIcon, AssetIcon, CapsuleIcon, CategoryIcon, FriendIcon } from "@/components/icons/nav-icons";
 
 /** Stesse icone già usate per le voci di menu corrispondenti (v. nav-items.ts) --- Categorie non ha una voce di menu propria (vive in Impostazioni), le si dà un'icona a sé (v. icons/nav-icons.tsx, CategoryIcon): non è legata a nessuna categoria specifica dell'utente (quelle restano emoji scelte da lui, v. IconPicker), è solo la decorazione di questo riquadro. */
@@ -17,8 +17,8 @@ const COUNTERS: {
   { key: "categories", label: "Categorie", icon: CategoryIcon, href: "/settings" },
 ];
 
-/** Quanti elementi ci sono in ogni sezione, a colpo d'occhio --- niente di nuovo da calcolare: lo stesso AIContext già decifrato per il resto della dashboard. */
-export function DashboardCounters({ context }: { context: AIContext }) {
+/** Quanti elementi ci sono in ogni sezione, a colpo d'occhio --- niente di nuovo da calcolare: lo stesso SummaryContext già decifrato per il resto della dashboard. */
+export function DashboardCounters({ context }: { context: SummaryContext }) {
   // Sotto-contatori solo per Amici --- due conteggi distinti (non
   // l'intersezione): quanti sono Attivi e, separatamente, quanti sono
   // Guardiani (v. domain/friends, isGuardian --- Dead Man's Switch

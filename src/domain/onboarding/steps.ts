@@ -1,11 +1,11 @@
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentSummary } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { FriendListItem } from "@/domain/friends/types";
 import type { CapsuleListItem } from "@/domain/capsules/types";
 import type { OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
 
 export interface OnboardingSourceData {
-  documents: DocumentListItem[];
+  documents: DocumentSummary[];
   assets: AssetListItem[];
   friends: FriendListItem[];
   capsules: CapsuleListItem[];

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/db/supabase/client";
 import { SidePanel } from "@/components/ui/SidePanel";
-import { buildAIContext } from "@/domain/ai/context";
+import { buildSummaryContext } from "@/domain/ai/context";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { OnboardingChecklist, type OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
 import {
@@ -40,7 +40,7 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
   const refresh = useCallback(async () => {
     if (!masterKey) return;
     try {
-      const context = await buildAIContext(supabase, masterKey);
+      const context = await buildSummaryContext(supabase, masterKey);
       setSteps(
         computeOnboardingSteps({
           documents: context.documents,

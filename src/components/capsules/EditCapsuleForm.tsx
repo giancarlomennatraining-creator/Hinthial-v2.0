@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
 import { listCapsules, updateCapsule } from "@/domain/capsules/repository";
 import { listFriends } from "@/domain/friends/repository";
-import { listDocuments } from "@/domain/documents/repository";
+import { listDocumentSummaries } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { listDossiers } from "@/domain/dossiers/repository";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
@@ -17,7 +17,7 @@ import { CapsuleLetterEditor } from "@/components/capsules/CapsuleLetterEditor";
 import { AudioVideoRecorder } from "@/components/media/AudioVideoRecorder";
 import type { CapsuleAttachment, CapsuleContentStyle, CapsuleListItem } from "@/domain/capsules/types";
 import type { FriendListItem } from "@/domain/friends/types";
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentSummary } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
 
@@ -47,7 +47,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
   const [capsule, setCapsule] = useState<CapsuleListItem | null>(null);
   const [activeFriends, setActiveFriends] = useState<FriendListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
+  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +60,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
   const [openAt, setOpenAt] = useState("");
   const [showAttachmentTools, setShowAttachmentTools] = useState(false);
   const [relatedFriends, setRelatedFriends] = useState<FriendListItem[]>([]);
-  const [linkedDocuments, setLinkedDocuments] = useState<DocumentListItem[]>([]);
+  const [linkedDocuments, setLinkedDocuments] = useState<DocumentSummary[]>([]);
   // Allegati diretti: keptAttachments parte dagli esistenti, "Rimuovi" li sposta in removedAttachments (cancellati da Storage solo dopo il salvataggio, v. updateCapsule). newFiles sono quelli aggiunti ora.
   const [keptAttachments, setKeptAttachments] = useState<CapsuleAttachment[]>([]);
   const [removedAttachments, setRemovedAttachments] = useState<CapsuleAttachment[]>([]);
@@ -79,7 +79,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
           listCapsules(supabase, masterKey),
           listFriends(supabase, masterKey),
           listCategories(supabase),
-          listDocuments(supabase, masterKey),
+          listDocumentSummaries(supabase, masterKey),
           listDossiers(supabase, masterKey),
         ]);
       if (requestId !== latestRequestRef.current) return;

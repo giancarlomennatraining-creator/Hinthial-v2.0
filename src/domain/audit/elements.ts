@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 import type { AuditEntityType } from "@/lib/audit/log-event";
-import { listDocuments, listTrashedDocuments } from "@/domain/documents/repository";
+import { listDocumentSummaries, listTrashedDocuments } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { listFriends } from "@/domain/friends/repository";
 import { listCapsules } from "@/domain/capsules/repository";
@@ -29,7 +29,7 @@ export async function listAuditElements(
   masterKey: CryptoKey,
 ): Promise<AuditElementOption[]> {
   const [documents, trashed, assets, friends, capsules, dossiers, categories] = await Promise.allSettled([
-    listDocuments(supabase, masterKey),
+    listDocumentSummaries(supabase, masterKey),
     listTrashedDocuments(supabase, masterKey),
     listAssets(supabase, masterKey),
     listFriends(supabase, masterKey),

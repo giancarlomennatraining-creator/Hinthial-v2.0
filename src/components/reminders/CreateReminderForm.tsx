@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
 import { createReminder } from "@/domain/reminders/repository";
-import { listDocuments } from "@/domain/documents/repository";
+import { listDocumentSummaries } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { sortAlphabetically } from "@/lib/utils";
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentSummary } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 
 /**
@@ -22,7 +22,7 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
   const router = useRouter();
 
-  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
+  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
     setError(null);
     try {
       const [documentsResult, assetsResult] = await Promise.all([
-        listDocuments(supabase, masterKey),
+        listDocumentSummaries(supabase, masterKey),
         listAssets(supabase, masterKey),
       ]);
       setDocuments(documentsResult);

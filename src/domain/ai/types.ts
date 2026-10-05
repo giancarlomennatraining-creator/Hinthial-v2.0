@@ -1,5 +1,5 @@
 import type { AssetListItem } from "@/domain/assets/types";
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentListItem, DocumentSummary } from "@/domain/documents/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
 import type { FriendListItem } from "@/domain/friends/types";
 import type { CapsuleListItem } from "@/domain/capsules/types";
@@ -19,6 +19,9 @@ export interface AIContext {
   friends: FriendListItem[];
   capsules: CapsuleListItem[];
 }
+
+/** Come AIContext, con i documenti senza testo letto, sintesi e analisi (v. DocumentSummary): per conteggi, scadenze e avvisi che non li usano. */
+export type SummaryContext = Omit<AIContext, "documents"> & { documents: DocumentSummary[] };
 
 /** Un'entità citata in una risposta o in un suggerimento --- collegata alla pagina dove l'utente può vederla. */
 export interface AISource {

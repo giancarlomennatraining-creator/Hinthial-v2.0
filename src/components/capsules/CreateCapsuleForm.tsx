@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
 import { createCapsule } from "@/domain/capsules/repository";
 import { listFriends } from "@/domain/friends/repository";
-import { listDocuments } from "@/domain/documents/repository";
+import { listDocumentSummaries } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { listDossiers } from "@/domain/dossiers/repository";
 import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachmentPicker";
@@ -15,7 +15,7 @@ import { CapsuleOpenAtField } from "@/components/capsules/CapsuleOpenAtField";
 import { CapsuleLetterEditor } from "@/components/capsules/CapsuleLetterEditor";
 import { AudioVideoRecorder } from "@/components/media/AudioVideoRecorder";
 import type { FriendListItem } from "@/domain/friends/types";
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentSummary } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import type { CapsuleContentStyle } from "@/domain/capsules/types";
@@ -40,7 +40,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
 
   const [friends, setFriends] = useState<FriendListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
+  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +54,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const [content, setContent] = useState("");
   const [contentStyle, setContentStyle] = useState<CapsuleContentStyle>("simple");
   const [showAttachmentTools, setShowAttachmentTools] = useState(false);
-  const [pendingLinkedDocuments, setPendingLinkedDocuments] = useState<DocumentListItem[]>([]);
+  const [pendingLinkedDocuments, setPendingLinkedDocuments] = useState<DocumentSummary[]>([]);
   const [recordedFiles, setRecordedFiles] = useState<File[]>([]);
 
   const refresh = useCallback(async () => {
@@ -64,7 +64,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
         await Promise.all([
           listFriends(supabase, masterKey),
           listCategories(supabase),
-          listDocuments(supabase, masterKey),
+          listDocumentSummaries(supabase, masterKey),
           listDossiers(supabase, masterKey),
         ]);
       setFriends(friendsResult);

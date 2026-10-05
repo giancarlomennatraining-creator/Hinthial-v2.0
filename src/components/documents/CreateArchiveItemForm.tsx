@@ -13,7 +13,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/db/supabase/client";
 import {
   createTextNote,
-  listDocuments,
+  getDocumentById,
   saveAISynthesis,
   saveContentAnalysis,
   updateDocumentAIExtractionExclusion,
@@ -667,8 +667,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
 
       // Invece del ritorno diretto a /archive, i passi 4 e 5 (cosa Hinthial ne ha già ricavato e, se vuoi,
       // l'analisi con Claude) --- prima di scegliere se andare sulla scheda o tornare all'archivio.
-      const documents = await listDocuments(supabase, masterKey);
-      const created = documents.find((d) => d.id === newId) ?? null;
+      const created = await getDocumentById(supabase, masterKey, newId);
       if (created) {
         setSavedDoc(created);
         setSavedMoment(true);
@@ -743,13 +742,11 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
           fields.synthesis,
         );
       }
-      const documents = await listDocuments(supabase, masterKey);
-      setSavedDoc(documents.find((d) => d.id === savedDoc.id) ?? savedDoc);
+      setSavedDoc((await getDocumentById(supabase, masterKey, savedDoc.id)) ?? savedDoc);
       setAiDone(true);
     } catch (err) {
       // Ciò che era già stato letto è salvato: si rilegge il documento perché il bottone proponga di riprendere.
-      const documents = await listDocuments(supabase, masterKey).catch(() => null);
-      const reloaded = documents?.find((d) => d.id === savedDoc.id);
+      const reloaded = await getDocumentById(supabase, masterKey, savedDoc.id).catch(() => null);
       if (reloaded) setSavedDoc(reloaded);
       if (!(err instanceof AnalysisAbortedError)) {
         setError(
@@ -770,8 +767,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     setError(null);
     try {
       await updateDocumentAIExtractionExclusion(supabase, savedDoc.id, next);
-      const documents = await listDocuments(supabase, masterKey);
-      setSavedDoc(documents.find((d) => d.id === savedDoc.id) ?? savedDoc);
+      setSavedDoc((await getDocumentById(supabase, masterKey, savedDoc.id)) ?? savedDoc);
     } catch (err) {
       setError(
         err instanceof Error

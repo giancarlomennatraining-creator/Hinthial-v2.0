@@ -41,6 +41,7 @@ import { removeDocumentSegments, saveDocumentSegments } from "@/domain/documents
 import { canHaveThumbnail, createThumbnail } from "@/lib/thumbnail";
 import type {
   DocumentListItem,
+  DocumentSummary,
   DocumentMetadataInput,
   TextNoteInput,
 } from "@/domain/documents/types";
@@ -69,6 +70,10 @@ export interface UploadOptions {
 
 const DOCUMENT_COLUMNS =
   "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, encrypted_ai_synthesis, ai_synthesis_generated_at, encrypted_content_analysis, analysis_status, analysis_updated_at, created_at";
+
+/** Come DOCUMENT_COLUMNS, senza testo letto, trascrizione, sintesi e analisi: v. DocumentSummary. */
+const DOCUMENT_SUMMARY_COLUMNS =
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, ai_synthesis_generated_at, analysis_status, analysis_updated_at, created_at";
 
 type DocumentRow = {
   id: string;
@@ -226,6 +231,51 @@ async function toDocumentListItem(
   };
 }
 
+type DocumentSummaryRow = Omit<
+  DocumentRow,
+  "encrypted_transcript" | "encrypted_extracted_text" | "encrypted_ai_synthesis" | "encrypted_content_analysis"
+>;
+
+async function toDocumentSummary(
+  masterKey: CryptoKey,
+  row: DocumentSummaryRow,
+  dossierIds: string[],
+): Promise<DocumentSummary> {
+  const [filenameBytes, notes, tags, issuer, structuredFields] = await Promise.all([
+    decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
+    decryptOptionalText(masterKey, row.encrypted_notes),
+    decryptTags(masterKey, row.encrypted_tags),
+    decryptOptionalText(masterKey, row.encrypted_issuer),
+    decryptStructuredFields(masterKey, row.encrypted_structured_fields),
+  ]);
+
+  return {
+    id: row.id,
+    filename: bytesToUtf8(filenameBytes),
+    mimeType: row.mime_type,
+    size: row.size,
+    categoryId: row.category_id,
+    relatedAssetId: row.related_asset_id,
+    dossierIds,
+    createdAt: row.created_at,
+    storagePath: row.storage_path,
+    wrappedDocumentKey: row.wrapped_document_key,
+    expiresAt: row.expires_at,
+    notes,
+    tags,
+    issuer,
+    extractedAt: row.extracted_at,
+    hasThumbnail: row.has_thumbnail,
+    deletedAt: row.deleted_at,
+    purgeAt: row.purge_at,
+    aiExtractionExcluded: row.ai_extraction_excluded,
+    structuredFields,
+    aiSynthesisGeneratedAt: row.ai_synthesis_generated_at,
+    analysisStatus: isAnalysisStatus(row.analysis_status) ? row.analysis_status : null,
+    analysisUpdatedAt: row.analysis_updated_at,
+  };
+}
+
 /** null in -> null out: nessuna miniatura da cifrare. */
 async function encryptThumbnail(masterKey: CryptoKey, thumbnail: Blob | null): Promise<string | null> {
   if (!thumbnail) return null;
@@ -255,6 +305,33 @@ export async function listDocuments(
   const rows = data ?? [];
   return Promise.all(
     rows.map((row) => toDocumentListItem(masterKey, row, dossierIdsByDocument.get(row.id) ?? [])),
+  );
+}
+
+/**
+ * Come `listDocuments`, ma senza scaricare né decifrare testo letto, trascrizione, sintesi e analisi di ogni
+ * documento: per gli elenchi, i conteggi e i selettori che non li mostrano. Un documento nel Cestino non compare.
+ */
+export async function listDocumentSummaries(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+): Promise<DocumentSummary[]> {
+  const [{ data, error }, dossierIdsByDocument] = await Promise.all([
+    supabase
+      .from("documents")
+      .select(DOCUMENT_SUMMARY_COLUMNS)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
+    listAllDossierLinks(supabase),
+  ]);
+
+  if (error) {
+    throw new Error(`Impossibile caricare i documenti: ${error.message}`);
+  }
+
+  const rows = (data ?? []) as unknown as DocumentSummaryRow[];
+  return Promise.all(
+    rows.map((row) => toDocumentSummary(masterKey, row, dossierIdsByDocument.get(row.id) ?? [])),
   );
 }
 
@@ -701,7 +778,7 @@ export async function downloadThumbnail(
 export async function downloadDocument(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
-  doc: DocumentListItem,
+  doc: Pick<DocumentSummary, "storagePath" | "wrappedDocumentKey" | "filename" | "mimeType">,
 ): Promise<{ filename: string; mimeType: string; bytes: Uint8Array }> {
   const serializedPayload = await downloadEncryptedPayload(supabase, doc.storagePath);
 
@@ -715,15 +792,29 @@ export async function downloadDocument(
 }
 
 /** FASE 17b: contenuti pre-estrazione (extractedAt null, tipo leggibile) --- gli unici senza ricerca dentro il file. */
-export function documentsAwaitingExtraction(documents: DocumentListItem[]): DocumentListItem[] {
+export function documentsAwaitingExtraction<T extends Pick<DocumentSummary, "extractedAt" | "mimeType">>(
+  documents: T[],
+): T[] {
   return documents.filter((doc) => doc.extractedAt === null && canExtractText(doc.mimeType));
+}
+
+async function readStoredExtractedText(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  id: string,
+): Promise<string> {
+  const { data } = await supabase.from("documents").select("encrypted_extracted_text").eq("id", id).maybeSingle();
+  return decryptOptionalText(masterKey, data?.encrypted_extracted_text ?? null);
 }
 
 /** Rilegge un contenuto già archiviato. Marca `extracted_at` anche a vuoto, per distinguere "letto, senza testo" da "mai letto". */
 export async function extractTextForExistingDocument(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
-  doc: DocumentListItem,
+  doc: Pick<
+    DocumentSummary,
+    "id" | "storagePath" | "wrappedDocumentKey" | "filename" | "mimeType" | "hasThumbnail" | "extractedAt"
+  > & { extractedText?: string },
   onProgress?: (fraction: number) => void,
 ): Promise<{ foundText: boolean }> {
   const { bytes } = await downloadDocument(supabase, masterKey, doc);
@@ -744,7 +835,11 @@ export async function extractTextForExistingDocument(
   };
 
   // Una lettura di Hinthia riguarda il testo di allora: se il testo cambia non vale più, e non va mostrata come attuale.
-  if ((text ?? "") !== doc.extractedText) {
+  // Chi chiama con un elenco leggero non ha il testo di prima: si rilegge solo se serve (mai letto = nessun testo né analisi).
+  const previousText =
+    doc.extractedText ??
+    (doc.extractedAt === null ? "" : await readStoredExtractedText(supabase, masterKey, doc.id));
+  if ((text ?? "") !== previousText) {
     update.encrypted_content_analysis = null;
     update.analysis_status = null;
     update.analysis_updated_at = null;

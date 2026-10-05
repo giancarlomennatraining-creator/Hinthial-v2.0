@@ -4,7 +4,7 @@ import { useState } from "react";
 import { sortAlphabetically } from "@/lib/utils";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import type { Category } from "@/domain/categories/types";
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentSummary } from "@/domain/documents/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
 
 /**
@@ -23,10 +23,10 @@ export function DocumentAttachmentPicker({
 }: {
   idPrefix: string;
   categories: Category[];
-  documents: DocumentListItem[];
+  documents: DocumentSummary[];
   dossiers?: DossierListItem[];
-  selected: DocumentListItem[];
-  onChange: (next: DocumentListItem[]) => void;
+  selected: DocumentSummary[];
+  onChange: (next: DocumentSummary[]) => void;
 }) {
   const [categoryId, setCategoryId] = useState("");
   const [documentId, setDocumentId] = useState("");

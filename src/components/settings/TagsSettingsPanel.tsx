@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/db/supabase/client";
-import { listDocuments, updateDocumentMetadata } from "@/domain/documents/repository";
+import { listDocumentSummaries, updateDocumentMetadata } from "@/domain/documents/repository";
 import { aggregateTags, listIncludesTag, removeTagFromList, renameTagInList } from "@/domain/documents/tags";
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentSummary } from "@/domain/documents/types";
 
 /**
  * A differenza di CategoriesPanel, qui non c'è nulla da creare: un tag è solo "qualcosa che uno o più documenti
@@ -15,7 +15,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
 export function TagsSettingsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
 
-  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
+  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyTag, setBusyTag] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export function TagsSettingsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      setDocuments(await listDocuments(supabase, masterKey));
+      setDocuments(await listDocumentSummaries(supabase, masterKey));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare i tag.");
     } finally {

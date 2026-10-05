@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/db/supabase/client";
-import { buildAIContext } from "@/domain/ai/context";
+import { buildSummaryContext } from "@/domain/ai/context";
 import { DashboardCounters } from "@/components/dashboard/DashboardCounters";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
-import type { AIContext } from "@/domain/ai/types";
+import type { SummaryContext } from "@/domain/ai/types";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -19,20 +19,20 @@ function formatDate(iso: string): string {
 /**
  * Il corpo della dashboard: contatori per sezione, prossime scadenze, aggiunti di recente ed elementi da completare.
  * Niente checklist "Onboarding" qui: resta consultabile dal gadget persistente in barra laterale (v.
- * OnboardingStatus). Tutto derivato da un unico AIContext (v. domain/ai/context.ts), lo stesso snapshot già
+ * OnboardingStatus). Tutto derivato da un unico SummaryContext (v. domain/ai/context.ts), lo stesso snapshot già
  * decifrato di Assistente AI e ricerca globale, costruito una sola volta invece che con una query per widget.
  */
 export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useRef(createClient()).current;
 
-  const [context, setContext] = useState<AIContext | null>(null);
+  const [context, setContext] = useState<SummaryContext | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const built = await buildAIContext(supabase, masterKey);
+      const built = await buildSummaryContext(supabase, masterKey);
       setContext(built);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare la dashboard.");

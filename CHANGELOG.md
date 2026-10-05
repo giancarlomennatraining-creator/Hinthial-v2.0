@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-05 (41)
+
+### Elenchi più leggeri, contesto condiviso e test più affidabili
+
+**Cosa fa:**
+- **Elenchi più leggeri.** Archivio, beni, capsule, fascicoli, scadenze, tag e dashboard non scaricano più né decifrano il testo letto, la trascrizione, la sintesi e l'analisi di Hinthia di **tutti** i documenti: con 4 documenti i dati trasferiti per pagina passano da circa 25-31 KB a circa 1 KB, e il risparmio cresce con l'archivio. La trascrizione di un audio si legge solo quando la apri.
+- **Barra laterale e dashboard** non ricostruiscono più ciascuna per conto proprio tutto l'archivio all'apertura: se la chiedono nello stesso momento, si fa una sola lettura.
+- **La creazione di un contenuto** rilegge solo il documento appena salvato e non più tutto l'archivio.
+- Il **reset della password con un codice di backup** ha ora un test e2e (e si verifica che il codice sia monouso).
+
+**Note tecniche:** nuovo tipo `DocumentSummary` (senza `transcript`, `extractedText`, `aiSynthesis`, `contentAnalysis`) e `listDocumentSummaries`; chi ha bisogno del contenuto usa `listDocuments`/`getDocumentById` (ricerca, risposte, cronologia dei fascicoli, importazione multipla, esportazione). `buildSummaryContext` per dashboard e avanzamento; `buildAIContext` e `buildSummaryContext` condividono la lettura in corso (`shareWhileLoading`) ma non fanno cache, così un elemento nuovo si vede alla richiesta successiva. `extractTextForExistingDocument` rilegge il testo precedente da sola solo se serve a decidere se l'analisi di Hinthia resta valida. **Test:** i due test di eredità digitale simulano l'invio delle email (prima il controllo scorreva tutti gli utenti del database condiviso e provava a scrivere email vere) e il test dei guardiani verifica a chi verrebbe inviata la richiesta; `import-export` e `archive-proposals` non dipendono più dal menu utente né dalla velocità della lettura. Nessuna migrazione.
+
+---
+
 ## 2026-10-03 (40)
 
 ### Più veloce: meno chiamate in fila al database

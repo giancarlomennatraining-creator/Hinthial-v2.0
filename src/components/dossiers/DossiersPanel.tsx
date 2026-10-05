@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import { deleteDossier, listDossiers } from "@/domain/dossiers/repository";
-import { listDocuments } from "@/domain/documents/repository";
+import { listDocumentSummaries } from "@/domain/documents/repository";
 import { formatDate } from "@/lib/format";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -21,7 +21,7 @@ import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { DossierListItem, DossierStatus } from "@/domain/dossiers/types";
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentSummary } from "@/domain/documents/types";
 
 type SortColumn = "title" | "status" | "documents" | "createdAt";
 
@@ -40,7 +40,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const showToast = useToast();
 
   const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
-  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
+  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -65,7 +65,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
     try {
       const [dossiersResult, documentsResult] = await Promise.all([
         listDossiers(supabase, masterKey),
-        listDocuments(supabase, masterKey),
+        listDocumentSummaries(supabase, masterKey),
       ]);
       setDossiers(dossiersResult);
       setDocuments(documentsResult);
@@ -107,7 +107,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  function documentsFor(dossier: DossierListItem): DocumentListItem[] {
+  function documentsFor(dossier: DossierListItem): DocumentSummary[] {
     return documents.filter((doc) => doc.dossierIds.includes(dossier.id));
   }
 

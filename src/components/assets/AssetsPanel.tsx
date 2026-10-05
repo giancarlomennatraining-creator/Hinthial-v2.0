@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import { deleteAsset, listAssets } from "@/domain/assets/repository";
-import { listDocuments } from "@/domain/documents/repository";
+import { listDocumentSummaries } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { listReminders } from "@/domain/reminders/repository";
 import { sortAlphabetically } from "@/lib/utils";
@@ -21,7 +21,7 @@ import { useListViewPreferences } from "@/components/layout/ListViewPreferencesP
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import type { AssetListItem } from "@/domain/assets/types";
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentSummary } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -44,7 +44,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
-  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
+  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [reminders, setReminders] = useState<ReminderListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +74,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
         await Promise.all([
           listCategories(supabase),
           listAssets(supabase, masterKey),
-          listDocuments(supabase, masterKey),
+          listDocumentSummaries(supabase, masterKey),
           listReminders(supabase, masterKey),
         ]);
       setCategories(categoriesResult);

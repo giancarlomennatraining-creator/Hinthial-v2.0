@@ -11,7 +11,8 @@ import {
   downloadDocument,
   logDocumentDownloaded,
   extractTextForExistingDocument,
-  listDocuments,
+  getDocumentById,
+  listDocumentSummaries,
   moveDocumentsToTrash,
   updateDocumentMetadata,
   updateDocumentTranscript,
@@ -24,7 +25,7 @@ import { listCategories } from "@/domain/categories/repository";
 import { listDossiers, replaceDocumentDossierLinks } from "@/domain/dossiers/repository";
 import { contentKindFor, hasInlinePlayer, isTranscribable } from "@/lib/content-kind";
 import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentSummary } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
@@ -74,7 +75,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
   const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
-  const [documents, setDocuments] = useState<DocumentListItem[]>([]);
+  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
@@ -141,7 +142,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
         listCategories(supabase),
         listAssets(supabase, masterKey),
         listDossiers(supabase, masterKey),
-        listDocuments(supabase, masterKey),
+        listDocumentSummaries(supabase, masterKey),
         userId ? getTrashRetentionDays(supabase, userId) : Promise.resolve(null),
       ]);
       setCategories(categoriesResult);
@@ -181,7 +182,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [addMenuOpen]);
 
-  async function handleOpen(doc: DocumentListItem) {
+  async function handleOpen(doc: DocumentSummary) {
     setBusyDocId(doc.id);
     setError(null);
     try {
@@ -195,7 +196,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  async function togglePlayer(doc: DocumentListItem) {
+  async function togglePlayer(doc: DocumentSummary) {
     if (playingId === doc.id) {
       if (playerUrl) URL.revokeObjectURL(playerUrl);
       setPlayingId(null);
@@ -220,7 +221,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  async function toggleNote(doc: DocumentListItem) {
+  async function toggleNote(doc: DocumentSummary) {
     if (openNoteId === doc.id) {
       setOpenNoteId(null);
       return;
@@ -240,7 +241,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  async function saveNote(doc: DocumentListItem) {
+  async function saveNote(doc: DocumentSummary) {
     if (!noteDraft.title.trim()) {
       setError("Inserisci un titolo per la nota.");
       return;
@@ -267,17 +268,24 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  function toggleTranscript(doc: DocumentListItem) {
+  // La trascrizione non sta nell'elenco (pesa): si legge dal documento solo quando la si apre.
+  async function toggleTranscript(doc: DocumentSummary) {
     if (transcribingId === doc.id) {
       setTranscribingId(null);
       return;
     }
+    try {
+      const full = await getDocumentById(supabase, masterKey, doc.id);
+      setTranscriptDraft(full?.transcript ?? "");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile aprire la trascrizione.");
+      return;
+    }
     setTranscribingId(doc.id);
-    setTranscriptDraft(doc.transcript);
     setTranscriptAutoMessage(null);
   }
 
-  async function handleAutoTranscribe(doc: DocumentListItem) {
+  async function handleAutoTranscribe(doc: DocumentSummary) {
     setTranscriptAutoMessage(null);
     setTranscriptAutoBusy(true);
     setError(null);
@@ -298,7 +306,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  async function saveTranscript(doc: DocumentListItem) {
+  async function saveTranscript(doc: DocumentSummary) {
     setTranscriptSaving(true);
     setError(null);
     try {
@@ -314,7 +322,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   /** L'eliminazione sposta nel Cestino, non elimina più per sempre: farlo su più documenti insieme moltiplica il rischio di un clic distratto. */
-  async function handleDelete(doc: DocumentListItem) {
+  async function handleDelete(doc: DocumentSummary) {
     if (
       !window.confirm(
         `Spostare "${doc.filename}" nel cestino? Potrai ripristinarlo entro ${trashRetentionDays} giorni, da Archivio → Cestino.`,
@@ -473,15 +481,15 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  function categoryFor(doc: DocumentListItem): Category | undefined {
+  function categoryFor(doc: DocumentSummary): Category | undefined {
     return categories.find((c) => c.id === doc.categoryId);
   }
 
-  function assetFor(doc: DocumentListItem): AssetListItem | undefined {
+  function assetFor(doc: DocumentSummary): AssetListItem | undefined {
     return assets.find((a) => a.id === doc.relatedAssetId);
   }
 
-  function sortValueFor(doc: DocumentListItem, column: SortColumn): string {
+  function sortValueFor(doc: DocumentSummary, column: SortColumn): string {
     switch (column) {
       case "name":
         return doc.filename;
