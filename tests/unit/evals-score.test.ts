@@ -64,7 +64,7 @@ describe("scoreDocument", () => {
   });
 
   it("conta i dati mancanti, sbagliati e in più, e gli eventi su date da non ricordare", () => {
-    const score = scoreDocument(GOLD, {
+    const score = scoreDocument({ ...GOLD, notEvents: ["2027-01-01"] }, {
       ...PERFECT,
       documentType: "contratto",
       expiry: ["2027-03-15"],
@@ -74,7 +74,7 @@ describe("scoreDocument", () => {
         { key: "numero_polizza", value: "999" },
         { key: "targa", value: "GH482XP" },
       ],
-      events: ["2026-03-10"],
+      events: ["2027-01-01"],
       everything: ["scadenza 2099-12-31"],
     });
     expect(score.typeOk).toBe(false);
@@ -84,6 +84,11 @@ describe("scoreDocument", () => {
     expect(score.fields).toEqual({ tp: 0, valueOtherKey: 0, wrongValue: 1, extra: 1, gold: 2 });
     expect(score.events).toMatchObject({ tp: 0, fp: 1, fn: 1, falseEvents: 1 });
     expect(score.forbiddenHits).toEqual(["2099-12-31"]);
+  });
+
+  it("non conta gli eventi passati: l'app non li propone", () => {
+    const score = scoreDocument(GOLD, { ...PERFECT, events: ["2027-04-01", "2025-09-15"] });
+    expect(score.events).toMatchObject({ tp: 1, fp: 0, fn: 0, falseEvents: 0 });
   });
 
   it("distingue un valore trovato con un'altra chiave da uno non trovato", () => {

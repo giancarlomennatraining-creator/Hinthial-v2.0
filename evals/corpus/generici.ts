@@ -52,14 +52,14 @@ Ricorso: entro 60 giorni dalla notifica al Prefetto o entro 30 giorni al Giudice
     ],
     gold: {
       type: "generico",
-      expiry: [],
+      expiry: ["2026-11-09"],
       issuer: "Comune di Torre del Greco",
       category: ["Veicoli", "Fiscale", "Personale", "Altro"],
       fields: {},
       events: ["2026-11-09", "2026-10-10"],
       notEvents: ["2026-08-02", "2026-09-10"],
     },
-    note: "Due termini espliciti da ricordare; le date della violazione e della notifica sono passate.",
+    note: "Il termine di pagamento è scadenza e evento, il termine di ricorso solo evento; le date della violazione e della notifica sono passate.",
   },
   {
     id: "ape-attestato",

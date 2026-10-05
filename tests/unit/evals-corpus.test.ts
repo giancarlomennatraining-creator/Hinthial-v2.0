@@ -32,12 +32,10 @@ describe("corpus di prova", () => {
         }
       });
 
-      it("gli eventi sono futuri e distinti da scadenze e date da non ricordare", () => {
+      it("gli eventi sono futuri e distinti dalle date da non ricordare", () => {
         for (const date of gold.events) expect(date > TODAY, `evento ${date} non futuro`).toBe(true);
-        for (const date of gold.events) {
-          expect(gold.expiry).not.toContain(date);
-          expect(gold.notEvents).not.toContain(date);
-        }
+        // Una scadenza di pagamento vale sia come scadenza del documento sia come evento: le due liste possono coincidere.
+        for (const date of gold.events) expect(gold.notEvents).not.toContain(date);
         for (const date of gold.expiry) expect(gold.notEvents).not.toContain(date);
       });
 

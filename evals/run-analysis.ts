@@ -1,7 +1,7 @@
 import { prepareAnalysis } from "@/domain/ai/analysis/blocks";
 import { mergeBlocks } from "@/domain/ai/analysis/merge";
 import { isAnalysisDocumentType, resolveAnalysisSchema, type AnalysisDocumentType } from "@/domain/ai/analysis/schemas";
-import type { AnalysisProvider } from "@/domain/ai/analysis/types";
+import type { AnalysisProvider, RawBlockAnalysis } from "@/domain/ai/analysis/types";
 import { validateBlock, type ValidatedBlock } from "@/domain/ai/analysis/validate";
 import type { ContentSegment } from "@/domain/extraction/types";
 import type { Prediction } from "./score";
@@ -21,8 +21,20 @@ export const EVAL_CATEGORIES = [
   "Altro",
 ].map((name) => ({ id: `cat-${name.toLowerCase()}`, name }));
 
+/** Quante letture il motore ha dato e la validazione ha scartato (citazione non trovata, valore incoerente...). */
+export interface Discarded {
+  expiry: number;
+  issuer: number;
+  category: number;
+  fields: number;
+  events: number;
+}
+
 export interface AnalysisRun {
   prediction: Prediction;
+  discarded: Discarded;
+  /** L'uscita grezza del motore per blocco, prima della validazione: per capire se un dato mancante è colpa del motore o della verifica. */
+  raw: RawBlockAnalysis[];
   calls: number;
   ms: number;
   /** Caratteri di testo spediti al motore, in tutti i blocchi. */
@@ -46,13 +58,22 @@ export async function runAnalysis(document: EvalDocument, provider: AnalysisProv
   let calls = 0;
   let charsSent = 0;
   const blocks: ValidatedBlock[] = [];
+  const raws: RawBlockAnalysis[] = [];
+  const discarded: Discarded = { expiry: 0, issuer: 0, category: 0, fields: 0, events: 0 };
 
   for (const block of prepared.blocks) {
     calls += 1;
     charsSent += block.text.length;
     const raw = await provider.analyzeBlock({ block, categories: EVAL_CATEGORIES, vocabulary: [], documentType });
     documentType ??= isAnalysisDocumentType(raw.documentType) ? raw.documentType : "generico";
-    blocks.push(validateBlock(raw, prepared.segments, EVAL_CATEGORIES, resolveAnalysisSchema(documentType)));
+    const validated = validateBlock(raw, prepared.segments, EVAL_CATEGORIES, resolveAnalysisSchema(documentType));
+    blocks.push(validated);
+    raws.push(raw);
+    discarded.expiry += raw.expiry.length - validated.expiry.length;
+    discarded.issuer += raw.issuer.length - validated.issuer.length;
+    discarded.category += (raw.category ? 1 : 0) - (validated.category ? 1 : 0);
+    discarded.fields += raw.fields.length - validated.fields.length;
+    discarded.events += raw.events.length - validated.events.length;
   }
 
   const merged = mergeBlocks(blocks);
@@ -74,5 +95,5 @@ export async function runAnalysis(document: EvalDocument, provider: AnalysisProv
     ],
   };
 
-  return { prediction, calls, ms: Date.now() - started, charsSent };
+  return { prediction, discarded, raw: raws, calls, ms: Date.now() - started, charsSent };
 }

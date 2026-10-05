@@ -26,7 +26,6 @@ Emessa a Napoli il 10/03/2026`,
       category: ["Assicurazioni", "Veicoli"],
       fields: {
         numero_polizza: "400/88231907",
-        compagnia: "Generali Italia",
         data_decorrenza: "2026-03-14",
         premio: "612,40",
         massimale: "6.070.000,00",

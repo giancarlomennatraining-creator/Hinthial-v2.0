@@ -13,6 +13,9 @@ export interface Prediction {
   everything: string[];
 }
 
+/** La data di riferimento del corpus: gli eventi passati non si propongono (come fa l'app, v. buildAIProposals), quindi non si contano. */
+export const EVAL_TODAY = "2026-10-05";
+
 export interface Counts {
   tp: number;
   fp: number;
@@ -128,8 +131,9 @@ export function scoreDocument(gold: EvalGold, prediction: Prediction): DocScore 
     if (prediction.fields.some((f) => f.key !== key && valuesMatch(valueType, expectedValue, f.value))) valueOtherKey += 1;
   }
 
-  const events = setCounts(gold.events, prediction.events);
-  const falseEvents = prediction.events.filter((date) => gold.notEvents.includes(date)).length;
+  const futureEvents = prediction.events.filter((date) => date >= EVAL_TODAY);
+  const events = setCounts(gold.events, futureEvents);
+  const falseEvents = futureEvents.filter((date) => gold.notEvents.includes(date)).length;
 
   const haystack = prediction.everything.map((value) => value.toLowerCase());
   const forbiddenHits = (gold.forbidden ?? []).filter((forbidden) =>

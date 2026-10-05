@@ -2,9 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, it } from "vitest";
 import { CORPUS } from "./corpus";
+import { diagnoseDocument, formatDiagnosis } from "./diagnose";
+import { EVAL_CATEGORIES } from "./run-analysis";
 import { createEvalProvider } from "./providers";
 import { formatReport, type DocResult } from "./report";
 import { runAnalysis } from "./run-analysis";
+import type { RawBlockAnalysis } from "@/domain/ai/analysis/types";
 import { scoreDocument } from "./score";
 
 /**
@@ -32,7 +35,17 @@ describe(`misura della lettura (${PROVIDER})`, () => {
           const old = saved.results.find((r) => r.id === document.id);
           return old ? [{ ...old, type: document.gold.type, score: scoreDocument(document.gold, old.prediction) }] : [];
         });
-        const report = formatReport(`${saved.provider} (rivalutato da ${path.basename(FROM)})`, documents, rescored);
+        let report = formatReport(`${saved.provider} (rivalutato da ${path.basename(FROM)})`, documents, rescored);
+        if (process.env.EVAL_DIAGNOSE) {
+          // Perché la validazione scarta le letture del motore: serve l'uscita grezza, salvata dalle misure recenti.
+          const discarded = documents.flatMap((document) => {
+            const result = saved.results.find((r) => r.id === document.id) as (DocResult & { raw?: RawBlockAnalysis[] }) | undefined;
+            return result?.raw
+              ? diagnoseDocument(document, result.raw, EVAL_CATEGORIES.map((c) => c.id), result.prediction.documentType)
+              : [];
+          });
+          report += `\n\n${formatDiagnosis(discarded)}`;
+        }
         process.stdout.write(`
 ${report}
 
@@ -60,7 +73,9 @@ ${report}
               calls: run.calls,
               ms: run.ms,
               charsSent: run.charsSent,
-            };
+              discarded: run.discarded,
+              raw: run.raw,
+            } as DocResult & { raw: unknown };
           } catch (error) {
             // Un documento che fallisce conta come "non ha trovato niente", e l'errore resta nel rapporto.
             const empty = { documentType: "generico", expiry: [], issuers: [], categoryName: null, fields: [], events: [], everything: [] };

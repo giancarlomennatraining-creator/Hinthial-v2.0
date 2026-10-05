@@ -58,10 +58,10 @@ Scadenza di pagamento: 03/11/2026
     ],
     gold: {
       type: "bolletta",
-      expiry: [],
+      expiry: ["2026-11-03"],
       issuer: "Acque del Sud",
       category: ["Casa"],
-      fields: { fornitore: "Acque del Sud", numero_fattura: "2026-AS-300871", importo_totale: "58,20", data_scadenza_pagamento: "2026-11-03", codice_fornitura: "U-8800123" },
+      fields: { numero_fattura: "2026-AS-300871", importo_totale: "58,20", codice_fornitura: "U-8800123" },
       events: ["2026-11-03"],
       notEvents: ["2026-10-03"],
       forbidden: ["0,01"],

@@ -1,4 +1,5 @@
-import { summarize, valuesMatch, type DocScore, type Prediction, type Summary } from "./score";
+import { EVAL_TODAY, summarize, valuesMatch, type DocScore, type Prediction, type Summary } from "./score";
+import type { Discarded } from "./run-analysis";
 import { resolveAnalysisSchema } from "@/domain/ai/analysis/schemas";
 import type { EvalDocument } from "./types";
 
@@ -11,6 +12,8 @@ export interface DocResult {
   calls: number;
   ms: number;
   charsSent: number;
+  /** Letture del motore scartate dalla validazione (assente nelle misure salvate prima di questo conteggio). */
+  discarded?: Discarded;
   error?: string;
 }
 
@@ -40,11 +43,14 @@ export function problemsOf(document: EvalDocument, result: DocResult): string[] 
     const other = prediction.fields.find((f) => valuesMatch(valueType, value, f.value));
     problems.push(other ? `campo ${key} (${value}): c'è, ma con la chiave "${other.key}"` : `campo mancante: ${key} (${value})`);
   }
-  for (const date of gold.events.filter((d) => !prediction.events.includes(d))) problems.push(`evento mancante: ${date}`);
-  for (const date of prediction.events.filter((d) => !gold.events.includes(d))) {
+  const futureEvents = prediction.events.filter((d) => d >= EVAL_TODAY);
+  for (const date of gold.events.filter((d) => !futureEvents.includes(d))) problems.push(`evento mancante: ${date}`);
+  for (const date of futureEvents.filter((d) => !gold.events.includes(d))) {
     problems.push(gold.notEvents.includes(date) ? `evento sbagliato (data da non ricordare): ${date}` : `evento in più: ${date}`);
   }
   for (const hit of score.forbiddenHits) problems.push(`VALORE VIETATO presente: ${hit}`);
+  const lost = Object.entries(result.discarded ?? {}).filter(([, n]) => n > 0);
+  if (lost.length > 0) problems.push(`scartato dalla validazione: ${lost.map(([what, n]) => `${what} ${n}`).join(", ")}`);
   if (result.error) problems.push(`errore: ${result.error}`);
   return problems;
 }
@@ -80,6 +86,14 @@ export function formatReport(provider: string, documents: EvalDocument[], result
   const ms = results.reduce((n, r) => n + r.ms, 0);
   const chars = results.reduce((n, r) => n + r.charsSent, 0);
   lines.push("", `Richieste: ${calls} - testo inviato: ${chars.toLocaleString("it-IT")} caratteri - tempo medio per documento: ${(ms / Math.max(results.length, 1) / 1000).toFixed(1)} s`);
+  const discardedTotal = results.reduce(
+    (acc, r) => {
+      for (const key of Object.keys(acc) as (keyof Discarded)[]) acc[key] += r.discarded?.[key] ?? 0;
+      return acc;
+    },
+    { expiry: 0, issuer: 0, category: 0, fields: 0, events: 0 } as Discarded,
+  );
+  lines.push(`Letture scartate dalla validazione (citazione non trovata o valore incoerente): scadenze ${discardedTotal.expiry}, emittenti ${discardedTotal.issuer}, categorie ${discardedTotal.category}, campi ${discardedTotal.fields}, eventi ${discardedTotal.events}`);
   lines.push("Legenda: P = precisione, R = completezza; ev.X = eventi dati su date che non andavano ricordate; vie. = valori vietati comparsi.");
 
   const withProblems = results.map((r) => ({ r, problems: problemsOf(byId.get(r.id) as EvalDocument, r) })).filter((x) => x.problems.length > 0);
