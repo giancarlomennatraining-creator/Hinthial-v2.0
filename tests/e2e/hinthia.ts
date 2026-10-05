@@ -99,7 +99,9 @@ export async function mockHinthiaReading(page: Page, { fields = false, category 
     }
     const insurance = request.categories?.find((c) => /assicur/i.test(c.name));
     const result = {
-      documentType: "polizza",
+      // Con un tipo noto l'app propone da sola la categoria che gli corrisponde (v. category-defaults.ts): per i test che
+      // vogliono "nessuna categoria" il tipo è generico.
+      documentType: category ? "polizza" : "generico",
       expiry: [{ value: "2027-06-03", segmentId: "p1", quote: "Valida fino al 3 giugno 2027" }],
       issuer: [{ value: "GENERALI ITALIA S.p.A.", segmentId: "p1", quote: "GENERALI ITALIA S.p.A." }],
       category:

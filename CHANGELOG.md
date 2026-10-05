@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-05 (47)
+
+### La categoria si ricava anche dal tipo di documento
+
+**Cosa cambia:** se Hinthia legge un documento e non propone una categoria, la scheda ne propone una in base al **tipo riconosciuto**: una polizza va in "Assicurazioni", una bolletta in "Casa", un contratto in "Contratti", un referto in "Salute", una fattura in "Fiscale", un estratto conto in "Finanze". La proposta è segnata come **"calcolata da Hinthial"** e dice "Dal tipo di documento: Bolletta", perché non c'è una frase del documento che la provi; la accetti o la rifiuti come le altre. Funziona **anche sulle letture già salvate**, senza rileggere.
+
+**Dove non propone niente:** verbali, certificati e documenti generici (una stessa categoria non va bene a tutti: un certificato può essere di residenza, di prestazione energetica o di idoneità), e se hai rinominato o eliminato la categoria corrispondente (il nome si cerca tra le tue, senza badare alle maiuscole). Se il documento ha già una categoria, non si propone nulla.
+
+**Misura su 34 documenti inventati:** categoria 94% in entrambe le prove (prima 68% e 91%, a seconda della prova): ora il risultato non dipende più dall'umore del modello.
+
+**Note tecniche:** `category-defaults.ts` (tabella tipo -> nome della categoria e `defaultCategoryFor`), applicato in `extractedFieldsFrom` con `derived: true`; la misura (`evals/run-analysis.ts`) applica lo stesso ripiego. La tabella è fissa: renderla modificabile dalle Impostazioni è il passo successivo. Nessuna migrazione.
+
+---
+
 ## 2026-10-05 (46)
 
 ### Tre tipi di documento in più: verbali, certificati ed estratti conto

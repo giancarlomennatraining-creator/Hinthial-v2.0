@@ -11,6 +11,8 @@ export interface Provenance {
 }
 
 export interface ValidatedEvidence {
+  /** Vero se non è letto nel testo ma ricavato (la categoria dal tipo del documento): non ha una citazione. */
+  derived?: boolean;
   value: string;
   /** La citazione, verificata nel segmento indicato. */
   source: string;

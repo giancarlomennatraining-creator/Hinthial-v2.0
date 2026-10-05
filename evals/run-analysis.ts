@@ -1,4 +1,5 @@
 import { prepareAnalysis } from "@/domain/ai/analysis/blocks";
+import { defaultCategoryFor } from "@/domain/ai/analysis/category-defaults";
 import { mergeBlocks } from "@/domain/ai/analysis/merge";
 import { isAnalysisDocumentType, resolveAnalysisSchema, type AnalysisDocumentType } from "@/domain/ai/analysis/schemas";
 import type { AnalysisProvider, RawBlockAnalysis } from "@/domain/ai/analysis/types";
@@ -77,7 +78,10 @@ export async function runAnalysis(document: EvalDocument, provider: AnalysisProv
   }
 
   const merged = mergeBlocks(blocks);
-  const category = merged.category ? EVAL_CATEGORIES.find((c) => c.id === merged.category?.value) : undefined;
+  // Come in produzione (extractedFieldsFrom): senza una categoria dal motore, quella che di norma va con il tipo.
+  const category = merged.category
+    ? EVAL_CATEGORIES.find((c) => c.id === merged.category?.value)
+    : defaultCategoryFor(documentType, EVAL_CATEGORIES);
 
   const prediction: Prediction = {
     documentType: documentType ?? "generico",

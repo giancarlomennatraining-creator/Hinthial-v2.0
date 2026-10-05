@@ -184,7 +184,9 @@ describe("analyzeDocumentWithClaude", () => {
     );
 
     const fields = await analyzeDocumentWithClaude(doc(), CATEGORIES, "category");
-    expect(fields.category).toBeNull();
+    // Quella inventata non passa; può esserci solo quella dedotta dal tipo del documento (v. category-defaults.ts).
+    expect(fields.category?.value).not.toBe("cat-inventata");
+    if (fields.category) expect(fields.category.derived).toBe(true);
   });
 
   it("nessuna sintesi (null) resta null, non stringa vuota inventata", async () => {

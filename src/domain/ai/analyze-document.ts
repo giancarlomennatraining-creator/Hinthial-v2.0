@@ -4,6 +4,7 @@ import type { ContentSegment } from "@/domain/extraction/types";
 import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
 import { contentFingerprint } from "@/lib/crypto/fingerprint";
 import { prepareAnalysis, type PreparedAnalysis } from "@/domain/ai/analysis/blocks";
+import { defaultCategoryFor } from "@/domain/ai/analysis/category-defaults";
 import { mergeBlocks } from "@/domain/ai/analysis/merge";
 import {
   statusOf,
@@ -157,10 +158,26 @@ export async function inspectSavedAnalysis(
 }
 
 /** I candidati di una lettura salvata, nella forma che la scheda sa già mostrare come proposte. */
-export function extractedFieldsFrom(analysis: PersistedContentAnalysis, categories: { id: string }[]): AIExtractedFields {
+export function extractedFieldsFrom(
+  analysis: PersistedContentAnalysis,
+  categories: { id: string; name?: string }[],
+): AIExtractedFields {
   const merged = mergeBlocks(analysis.blocks);
   // Una categoria eliminata dopo la lettura non è più una proposta sensata.
-  const category = merged.category && categories.some((c) => c.id === merged.category?.value) ? merged.category : null;
+  let category = merged.category && categories.some((c) => c.id === merged.category?.value) ? merged.category : null;
+
+  // Se il motore non ha proposto una categoria, quella che di norma va con il tipo del documento (v. category-defaults.ts).
+  if (!category) {
+    const byType = defaultCategoryFor(analysis.documentType, categories);
+    if (byType) {
+      category = {
+        derived: true,
+        value: byType.id,
+        source: `Dal tipo di documento: ${resolveAnalysisSchema(analysis.documentType).label}`,
+        provenance: { segmentId: "tipo-documento", page: null },
+      };
+    }
+  }
   return {
     expiry: merged.expiry,
     issuer: merged.issuer,
@@ -388,6 +405,7 @@ export function buildAIProposals(
       source: fields.category.source,
       ...pageOf(fields.category),
       aiGenerated: true,
+      ...(fields.category.derived ? { derived: true } : {}),
     });
   }
 
