@@ -14,8 +14,11 @@
  * throwaway, cancellati alla fine.
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { runDigitalLegacyCheck } from "@/domain/digital-legacy/automation";
+
+// Niente email vere: il controllo scorre tutti gli utenti del database condiviso, anche quelli veri.
+vi.mock("@/lib/email/send-email", () => ({ sendEmail: vi.fn().mockResolvedValue(undefined) }));
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

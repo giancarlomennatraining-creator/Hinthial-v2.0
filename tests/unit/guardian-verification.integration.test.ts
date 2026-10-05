@@ -7,12 +7,17 @@
  * accounts, deleted at the end.
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { notifyGuardians, runDigitalLegacyCheck } from "@/domain/digital-legacy/automation";
+import { sendEmail } from "@/lib/email/send-email";
 import {
   getGuardianVerificationRequest,
   respondToGuardianVerificationRequest,
 } from "@/domain/digital-legacy/guardians";
+
+// Niente email vere: il controllo scorre TUTTI gli utenti del database condiviso (anche quelli veri con l'eredità attiva)
+// e Resend rifiuta comunque gli indirizzi di prova (@example.com). Si verifica a chi verrebbe inviata.
+vi.mock("@/lib/email/send-email", () => ({ sendEmail: vi.fn().mockResolvedValue(undefined) }));
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -124,6 +129,14 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
     expect(requestError).toBeNull();
     expect(request?.response).toBeNull();
     requestId = request!.id;
+
+    // La richiesta al guardiano parte per email, al suo indirizzo e con il link per rispondere.
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: guardian.email,
+        html: expect.stringContaining(`/guardian-check/${requestId}`),
+      }),
+    );
 
     // Nessuna risposta ancora: il quorum non è soddisfatto, resta in awaiting_guardians.
     await runDigitalLegacyCheck(admin);

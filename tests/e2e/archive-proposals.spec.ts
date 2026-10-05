@@ -77,6 +77,9 @@ async function setUpWithPolizza(page: import("@playwright/test").Page) {
     mimeType: "application/pdf",
     buffer: buildPdf(POLIZZA),
   });
+  // Prima di salvare la lettura deve aver finito: la categoria ricavata dal testo si salva col documento solo allora,
+  // e senza questa attesa il numero di proposte dipenderebbe dalla velocità del computer.
+  await expect(page.getByText("Letto sul dispositivo")).toBeVisible({ timeout: 30_000 });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 30_000 });

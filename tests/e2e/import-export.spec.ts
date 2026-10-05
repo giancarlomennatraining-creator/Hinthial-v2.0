@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -17,8 +17,7 @@ test("importa amici da CSV: template, anteprima con riga da correggere, risultat
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await page.goto("/settings");
   await expect(page).toHaveURL(/\/settings$/);
   await page.getByRole("tab", { name: "Importa/Esporta" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
@@ -88,9 +87,11 @@ test("importa amici da CSV: template, anteprima con riga da correggere, risultat
   await expect(page.getByText("Luca Bianchi")).not.toBeVisible();
 
   // La scheda Esporta resta raggiungibile dalla stessa scheda di Impostazioni.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await page.goto("/settings");
   await page.getByRole("tab", { name: "Importa/Esporta" }).click();
+  // goto ricarica la pagina: la Master Key torna bloccata e va sbloccata.
+  await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await exportTab.click();
   await expect(page.getByRole("heading", { name: "Esporta i tuoi dati" })).toBeVisible();
 });
@@ -107,8 +108,7 @@ test("importa beni da CSV: corregge una categoria non trovata creandola al volo"
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await page.goto("/settings");
   await expect(page).toHaveURL(/\/settings$/);
   await page.getByRole("tab", { name: "Importa/Esporta" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");

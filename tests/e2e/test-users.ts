@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { TOTP } from "otpauth";
+import { generateBackupCodes, hashBackupCode } from "../../src/domain/mfa/backup-codes";
 
 export interface TestUser {
   firstName: string;
@@ -176,6 +177,25 @@ export async function enrollTotpForTestUser(user: TestUser): Promise<string> {
   });
   if (verified.error) throw new Error(`Verifica MFA fallita: ${verified.error.message}`);
   return enrolled.data.totp.secret;
+}
+
+/** Genera i codici di backup di un utente di prova, come farebbe lui dalle Impostazioni, e li restituisce in chiaro (nel database ci sono solo gli hash). */
+export async function createBackupCodesForTestUser(user: TestUser): Promise<string[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceRoleKey) throw new Error("Supabase non configurato per i test.");
+
+  const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+  const { data, error } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  if (error) throw new Error(error.message);
+  const found = data.users.find((candidate) => candidate.email === user.email);
+  if (!found) throw new Error("Utente di prova non trovato.");
+
+  const codes = generateBackupCodes(3);
+  const rows = await Promise.all(codes.map(async (code) => ({ owner_id: found.id, code_hash: await hashBackupCode(code) })));
+  const { error: insertError } = await admin.from("mfa_backup_codes").insert(rows);
+  if (insertError) throw new Error(insertError.message);
+  return codes;
 }
 
 export function totpCode(secret: string): string {

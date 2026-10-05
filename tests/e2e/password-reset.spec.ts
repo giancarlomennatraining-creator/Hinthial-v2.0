@@ -1,6 +1,7 @@
 import { expect, test } from "./fixtures";
 import {
   createConfirmedTestUser,
+  createBackupCodesForTestUser,
   enrollTotpForTestUser,
   generateRecoveryOtp,
   totpCode,
@@ -148,4 +149,42 @@ test("con l'autenticazione a due fattori il reset chiede anche il codice dell'ap
   await page.getByLabel("Password").fill(newPassword);
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/login\/mfa$/, { timeout: 15_000 });
+});
+
+test("con l'autenticazione a due fattori il reset accetta anche un codice di backup, una volta sola", async ({ page }) => {
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+  await enrollTotpForTestUser(user);
+  const [backupCode] = await createBackupCodesForTestUser(user);
+
+  async function openNewPasswordPage() {
+    const otp = await generateRecoveryOtp(user.email);
+    await page.goto(`/forgot-password/verify?email=${encodeURIComponent(user.email)}`);
+    await page.getByLabel("Codice di verifica").fill(otp);
+    await page.getByRole("button", { name: "Verifica codice" }).click();
+    await expect(page).toHaveURL(/\/forgot-password\/new$/);
+  }
+
+  const newPassword = "NuovaPassword123!";
+  await openNewPasswordPage();
+  await page.getByLabel("Nuova password", { exact: true }).fill(newPassword);
+  await page.getByLabel("Conferma nuova password").fill(newPassword);
+  await page.getByLabel("Codice a 6 cifre o di backup").fill(backupCode);
+  await page.getByRole("button", { name: "Salva nuova password" }).click();
+  await expect(page).toHaveURL(/\/login$/, { timeout: 15_000 });
+
+  // La password è cambiata davvero (con l'API admin, perché un codice di backup non porta la sessione al secondo livello).
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password").fill(newPassword);
+  await page.getByRole("button", { name: "Accedi" }).click();
+  await expect(page).toHaveURL(/\/login\/mfa$/, { timeout: 15_000 });
+
+  // Il codice di backup è monouso: lo stesso codice non vale una seconda volta.
+  await page.context().clearCookies();
+  await openNewPasswordPage();
+  await page.getByLabel("Nuova password", { exact: true }).fill("AltraPassword456!");
+  await page.getByLabel("Conferma nuova password").fill("AltraPassword456!");
+  await page.getByLabel("Codice a 6 cifre o di backup").fill(backupCode);
+  await page.getByRole("button", { name: "Salva nuova password" }).click();
+  await expect(page.getByText("Codice non valido. Riprova.")).toBeVisible();
 });
