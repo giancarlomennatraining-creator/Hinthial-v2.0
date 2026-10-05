@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -18,8 +19,7 @@ test("Impostazioni > Eredità digitale mostra i preset, il riepilogo si aggiorna
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   // Consultabile subito, prima di configurare la cifratura: nessun dato cifrato coinvolto.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Eredità digitale" }).click();
 
   await expect(page.getByRole("heading", { name: "Eredità digitale" })).toBeVisible();
@@ -105,8 +105,7 @@ test("la prova generale mostra un calendario reale e si ferma onestamente senza 
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Eredità digitale" }).click();
   await expect(page.getByRole("heading", { name: "Eredità digitale" })).toBeVisible();
 

@@ -48,24 +48,24 @@ test("le intestazioni delle tabelle in Archivio ordinano lessicograficamente, co
   await page.getByRole("radio", { name: "Vista a tabella" }).click();
   await expect(page.locator("table")).toBeVisible();
 
-  const nameCells = page.locator("tbody tr td:first-child");
+  // La prima colonna è la casella di selezione: il nome sta nella seconda.
+  const nameCells = page.locator("tbody tr td:nth-child(2) span.truncate");
   const nameHeader = page.getByRole("columnheader", { name: "Nome" });
 
-  // Ordinamento predefinito: prima colonna (Nome), crescente A→Z --- non
-  // più l'ordine cronologico. "📄 " davanti al nome è l'icona del tipo di
-  // contenuto (v. CONTENT_KIND_ICON).
+  // Ordinamento predefinito: colonna Nome, crescente A→Z --- non più l'ordine cronologico. L'icona del tipo di
+  // contenuto (v. CONTENT_KIND_ICON) è un elemento a parte, non fa parte del nome.
   await expect(nameHeader).toHaveAttribute("aria-sort", "ascending");
-  await expect(nameCells).toHaveText(["📄 Ananas.txt", "📄 Banana.txt", "📄 Ciliegia.txt"]);
+  await expect(nameCells).toHaveText(["Ananas.txt", "Banana.txt", "Ciliegia.txt"]);
 
   // Un click sulla stessa colonna già attiva inverte la direzione.
   await nameHeader.getByRole("button", { name: "Nome" }).click();
   await expect(nameHeader).toHaveAttribute("aria-sort", "descending");
-  await expect(nameCells).toHaveText(["📄 Ciliegia.txt", "📄 Banana.txt", "📄 Ananas.txt"]);
+  await expect(nameCells).toHaveText(["Ciliegia.txt", "Banana.txt", "Ananas.txt"]);
 
   // Un secondo click torna a crescente.
   await nameHeader.getByRole("button", { name: "Nome" }).click();
   await expect(nameHeader).toHaveAttribute("aria-sort", "ascending");
-  await expect(nameCells).toHaveText(["📄 Ananas.txt", "📄 Banana.txt", "📄 Ciliegia.txt"]);
+  await expect(nameCells).toHaveText(["Ananas.txt", "Banana.txt", "Ciliegia.txt"]);
 });
 
 test("le intestazioni delle tabelle in Amici ordinano lessicograficamente", async ({

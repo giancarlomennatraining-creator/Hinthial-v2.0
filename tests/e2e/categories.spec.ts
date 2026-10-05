@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 // Le categorie sono in chiaro (non richiedono la Master Key): a
@@ -22,8 +23,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await expect(page).toHaveURL(/\/settings$/);
   await page.getByRole("tab", { name: "Categorie" }).click();
   await expect(page.getByRole("heading", { name: "Categorie" })).toBeVisible();
@@ -58,8 +58,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   await expect(page.locator("#upload-category")).toContainText("🎯 Hobby");
 
   // Modifica: rinomina la categoria personalizzata.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Categorie" }).click();
   const hobbyRow = page.locator("li", { hasText: "🎯 Hobby" });
   await hobbyRow.getByRole("button", { name: "Modifica" }).click();
@@ -89,8 +88,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   await expect(page.getByText("🎯 Hobby e sport · ")).toBeVisible();
 
   // Eliminazione: il popup avverte che è in uso, ma non cancella nulla.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   // Attende che la navigazione sia completa: la riga del documento in
   // Archivio contiene anch'essa il testo della categoria come badge,
   // quindi il locator sotto potrebbe altrimenti trovare quella invece.
@@ -127,8 +125,7 @@ test("il campo Icona propone una lista di icone selezionabili al click", async (
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Categorie" }).click();
   await expect(page.getByRole("heading", { name: "Categorie" })).toBeVisible();
 
