@@ -116,3 +116,26 @@ test("le scelte sulle proposte restano in Impostazioni > Attività, filtrabili p
     timeout: 30_000,
   });
 });
+
+test("una data da ricordare già passata non si propone, ma la scheda lo dice", async ({ page }) => {
+  test.slow();
+
+  // Scadenza ed emittente si propongono; la rata è del 12/09/2026, passata rispetto a oggi: niente "Aggiungi a Scadenze".
+  await openAnalysedDocument(page, {
+    expectedProposals: 2,
+    category: false,
+    lines: [
+      "GENERALI ITALIA S.p.A.",
+      "Polizza responsabilita civile",
+      "Valida fino al 3 giugno 2027",
+      "Pagamento della rata entro il 12/09/2020",
+    ],
+    events: [{ value: "2020-09-12", title: "Pagamento rata", quote: "Pagamento della rata entro il 12/09/2020" }],
+  });
+
+  const panel = page.getByRole("tabpanel", { name: /^Chiedi a Hinthia/ });
+  await expect(panel.getByRole("button", { name: "Aggiungi a Scadenze" })).toHaveCount(0);
+  const note = panel.getByRole("complementary", { name: "Date già passate" });
+  await expect(note).toBeVisible();
+  await expect(note).toContainText("Pagamento rata");
+});

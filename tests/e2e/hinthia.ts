@@ -86,10 +86,12 @@ export interface MockedReading {
   fields?: boolean;
   /** Propone la categoria "Assicurazioni" (se esiste tra quelle inviate). */
   category?: boolean;
+  /** Eventi da ricordare restituiti dal motore: la data deve comparire nel testo del documento. */
+  events?: { value: string; title: string; quote: string }[];
 }
 
 /** Risponde alla route di analisi con una lettura fissa, nel formato attuale (v. api/ai/analyze): `result` per un blocco, `synthesis` per la fusione. */
-export async function mockHinthiaReading(page: Page, { fields = false, category = true }: MockedReading = {}) {
+export async function mockHinthiaReading(page: Page, { fields = false, category = true, events = [] }: MockedReading = {}) {
   await page.route("**/api/ai/analyze", (route) => {
     const request = route.request().postDataJSON() as { mode?: string; categories?: { id: string; name: string }[] };
     if (request.mode === "merge") {
@@ -120,7 +122,7 @@ export async function mockHinthiaReading(page: Page, { fields = false, category 
             },
           ]
         : [],
-      events: [],
+      events: events.map((event) => ({ ...event, segmentId: "p1" })),
       synthesis: null,
     };
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ result }) });
@@ -163,8 +165,8 @@ export async function openAnalysedDocument(
   page: Page,
   options: { filename?: string; lines?: string[] } & MockedReading & { expectedProposals: number },
 ): Promise<TestUser> {
-  const { expectedProposals, fields, category, ...file } = options;
-  await mockHinthiaReading(page, { fields, category });
+  const { expectedProposals, fields, category, events, ...file } = options;
+  await mockHinthiaReading(page, { fields, category, events });
   const user = await setUpWithDocument(page, file);
   await enableHinthia(page);
   await askHinthia(page, expectedProposals);

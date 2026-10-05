@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-05 (45)
+
+### Hinthia dice quando una data da ricordare è già passata
+
+**Cosa fa:** se la lettura trova una data da ricordare (un pagamento, un appuntamento) ma è già passata, la scheda lo scrive nella tab "Chiedi a Hinthia" ("Hinthia ha trovato una data da ricordare, ma è già passata: non l'ho aggiunta a Scadenze", con la data e il nome). Prima la proposta spariva senza spiegazioni. Il comportamento resta lo stesso: una data passata non diventa una scadenza.
+
+**Note tecniche:** `pastEventsOf` (`analyze-document.ts`) e `PastEventsNotice`; test unitari e un e2e (`archive-proposals`). Nessuna migrazione.
+
+---
+
 ## 2026-10-05 (44)
 
 ### Lettura di Hinthia più completa: campi, eventi e categoria

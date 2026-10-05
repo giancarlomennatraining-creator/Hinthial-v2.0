@@ -344,6 +344,18 @@ function pageOf(evidence: { provenance: { page: number | null } }): { page?: num
   return evidence.provenance.page === null ? {} : { page: evidence.provenance.page };
 }
 
+/**
+ * Le date da ricordare che la lettura ha trovato ma che sono già passate: `buildAIProposals` non le propone, e la scheda
+ * lo dice invece di lasciarle sparire. Una per giorno, dalla più vecchia.
+ */
+export function pastEventsOf(fields: Pick<AIExtractedFields, "events">, today: string): { date: string; title: string }[] {
+  const byDate = new Map<string, string>();
+  for (const event of fields.events) {
+    if (event.value < today && !byDate.has(event.value)) byDate.set(event.value, event.title);
+  }
+  return [...byDate.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, title]) => ({ date, title }));
+}
+
 /** Ciò che serve a decidere quali eventi proporre: senza, gli eventi non si propongono (non si sa cosa c'è già in Scadenze). */
 export interface EventProposalContext {
   /** Oggi, `YYYY-MM-DD` nel fuso dell'utente. */

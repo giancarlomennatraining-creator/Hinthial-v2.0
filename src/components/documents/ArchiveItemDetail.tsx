@@ -41,6 +41,7 @@ import {
   analysisConfirmMessage,
   analyzeDocumentWithClaude,
   extractedFieldsFrom,
+  pastEventsOf,
   inspectSavedAnalysis,
   planAnalysis,
   buildAIProposals,
@@ -50,6 +51,7 @@ import {
 } from "@/domain/ai/analyze-document";
 import { listDocumentReminderDates, localDateKey } from "@/domain/reminders/repository";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
+import { PastEventsNotice } from "@/components/documents/PastEventsNotice";
 import { ProposalsSection, type UndoableAction } from "@/components/documents/ProposalsSection";
 import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
 import { AnalysisOverviewSection } from "@/components/documents/AnalysisOverviewSection";
@@ -621,12 +623,14 @@ export function ArchiveItemDetail({
   const reading = readingStateFor(doc);
   // Ricalcolate a ogni render: accettare o rifiutare una proposta la filtra automaticamente, senza stato a parte.
   // Vengono dalla lettura salvata, non da uno stato della pagina: sopravvivono al ricaricamento e a un'interruzione.
-  const aiProposals = doc.contentAnalysis
-    ? buildAIProposals(doc, extractedFieldsFrom(doc.contentAnalysis, categories), rejections, {
+  const aiFields = doc.contentAnalysis ? extractedFieldsFrom(doc.contentAnalysis, categories) : null;
+  const aiProposals = aiFields
+    ? buildAIProposals(doc, aiFields, rejections, {
         today,
         existingDates: reminderDates,
       })
     : [];
+  const pastEvents = aiFields ? pastEventsOf(aiFields, today) : [];
   const analysisOverview = doc.contentAnalysis
     ? buildAnalysisOverview(doc.contentAnalysis, doc, categories, reminderDates)
     : null;
@@ -963,6 +967,7 @@ export function ArchiveItemDetail({
                   acceptAllCount={aiAcceptAllCandidates.length}
                   onAcceptAll={() => handleAcceptAll(aiAcceptAllCandidates)}
                 />
+                <PastEventsNotice events={pastEvents} />
                 {analysisOverview ? (
                   <AnalysisOverviewSection
                     overview={analysisOverview}
