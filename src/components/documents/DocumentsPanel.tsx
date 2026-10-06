@@ -1,59 +1,42 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getLocalUserId } from "@/lib/auth/local-user";
-import { createClient } from "@/lib/db/supabase/client";
 import { bytesToUtf8 } from "@/lib/crypto";
 import {
   documentsAwaitingExtraction,
   downloadDocument,
-  logDocumentDownloaded,
   extractTextForExistingDocument,
   getDocumentById,
-  listDocumentSummaries,
-  moveDocumentsToTrash,
-  updateDocumentMetadata,
   updateDocumentTranscript,
   updateTextNoteContent,
 } from "@/domain/documents/repository";
-import { getTrashRetentionDays } from "@/domain/profile/repository";
 import { listIncludesTag } from "@/domain/documents/tags";
-import { listAssets } from "@/domain/assets/repository";
-import { listCategories } from "@/domain/categories/repository";
-import { listDossiers, replaceDocumentDossierLinks } from "@/domain/dossiers/repository";
 import { contentKindFor, hasInlinePlayer, isTranscribable } from "@/lib/content-kind";
 import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
 import type { DocumentSummary } from "@/domain/documents/types";
-import type { AssetListItem } from "@/domain/assets/types";
-import type { Category } from "@/domain/categories/types";
-import type { DossierListItem } from "@/domain/dossiers/types";
-import { saveBytesAsFile } from "@/lib/download";
 import { formatDate, formatSize } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
-import { MobileAddFab, type MobileAddFabMenuItem } from "@/components/ui/MobileAddFab";
+import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { PageHelp } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
-import { ListViewToggle } from "@/components/ui/ListViewToggle";
 import { Pagination } from "@/components/ui/Pagination";
 import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
 import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
-import { useListViewPreferences } from "@/components/layout/ListViewPreferencesProvider";
 import { ArchiveTabs } from "@/components/documents/ArchiveTabs";
+import { AlternativeArchiveView } from "@/components/documents/archive/AlternativeArchiveView";
+import { ArchiveViewSwitcher } from "@/components/documents/archive/ArchiveViewSwitcher";
+import { AddContentMenu, ADD_CONTENT_ITEMS } from "@/components/documents/archive/parts";
+import { ThumbnailProvider } from "@/components/documents/archive/thumbnails";
+import { useArchiveData } from "@/components/documents/archive/useArchiveData";
+import { useArchiveView } from "@/components/documents/archive/useArchiveView";
 import { ContentTypeIcon } from "@/components/documents/ContentTypeIcon";
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { useToast } from "@/components/ui/ToastProvider";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-const ADD_CONTENT_ITEMS: MobileAddFabMenuItem[] = [
-  { href: "/archive/new", label: "Carica un file", icon: "📄" },
-  { href: "/archive/new?mode=record", label: "Registra audio/video", icon: "🎬" },
-  { href: "/archive/new?mode=note", label: "Scrivi una nota", icon: "📝" },
-  { href: "/archive/import", label: "Importa più file insieme", icon: "📥", separated: true },
-];
 
 function expiryStatus(expiresAt: string | null): "none" | "overdue" | "soon" | "ok" {
   if (!expiresAt) return "none";
@@ -67,28 +50,39 @@ type SortColumn = "name" | "category" | "asset" | "size" | "createdAt" | "expire
 
 /** "Archivio": documenti, immagini, audio, video e note testuali nella stessa lista con gli stessi attributi. Immagini/audio/video hanno un player inline (v. lib/content-kind.ts); una nota si apre e si modifica qui stesso. */
 export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [assets, setAssets] = useState<AssetListItem[]>([]);
-  const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
-  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [busyDocId, setBusyDocId] = useState<string | null>(null);
-
-  // Set (non array): toggle/verifica per id restano O(1) con centinaia di righe.
-  // trashRetentionDays è letto una volta all'avvio (non un Provider): cambia di rado.
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkBusy, setBulkBusy] = useState(false);
-  const [trashRetentionDays, setTrashRetentionDays] = useState(15);
-  const [bulkPopover, setBulkPopover] = useState<"category" | "tag" | "dossier" | null>(null);
-  const [addMenuOpen, setAddMenuOpen] = useState(false);
-  const addMenuRef = useRef<HTMLDivElement>(null);
-  const [bulkTagInput, setBulkTagInput] = useState("");
+  const data = useArchiveData(masterKey);
+  const {
+    supabase,
+    categories,
+    dossiers,
+    documents,
+    loading,
+    error,
+    setError,
+    refresh,
+    busyDocId,
+    selectedIds,
+    toggleSelected,
+    toggleSelectAll,
+    clearSelection,
+    bulkBusy,
+    bulkPopover,
+    setBulkPopover,
+    bulkTagInput,
+    setBulkTagInput,
+    handleOpen,
+    handleDelete,
+    handleBulkDelete,
+    handleBulkCategory,
+    handleBulkTag,
+    handleBulkDossier,
+    categoryFor,
+    assetFor,
+  } = data;
   const [categoryFilter, setCategoryFilter] = useState("");
   // Impostato cliccando un tag sul documento --- un solo tag alla volta, niente menu a tendina.
   const [tagFilter, setTagFilter] = useState<string | null>(null);
@@ -102,8 +96,9 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     fraction: number | null;
   } | null>(null);
 
-  const { modeFor } = useListViewPreferences();
-  const viewMode = modeFor("archive");
+  // Elenco e tabella restano qui; le altre quattro viste sono componenti a parte (v. AlternativeArchiveView).
+  const archiveView = useArchiveView();
+  const viewMode = archiveView.view === "table" ? "table" : "list";
 
   // Player inline per immagini/audio/video --- un solo elemento aperto alla volta.
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -133,68 +128,12 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }, [showCreatedMessage, router, showToast]);
 
-  const refresh = useCallback(async () => {
-    setError(null);
-    try {
-      // Tutto in parallelo: prima la conservazione del cestino arrivava dopo, con un `getUser()` e una query in fila, e la pagina restava in caricamento fino ad allora.
-      const userId = await getLocalUserId(supabase);
-      const [categoriesResult, assetsResult, dossiersResult, documentsResult, trashDays] = await Promise.all([
-        listCategories(supabase),
-        listAssets(supabase, masterKey),
-        listDossiers(supabase, masterKey),
-        listDocumentSummaries(supabase, masterKey),
-        userId ? getTrashRetentionDays(supabase, userId) : Promise.resolve(null),
-      ]);
-      setCategories(categoriesResult);
-      setAssets(assetsResult);
-      setDossiers(dossiersResult);
-      setDocuments(documentsResult);
-      if (trashDays !== null) setTrashRetentionDays(trashDays);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare l'archivio.");
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase, masterKey]);
-
-  useEffect(() => {
-    // Legittimo qui: i dati si decifrano solo con la masterKey in memoria, non possono venire da un Server Component.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    refresh();
-  }, [refresh]);
-
   // Chiude sempre il player e libera l'object URL se il componente si smonta.
   useEffect(() => {
     return () => {
       if (playerUrl) URL.revokeObjectURL(playerUrl);
     };
   }, [playerUrl]);
-
-  // Menu "+ Aggiungi contenuto" (v. UserMenu.tsx per lo stesso pattern): si chiude a un click fuori da bottone e pannello.
-  useEffect(() => {
-    if (!addMenuOpen) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (addMenuRef.current && !addMenuRef.current.contains(event.target as Node)) {
-        setAddMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [addMenuOpen]);
-
-  async function handleOpen(doc: DocumentSummary) {
-    setBusyDocId(doc.id);
-    setError(null);
-    try {
-      const { filename, mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
-      saveBytesAsFile(bytes, filename, mimeType);
-      void logDocumentDownloaded(supabase, doc.id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aprire il contenuto.");
-    } finally {
-      setBusyDocId(null);
-    }
-  }
 
   async function togglePlayer(doc: DocumentSummary) {
     if (playingId === doc.id) {
@@ -321,174 +260,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  /** L'eliminazione sposta nel Cestino, non elimina più per sempre: farlo su più documenti insieme moltiplica il rischio di un clic distratto. */
-  async function handleDelete(doc: DocumentSummary) {
-    if (
-      !window.confirm(
-        `Spostare "${doc.filename}" nel cestino? Potrai ripristinarlo entro ${trashRetentionDays} giorni, da Archivio → Cestino.`,
-      )
-    )
-      return;
-
-    setBusyDocId(doc.id);
-    setError(null);
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Devi essere autenticato.");
-
-      await moveDocumentsToTrash(supabase, user.id, [doc.id], trashRetentionDays);
-      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
-      setSelectedIds((prev) => {
-        if (!prev.has(doc.id)) return prev;
-        const next = new Set(prev);
-        next.delete(doc.id);
-        return next;
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile spostare il contenuto nel cestino.");
-    } finally {
-      setBusyDocId(null);
-    }
-  }
-
-  function toggleSelected(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function toggleSelectAll(ids: string[]) {
-    setSelectedIds((prev) => {
-      const allSelected = ids.length > 0 && ids.every((id) => prev.has(id));
-      return allSelected ? new Set() : new Set(ids);
-    });
-  }
-
-  function clearSelection() {
-    setSelectedIds(new Set());
-    setBulkPopover(null);
-  }
-
-  const selectedDocuments = documents.filter((doc) => selectedIds.has(doc.id));
-
-  async function handleBulkDelete() {
-    const count = selectedDocuments.length;
-    if (count === 0) return;
-    if (
-      !window.confirm(
-        `Spostare ${count} ${count === 1 ? "documento" : "documenti"} nel cestino? Potrai ripristinarli entro ${trashRetentionDays} giorni, da Archivio → Cestino.`,
-      )
-    )
-      return;
-
-    setBulkBusy(true);
-    setError(null);
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Devi essere autenticato.");
-
-      const ids = selectedDocuments.map((doc) => doc.id);
-      await moveDocumentsToTrash(supabase, user.id, ids, trashRetentionDays);
-      setDocuments((prev) => prev.filter((d) => !selectedIds.has(d.id)));
-      clearSelection();
-      showToast(`${count} ${count === 1 ? "documento spostato" : "documenti spostati"} nel cestino.`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile spostare nel cestino.");
-    } finally {
-      setBulkBusy(false);
-    }
-  }
-
-  /** updateDocumentMetadata sovrascrive l'intero input insieme (v. domain/documents/repository.ts): si parte dal documento già in memoria e se ne cambia solo il campo che conta. */
-  async function handleBulkCategory(categoryId: string) {
-    setBulkBusy(true);
-    setError(null);
-    try {
-      for (const doc of selectedDocuments) {
-        await updateDocumentMetadata(supabase, masterKey, doc.id, {
-          categoryId,
-          relatedAssetId: doc.relatedAssetId,
-          dossierIds: doc.dossierIds,
-          expiresAt: doc.expiresAt,
-          notes: doc.notes,
-          tags: doc.tags,
-          issuer: doc.issuer,
-        });
-      }
-      await refresh();
-      clearSelection();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare la categoria.");
-    } finally {
-      setBulkBusy(false);
-    }
-  }
-
-  async function handleBulkTag(tag: string) {
-    const trimmed = tag.trim();
-    if (!trimmed) return;
-    setBulkBusy(true);
-    setError(null);
-    try {
-      for (const doc of selectedDocuments) {
-        if (doc.tags.includes(trimmed)) continue; // già presente --- non doppio
-        await updateDocumentMetadata(supabase, masterKey, doc.id, {
-          categoryId: doc.categoryId,
-          relatedAssetId: doc.relatedAssetId,
-          dossierIds: doc.dossierIds,
-          expiresAt: doc.expiresAt,
-          notes: doc.notes,
-          tags: [...doc.tags, trimmed],
-          issuer: doc.issuer,
-        });
-      }
-      await refresh();
-      clearSelection();
-      setBulkTagInput("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiungere il tag.");
-    } finally {
-      setBulkBusy(false);
-    }
-  }
-
-  async function handleBulkDossier(dossierId: string) {
-    setBulkBusy(true);
-    setError(null);
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Devi essere autenticato.");
-
-      for (const doc of selectedDocuments) {
-        if (doc.dossierIds.includes(dossierId)) continue; // già dentro --- non doppio
-        await replaceDocumentDossierLinks(supabase, user.id, doc.id, [...doc.dossierIds, dossierId]);
-      }
-      await refresh();
-      clearSelection();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiungere al fascicolo.");
-    } finally {
-      setBulkBusy(false);
-    }
-  }
-
-  function categoryFor(doc: DocumentSummary): Category | undefined {
-    return categories.find((c) => c.id === doc.categoryId);
-  }
-
-  function assetFor(doc: DocumentSummary): AssetListItem | undefined {
-    return assets.find((a) => a.id === doc.relatedAssetId);
-  }
-
   function sortValueFor(doc: DocumentSummary, column: SortColumn): string {
     switch (column) {
       case "name":
@@ -555,6 +326,37 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     currentPage * TABLE_PAGE_SIZE,
   );
 
+  const isAlternativeView = archiveView.view !== "list" && archiveView.view !== "table";
+
+  if (isAlternativeView || archiveView.preferencesLoading) {
+    return (
+      <div className="flex flex-col gap-5 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
+        <ArchiveTabs />
+        {error ? (
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            {error}
+          </p>
+        ) : null}
+        {loading || archiveView.preferencesLoading ? (
+          <ListSkeleton />
+        ) : documents.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Ancora nulla in archivio. Aggiungi il tuo primo contenuto col tasto qui sotto.
+            </p>
+            <div className="mt-4 flex justify-center">
+              <AddContentMenu label="+ Aggiungi contenuto" />
+            </div>
+          </div>
+        ) : (
+          <ThumbnailProvider data={data}>
+            <AlternativeArchiveView view={archiveView.view} data={data} />
+          </ThumbnailProvider>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
@@ -574,41 +376,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             />
           </div>
         </div>
-        <div ref={addMenuRef} className="relative hidden shrink-0 sm:block">
-          <button
-            type="button"
-            onClick={() => setAddMenuOpen((v) => !v)}
-            aria-expanded={addMenuOpen}
-            aria-haspopup="menu"
-            className="flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
-          >
-            + Aggiungi contenuto
-            <span aria-hidden="true" className="text-xs">
-              {addMenuOpen ? "▴" : "▾"}
-            </span>
-          </button>
-          {addMenuOpen ? (
-            <div
-              role="menu"
-              aria-label="Aggiungi contenuto"
-              className="absolute top-full right-0 z-10 mt-1 w-56 overflow-hidden rounded-md border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
-            >
-              {ADD_CONTENT_ITEMS.map((item) => (
-                <div key={item.href}>
-                  {item.separated ? <div className="my-1 border-t border-zinc-100 dark:border-zinc-900" /> : null}
-                  <Link
-                    href={item.href}
-                    role="menuitem"
-                    onClick={() => setAddMenuOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
-                  >
-                    <span aria-hidden="true">{item.icon}</span> {item.label}
-                  </Link>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
+        <AddContentMenu />
       </div>
 
       <ArchiveTabs />
@@ -677,7 +445,9 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 </option>
               ))}
             </select>
-            <ListViewToggle section="archive" hideOnMobile />
+            <div className="hidden md:ml-auto md:block">
+              <ArchiveViewSwitcher />
+            </div>
             {tagFilter ? (
               <button
                 type="button"

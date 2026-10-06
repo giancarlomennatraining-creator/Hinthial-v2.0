@@ -10,6 +10,28 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-06 (52)
+
+### L'Archivio ha sei viste: elenco, tabella e quattro nuove
+
+**Cosa fa:**
+- Nell'Archivio c'è un menu **"Vista"** (accanto a "+ Aggiungi contenuto") per guardare gli stessi documenti in sei modi. Scegliere una vista vale per quella visita (finisce nell'indirizzo: il tasto indietro torna alla precedente). **"Rendi predefinita"** la salva su tutti i tuoi dispositivi, ed è la stessa scelta di **Impostazioni > Aspetto > Liste > Archivio**.
+- **Cassettiera**: una galleria di schede con miniatura, viste in cima (Tutti, In scadenza, Da leggere, Senza categoria, Recenti) e filtri a faccette a sinistra (categoria, tipo, anno) che si combinano. Schede grandi o compatte, ordine per data, nome o scadenza, "Mostra altri 60". Selezionando compare una barra scura in basso con Categoria, Fascicolo, Tag e Cestino.
+- **Linea del tempo**: i documenti per mese lungo una linea, con in cima le scadenze in arrivo, filtri (categoria, tipo, bene, scadenza, da leggere) e a destra la **Mappa del tempo**: una barra per mese, un clic per saltarci. Azioni al passaggio (Apri, Scarica, Elimina).
+- **Collezioni**: la home dice cosa chiede attenzione (in scadenza, da leggere con Hinthia, senza categoria, possibili doppioni) e mostra le categorie come pile di fogli; aprirne una porta a una tabella ordinabile (nome, tipo, scadenza, aggiunto) con selezione e "Mostra altri 50". La ricerca in alto cerca in tutto l'archivio.
+- **Scaffale**: ogni documento è un dorso su uno scaffale. Il colore è la categoria, l'altezza il peso del file, il nastrino in cima una scadenza vicina, il puntino in basso la lettura di Hinthia. I filtri "illuminano" i dorsi giusti senza nascondere gli altri; cliccando un dorso la scheda si apre a destra.
+- Tutte e quattro cercano per nome, emittente, note, tag, campi della Scheda (targa, numero polizza…), categoria e bene. Sul telefono resta l'elenco, come prima.
+
+**Note tecniche:**
+- Nessuna migrazione: la vista è `profiles.list_view_preferences.archive` (jsonb), ora una di sei (`ArchiveViewMode`); le altre sezioni restano a elenco o tabella. `modeFor("archive")` ricade su elenco/tabella; `archiveViewFor()` e `savedArchiveView` danno la vista completa. Il parametro dell'indirizzo è `?vista=`.
+- `DocumentsPanel` è stato diviso: dati, selezione e azioni di gruppo sono in `archive/useArchiveData.ts` e valgono per ogni vista; elenco e tabella restano dove erano. Le quattro viste sono in `components/documents/archive/` (`GalleryView`, `TimelineView`, `CollectionsView`, `ShelfView`), la parte pura (colori delle categorie, urgenza delle scadenze, ricerca, mesi, collezioni, disposizione dello scaffale) in `domain/documents/archive-views.ts`.
+- Le categorie non hanno un colore proprio: si ricava in modo stabile dal nome (colori fissi per le categorie predefinite, per le altre dall'hash del nome). Le miniature vere dei documenti si scaricano e decifrano solo quando la scheda entra nello schermo (al massimo quattro richieste insieme, una cache per tutta la pagina); dove non c'è, una pagina disegnata col colore della categoria.
+- Tipo = tipo di contenuto (documento, immagine, nota…), non il tipo letto da Hinthia (polizza, bolletta…): quello sta nella lettura cifrata e non è nell'elenco leggero. "Possibili doppioni" = stesso nome e stessa dimensione. L'altezza dei dorsi usa la dimensione del file, non le pagine.
+- Limite noto: l'Archivio carica e decifra ancora tutti i riassunti dei documenti a ogni visita (come prima); le viste ne disegnano 60 alla volta o 168 sullo scaffale, ma l'indice leggero tenuto sul dispositivo resta da fare.
+- Test: unità della parte pura, delle quattro viste e delle preferenze; e2e del menu, della vista predefinita da menu e da Impostazioni e dell'indirizzo con `?vista=`.
+
+---
+
 ## 2026-10-06 (51)
 
 ### Un solo registro di lettura, con il movimento
