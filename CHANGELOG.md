@@ -10,6 +10,42 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-06 (52)
+
+### La misura può provare un modello locale (Ollama)
+
+**Cosa fa:**
+- Nessun cambiamento per chi usa l'app. Per chi sviluppa: `EVAL_PROVIDER=ollama npm run eval` esegue lo stesso corpus di 34 documenti con un modello che gira sul proprio computer (predefinito `qwen2.5:3b`, scelto con `EVAL_MODEL`) e produce la stessa tabella di Anthropic, per vedere dove un modello piccolo basta.
+
+**Note tecniche:**
+- Le istruzioni, lo schema di uscita e il messaggio del blocco stanno in `src/domain/ai/analysis/prompt.ts` (già condiviso dal provider Claude): la misura confronta i motori, non i prompt.
+- `evals/ollama-provider.ts`: chat API con `format` = schema JSON, temperatura 0, timeout 10 minuti, concorrenza 1 di default; errore chiaro se Ollama non è raggiungibile o il modello non è scaricato. La sintesi unica (`mergeSyntheses`) non è ancora misurata. Nessun codice di produzione lo usa.
+- Non è stato eseguito su un modello vero: il portatile di sviluppo non regge un modello locale (v. decisione di restare su Anthropic per ora). Il test usa chiamate simulate.
+
+---
+
+## 2026-10-06 (51)
+
+### Un solo registro di lettura, con il movimento
+
+**Cosa fa:**
+- Nella scheda **"Chiedi a Hinthia"** le due sezioni che dicevano le stesse cose, "Proposte" e "Cosa ha letto Hinthia", sono diventate **un solo elenco**: il registro di lettura. Ogni riga è una cosa trovata da Hinthia, con la sua pagina d'origine e la frase del documento che la prova.
+- **Accetta, Modifica e No grazie stanno di fianco alla voce**, sulla stessa riga: la pagina è circa metà di prima. "Aggiungi a Scadenze", "Collega" e "Crea e collega" funzionano allo stesso modo.
+- **Una voce accettata diventa di sola lettura** ("nella Scheda") e si restringe a una riga: la pagina si snellisce mentre decidi e restano in evidenza le voci da decidere. Una voce scartata resta in elenco, attenuata, con **Ripristina**. Il tipo di documento è sempre di sola lettura.
+- In cima, un riquadro dice "8 di 10 nella Scheda · 2 da decidere", con una barra a tacche (una per voce) e il pulsante **"Accetta le N rimaste"**. Le voci sono raggruppate in Documento, Dettagli, Importi e date, Collegamenti.
+- **Il movimento:** accettando, un lampo verde attraversa la riga, la spunta si disegna da sola, la tacca della barra cresce e il numero in alto scorre; con "Accetta le N rimaste" le righe si accendono **a onda**, una ogni 150 millisecondi, e a lavoro finito il riquadro lancia un alone verde. Passando su una voce da decidere si illumina con un filo blu; i pulsanti si sollevano e si schiacciano. Chi ha il movimento ridotto nel sistema vede gli stessi stati senza animazioni.
+- L'intestazione di una lettura già fatta è ora "Lettura di Hinthia · titolo · letta il…", con "Rileggi da capo" di fianco.
+- **Ordine della scheda:** "Vedi attività di questo contenuto" sta sotto l'anteprima, a sinistra, e non più sopra le tab. Nella scheda "Chiedi a Hinthia" l'ordine è: intestazione della lettura, **riassunto**, registro delle proposte. Il testo "Non hai ancora chiesto a Hinthia di leggere questo documento" compare solo se il documento non è mai stato letto (prima compariva anche con una lettura senza riassunto).
+
+**Note tecniche:**
+- `src/domain/ai/analysis/register.ts` (puro) costruisce le righe unendo i fatti della lettura (`buildAnalysisOverview`), le proposte e i rifiuti: una riga è `pending` (ha una proposta), `adopted` (già nella Scheda), `rejected` (c'è un rifiuto registrato) o `info` (nessuna azione possibile: tipo di documento, una data già passata, un campo già diverso nella Scheda). Le proposte senza una lettura che le spieghi (il bene da creare o collegare, la categoria dedotta dal tipo) diventano righe a sé.
+- `ReadingRegister.tsx` sostituisce `ProposalsSection.tsx` e `AnalysisOverviewSection.tsx` (eliminati, con i loro test; la pagina d'origine con la frase evidenziata è rimasta). Il movimento è in `globals.css` (`.reading-*`, `--d` = ritardo di ciascuna riga): la riga che passa a "nella Scheda" si riconosce confrontando lo stato con il render precedente, e non si anima nulla al primo caricamento.
+- Con "Accetta le N rimaste" le scritture restano sequenziali come prima; la riga si accende a onda quando la pagina si aggiorna, non a ogni scrittura.
+- Non c'è un "Annulla" sulla riga: l'annullamento resta quello sopra le tab (annulla l'ultima azione, anche "Accetta le N rimaste" in un colpo). L'ordine delle righe è quello del registro (categoria prima della scadenza): gli e2e delle proposte cercano la riga per nome.
+- Test: unità del registro (`reading-register.test.tsx`) e e2e delle proposte aggiornati.
+
+---
+
 ## 2026-10-06 (50)
 
 ### Hinthial propone di creare il bene, e il bene mostra tutte le sue scadenze

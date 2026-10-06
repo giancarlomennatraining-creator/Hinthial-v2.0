@@ -10,7 +10,7 @@ import { mockAIProvider } from "@/domain/ai/mock-provider";
 import { SidePanel } from "@/components/ui/SidePanel";
 
 export interface HelpTip {
-  /** Emoji, coerente con le liste puntate già in uso altrove (v. ProposalsSection). */
+  /** Emoji, coerente con le liste puntate già in uso altrove (v. ReadingRegister). */
   icon: string;
   text: string;
 }

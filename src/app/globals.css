@@ -357,3 +357,248 @@ h6 {
     transition: none;
   }
 }
+
+/*
+ * Registro di lettura (v. ReadingRegister.tsx): le righe di ciò che Hinthia ha trovato passano da "da decidere" a
+ * "nella Scheda" con un movimento --- un lampo verde attraversa la riga, la spunta si disegna, la tacca della barra
+ * cresce, la riga si restringe a una sola riga. Regole qui e non come utility Tailwind: servono keyframe e selettori
+ * sullo stato (v. altre eccezioni in questo file). `--d` è il ritardo della riga: con "Accetta le N rimaste" le righe
+ * si accendono a onda, una dopo l'altra.
+ */
+.reading-row {
+  position: relative;
+  overflow: hidden;
+  padding: 9px 18px;
+  background: #ffffff;
+  border-top: 1px solid #eef0f8;
+  transition:
+    background-color 0.45s ease var(--d, 0ms),
+    padding 0.45s ease var(--d, 0ms),
+    opacity 0.35s ease,
+    box-shadow 0.2s ease;
+}
+.reading-row[data-state="pending"]:hover {
+  background: #f6f8ff;
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+.reading-row[data-state="adopted"] {
+  background: #f6fbf8;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.reading-row[data-state="rejected"] {
+  background: #fafbfd;
+  opacity: 0.7;
+}
+.reading-row[data-just="true"] {
+  animation: reading-flash 1s ease-out var(--d, 0ms);
+}
+.reading-row[data-just="true"]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 60%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(28, 124, 90, 0.22), transparent);
+  transform: translateX(-100%);
+  animation: reading-sweep 0.8s ease-out var(--d, 0ms) forwards;
+}
+.reading-quote {
+  overflow: hidden;
+  max-height: 20px;
+  transition:
+    max-height 0.45s ease var(--d, 0ms),
+    opacity 0.3s ease var(--d, 0ms);
+}
+.reading-row[data-state="adopted"] .reading-quote {
+  max-height: 0;
+  opacity: 0;
+}
+.reading-value {
+  transition:
+    font-size 0.35s ease var(--d, 0ms),
+    color 0.35s ease var(--d, 0ms);
+}
+.reading-row[data-state="adopted"] .reading-value {
+  font-size: 14px;
+  color: #3d4670;
+}
+.reading-row[data-just="true"] .reading-badge {
+  animation: reading-pop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) var(--d, 0ms) both;
+}
+.reading-row[data-just="true"] .reading-check polyline {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: reading-draw 0.45s ease-out calc(var(--d, 0ms) + 0.12s) forwards;
+}
+.reading-row[data-just="true"] .reading-adopted-label {
+  animation: reading-fadein 0.4s ease-out var(--d, 0ms) both;
+}
+.reading-seg {
+  transition: background-color 0.5s ease var(--d, 0ms);
+  transform-origin: left center;
+  background: #bccaf5;
+}
+.reading-seg[data-state="adopted"] {
+  background: #1c7c5a;
+}
+.reading-seg[data-state="rejected"] {
+  background: #cfd3e3;
+}
+.reading-seg[data-just="true"] {
+  animation: reading-grow 0.55s ease-out var(--d, 0ms);
+}
+.reading-tick-a {
+  animation: reading-tick 0.45s ease-out;
+}
+.reading-tick-b {
+  animation: reading-tick-b 0.45s ease-out;
+}
+.reading-card[data-done="true"] {
+  animation: reading-glow 1.3s ease-out;
+}
+.reading-btn {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+.reading-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+.reading-btn:not(:disabled):active {
+  transform: scale(0.96);
+}
+.reading-btn-primary:not(:disabled):hover {
+  box-shadow: 0 6px 14px rgba(43, 79, 196, 0.35);
+}
+
+.dark .reading-row {
+  background: #09090b;
+  border-top-color: #1f1f23;
+}
+.dark .reading-row[data-state="pending"]:hover {
+  background: rgba(43, 79, 196, 0.14);
+}
+.dark .reading-row[data-state="adopted"] {
+  background: rgba(28, 124, 90, 0.14);
+}
+.dark .reading-row[data-state="rejected"] {
+  background: #111113;
+}
+.dark .reading-row[data-state="adopted"] .reading-value {
+  color: #d4d4d8;
+}
+.dark .reading-seg {
+  background: rgba(157, 182, 255, 0.35);
+}
+.dark .reading-seg[data-state="adopted"] {
+  background: #2fa57c;
+}
+.dark .reading-seg[data-state="rejected"] {
+  background: #3f3f46;
+}
+
+@keyframes reading-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(220%);
+  }
+}
+@keyframes reading-flash {
+  0% {
+    background-color: #cdeedd;
+  }
+  100% {
+    background-color: #f6fbf8;
+  }
+}
+@keyframes reading-pop {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes reading-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes reading-fadein {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes reading-grow {
+  from {
+    transform: scaleX(0.1);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes reading-tick {
+  from {
+    transform: translateY(70%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes reading-tick-b {
+  from {
+    transform: translateY(70%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes reading-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(28, 124, 90, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 18px rgba(28, 124, 90, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reading-row,
+  .reading-row::after,
+  .reading-row .reading-badge,
+  .reading-row .reading-adopted-label,
+  .reading-quote,
+  .reading-value,
+  .reading-seg,
+  .reading-tick-a,
+  .reading-tick-b,
+  .reading-card,
+  .reading-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+  .reading-row[data-just="true"] .reading-check polyline {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+}

@@ -56,9 +56,8 @@ import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvi
 import { listTypeCategoryOverrides } from "@/domain/categories/type-categories";
 import type { TypeCategoryOverrides } from "@/domain/ai/analysis/category-defaults";
 import { PastEventsNotice } from "@/components/documents/PastEventsNotice";
-import { ProposalsSection, type UndoableAction } from "@/components/documents/ProposalsSection";
+import { ReadingRegister, type UndoableAction } from "@/components/documents/ReadingRegister";
 import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
-import { AnalysisOverviewSection } from "@/components/documents/AnalysisOverviewSection";
 import { buildAnalysisOverview } from "@/domain/ai/analysis/overview";
 import {
   DocumentMetadataFields,
@@ -499,6 +498,19 @@ export function ArchiveItemDetail({
     });
   }
 
+  /** Una riga scartata si riprende dal registro: il rifiuto registrato si cancella e la proposta torna da decidere. */
+  function handleRestoreRejection(rejection: ProposalRejection) {
+    if (!doc) return;
+    void runProposalAction(async (ownerId) => {
+      await undoRejection(supabase, ownerId, rejection.id, {
+        documentId: doc.id,
+        kind: rejection.kind,
+        fieldKey: rejection.fieldKey,
+      });
+      return { message: "Proposta ripristinata.", onUndo: () => setUndoable(null) };
+    });
+  }
+
   /** FASE 22: unica fase irreversibile del piano --- un contenuto uscito è uscito, quindi un window.confirm prima di ogni invio, qualunque sia lo scope scelto. */
   async function handleAnalyzeWithClaude(scope: AIAnalysisScope, options?: { force?: boolean }) {
     if (!doc) return;
@@ -805,6 +817,12 @@ export function ArchiveItemDetail({
               </p>
             )}
           </section>
+          <Link
+            href={`/settings?tab=activity&entity=document:${doc.id}`}
+            className="self-start text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+          >
+            Vedi attività di questo contenuto →
+          </Link>
           </div>
 
           {/* Colonna a tab: Scheda / Letto dal dispositivo / Analisi con Hinthia --- niente più "Proposte" a sé
@@ -860,13 +878,6 @@ export function ArchiveItemDetail({
                 Chiedi a Hinthia{aiProposals.length > 0 ? ` · ${aiProposals.length}` : ""}
               </button>
             </div>
-            <Link
-              href={`/settings?tab=activity&entity=document:${doc.id}`}
-              className="self-start text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-            >
-              Vedi attività di questo contenuto →
-            </Link>
-
             {/* L'annullamento resta visibile a cambio tab: una sola istanza sopra i pannelli, non una per tab.
                 aria-label distinto dal toast globale (v. ToastProvider): entrambi sono role="status". */}
             {undoable ? (
@@ -984,30 +995,12 @@ export function ArchiveItemDetail({
                   progress={aiProgress}
                   savedState={savedAnalysis}
                   analyzedAtLabel={doc.analysisUpdatedAt ? formatDate(doc.analysisUpdatedAt) : null}
+                  documentTitle={doc.filename}
                   lastRunFailed={doc.analysisStatus === "failed"}
                   onAnalyze={handleAnalyzeWithClaude}
                   onAbort={() => aiAbortRef.current?.abort()}
                   onToggleExcluded={handleToggleAIExclusion}
                 />
-                <ProposalsSection
-                  proposals={aiProposals}
-                  categories={categories}
-                  assets={assets}
-                  busy={proposalBusy}
-                  onAccept={handleAcceptProposal}
-                  onReject={handleRejectProposal}
-                  acceptAllCount={aiAcceptAllCandidates.length}
-                  onAcceptAll={() => handleAcceptAll(aiAcceptAllCandidates)}
-                />
-                <PastEventsNotice events={pastEvents} />
-                {analysisOverview ? (
-                  <AnalysisOverviewSection
-                    overview={analysisOverview}
-                    segments={pageSegments}
-                    text={doc.extractedText}
-                    loadPdfBytes={isPdf ? loadPdfBytes : undefined}
-                  />
-                ) : null}
                 {doc.aiSynthesis ? (
                   <section
                     aria-label="Analisi con Hinthia"
@@ -1029,11 +1022,29 @@ export function ArchiveItemDetail({
                       </p>
                     ) : null}
                   </section>
-                ) : (
+                ) : analysisOverview ? null : (
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
                     Non hai ancora chiesto a Hinthia di leggere questo documento.
                   </p>
                 )}
+                <ReadingRegister
+                  overview={analysisOverview}
+                  proposals={aiProposals}
+                  rejections={rejections}
+                  categories={categories}
+                  assets={assets}
+                  today={today}
+                  busy={proposalBusy}
+                  segments={pageSegments}
+                  text={doc.extractedText}
+                  loadPdfBytes={isPdf ? loadPdfBytes : undefined}
+                  onAccept={handleAcceptProposal}
+                  onReject={handleRejectProposal}
+                  onRestore={handleRestoreRejection}
+                  acceptAllCount={aiAcceptAllCandidates.length}
+                  onAcceptAll={() => handleAcceptAll(aiAcceptAllCandidates)}
+                />
+                <PastEventsNotice events={pastEvents} />
               </div>
             )}
           </div>

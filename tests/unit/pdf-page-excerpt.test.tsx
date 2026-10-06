@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AnalysisOverviewSection } from "@/components/documents/AnalysisOverviewSection";
+import { ReadingRegister } from "@/components/documents/ReadingRegister";
 import { PdfPageExcerpt } from "@/components/documents/PdfPageExcerpt";
 import type { AnalysisOverview } from "@/domain/ai/analysis/overview";
 import type { ContentSegment } from "@/domain/extraction/types";
@@ -70,7 +70,19 @@ describe("PdfPageExcerpt", () => {
   });
 });
 
-describe("AnalysisOverviewSection con un PDF", () => {
+const register = {
+  proposals: [],
+  rejections: [],
+  categories: [],
+  assets: [],
+  today: "2026-10-06",
+  busy: false,
+  onAccept: () => {},
+  onReject: () => {},
+  onRestore: () => {},
+};
+
+describe("ReadingRegister con un PDF", () => {
   const SEGMENTS: ContentSegment[] = [
     { id: "p2", kind: "page", index: 2, text: "Condizioni.\nValida fino al 3 giugno 2027.\nFine." },
   ];
@@ -95,14 +107,15 @@ describe("AnalysisOverviewSection con un PDF", () => {
   it("apre la pagina originale e permette di passare al testo letto e ritorno", async () => {
     renderPage.mockResolvedValue(RENDERED);
     render(
-      <AnalysisOverviewSection
+      <ReadingRegister
+        {...register}
         overview={OVERVIEW}
         segments={SEGMENTS}
         text=""
         loadPdfBytes={async () => new Uint8Array([1])}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "pagina 2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mostra il punto d'origine di Scadenza" }));
     expect(await screen.findByRole("region", { name: "Pagina originale" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Mostra il testo letto" }));
@@ -114,8 +127,8 @@ describe("AnalysisOverviewSection con un PDF", () => {
   });
 
   it("senza i byte del PDF resta il solo testo letto", () => {
-    render(<AnalysisOverviewSection overview={OVERVIEW} segments={SEGMENTS} text="" />);
-    fireEvent.click(screen.getByRole("button", { name: "pagina 2" }));
+    render(<ReadingRegister {...register} overview={OVERVIEW} segments={SEGMENTS} text="" />);
+    fireEvent.click(screen.getByRole("button", { name: "Mostra il punto d'origine di Scadenza" }));
     expect(screen.getByRole("region", { name: "Testo letto" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Mostra il testo letto" })).toBeNull();
   });

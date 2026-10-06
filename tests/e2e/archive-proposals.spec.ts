@@ -12,6 +12,14 @@ import { MASTER_PASSWORD, openAnalysedDocument } from "./hinthia";
 const accettaDi = (page: import("@playwright/test").Page) =>
   page.getByRole("tabpanel", { name: /^Chiedi a Hinthia/ }).getByRole("button", { name: "Accetta", exact: true });
 
+// Nel registro la categoria viene prima della scadenza: per accettare "la scadenza" si cerca la sua riga.
+const accettaScadenza = (page: import("@playwright/test").Page) =>
+  page
+    .getByRole("tabpanel", { name: /^Chiedi a Hinthia/ })
+    .getByRole("listitem")
+    .filter({ hasText: "Scadenza" })
+    .getByRole("button", { name: "Accetta", exact: true });
+
 test("accettare una proposta scrive davvero, e si può annullare", async ({ page }) => {
   test.slow();
 
@@ -28,7 +36,7 @@ test("accettare una proposta scrive davvero, e si può annullare", async ({ page
   await expect(scadenza).toHaveValue("");
   await hinthiaTab.click();
 
-  await accettaDi(page).first().click();
+  await accettaScadenza(page).click();
 
   // La scheda si aggiorna, e la proposta sparisce: ciò che è impostato non si ripropone.
   // L'annullamento è condiviso sopra le tab, non dentro il pannello: non deve sparire cambiando tab.
@@ -46,7 +54,7 @@ test("accettare una proposta scrive davvero, e si può annullare", async ({ page
   await hinthiaTab.click();
 
   // Si riaccetta, e stavolta si va a vedere l'effetto fuori dall'Archivio.
-  await accettaDi(page).first().click();
+  await accettaScadenza(page).click();
   await schedaTab.click();
   await expect(scadenza).toHaveValue("2027-06-03", { timeout: 20_000 });
 
@@ -87,8 +95,7 @@ test("modificare una proposta prima di accettarla", async ({ page }) => {
 
   await page
     .getByRole("tabpanel", { name: /^Chiedi a Hinthia/ })
-    .getByRole("button", { name: "Modifica" })
-    .first()
+    .getByRole("button", { name: "Modifica Scadenza" })
     .click();
 
   // Il caso più frequente: la data c'è ma è quella sbagliata.
@@ -105,7 +112,7 @@ test("le scelte sulle proposte restano in Impostazioni > Attività, filtrabili p
 
   await openAnalysedDocument(page, { expectedProposals: 3 });
 
-  await accettaDi(page).first().click();
+  await accettaScadenza(page).click();
   await page.getByRole("tab", { name: "Scheda" }).click();
   await expect(page.getByLabel("Scadenza")).toHaveValue("2027-06-03", { timeout: 20_000 });
 

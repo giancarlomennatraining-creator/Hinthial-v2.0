@@ -38,7 +38,7 @@ function ProgressStatus({ progress }: { progress: AnalysisProgress | null }) {
 
 /**
  * FASE 22: il bottone che manda per davvero il testo di un documento a Claude --- niente di automatico, un clic
- * esplicito per documento. Puramente presentazionale (come ProposalsSection): stato e chiamate vivono in
+ * esplicito per documento. Puramente presentazionale (come ReadingRegister): stato e chiamate vivono in
  * ArchiveItemDetail.tsx, incluso il window.confirm prima dell'invio (v. handleAnalyzeWithClaude).
  */
 export function AIAnalysisTrigger({
@@ -51,6 +51,7 @@ export function AIAnalysisTrigger({
   progress = null,
   savedState = { kind: "none" },
   analyzedAtLabel = null,
+  documentTitle = null,
   lastRunFailed = false,
   onAnalyze,
   onAbort,
@@ -70,6 +71,8 @@ export function AIAnalysisTrigger({
   savedState?: SavedAnalysisState;
   /** Quando è stata salvata l'ultima lettura, già formattato. */
   analyzedAtLabel?: string | null;
+  /** Il titolo del documento, per l'intestazione di una lettura già fatta. */
+  documentTitle?: string | null;
   /** L'ultima lettura si è fermata per un errore, non per una scelta dell'utente. */
   lastRunFailed?: boolean;
   /** `force` = "Rileggi da capo": ignora la lettura salvata. */
@@ -89,6 +92,43 @@ export function AIAnalysisTrigger({
       : savedState.kind === "merge-pending"
         ? "Prepara la sintesi finale"
         : "Chiedi a Hinthia";
+
+  const excludeToggle = (
+    <label className="mt-1 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+      <input
+        type="checkbox"
+        checked={excluded}
+        onChange={() => onToggleExcluded(!excluded)}
+        className="h-3.5 w-3.5 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+      />
+      Escludi questo documento dall&apos;analisi di Hinthia, anche con la categoria abilitata
+    </label>
+  );
+
+  // Una lettura già fatta: l'intestazione del registro (v. ReadingRegister), con "Rileggi da capo" di fianco.
+  if (alreadyRead && consentActive && !excluded && !busy) {
+    const subtitle = [documentTitle, analyzedAtLabel ? `letta il ${analyzedAtLabel}` : "letta"].filter(Boolean).join(" · ");
+    return (
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3.5">
+          {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
+          <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-11 w-11 shrink-0 rounded-full shadow-[0_6px_16px_rgba(43,79,196,0.35)]" />
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <p className="font-heading text-xl font-extrabold tracking-tight text-[#121a35] dark:text-zinc-50">Lettura di Hinthia</p>
+            <p className="truncate text-[13px] text-[#5b6483] dark:text-zinc-400">{subtitle}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onAnalyze(rereadScope, { force: true })}
+            className="reading-btn shrink-0 rounded-[10px] border border-[#c9d0e6] bg-white px-3.5 py-2 text-[13px] font-semibold text-[#121a35] hover:border-brand hover:bg-[#f1f5ff] dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
+          >
+            Rileggi da capo
+          </button>
+        </div>
+        {excludeToggle}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -193,15 +233,7 @@ export function AIAnalysisTrigger({
         </button>
       ) : null}
 
-      <label className="mt-1 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-        <input
-          type="checkbox"
-          checked={excluded}
-          onChange={() => onToggleExcluded(!excluded)}
-          className="h-3.5 w-3.5 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
-        />
-        Escludi questo documento dall&apos;analisi di Hinthia, anche con la categoria abilitata
-      </label>
+      {excludeToggle}
     </div>
   );
 }
