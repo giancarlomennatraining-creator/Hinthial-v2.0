@@ -10,6 +10,23 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-06 (53)
+
+### Fascicoli vivi: l'elenco e la scheda raccontano la vicenda da soli
+
+**Cosa fa:**
+- L'elenco dei fascicoli è una griglia di schede: stato (Aperto/Chiuso), **prossima scadenza** in evidenza (rossa se urgente), quanti documenti, quanto si è speso, quanti beni, "ultimo documento ieri" e tre paginette colorate come le categorie. Cliccando dove vuoi la scheda si apre; il menu ha Apri, Modifica, Elimina. In cima, al posto del menu a tendina, i filtri **Tutti / Aperti / Chiusi / Con scadenze vicine**, con i conteggi.
+- La scheda di un fascicolo ha una **Cronologia** unica: documenti, note e scadenze in ordine di data, con l'importo letto dal documento. Sopra la cronologia scrivi una **nota** ("Aggiungi nota"): diventa una nota dell'Archivio già collegata al fascicolo.
+- A destra, solo se hanno qualcosa da dire: **Prossime scadenze**, **Spese** (totale e voci principali), **Coinvolti** (i beni dei documenti) e **Cosa dicono i documenti**, che mostra le sintesi già scritte da Hinthia sui documenti letti, senza avviare nessuna nuova lettura.
+- Niente da compilare: tutto si ricava da ciò che c'è già nei documenti.
+
+**Note tecniche:**
+- Nessuna migrazione. La parte pura è in `domain/dossiers/overview.ts` (importi, scadenze, panoramica, cronologia viva), coperta da `tests/unit/dossier-overview.test.ts`; i componenti sono `DossierCard`, `DossiersPanel` e `DossierDetail`.
+- Una spesa è l'importo di un documento nei campi `importo_totale`, `importo_sanzione`, `premio`, `importo`, in quest'ordine: massimale e saldo non contano, per non gonfiare il totale. Le scadenze sono quelle create per i documenti del fascicolo più la data di scadenza dei documenti stessi (se coincidono nello stesso giorno resta la scadenza).
+- Le sintesi di "Cosa dicono i documenti" si leggono solo al clic, con `getDocumentsByIds`. Rimandati: fasi, documenti attesi, persone, condivisione, fascicoli suggeriti.
+
+---
+
 ## 2026-10-06 (52)
 
 ### L'Archivio ha sei viste: elenco, tabella e quattro nuove
