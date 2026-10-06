@@ -10,6 +10,24 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-06 (50)
+
+### Hinthial propone di creare il bene, e il bene mostra tutte le sue scadenze
+
+**Cosa fa:**
+- Se un documento parla di un bene che non hai ancora (una polizza auto con modello e targa, una polizza casa con l'oggetto assicurato, una bolletta con il codice di fornitura), nella scheda compare **"Nuovo bene: Ford Focus 1.5 EcoBlue (EY389YM)"**. **Crea e collega** crea il bene e vi collega il documento; **Modifica** cambia il nome prima di crearlo; **No, grazie** non la ripropone; **Annulla** elimina il bene appena creato.
+- Se esiste già un bene con lo stesso nome, propone di collegarlo invece di crearne un doppione.
+- Dopo il primo collegamento il bene "impara" targa e numero di polizza: i documenti successivi vengono proposti da soli (v. voce 49).
+- Nella pagina **Beni**, "Scadenze collegate" ora riunisce in un posto solo: le scadenze create per il bene, quelle dei suoi documenti (per esempio una disdetta accettata da una polizza) e la data di scadenza dei documenti stessi (📄), in ordine di data. Il conteggio nella tabella segue lo stesso criterio.
+
+**Note tecniche:**
+- `buildNewAssetProposal` (`src/domain/assets/link-proposal.ts`) ricava il nome dai campi già letti o confermati (targa + oggetto assicurato, solo oggetto assicurato se più corto di 60 caratteri, codice di fornitura): nessun cambiamento al prompt né alla lettura, quindi nessun bump di `ANALYSIS_PIPELINE_VERSION` e nessuna nuova chiamata a un servizio esterno. Resta il limite che il nome è quello che la lettura ha dato ai campi: per beni senza questi identificativi (un elettrodomestico, un animale) la proposta non compare; un bene con nome scelto dal modello sarebbe un passo successivo, con modifica del prompt e nuova misura.
+- Stessa proposta `asset` della voce 49 (`createAsset` + `value` = nome): nessuna nuova migrazione, il rifiuto usa il nome come valore. Il bene nasce nella categoria del documento, se ce l'ha.
+- `src/domain/assets/deadlines.ts` (puro): scadenze non completate del bene o dei suoi documenti + data di scadenza dei documenti; se un evento coincide col giorno di scadenza del proprio documento mostra solo l'evento.
+- Test: unità (proposta, scadenze, sezione), integrazione (crea/annulla contro il database) ed e2e.
+
+---
+
 ## 2026-10-05 (49)
 
 ### Hinthial propone il bene a cui collegare un documento

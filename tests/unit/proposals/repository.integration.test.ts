@@ -190,5 +190,25 @@ describe.runIf(canRun)("proposte di campo generico (kind \"field\") contro il da
 
       expect(rejections).toContainEqual({ id: rejectionId, kind: "asset", fieldKey: undefined, value: assetId });
     });
+
+    it("accettare un bene da creare lo crea e vi collega il documento, annullare elimina il bene e scollega", async () => {
+      const proposal: Proposal = {
+        kind: "asset",
+        value: "Ford Focus (EY389YM)",
+        createAsset: true,
+        source: "Dal documento: targa EY389YM. Non hai ancora un bene così.",
+      };
+      const doc = { id: documentId, relatedAssetId: null, categoryId: null } as DocumentListItem;
+
+      const accepted = await acceptProposal(userClient, masterKey, userId, doc, proposal, proposal.value);
+      expect(accepted.kind).toBe("asset");
+      expect(accepted.createdAssetId).toBeTruthy();
+      expect(await relatedAsset()).toBe(accepted.createdAssetId);
+
+      await undoAcceptance(userClient, masterKey, userId, documentId, accepted);
+      expect(await relatedAsset()).toBeNull();
+      const { data } = await userClient.from("assets").select("id").eq("id", accepted.createdAssetId!);
+      expect(data).toEqual([]);
+    });
   });
 });

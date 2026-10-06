@@ -88,3 +88,29 @@ describe("ProposalsSection, collegamento a un bene", () => {
     expect(onAccept).toHaveBeenCalledWith(PROPOSAL, "a-casa");
   });
 });
+
+describe("ProposalsSection, bene da creare", () => {
+  const CREATE: Proposal = {
+    kind: "asset",
+    value: "Ford Focus (EY389YM)",
+    createAsset: true,
+    source: "Dal documento: targa EY389YM. Non hai ancora un bene così.",
+  };
+
+  it("mostra il nome proposto e il pulsante dice Crea e collega", () => {
+    const onAccept = vi.fn();
+    render(<ProposalsSection proposals={[CREATE]} categories={[]} busy={false} onAccept={onAccept} onReject={vi.fn()} />);
+    expect(screen.getByText("Nuovo bene: Ford Focus (EY389YM)")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Crea e collega" }));
+    expect(onAccept).toHaveBeenCalledWith(CREATE, "Ford Focus (EY389YM)");
+  });
+
+  it("Modifica permette di cambiare il nome prima di crearlo", () => {
+    const onAccept = vi.fn();
+    render(<ProposalsSection proposals={[CREATE]} categories={[]} busy={false} onAccept={onAccept} onReject={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Modifica" }));
+    fireEvent.change(screen.getByLabelText("Nome del bene da creare"), { target: { value: "La mia Focus" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salva" }));
+    expect(onAccept).toHaveBeenCalledWith(CREATE, "La mia Focus");
+  });
+});

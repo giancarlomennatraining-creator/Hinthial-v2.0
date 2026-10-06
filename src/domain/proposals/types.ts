@@ -11,7 +11,7 @@
  * visibile ma non proponibile, manca un campo che l'accolga. "event" è una data da ricordare (rinnovo, pagamento,
  * visita): accettarla non cambia il documento, crea una scadenza in Scadenze collegata ad esso.
  */
-/** "asset" collega il documento a un bene (`value` = id del bene): v. domain/assets/link-proposal. */
+/** "asset" collega il documento a un bene (`value` = id del bene) o ne crea uno (`createAsset`, `value` = nome): v. domain/assets/link-proposal. */
 export type ProposalKind = "expiry" | "category" | "issuer" | "field" | "event" | "asset";
 
 export interface Proposal {
@@ -30,6 +30,8 @@ export interface Proposal {
   fieldKey?: string;
   /** Solo per kind "field": l'etichetta leggibile, registrata nel vocabolario alla prima accettazione. */
   fieldLabel?: string;
+  /** Solo per kind "asset": vero se il bene non c'è ancora e `value` è il nome da dargli (accettare lo crea e vi collega il documento). */
+  createAsset?: boolean;
   /** Solo per kind "event": come si chiamerà la scadenza creata in Scadenze. */
   eventTitle?: string;
 }

@@ -86,6 +86,8 @@ export interface MockedReading {
   fields?: boolean;
   /** Propone la categoria "Assicurazioni" (se esiste tra quelle inviate). */
   category?: boolean;
+  /** Altri campi restituiti dal motore, oltre a quelli di `fields`: la citazione deve comparire nel testo del documento. */
+  extraFields?: { key: string; label: string; value: string; quote: string }[];
   /** Il tipo di documento che il motore dichiara (default: polizza con categoria, generico senza). */
   documentType?: string;
   /** Eventi da ricordare restituiti dal motore: la data deve comparire nel testo del documento. */
@@ -95,7 +97,7 @@ export interface MockedReading {
 /** Risponde alla route di analisi con una lettura fissa, nel formato attuale (v. api/ai/analyze): `result` per un blocco, `synthesis` per la fusione. */
 export async function mockHinthiaReading(
   page: Page,
-  { fields = false, category = true, events = [], documentType }: MockedReading = {},
+  { fields = false, category = true, events = [], documentType, extraFields = [] }: MockedReading = {},
 ) {
   await page.route("**/api/ai/analyze", (route) => {
     const request = route.request().postDataJSON() as { mode?: string; categories?: { id: string; name: string }[] };
@@ -111,7 +113,8 @@ export async function mockHinthiaReading(
       issuer: [{ value: "GENERALI ITALIA S.p.A.", segmentId: "p1", quote: "GENERALI ITALIA S.p.A." }],
       category:
         category && insurance ? { id: insurance.id, segmentId: "p1", quote: "Polizza responsabilita civile" } : null,
-      fields: fields
+      fields: [
+        ...(fields
         ? [
             {
               key: "numero_polizza",
@@ -128,7 +131,9 @@ export async function mockHinthiaReading(
               quote: "Data di nascita 1990-05-12",
             },
           ]
-        : [],
+        : []),
+        ...extraFields.map((f) => ({ ...f, segmentId: "p1" })),
+      ],
       events: events.map((event) => ({ ...event, segmentId: "p1" })),
       synthesis: null,
     };

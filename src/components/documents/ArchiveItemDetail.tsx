@@ -21,7 +21,7 @@ import {
 import { loadDocumentSegments } from "@/domain/documents/segments";
 import type { ContentSegment } from "@/domain/extraction/types";
 import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
-import { buildAssetProposal, type LinkedDocumentFields } from "@/domain/assets/link-proposal";
+import { buildAssetProposal, buildNewAssetProposal, type LinkedDocumentFields } from "@/domain/assets/link-proposal";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories, grantCategoryAIExtractionTemporarily } from "@/domain/categories/repository";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
@@ -434,7 +434,9 @@ export function ArchiveItemDetail({
           proposal.kind === "event"
             ? `Aggiunta in Scadenze: ${proposal.eventTitle ?? "evento"}, ${formatDate(value)}.`
             : proposal.kind === "asset"
-            ? `Collegato a ${assets.find((a) => a.id === value)?.name ?? "un bene"}.`
+            ? proposal.createAsset
+              ? `Bene "${value.trim()}" creato e collegato.`
+              : `Collegato a ${assets.find((a) => a.id === value)?.name ?? "un bene"}.`
             : proposal.kind === "expiry"
             ? `Scadenza impostata al ${formatDate(value)}.`
             : proposal.kind === "issuer"
@@ -645,13 +647,11 @@ export function ArchiveItemDetail({
   // Ricalcolate a ogni render: accettare o rifiutare una proposta la filtra automaticamente, senza stato a parte.
   // Vengono dalla lettura salvata, non da uno stato della pagina: sopravvivono al ricaricamento e a un'interruzione.
   const aiFields = doc.contentAnalysis ? extractedFieldsFrom(doc.contentAnalysis, categories, typeCategories) : null;
-  const assetProposal = buildAssetProposal({
-    doc,
-    readFields: aiFields?.fields.map((f) => ({ key: f.key, value: f.value })) ?? [],
-    linked: linkedFields,
-    assets,
-    rejections,
-  });
+  const readIdentifiers = aiFields?.fields.map((f) => ({ key: f.key, value: f.value })) ?? [];
+  // Prima un bene che c'è già (lo stesso identificativo di un documento collegato), altrimenti uno da creare.
+  const assetProposal =
+    buildAssetProposal({ doc, readFields: readIdentifiers, linked: linkedFields, assets, rejections }) ??
+    buildNewAssetProposal({ doc, readFields: readIdentifiers, assets, rejections });
   const aiProposals = [
     ...(aiFields
       ? buildAIProposals(doc, aiFields, rejections, {

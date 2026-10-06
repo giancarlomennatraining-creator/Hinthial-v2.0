@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
+import { assetDeadlines } from "@/domain/assets/deadlines";
 import { deleteAsset, listAssets } from "@/domain/assets/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
@@ -132,7 +133,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
       case "documents":
         return String(documents.filter((d) => d.relatedAssetId === asset.id).length);
       case "reminders":
-        return String(reminders.filter((r) => r.relatedAssetId === asset.id).length);
+        return String(assetDeadlines(asset.id, documents, reminders).length);
       case "createdAt":
         return formatDate(asset.createdAt);
     }
@@ -265,7 +266,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                       const category = categoryFor(asset);
                       const busy = busyId === asset.id;
                       const linkedDocuments = documents.filter((d) => d.relatedAssetId === asset.id);
-                      const linkedReminders = reminders.filter((r) => r.relatedAssetId === asset.id);
+                      const deadlines = assetDeadlines(asset.id, documents, reminders);
 
                       return (
                         <tr key={asset.id}>
@@ -279,7 +280,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                             {linkedDocuments.length}
                           </td>
                           <td className="hidden p-3 text-zinc-600 @3xl:table-cell dark:text-zinc-400">
-                            {linkedReminders.length}
+                            {deadlines.length}
                           </td>
                           <td className="hidden p-3 text-zinc-600 @4xl:table-cell dark:text-zinc-400">
                             {formatDate(asset.createdAt)}
@@ -308,7 +309,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 const category = categoryFor(asset);
                 const busy = busyId === asset.id;
                 const linkedDocuments = documents.filter((d) => d.relatedAssetId === asset.id);
-                const linkedReminders = reminders.filter((r) => r.relatedAssetId === asset.id);
+                const deadlines = assetDeadlines(asset.id, documents, reminders);
 
                 return (
                   <li key={asset.id} className="flex flex-col gap-3 p-4">
@@ -353,16 +354,16 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                           Scadenze collegate
                         </p>
-                        {linkedReminders.length === 0 ? (
+                        {deadlines.length === 0 ? (
                           <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-600">Nessuna.</p>
                         ) : (
                           <ul className="mt-1 flex flex-col gap-0.5">
-                            {linkedReminders.map((reminder) => (
+                            {deadlines.map((deadline) => (
                               <li
-                                key={reminder.id}
+                                key={`${deadline.kind}-${deadline.id}`}
                                 className="truncate text-xs text-zinc-700 dark:text-zinc-300"
                               >
-                                ⏰ {reminder.title} · {formatDate(reminder.dueAt)}
+                                {deadline.kind === "reminder" ? "⏰" : "📄"} {deadline.title} · {formatDate(deadline.date)}
                               </li>
                             ))}
                           </ul>

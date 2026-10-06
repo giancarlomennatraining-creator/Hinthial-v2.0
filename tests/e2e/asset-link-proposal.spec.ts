@@ -64,3 +64,47 @@ test("propone di collegare la polizza al bene che ha già un documento con lo st
   await page.getByRole("status", { name: "Ultima proposta" }).getByRole("button", { name: "Annulla" }).click();
   await expect(page.getByLabel("Bene collegato").locator("option:checked")).toHaveText("Scegli prima una categoria", { timeout: 20_000 });
 });
+
+test("da una polizza propone di creare il bene, lo crea collegando il documento, e il bene mostra le sue scadenze", async ({ page }) => {
+  test.slow();
+
+  const lines = [...POLIZZA, "Oggetto assicurato: Ford Focus 1.5 EcoBlue", "Targa: EY389YM"];
+  await mockHinthiaReading(page, {
+    category: false,
+    extraFields: [
+      { key: "oggetto_assicurato", label: "Oggetto assicurato", value: "Ford Focus 1.5 EcoBlue", quote: "Oggetto assicurato: Ford Focus 1.5 EcoBlue" },
+      { key: "targa", label: "Targa", value: "EY389YM", quote: "Targa: EY389YM" },
+    ],
+  });
+  await setUpWithDocument(page, { filename: "polizza-focus.pdf", lines });
+  await enableHinthia(page);
+
+  // Scadenza, emittente, due campi e il bene da creare.
+  await askHinthia(page, 5);
+  await page.getByRole("tab", { name: "Scheda" }).click();
+  await page.getByRole("group", { name: "Informazioni trovate da Hinthia" }).getByRole("button", { name: "Accetta tutto" }).click();
+  await expect(page.getByRole("status", { name: "Ultima proposta" })).toContainText("informazioni aggiunte", { timeout: 20_000 });
+
+  await page.getByRole("tab", { name: /^Chiedi a Hinthia/ }).click();
+  await expect(page.getByText("Nuovo bene: Ford Focus 1.5 EcoBlue (EY389YM)")).toBeVisible();
+  await page.getByRole("button", { name: "Crea e collega" }).click();
+  const lastAction = page.getByRole("status", { name: "Ultima proposta" });
+  await expect(lastAction).toContainText('Bene "Ford Focus 1.5 EcoBlue (EY389YM)" creato e collegato', { timeout: 20_000 });
+
+  // Annullando, il bene sparisce e la proposta torna.
+  await lastAction.getByRole("button", { name: "Annulla" }).click();
+  await expect(page.getByRole("button", { name: "Crea e collega" })).toBeVisible({ timeout: 20_000 });
+  await page.getByRole("tab", { name: "Scheda" }).click();
+  await expect(page.getByLabel("Bene collegato").locator("option:checked")).toHaveText("Scegli prima una categoria");
+
+  await page.getByRole("tab", { name: /^Chiedi a Hinthia/ }).click();
+  await page.getByRole("button", { name: "Crea e collega" }).click();
+  await expect(lastAction).toContainText("creato e collegato", { timeout: 20_000 });
+  await page.getByRole("tab", { name: "Scheda" }).click();
+  await expect(page.getByLabel("Bene collegato").locator("option:checked")).toHaveText("Ford Focus 1.5 EcoBlue (EY389YM)");
+
+  // Il bene mostra la scadenza del documento collegato.
+  await page.getByRole("link", { name: "Beni", exact: true }).click();
+  const asset = page.getByRole("listitem").filter({ hasText: "Ford Focus 1.5 EcoBlue (EY389YM)" });
+  await expect(asset).toContainText("polizza-focus.pdf scade", { timeout: 15_000 });
+});

@@ -88,3 +88,59 @@ export function buildAssetProposal(input: {
     source: `${LINKING_FIELDS[match.own.key]} (${match.own.value}) di "${match.filename}", già collegato a ${asset.name}.`,
   };
 }
+
+/** Oltre questa lunghezza un "oggetto assicurato" è una frase, non il nome di un bene. */
+const MAX_ASSET_NAME_LENGTH = 60;
+
+/**
+ * Il documento parla di un bene che ancora non c'è? Il nome si ricava dai campi già letti o confermati, senza altre
+ * letture: la targa (con il modello del veicolo se la polizza lo dice), l'oggetto assicurato di una polizza, il codice
+ * di fornitura di un'utenza. Se un bene con lo stesso nome esiste già, si propone di collegarlo invece di crearne un
+ * doppione. Il nome è una proposta, modificabile prima di accettare.
+ */
+export function buildNewAssetProposal(input: {
+  doc: { relatedAssetId: string | null; structuredFields: Record<string, string> };
+  readFields: OwnIdentifier[];
+  assets: { id: string; name: string }[];
+  rejections: ProposalRejection[];
+}): Proposal | null {
+  const { doc, readFields, assets, rejections } = input;
+  if (doc.relatedAssetId) return null;
+
+  // Ciò che è già nella Scheda vince su ciò che Hinthia ha letto.
+  const values: Record<string, string> = {};
+  for (const { key, value } of [...readFields, ...Object.entries(doc.structuredFields).map(([key, value]) => ({ key, value }))]) {
+    if (value.trim()) values[key] = value.trim();
+  }
+
+  const object = values.oggetto_assicurato && values.oggetto_assicurato.length <= MAX_ASSET_NAME_LENGTH ? values.oggetto_assicurato : null;
+  const plate = values.targa && normalizeIdentifier(values.targa).length >= MIN_IDENTIFIER_LENGTH ? values.targa.toUpperCase() : null;
+  const supply =
+    values.codice_fornitura && normalizeIdentifier(values.codice_fornitura).length >= MIN_IDENTIFIER_LENGTH
+      ? values.codice_fornitura
+      : null;
+
+  let name: string | null = null;
+  let from = "";
+  if (plate) {
+    name = object ? `${object} (${plate})` : `Veicolo ${plate}`;
+    from = object ? `oggetto assicurato "${object}" e targa ${plate}` : `targa ${plate}`;
+  } else if (object) {
+    name = object;
+    from = `oggetto assicurato "${object}"`;
+  } else if (supply) {
+    name = `Utenza ${supply}`;
+    from = `codice di fornitura ${supply}`;
+  }
+  if (!name) return null;
+
+  const wanted = normalizeIdentifier(name);
+  const existing = assets.find((a) => normalizeIdentifier(a.name) === wanted);
+  if (existing) {
+    if (rejections.some((r) => r.kind === "asset" && r.value === existing.id)) return null;
+    return { kind: "asset", value: existing.id, source: `Dal documento: ${from}. Hai già un bene con questo nome.` };
+  }
+
+  if (rejections.some((r) => r.kind === "asset" && r.value === name)) return null;
+  return { kind: "asset", value: name, createAsset: true, source: `Dal documento: ${from}. Non hai ancora un bene così.` };
+}

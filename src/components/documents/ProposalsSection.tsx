@@ -86,7 +86,10 @@ export function ProposalsSection({
     if (proposal.kind === "expiry") return formatDate(proposal.value);
     if (proposal.kind === "event") return `${proposal.eventTitle ?? "Evento"}, ${formatDate(proposal.value)}`;
     if (proposal.kind === "issuer" || proposal.kind === "field") return proposal.value;
-    if (proposal.kind === "asset") return assets.find((a) => a.id === proposal.value)?.name ?? "Bene";
+    if (proposal.kind === "asset") {
+      if (proposal.createAsset) return `Nuovo bene: ${proposal.value}`;
+      return assets.find((a) => a.id === proposal.value)?.name ?? "Bene";
+    }
     return categories.find((c) => c.id === proposal.value)?.name ?? proposal.value;
   }
 
@@ -164,6 +167,14 @@ export function ProposalsSection({
                     aria-label={`${kindLabel(proposal)} da impostare`}
                     className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
                   />
+                ) : proposal.kind === "asset" && proposal.createAsset ? (
+                  <input
+                    type="text"
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    aria-label="Nome del bene da creare"
+                    className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                  />
                 ) : proposal.kind === "asset" ? (
                   <select
                     value={draft}
@@ -218,7 +229,7 @@ export function ProposalsSection({
                   onClick={() => onAccept(proposal, proposal.value)}
                   className="rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
                 >
-                  {proposal.kind === "event" ? "Aggiungi a Scadenze" : proposal.kind === "asset" ? "Collega" : "Accetta"}
+                  {proposal.kind === "event" ? "Aggiungi a Scadenze" : proposal.kind === "asset" ? (proposal.createAsset ? "Crea e collega" : "Collega") : "Accetta"}
                 </button>
                 <button
                   type="button"

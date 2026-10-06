@@ -11,6 +11,7 @@ import {
 import { logAuditEvent, type AuditEntityRef } from "@/lib/audit/log-event";
 import { decryptStructuredFields, encryptStructuredFields } from "@/domain/documents/repository";
 import { registerFieldVocabulary } from "@/domain/structured-fields/vocabulary";
+import { createAsset, deleteAsset } from "@/domain/assets/repository";
 import { createReminder, deleteReminder } from "@/domain/reminders/repository";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { Proposal, ProposalKind, ProposalRejection } from "@/domain/proposals/types";
@@ -35,6 +36,8 @@ export interface AcceptedProposal {
   previousValue: string | null;
   /** Solo per kind "event": la scadenza creata, da eliminare se si annulla. */
   reminderId?: string;
+  /** Solo per kind "asset" che crea un bene: il bene creato, da eliminare se si annulla. */
+  createdAssetId?: string;
 }
 
 /** Un evento letto è un giorno, non un'ora: la scadenza si fissa alle 9 del mattino (fuso dell'utente), un orario ragionevole per un promemoria. */
@@ -161,6 +164,23 @@ export async function acceptProposal(
     return { kind: "field", fieldKey, previousValue };
   }
 
+  if (proposal.kind === "asset" && proposal.createAsset) {
+    const name = value.trim();
+    if (!name) throw new Error("Proposta di bene senza nome.");
+
+    // Il bene nasce nella categoria del documento, se ce l'ha: così il campo "Bene collegato" lo offre anche dopo.
+    const assetId = await createAsset(supabase, masterKey, ownerId, { name, categoryId: doc.categoryId });
+    const { error } = await supabase.from("documents").update({ related_asset_id: assetId }).eq("id", doc.id);
+    if (error) {
+      // Il documento non è stato collegato: il bene appena creato non deve restare orfano.
+      await deleteAsset(supabase, ownerId, assetId).catch(() => undefined);
+      throw new Error(`Impossibile applicare la proposta: ${error.message}`);
+    }
+
+    await logAuditEvent(supabase, ownerId, "proposal_accepted", { proposalKind: "asset" }, documentRef(doc.id));
+    return { kind: "asset", previousValue: doc.relatedAssetId, createdAssetId: assetId };
+  }
+
   const previousValue = currentValue(doc, proposal.kind);
 
   const { error } = await supabase
@@ -220,6 +240,9 @@ export async function undoAcceptance(
   if (error) {
     throw new Error(`Impossibile annullare: ${error.message}`);
   }
+
+  // Un bene creato dalla proposta sparisce con lei: prima il documento è stato scollegato, poi si elimina.
+  if (accepted.createdAssetId) await deleteAsset(supabase, ownerId, accepted.createdAssetId);
 
   await logAuditEvent(supabase, ownerId, "proposal_undone", { proposalKind: accepted.kind }, documentRef(documentId));
 }
