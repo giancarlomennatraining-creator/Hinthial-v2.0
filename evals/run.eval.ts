@@ -14,12 +14,14 @@ import { scoreDocument } from "./score";
  * La misura: esegue la catena di analisi su ogni documento di prova con il motore scelto e stampa il rapporto.
  *   npm run eval                              (motore "claude")
  *   EVAL_PROVIDER=empty npm run eval          (nessun motore: il pavimento, senza rete)
+ *   EVAL_PROVIDER=ollama EVAL_MODEL=qwen2.5:3b npm run eval   (un modello locale servito da Ollama)
  *   EVAL_ONLY=polizza-rca-generali,bolletta-luce npm run eval
  * Il rapporto completo si salva anche in evals/results/ (ignorata da git).
  */
 const PROVIDER = process.env.EVAL_PROVIDER ?? "claude";
 const ONLY = process.env.EVAL_ONLY?.split(",").map((id) => id.trim()).filter(Boolean);
-const CONCURRENCY = Number(process.env.EVAL_CONCURRENCY ?? 3);
+// Un modello locale ha una sola CPU/GPU da dividere: più richieste insieme lo rallentano e basta.
+const CONCURRENCY = Number(process.env.EVAL_CONCURRENCY ?? (PROVIDER === "ollama" ? 1 : 3));
 /** Un file di risultati già salvato: si rivaluta senza rifare le chiamate al motore (utile cambiando il punteggio). */
 const FROM = process.env.EVAL_FROM;
 /** Con EVAL_FROM: rifà la validazione sull'uscita grezza salvata (senza chiamare il motore), per misurare un cambiamento alla validazione. */

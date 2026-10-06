@@ -9,6 +9,7 @@ confrontare motori (Anthropic, un modello locale, un server) e a vedere se un ca
 ```
 npm run eval                                   # motore "claude" (usa ANTHROPIC_API_KEY di .env.local, costa pochi centesimi)
 EVAL_PROVIDER=empty npm run eval               # nessun motore: il pavimento, senza rete né costi
+EVAL_PROVIDER=ollama npm run eval              # un modello locale (Ollama); EVAL_MODEL=qwen2.5:3b (predefinito), OLLAMA_URL=http://localhost:11434
 EVAL_ONLY=polizza-rca-generali npm run eval    # solo alcuni documenti (id separati da virgola)
 EVAL_FROM=evals/results/<file>.json npm run eval   # rivaluta una misura già salvata, senza rifare le chiamate
 ```
@@ -25,6 +26,7 @@ I rapporti completi si salvano in `evals/results/` (ignorata da git). Le misure 
   valore; categoria; valori vietati).
 - `run-analysis.ts` la catena di analisi, senza rete né database.
 - `providers.ts` i motori: per provarne uno nuovo basta implementare `AnalysisProvider` e aggiungerlo qui.
+- `ollama-provider.ts` un modello locale via Ollama: stesse istruzioni e stesso schema di Anthropic (`src/domain/ai/analysis/prompt.ts`), uscita vincolata allo schema JSON, temperatura 0. Prima `ollama pull <modello>`.
 - `report.ts` la tabella e l'elenco di cosa non torna in ogni documento.
 
 `tests/unit/evals-corpus.test.ts` controlla le risposte giuste contro i documenti stessi (se un dato annotato non compare nel
