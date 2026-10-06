@@ -133,6 +133,12 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   await expect(cronologia.getByRole("link", { name: /referto-visita\.pdf/ })).toBeVisible();
   await expect(cronologia).toContainText(/\d{1,2} [a-zà-ù]{3} \d{4}/);
 
+  // Una nota scritta qui entra nella cronologia, come nota dell'Archivio collegata al fascicolo.
+  await cronologia.getByLabel("Scrivi una nota").fill("Chiamare l'ortopedico per il controllo");
+  await cronologia.getByRole("button", { name: "Aggiungi nota" }).click();
+  await expect(page.getByText("Nota aggiunta.")).toBeVisible({ timeout: 15_000 });
+  await expect(cronologia.getByRole("link", { name: /Chiamare l'ortopedico/ })).toBeVisible();
+
   // Chiudere e riaprire: un clic, non un form.
   await page.getByRole("button", { name: "Chiudi fascicolo" }).click();
   await expect(page.getByRole("button", { name: "Riapri fascicolo" })).toBeVisible({

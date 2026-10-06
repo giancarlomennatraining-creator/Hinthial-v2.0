@@ -6,6 +6,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import { deleteDossier, listDossiers } from "@/domain/dossiers/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
+import { listAssets } from "@/domain/assets/repository";
+import { listCategories } from "@/domain/categories/repository";
+import { listReminders } from "@/domain/reminders/repository";
+import { DossierCard } from "@/components/dossiers/DossierCard";
+import { categoryColor, needsAttention } from "@/domain/documents/archive-views";
+import { dossierOverview, type DossierOverview } from "@/domain/dossiers/overview";
+import type { AssetListItem } from "@/domain/assets/types";
+import type { Category } from "@/domain/categories/types";
+import type { ReminderListItem } from "@/domain/reminders/types";
+import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -41,11 +51,15 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [assets, setAssets] = useState<AssetListItem[]>([]);
+  const [reminders, setReminders] = useState<ReminderListItem[]>([]);
+  const [now] = useState(() => new Date());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"" | DossierStatus>("");
+  const [statusFilter, setStatusFilter] = useState<"" | DossierStatus | "soon">("");
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "createdAt", direction: "desc" });
 
@@ -63,12 +77,19 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [dossiersResult, documentsResult] = await Promise.all([
+      const [dossiersResult, documentsResult, categoriesResult, assetsResult, remindersResult] = await Promise.all([
         listDossiers(supabase, masterKey),
         listDocumentSummaries(supabase, masterKey),
+        listCategories(supabase),
+        listAssets(supabase, masterKey),
+        // Le scadenze servono solo a dire "prossima scadenza": se non si leggono, la scheda resta com'è.
+        listReminders(supabase, masterKey).catch((): ReminderListItem[] => []),
       ]);
       setDossiers(dossiersResult);
       setDocuments(documentsResult);
+      setCategories(categoriesResult);
+      setAssets(assetsResult);
+      setReminders(remindersResult);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare i fascicoli.");
     } finally {
@@ -128,12 +149,44 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
     setSort((prev) => toggleSort(prev, column));
   }
 
+  const overviews = new Map<string, DossierOverview>(
+    dossiers.map((dossier) => [dossier.id, dossierOverview({ documents: documentsFor(dossier), reminders, assets, now })]),
+  );
+  const isSoon = (dossier: DossierListItem) => {
+    const next = overviews.get(dossier.id)?.nextDeadline;
+    return dossier.status === "open" && next !== null && next !== undefined && needsAttention(next.info);
+  };
+
   const filteredDossiers = dossiers
     .filter((dossier) => {
       const normalized = query.trim().toLowerCase();
       return !normalized || dossier.title.toLowerCase().includes(normalized);
     })
-    .filter((dossier) => !statusFilter || dossier.status === statusFilter);
+    .filter((dossier) => !statusFilter || (statusFilter === "soon" ? isSoon(dossier) : dossier.status === statusFilter));
+
+  const chips: { value: "" | DossierStatus | "soon"; label: string; count: number }[] = [
+    { value: "", label: "Tutti", count: dossiers.length },
+    { value: "open", label: "Aperti", count: dossiers.filter((d) => d.status === "open").length },
+    { value: "closed", label: "Chiusi", count: dossiers.filter((d) => d.status === "closed").length },
+    { value: "soon", label: "Con scadenze vicine", count: dossiers.filter(isSoon).length },
+  ];
+
+  /** Il colore del fascicolo: quello della categoria più presente nei suoi documenti, o il blu di Hinthial. */
+  function colorOf(dossier: DossierListItem): string {
+    const counts = new Map<string, number>();
+    for (const doc of documentsFor(dossier)) {
+      const name = categories.find((c) => c.id === doc.categoryId)?.name;
+      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+    }
+    const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+    return top ? categoryColor(top[0]) : "#2b4fc4";
+  }
+  function pageColorsOf(dossier: DossierListItem): string[] {
+    return [...documentsFor(dossier)]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 3)
+      .map((doc) => categoryColor(categories.find((c) => c.id === doc.categoryId)?.name ?? null));
+  }
 
   const sortedDossiers = applySort(filteredDossiers, sort, sortValueFor);
 
@@ -187,19 +240,35 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <SearchInput value={query} onChange={setQuery} placeholder="Cerca per titolo…" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as "" | DossierStatus)}
-              aria-label="Filtra per stato"
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-            >
-              <option value="">Tutti gli stati</option>
-              <option value="open">Aperti</option>
-              <option value="closed">Chiusi</option>
-            </select>
             <ListViewToggle section="dossiers" hideOnMobile />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtra per stato">
+            {chips.map((chip) => {
+              const active = statusFilter === chip.value;
+              return (
+                <button
+                  key={chip.value || "all"}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => {
+                    setStatusFilter(chip.value);
+                    setPage(1);
+                  }}
+                  className={cn(
+                    "flex items-center gap-2 rounded-full border px-3.5 py-[7px] text-[13.5px] font-semibold transition-colors",
+                    active
+                      ? "border-brand bg-brand text-white"
+                      : "border-[#dfe3f0] bg-white text-[#121a35] hover:bg-[#e8edfc] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900",
+                  )}
+                >
+                  <span>{chip.label}</span>
+                  <span className={cn("text-xs font-bold", active ? "text-[#cfdaff]" : "text-[#5b6483] dark:text-zinc-400")}>{chip.count}</span>
+                </button>
+              );
+            })}
           </div>
 
           {filteredDossiers.length === 0 ? (
@@ -283,43 +352,22 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
               <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
             </div>
           ) : (
-            <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
-              {filteredDossiers.map((dossier) => {
-                const busy = busyId === dossier.id;
-                const linked = documentsFor(dossier);
-
-                return (
-                  <li key={dossier.id} className="flex flex-col gap-3 p-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="min-w-0">
-                        <Link
-                          href={`/dossiers/${dossier.id}`}
-                          className="block truncate text-sm font-medium text-zinc-900 transition-colors hover:text-brand dark:text-zinc-100 dark:hover:text-blue-400"
-                        >
-                          {STATUS_ICON[dossier.status]} {dossier.title}
-                        </Link>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                          {STATUS_LABEL[dossier.status]} · {linked.length}{" "}
-                          {linked.length === 1 ? "documento" : "documenti"} ·{" "}
-                          {formatDate(dossier.createdAt)}
-                        </p>
-                      </div>
-                      <RowActionsMenu label={`Azioni per ${dossier.title}`}>
-                        <RowMenuItem disabled={busy} onClick={() => router.push(`/dossiers/${dossier.id}`)}>
-                          Apri
-                        </RowMenuItem>
-                        <RowMenuItem disabled={busy} onClick={() => router.push(`/dossiers/${dossier.id}/edit`)}>
-                          Modifica
-                        </RowMenuItem>
-                        <RowMenuItem disabled={busy} danger onClick={() => handleDelete(dossier)}>
-                          Elimina
-                        </RowMenuItem>
-                      </RowActionsMenu>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredDossiers.map((dossier) => (
+                <DossierCard
+                  key={dossier.id}
+                  dossier={dossier}
+                  overview={overviews.get(dossier.id) as DossierOverview}
+                  color={colorOf(dossier)}
+                  pageColors={pageColorsOf(dossier)}
+                  now={now}
+                  busy={busyId === dossier.id}
+                  onOpen={() => router.push(`/dossiers/${dossier.id}`)}
+                  onEdit={() => router.push(`/dossiers/${dossier.id}/edit`)}
+                  onDelete={() => handleDelete(dossier)}
+                />
+              ))}
+            </div>
           )}
         </>
       )}
