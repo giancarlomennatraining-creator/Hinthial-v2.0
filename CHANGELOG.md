@@ -10,20 +10,6 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
-## 2026-10-06 (52)
-
-### La misura può provare un modello locale (Ollama)
-
-**Cosa fa:**
-- Nessun cambiamento per chi usa l'app. Per chi sviluppa: `EVAL_PROVIDER=ollama npm run eval` esegue lo stesso corpus di 34 documenti con un modello che gira sul proprio computer (predefinito `qwen2.5:3b`, scelto con `EVAL_MODEL`) e produce la stessa tabella di Anthropic, per vedere dove un modello piccolo basta.
-
-**Note tecniche:**
-- Le istruzioni, lo schema di uscita e il messaggio del blocco stanno in `src/domain/ai/analysis/prompt.ts` (già condiviso dal provider Claude): la misura confronta i motori, non i prompt.
-- `evals/ollama-provider.ts`: chat API con `format` = schema JSON, temperatura 0, timeout 10 minuti, concorrenza 1 di default; errore chiaro se Ollama non è raggiungibile o il modello non è scaricato. La sintesi unica (`mergeSyntheses`) non è ancora misurata. Nessun codice di produzione lo usa.
-- Non è stato eseguito su un modello vero: il portatile di sviluppo non regge un modello locale (v. decisione di restare su Anthropic per ora). Il test usa chiamate simulate.
-
----
-
 ## 2026-10-06 (51)
 
 ### Un solo registro di lettura, con il movimento
