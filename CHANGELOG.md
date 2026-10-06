@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-07 (55)
+
+### Fascicoli suggeriti: Hinthial nota cosa va insieme
+
+**Cosa fa:**
+- Nell'elenco dei fascicoli, se hai **tre o più documenti dello stesso bene** e nessuno è in un fascicolo, compare un avviso: "Hai 3 documenti di «Fiat Panda» senza un fascicolo. Vuoi riunirli?". **"Crea il fascicolo"** lo crea col nome del bene, ci mette dentro i documenti e lo apre; **"Non ora"** lo nasconde.
+- Nella scheda di un fascicolo, il riquadro **"Forse appartengono qui"** elenca altri documenti dello stesso bene dei suoi documenti, ancora fuori: **"Aggiungi"** li mette dentro (restano negli altri fascicoli in cui già stanno), la **×** li scarta.
+- Regole prudenti, per non proporre collegamenti sbagliati: un fascicolo nuovo solo da tre documenti in su e mai se esiste già un fascicolo con quel nome; i documenti da aggiungere solo se almeno due del fascicolo sono di quel bene, e se il bene è uno solo (con due beni a pari merito non si sceglie). Mai sui fascicoli chiusi.
+
+**Note tecniche:**
+- Nessuna migrazione e nessun dato in più sul server: i suggerimenti si calcolano sul dispositivo (`domain/dossiers/suggestions.ts`, coperto da test) dai beni già collegati ai documenti. I "Non ora" e le × si ricordano nel `localStorage` del dispositivo, quindi su un altro dispositivo il suggerimento ricompare.
+- Non sono "proposte" del registro di lettura (nessun nuovo tipo di proposta): vivono nelle pagine dei fascicoli. Rimandato: suggerire un fascicolo anche da altri legami (stesso emittente, parole in comune) e dal singolo documento.
+
+---
+
 ## 2026-10-07 (54)
 
 ### Documenti attesi nel fascicolo
