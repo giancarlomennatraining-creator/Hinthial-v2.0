@@ -651,6 +651,41 @@ export type Database = {
           },
         ];
       };
+      dossier_expected_items: {
+        Row: {
+          id: string;
+          dossier_id: string;
+          owner_id: string;
+          encrypted_label: string;
+          done: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          dossier_id: string;
+          owner_id: string;
+          encrypted_label: string;
+          done?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          dossier_id?: string;
+          owner_id?: string;
+          encrypted_label?: string;
+          done?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "dossier_expected_items_dossier_id_fkey";
+            columns: ["dossier_id"];
+            isOneToOne: false;
+            referencedRelation: "dossiers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       document_dossiers: {
         Row: {
           document_id: string;

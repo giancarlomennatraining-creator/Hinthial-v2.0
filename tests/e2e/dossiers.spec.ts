@@ -139,6 +139,16 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   await expect(page.getByText("Nota aggiunta.")).toBeVisible({ timeout: 15_000 });
   await expect(cronologia.getByRole("link", { name: /Chiamare l'ortopedico/ })).toBeVisible();
 
+  // I documenti attesi: "Referto" si spunta da solo (c'è referto-visita.pdf), "Fattura" resta da fare finché non si spunta a mano.
+  await page.getByRole("button", { name: "+ Documenti attesi" }).click();
+  const attesi = page.getByRole("region", { name: "Documenti attesi" });
+  await attesi.getByLabel("Aggiungi un documento atteso").fill("Referto, Fattura");
+  await attesi.getByRole("button", { name: "Aggiungi", exact: true }).click();
+  await expect(attesi).toContainText("1 di 2", { timeout: 15_000 });
+  await expect(attesi.getByRole("link", { name: /referto-visita\.pdf/ })).toBeVisible();
+  await attesi.getByLabel("Fattura: fatto").check();
+  await expect(attesi).toContainText("2 di 2", { timeout: 15_000 });
+
   // Chiudere e riaprire: un clic, non un form.
   await page.getByRole("button", { name: "Chiudi fascicolo" }).click();
   await expect(page.getByRole("button", { name: "Riapri fascicolo" })).toBeVisible({

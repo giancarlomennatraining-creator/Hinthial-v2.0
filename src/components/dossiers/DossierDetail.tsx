@@ -4,7 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
-import { deleteDossier, listDossiers, setDossierStatus } from "@/domain/dossiers/repository";
+import {
+  addExpectedItem,
+  deleteDossier,
+  deleteExpectedItem,
+  listDossiers,
+  listExpectedItems,
+  setDossierStatus,
+  setExpectedItemDone,
+} from "@/domain/dossiers/repository";
+import { matchExpected, type ExpectedItem } from "@/domain/dossiers/expected";
 import { buildLivingTimeline, dossierOverview, formatEuro, type LivingTimelineEntry, type TimelineKind } from "@/domain/dossiers/overview";
 import { createTextNote, getDocumentsByIds, listDocumentSummaries } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
@@ -95,6 +104,11 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
 
   const [noteText, setNoteText] = useState("");
   const [noteBusy, setNoteBusy] = useState(false);
+  // null = la tabella dei documenti attesi non c'è ancora (migrazione non applicata): il riquadro non compare.
+  const [expectedItems, setExpectedItems] = useState<ExpectedItem[] | null>(null);
+  const [addingExpected, setAddingExpected] = useState(false);
+  const [expectedText, setExpectedText] = useState("");
+  const [expectedBusy, setExpectedBusy] = useState(false);
   const [readings, setReadings] = useState<DocumentListItem[] | null>(null);
   const [readingsBusy, setReadingsBusy] = useState(false);
 
@@ -104,14 +118,16 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
     const requestId = ++latestRequestRef.current;
     setError(null);
     try {
-      const [dossiers, documentsResult, assetsResult, remindersResult] = await Promise.all([
+      const [dossiers, documentsResult, assetsResult, remindersResult, expectedResult] = await Promise.all([
         listDossiers(supabase, masterKey),
         listDocumentSummaries(supabase, masterKey),
         listAssets(supabase, masterKey),
         // Un di più: se le scadenze non si leggono, la scheda mostra comunque i documenti.
         listReminders(supabase, masterKey).catch((): ReminderListItem[] => []),
+        listExpectedItems(supabase, masterKey, dossierId).catch((): null => null),
       ]);
       if (requestId !== latestRequestRef.current) return;
+      setExpectedItems(expectedResult);
       setDossier(dossiers.find((d) => d.id === dossierId) ?? null);
       setDocuments(documentsResult);
       setAssets(assetsResult);
@@ -209,6 +225,43 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
     }
   }
 
+  /** Aggiunge una o più voci: più nomi separati da virgola o a capo diventano più voci. */
+  async function handleAddExpected() {
+    const labels = expectedText
+      .split(/[,\n]/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (labels.length === 0) return;
+    setExpectedBusy(true);
+    setError(null);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Devi essere autenticato.");
+      for (const label of labels) await addExpectedItem(supabase, masterKey, user.id, dossierId, label);
+      setExpectedText("");
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile aggiungere il documento atteso.");
+    } finally {
+      setExpectedBusy(false);
+    }
+  }
+
+  async function handleExpectedAction(action: () => Promise<void>) {
+    setExpectedBusy(true);
+    setError(null);
+    try {
+      await action();
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile aggiornare i documenti attesi.");
+    } finally {
+      setExpectedBusy(false);
+    }
+  }
+
   /** Le sintesi sono già nei documenti letti da Hinthia: si leggono solo quando le chiedi, e nessuna nuova lettura parte. */
   async function handleShowReadings(ids: string[]) {
     setReadingsBusy(true);
@@ -245,6 +298,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
   const linkedDocuments = documents.filter((doc) => doc.dossierIds.includes(dossierId));
   const overview = dossierOverview({ documents: linkedDocuments, reminders, assets, now });
   const timeline = buildLivingTimeline(linkedDocuments, reminders);
+  const expected = expectedItems ? matchExpected(expectedItems, linkedDocuments) : null;
   const isClosed = dossier.status === "closed";
   const expenses = overview.expenses;
   const expenseSlices = expenses
@@ -361,6 +415,95 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
         </section>
 
         <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[300px]">
+          {expected && (expected.total > 0 || addingExpected) ? (
+            <section aria-label="Documenti attesi" className={CARD}>
+              <div className="flex items-baseline justify-between">
+                <h2 className={CARD_TITLE}>Documenti attesi</h2>
+                {expected.total > 0 ? (
+                  <span className="text-xs font-bold text-[#5b6483] dark:text-zinc-400">
+                    {expected.done} di {expected.total}
+                  </span>
+                ) : null}
+              </div>
+              {expected.total > 0 ? (
+                <div className="h-1.5 overflow-hidden rounded-full bg-[#eef0f8] dark:bg-zinc-900" aria-hidden="true">
+                  <span className="block h-full rounded-full bg-[#1c7c5a]" style={{ width: `${(expected.done / expected.total) * 100}%` }} />
+                </div>
+              ) : null}
+              <ul className="flex flex-col">
+                {expected.statuses.map((status) => (
+                  <li key={status.item.id} className="group flex items-start gap-2.5 border-t border-[#eef0f8] py-2 first:border-t-0 first:pt-0 dark:border-zinc-900">
+                    <input
+                      type="checkbox"
+                      checked={status.satisfied}
+                      // Una voce abbinata a un documento non si disattiva da qui: toglierla è un'altra cosa.
+                      disabled={expectedBusy || status.documentId !== null}
+                      onChange={(e) => {
+                        // Subito, senza aspettare la rete: la spunta deve rispondere al clic.
+                        const checked = e.target.checked;
+                        setExpectedItems((items) => items?.map((i) => (i.id === status.item.id ? { ...i, done: checked } : i)) ?? items);
+                        void handleExpectedAction(() => setExpectedItemDone(supabase, status.item.id, checked));
+                      }}
+                      aria-label={`${status.item.label}: fatto`}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-[#1c7c5a]"
+                    />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className={`text-sm leading-snug font-semibold ${status.satisfied ? "text-[#5b6483] line-through dark:text-zinc-500" : ""}`}>
+                        {status.item.label}
+                      </span>
+                      {status.documentId ? (
+                        <Link href={`/archive/${status.documentId}`} className="truncate text-xs font-bold text-[#1c7c5a] hover:underline">
+                          {status.documentName}
+                        </Link>
+                      ) : null}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={expectedBusy}
+                      onClick={() => void handleExpectedAction(() => deleteExpectedItem(supabase, status.item.id))}
+                      aria-label={`Togli ${status.item.label}`}
+                      className="shrink-0 rounded-md px-1.5 text-base leading-none text-[#8a91ad] hover:text-red-600 disabled:opacity-50"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={expectedText}
+                  onChange={(e) => setExpectedText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void handleAddExpected();
+                  }}
+                  placeholder="Referto, fattura…"
+                  aria-label="Aggiungi un documento atteso"
+                  className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-[#dfe3f0] bg-white px-3 py-2 text-[13px] outline-none focus:border-brand dark:border-zinc-800 dark:bg-zinc-950"
+                />
+                <button
+                  type="button"
+                  disabled={expectedBusy || !expectedText.trim()}
+                  onClick={() => void handleAddExpected()}
+                  className="rounded-[10px] border border-[#c9d0e6] bg-white px-3 py-2 text-[13px] font-bold text-brand hover:border-brand disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950"
+                >
+                  Aggiungi
+                </button>
+              </div>
+              <p className="text-[11.5px] leading-snug text-[#8a91ad] dark:text-zinc-500">
+                Una voce si spunta da sola quando nel fascicolo c&apos;è un documento che la nomina.
+              </p>
+            </section>
+          ) : expected && !isClosed ? (
+            <button
+              type="button"
+              onClick={() => setAddingExpected(true)}
+              className="self-start rounded-xl border-[1.5px] border-dashed border-[#c9d0e6] px-3.5 py-2 text-[13px] font-bold text-brand hover:border-brand dark:border-zinc-700"
+            >
+              + Documenti attesi
+            </button>
+          ) : null}
+
           {overview.deadlines.length > 0 ? (
             <section aria-label="Prossime scadenze" className={CARD}>
               <h2 className={CARD_TITLE}>Prossime scadenze</h2>
