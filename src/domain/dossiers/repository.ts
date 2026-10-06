@@ -10,6 +10,7 @@ import {
 } from "@/lib/crypto";
 import { logAuditEvent, logAuditEventForCurrentUser } from "@/lib/audit/log-event";
 import type { DossierInput, DossierListItem, DossierStatus } from "@/domain/dossiers/types";
+import type { ExpectedItem } from "@/domain/dossiers/expected";
 
 const DOSSIER_COLUMNS =
   "id, encrypted_title, encrypted_description, status, created_at, closed_at";
@@ -236,5 +237,73 @@ export async function replaceDocumentDossierLinks(
 
   if (insertError) {
     throw new Error(`Impossibile aggiornare i fascicoli collegati: ${insertError.message}`);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Documenti attesi (v. domain/dossiers/expected.ts): l'etichetta è cifrata, la spunta e l'ordine no.
+// ---------------------------------------------------------------------------------------------------------------
+
+/** Dal più vecchio al più nuovo: l'ordine in cui l'utente li ha scritti. */
+export async function listExpectedItems(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  dossierId: string,
+): Promise<ExpectedItem[]> {
+  const { data, error } = await supabase
+    .from("dossier_expected_items")
+    .select("id, encrypted_label, done")
+    .eq("dossier_id", dossierId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(`Impossibile caricare i documenti attesi: ${error.message}`);
+  }
+
+  return Promise.all(
+    (data ?? []).map(async (row) => ({
+      id: row.id,
+      label: bytesToUtf8(await decryptBytes(masterKey, parseEnvelope(row.encrypted_label))),
+      done: row.done,
+    })),
+  );
+}
+
+export async function addExpectedItem(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  ownerId: string,
+  dossierId: string,
+  label: string,
+): Promise<void> {
+  const encrypted = await encryptBytes(masterKey, utf8ToBytes(label.trim()));
+  const { error } = await supabase.from("dossier_expected_items").insert({
+    owner_id: ownerId,
+    dossier_id: dossierId,
+    encrypted_label: serializeEnvelope(encrypted),
+  });
+
+  if (error) {
+    throw new Error(`Impossibile aggiungere il documento atteso: ${error.message}`);
+  }
+}
+
+export async function setExpectedItemDone(
+  supabase: SupabaseClient<Database>,
+  itemId: string,
+  done: boolean,
+): Promise<void> {
+  const { error } = await supabase.from("dossier_expected_items").update({ done }).eq("id", itemId);
+
+  if (error) {
+    throw new Error(`Impossibile aggiornare il documento atteso: ${error.message}`);
+  }
+}
+
+export async function deleteExpectedItem(supabase: SupabaseClient<Database>, itemId: string): Promise<void> {
+  const { error } = await supabase.from("dossier_expected_items").delete().eq("id", itemId);
+
+  if (error) {
+    throw new Error(`Impossibile eliminare il documento atteso: ${error.message}`);
   }
 }

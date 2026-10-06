@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-07 (54)
+
+### Documenti attesi nel fascicolo
+
+**Cosa fa:**
+- Nella scheda di un fascicolo puoi scrivere cosa ti aspetti di trovarci ("Referto", "Fattura dell'intervento"…): il pulsante **"+ Documenti attesi"** apre il riquadro, e più voci separate da virgola si aggiungono insieme.
+- Ogni voce si **spunta da sola** quando nel fascicolo c'è un documento che la nomina (nel nome, nell'emittente, nei tag, nelle note o nei campi letti da Hinthia), e sotto compare il link a quel documento. Per una cosa che non sta in Hinthial ("ritirare l'originale") si spunta a mano. Una barra mostra quante sono fatte.
+- Senza voci la scheda resta com'è: il riquadro compare solo se lo vuoi.
+
+**Note tecniche:**
+- Migrazione `20261007000000_dossier_expected_items` (additiva, una tabella nuova): `dossier_expected_items` con etichetta cifrata sul dispositivo come titolo e descrizione del fascicolo, spunta in chiaro, accesso solo al proprietario e al suo fascicolo. Il record dello storico delle migrazioni del progetto è fermo al 2026-09-28 (le successive sono state applicate a mano): per questa NON usare `supabase db push`, che riproverebbe anche quelle, ma `supabase db query --linked -f` sul solo file.
+- L'abbinamento è puro (`domain/dossiers/expected.ts`, coperto da test): parole significative della voce (senza accenti, senza vocale finale, quindi "fattura" = "fatture", senza articoli e preposizioni) tutte presenti nel testo del documento; un documento soddisfa una sola voce. Se la tabella non esiste ancora la scheda funziona lo stesso e il riquadro non compare.
+
+---
+
 ## 2026-10-06 (53)
 
 ### Fascicoli vivi: l'elenco e la scheda raccontano la vicenda da soli
