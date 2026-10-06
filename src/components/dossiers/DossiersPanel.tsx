@@ -4,7 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
-import { deleteDossier, listDossiers } from "@/domain/dossiers/repository";
+import { createDossier, deleteDossier, listDossiers, replaceDocumentDossierLinks } from "@/domain/dossiers/repository";
+import { DossierSuggestions } from "@/components/dossiers/DossierSuggestions";
+import {
+  loadDismissedSuggestions,
+  newSuggestionKey,
+  saveDismissedSuggestions,
+  suggestNewDossiers,
+  type NewDossierSuggestion,
+} from "@/domain/dossiers/suggestions";
 import { listDocumentSummaries } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
@@ -58,6 +66,9 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [suggestionBusy, setSuggestionBusy] = useState<string | null>(null);
+  // I "Non ora" si ricordano sul dispositivo: si leggono dopo il montaggio (lo storage non esiste sul server).
+  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"" | DossierStatus | "soon">("");
   const [page, setPage] = useState(1);
@@ -102,6 +113,37 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDismissed(loadDismissedSuggestions());
+  }, []);
+
+  function handleDismissSuggestion(suggestion: NewDossierSuggestion) {
+    const next = new Set(dismissed).add(newSuggestionKey(suggestion.assetId));
+    setDismissed(next);
+    saveDismissedSuggestions(next);
+  }
+
+  /** Crea il fascicolo col nome del bene e vi collega i documenti (nessuno aveva già un fascicolo, v. suggestNewDossiers). */
+  async function handleAcceptSuggestion(suggestion: NewDossierSuggestion) {
+    setSuggestionBusy(suggestion.assetId);
+    setError(null);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Devi essere autenticato.");
+      const dossierId = await createDossier(supabase, masterKey, user.id, { title: suggestion.title, description: "" });
+      for (const documentId of suggestion.documentIds) {
+        await replaceDocumentDossierLinks(supabase, user.id, documentId, [dossierId]);
+      }
+      router.push(`/dossiers/${dossierId}?created=1`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile creare il fascicolo.");
+      setSuggestionBusy(null);
+    }
+  }
 
   async function handleDelete(dossier: DossierListItem) {
     if (
@@ -228,6 +270,15 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {error}
         </p>
+      ) : null}
+
+      {!loading ? (
+        <DossierSuggestions
+          suggestions={suggestNewDossiers({ documents, dossiers, assets, dismissed })}
+          busyKey={suggestionBusy}
+          onAccept={handleAcceptSuggestion}
+          onDismiss={handleDismissSuggestion}
+        />
       ) : null}
 
       {loading ? (

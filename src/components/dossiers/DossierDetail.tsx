@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
 import {
   addExpectedItem,
+  replaceDocumentDossierLinks,
   deleteDossier,
   deleteExpectedItem,
   listDossiers,
@@ -14,6 +15,12 @@ import {
   setExpectedItemDone,
 } from "@/domain/dossiers/repository";
 import { matchExpected, type ExpectedItem } from "@/domain/dossiers/expected";
+import {
+  documentSuggestionKey,
+  loadDismissedSuggestions,
+  saveDismissedSuggestions,
+  suggestDocumentsForDossier,
+} from "@/domain/dossiers/suggestions";
 import { buildLivingTimeline, dossierOverview, formatEuro, type LivingTimelineEntry, type TimelineKind } from "@/domain/dossiers/overview";
 import { createTextNote, getDocumentsByIds, listDocumentSummaries } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
@@ -109,6 +116,8 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
   const [addingExpected, setAddingExpected] = useState(false);
   const [expectedText, setExpectedText] = useState("");
   const [expectedBusy, setExpectedBusy] = useState(false);
+  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
+  const [suggestionBusy, setSuggestionBusy] = useState(false);
   const [readings, setReadings] = useState<DocumentListItem[] | null>(null);
   const [readingsBusy, setReadingsBusy] = useState(false);
 
@@ -145,6 +154,12 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    // I "Non ora" stanno sul dispositivo: si leggono dopo il montaggio, lo storage non esiste sul server.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDismissed(loadDismissedSuggestions());
+  }, []);
 
   // "?created=1"/"?updated=1" --- stesso schema di CapsulesPanel.tsx.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
@@ -262,6 +277,33 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
     }
   }
 
+  function handleDismissCandidate(documentId: string) {
+    const next = new Set(dismissed).add(documentSuggestionKey(dossierId, documentId));
+    setDismissed(next);
+    saveDismissedSuggestions(next);
+  }
+
+  /** Aggiunge il documento al fascicolo, tenendo gli altri fascicoli in cui già sta. */
+  async function handleAddCandidate(documentId: string) {
+    const target = documents.find((d) => d.id === documentId);
+    if (!target) return;
+    setSuggestionBusy(true);
+    setError(null);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Devi essere autenticato.");
+      await replaceDocumentDossierLinks(supabase, user.id, documentId, [...target.dossierIds, dossierId]);
+      await refresh();
+      showToast("Documento aggiunto al fascicolo.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile aggiungere il documento.");
+    } finally {
+      setSuggestionBusy(false);
+    }
+  }
+
   /** Le sintesi sono già nei documenti letti da Hinthia: si leggono solo quando le chiedi, e nessuna nuova lettura parte. */
   async function handleShowReadings(ids: string[]) {
     setReadingsBusy(true);
@@ -298,6 +340,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
   const linkedDocuments = documents.filter((doc) => doc.dossierIds.includes(dossierId));
   const overview = dossierOverview({ documents: linkedDocuments, reminders, assets, now });
   const timeline = buildLivingTimeline(linkedDocuments, reminders);
+  const candidates = dossier.status === "closed" ? [] : suggestDocumentsForDossier({ dossierId, documents, assets, dismissed });
   const expected = expectedItems ? matchExpected(expectedItems, linkedDocuments) : null;
   const isClosed = dossier.status === "closed";
   const expenses = overview.expenses;
@@ -502,6 +545,45 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
             >
               + Documenti attesi
             </button>
+          ) : null}
+
+          {candidates.length > 0 ? (
+            <section aria-label="Forse appartengono qui" className={CARD}>
+              <h2 className={CARD_TITLE}>Forse appartengono qui</h2>
+              <p className="text-[13px] leading-snug text-[#5b6483] dark:text-zinc-400">
+                Altri documenti di &laquo;{candidates[0].assetName}&raquo;, come quelli di questo fascicolo.
+              </p>
+              <ul className="flex flex-col">
+                {candidates.map((candidate) => (
+                  <li key={candidate.documentId} className="flex items-center gap-2 border-t border-[#eef0f8] py-2 first:border-t-0 first:pt-0 dark:border-zinc-900">
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <Link href={`/archive/${candidate.documentId}`} className="truncate text-[13px] font-bold hover:text-brand">
+                        {candidate.filename}
+                      </Link>
+                      <span className="text-xs text-[#5b6483] dark:text-zinc-400">{formatDayMonthYear(candidate.createdAt)}</span>
+                    </span>
+                    <button
+                      type="button"
+                      disabled={suggestionBusy}
+                      onClick={() => void handleAddCandidate(candidate.documentId)}
+                      aria-label={`Aggiungi ${candidate.filename} al fascicolo`}
+                      className="shrink-0 rounded-lg border border-[#c9d0e6] bg-white px-2.5 py-1 text-xs font-bold text-brand hover:border-brand disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950"
+                    >
+                      Aggiungi
+                    </button>
+                    <button
+                      type="button"
+                      disabled={suggestionBusy}
+                      onClick={() => handleDismissCandidate(candidate.documentId)}
+                      aria-label={`Non aggiungere ${candidate.filename}`}
+                      className="shrink-0 rounded-md px-1.5 text-base leading-none text-[#8a91ad] hover:text-red-600 disabled:opacity-50"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
           ) : null}
 
           {overview.deadlines.length > 0 ? (
