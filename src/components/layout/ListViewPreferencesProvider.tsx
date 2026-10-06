@@ -6,6 +6,7 @@ import { fetchListViewPreferences, updateListViewPreferences } from "@/domain/pr
 import { useMediaQuery } from "@/lib/use-media-query";
 import {
   DEFAULT_LIST_VIEW_MODE,
+  type ArchiveViewMode,
   type ListSection,
   type ListViewMode,
   type ListViewPreferences,
@@ -13,8 +14,14 @@ import {
 
 interface ListViewPreferencesContextValue {
   loading: boolean;
+  /** Elenco o tabella. Per l'Archivio, che ha altre viste, è "table" solo se è quella scelta: le altre viste ricadono sull'elenco. */
   modeFor: (section: ListSection) => ListViewMode;
   setMode: (section: ListSection, mode: ListViewMode) => Promise<void>;
+  /** La vista predefinita dell'Archivio (una delle sei). Sotto md è sempre l'elenco: le viste larghe non ci stanno. */
+  archiveViewFor: () => ArchiveViewMode;
+  /** La preferenza salvata, senza la regola dello schermo stretto: serve a Impostazioni, dove va sempre impostabile. */
+  savedArchiveView: ArchiveViewMode;
+  setArchiveView: (view: ArchiveViewMode) => Promise<void>;
 }
 
 const ListViewPreferencesContext = createContext<ListViewPreferencesContextValue | null>(null);
@@ -61,15 +68,17 @@ export function ListViewPreferencesProvider({
   }, [userId]);
 
   const modeFor = useCallback(
-    (section: ListSection) =>
-      isNarrowScreen ? "list" : preferences[section] ?? DEFAULT_LIST_VIEW_MODE,
+    (section: ListSection): ListViewMode => {
+      if (isNarrowScreen) return "list";
+      if (section === "archive") return preferences.archive === "table" ? "table" : "list";
+      return preferences[section] ?? DEFAULT_LIST_VIEW_MODE;
+    },
     [preferences, isNarrowScreen],
   );
 
-  const setMode = useCallback(
-    async (section: ListSection, mode: ListViewMode) => {
+  const savePreferences = useCallback(
+    async (next: ListViewPreferences) => {
       const previous = preferences;
-      const next = { ...preferences, [section]: mode };
       setPreferences(next); // optimistic: l'interruttore risponde subito
 
       try {
@@ -83,9 +92,24 @@ export function ListViewPreferencesProvider({
     [preferences, userId],
   );
 
+  const setMode = useCallback(
+    (section: ListSection, mode: ListViewMode) => savePreferences({ ...preferences, [section]: mode }),
+    [preferences, savePreferences],
+  );
+
+  const savedArchiveView: ArchiveViewMode = preferences.archive ?? DEFAULT_LIST_VIEW_MODE;
+  const archiveViewFor = useCallback(
+    (): ArchiveViewMode => (isNarrowScreen ? "list" : savedArchiveView),
+    [isNarrowScreen, savedArchiveView],
+  );
+  const setArchiveView = useCallback(
+    (view: ArchiveViewMode) => savePreferences({ ...preferences, archive: view }),
+    [preferences, savePreferences],
+  );
+
   const value = useMemo<ListViewPreferencesContextValue>(
-    () => ({ loading, modeFor, setMode }),
-    [loading, modeFor, setMode],
+    () => ({ loading, modeFor, setMode, archiveViewFor, savedArchiveView, setArchiveView }),
+    [loading, modeFor, setMode, archiveViewFor, savedArchiveView, setArchiveView],
   );
 
   return (

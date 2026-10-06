@@ -17,7 +17,36 @@ export type ListSection =
 
 export type ListViewMode = "list" | "table";
 
-export type ListViewPreferences = Partial<Record<ListSection, ListViewMode>>;
+/**
+ * L'Archivio ha, oltre a elenco e tabella, quattro viste alternative (galleria, linea del tempo, collezioni,
+ * scaffale): stessi documenti, un altro modo di trovarli quando sono molti. Le altre sezioni restano a due modi.
+ */
+export type ArchiveViewMode = ListViewMode | "gallery" | "timeline" | "collections" | "shelf";
+
+export const ARCHIVE_VIEW_MODES: ArchiveViewMode[] = ["list", "table", "gallery", "timeline", "collections", "shelf"];
+
+export interface ArchiveViewOption {
+  value: ArchiveViewMode;
+  label: string;
+  description: string;
+}
+
+export const ARCHIVE_VIEW_OPTIONS: ArchiveViewOption[] = [
+  { value: "list", label: "Elenco", description: "La lista di sempre, con tutto sotto mano" },
+  { value: "table", label: "Tabella", description: "Righe ordinabili, a pagine" },
+  { value: "gallery", label: "Cassettiera", description: "Schede con miniatura e filtri a faccette" },
+  { value: "timeline", label: "Linea del tempo", description: "Per mese, con la mappa dei mesi" },
+  { value: "collections", label: "Collezioni", description: "Dall'insieme al dettaglio, per categoria" },
+  { value: "shelf", label: "Scaffale", description: "Ogni documento è un dorso" },
+];
+
+export function isArchiveViewMode(value: unknown): value is ArchiveViewMode {
+  return typeof value === "string" && (ARCHIVE_VIEW_MODES as string[]).includes(value);
+}
+
+export type ListViewPreferences = Partial<Record<Exclude<ListSection, "archive">, ListViewMode>> & {
+  archive?: ArchiveViewMode;
+};
 
 export const LIST_SECTIONS: ListSection[] = [
   "archive",
@@ -49,7 +78,9 @@ export function parseListViewPreferences(raw: unknown): ListViewPreferences {
   const result: ListViewPreferences = {};
   for (const section of LIST_SECTIONS) {
     const value = (raw as Record<string, unknown>)[section];
-    if (value === "list" || value === "table") {
+    if (section === "archive") {
+      if (isArchiveViewMode(value)) result.archive = value;
+    } else if (value === "list" || value === "table") {
       result[section] = value;
     }
   }

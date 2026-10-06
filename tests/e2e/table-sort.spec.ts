@@ -45,7 +45,9 @@ test("le intestazioni delle tabelle in Archivio ordinano lessicograficamente, co
     await expect(page.getByText(name)).toBeVisible({ timeout: 15_000 });
   }
 
-  await page.getByRole("radio", { name: "Vista a tabella" }).click();
+  // Dal menu "Vista" dell'Archivio (elenco, tabella e le altre quattro viste).
+  await page.getByRole("button", { name: /^Vista:/ }).click();
+  await page.getByRole("menuitemradio", { name: /Tabella/ }).click();
   await expect(page.locator("table")).toBeVisible();
 
   // La prima colonna è la casella di selezione: il nome sta nella seconda.
