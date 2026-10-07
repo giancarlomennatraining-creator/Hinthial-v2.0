@@ -9,16 +9,29 @@ import {
   bytesToUtf8,
 } from "@/lib/crypto";
 import { logAuditEvent, logAuditEventForCurrentUser } from "@/lib/audit/log-event";
-import type { DossierInput, DossierListItem, DossierStatus } from "@/domain/dossiers/types";
+import { removeDossierShareFiles } from "@/lib/storage/dossier-shares-bucket";
+import type { DossierInput, DossierListItem, DossierStatus, DossierSummary } from "@/domain/dossiers/types";
+import { parseStoredPhases, serializePhases, type DossierPhases } from "@/domain/dossiers/phases";
+import {
+  MAX_PERSON_NAME_LENGTH,
+  MAX_PERSON_ROLE_LENGTH,
+  MAX_STEP_LENGTH,
+  parsePersonData,
+  parseStepData,
+  type DossierPerson,
+  type DossierStep,
+} from "@/domain/dossiers/items";
 import type { ExpectedItem } from "@/domain/dossiers/expected";
 
 const DOSSIER_COLUMNS =
-  "id, encrypted_title, encrypted_description, status, created_at, closed_at";
+  "id, encrypted_title, encrypted_description, encrypted_phases, encrypted_summary, status, created_at, closed_at";
 
 type DossierRow = {
   id: string;
   encrypted_title: string;
   encrypted_description: string | null;
+  encrypted_phases: string | null;
+  encrypted_summary: string | null;
   status: string;
   created_at: string;
   closed_at: string | null;
@@ -36,10 +49,40 @@ async function decryptOptionalText(masterKey: CryptoKey, serialized: string | nu
   return bytesToUtf8(bytes);
 }
 
+/** Un JSON cifrato mai scritto (null) o guasto vale "niente": fasi e riassunto non devono mai bloccare l'apertura di un fascicolo. */
+async function decryptOptionalJson<T>(masterKey: CryptoKey, serialized: string | null, parse: (json: string) => T | null): Promise<T | null> {
+  if (!serialized) return null;
+  try {
+    return parse(await decryptOptionalText(masterKey, serialized));
+  } catch {
+    return null;
+  }
+}
+
+function parseStoredSummary(json: string): DossierSummary | null {
+  try {
+    const value: unknown = JSON.parse(json);
+    if (!value || typeof value !== "object") return null;
+    const { text, generatedAt, documentCount } = value as Record<string, unknown>;
+    if (typeof text !== "string" || !text.trim() || typeof generatedAt !== "string") return null;
+    const readableCount = (value as { readableCount?: unknown }).readableCount;
+    return {
+      text,
+      generatedAt,
+      documentCount: typeof documentCount === "number" ? documentCount : 0,
+      ...(typeof readableCount === "number" ? { readableCount } : {}),
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function toDossierListItem(masterKey: CryptoKey, row: DossierRow): Promise<DossierListItem> {
-  const [titleBytes, description] = await Promise.all([
+  const [titleBytes, description, phases, summary] = await Promise.all([
     decryptBytes(masterKey, parseEnvelope(row.encrypted_title)),
     decryptOptionalText(masterKey, row.encrypted_description),
+    decryptOptionalJson(masterKey, row.encrypted_phases, parseStoredPhases),
+    decryptOptionalJson(masterKey, row.encrypted_summary, parseStoredSummary),
   ]);
 
   return {
@@ -50,6 +93,8 @@ async function toDossierListItem(masterKey: CryptoKey, row: DossierRow): Promise
     status: row.status as DossierStatus,
     createdAt: row.created_at,
     closedAt: row.closed_at,
+    phases,
+    summary,
   };
 }
 
@@ -148,6 +193,9 @@ export async function deleteDossier(
   ownerId: string,
   dossierId: string,
 ): Promise<void> {
+  // I link di condivisione spariscono con il fascicolo, ma le copie cifrate dei documenti in Storage vanno tolte a parte.
+  await removeDossierShareFiles(supabase, ownerId, dossierId);
+
   // Il titolo è già cifrato nella riga: lo si copia nell'evento, per riconoscere il fascicolo dopo l'eliminazione.
   const { data: titleRow } = await supabase.from("dossiers").select("encrypted_title").eq("id", dossierId).maybeSingle();
 
@@ -305,5 +353,142 @@ export async function deleteExpectedItem(supabase: SupabaseClient<Database>, ite
 
   if (error) {
     throw new Error(`Impossibile eliminare il documento atteso: ${error.message}`);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Fasi, riassunto, prossimi passi e persone (v. migrazione dossier_phases_items_summary): tutto cifrato sul dispositivo.
+// ---------------------------------------------------------------------------------------------------------------
+
+/** `null` toglie le fasi. */
+export async function setDossierPhases(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  dossierId: string,
+  phases: DossierPhases | null,
+): Promise<void> {
+  const encrypted = phases ? await encryptOptionalText(masterKey, serializePhases(phases)) : null;
+  const { error } = await supabase.from("dossiers").update({ encrypted_phases: encrypted }).eq("id", dossierId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare le fasi: ${error.message}`);
+  }
+}
+
+export async function setDossierSummary(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  dossierId: string,
+  summary: DossierSummary | null,
+): Promise<void> {
+  const encrypted = summary ? await encryptOptionalText(masterKey, JSON.stringify(summary)) : null;
+  const { error } = await supabase.from("dossiers").update({ encrypted_summary: encrypted }).eq("id", dossierId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare il riassunto: ${error.message}`);
+  }
+}
+
+export interface DossierItems {
+  steps: DossierStep[];
+  people: DossierPerson[];
+}
+
+/** Passi e persone di un fascicolo, o di tutti se `dossierId` manca (per l'elenco). Una riga illeggibile si salta. */
+export async function listDossierItems(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  dossierId?: string,
+): Promise<DossierItems> {
+  let query = supabase
+    .from("dossier_items")
+    .select("id, dossier_id, kind, encrypted_data, due_on, done")
+    .order("created_at", { ascending: true });
+  if (dossierId) query = query.eq("dossier_id", dossierId);
+  const { data, error } = await query;
+
+  if (error) {
+    throw new Error(`Impossibile caricare passi e persone: ${error.message}`);
+  }
+
+  const items: DossierItems = { steps: [], people: [] };
+  await Promise.all(
+    (data ?? []).map(async (row, index) => {
+      try {
+        const json = await decryptOptionalText(masterKey, row.encrypted_data);
+        if (row.kind === "step") {
+          const text = parseStepData(json);
+          if (text) items.steps[index] = { id: row.id, dossierId: row.dossier_id, text, dueOn: row.due_on, done: row.done };
+        } else if (row.kind === "person") {
+          const person = parsePersonData(json);
+          if (person) items.people[index] = { id: row.id, dossierId: row.dossier_id, ...person };
+        }
+      } catch {
+        // Una riga che non si decifra non deve nascondere le altre.
+      }
+    }),
+  );
+  // Gli indici tengono l'ordine di creazione; i buchi delle righe saltate si tolgono qui.
+  return { steps: items.steps.filter(Boolean), people: items.people.filter(Boolean) };
+}
+
+export async function addDossierStep(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  ownerId: string,
+  dossierId: string,
+  input: { text: string; dueOn: string | null },
+): Promise<void> {
+  const encrypted = await encryptOptionalText(masterKey, JSON.stringify({ text: input.text.trim().slice(0, MAX_STEP_LENGTH) }));
+  const { error } = await supabase.from("dossier_items").insert({
+    owner_id: ownerId,
+    dossier_id: dossierId,
+    kind: "step",
+    encrypted_data: encrypted as string,
+    due_on: input.dueOn,
+  });
+
+  if (error) {
+    throw new Error(`Impossibile aggiungere il passo: ${error.message}`);
+  }
+}
+
+export async function addDossierPerson(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  ownerId: string,
+  dossierId: string,
+  input: { name: string; role: string },
+): Promise<void> {
+  const data = {
+    name: input.name.trim().slice(0, MAX_PERSON_NAME_LENGTH),
+    role: input.role.trim().slice(0, MAX_PERSON_ROLE_LENGTH),
+  };
+  const encrypted = await encryptOptionalText(masterKey, JSON.stringify(data));
+  const { error } = await supabase.from("dossier_items").insert({
+    owner_id: ownerId,
+    dossier_id: dossierId,
+    kind: "person",
+    encrypted_data: encrypted as string,
+  });
+
+  if (error) {
+    throw new Error(`Impossibile aggiungere la persona: ${error.message}`);
+  }
+}
+
+export async function setDossierStepDone(supabase: SupabaseClient<Database>, itemId: string, done: boolean): Promise<void> {
+  const { error } = await supabase.from("dossier_items").update({ done }).eq("id", itemId);
+
+  if (error) {
+    throw new Error(`Impossibile aggiornare il passo: ${error.message}`);
+  }
+}
+
+export async function deleteDossierItem(supabase: SupabaseClient<Database>, itemId: string): Promise<void> {
+  const { error } = await supabase.from("dossier_items").delete().eq("id", itemId);
+
+  if (error) {
+    throw new Error(`Impossibile eliminare la voce: ${error.message}`);
   }
 }

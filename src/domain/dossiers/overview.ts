@@ -2,6 +2,7 @@ import { expiryInfo, type ExpiryInfo } from "@/domain/documents/archive-views";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { DocumentSummary } from "@/domain/documents/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
+import type { DossierStep } from "@/domain/dossiers/items";
 import { NOTE_MIME_TYPE } from "@/lib/content-kind";
 
 /**
@@ -78,7 +79,7 @@ export function formatEuro(amount: number): string {
 // ---------------------------------------------------------------------------------------------------------------
 
 export interface DossierDeadline {
-  kind: "reminder" | "document";
+  kind: "reminder" | "document" | "step";
   id: string;
   title: string;
   /** ISO: un istante per una scadenza, una data per un documento. */
@@ -88,13 +89,14 @@ export interface DossierDeadline {
 
 /**
  * Le scadenze del fascicolo, dalla più urgente (le già scadute per prime): quelle create per i suoi documenti e la data
- * di scadenza dei documenti stessi. Se la data di un documento è già una scadenza dello stesso giorno, resta solo questa,
- * che ha un titolo più chiaro. Le completate non contano.
+ * di scadenza dei documenti stessi, più i prossimi passi con una data. Se la data di un documento è già una scadenza dello
+ * stesso giorno, resta solo questa, che ha un titolo più chiaro. Le completate e i passi fatti non contano.
  */
 export function dossierDeadlines(
   documents: Pick<DocumentSummary, "id" | "filename" | "expiresAt">[],
   reminders: Pick<ReminderListItem, "id" | "title" | "dueAt" | "completed" | "relatedDocumentId">[],
   now: Date,
+  steps: Pick<DossierStep, "id" | "text" | "dueOn" | "done">[] = [],
 ): DossierDeadline[] {
   const documentIds = new Set(documents.map((d) => d.id));
   const mine = reminders.filter((r) => r.relatedDocumentId !== null && documentIds.has(r.relatedDocumentId));
@@ -115,7 +117,11 @@ export function dossierDeadlines(
       info: expiryInfo(d.expiresAt, now),
     }));
 
-  return [...fromReminders, ...fromDocuments].sort((a, b) => (a.info.days ?? 0) - (b.info.days ?? 0));
+  const fromSteps: DossierDeadline[] = steps
+    .filter((s) => !s.done && s.dueOn)
+    .map((s) => ({ kind: "step", id: s.id, title: s.text, date: s.dueOn as string, info: expiryInfo(s.dueOn, now) }));
+
+  return [...fromReminders, ...fromDocuments, ...fromSteps].sort((a, b) => (a.info.days ?? 0) - (b.info.days ?? 0));
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -143,9 +149,11 @@ export function dossierOverview(input: {
   documents: DocumentSummary[];
   reminders: ReminderListItem[];
   assets: Pick<AssetListItem, "id" | "name">[];
+  /** I prossimi passi del fascicolo: quelli con una data contano tra le scadenze. */
+  steps?: DossierStep[];
   now: Date;
 }): DossierOverview {
-  const { documents, reminders, assets, now } = input;
+  const { documents, reminders, assets, now, steps } = input;
 
   const expenseItems = documents
     .map((doc) => ({ doc, expense: documentExpense(doc) }))
@@ -153,7 +161,7 @@ export function dossierOverview(input: {
     .map(({ doc, expense }) => ({ docId: doc.id, filename: doc.filename, label: expense.label, amount: expense.amount }))
     .sort((a, b) => b.amount - a.amount);
 
-  const deadlines = dossierDeadlines(documents, reminders, now);
+  const deadlines = dossierDeadlines(documents, reminders, now, steps);
 
   const assetCounts = new Map<string, number>();
   for (const doc of documents) {

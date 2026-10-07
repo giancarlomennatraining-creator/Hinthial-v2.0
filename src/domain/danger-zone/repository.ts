@@ -11,6 +11,7 @@ import {
   removeEncryptedCapsulePayloads,
 } from "@/lib/storage/capsules-bucket";
 import { resetCategoriesToDefault } from "@/domain/categories/repository";
+import { removeAllOwnerShareFiles } from "@/lib/storage/dossier-shares-bucket";
 import { logAuditEvent } from "@/lib/audit/log-event";
 
 /**
@@ -45,7 +46,12 @@ export async function wipeVault(
   await Promise.all([
     removeEncryptedPayloads(supabase, documentPaths),
     removeEncryptedCapsulePayloads(supabase, capsuleAttachmentPaths),
+    // Anche le copie condivise con un link: dopo "Cancella tutto" nessun link deve più mostrare niente.
+    removeAllOwnerShareFiles(supabase, ownerId),
   ]);
+
+  // Le righe dei link: senza copie cifrate non mostrerebbero niente, e non devono restare in elenco.
+  await supabase.from("dossier_shares").delete().eq("owner_id", ownerId);
 
   const { error: documentsError } = await supabase.from("documents").delete().eq("owner_id", ownerId);
   if (documentsError) {

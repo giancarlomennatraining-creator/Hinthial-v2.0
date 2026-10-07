@@ -6,6 +6,7 @@ import { mixColor, relativeDay } from "@/domain/documents/archive-views";
 import { formatEuro, type DossierOverview } from "@/domain/dossiers/overview";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import { formatDate } from "@/lib/format";
+import { phaseState } from "@/domain/dossiers/phases";
 
 /**
  * Una scheda dell'elenco dei fascicoli: lo stato, la prossima scadenza, quanti documenti, quanto si è speso. Tutto si
@@ -90,6 +91,23 @@ export function DossierCard({
         </p>
       </div>
 
+      {dossier.phases ? (
+        <div className="flex flex-col gap-1.5" aria-label={`Fase: ${dossier.phases.names[dossier.phases.current]}`}>
+          <div className="flex gap-1" aria-hidden="true">
+            {dossier.phases.names.map((name, i) => (
+              <span
+                key={`${i}-${name}`}
+                className="h-1 flex-1 rounded-full"
+                style={{ background: phaseState(dossier.phases!, i) === "todo" ? "#e3e7f3" : phaseState(dossier.phases!, i) === "done" ? "#1c7c5a" : color }}
+              />
+            ))}
+          </div>
+          <span className="text-xs font-bold text-[#3d4670] dark:text-zinc-300">
+            Fase {dossier.phases.current + 1} di {dossier.phases.names.length} · {dossier.phases.names[dossier.phases.current]}
+          </span>
+        </div>
+      ) : null}
+
       {next && !closed ? (
         <div
           className="flex items-center gap-2 rounded-[10px] px-[11px] py-2"
@@ -110,7 +128,7 @@ export function DossierCard({
             <path d="M12 7v5l3 2" />
           </svg>
           <span className="min-w-0 truncate text-[12.5px] font-bold" style={{ color: urgent ? "#b42318" : next.info.level === "warn" ? "#8a5a00" : "#4a5275" }}>
-            {next.kind === "reminder" ? `${next.title} · ${next.info.text.replace("scade ", "")}` : `${next.title.replace(" scade", "")} · ${next.info.text}`}
+            {next.kind === "document" ? `${next.title.replace(" scade", "")} · ${next.info.text}` : `${next.title} · ${next.info.text.replace("scade ", "")}`}
           </span>
         </div>
       ) : null}

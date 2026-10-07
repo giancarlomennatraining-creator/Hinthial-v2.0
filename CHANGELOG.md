@@ -10,6 +10,55 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-07 (58)
+
+### Condividere un fascicolo con un link protetto
+
+**Cosa fa:**
+- Nella scheda di un fascicolo c'è il pulsante **"Condividi"**. Si scelgono i documenti (tutti, o si tolgono quelli che non vanno mostrati), **con chi** (Notaio, Medico, Commercialista, Avvocato o un nome: serve solo a riconoscere il link), **per quanto tempo** (24 ore, 7 giorni, 30 giorni) e **cosa può fare** (solo vedere, oppure vedere e scaricare). Si può includere il riassunto di Hinthia e le fasi; persone coinvolte, passi e note personali non vengono mai condivisi.
+- Il pulsante **"Crea il link protetto"** cifra i documenti sul tuo dispositivo (con una barra di avanzamento) e dà un link da **copiare** o da **inviare per email** (un'email già scritta).
+- Chi riceve il link **non ha bisogno di un account**: apre una pagina con il fascicolo, i documenti (anteprima di PDF, immagini, audio, video, note) e, se permesso, il pulsante per scaricarli. Il link scade da solo.
+- Nella stessa pagina vedi l'elenco dei **link condivisi**: stato (Attivo, Scaduto, Revocato), quante volte è stato aperto, quanti documenti sono stati visti e l'ultimo accesso. **"Copia il link"** lo ricopia in qualunque momento, **"Revoca subito"** lo chiude e toglie le copie dei documenti.
+
+**Note tecniche:**
+- Migrazione `20261009000000_dossier_shares`: tabelle `dossier_shares` e `dossier_share_accesses` e bucket privato `dossier-shares`. Il dispositivo ricifra ogni documento con una chiave nuova che sta **solo nel link, dopo il #** (il browser non la invia mai al server); l'indice del fascicolo è cifrato con la stessa chiave, e la chiave stessa è salvata cifrata con la Master Key per poter ricopiare il link. Il server consegna solo byte che non può leggere. Dettagli in `lib/crypto/PROTOCOL.md`.
+- Pagine pubbliche: `/c/[id]` (fuori da `(app)`, non indicizzata) e `/api/shares/[id]` e `/api/shares/[id]/documents/[documentId]` (service role): controllano solo che il link esista, non sia scaduto, revocato o ripulito, e rispondono allo stesso modo a ogni errore. Gli accessi li scrive il server.
+- Pulizia: revoca, scadenza (cron giornaliero `trash-purge` → `lib/shares/purge.ts`), eliminazione del fascicolo, "Cancella tutto" ed eliminazione dell'account tolgono le copie da Storage. Eventi in Attività: "Fascicolo condiviso con un link" e "Link di condivisione revocato".
+- Limiti dichiarati: chi ha il link intero apre i documenti finché non scade o viene revocato (un'email che lo porta passa dal fornitore di posta); "solo vedere" nasconde il pulsante di download ma non può impedire di salvare o fotografare ciò che si vede. Al massimo 40 documenti e 100 MB per link. Non c'è ancora un limite di richieste sulle pagine pubbliche.
+
+---
+
+## 2026-10-07 (57)
+
+### "In breve": il riassunto del fascicolo scritto da Hinthia
+
+**Cosa fa:**
+- Se Hinthia ha già letto dei documenti di un fascicolo, in cima compare **"In breve"**: **"Scrivi il riassunto"** produce 3-5 frasi sulla vicenda (di cosa si tratta, fatti principali, scadenza più vicina, cosa sembra mancare), partendo dalle sintesi che Hinthia ha già scritto. Non rilegge i file.
+- Il riassunto si salva nel fascicolo e dice da quando è e da quanti documenti è tratto. Se poi Hinthia legge altri documenti, avvisa che è da aggiornare; **"Aggiorna"** lo riscrive, **"Elimina il riassunto"** lo toglie.
+- Parte solo quando lo chiedi, e solo con i documenti che hai abilitato: i documenti esclusi dall'analisi o di una categoria non abilitata restano fuori, e te lo dice.
+
+**Note tecniche:**
+- Rotta `api/ai/dossier-summary`: ricontrolla sul database il consenso generale (`ai_master_enabled`, `ai_extraction_consent`) e per ogni documento l'esclusione e la categoria abilitata, come `api/ai/analyze`; il permesso "solo questa volta" non vale qui. Il client manda solo titolo del fascicolo e, per documento, nome, data, sintesi (max 1.500 caratteri) e fino a 8 campi letti (max 30 documenti); il server rifiuta richieste fuori misura. Un evento "Documento letto da Hinthia" per ogni documento usato. Modello: lo stesso della fusione delle sintesi (`ANALYSIS_MODELS.merge`).
+- Il testo si salva cifrato con la Master Key in `dossiers.encrypted_summary` (migrazione `20261008000000`). La parte pura è in `domain/ai/dossier-summary.ts` (richiesta, validazione, "da aggiornare"), la chiamata ad Anthropic in `lib/ai/claude-dossier-summary.ts`.
+
+---
+
+## 2026-10-07 (56)
+
+### Fasi, prossimi passi e persone nel fascicolo
+
+**Cosa fa:**
+- **Fasi**: il pulsante "+ Fasi" propone un modello (Acquisto casa, Salute, Incidente, Lavori in casa) o si scrivono a mano ("Visite, Esami, Cura"). Si vedono come tappe; **un clic sposta** la fase in cui sei (la scelta è tua, Hinthia non decide). Nell'elenco la scheda del fascicolo dice "Fase 3 di 5 · Mutuo" con una barretta di avanzamento.
+- **Prossimi passi**: poche righe da fare ("Fissare il rogito"), con un giorno facoltativo e la spunta. Quelli con un giorno contano tra le prossime scadenze del fascicolo, anche nell'elenco.
+- **Persone**: chi c'entra con la vicenda, con nome e ruolo ("Notaio Rossi · Studio notarile"), nel riquadro "Coinvolti" insieme ai beni.
+- Tutto facoltativo: finché non lo aggiungi, la scheda non mostra niente di tutto questo (solo i pulsanti "+ …").
+
+**Note tecniche:**
+- Migrazione `20261008000000_dossier_phases_items_summary`: `dossiers.encrypted_phases` (JSON cifrato: nomi e fase corrente) e tabella `dossier_items` (passi e persone, `encrypted_data` cifrato; in chiaro solo `done` e `due_on`). Parte pura in `domain/dossiers/phases.ts` e `items.ts`; i passi con data entrano in `dossierDeadlines`.
+- `DossierDetail` è stato diviso in componenti (`DossierTimeline`, `ExpectedItemsCard`, `DossierNextSteps`, `DossierInvolved`, `PhasesBar`, `DossierSideCards`).
+
+---
+
 ## 2026-10-07 (55)
 
 ### Fascicoli suggeriti: Hinthial nota cosa va insieme
