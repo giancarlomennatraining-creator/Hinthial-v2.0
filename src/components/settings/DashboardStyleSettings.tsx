@@ -29,6 +29,19 @@ function StylePreview({ style }: { style: DashboardStyle }) {
       </div>
     );
   }
+  if (style === "board") {
+    return (
+      <div aria-hidden="true" className="grid h-20 grid-cols-4 gap-1">
+        {[3, 2, 3, 1].map((n, col) => (
+          <div key={col} className="flex flex-col gap-1 rounded bg-zinc-100 p-1 dark:bg-zinc-900">
+            {Array.from({ length: n }).map((_, i) => (
+              <div key={i} className={cn("h-3 rounded-sm", col === 0 && i === 0 ? "bg-red-400" : "bg-zinc-300 dark:bg-zinc-700")} />
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  }
   if (style === "stories") {
     return (
       <div aria-hidden="true" className="flex h-20 items-center justify-center gap-2">

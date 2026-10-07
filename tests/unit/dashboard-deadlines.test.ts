@@ -130,7 +130,7 @@ describe("parseDashboardStyle", () => {
     expect(parseDashboardStyle("classic")).toBe("classic");
     expect(parseDashboardStyle("bento")).toBe("bento");
     expect(parseDashboardStyle("stories")).toBe("stories");
-    expect(parseDashboardStyle("board")).toBe("classic"); // non ancora disponibile
+    expect(parseDashboardStyle("board")).toBe("board");
     expect(parseDashboardStyle("boh")).toBe("classic");
     expect(parseDashboardStyle(null)).toBe("classic");
   });
