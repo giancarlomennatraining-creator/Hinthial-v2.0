@@ -19,6 +19,7 @@ export interface DashboardStyleOption {
 export const DASHBOARD_STYLE_OPTIONS: DashboardStyleOption[] = [
   { value: "classic", label: "Classica", description: "I riquadri di sempre: contatori, prossime scadenze, aggiunti di recente." },
   { value: "today", label: "Oggi", description: "Parte da cosa fare: ogni scadenza vicina ha il suo pulsante per segnarla fatta o rimandarla." },
+  { value: "bento", label: "Bento", description: "Un colpo d'occhio su tutto, in riquadri di misure diverse: la prossima scadenza, l'archivio, la prossima capsula, gli amici, i beni e una domanda per Hinthia." },
 ];
 
 export const DASHBOARD_STYLES: DashboardStyle[] = DASHBOARD_STYLE_OPTIONS.map((o) => o.value);

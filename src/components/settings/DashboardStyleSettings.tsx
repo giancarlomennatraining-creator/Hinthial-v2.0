@@ -29,6 +29,16 @@ function StylePreview({ style }: { style: DashboardStyle }) {
       </div>
     );
   }
+  if (style === "bento") {
+    return (
+      <div aria-hidden="true" className="grid h-20 grid-cols-4 grid-rows-2 gap-1">
+        <div className="col-span-2 row-span-2 rounded bg-brand" />
+        <div className={block} />
+        <div className={accent} />
+        <div className="col-span-2 rounded bg-zinc-200 dark:bg-zinc-800" />
+      </div>
+    );
+  }
   return (
     <div aria-hidden="true" className="flex h-20 flex-col gap-1.5">
       <div className="grid grid-cols-5 gap-1">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/db/supabase/client";
 import { buildAIContext } from "@/domain/ai/context";
@@ -74,7 +75,9 @@ export function AIPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
-  const [question, setQuestion] = useState("");
+  // "?q=" arriva dalla domanda scritta nella dashboard (stile Bento): la si trova già nel campo, da inviare.
+  const searchParams = useSearchParams();
+  const [question, setQuestion] = useState(() => searchParams.get("q") ?? "");
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Segue la conversazione verso il basso man mano che si allunga, anche quando compare l'indicatore "sta scrivendo".

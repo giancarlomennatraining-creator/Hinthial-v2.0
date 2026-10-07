@@ -128,7 +128,8 @@ describe("parseDashboardStyle", () => {
   it("accetta gli stili conosciuti e ricade su Classica per il resto", () => {
     expect(parseDashboardStyle("today")).toBe("today");
     expect(parseDashboardStyle("classic")).toBe("classic");
-    expect(parseDashboardStyle("bento")).toBe("classic"); // non ancora disponibile
+    expect(parseDashboardStyle("bento")).toBe("bento");
+    expect(parseDashboardStyle("stories")).toBe("classic"); // non ancora disponibile
     expect(parseDashboardStyle("boh")).toBe("classic");
     expect(parseDashboardStyle(null)).toBe("classic");
   });

@@ -10,6 +10,23 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-07 (63)
+
+### Dashboard "Bento"
+
+**Cosa fa:**
+- Nuovo stile della Dashboard, da scegliere in **Impostazioni > Aspetto > Dashboard**: un colpo d'occhio su tutto, in **riquadri di misure diverse**, ognuno col suo gesto e ognuno un link alla sua sezione.
+- Il riquadro grande è la **prossima scadenza** ("Bollo auto tra 5 giorni", con la data e il bene) con le etichette "N scadute" e "N nei prossimi 30 giorni". **Archivio** mostra quanti documenti hai e quanti nuovi questa settimana, con un ventaglio di tre schede nel colore della categoria. **Prossima capsula** ha un anello con i giorni all'apertura e il nome di chi la riceverà. **Amici** mostra le foto (o le iniziali) e quanti sono amici e guardiani. **Beni** elenca fino a tre beni con la scadenza che li riguarda e un'etichetta (scaduta, in arrivo, ok): prima quelli con qualcosa da sistemare. **Primi passi** è un anello con i passi di avvio completati e dice quello che manca. **Appena aggiunti** mostra gli ultimi due documenti.
+- **Chiedi a Hinthia**: scrivi una domanda (o tocca uno dei due suggerimenti, ricavati dalle tue scadenze) e si apre la pagina di Hinthia con la domanda già nel campo, pronta da inviare. Vale anche per chiunque arrivi alla pagina con `?q=...`.
+- Su smartphone i riquadri piccoli stanno affiancati a due a due, quelli grandi occupano tutta la riga. A vault vuoto ogni riquadro ha un testo gentile.
+
+**Note tecniche:**
+- Nessuna migrazione (il valore `bento` era già previsto dal vincolo di `profiles.dashboard_style`). `buildBento` (`domain/dashboard/bento.ts`, pura) ricava tutto dallo stesso `SummaryContext` delle altre viste; `DashboardBento` lo disegna. Per i beni una scadenza già passata conta più di qualunque futura.
+- La domanda non viene inviata dalla dashboard: si apre Hinthia con il campo compilato, così la risposta (locale o con Claude, secondo il consenso) resta una scelta di chi preme "Invia". `AIPanel` legge `?q=` una sola volta all'apertura.
+- Test: unità per `buildBento` e per il componente (a vault vuoto, scadenze, beni, domanda), e2e esteso in `dashboard-style.spec.ts` (scelta di Bento, scadenza rimandata, domanda che arriva a Hinthia).
+
+---
+
 ## 2026-10-07 (62)
 
 ### Lo stile della Dashboard si sceglie dalle Impostazioni (primo: "Oggi")
