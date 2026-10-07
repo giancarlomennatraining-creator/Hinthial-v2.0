@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DashboardBento } from "@/components/dashboard/DashboardBento";
 import { DashboardClassic } from "@/components/dashboard/DashboardClassic";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { DashboardToday } from "@/components/dashboard/DashboardToday";
@@ -30,6 +31,9 @@ export function DashboardWidgets({ masterKey, style }: { masterKey: CryptoKey; s
 
   if (style === "today") {
     return <DashboardToday supabase={supabase} masterKey={masterKey} context={context} now={now} patchReminder={patchReminder} />;
+  }
+  if (style === "bento") {
+    return <DashboardBento context={context} now={now} />;
   }
   return <DashboardClassic context={context} />;
 }

@@ -72,4 +72,24 @@ test("lo stile della Dashboard si sceglie in Impostazioni > Aspetto: Oggi mostra
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("heading", { name: "Da fare ora" })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("Hai finito per oggi")).toBeVisible();
+
+  // Anche Bento si sceglie da lì: la prossima scadenza è quella rimandata, e la domanda scritta arriva a Hinthia già nel campo.
+  await openSettings(page, user);
+  await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("tab", { name: "Dashboard" }).click();
+  const bento = page.getByRole("radio", { name: /Bento/ });
+  await expect(bento).toContainText("colpo d'occhio");
+  await bento.click();
+  await expect(bento).toHaveAttribute("aria-checked", "true");
+
+  await page.getByRole("link", { name: "Dashboard" }).click();
+  const hero = page.getByRole("link", { name: /Prossima scadenza/ });
+  await expect(hero).toBeVisible({ timeout: 10_000 });
+  await expect(hero).toContainText("Bollo auto");
+  await expect(hero).toContainText("tra 9 giorni");
+
+  await page.getByLabel("Domanda per Hinthia").fill("Quando scade il bollo?");
+  await page.getByRole("button", { name: "Chiedi", exact: true }).click();
+  await expect(page).toHaveURL(/\/ai\?q=/, { timeout: 15_000 });
+  await expect(page.getByLabel("Fai una domanda")).toHaveValue("Quando scade il bollo?");
 });
