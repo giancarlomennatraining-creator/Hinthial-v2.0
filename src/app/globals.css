@@ -602,3 +602,333 @@ h6 {
     stroke-dashoffset: 0 !important;
   }
 }
+
+/*
+ * Zona di rilascio del file (v. components/documents/FileDropZone.tsx) --- il concept "Mirino": quattro angoli si
+ * stringono sul foglio quando un file ci passa sopra, una luce lo scorre mentre Hinthial legge il testo sul dispositivo,
+ * le righe si accendono, e a lettura finita compare il timbro. Lo stato sta in `data-state` (idle | over | loading |
+ * done); senza una percentuale (`data-indeterminate`) la luce va e viene e le righe si accendono a turno.
+ */
+.file-drop {
+  --fd-line: #c9d0e6;
+  --fd-bg: #f3f5fb;
+  --fd-surface: #ffffff;
+  --fd-border: #dfe3f0;
+  --fd-muted: #5b6483;
+  --fd-teal: #12a58f;
+  --fd-ok: #1c7c5a;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 212px;
+  border-radius: 20px;
+  border: 1px solid var(--fd-border);
+  background: var(--fd-bg);
+  color: var(--fd-muted);
+  text-align: center;
+  transition: background 0.4s ease, color 0.4s ease, border-color 0.3s ease;
+}
+.dark .file-drop {
+  --fd-line: #38427a;
+  --fd-bg: #0f1530;
+  --fd-surface: #141b36;
+  --fd-border: #28305a;
+  --fd-muted: #9aa3c4;
+  --fd-teal: #3fd1b8;
+  --fd-ok: #5bd6a4;
+}
+.file-drop:focus-within {
+  outline: 2.5px solid var(--brand);
+  outline-offset: 2px;
+}
+.file-drop[data-state="over"] {
+  background: color-mix(in srgb, var(--fd-teal) 10%, var(--fd-bg));
+  color: var(--fd-teal);
+}
+.file-drop[data-state="loading"] {
+  background: color-mix(in srgb, var(--fd-teal) 8%, var(--fd-bg));
+  color: var(--fd-teal);
+}
+.file-drop[data-state="done"] {
+  background: color-mix(in srgb, var(--fd-ok) 9%, var(--fd-bg));
+  color: var(--fd-ok);
+}
+.fd-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 20px;
+  pointer-events: none;
+}
+.fd-msg {
+  margin: 0;
+  min-height: 24px;
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+.fd-msg > span {
+  display: none;
+}
+.file-drop[data-state="idle"] .fd-m-idle,
+.file-drop[data-state="over"] .fd-m-over,
+.file-drop[data-state="loading"] .fd-m-load,
+.file-drop[data-state="done"] .fd-m-done {
+  display: inline;
+  animation: fd-msg-in 0.32s ease both;
+}
+@keyframes fd-msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fd-sub {
+  margin: 0;
+  font-size: 12.5px;
+  transition: opacity 0.25s ease;
+}
+.file-drop[data-state="loading"] .fd-sub,
+.file-drop[data-state="done"] .fd-sub {
+  opacity: 0;
+}
+.fd-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+  background-image: linear-gradient(var(--fd-border) 1px, transparent 1px), linear-gradient(90deg, var(--fd-border) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(70% 80% at 50% 50%, #000, transparent);
+  -webkit-mask-image: radial-gradient(70% 80% at 50% 50%, #000, transparent);
+  transition: opacity 0.4s ease;
+}
+.file-drop[data-state="over"] .fd-grid,
+.file-drop[data-state="loading"] .fd-grid {
+  opacity: 1;
+}
+.fd-c {
+  position: absolute;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border: 0 solid var(--fd-line);
+  pointer-events: none;
+  transition: transform 0.45s cubic-bezier(0.2, 1.3, 0.4, 1), border-color 0.3s ease;
+}
+.fd-c.tl {
+  left: 14px;
+  top: 14px;
+  border-left-width: 4px;
+  border-top-width: 4px;
+  border-top-left-radius: 12px;
+}
+.fd-c.tr {
+  right: 14px;
+  top: 14px;
+  border-right-width: 4px;
+  border-top-width: 4px;
+  border-top-right-radius: 12px;
+}
+.fd-c.bl {
+  left: 14px;
+  bottom: 14px;
+  border-left-width: 4px;
+  border-bottom-width: 4px;
+  border-bottom-left-radius: 12px;
+}
+.fd-c.br {
+  right: 14px;
+  bottom: 14px;
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+  border-bottom-right-radius: 12px;
+}
+.file-drop[data-state="over"] .fd-c,
+.file-drop[data-state="loading"] .fd-c {
+  border-color: var(--fd-teal);
+}
+.file-drop[data-state="over"] .fd-c.tl,
+.file-drop[data-state="loading"] .fd-c.tl {
+  transform: translate(22px, 22px);
+}
+.file-drop[data-state="over"] .fd-c.tr,
+.file-drop[data-state="loading"] .fd-c.tr {
+  transform: translate(-22px, 22px);
+}
+.file-drop[data-state="over"] .fd-c.bl,
+.file-drop[data-state="loading"] .fd-c.bl {
+  transform: translate(22px, -22px);
+}
+.file-drop[data-state="over"] .fd-c.br,
+.file-drop[data-state="loading"] .fd-c.br {
+  transform: translate(-22px, -22px);
+}
+.file-drop[data-state="done"] .fd-c {
+  border-color: var(--fd-ok);
+  animation: fd-flash 0.7s ease;
+}
+@keyframes fd-flash {
+  0% {
+    opacity: 0.2;
+  }
+  50%,
+  100% {
+    opacity: 1;
+  }
+}
+.fd-page {
+  position: relative;
+  display: flex;
+  width: 62px;
+  height: 78px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 9px;
+  border: 2px solid var(--fd-line);
+  border-radius: 7px;
+  background: var(--fd-surface);
+  transition: transform 0.4s cubic-bezier(0.2, 1.4, 0.4, 1), border-color 0.3s ease;
+}
+.fd-page i {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--fd-line);
+  transition: background 0.2s ease;
+}
+.fd-page i:nth-child(1) {
+  width: 60%;
+}
+.fd-page i:nth-child(3) {
+  width: 80%;
+}
+.fd-page i:nth-child(5) {
+  width: 50%;
+}
+.fd-page i[data-on="true"] {
+  background: var(--fd-teal);
+}
+.fd-stamp {
+  position: absolute;
+  right: -14px;
+  bottom: -14px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--fd-ok);
+  color: #fff;
+  transform: scale(0);
+}
+.fd-stamp svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.file-drop[data-state="over"] .fd-page {
+  border-color: var(--fd-teal);
+  transform: translateY(-6px) rotate(-4deg) scale(1.08);
+}
+.file-drop[data-state="loading"] .fd-page {
+  border-color: var(--fd-teal);
+  transform: scale(1.1);
+}
+.file-drop[data-state="done"] .fd-page {
+  border-color: var(--fd-ok);
+}
+.file-drop[data-state="done"] .fd-page i {
+  background: var(--fd-ok);
+}
+.file-drop[data-state="done"] .fd-stamp {
+  transform: scale(1);
+  transition: transform 0.45s 0.1s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.fd-scan {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: var(--fd-teal);
+  box-shadow: 0 0 18px 6px color-mix(in srgb, var(--fd-teal) 55%, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+.file-drop[data-state="loading"] .fd-scan {
+  opacity: 1;
+  top: calc(var(--fd-p, 0) * 100%);
+  transition: top 0.2s linear;
+}
+/* Senza una percentuale: la luce va e viene, e le righe si accendono a turno. */
+.file-drop[data-state="loading"][data-indeterminate="true"] .fd-scan {
+  transition: none;
+  animation: fd-scan-sweep 1.9s ease-in-out infinite alternate;
+}
+@keyframes fd-scan-sweep {
+  from {
+    top: 0;
+  }
+  to {
+    top: calc(100% - 3px);
+  }
+}
+.file-drop[data-state="loading"][data-indeterminate="true"] .fd-page i {
+  animation: fd-line-lit 1.9s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 0.28s);
+}
+@keyframes fd-line-lit {
+  0%,
+  100% {
+    background: var(--fd-line);
+  }
+  35%,
+  65% {
+    background: var(--fd-teal);
+  }
+}
+/* Il campo vero ricopre il riquadro, invisibile ma presente: raggiungibile da tastiera e da chi verifica l'interfaccia. */
+.fd-input {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  opacity: 0;
+}
+.file-drop[data-state="loading"] .fd-input,
+.file-drop[data-state="done"] .fd-input {
+  cursor: progress;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .file-drop,
+  .file-drop * {
+    animation-duration: 0.01s !important;
+    transition-duration: 0.01s !important;
+  }
+  .file-drop[data-state="loading"][data-indeterminate="true"] .fd-scan {
+    animation: none !important;
+    top: 50%;
+  }
+}
