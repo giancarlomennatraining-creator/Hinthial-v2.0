@@ -10,6 +10,23 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-07 (64)
+
+### Dashboard "Storie"
+
+**Cosa fa:**
+- Nuovo stile della Dashboard, da scegliere in **Impostazioni > Aspetto > Dashboard**: la tua giornata a **cinque schermate che scorrono da sole**, come le storie. **Oggi** (quante cose chiedono attenzione, con il numero che sale), **Scadenze** (le prime tre, quelle già passate per prime, con la data e il bene), **Archivio** (i documenti nuovi della settimana e un ventaglio di pagine), **Capsule** (quando si apre la prossima, con un anello e i giorni che mancano) e **Primi passi** (l'anello dei passi di avvio e quello che manca). Ogni storia ha il suo colore e il suo pulsante verso la sezione.
+- In alto le barre di avanzamento: ognuna si riempie in 6 secondi e poi si passa alla successiva (dall'ultima si riparte dalla prima). **Tocca a destra per avanzare, a sinistra per tornare**, **tieni premuto per fermare**, oppure usa il **pulsante di pausa** o le **frecce** della tastiera.
+- **Su schermo largo** la storia sta al centro, con l'indice delle cinque storie a sinistra e, a destra, i documenti recenti (con le miniature) e le aree. Su smartphone la storia è in cima, il resto sotto.
+- Chi ha scelto "meno movimento" nel dispositivo non le vede avanzare da sole né gli ingressi animati: i numeri compaiono interi e si va avanti a tocchi.
+
+**Note tecniche:**
+- Nessuna migrazione (`stories` era già nel vincolo di `profiles.dashboard_style`). `buildStories` (pura, `domain/dashboard/stories.ts`) ricava il contenuto dallo stesso contesto delle altre viste, riusando `buildBento`; `BentoCapsule` ora porta anche `openAt` e `others`. "Aggiunti di recente" e "Le tue aree" sono stati estratti in componenti condivisi (`DashboardRecentDocuments`, `DashboardAreas`), usati anche da Oggi.
+- L'avanzamento è una animazione CSS (`story-seg`) il cui `animationend` passa alla storia successiva: mettere in pausa è `animation-play-state: paused`, senza timer in JavaScript da sincronizzare. Le animazioni stanno in `globals.css` (`story-*`) con una regola `prefers-reduced-motion`.
+- Test: unità per `buildStories` e per il componente (navigazione a tocchi e frecce, pausa e tenere premuto, capsule, primi passi, vault vuoto); l'avanzamento da solo è coperto dall'e2e (`dashboard-style.spec.ts`), perché jsdom non emette gli eventi di animazione.
+
+---
+
 ## 2026-10-07 (63)
 
 ### Dashboard "Bento"

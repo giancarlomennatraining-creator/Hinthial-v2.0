@@ -65,7 +65,7 @@ describe("buildBento", () => {
       { id: "c3", title: "Lontana", openAt: on(200), relatedFriends: [] },
     ] as never;
     const data = buildBento(context({ capsules }), NOW);
-    expect(data.nextCapsule).toEqual({ title: "Per Luca", days: 30, recipient: "Luca" });
+    expect(data.nextCapsule).toEqual({ title: "Per Luca", days: 30, openAt: on(30), others: 1, recipient: "Luca" });
   });
 
   it("amici e guardiani", () => {

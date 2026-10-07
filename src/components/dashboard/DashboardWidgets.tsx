@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DashboardBento } from "@/components/dashboard/DashboardBento";
 import { DashboardClassic } from "@/components/dashboard/DashboardClassic";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { DashboardStories } from "@/components/dashboard/DashboardStories";
 import { DashboardToday } from "@/components/dashboard/DashboardToday";
 import { useDashboardData } from "@/components/dashboard/useDashboardData";
 import type { DashboardStyle } from "@/lib/dashboard-style";
@@ -31,6 +32,9 @@ export function DashboardWidgets({ masterKey, style }: { masterKey: CryptoKey; s
 
   if (style === "today") {
     return <DashboardToday supabase={supabase} masterKey={masterKey} context={context} now={now} patchReminder={patchReminder} />;
+  }
+  if (style === "stories") {
+    return <DashboardStories supabase={supabase} masterKey={masterKey} context={context} now={now} />;
   }
   if (style === "bento") {
     return <DashboardBento context={context} now={now} />;

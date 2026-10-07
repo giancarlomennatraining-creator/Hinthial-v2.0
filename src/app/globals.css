@@ -949,3 +949,47 @@ h6 {
     animation: none !important;
   }
 }
+
+/* Dashboard "Storie" (v. components/dashboard/DashboardStories.tsx): le barre di avanzamento che avanzano da sole, l'ingresso a cascata del testo e il ventaglio di pagine. */
+@keyframes story-seg {
+  to { width: 100%; }
+}
+@keyframes story-in {
+  from { opacity: 0; transform: translateY(22px); }
+}
+@keyframes story-fan {
+  from { transform: rotate(0) translateX(0) scale(0.7); opacity: 0; }
+}
+@keyframes story-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes story-ring {
+  from { stroke-dashoffset: var(--full); }
+}
+.story-seg-on {
+  animation: story-seg 6s linear forwards;
+}
+.story-paused .story-seg-on {
+  animation-play-state: paused;
+}
+.story-rise > * {
+  animation: story-in 0.6s cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 110ms + 100ms);
+}
+.story-deco {
+  animation: story-spin 30s linear infinite;
+}
+.story-page {
+  transform-origin: 50% 130%;
+  transform: rotate(calc((var(--k) - 1) * 18deg)) translateX(calc((var(--k) - 1) * 26px));
+  animation: story-fan 1s cubic-bezier(0.2, 1.3, 0.4, 1) backwards;
+  animation-delay: calc(var(--k) * 140ms + 400ms);
+}
+.story-ring-bar {
+  animation: story-ring 1.4s cubic-bezier(0.2, 0.9, 0.3, 1) 0.4s backwards;
+}
+/* Chi preferisce meno movimento non vede le storie avanzare da sole (resta il tocco o le frecce) né gli ingressi animati. */
+@media (prefers-reduced-motion: reduce) {
+  .story-seg-on { animation: none; width: 100%; }
+  .story-rise > *, .story-deco, .story-page, .story-ring-bar { animation: none; }
+}
