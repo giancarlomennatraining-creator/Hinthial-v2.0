@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-07 (59)
+
+### Nuovo fascicolo da un modello
+
+**Cosa fa:**
+- In "Nuovo fascicolo" si può partire da un **modello**: Acquisto di una casa, Incidente d'auto, Cura medica, Ristrutturazione, Successione, Trasloco, Nuovo lavoro, Nascita di un figlio. Ogni scheda dice quante fasi e quanti documenti attesi propone. **"Parti da zero"** resta il percorso di sempre (solo titolo e descrizione).
+- Scegliendo un modello il titolo si compila da solo (si può cambiare) e compaiono: **le fasi** (modificabili: nomi separati da virgola), i **documenti attesi** da spuntare o togliere, e **"Ho già trovato N documenti tra i tuoi"**: quelli già in Hinthial che nominano una voce del modello (es. "Visura catastale.pdf"), con "Sembra: …", da tenere o scartare.
+- "Crea fascicolo" crea il fascicolo con le fasi, i documenti attesi scelti e collega i documenti trovati, poi apre la scheda.
+
+**Note tecniche:**
+- Nessuna migrazione: un modello è solo un insieme di dati (`domain/dossiers/templates.ts`) che usa fasi e documenti attesi già esistenti. I documenti trovati si cercano con lo stesso abbinamento dei documenti attesi (`matchExpected`), solo tra quelli che non stanno già in un fascicolo, uno per voce; si leggono solo quando si sceglie un modello, così "Parti da zero" non costa nulla in più.
+- Se il fascicolo si crea ma un passaggio successivo fallisce (fasi, voci, collegamenti) la pagina lo dice e offre "Apri il fascicolo", senza permettere un secondo "Crea" che ne farebbe un doppione.
+
+---
+
 ## 2026-10-07 (58)
 
 ### Condividere un fascicolo con un link protetto
