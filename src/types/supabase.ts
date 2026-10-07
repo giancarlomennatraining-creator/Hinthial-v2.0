@@ -77,6 +77,8 @@ type AuditEventTypeColumn =
   | "friend_deleted"
   | "capsule_updated"
   | "dossier_updated"
+  | "dossier_shared"
+  | "dossier_share_revoked"
   | "category_updated";
 
 type FriendStatusColumn = "active" | "revoked";
@@ -420,6 +422,8 @@ export type Database = {
           owner_id: string;
           encrypted_title: string;
           encrypted_description: string | null;
+          encrypted_phases: string | null;
+          encrypted_summary: string | null;
           status: string;
           created_at: string;
           closed_at: string | null;
@@ -429,6 +433,8 @@ export type Database = {
           owner_id: string;
           encrypted_title: string;
           encrypted_description?: string | null;
+          encrypted_phases?: string | null;
+          encrypted_summary?: string | null;
           status?: string;
           created_at?: string;
           closed_at?: string | null;
@@ -438,6 +444,8 @@ export type Database = {
           owner_id?: string;
           encrypted_title?: string;
           encrypted_description?: string | null;
+          encrypted_phases?: string | null;
+          encrypted_summary?: string | null;
           status?: string;
           created_at?: string;
           closed_at?: string | null;
@@ -647,6 +655,135 @@ export type Database = {
             columns: ["owner_id"];
             isOneToOne: false;
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      dossier_shares: {
+        Row: {
+          id: string;
+          owner_id: string;
+          dossier_id: string;
+          encrypted_label: string | null;
+          encrypted_link_key: string;
+          encrypted_manifest: string;
+          allow_download: boolean;
+          document_count: number;
+          expires_at: string;
+          revoked_at: string | null;
+          files_purged_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          dossier_id: string;
+          encrypted_label?: string | null;
+          encrypted_link_key: string;
+          encrypted_manifest: string;
+          allow_download?: boolean;
+          document_count: number;
+          expires_at: string;
+          revoked_at?: string | null;
+          files_purged_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          dossier_id?: string;
+          encrypted_label?: string | null;
+          encrypted_link_key?: string;
+          encrypted_manifest?: string;
+          allow_download?: boolean;
+          document_count?: number;
+          expires_at?: string;
+          revoked_at?: string | null;
+          files_purged_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "dossier_shares_dossier_id_fkey";
+            columns: ["dossier_id"];
+            isOneToOne: false;
+            referencedRelation: "dossiers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      dossier_share_accesses: {
+        Row: {
+          id: string;
+          share_id: string;
+          owner_id: string;
+          kind: string;
+          document_id: string | null;
+          accessed_at: string;
+        };
+        Insert: {
+          id?: string;
+          share_id: string;
+          owner_id: string;
+          kind: string;
+          document_id?: string | null;
+          accessed_at?: string;
+        };
+        Update: {
+          id?: string;
+          share_id?: string;
+          owner_id?: string;
+          kind?: string;
+          document_id?: string | null;
+          accessed_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "dossier_share_accesses_share_id_fkey";
+            columns: ["share_id"];
+            isOneToOne: false;
+            referencedRelation: "dossier_shares";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      dossier_items: {
+        Row: {
+          id: string;
+          dossier_id: string;
+          owner_id: string;
+          kind: string;
+          encrypted_data: string;
+          due_on: string | null;
+          done: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          dossier_id: string;
+          owner_id: string;
+          kind: string;
+          encrypted_data: string;
+          due_on?: string | null;
+          done?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          dossier_id?: string;
+          owner_id?: string;
+          kind?: string;
+          encrypted_data?: string;
+          due_on?: string | null;
+          done?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "dossier_items_dossier_id_fkey";
+            columns: ["dossier_id"];
+            isOneToOne: false;
+            referencedRelation: "dossiers";
             referencedColumns: ["id"];
           },
         ];

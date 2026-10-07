@@ -4,7 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
-import { createDossier, deleteDossier, listDossiers, replaceDocumentDossierLinks } from "@/domain/dossiers/repository";
+import {
+  createDossier,
+  deleteDossier,
+  listDossierItems,
+  listDossiers,
+  replaceDocumentDossierLinks,
+} from "@/domain/dossiers/repository";
+import type { DossierStep } from "@/domain/dossiers/items";
 import { DossierSuggestions } from "@/components/dossiers/DossierSuggestions";
 import {
   loadDismissedSuggestions,
@@ -62,6 +69,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
   const [reminders, setReminders] = useState<ReminderListItem[]>([]);
+  const [steps, setSteps] = useState<DossierStep[]>([]);
   const [now] = useState(() => new Date());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,14 +96,17 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [dossiersResult, documentsResult, categoriesResult, assetsResult, remindersResult] = await Promise.all([
+      const [dossiersResult, documentsResult, categoriesResult, assetsResult, remindersResult, itemsResult] = await Promise.all([
         listDossiers(supabase, masterKey),
         listDocumentSummaries(supabase, masterKey),
         listCategories(supabase),
         listAssets(supabase, masterKey),
         // Le scadenze servono solo a dire "prossima scadenza": se non si leggono, la scheda resta com'è.
         listReminders(supabase, masterKey).catch((): ReminderListItem[] => []),
+        // I prossimi passi contano tra le scadenze: se non si leggono, la scheda resta com'è.
+        listDossierItems(supabase, masterKey).catch(() => ({ steps: [] as DossierStep[], people: [] })),
       ]);
+      setSteps(itemsResult.steps);
       setDossiers(dossiersResult);
       setDocuments(documentsResult);
       setCategories(categoriesResult);
@@ -192,7 +203,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   const overviews = new Map<string, DossierOverview>(
-    dossiers.map((dossier) => [dossier.id, dossierOverview({ documents: documentsFor(dossier), reminders, assets, now })]),
+    dossiers.map((dossier) => [dossier.id, dossierOverview({ documents: documentsFor(dossier), reminders, assets, steps: steps.filter((s) => s.dossierId === dossier.id), now })]),
   );
   const isSoon = (dossier: DossierListItem) => {
     const next = overviews.get(dossier.id)?.nextDeadline;

@@ -59,6 +59,8 @@ export type AuditEventType =
   | "friend_deleted"
   | "capsule_updated"
   | "dossier_updated"
+  | "dossier_shared"
+  | "dossier_share_revoked"
   | "category_updated";
 
 export type AuditEntityType = "document" | "asset" | "friend" | "capsule" | "dossier" | "category";

@@ -112,12 +112,33 @@ control), so this is **best effort, not a security guarantee**:
   their raw bytes can never be read back out through this module's API,
   only used for encrypt/decrypt.
 
+## Share links (dossiers shared with a professional)
+
+Added after FASE 3, on top of this module (no new primitive): `src/domain/dossiers/shares-repository.ts` and
+`src/domain/dossiers/sharing.ts`.
+
+- The owner's device decrypts each chosen document (DK unwrapped with the MK), then re-encrypts the bytes with a fresh
+  random **Share Key** (AES-256-GCM, `generateSymmetricKey`) and uploads the copies to a private bucket
+  (`dossier-shares`, path `{owner}/{share}/{document}.json`, serialized `EncryptedEnvelope`).
+- A manifest (title, description, document list, optional summary and phases) is encrypted with the Share Key and stored in
+  `dossier_shares.encrypted_manifest`. The Share Key, encrypted with the MK, is stored in `encrypted_link_key` so the owner
+  can copy the link again later. The label ("Notaio Rossi") is MK-encrypted like any user text.
+- The Share Key travels **only in the URL fragment** (`/c/{share}#{base64url(key)}`). Browsers never send the fragment to
+  the server, so the server stores and serves ciphertext it cannot read. The public page (`/c/[id]`) fetches the manifest
+  and the copies through `/api/shares/...` (service role, no account), checks only "exists, not revoked, not expired, not
+  purged", and decrypts in the visitor's browser.
+- In clear on the server: expiry, whether download is allowed, document count, revocation state, access log
+  (opened / which document / when). Everything else is ciphertext.
+- Revoking, expiry (daily cron) and deleting the dossier remove the copies from Storage. The link then answers 404 with the
+  same message as a wrong link.
+- Honest limits: anyone holding the whole link can open the documents until it expires or is revoked (the link is a bearer
+  credential, and an email carrying it passes through the mail provider); "view only" hides the download button but cannot
+  stop a recipient from saving or photographing what they can see.
+
 ## What this module does NOT do (yet)
 
-- **Sharing.** Per HINTHIAL_MVP.md FASE 3: "Non implementare ancora
-  sharing complesso." The per-document key design (DK wrapped by MK)
-  leaves room for it later (e.g. also wrapping a DK with a recipient's
-  public key), but no such flow exists yet.
+- **Account-to-account sharing with a recipient's public key.** The per-document key design (DK wrapped by MK) leaves room
+  for it (capsules already wrap keys for linked friends); link-based sharing of dossiers is described above.
 - **Storage/UI integration.** This module is intentionally isolated ---
   it doesn't know about Supabase, documents-as-database-rows, or any UI.
   That wiring is FASE 4 (Vault documentale).
