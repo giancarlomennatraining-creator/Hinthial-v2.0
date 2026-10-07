@@ -97,7 +97,7 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await page.getByLabel("Ruolo").fill("Coniuge");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
-  const friendRow = page.locator("li", { hasText: "Maria Rossi" });
+  const friendRow = page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /Maria Rossi/ });
   await expect(friendRow).toBeVisible({ timeout: 10_000 });
   // Amico + guardiano richiederebbe ora una doppia richiesta di consenso
   // reale tra due account (v. friends.spec.ts per quel flusso) --- qui
@@ -107,7 +107,7 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await page.reload();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
-  await expect(friendRow.getByText("🛡️ Guardiano")).toBeVisible({ timeout: 10_000 });
+  await expect(friendRow.getByTitle("Guardiano")).toBeVisible({ timeout: 10_000 });
 
   await statusButton.click();
   await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 63% completato", {

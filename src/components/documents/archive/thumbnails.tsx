@@ -73,6 +73,11 @@ class ThumbnailCache {
     this.pump();
   }
 
+  /** Dopo un dispose(): in Strict Mode (sviluppo) React smonta e rimonta senza ricreare l'oggetto, che deve tornare utilizzabile. */
+  revive() {
+    this.disposed = false;
+  }
+
   dispose() {
     this.disposed = true;
     for (const url of this.urls.values()) if (url) URL.revokeObjectURL(url);
@@ -90,7 +95,10 @@ export function ThumbnailProvider({ data, children }: { data: Pick<ArchiveData, 
     () => new ThumbnailCache((doc) => downloadThumbnail(supabase, masterKey, doc)),
     [supabase, masterKey],
   );
-  useEffect(() => () => cache.dispose(), [cache]);
+  useEffect(() => {
+    cache.revive();
+    return () => cache.dispose();
+  }, [cache]);
   return <ThumbnailContext.Provider value={cache}>{children}</ThumbnailContext.Provider>;
 }
 

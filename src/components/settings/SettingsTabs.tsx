@@ -20,6 +20,7 @@ import { BottomNavItemsSettings } from "@/components/settings/BottomNavItemsSett
 import { MainNavItemsSettings } from "@/components/settings/MainNavItemsSettings";
 import { ListViewSettings } from "@/components/settings/ListViewSettings";
 import { CapsuleCountdownSettings } from "@/components/settings/CapsuleCountdownSettings";
+import { DashboardStyleSettings } from "@/components/settings/DashboardStyleSettings";
 import { TrashRetentionSettings } from "@/components/settings/TrashRetentionSettings";
 import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
@@ -41,6 +42,7 @@ import {
   HeartIcon,
   ImportExportIcon,
   ListViewIcon,
+  DashboardIcon,
   MedicalCardIcon,
   MenuListIcon,
   SecurityIcon,
@@ -126,6 +128,7 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
           { id: "nav-layout", label: "Disposizione menu", icon: SidebarLayoutIcon },
           { id: "nav-items", label: "Voci del menu", icon: MenuListIcon },
           { id: "bottom-bar", label: "Barra in basso", icon: BottomBarIcon },
+          { id: "dashboard", label: "Dashboard", icon: DashboardIcon },
           { id: "lists", label: "Liste", icon: ListViewIcon },
           { id: "capsules", label: "Capsule", icon: CapsuleIcon },
           { id: "archive", label: "Archivio", icon: ArchiveIcon },
@@ -424,6 +427,16 @@ export function SettingsTabs({
             description="Scegli quali voci mostrare sempre in basso su smartphone — le altre restano comunque raggiungibili dal menu con le 3 lineette."
           >
             <BottomNavItemsSettings />
+          </FunctionBlock>
+        );
+      }
+      if (activeSection === "dashboard") {
+        return (
+          <FunctionBlock
+            title="Stile della Dashboard"
+            description="Scegli come si presenta la prima pagina: gli stessi dati, letti in modi diversi. La scelta resta la stessa su tutti i tuoi dispositivi."
+          >
+            <DashboardStyleSettings />
           </FunctionBlock>
         );
       }

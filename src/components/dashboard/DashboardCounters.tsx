@@ -4,7 +4,7 @@ import type { SummaryContext } from "@/domain/ai/types";
 import { ArchiveIcon, AssetIcon, CapsuleIcon, CategoryIcon, FriendIcon } from "@/components/icons/nav-icons";
 
 /** Stesse icone già usate per le voci di menu corrispondenti (v. nav-items.ts) --- Categorie non ha una voce di menu propria (vive in Impostazioni), le si dà un'icona a sé (v. icons/nav-icons.tsx, CategoryIcon): non è legata a nessuna categoria specifica dell'utente (quelle restano emoji scelte da lui, v. IconPicker), è solo la decorazione di questo riquadro. */
-const COUNTERS: {
+export const COUNTERS: {
   key: "documents" | "assets" | "friends" | "capsules" | "categories";
   label: string;
   icon: ComponentType<SVGProps<SVGSVGElement>>;

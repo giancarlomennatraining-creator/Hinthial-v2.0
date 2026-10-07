@@ -4,5 +4,5 @@ import { DashboardPanel } from "@/components/dashboard/DashboardPanel";
 export default async function DashboardPage() {
   const user = await getCurrentUser();
 
-  return <DashboardPanel displayName={user?.displayName ?? "Utente"} />;
+  return <DashboardPanel displayName={user?.displayName ?? "Utente"} style={user?.dashboardStyle ?? "classic"} />;
 }

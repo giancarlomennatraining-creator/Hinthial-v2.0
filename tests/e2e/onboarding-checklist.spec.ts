@@ -100,14 +100,14 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await page.getByLabel("Ruolo").fill("Coniuge");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
-  const friendRow = page.locator("li", { hasText: "Maria Rossi" });
+  const friendRow = page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /Maria Rossi/ });
   await expect(friendRow).toBeVisible({ timeout: 10_000 });
   // Amico + guardiano richiederebbe una doppia richiesta reale tra due account (v. friends.spec.ts): qui serve solo come dato di partenza, si forza via il client admin.
   await forceOwnFriendToGuardian(user.email);
   await page.reload();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
-  await expect(friendRow.getByText("🛡️ Guardiano")).toBeVisible({ timeout: 10_000 });
+  await expect(friendRow.getByTitle("Guardiano")).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole("link", { name: "Dashboard" }).click();
   await openPanel();

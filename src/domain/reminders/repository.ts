@@ -139,6 +139,19 @@ export async function setReminderCompleted(
   }
 }
 
+/** Sposta la scadenza a un'altra data (v. "Rimanda" e la Lavagna in Dashboard): il titolo cifrato non cambia. */
+export async function setReminderDueAt(
+  supabase: SupabaseClient<Database>,
+  reminderId: string,
+  dueAt: string,
+): Promise<void> {
+  const { error } = await supabase.from("reminders").update({ due_at: dueAt }).eq("id", reminderId);
+
+  if (error) {
+    throw new Error(`Impossibile spostare la scadenza: ${error.message}`);
+  }
+}
+
 export async function deleteReminder(
   supabase: SupabaseClient<Database>,
   reminderId: string,
