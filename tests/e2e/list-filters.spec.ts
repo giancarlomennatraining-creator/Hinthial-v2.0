@@ -172,12 +172,12 @@ test("la ricerca globale e il filtro per stato funzionano in Scadenze, Amici e C
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
 
-  const lucaRow = page.getByRole("listitem").filter({ hasText: "Luca Bianchi" });
-  await openRowMenu(lucaRow);
+  const rubrica = page.getByRole("region", { name: "Rubrica" });
+  await rubrica.getByRole("button", { name: /Luca Bianchi/ }).click();
+  const lucaScheda = page.getByRole("region", { name: "Scheda di Luca Bianchi" });
+  await openRowMenu(lucaScheda);
   await page.getByRole("menuitem", { name: "Revoca" }).click();
-  await expect(
-    page.getByRole("listitem").filter({ hasText: "Luca Bianchi" }).getByText("Revocato"),
-  ).toBeVisible();
+  await expect(lucaScheda.getByText("Revocato")).toBeVisible();
 
   const friendsSearch = await searchGlobally(page, "avvocato");
   await expect(friendsSearch.getByRole("button", { name: /Luca Bianchi/ })).toBeVisible();
@@ -185,8 +185,8 @@ test("la ricerca globale e il filtro per stato funzionano in Scadenze, Amici e C
   await closeGlobalSearch(page);
 
   await page.getByLabel("Filtra per stato").selectOption({ label: "Attivi" });
-  await expect(page.getByText("Maria Rossi")).toBeVisible();
-  await expect(page.getByText("Luca Bianchi")).not.toBeVisible();
+  await expect(rubrica.getByRole("button", { name: /Maria Rossi/ })).toBeVisible();
+  await expect(rubrica.getByRole("button", { name: /Luca Bianchi/ })).toHaveCount(0);
 
   // Capsule: una chiusa, una bozza.
   await page.getByRole("link", { name: "Capsule" }).click();

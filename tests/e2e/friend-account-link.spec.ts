@@ -37,21 +37,21 @@ test("un amico collegato a un account si scollega da solo se gli si cambia l'ema
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
 
-  const row = page.locator("li", { hasText: "Amico Collegato" });
-  await expect(row).toBeVisible({ timeout: 10_000 });
-  await expect(row.getByTitle("Ha un account Hinthial")).toBeVisible({ timeout: 15_000 });
+  const scheda = page.getByRole("region", { name: "Scheda di Amico Collegato" });
+  await expect(scheda).toBeVisible({ timeout: 10_000 });
+  await expect(scheda.getByText("Ha un account Hinthial")).toBeVisible({ timeout: 15_000 });
 
   // Cambiando l'email a qualcosa che non corrisponde più a nessun
   // account, il badge deve sparire --- non restare agganciato
   // all'account di prima (v. domain/friends/repository.ts, updateFriend).
-  await row.getByRole("button", { name: /Azioni/ }).click();
+  await scheda.getByRole("button", { name: /Azioni/ }).click();
   await page.getByRole("menuitem", { name: "Modifica" }).click();
   await expect(page.getByRole("heading", { name: "Modifica amico" })).toBeVisible();
   await page.getByLabel("Email").fill("indirizzo-diverso@esempio.it");
   await page.getByRole("button", { name: "Salva modifiche" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
 
-  const updatedRow = page.locator("li", { hasText: "Amico Collegato" });
-  await expect(updatedRow).toBeVisible({ timeout: 10_000 });
-  await expect(updatedRow.getByTitle("Ha un account Hinthial")).not.toBeVisible();
+  const updatedScheda = page.getByRole("region", { name: "Scheda di Amico Collegato" });
+  await expect(updatedScheda).toBeVisible({ timeout: 10_000 });
+  await expect(updatedScheda.getByText("Ha un account Hinthial")).not.toBeVisible();
 });

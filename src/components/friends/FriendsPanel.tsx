@@ -40,23 +40,9 @@ import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import type { FriendListItem, FriendStatus } from "@/domain/friends/types";
 import type { CapsuleListItem } from "@/domain/capsules/types";
+import { AddressBook } from "@/components/friends/AddressBook";
 import { useToast } from "@/components/ui/ToastProvider";
 import { AlertTriangleIcon } from "@/components/icons/nav-icons";
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("it-IT", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-/** Come formatDate, ma con l'orario --- solo per l'apertura di una capsula, l'unica data dell'app che ora ne porta uno significativo. */
-function formatDateTime(iso: string): string {
-  const date = new Date(iso);
-  const time = date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
-  return `${formatDate(iso)}, ${time}`;
-}
 
 const STATUS_LABEL: Record<FriendStatus, string> = {
   active: "Attivo",
@@ -69,34 +55,6 @@ const STATUS_BADGE_CLASS: Record<FriendStatus, string> = {
 };
 
 type SortColumn = "name" | "email" | "role" | "status" | "capsules";
-
-/** Al passaggio del mouse, l'elenco delle capsule che indicano questo amico tra i destinatari. */
-function CapsulesBadge({ capsules }: { capsules: CapsuleListItem[] }) {
-  if (capsules.length === 0) return null;
-
-  return (
-    <span className="group relative inline-flex shrink-0">
-      <span className="cursor-default rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
-        📦 {capsules.length} {capsules.length === 1 ? "capsula" : "capsule"}
-      </span>
-      <span className="invisible absolute left-0 top-full z-10 mt-1 w-64 rounded-md border border-zinc-200 bg-white p-2 text-xs text-zinc-700 opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
-        <ul className="flex flex-col gap-1.5">
-          {capsules.map((capsule) => (
-            <li key={capsule.id}>
-              <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
-                {capsule.title}
-              </p>
-              <p className="text-zinc-500 dark:text-zinc-400">
-                creata il {formatDate(capsule.createdAt)}
-                {capsule.openAt ? ` · apertura prevista ${formatDateTime(capsule.openAt)}` : ""}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </span>
-    </span>
-  );
-}
 
 /** Badge "🤝 Amico" (amicizia reciproca confermata) --- v. FriendListItem.isFriend. Niente badge per una PERSONA: è lo stato di partenza, non serve segnalarlo. */
 function FriendBadge({ isFriend }: { isFriend: boolean }) {
@@ -482,6 +440,27 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
     );
   }
 
+  /** Il menu "⋮" di una persona: lo stesso nella vista a tabella e nella scheda della rubrica. */
+  function rowMenu(friend: FriendListItem) {
+    const busy = busyId === friend.id;
+    return (
+      <RowActionsMenu label={`Azioni per ${friend.name}`}>
+        {guardianOrFriendshipMenuItems(friend, busy)}
+        {friend.status !== "revoked" ? (
+          <RowMenuItem disabled={busy} onClick={() => handleSetStatus(friend, "revoked")}>
+            Revoca
+          </RowMenuItem>
+        ) : null}
+        <RowMenuItem disabled={busy} onClick={() => router.push(`/friends/${friend.id}/edit`)}>
+          Modifica
+        </RowMenuItem>
+        <RowMenuItem disabled={busy} danger onClick={() => handleDelete(friend)}>
+          Elimina
+        </RowMenuItem>
+      </RowActionsMenu>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
@@ -605,8 +584,6 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                   </thead>
                   <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
                     {pagedFriends.map((friend) => {
-                      const busy = busyId === friend.id;
-
                       return (
                         <tr key={friend.id}>
                           <td className="max-w-[12rem] p-3 font-medium text-zinc-900 dark:text-zinc-100">
@@ -648,20 +625,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
                             {capsulesFor(friend).length}
                           </td>
                           <td className="p-3">
-                            <RowActionsMenu label={`Azioni per ${friend.name}`}>
-                              {guardianOrFriendshipMenuItems(friend, busy)}
-                              {friend.status !== "revoked" ? (
-                                <RowMenuItem disabled={busy} onClick={() => handleSetStatus(friend, "revoked")}>
-                                  Revoca
-                                </RowMenuItem>
-                              ) : null}
-                              <RowMenuItem disabled={busy} onClick={() => router.push(`/friends/${friend.id}/edit`)}>
-                                Modifica
-                              </RowMenuItem>
-                              <RowMenuItem disabled={busy} danger onClick={() => handleDelete(friend)}>
-                                Elimina
-                              </RowMenuItem>
-                            </RowActionsMenu>
+                            {rowMenu(friend)}
                           </td>
                         </tr>
                       );
@@ -672,63 +636,18 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
               <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
             </div>
           ) : (
-            <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
-              {filteredFriends.map((friend) => {
-                const busy = busyId === friend.id;
-
-                return (
-                  <li key={friend.id} className="flex items-center justify-between gap-4 p-4">
-                    <div className="flex min-w-0 items-start gap-3">
-                      <Avatar
-                        firstName={friend.firstName}
-                        lastName={friend.lastName}
-                        avatarUrl={avatarUrlFor(friend)}
-                        seed={friend.id}
-                        linked={friend.linkedUserId !== null}
-                      />
-                      <div className="min-w-0">
-                      {/* div, non p: la nuvoletta di CapsulesBadge contiene <ul>/<li>, non ammessi dentro un <p>. */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                          {friend.name}
-                        </span>
-                        <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[friend.status]}`}
-                        >
-                          {STATUS_LABEL[friend.status]}
-                        </span>
-                        <FriendBadge isFriend={friend.isFriend} />
-                        <GuardianBadge isGuardian={friend.isGuardian} />
-                        {isFriendRequestPending(friend) ? (
-                          <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
-                            Amicizia in attesa
-                          </span>
-                        ) : null}
-                        <CapsulesBadge capsules={capsulesFor(friend)} />
-                      </div>
-                      <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
-                        {friend.email} · {friend.role} · dal {formatDate(friend.createdAt)}
-                      </p>
-                      </div>
-                    </div>
-                    <RowActionsMenu label={`Azioni per ${friend.name}`}>
-                      {guardianOrFriendshipMenuItems(friend, busy)}
-                      {friend.status !== "revoked" ? (
-                        <RowMenuItem disabled={busy} onClick={() => handleSetStatus(friend, "revoked")}>
-                          Revoca
-                        </RowMenuItem>
-                      ) : null}
-                      <RowMenuItem disabled={busy} onClick={() => router.push(`/friends/${friend.id}/edit`)}>
-                        Modifica
-                      </RowMenuItem>
-                      <RowMenuItem disabled={busy} danger onClick={() => handleDelete(friend)}>
-                        Elimina
-                      </RowMenuItem>
-                    </RowActionsMenu>
-                  </li>
-                );
-              })}
-            </ul>
+            <AddressBook
+              friends={filteredFriends}
+              capsulesFor={capsulesFor}
+              avatarUrlFor={avatarUrlFor}
+              isFriendRequestPending={isFriendRequestPending}
+              isGuardianRequestPending={isGuardianRequestPending}
+              canRequestFriendship={canRequestFriendship}
+              busyId={busyId}
+              onRequestFriendship={handleRequestFriendship}
+              onToggleGuardian={handleToggleGuardian}
+              renderMenu={rowMenu}
+            />
           )}
         </>
       )}

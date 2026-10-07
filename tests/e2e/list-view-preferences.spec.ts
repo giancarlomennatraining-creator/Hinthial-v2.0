@@ -51,7 +51,7 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
   await page.getByLabel("Ruolo").fill("Coniuge");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
-  await expect(page.getByText("Maria Rossi")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /Maria Rossi/ })).toBeVisible({ timeout: 10_000 });
 
   // Di default è a elenco: nessuna tabella in vista.
   await expect(page.locator("table")).not.toBeVisible();
@@ -86,7 +86,7 @@ test("la modalità di visualizzazione si imposta da Impostazioni > Aspetto, si a
   );
   await page.getByRole("radio", { name: "Vista a elenco" }).click();
   await expect(page.locator("table")).not.toBeVisible();
-  await expect(page.getByRole("listitem").filter({ hasText: "Maria Rossi" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /Maria Rossi/ })).toBeVisible();
 
   // Resta impostata dopo un refresh vero --- sincronizzata sul server, non solo in localStorage.
   await page.reload();

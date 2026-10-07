@@ -932,3 +932,20 @@ h6 {
     top: 50%;
   }
 }
+
+/* La scheda di una persona in rubrica (v. components/friends/AddressBook.tsx): entra con una piccola salita ogni volta che si cambia persona. */
+@keyframes rubrica-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="rubrica-in"] {
+    animation: none !important;
+  }
+}

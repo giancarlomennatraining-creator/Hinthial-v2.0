@@ -84,7 +84,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await page.getByLabel("Ruolo").fill("Coniuge");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
-  await expect(page.getByText("Maria Rossi")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /Maria Rossi/ })).toBeVisible({ timeout: 10_000 });
 
   // Una capsula.
   await page.getByRole("link", { name: "Capsule" }).click();

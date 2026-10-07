@@ -45,16 +45,19 @@ test("aggiunge un amico, ne segue lo stato e lo elimina", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
   await expect(page.getByText("Amico aggiunto.")).toBeVisible();
-  const row = page.locator("li", { hasText: "Maria Rossi" });
-  await expect(row).toBeVisible({ timeout: 10_000 });
-  await expect(row.getByText("Attivo")).toBeVisible();
-  await expect(row.getByText("maria.rossi@esempio.it · Coniuge")).toBeVisible();
+  // La rubrica: la persona è nell'elenco, e la sua scheda a destra (su schermo largo la prima è già aperta).
+  await expect(page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /Maria Rossi/ })).toBeVisible({ timeout: 10_000 });
+  const scheda = page.getByRole("region", { name: "Scheda di Maria Rossi" });
+  await expect(scheda).toBeVisible();
+  await expect(scheda.getByText("Attivo")).toBeVisible();
+  await expect(scheda.getByText("maria.rossi@esempio.it")).toBeVisible();
+  await expect(scheda.getByText("Coniuge")).toBeVisible();
 
   // "Revoca": Attivo -> Revocato. Nessuno sblocco automatico dei dati: revocare è solo un cambio di stato registrato.
-  await openRowMenu(row);
+  await openRowMenu(scheda);
   await page.getByRole("menuitem", { name: "Revoca" }).click();
-  await expect(row.getByText("Revocato")).toBeVisible({ timeout: 10_000 });
-  await openRowMenu(row);
+  await expect(scheda.getByText("Revocato")).toBeVisible({ timeout: 10_000 });
+  await openRowMenu(scheda);
   await expect(page.getByRole("menuitem", { name: "Revoca" })).not.toBeVisible();
 
   // Modifica: si può correggere anche un amico già revocato.
@@ -68,15 +71,16 @@ test("aggiunge un amico, ne segue lo stato e lo elimina", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
   await expect(page.getByText("Amico aggiornato.")).toBeVisible();
-  const updatedRow = page.locator("li", { hasText: "Maria Bianchi" });
-  await expect(updatedRow).toBeVisible({ timeout: 10_000 });
-  await expect(updatedRow.getByText("maria.bianchi@esempio.it · Sorella")).toBeVisible();
+  const updatedScheda = page.getByRole("region", { name: "Scheda di Maria Bianchi" });
+  await expect(updatedScheda).toBeVisible({ timeout: 10_000 });
+  await expect(updatedScheda.getByText("maria.bianchi@esempio.it")).toBeVisible();
+  await expect(updatedScheda.getByText("Sorella")).toBeVisible();
   // Lo stato non viene toccato dalla modifica.
-  await expect(updatedRow.getByText("Revocato")).toBeVisible();
+  await expect(updatedScheda.getByText("Revocato")).toBeVisible();
 
   // Eliminazione.
   page.once("dialog", (dialog) => dialog.accept());
-  await openRowMenu(updatedRow);
+  await openRowMenu(updatedScheda);
   await page.getByRole("menuitem", { name: "Elimina" }).click();
   await expect(page.getByText("Nessun amico ancora")).toBeVisible({
     timeout: 10_000,
@@ -127,7 +131,7 @@ test("nome e cognome riempiono da soli il nome visualizzato, finché non lo si t
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
 
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
-  const row = page.locator("li", { hasText: "La mia amica Giulia" });
+  const row = page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /La mia amica Giulia/ });
   await expect(row).toBeVisible({ timeout: 10_000 });
   // Nessuna foto caricata --- iniziali di nome/cognome (Giulia Verdi-Neri -> GV).
   await expect(row.getByText("GV", { exact: true })).toBeVisible();
@@ -169,13 +173,15 @@ test("una PERSONA non collegata non offre né \"Richiedi amicizia\" né \"Chiedi
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
 
-  const row = page.locator("li", { hasText: "Luca Neri" });
-  await expect(row).toBeVisible({ timeout: 10_000 });
-  await expect(row.getByTitle("Ha un account Hinthial")).not.toBeVisible();
-  await expect(row.getByText("🤝 Amico")).not.toBeVisible();
-  await expect(row.getByText("🛡️ Guardiano")).not.toBeVisible();
+  const scheda = page.getByRole("region", { name: "Scheda di Luca Neri" });
+  await expect(scheda).toBeVisible({ timeout: 10_000 });
+  await expect(scheda.getByText("Ha un account Hinthial")).not.toBeVisible();
+  await expect(scheda.getByText("🤝 Amico")).not.toBeVisible();
+  await expect(scheda.getByText("🛡️ Guardiano")).not.toBeVisible();
+  await expect(scheda.getByRole("button", { name: "Richiedi amicizia" })).not.toBeVisible();
+  await expect(scheda.getByRole("button", { name: "Chiedi di diventare guardiano" })).not.toBeVisible();
 
-  await openRowMenu(row);
+  await openRowMenu(scheda);
   await expect(page.getByRole("menuitem", { name: "Richiedi amicizia" })).not.toBeVisible();
   await expect(page.getByRole("menuitem", { name: "Chiedi di diventare guardiano" })).not.toBeVisible();
   await page.getByRole("heading", { name: "Amici" }).click();
