@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-07 (60)
+
+### Una nuova zona di rilascio per il file ("Mirino")
+
+**Cosa fa:**
+- Il riquadro in cui si trascina un documento (Archivio > Aggiungi contenuto > Carica un file) non ha più la graffetta: ora è un **mirino**. A riposo ha quattro angoli e un foglio.
+- Quando **trascini un file sopra**, il riquadro si colora di verde acqua, compare una griglia, i quattro angoli si stringono sul foglio e dice "Inquadrato: rilascia".
+- Quando **il file viene caricato**, una luce scorre sul foglio mentre Hinthial ne legge il testo sul dispositivo (con la percentuale, quando si conosce) e le righe si accendono. A lettura finita compare il timbro "Fatto", poi la zona lascia il posto alla scheda del file, come prima.
+- Rimuovendo il file la zona torna a riposo. Funziona anche in tema scuro, e con il movimento ridotto le animazioni si spengono.
+
+**Note tecniche:**
+- Componente `FileDropZone` (stati `idle | over | loading | done` in `data-state`) e stili `.file-drop` in `globals.css`; nessuna libreria. Il campo file vero (`#file`) ricopre ancora il riquadro, invisibile, quindi tastiera, "Scatta foto" e i test restano com'erano. "Trascinando sopra" è un evento di trascinamento: il solo passaggio del mouse non cambia niente.
+- La zona resta visibile durante la lettura del file e per circa un secondo dopo (`zoneSettled` in `CreateArchiveItemForm`): è il tempo del timbro. Test e2e: `archive-dropzone.spec.ts`.
+
+---
+
 ## 2026-10-07 (59)
 
 ### Nuovo fascicolo da un modello

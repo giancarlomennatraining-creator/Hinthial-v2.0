@@ -34,6 +34,7 @@ import type { ContentSegment } from "@/domain/extraction/types";
 import { loadDocumentSegments } from "@/domain/documents/segments";
 import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
 import { readingStateFor } from "@/domain/extraction/reading-state";
+import { FileDropZone } from "@/components/documents/FileDropZone";
 import {
   AnalysisAbortedError,
   analysisConfirmMessage,
@@ -333,6 +334,15 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
 
   // FASE 19b: la lettura parte appena scegli il file, non a Salva --- avviene dentro il tempo che stavi già spendendo.
   const [reading, setReading] = useState<ReadingState>({ status: "idle" });
+  // La zona resta visibile mentre il file si legge e un istante dopo (il timbro "Fatto"), poi lascia il posto alla scheda del file.
+  const [zoneSettled, setZoneSettled] = useState(false);
+  const zoneState = !pickedFile ? "idle" : reading.status === "reading" || reading.status === "idle" ? "loading" : "done";
+  const zoneProgress = reading.status === "reading" ? reading.progress : null;
+  useEffect(() => {
+    if (!pickedFile || zoneState !== "done" || zoneSettled) return;
+    const timer = setTimeout(() => setZoneSettled(true), 1100);
+    return () => clearTimeout(timer);
+  }, [pickedFile, zoneState, zoneSettled]);
   const [title, setTitle] = useState("");
   /** Cosa ha messo Hinthial --- sparisce appena l'utente tocca il campo, da quel momento il valore è suo. */
   // Identifica il file in lettura: se ne scegli un altro prima che finisca, il risultato vecchio non deve sovrascrivere.
@@ -442,6 +452,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
 
   function pickFile(file: File | null) {
     setPickedFile(file);
+    setZoneSettled(false);
     // Non si azzerano titolo/categoria/bene/fascicolo/tag/note: ciò che è già compilato non si tocca.
     if (file) {
       readingPromiseRef.current = readPickedFile(file);
@@ -456,11 +467,6 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     pickFile(null);
     setTitle("");
     if (fileInputRef.current) fileInputRef.current.value = "";
-  }
-
-  function handleDropFile(event: React.DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-    pickFile(event.dataTransfer.files?.[0] ?? null);
   }
 
   /** Legge il testo del file sul dispositivo, per salvarlo con il contenuto (ricerca, analisi di Hinthia). Non compila nessun campo. */
@@ -848,7 +854,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                 >
                   {mode === "upload" ? (
                     <div className="flex flex-col gap-3">
-                      {pickedFile ? (
+                      {pickedFile && zoneSettled ? (
                         <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
                           <span className="text-xl" aria-hidden="true">
                             📄
@@ -873,36 +879,15 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                         </div>
                       ) : (
                         <div className="flex flex-col items-center gap-3">
-                          {/* Concept pulito (v. feedback utente): un'unica superficie, non due messaggi sovrapposti ---
-                        l'intero riquadro è insieme zona di rilascio e "clicca per scegliere": la casella nativa
-                        lo ricopre per intero, invisibile ma presente (non `hidden`: resta un vero controllo,
-                        raggiungibile da tastiera e da chi verifica l'interfaccia), un solo messaggio sopra. */}
-                          <div
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={handleDropFile}
-                            className="relative flex w-full flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700"
-                          >
-                            <input
-                              id="file"
-                              ref={fileInputRef}
-                              type="file"
-                              onChange={(e) =>
-                                pickFile(e.target.files?.[0] ?? null)
-                              }
-                              onBlur={handleFileInputBlur}
-                              aria-label="Scegli un file"
-                              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                            />
-                            <span className="text-3xl" aria-hidden="true">
-                              📎
-                            </span>
-                            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                              Trascina qui un documento, o clicca per sceglierlo
-                            </p>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                              PDF, immagini, file di testo
-                            </p>
-                          </div>
+                          {/* Concept "Mirino" (v. FileDropZone): un'unica superficie, zona di rilascio e "clicca per scegliere"
+                        insieme; il campo vero la ricopre, invisibile ma presente. Resta visibile anche mentre il file si legge. */}
+                          <FileDropZone
+                            inputRef={fileInputRef}
+                            state={zoneState}
+                            progress={zoneProgress}
+                            onFile={pickFile}
+                            onInputBlur={handleFileInputBlur}
+                          />
                           {/* Solo su smartphone --- su desktop capture non ha effetto e sarebbe ridondante. Fuori dal
                         riquadro sopra: dentro, la casella invisibile ne intercetterebbe il click. */}
                           <button
