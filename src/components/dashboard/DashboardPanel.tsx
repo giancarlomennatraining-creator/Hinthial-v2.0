@@ -10,6 +10,7 @@ import { LoginSplash } from "@/components/dashboard/LoginSplash";
 import { SharedCapsuleNotificationPopup } from "@/components/dashboard/SharedCapsuleNotificationPopup";
 import { FriendRequestNotificationPopup } from "@/components/dashboard/FriendRequestNotificationPopup";
 import { PageHelp } from "@/components/help/PageHelp";
+import type { DashboardStyle } from "@/lib/dashboard-style";
 
 /**
  * The greeting always renders, regardless of encryption status ---
@@ -23,7 +24,7 @@ import { PageHelp } from "@/components/help/PageHelp";
  * (v. OnboardingStatus), che copre lo stesso scopo senza occupare corpo
  * della pagina.
  */
-export function DashboardPanel({ displayName }: { displayName: string }) {
+export function DashboardPanel({ displayName, style }: { displayName: string; style: DashboardStyle }) {
   const { status } = useMasterKey();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -76,7 +77,7 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
         <>
           <SharedCapsuleNotificationPopup />
           <FriendRequestNotificationPopup masterKey={status.masterKey} />
-          <DashboardWidgets masterKey={status.masterKey} />
+          <DashboardWidgets masterKey={status.masterKey} style={style} />
         </>
       ) : status.kind === "checking" ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>

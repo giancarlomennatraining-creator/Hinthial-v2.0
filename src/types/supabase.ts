@@ -86,6 +86,7 @@ type FriendStatusColumn = "active" | "revoked";
 type RequestStatusColumn = "pending" | "accepted" | "rejected";
 
 type NavOrientationColumn = "sidebar-left" | "sidebar-right" | "topbar";
+type DashboardStyleColumn = "classic" | "today" | "bento" | "stories" | "board";
 
 type CapsuleStatusColumn = "draft" | "ready" | "shared";
 type CapsuleAccessConditionColumn = "manual";
@@ -115,6 +116,7 @@ export type Database = {
           birth_date: string | null;
           list_view_preferences: Json;
           nav_orientation: NavOrientationColumn;
+          dashboard_style: DashboardStyleColumn;
           bottom_nav_items: Json;
           main_nav_items: Json | null;
           onboarding_widget_hidden: boolean;
@@ -151,6 +153,7 @@ export type Database = {
           birth_date?: string | null;
           list_view_preferences?: Json;
           nav_orientation?: NavOrientationColumn;
+          dashboard_style?: DashboardStyleColumn;
           bottom_nav_items?: Json;
           main_nav_items?: Json | null;
           onboarding_widget_hidden?: boolean;
@@ -187,6 +190,7 @@ export type Database = {
           birth_date?: string | null;
           list_view_preferences?: Json;
           nav_orientation?: NavOrientationColumn;
+          dashboard_style?: DashboardStyleColumn;
           bottom_nav_items?: Json;
           main_nav_items?: Json | null;
           onboarding_widget_hidden?: boolean;

@@ -10,6 +10,23 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-07 (62)
+
+### Lo stile della Dashboard si sceglie dalle Impostazioni (primo: "Oggi")
+
+**Cosa fa:**
+- In **Impostazioni > Aspetto > Dashboard** si sceglie come si presenta la prima pagina, con una scheda e una breve spiegazione per ogni stile. La scelta segue l'account su tutti i dispositivi. Per ora gli stili sono due: **Classica** (la dashboard di sempre, resta quella predefinita) e **Oggi**.
+- **Oggi** parte da cosa fare: in alto una frase dice quante cose chiedono attenzione ("Oggi 2 cose meritano attenzione") con una barra di avanzamento. Ogni scadenza già scaduta o entro 7 giorni ha la sua carta, colorata per urgenza, con il documento collegato e due pulsanti: **Segna fatta** e **Rimanda di 7 giorni** (una scadenza già passata riparte da oggi). Quando hai finito lo dice. Sotto, "Più avanti" con le prossime tre; di lato la **settimana** (sette giorni con un punto colorato dove c'è una scadenza, da toccare per leggerla), i **documenti aggiunti di recente** come schede da scorrere di lato (con la **miniatura vera** del file dove c'è, altrimenti una pagina disegnata nel colore della categoria) e le **aree** come pastiglie con icona, numero e nome. Su smartphone tutto in una colonna.
+- Gli altri stili (Bento, Storie, Lavagna) arriveranno uno alla volta.
+
+**Note tecniche:**
+- Migrazione `20261010000000_dashboard_style.sql`: `profiles.dashboard_style` (testo, predefinito `classic`, vincolato ai cinque valori già previsti). Letto lato server con il resto del profilo (`getCurrentUser`) per non mostrare per un istante lo stile sbagliato; `lib/dashboard-style.ts` elenca solo gli stili già disponibili.
+- I dati sono gli stessi per ogni stile: l'hook `useDashboardData` costruisce una volta il `SummaryContext` e `DashboardWidgets` sceglie la vista (`DashboardClassic`, `DashboardToday`); un "segna fatta" o "rimanda" aggiorna la scadenza in locale (`patchReminder`) invece di ricostruire e decifrare tutto. Nuova `setReminderDueAt`. Le funzioni di data (`daysUntil`, `deadlineLevel`, `whenText`, `buildTodayPlan`) sono pure, in `domain/dashboard/deadlines.ts`, e contano giorni di calendario nel fuso dell'utente.
+- Corretto un difetto che si vedeva solo in sviluppo: le **miniature dei documenti non comparivano mai** (né qui né nella Cassettiera dell'Archivio). In sviluppo React monta, smonta e rimonta ogni componente; la cache delle miniature veniva chiusa allo smontaggio e non riaperta al rimontaggio, quindi scartava ogni risultato. Ora la cache si riapre (`revive`); test `thumbnails-strict-mode.test.tsx`. In produzione non succedeva.
+- Test: unità per le funzioni di data e per la vista Oggi (segna fatta, rimanda, errore di salvataggio, settimana), e2e `dashboard-style.spec.ts` (scelta, uso, persistenza dopo il refresh). Sistemati anche `onboarding-checklist` e `onboarding-status`, che cercavano gli amici nelle righe dell'elenco invece che nella rubrica.
+
+---
+
 ## 2026-10-07 (61)
 
 ### Amici diventa una rubrica
