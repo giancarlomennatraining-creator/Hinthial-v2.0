@@ -92,4 +92,23 @@ test("lo stile della Dashboard si sceglie in Impostazioni > Aspetto: Oggi mostra
   await page.getByRole("button", { name: "Chiedi", exact: true }).click();
   await expect(page).toHaveURL(/\/ai\?q=/, { timeout: 15_000 });
   await expect(page.getByLabel("Fai una domanda")).toHaveValue("Quando scade il bollo?");
+
+  // E Storie: la giornata a schermate. Le barre avanzano da sole (6 secondi l'una) e si può andare avanti a tocchi.
+  await openSettings(page, user);
+  await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("tab", { name: "Dashboard" }).click();
+  const stories = page.getByRole("radio", { name: /Storie/ });
+  await expect(stories).toContainText("scorrono da sole");
+  await stories.click();
+  await expect(stories).toHaveAttribute("aria-checked", "true");
+
+  await page.getByRole("link", { name: "Dashboard" }).click();
+  const story = page.getByRole("group", { name: /^Storia \d di 5/ });
+  await expect(story).toHaveAttribute("aria-label", "Storia 1 di 5: Oggi", { timeout: 10_000 });
+  await expect(story.getByRole("heading", { level: 3 })).toHaveText("Tutto in ordine oggi"); // il bollo è stato rimandato
+  await page.getByRole("button", { name: "Storia successiva" }).click();
+  await expect(story).toHaveAttribute("aria-label", "Storia 2 di 5: Scadenze");
+  await expect(story).toContainText("Bollo auto");
+  // Da sola, dopo qualche secondo, passa alla successiva.
+  await expect(story).toHaveAttribute("aria-label", "Storia 3 di 5: Archivio", { timeout: 12_000 });
 });

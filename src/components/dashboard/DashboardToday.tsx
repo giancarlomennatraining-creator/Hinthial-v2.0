@@ -5,17 +5,14 @@ import { useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 import { AlertTriangleIcon, CheckCircleIcon, ReminderIcon } from "@/components/icons/nav-icons";
-import { COUNTERS } from "@/components/dashboard/DashboardCounters";
-import { ThumbnailProvider, useThumbnail } from "@/components/documents/archive/thumbnails";
+import { DashboardAreas } from "@/components/dashboard/DashboardAreas";
+import { DashboardRecentDocuments } from "@/components/dashboard/DashboardRecentDocuments";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { SummaryContext } from "@/domain/ai/types";
-import { categoryColor, UNCATEGORIZED_COLOR } from "@/domain/documents/archive-views";
-import type { DocumentSummary } from "@/domain/documents/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
 import { setReminderCompleted, setReminderDueAt } from "@/domain/reminders/repository";
 import {
   addDaysIso,
-  agoText,
   buildTodayPlan,
   dayKey,
   daysUntil,
@@ -53,39 +50,6 @@ const CARD =
 
 function formatDay(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" });
-}
-
-/** Una scheda di "Aggiunti di recente": la miniatura vera del file dove c'è, altrimenti una pagina disegnata nel colore della categoria. */
-function RecentDocCard({ doc, color, now }: { doc: DocumentSummary; color: string; now: Date }) {
-  const { url, ref } = useThumbnail(doc);
-  return (
-    <Link
-      href={`/archive/${doc.id}`}
-      aria-label={`Apri ${doc.filename}`}
-      className="w-[124px] shrink-0 snap-start overflow-hidden rounded-[14px] border border-zinc-200 bg-white transition-transform hover:-translate-y-[3px] dark:border-zinc-800 dark:bg-zinc-950"
-    >
-      <div
-        ref={ref}
-        className="relative h-[62px] overflow-hidden"
-        style={{ background: `linear-gradient(160deg, ${color}, color-mix(in srgb, ${color} 55%, #000))` }}
-      >
-        {url ? (
-          // eslint-disable-next-line @next/next/no-img-element -- object URL locale, decifrata sul dispositivo
-          <img src={url} alt="" className="size-full object-cover object-top" />
-        ) : (
-          <div aria-hidden="true" className="absolute inset-x-3.5 top-3.5 flex flex-col gap-[5px]">
-            <span className="h-[3px] rounded-sm bg-white/60" />
-            <span className="h-[3px] rounded-sm bg-white/45" />
-            <span className="h-[3px] w-3/4 rounded-sm bg-white/30" />
-          </div>
-        )}
-      </div>
-      <div className="px-2.5 pb-2 pt-2">
-        <span className="block truncate text-xs font-semibold text-zinc-800 dark:text-zinc-200">{doc.filename}</span>
-        <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400">{agoText(doc.createdAt, now)}</span>
-      </div>
-    </Link>
-  );
 }
 
 /**
@@ -364,57 +328,9 @@ export function DashboardToday({
             </p>
           </section>
 
-          <section className={cn("p-4", CARD)}>
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Aggiunti di recente</h3>
-            {context.documents.length === 0 ? (
-              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Ancora nulla in archivio.</p>
-            ) : (
-              <ThumbnailProvider data={{ supabase, masterKey }}>
-                <div className="mt-3 flex snap-x snap-proximity gap-2.5 overflow-x-auto pb-1.5">
-                  {context.documents.slice(0, 8).map((doc) => {
-                    const category = context.categories.find((c) => c.id === doc.categoryId);
-                    return (
-                      <RecentDocCard
-                        key={doc.id}
-                        doc={doc}
-                        color={category ? categoryColor(category.name) : UNCATEGORIZED_COLOR}
-                        now={now}
-                      />
-                    );
-                  })}
-                </div>
-              </ThumbnailProvider>
-            )}
-            <Link href="/archive" className="mt-2 inline-block text-xs font-medium text-brand hover:underline">
-              Vai all&apos;archivio
-            </Link>
-          </section>
+          <DashboardRecentDocuments supabase={supabase} masterKey={masterKey} context={context} now={now} />
 
-          <section aria-label="Le tue aree">
-            <h3 className="mb-2 px-0.5 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-              Le tue aree
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {COUNTERS.map((counter) => (
-                <Link
-                  key={counter.key}
-                  href={counter.href}
-                  aria-label={`${counter.label}: ${context[counter.key].length}`}
-                  className="flex items-center gap-2.5 rounded-2xl border border-zinc-200 bg-white py-2 pl-2.5 pr-3.5 transition hover:-translate-y-0.5 hover:border-brand dark:border-zinc-800 dark:bg-zinc-950"
-                >
-                  <span aria-hidden="true" className="grid size-[30px] place-items-center rounded-[10px] bg-brand/10 text-brand">
-                    <counter.icon width={16} height={16} />
-                  </span>
-                  <span aria-hidden="true">
-                    <b className="block text-base font-extrabold leading-none text-zinc-900 dark:text-zinc-100">
-                      {context[counter.key].length}
-                    </b>
-                    <small className="text-xs text-zinc-500 dark:text-zinc-400">{counter.label}</small>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </section>
+          <DashboardAreas context={context} />
         </div>
       </div>
     </div>

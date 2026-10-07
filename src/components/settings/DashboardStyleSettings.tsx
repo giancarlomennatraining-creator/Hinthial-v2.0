@@ -29,6 +29,21 @@ function StylePreview({ style }: { style: DashboardStyle }) {
       </div>
     );
   }
+  if (style === "stories") {
+    return (
+      <div aria-hidden="true" className="flex h-20 items-center justify-center gap-2">
+        <div className="flex h-full w-12 flex-col gap-1 rounded-lg bg-gradient-to-b from-indigo-500 to-indigo-900 p-1">
+          <div className="flex gap-0.5">
+            <div className="h-0.5 flex-1 rounded bg-white" />
+            <div className="h-0.5 flex-1 rounded bg-white/40" />
+            <div className="h-0.5 flex-1 rounded bg-white/40" />
+          </div>
+          <div className="mt-auto h-3 w-5 rounded bg-white/90" />
+        </div>
+        <div className="h-full w-7 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+      </div>
+    );
+  }
   if (style === "bento") {
     return (
       <div aria-hidden="true" className="grid h-20 grid-cols-4 grid-rows-2 gap-1">

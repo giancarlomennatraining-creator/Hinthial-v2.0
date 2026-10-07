@@ -7,6 +7,10 @@ import { daysUntil, whenText } from "@/domain/dashboard/deadlines";
 export interface BentoCapsule {
   title: string;
   days: number;
+  /** Quando si apre (ISO). */
+  openAt: string;
+  /** Quante altre capsule, oltre a questa, devono ancora aprirsi. */
+  others: number;
   /** Il nome proprio del primo destinatario, o null se la capsula non ne ha. */
   recipient: string | null;
 }
@@ -105,6 +109,8 @@ export function buildBento(context: SummaryContext, now: Date): BentoData {
       ? {
           title: capsule.title,
           days: daysUntil(capsule.openAt as string, now),
+          openAt: capsule.openAt as string,
+          others: futureCapsules.length - 1,
           recipient: recipient ? firstNameOf(recipient.firstName || recipient.name) : null,
         }
       : null,
