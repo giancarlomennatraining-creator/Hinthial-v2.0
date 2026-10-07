@@ -46,7 +46,8 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await page.getByLabel("Ruolo").fill("Coniuge");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
-  const friendRow = page.locator("li", { hasText: "Maria Rossi" });
+  const rubrica = page.getByRole("region", { name: "Rubrica" });
+  const friendRow = rubrica.getByRole("button", { name: /Maria Rossi/ });
   await expect(friendRow).toBeVisible({ timeout: 10_000 });
 
   // Un secondo amico, per verificare che una capsula possa avere più destinatari.
@@ -57,12 +58,14 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await page.getByLabel("Ruolo").fill("Fratello");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
-  const secondFriendRow = page.locator("li", { hasText: "Luca Bianchi" });
+  const secondFriendRow = rubrica.getByRole("button", { name: /Luca Bianchi/ });
   await expect(secondFriendRow).toBeVisible({ timeout: 10_000 });
 
   // Gli amici nascono già ATTIVI: solo i revocati non sono selezionabili come destinatari.
-  await expect(friendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
-  await expect(secondFriendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
+  await friendRow.click();
+  await expect(page.getByRole("region", { name: "Scheda di Maria Rossi" }).getByText("Attivo")).toBeVisible({ timeout: 10_000 });
+  await secondFriendRow.click();
+  await expect(page.getByRole("region", { name: "Scheda di Luca Bianchi" }).getByText("Attivo")).toBeVisible({ timeout: 10_000 });
 
   // Wizard a tre passi: chi/quando, contenuti dall'archivio, audio/video/testo.
   await page.getByRole("link", { name: "Capsule" }).click();
@@ -205,12 +208,14 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   // In Amici, il destinatario mostra quante capsule lo riguardano, e al passaggio del mouse nome e date.
   await page.getByRole("link", { name: "Amici" }).click();
   await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
-  const mariaCapsulesBadge = friendRow.getByText("📦 1 capsula");
-  await expect(mariaCapsulesBadge).toBeVisible();
-  await mariaCapsulesBadge.hover();
-  await expect(friendRow.getByText("Per Maria (aggiornato)")).toBeVisible();
-  await expect(friendRow.getByText("apertura prevista 15 mar 2027, 10:00")).toBeVisible();
-  await expect(secondFriendRow.getByText("📦", { exact: false })).not.toBeVisible();
+  await friendRow.click();
+  const mariaScheda = page.getByRole("region", { name: "Scheda di Maria Rossi" });
+  await expect(mariaScheda.getByText("Per Maria (aggiornato)")).toBeVisible();
+  await expect(mariaScheda.getByText(/apertura prevista 15 mar 2027, 10:00/)).toBeVisible();
+  await secondFriendRow.click();
+  await expect(
+    page.getByRole("region", { name: "Scheda di Luca Bianchi" }).getByText("Nessuna capsula affidata a Luca."),
+  ).toBeVisible();
 
   await page.getByRole("link", { name: "Capsule" }).click();
   await expect(page.getByRole("heading", { name: "Capsule" })).toBeVisible();

@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-07 (61)
+
+### Amici diventa una rubrica
+
+**Cosa fa:**
+- La pagina **Amici** (vista a elenco) è ora una **rubrica**: in alfabetico per nome, con le lettere come intestazioni, una **ricerca** (per nome, ruolo o email) e un **indice a lettere** a lato: un tocco salta alla lettera, quelle senza nessuno sono spente. A destra, la **scheda della persona** con foto o iniziali, ruolo, stato (Attivo/Revocato), amico, guardiano, "Ha un account Hinthial", email, da quando è in rubrica e le **capsule che le hai affidato** (titolo, data di creazione e apertura prevista).
+- Dalla scheda: "Richiedi amicizia" (se ha un account), "Chiedi di diventare guardiano" o "Rimuovi dai guardiani" (solo per gli amici), "Modifica" e il menu ⋮ con tutte le azioni di prima (Revoca, Elimina...).
+- **Su smartphone** si vede una cosa alla volta: la rubrica, e **toccando una persona la sua scheda**, con **"← Rubrica"** per tornare all'elenco, che riparte da dove l'avevi lasciato. Su tablet e computer elenco e scheda stanno affiancati.
+- La vista a tabella (solo su schermi larghi) resta com'è, e si sceglie sempre dall'interruttore o da Impostazioni > Aspetto > Liste. Le richieste di amicizia in arrivo e il filtro per stato non cambiano.
+
+**Note tecniche:**
+- Nessuna migrazione. Componente `AddressBook` (con le funzioni pure `letterOf`, `groupByLetter`, `sortAlphabetically`, `nameParts`), usato da `FriendsPanel` al posto dell'elenco a righe; il menu ⋮ è lo stesso della tabella (`rowMenu`). Gli amici senza nome e cognome salvati (i più vecchi) mostrano le iniziali ricavate dal nome visualizzato invece del punto interrogativo.
+- Ordine per nome visualizzato (di solito il nome proprio), come molte rubriche; i nomi che non iniziano con una lettera stanno sotto "#". Il tasto "indietro" del telefono lascia la pagina (non torna alla rubrica): per tornare c'è "← Rubrica". Test: `friends-rubrica.spec.ts` (schermo largo e smartphone); gli altri test che guardavano le righe degli amici sono stati adattati alla scheda.
+
+---
+
 ## 2026-10-07 (60)
 
 ### Una nuova zona di rilascio per il file ("Mirino")

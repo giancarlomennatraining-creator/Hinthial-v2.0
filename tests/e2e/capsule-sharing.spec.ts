@@ -69,11 +69,11 @@ test("chiudere e condividere una capsula la rende apribile dal destinatario coll
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
 
-  const friendRow = page.locator("li", { hasText: "Destinatario Collegato" });
-  await expect(friendRow).toBeVisible({ timeout: 10_000 });
-  await expect(friendRow.getByTitle("Ha un account Hinthial")).toBeVisible({ timeout: 15_000 });
+  const friendScheda = page.getByRole("region", { name: "Scheda di Destinatario Collegato" });
+  await expect(friendScheda).toBeVisible({ timeout: 10_000 });
+  await expect(friendScheda.getByText("Ha un account Hinthial")).toBeVisible({ timeout: 15_000 });
   // Nasce già "Attivo": niente concetto di "In attesa" da sbloccare a mano.
-  await expect(friendRow.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
+  await expect(friendScheda.getByText("Attivo")).toBeVisible({ timeout: 10_000 });
 
   // Capsula con data di apertura già nel passato: non serve aspettare per verificare che l'apertura funzioni davvero.
   const secretMessage = `messaggio segreto per la condivisione --- ${Date.now()}`;

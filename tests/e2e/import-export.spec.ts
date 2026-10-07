@@ -83,7 +83,7 @@ test("importa amici da CSV: template, anteprima con riga da correggere, risultat
 
   await page.getByRole("link", { name: "Vai ad Amici" }).click();
   await expect(page).toHaveURL(/\/friends$/);
-  await expect(page.locator("li", { hasText: "Maria Rossi" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /Maria Rossi/ })).toBeVisible();
   await expect(page.getByText("Luca Bianchi")).not.toBeVisible();
 
   // La scheda Esporta resta raggiungibile dalla stessa scheda di Impostazioni.

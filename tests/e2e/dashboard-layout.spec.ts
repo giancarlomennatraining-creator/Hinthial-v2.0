@@ -86,7 +86,7 @@ test("la dashboard mostra i contatori per sezione e i tre riquadri anche a vault
   await page.getByLabel("Ruolo").fill("Coniuge");
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
-  const friendRow = page.locator("li", { hasText: "Maria Rossi" });
+  const friendRow = page.getByRole("region", { name: "Scheda di Maria Rossi" });
   await expect(friendRow).toBeVisible({ timeout: 10_000 });
   // Amico + guardiano richiederebbe ora una doppia richiesta di consenso
   // reale tra due account (v. friends.spec.ts per quel flusso) --- qui
