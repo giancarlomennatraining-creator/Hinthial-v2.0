@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DashboardBento } from "@/components/dashboard/DashboardBento";
+import { DashboardBoard } from "@/components/dashboard/DashboardBoard";
 import { DashboardClassic } from "@/components/dashboard/DashboardClassic";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { DashboardStories } from "@/components/dashboard/DashboardStories";
@@ -32,6 +33,9 @@ export function DashboardWidgets({ masterKey, style }: { masterKey: CryptoKey; s
 
   if (style === "today") {
     return <DashboardToday supabase={supabase} masterKey={masterKey} context={context} now={now} patchReminder={patchReminder} />;
+  }
+  if (style === "board") {
+    return <DashboardBoard supabase={supabase} context={context} now={now} patchReminder={patchReminder} />;
   }
   if (style === "stories") {
     return <DashboardStories supabase={supabase} masterKey={masterKey} context={context} now={now} />;

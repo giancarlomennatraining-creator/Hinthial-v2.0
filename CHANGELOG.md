@@ -10,6 +10,24 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-07 (65)
+
+### Dashboard "Lavagna"
+
+**Cosa fa:**
+- Ultimo stile della Dashboard, da scegliere in **Impostazioni > Aspetto > Dashboard**: le tue scadenze in **colonne per tempo**: *Da sistemare* (già scadute), *Questa settimana* (entro 7 giorni), *Questo mese* (entro 30), *Più avanti* e *Fatte* (le ultime cinque completate). Ogni carta ha il titolo, quanto manca (colorato per urgenza), la data e il bene.
+- **Si trascina una carta (col mouse) in un'altra colonna e la sua data si sposta**: in una colonna di date la scadenza va a un giorno di quella colonna (tra 4 giorni per la settimana, 20 per il mese, 60 per più avanti), alla stessa ora; in *Fatte* la scadenza è segnata come completata; una carta *Fatta* trascinata in una colonna torna aperta. Mentre si trascina la carta segue il mouse e la colonna sotto si illumina; *Esc* annulla il trascinamento.
+- **In *Da sistemare* non si può trascinare**: si riempie da sola con il passare del tempo. Rilasciare lì fa tremare la colonna e spiega perché; la carta resta dov'era.
+- **Ogni spostamento si può annullare** per qualche secondo ("«Bollo auto» spostata in "Più avanti": lun 7 dic. — Annulla"). In alto un contatore dice quante ne hai segnate come fatte oggi.
+- **Su smartphone e con la tastiera** ogni carta ha i pulsanti per spostarla ("→ settimana", "→ mese", "→ più avanti", "✓ Fatta"), e le colonne scorrono di lato (il dito non trascina: litigherebbe con lo scorrimento). Su schermo largo i pulsanti compaiono quando una carta riceve il focus da tastiera.
+
+**Note tecniche:**
+- Nessuna migrazione. Le regole stanno in funzioni pure (`domain/dashboard/board.ts`: `columnOf`, `buildBoard`, `planMove`), che decidono in quale colonna sta una scadenza e cosa va salvato per uno spostamento (completata sì/no e nuova data, o niente, o rifiuto). Il componente applica lo spostamento in modo ottimistico e lo salva con `setReminderCompleted` e `setReminderDueAt` (solo ciò che cambia); se il salvataggio fallisce torna indietro. L'annulla ripristina completamento e data di prima.
+- Il trascinamento è fatto con i pointer events del mouse (non l'HTML5 drag-and-drop, che non dà controllo sull'aspetto né sul rifiuto) e una copia della carta che segue il puntatore; il bersaglio si trova con `elementFromPoint`. Col dito non parte nulla, per non togliere lo scorrimento delle colonne.
+- Test: unità per le regole delle colonne e degli spostamenti, e per il componente (pulsanti, annulla, errore, trascinamento con eventi del mouse); e2e `dashboard-board.spec.ts` con un trascinamento vero e la verifica che lo spostamento resti salvato.
+
+---
+
 ## 2026-10-07 (64)
 
 ### Dashboard "Storie"
