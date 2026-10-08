@@ -44,7 +44,8 @@ test("il tasto di comprimi/espandi la barra laterale nasconde etichette e nome, 
   await expect(page).toHaveURL(/\/archive$/);
 
   // Persiste dopo un refresh vero --- solo su questo dispositivo (localStorage), come il tema.
-  await page.reload();
+  // Da una pagina che non serve la chiave: l'Archivio aprirebbe la finestra di creazione sopra la barra.
+  await page.goto("/settings");
   await expect(aside).toHaveClass(/w-20/);
   await expect(page.getByRole("button", { name: "Espandi il menu" })).toBeVisible();
 

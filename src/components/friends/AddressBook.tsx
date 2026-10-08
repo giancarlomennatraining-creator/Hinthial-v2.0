@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/Avatar";
 import type { FriendListItem, FriendStatus } from "@/domain/friends/types";
@@ -110,11 +110,44 @@ export function AddressBook({
     if (!detailOnMobile && listRef.current) listRef.current.scrollTop = savedScroll.current;
   }, [detailOnMobile]);
 
+  // Su smartphone aprire una scheda aggiunge un passo alla cronologia del browser: il tasto "indietro" del telefono
+  // torna alla rubrica invece di lasciare la pagina, e "avanti" riapre la scheda. Su schermo largo la scheda sta
+  // accanto all'elenco e non tocca la cronologia.
+  const pushedHistory = useRef(false);
+
+  useEffect(() => {
+    function onPopState() {
+      const id = (window.history.state as { rubricaPerson?: string } | null)?.rubricaPerson;
+      pushedHistory.current = Boolean(id);
+      if (id) {
+        setSelectedId(id);
+        setMobileOpen(true);
+      } else {
+        setMobileOpen(false);
+      }
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
   function open(friend: FriendListItem) {
     savedScroll.current = listRef.current?.scrollTop ?? 0;
     setSelectedId(friend.id);
     setMobileOpen(true);
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      window.history.pushState({ rubricaPerson: friend.id }, "");
+      pushedHistory.current = true;
+    }
     window.scrollTo({ top: 0 });
+  }
+
+  /** "← Rubrica": come il tasto indietro del telefono, per non lasciare in cronologia un passo che non c'è più. */
+  function backToList() {
+    if (pushedHistory.current) {
+      window.history.back();
+    } else {
+      setMobileOpen(false);
+    }
   }
 
   function jumpTo(letter: string) {
@@ -235,7 +268,7 @@ export function AddressBook({
         >
           <button
             type="button"
-            onClick={() => setMobileOpen(false)}
+            onClick={backToList}
             className="-mb-1 flex items-center gap-1 self-start text-sm font-semibold text-brand hover:underline md:hidden"
           >
             ← Rubrica

@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
-import { AlertTriangleIcon, CheckCircleIcon, ReminderIcon } from "@/components/icons/nav-icons";
+import { AIIcon, AlertTriangleIcon, CheckCircleIcon, FriendIcon, ReminderIcon } from "@/components/icons/nav-icons";
 import { DashboardAreas } from "@/components/dashboard/DashboardAreas";
+import { useIncomingFriendRequests, usePendingProposals } from "@/components/dashboard/useDashboardNotices";
 import { DashboardRecentDocuments } from "@/components/dashboard/DashboardRecentDocuments";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { SummaryContext } from "@/domain/ai/types";
@@ -52,6 +53,37 @@ function formatDay(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" });
 }
 
+/** Una carta di "Da fare ora" che non è una scadenza (una richiesta di amicizia, le proposte di Hinthia): stessa forma, colore del marchio. */
+function NoticeCard({
+  icon,
+  title,
+  text,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={cn("grid min-w-0 grid-cols-[4px_1fr] overflow-hidden", CARD)}>
+      <span aria-hidden="true" className="bg-brand" />
+      <div className="flex min-w-0 flex-col gap-2.5 p-3.5">
+        <div className="flex items-start gap-2.5">
+          <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand">
+            {icon}
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold leading-snug text-zinc-900 dark:text-zinc-100">{title}</p>
+            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{text}</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * La dashboard "Oggi": parte da cosa fare. Una frase dice quante cose chiedono attenzione e ogni scadenza vicina (o già
  * scaduta) ha il suo pulsante: segna fatta, rimanda di sette giorni. Il resto --- la settimana, i documenti recenti, le
@@ -77,7 +109,11 @@ export function DashboardToday({
   const [selectedDay, setSelectedDay] = useState(() => dayKey(now));
 
   const plan = buildTodayPlan(context.reminders, now);
-  const left = plan.actions.length;
+  const friendRequests = useIncomingFriendRequests(supabase, masterKey);
+  const pendingProposals = usePendingProposals(supabase, masterKey, context, now);
+  // Oltre alle scadenze, chiedono attenzione le richieste di amicizia e le proposte di Hinthia da rivedere.
+  const extras = friendRequests.requests.length + (pendingProposals ? 1 : 0);
+  const left = plan.actions.length + extras;
   const total = left + handled;
   const progress = total === 0 ? 100 : Math.round((handled / total) * 100);
   const selected = plan.week.find((d) => d.key === selectedDay) ?? plan.week[0];
@@ -163,13 +199,74 @@ export function DashboardToday({
           <h3 className="mt-1 px-0.5 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Da fare ora
           </h3>
+          {extras > 0 ? (
+            <ul className="flex flex-col gap-3">
+          {friendRequests.requests.map((request) => (
+            <li key={request.id} className="list-none">
+              <NoticeCard
+                icon={<FriendIcon width={18} height={18} />}
+                title={`${request.senderName} vuole diventare tuo amico`}
+                text="Se accetti, potrete scambiarvi capsule e potrà diventare un tuo guardiano."
+              >
+                <button
+                  type="button"
+                  disabled={friendRequests.busyId === request.id}
+                  onClick={async () => {
+                    const name = await friendRequests.accept(request);
+                    if (name) {
+                      setHandled((n) => n + 1);
+                      showToast(`Ora sei amico di ${name}.`);
+                    } else {
+                      showToast("Non è stato possibile accettare la richiesta: riprova da Amici.");
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-xs font-semibold text-white hover:bg-brand-hover disabled:opacity-50"
+                >
+                  Accetta
+                </button>
+                <button
+                  type="button"
+                  disabled={friendRequests.busyId === request.id}
+                  onClick={async () => {
+                    await friendRequests.reject(request);
+                    setHandled((n) => n + 1);
+                  }}
+                  className="rounded-xl border border-zinc-300 px-3.5 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                >
+                  Rifiuta
+                </button>
+              </NoticeCard>
+            </li>
+          ))}
+          {pendingProposals ? (
+            <li className="list-none">
+              <NoticeCard
+                icon={<AIIcon width={18} height={18} />}
+                title={
+                  pendingProposals.documents === 1 && pendingProposals.first
+                    ? `Hinthia ha letto «${pendingProposals.first.filename}»`
+                    : `Hinthia ha letto ${pendingProposals.documents} documenti`
+                }
+                text={`${pendingProposals.proposals === 1 ? "C'è 1 proposta" : `Ci sono ${pendingProposals.proposals} proposte`} da rivedere: decidi tu cosa accettare.`}
+              >
+                <Link
+                  href={`/archive/${pendingProposals.first?.id ?? ""}`}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-xs font-semibold text-white hover:bg-brand-hover"
+                >
+                  Rivedi le proposte
+                </Link>
+              </NoticeCard>
+            </li>
+          ) : null}
+            </ul>
+          ) : null}
           {left === 0 ? (
             <div className="rounded-2xl border-2 border-dashed border-zinc-300 p-7 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
               <CheckCircleIcon width={36} height={36} className="mx-auto mb-2 text-green-600 dark:text-green-400" />
               <p className="text-base font-bold text-zinc-900 dark:text-zinc-100">Hai finito per oggi</p>
               <p className="mt-0.5">Hinthial ti avvisa quando c&apos;è altro.</p>
             </div>
-          ) : (
+          ) : plan.actions.length > 0 ? (
             <ul className="flex flex-col gap-3">
               {plan.actions.map((reminder) => {
                 const days = daysUntil(reminder.dueAt, now);
@@ -235,7 +332,7 @@ export function DashboardToday({
                 );
               })}
             </ul>
-          )}
+          ) : null}
 
           <h3 className="mt-1 px-0.5 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Più avanti

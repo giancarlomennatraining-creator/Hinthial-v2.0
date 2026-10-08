@@ -10,6 +10,27 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-08 (67)
+
+### Rifiniture: creazione della master password in finestra, "Blocca la cassaforte", tasto indietro nella Rubrica, proposte e richieste nelle dashboard
+
+**Cosa fa:**
+- **La creazione della master password è una finestra**, come lo sblocco, nella **stessa pelle scelta** (Vetro, Cassaforte o Impronta): compare sopra la pagina sfocata sulle pagine che servono la chiave (non si può chiudere, senza non c'è nulla da mostrare), dal pulsante "Crea la tua master key" del popup di benvenuto (qui invece si può rimandare con "Più tardi", e restano il pulsante "Crea la master password" nella dashboard) e a fine creazione fa la stessa uscita dello sblocco: la pagina si popola solo quando l'animazione è finita. I due passi (scegli la password, salva la recovery key, con scarico, copia e kit stampabile) sono gli stessi di prima; la finestra si può chiudere solo al primo passo, davanti alla recovery key appena generata no.
+- **"Blocca la cassaforte"** nel menu utente (si vede solo a cassaforte sbloccata): blocca subito, mostra "Cassaforte bloccata." e riapre lo sblocco dove serve. Bloccando sparisce anche la conversazione con Hinthia, che contiene dati in chiaro. Un blocco voluto riabilita la finestra anche se sulla dashboard si era scelto "Più tardi".
+- **Rubrica su smartphone**: il tasto "indietro" del telefono torna dalla scheda di una persona all'elenco, senza lasciare la pagina ("avanti" riapre la scheda); "← Rubrica" fa lo stesso. Su schermo largo la cronologia non cambia.
+- **Dashboard Oggi e Bento**: le **richieste di amicizia** in arrivo si accettano o rifiutano da lì (in Oggi sono carte di "Da fare ora" e contano nella frase; in Bento un riquadro che compare solo se ce ne sono) e le **proposte di Hinthia da rivedere** (documenti letti con proposte ancora da decidere) portano al documento. Con questi due stili il popup delle richieste di amicizia non compare più, sarebbe un doppione.
+- **Nelle Impostazioni nessuna finestra automatica**: le sezioni che usano la chiave (Importa/Esporta, Scheda d'emergenza, Eredità digitale...) mostrano un riquadro "La cassaforte è bloccata" con il pulsante "Sblocca ora" (o "Crea la master password"), così il resto delle Impostazioni resta usabile. Le finestre non chiudibili delle pagine a intera hanno un link "Torna alla dashboard" e si ritirano lasciando la pagina. Il popup di benvenuto non sta più sopra (o sotto) la finestra di creazione.
+- **Con la tastiera su smartphone la finestra resta centrata**: le finestre di sblocco e di creazione si centrano nella parte di schermo ancora visibile sopra la tastiera, invece di essere spinte in alto dal browser (v. `DialogShell`, misura `visualViewport`).
+- **Test e2e sistemati**: `type-categories` cercava una frase che dopo il registro di lettura unico non esiste più; `mfa-backup-codes` era fragile (messaggio d'errore lento) e ora aspetta di più; la fixture dei test non resta più appesa se un pulsante "Più tardi" sparisce mentre lo clicca. La fixture chiude "Più tardi" dello sblocco solo sulla Dashboard, e solo quello del popup di benvenuto altrove.
+
+**Note tecniche:**
+- `DialogShell` (velo, focus, Esc, uscita) è il guscio comune a `UnlockDialog` e al nuovo `SetupDialog`; le immagini delle tre pelli sono ora cornici riusabili (`GlassFrame`, `VaultFrame`, `FingerprintFrame` in `unlock/frames.tsx`) con un posto per il contenuto. `SetupMasterKeyForm` mostra solo il contenuto e segnala passo e attività; il kit stampabile è un portale diretto nel `body`, per non essere tagliato dai bordi della finestra. `UnlockPromptProvider` gestisce due tipi di richiesta (`requestUnlock`, `requestSetup`), `lockNow` e `settling` vale anche per la creazione.
+- Il tasto indietro usa `history.pushState` (integrato col router di Next) con una marca nello stato e un ascoltatore di `popstate`.
+- Le proposte di Hinthia si calcolano nel browser dopo il primo disegno (`domain/dashboard/proposals.ts`): per i 12 documenti letti più di recente si decifra la lettura, si tolgono le proposte già decise e si somma; non conta le proposte di collegare un bene (servirebbero i campi degli altri documenti), quindi può essere appena più basso della scheda del documento.
+- Test: unità per la finestra di creazione e il suo modulo, il provider (creazione, blocco a mano), il menu e la chat, l'indietro della Rubrica, le proposte e le carte delle dashboard; e2e: creazione in finestra con la Cassaforte e blocco a mano, indietro del telefono, popup di benvenuto che apre la creazione sul posto.
+
+---
+
 ## 2026-10-08 (66)
 
 ### Lo sblocco diventa una finestra sopra la pagina sfocata (Vetro, Cassaforte, Impronta)

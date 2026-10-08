@@ -334,7 +334,7 @@ export function SettingsTabs({
     if (activeTab === "onboarding") {
       // Serve i dati decifrati per calcolare l'avanzamento --- richiede la master key sbloccata.
       return (
-        <RequireMasterKey>{(masterKey) => <OnboardingSettingsPanel masterKey={masterKey} />}</RequireMasterKey>
+        <RequireMasterKey inline>{(masterKey) => <OnboardingSettingsPanel masterKey={masterKey} />}</RequireMasterKey>
       );
     }
     if (activeTab === "privacy") {
@@ -370,7 +370,7 @@ export function SettingsTabs({
     if (activeTab === "emergency-card") {
       // Tutto cifrato: richiede la master key, a differenza della scheda qui sopra.
       return (
-        <RequireMasterKey>
+        <RequireMasterKey inline>
           {(masterKey) => (
             <EmergencyCardPanel
               masterKey={masterKey}
@@ -399,7 +399,7 @@ export function SettingsTabs({
     }
     if (activeTab === "tags") {
       // A differenza di Categorie, i tag sono cifrati: richiede la master key sbloccata.
-      return <RequireMasterKey>{(masterKey) => <TagsSettingsPanel masterKey={masterKey} />}</RequireMasterKey>;
+      return <RequireMasterKey inline>{(masterKey) => <TagsSettingsPanel masterKey={masterKey} />}</RequireMasterKey>;
     }
     if (activeTab === "appearance") {
       if (activeSection === "nav-layout") {
@@ -495,7 +495,7 @@ export function SettingsTabs({
     }
     // "Cancella tutto" ha bisogno della master key sbloccata per scoprire i path da rimuovere in Storage.
     return (
-      <RequireMasterKey>{(masterKey) => <DangerZonePanel userId={userId} masterKey={masterKey} />}</RequireMasterKey>
+      <RequireMasterKey inline>{(masterKey) => <DangerZonePanel userId={userId} masterKey={masterKey} />}</RequireMasterKey>
     );
   }
 

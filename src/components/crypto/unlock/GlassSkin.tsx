@@ -2,20 +2,9 @@
 
 import type { ReactNode } from "react";
 import { FingerprintIcon } from "@/components/icons/nav-icons";
+import { GlassFrame } from "@/components/crypto/unlock/frames";
 import { UnlockForm } from "@/components/crypto/unlock/UnlockForm";
 import type { UnlockFlow } from "@/components/crypto/unlock/useUnlockFlow";
-
-/** Il lucchetto: il fermo si solleva mentre si scrive, diventa rosso e trema se si sbaglia, si apre quando riesce. */
-function LockGlyph() {
-  return (
-    <svg className="unlock-lock" viewBox="0 0 92 106" aria-hidden="true">
-      <path className="u-shackle" d="M26 48 V34 a20 20 0 0 1 40 0 V48" />
-      <rect className="u-body" x="8" y="44" width="76" height="58" rx="16" />
-      <circle className="u-hole" cx="46" cy="70" r="7" />
-      <rect className="u-hole" x="43" y="72" width="6" height="14" rx="3" />
-    </svg>
-  );
-}
 
 function subtitle(flow: UnlockFlow): string {
   if (flow.phase === "verifying") return "Verifica in corso…";
@@ -37,8 +26,7 @@ export function GlassSkin({
 }) {
   const busy = flow.phase === "verifying" || flow.phase === "success";
   return (
-    <div className="unlock-glass" data-phase={flow.phase}>
-      <LockGlyph />
+    <GlassFrame phase={flow.phase}>
       <div>
         <h2>Sblocca</h2>
         <p className="unlock-sub" aria-live="polite">
@@ -64,6 +52,6 @@ export function GlassSkin({
           Più tardi
         </button>
       ) : null}
-    </div>
+    </GlassFrame>
   );
 }

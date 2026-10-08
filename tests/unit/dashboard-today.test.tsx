@@ -6,6 +6,17 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { SummaryContext } from "@/domain/ai/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
 
+const notices = {
+  requests: [] as { id: string; senderName: string }[],
+  pending: null as null | { documents: number; proposals: number; first: { id: string; filename: string; count: number } | null },
+  accept: vi.fn(),
+  reject: vi.fn(),
+};
+vi.mock("@/components/dashboard/useDashboardNotices", () => ({
+  useIncomingFriendRequests: () => ({ requests: notices.requests, busyId: null, accept: notices.accept, reject: notices.reject }),
+  usePendingProposals: () => notices.pending,
+}));
+
 const setReminderCompleted = vi.fn();
 const setReminderDueAt = vi.fn();
 
@@ -48,6 +59,16 @@ function Harness({ initial, documents = [] }: { initial: ReminderListItem[]; doc
 }
 
 beforeEach(() => {
+  notices.requests = [];
+  notices.pending = null;
+  // Come l'hook vero: accettare o rifiutare toglie la richiesta dall'elenco.
+  notices.accept.mockReset().mockImplementation(async (request: { id: string }) => {
+    notices.requests = notices.requests.filter((r) => r.id !== request.id);
+    return "Andrea Ferri";
+  });
+  notices.reject.mockReset().mockImplementation(async (request: { id: string }) => {
+    notices.requests = notices.requests.filter((r) => r.id !== request.id);
+  });
   setReminderCompleted.mockReset().mockResolvedValue(undefined);
   setReminderDueAt.mockReset().mockResolvedValue(undefined);
 });
@@ -147,5 +168,39 @@ describe("DashboardToday", () => {
     expect(first).toHaveTextContent("oggi");
     expect(screen.getByRole("link", { name: "Apri Referto holter.pdf" })).toHaveTextContent("ieri");
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("le richieste di amicizia e le proposte di Hinthia sono carte di 'Da fare ora' e contano nella frase", async () => {
+    notices.requests = [
+      { id: "r1", senderName: "Andrea Ferri" },
+      { id: "r2", senderName: "Giulia Neri" },
+    ];
+    notices.pending = { documents: 1, proposals: 3, first: { id: "d1", filename: "Polizza RCA.pdf", count: 3 } };
+    render(<Harness initial={[reminder("bollo", "Bollo auto", 5)]} />);
+
+    // Una scadenza, due richieste, le proposte.
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Oggi 4 cose meritano attenzione.");
+    expect(screen.getByText("Andrea Ferri vuole diventare tuo amico")).toBeInTheDocument();
+    expect(screen.getByText("Hinthia ha letto «Polizza RCA.pdf»")).toBeInTheDocument();
+    expect(screen.getByText(/Ci sono 3 proposte da rivedere/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Rivedi le proposte" })).toHaveAttribute("href", "/archive/d1");
+
+    const first = screen.getByText("Andrea Ferri vuole diventare tuo amico").closest("li")!;
+    fireEvent.click(within(first).getByRole("button", { name: "Accetta" }));
+    await waitFor(() => expect(notices.accept).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByText("1 di 4 sistemate")).toBeInTheDocument());
+
+    const second = screen.getByText("Giulia Neri vuole diventare tuo amico").closest("li")!;
+    fireEvent.click(within(second).getByRole("button", { name: "Rifiuta" }));
+    await waitFor(() => expect(notices.reject).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByText("2 di 4 sistemate")).toBeInTheDocument());
+  });
+
+  it("più documenti letti: il titolo dice quanti", () => {
+    notices.pending = { documents: 3, proposals: 5, first: { id: "d1", filename: "Polizza RCA.pdf", count: 3 } };
+    render(<Harness initial={[]} />);
+
+    expect(screen.getByText("Hinthia ha letto 3 documenti")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Oggi 1 cosa merita attenzione.");
   });
 });

@@ -25,8 +25,11 @@ test("attivare l'autenticazione a due fattori richiede il codice al login succes
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  // Il popup di benvenuto può comparire a menu già aperto e, chiudendosi, richiuderlo: si riapre finché il link non si clicca.
+  await expect(async () => {
+    await page.getByRole("button", { name: fullName(user) }).click({ timeout: 3_000 });
+    await page.getByRole("link", { name: "Impostazioni" }).click({ timeout: 3_000 });
+  }).toPass({ timeout: 20_000 });
   await page.getByRole("tab", { name: "Autenticazione" }).click();
   await expect(page.getByText("Non attiva")).toBeVisible();
 

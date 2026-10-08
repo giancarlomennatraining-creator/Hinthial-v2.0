@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AlertTriangleIcon, CheckCircleIcon } from "@/components/icons/nav-icons";
@@ -10,7 +9,7 @@ import { LoginSplash } from "@/components/dashboard/LoginSplash";
 import { SharedCapsuleNotificationPopup } from "@/components/dashboard/SharedCapsuleNotificationPopup";
 import { FriendRequestNotificationPopup } from "@/components/dashboard/FriendRequestNotificationPopup";
 import { PageHelp } from "@/components/help/PageHelp";
-import { useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
+import { rememberUnlockDismissed, unlockWasDismissed, useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import type { DashboardStyle } from "@/lib/dashboard-style";
 
@@ -26,30 +25,11 @@ import type { DashboardStyle } from "@/lib/dashboard-style";
  * (v. OnboardingStatus), che copre lo stesso scopo senza occupare corpo
  * della pagina.
  */
-/** La finestra di sblocco chiusa con "Più tardi" non si riapre da sola in questa sessione del browser (le pagine che servono la chiave la riaprono comunque). */
-const UNLOCK_DISMISSED_KEY = "hinthial.unlock-dismissed";
-
-function unlockWasDismissed(): boolean {
-  try {
-    return sessionStorage.getItem(UNLOCK_DISMISSED_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function rememberUnlockDismissed() {
-  try {
-    sessionStorage.setItem(UNLOCK_DISMISSED_KEY, "1");
-  } catch {
-    // Senza storage la finestra si riaprirà alla prossima visita: non grave.
-  }
-}
-
 export function DashboardPanel({ displayName, style }: { displayName: string; style: DashboardStyle }) {
   const { status } = useMasterKey();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { requestUnlock, releaseUnlock, settling } = useUnlockPrompt();
+  const { requestUnlock, requestSetup, releaseUnlock, settling } = useUnlockPrompt();
 
   // "?justLoggedIn=1" arriva da signIn/signUp/verifyMfaCode (v. auth/actions.ts) --- letto una sola volta
   // all'apertura, poi subito tolto dall'URL: un refresh o un ritorno alla Dashboard più tardi non lo rivede più.
@@ -108,7 +88,8 @@ export function DashboardPanel({ displayName, style }: { displayName: string; st
       {status.kind === "unlocked" && !settling ? (
         <>
           <SharedCapsuleNotificationPopup />
-          <FriendRequestNotificationPopup masterKey={status.masterKey} />
+          {/* Oggi e Bento mostrano le richieste di amicizia da sé, con accetta e rifiuta: il popup sarebbe un doppione. */}
+          {style === "today" || style === "bento" ? null : <FriendRequestNotificationPopup masterKey={status.masterKey} />}
           <DashboardWidgets masterKey={status.masterKey} style={style} />
         </>
       ) : status.kind === "checking" ? (
@@ -136,13 +117,18 @@ export function DashboardPanel({ displayName, style }: { displayName: string; st
           </div>
         </div>
       ) : (
-        <p className="max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
-          Crea la tua master password per iniziare a usare Hinthial:{" "}
-          <Link href="/archive" className="font-medium text-brand hover:underline">
-            vai all&apos;archivio
-          </Link>
-          .
-        </p>
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+          <p className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Crea la tua master password per iniziare a usare Hinthial: è un minuto.
+          </p>
+          <button
+            type="button"
+            onClick={() => requestSetup({ dismissible: true })}
+            className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          >
+            Crea la master password
+          </button>
+        </div>
       )}
     </div>
   );

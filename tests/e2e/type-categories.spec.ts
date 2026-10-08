@@ -28,7 +28,8 @@ test("la categoria proposta segue il tipo, e la scelta dell'utente la cambia", a
   await askHinthia(page, 3);
   const panel = page.getByRole("tabpanel", { name: /^Chiedi a Hinthia/ });
   await expect(panel).toContainText("Dal tipo di documento: Polizza assicurativa");
-  await expect(panel).toContainText("calcolata da Hinthial");
+  // La categoria "Assicurazioni" è proposta dal tipo: lo dice la riga stessa del registro di lettura.
+  await expect(panel).toContainText("Assicurazioni");
 
   // L'utente sceglie "Nessuna categoria" per le polizze: la scelta resta dopo un ricaricamento.
   await openCategoriesSettings(page);

@@ -97,5 +97,21 @@ test("su smartphone si vede la rubrica, toccando una persona la sua scheda, e \"
 
   // Un'altra persona: stessa cosa.
   await rubrica.getByRole("button", { name: /Davide Costa/ }).click();
-  await expect(page.getByRole("region", { name: "Scheda di Davide Costa" })).toBeVisible();
+  const schedaDavide = page.getByRole("region", { name: "Scheda di Davide Costa" });
+  await expect(schedaDavide).toBeVisible();
+
+  // Il tasto "indietro" del telefono (del browser) torna alla rubrica senza lasciare la pagina; "avanti" riapre la scheda.
+  await page.goBack();
+  await expect(rubrica).toBeVisible();
+  await expect(schedaDavide).toBeHidden();
+  await expect(page).toHaveURL(/\/friends$/);
+  await page.goForward();
+  await expect(schedaDavide).toBeVisible();
+  await expect(rubrica).toBeHidden();
+
+  // E "← Rubrica" fa lo stesso: dopo, un solo "indietro" lascia davvero la pagina (non resta un passo fantasma).
+  await schedaDavide.getByRole("button", { name: "← Rubrica" }).click();
+  await expect(rubrica).toBeVisible();
+  await page.goBack();
+  await expect(page).not.toHaveURL(/\/friends$/);
 });

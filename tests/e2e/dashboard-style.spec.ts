@@ -36,7 +36,7 @@ test("lo stile della Dashboard si sceglie in Impostazioni > Aspetto: Oggi mostra
   await expect(page).toHaveURL(/\/reminders$/, { timeout: 15_000 });
 
   // Di default la Dashboard è la Classica.
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Dashboard", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Prossime scadenze" })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole("heading", { name: "Da fare ora" })).not.toBeVisible();
 
@@ -52,7 +52,7 @@ test("lo stile della Dashboard si sceglie in Impostazioni > Aspetto: Oggi mostra
   await expect(today).toHaveAttribute("aria-checked", "true");
 
   // Subito la Dashboard è nel nuovo stile, con la scadenza e i suoi pulsanti.
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Dashboard", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Da fare ora" })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole("heading", { level: 2 })).toContainText("Oggi 1 cosa merita attenzione.");
   const card = page.getByRole("listitem").filter({ hasText: "Bollo auto" });
@@ -69,7 +69,7 @@ test("lo stile della Dashboard si sceglie in Impostazioni > Aspetto: Oggi mostra
   await page.goto("/archive");
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Dashboard", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Da fare ora" })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("Hai finito per oggi")).toBeVisible();
 
@@ -82,7 +82,7 @@ test("lo stile della Dashboard si sceglie in Impostazioni > Aspetto: Oggi mostra
   await bento.click();
   await expect(bento).toHaveAttribute("aria-checked", "true");
 
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Dashboard", exact: true }).click();
   const hero = page.getByRole("link", { name: /Prossima scadenza/ });
   await expect(hero).toBeVisible({ timeout: 10_000 });
   await expect(hero).toContainText("Bollo auto");
@@ -102,7 +102,7 @@ test("lo stile della Dashboard si sceglie in Impostazioni > Aspetto: Oggi mostra
   await stories.click();
   await expect(stories).toHaveAttribute("aria-checked", "true");
 
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Dashboard", exact: true }).click();
   const story = page.getByRole("group", { name: /^Storia \d di 5/ });
   await expect(story).toHaveAttribute("aria-label", "Storia 1 di 5: Oggi", { timeout: 10_000 });
   await expect(story.getByRole("heading", { level: 3 })).toHaveText("Tutto in ordine oggi"); // il bollo è stato rimandato

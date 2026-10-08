@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
 import { useState, type ReactNode } from "react";
 import type { ComponentType, SVGProps } from "react";
 import {
@@ -16,6 +18,8 @@ import {
   SecurityIcon,
 } from "@/components/icons/nav-icons";
 import { Avatar } from "@/components/ui/Avatar";
+import { useIncomingFriendRequests, usePendingProposals } from "@/components/dashboard/useDashboardNotices";
+import { useToast } from "@/components/ui/ToastProvider";
 import type { SummaryContext } from "@/domain/ai/types";
 import { buildBento, type BentoAssetRow } from "@/domain/dashboard/bento";
 import { agoText, whenText } from "@/domain/dashboard/deadlines";
@@ -79,9 +83,22 @@ function nameParts(full: string, first: string, last: string): [string, string] 
  * rovescia, il ventaglio dei documenti, l'anello della capsula, una domanda per Hinthia). Tutto ricavato dallo stesso
  * contesto delle altre (v. buildBento); ogni riquadro porta alla sua sezione.
  */
-export function DashboardBento({ context, now }: { context: SummaryContext; now: Date }) {
+export function DashboardBento({
+  supabase,
+  masterKey,
+  context,
+  now,
+}: {
+  supabase: SupabaseClient<Database>;
+  masterKey: CryptoKey;
+  context: SummaryContext;
+  now: Date;
+}) {
   const router = useRouter();
+  const showToast = useToast();
   const data = buildBento(context, now);
+  const friendRequests = useIncomingFriendRequests(supabase, masterKey);
+  const pendingProposals = usePendingProposals(supabase, masterKey, context, now);
   const [question, setQuestion] = useState("");
 
   function ask(text: string) {
@@ -220,6 +237,45 @@ export function DashboardBento({ context, now }: { context: SummaryContext; now:
           </span>
         </Link>
 
+        {/* Richieste di amicizia: solo se ce ne sono; si accettano o rifiutano da qui */}
+        {friendRequests.requests.length > 0 ? (
+          <section className={cn(TILE, "col-span-2 hover:translate-y-0 hover:shadow-none")} aria-label="Richieste di amicizia">
+            <Label icon={FriendIcon}>
+              {friendRequests.requests.length === 1 ? "Richiesta di amicizia" : "Richieste di amicizia"}
+            </Label>
+            <ul className="flex flex-col gap-3">
+              {friendRequests.requests.map((request) => (
+                <li key={request.id} className="flex min-w-0 flex-wrap items-center gap-2">
+                  <span className="min-w-0 flex-1 text-sm text-zinc-700 dark:text-zinc-300">
+                    <b className="text-zinc-900 dark:text-zinc-100">{request.senderName}</b> vuole diventare tuo amico
+                  </span>
+                  <span className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={friendRequests.busyId === request.id}
+                      onClick={async () => {
+                        const name = await friendRequests.accept(request);
+                        showToast(name ? `Ora sei amico di ${name}.` : "Non è stato possibile accettare la richiesta: riprova da Amici.");
+                      }}
+                      className="rounded-xl bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-hover disabled:opacity-50"
+                    >
+                      Accetta
+                    </button>
+                    <button
+                      type="button"
+                      disabled={friendRequests.busyId === request.id}
+                      onClick={() => void friendRequests.reject(request)}
+                      className="rounded-xl border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                    >
+                      Rifiuta
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
         {/* Beni */}
         <Link href="/assets" className={cn(TILE, "col-span-2")}>
           <Label icon={AssetIcon}>Beni · {data.assetCount}</Label>
@@ -272,6 +328,17 @@ export function DashboardBento({ context, now }: { context: SummaryContext; now:
               </svg>
             </button>
           </form>
+          {pendingProposals ? (
+            <Link
+              href={`/archive/${pendingProposals.first?.id ?? ""}`}
+              className="flex items-center gap-2 rounded-xl bg-brand/10 px-3 py-2 text-xs font-semibold text-brand hover:bg-brand/15"
+            >
+              <AIIcon width={14} height={14} />
+              {pendingProposals.proposals === 1
+                ? "Hinthia ha 1 proposta da rivedere"
+                : `Hinthia ha ${pendingProposals.proposals} proposte da rivedere`}
+            </Link>
+          ) : null}
           <div className="flex flex-wrap gap-1.5">
             {chips.map((chip) => (
               <button

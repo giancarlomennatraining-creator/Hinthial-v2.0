@@ -80,7 +80,12 @@ test("un utente autenticato può navigare la shell e fare logout", async ({
   // il setup della master key. Il flusso vero è coperto altrove; qui basta verificare che la navigazione arrivi.
   await page.getByRole("link", { name: "Hinthia", exact: true }).click();
   await expect(page).toHaveURL(/\/ai$/);
-  await expect(page.getByRole("heading", { name: "Configura la cifratura" })).toBeVisible();
+  // La creazione si apre sopra la pagina e non si chiude: ma da lì si può sempre tornare alla dashboard.
+  const setup = page.getByRole("dialog", { name: "Crea la master password" });
+  await expect(setup.getByRole("heading", { name: "Configura la cifratura" })).toBeVisible();
+  await setup.getByRole("link", { name: "Torna alla dashboard" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(setup).not.toBeVisible();
 
   // Il logout invalida la sessione e riporta alla landing.
   await page.getByRole("button", { name: fullName(user) }).click();
