@@ -10,6 +10,8 @@ import { LoginSplash } from "@/components/dashboard/LoginSplash";
 import { SharedCapsuleNotificationPopup } from "@/components/dashboard/SharedCapsuleNotificationPopup";
 import { FriendRequestNotificationPopup } from "@/components/dashboard/FriendRequestNotificationPopup";
 import { PageHelp } from "@/components/help/PageHelp";
+import { useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import type { DashboardStyle } from "@/lib/dashboard-style";
 
 /**
@@ -24,10 +26,30 @@ import type { DashboardStyle } from "@/lib/dashboard-style";
  * (v. OnboardingStatus), che copre lo stesso scopo senza occupare corpo
  * della pagina.
  */
+/** La finestra di sblocco chiusa con "Più tardi" non si riapre da sola in questa sessione del browser (le pagine che servono la chiave la riaprono comunque). */
+const UNLOCK_DISMISSED_KEY = "hinthial.unlock-dismissed";
+
+function unlockWasDismissed(): boolean {
+  try {
+    return sessionStorage.getItem(UNLOCK_DISMISSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function rememberUnlockDismissed() {
+  try {
+    sessionStorage.setItem(UNLOCK_DISMISSED_KEY, "1");
+  } catch {
+    // Senza storage la finestra si riaprirà alla prossima visita: non grave.
+  }
+}
+
 export function DashboardPanel({ displayName, style }: { displayName: string; style: DashboardStyle }) {
   const { status } = useMasterKey();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { requestUnlock, releaseUnlock } = useUnlockPrompt();
 
   // "?justLoggedIn=1" arriva da signIn/signUp/verifyMfaCode (v. auth/actions.ts) --- letto una sola volta
   // all'apertura, poi subito tolto dall'URL: un refresh o un ritorno alla Dashboard più tardi non lo rivede più.
@@ -35,6 +57,16 @@ export function DashboardPanel({ displayName, style }: { displayName: string; st
   useEffect(() => {
     if (showSplash) router.replace("/dashboard");
   }, [showSplash, router]);
+
+  // Con la cassaforte bloccata la finestra di sblocco compare subito sopra la dashboard sfocata; si può chiudere.
+  useEffect(() => {
+    if (status.kind === "locked" && !unlockWasDismissed()) {
+      requestUnlock({ dismissible: true, onDismiss: rememberUnlockDismissed });
+    }
+  }, [status.kind, requestUnlock]);
+
+  // Lasciando la dashboard con la finestra ancora aperta, questa non resta sopra un'altra pagina.
+  useEffect(() => () => releaseUnlock(), [releaseUnlock]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -81,25 +113,32 @@ export function DashboardPanel({ displayName, style }: { displayName: string; st
         </>
       ) : status.kind === "checking" ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+      ) : status.kind === "locked" ? (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+            <p className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
+              La cassaforte è bloccata: sblocca per vedere le tue scadenze e il tuo archivio recente.
+            </p>
+            <button
+              type="button"
+              onClick={() => requestUnlock({ dismissible: true, onDismiss: rememberUnlockDismissed })}
+              className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+            >
+              Sblocca ora
+            </button>
+          </div>
+          {/* Lo scheletro dà alla finestra di sblocco qualcosa da sfocare dietro: è la forma della dashboard che arriverà. */}
+          <div aria-hidden="true">
+            <DashboardSkeleton />
+          </div>
+        </div>
       ) : (
         <p className="max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
-          {status.kind === "locked" ? (
-            <>
-              Sblocca la cifratura per vedere le tue scadenze e il tuo archivio recente:{" "}
-              <Link href="/archive" className="font-medium text-brand hover:underline">
-                vai all&apos;archivio
-              </Link>
-              .
-            </>
-          ) : (
-            <>
-              Crea la tua master password per iniziare a usare Hinthial:{" "}
-              <Link href="/archive" className="font-medium text-brand hover:underline">
-                vai all&apos;archivio
-              </Link>
-              .
-            </>
-          )}
+          Crea la tua master password per iniziare a usare Hinthial:{" "}
+          <Link href="/archive" className="font-medium text-brand hover:underline">
+            vai all&apos;archivio
+          </Link>
+          .
         </p>
       )}
     </div>

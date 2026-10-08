@@ -90,7 +90,7 @@ test.describe("sotto md", () => {
       await page.getByRole("button", { name: "Aggiungi amico" }).click();
       await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
     }
-    await expect(page.locator("li", { hasText: "Amico Numero 7" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /Amico Numero 7/ })).toBeVisible({ timeout: 10_000 });
 
     const menuButton = page.getByRole("button", { name: "Apri il menu" });
     const boxBefore = await menuButton.boundingBox();

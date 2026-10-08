@@ -12,6 +12,10 @@ import { test as base, expect, type Page } from "@playwright/test";
  * di ogni azione e, se il pulsante è visibile, lo chiude prima di
  * proseguire --- nessun test deve saperne o gestirlo a mano.
  *
+ * Chiude allo stesso modo la finestra di sblocco della Dashboard (v. UnlockDialog, "Più tardi"), che compare a ogni
+ * visita con la cassaforte bloccata: chi ricarica la dashboard e poi clicca altrove non deve saperne. Quella delle
+ * pagine che servono la chiave non ha "Più tardi" e resta, come per un utente vero.
+ *
  * I test dedicati al popup stesso (v. master-key-intro.spec.ts)
  * importano `test`/`expect` direttamente da "@playwright/test", non da
  * qui: altrimenti si chiuderebbe da sé prima di poter verificare

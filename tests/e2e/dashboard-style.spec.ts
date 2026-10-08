@@ -63,10 +63,10 @@ test("lo stile della Dashboard si sceglie in Impostazioni > Aspetto: Oggi mostra
   await expect(page.getByText("Hai finito per oggi")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole("heading", { level: 2 })).toContainText("Tutto in ordine.");
 
-  // Lo stile resta quello scelto anche dopo un refresh (la cassaforte torna da sbloccare: lo stile no).
-  await page.reload();
-  await expect(page.getByText("Sblocca la cifratura per vedere le tue scadenze")).toBeVisible({ timeout: 15_000 });
-  await page.getByRole("link", { name: "vai all'archivio" }).click();
+  // Lo stile resta quello scelto anche dopo un ricaricamento (la cassaforte torna da sbloccare: lo stile no).
+  // La cassaforte è di nuovo bloccata. Si sblocca da una pagina che serve la chiave, dove la finestra non si può chiudere
+  // (quella della dashboard la chiude da sola la fixture, come ogni "Più tardi": qui non serve).
+  await page.goto("/archive");
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await page.getByRole("link", { name: "Dashboard" }).click();

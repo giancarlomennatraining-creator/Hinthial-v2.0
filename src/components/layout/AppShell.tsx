@@ -6,6 +6,7 @@ import { MobileNavBar } from "@/components/layout/MobileNavBar";
 import { BottomNavBar } from "@/components/layout/BottomNavBar";
 import { MasterKeyProvider } from "@/components/crypto/MasterKeyProvider";
 import { MasterKeyIntroModal } from "@/components/crypto/MasterKeyIntroModal";
+import { UnlockPromptProvider } from "@/components/crypto/UnlockPromptProvider";
 import { ListViewPreferencesProvider } from "@/components/layout/ListViewPreferencesProvider";
 import { NavOrientationProvider, useNavOrientation } from "@/components/layout/NavOrientationProvider";
 import { BottomNavItemsProvider } from "@/components/layout/BottomNavItemsProvider";
@@ -17,6 +18,7 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import { AuditWriteFailedNotice } from "@/components/audit/AuditWriteFailedNotice";
 import { cn } from "@/lib/utils";
 import type { NavOrientation } from "@/lib/nav-orientation";
+import type { UnlockStyle } from "@/lib/unlock-style";
 import type { BottomNavItems } from "@/lib/bottom-nav";
 import type { MainNavItems } from "@/lib/main-nav";
 
@@ -34,6 +36,7 @@ export function AppShell({
   displayName,
   avatarUrl,
   initialNavOrientation,
+  initialUnlockStyle,
   initialBottomNavItems,
   initialMainNavItems,
   initialOnboardingWidgetHidden,
@@ -51,6 +54,7 @@ export function AppShell({
   displayName: string;
   avatarUrl: string | null;
   initialNavOrientation: NavOrientation;
+  initialUnlockStyle: UnlockStyle;
   initialBottomNavItems: BottomNavItems;
   initialMainNavItems: MainNavItems;
   initialOnboardingWidgetHidden: boolean;
@@ -65,6 +69,7 @@ export function AppShell({
   return (
     <ToastProvider>
     <MasterKeyProvider>
+    <UnlockPromptProvider userId={userId} initialStyle={initialUnlockStyle}>
       <MasterKeyIntroModal userId={userId} initialSeen={initialMasterKeyIntroSeen} />
       <AuditWriteFailedNotice />
       <NavOrientationProvider userId={userId} initialOrientation={initialNavOrientation}>
@@ -95,6 +100,7 @@ export function AppShell({
         </MainNavItemsProvider>
         </BottomNavItemsProvider>
       </NavOrientationProvider>
+    </UnlockPromptProvider>
     </MasterKeyProvider>
     </ToastProvider>
   );

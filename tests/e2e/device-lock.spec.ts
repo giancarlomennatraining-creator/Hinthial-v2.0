@@ -170,6 +170,8 @@ test("un dispositivo fidato compare nell'elenco anche da un altro dispositivo, e
   await pcPage.getByLabel("Password").fill(user.password);
   await pcPage.getByRole("button", { name: "Accedi" }).click();
   await expect(pcPage).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+  // La cassaforte di questo browser è bloccata: la finestra di sblocco della dashboard si chiude con "Più tardi".
+  await pcPage.getByRole("button", { name: "Più tardi" }).click();
 
   await pcPage.getByRole("button", { name: fullName(user) }).click();
   await pcPage.getByRole("link", { name: "Impostazioni" }).click();
