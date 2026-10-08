@@ -10,6 +10,27 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-08 (66)
+
+### Lo sblocco diventa una finestra sopra la pagina sfocata (Vetro, Cassaforte, Impronta)
+
+**Cosa fa:**
+- Quando la cassaforte è bloccata, la master password non si chiede più in una scheda dentro la pagina ma in una **finestra che compare sopra la pagina, sfocata e oscurata**, con un'animazione. Sulla **Dashboard compare subito** (con dietro la forma della dashboard) e si può chiudere con **"Più tardi"** o **Esc**: da quel momento, in quella sessione del browser, non si riapre da sola, ma resta il pulsante **"Sblocca ora"**. Sulle pagine che servono la chiave (Archivio, Beni, Capsule, ...) si apre da sola e **non si può chiudere**: senza chiave non c'è nulla da mostrare.
+- **Tre pelli**, da scegliere in **Impostazioni > Aspetto > Sblocco**, ognuna con una breve spiegazione e un pulsante **"Provala"** (un'anteprima che non sblocca nulla: riesce con qualunque testo):
+  - **Vetro**: una lastra di vetro sfocata con una luce colorata che le gira dietro e un lucchetto che si agita mentre scrivi, diventa rosso e trema se sbagli, si apre se la password è giusta.
+  - **Cassaforte**: la porta di una cassaforte con una ruota che gira a ogni lettera; se sbagli la porta vibra e la spia si fa rossa; se è giusta i chiavistelli rientrano, la maniglia gira e la porta si apre **piano**, poi tutto sfuma mentre la sfocatura si dissolve (nessuno stacco netto: l'uscita dura circa due secondi e mezzo).
+  - **Impronta**: un anello da toccare per sbloccare con impronta o Face ID; una linea lo scansiona e, al riconoscimento, un'onda parte dal centro. La master password sta in un cassetto sotto. Su un dispositivo senza impronta registrata l'anello non è un pulsante e la password è già a vista.
+- Restano come prima: la **recovery key** ("Hai perso la password?"), lo sblocco con **impronta/Face ID** dove il dispositivo lo supporta e il **collegamento via QR** da un altro dispositivo fidato. A sblocco riuscito compare per qualche secondo "**Cassaforte sbloccata.**" e poi sparisce da sola (non resta sopra la barra del sistema).
+- Chi ha attivato "meno movimento" nel dispositivo vede la finestra chiudersi quasi subito, senza animazioni.
+- **Non cambia** la creazione della master password (la scheda e il popup di introduzione di prima): la finestra riguarda solo lo sblocco.
+
+**Note tecniche:**
+- Migrazione `20261011000000_unlock_style.sql`: `profiles.unlock_style` (`glass` | `vault` | `fingerprint`, predefinito `glass`), letto lato server con il profilo (`getCurrentUser`) e passato alla shell, come lo stile della Dashboard.
+- `UnlockPromptProvider` (in `AppShell`, dentro `MasterKeyProvider`) tiene la finestra in un posto solo: chi serve la chiave chiama `requestUnlock` (`RequireMasterKey` non chiudibile, la Dashboard chiudibile); una richiesta non chiudibile vince su una chiudibile già aperta, e la Dashboard ritira la sua uscendo di scena. `UnlockDialog` resta montata durante l'animazione di uscita anche se il vault è già sbloccato (il contenuto vero compare dietro mentre la sfocatura si dissolve), ha il focus intrappolato, Esc, `role="dialog"` e rispetta `prefers-reduced-motion`. Tutta la logica (password, recovery key, impronta, sblocco avvenuto per altra strada) è in `useUnlockFlow`; le pelli (`GlassSkin`, `VaultSkin`, `FingerprintSkin`) mostrano solo `phase` ed `error`. La sfocatura si anima con due proprietà CSS registrate (`@property --unlock-blur/--unlock-dim`). Il vecchio `UnlockMasterKeyForm` e il suo CSS sono stati rimossi.
+- Nei test e2e la fixture chiude da sola ogni "Più tardi", quindi anche la finestra della Dashboard (come già faceva con il popup di introduzione): così i test che ricaricano la dashboard e poi cliccano altrove non cambiano. Il test dedicato (`unlock-dialog.spec.ts`) usa `@playwright/test` direttamente. Test: unità per il flusso, le tre pelli, il provider e le Impostazioni; e2e per la finestra sulla dashboard, la scelta e l'anteprima, l'Archivio non chiudibile e la pelle Impronta senza impronta.
+
+---
+
 ## 2026-10-07 (65)
 
 ### Dashboard "Lavagna"

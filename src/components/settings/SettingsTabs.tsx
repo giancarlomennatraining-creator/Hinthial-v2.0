@@ -21,6 +21,7 @@ import { MainNavItemsSettings } from "@/components/settings/MainNavItemsSettings
 import { ListViewSettings } from "@/components/settings/ListViewSettings";
 import { CapsuleCountdownSettings } from "@/components/settings/CapsuleCountdownSettings";
 import { DashboardStyleSettings } from "@/components/settings/DashboardStyleSettings";
+import { UnlockStyleSettings } from "@/components/settings/UnlockStyleSettings";
 import { TrashRetentionSettings } from "@/components/settings/TrashRetentionSettings";
 import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
@@ -129,6 +130,7 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
           { id: "nav-items", label: "Voci del menu", icon: MenuListIcon },
           { id: "bottom-bar", label: "Barra in basso", icon: BottomBarIcon },
           { id: "dashboard", label: "Dashboard", icon: DashboardIcon },
+          { id: "unlock", label: "Sblocco", icon: SecurityIcon },
           { id: "lists", label: "Liste", icon: ListViewIcon },
           { id: "capsules", label: "Capsule", icon: CapsuleIcon },
           { id: "archive", label: "Archivio", icon: ArchiveIcon },
@@ -437,6 +439,16 @@ export function SettingsTabs({
             description="Scegli come si presenta la prima pagina: gli stessi dati, letti in modi diversi. La scelta resta la stessa su tutti i tuoi dispositivi."
           >
             <DashboardStyleSettings />
+          </FunctionBlock>
+        );
+      }
+      if (activeSection === "unlock") {
+        return (
+          <FunctionBlock
+            title="Finestra di sblocco"
+            description="Quando la cassaforte è bloccata, la master password si chiede in una finestra sopra la pagina sfocata. Scegli come si presenta e provala: l'anteprima non sblocca nulla. La scelta resta la stessa su tutti i tuoi dispositivi."
+          >
+            <UnlockStyleSettings />
           </FunctionBlock>
         );
       }

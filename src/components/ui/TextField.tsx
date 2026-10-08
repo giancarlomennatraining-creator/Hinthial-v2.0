@@ -6,7 +6,7 @@ type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   /**
    * "halo" --- lo stesso linguaggio più arrotondato e con il focus in
-   * blu brand dello sblocco (v. UnlockMasterKeyForm) e delle pagine di
+   * blu brand dello sblocco (v. UnlockDialog) e delle pagine di
    * autenticazione (login/registrazione/password dimenticata). Resta
    * opt-in, non il default: cambiare l'aspetto di ogni campo dell'app
    * con un colpo solo sarebbe una decisione di design-system a sé, non

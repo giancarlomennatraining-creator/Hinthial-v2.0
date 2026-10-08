@@ -106,7 +106,7 @@ test("le intestazioni delle tabelle in Amici ordinano lessicograficamente", asyn
     await page.getByLabel("Ruolo").fill("Amico");
     await page.getByRole("button", { name: "Aggiungi amico" }).click();
     await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
-    await expect(page.getByText(name)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: new RegExp(name) })).toBeVisible({ timeout: 10_000 });
   }
 
   await page.getByRole("radio", { name: "Vista a tabella" }).click();

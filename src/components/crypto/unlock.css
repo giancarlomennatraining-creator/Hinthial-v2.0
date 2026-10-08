@@ -1,0 +1,646 @@
+/*
+ * Finestra di sblocco della master key (v. UnlockDialog.tsx): un velo che sfoca e scurisce la pagina, e sopra una delle
+ * tre pelli scelte in Impostazioni > Aspetto > Sblocco (vetro, cassaforte, impronta). Le variabili --unlock-blur e
+ * --unlock-dim sono registrate, così la sfocatura si può animare con una transizione.
+ */
+@property --unlock-blur {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+@property --unlock-dim {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+.unlock-root {
+  --u-fg: #121a35;
+  --u-muted: #5b6483;
+  --u-faint: #8a91ad;
+  --u-line: #c9d0e6;
+  --u-field: #ffffff;
+  --u-glass: rgba(255, 255, 255, 0.72);
+  --u-glass-line: rgba(255, 255, 255, 0.6);
+  --u-danger: #b42318;
+  --u-ok: #1c7c5a;
+  --u-brand: #2b4fc4;
+  --u-on-brand: #ffffff;
+}
+.dark .unlock-root {
+  --u-fg: #e8ecfb;
+  --u-muted: #9aa3c4;
+  --u-faint: #727b9f;
+  --u-line: #38427a;
+  --u-field: #141b36;
+  --u-glass: rgba(20, 27, 54, 0.72);
+  --u-glass-line: rgba(127, 155, 255, 0.22);
+  --u-danger: #ff8a7d;
+  --u-ok: #5bd6a4;
+  --u-brand: #7f9bff;
+  --u-on-brand: #0c1124;
+}
+.unlock-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  --unlock-blur: 0px;
+  --unlock-dim: 0;
+  backdrop-filter: blur(var(--unlock-blur)) saturate(1.15);
+  -webkit-backdrop-filter: blur(var(--unlock-blur)) saturate(1.15);
+  background: rgba(12, 18, 48, var(--unlock-dim));
+  transition: --unlock-blur 0.7s cubic-bezier(0.2, 0.9, 0.3, 1), --unlock-dim 0.7s ease;
+}
+.unlock-veil[data-on="true"] {
+  --unlock-blur: 14px;
+  --unlock-dim: 0.42;
+}
+.unlock-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 61;
+  display: flex;
+  overflow-y: auto;
+  padding: 16px;
+  color: var(--u-fg);
+}
+.unlock-layer > * {
+  margin: auto;
+}
+.unlock-layer:focus {
+  outline: none;
+}
+
+/* Pezzi comuni alle tre pelli */
+.unlock-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  width: 100%;
+}
+.unlock-field label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.unlock-input {
+  width: 100%;
+  border: 1.5px solid var(--u-line);
+  background: var(--u-field);
+  color: var(--u-fg);
+  border-radius: 16px;
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.unlock-input:focus {
+  border-color: var(--u-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--u-brand) 22%, transparent);
+}
+.unlock-input[aria-invalid="true"] {
+  border-color: var(--u-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--u-danger) 18%, transparent);
+}
+.unlock-err-slot {
+  min-height: 1.1rem;
+  width: 100%;
+}
+.unlock-err {
+  color: var(--u-danger);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: left;
+  width: 100%;
+}
+.unlock-go {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  border-radius: 999px;
+  background: var(--u-brand);
+  color: var(--u-on-brand);
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.7rem 1.1rem;
+  cursor: pointer;
+  transition: transform 0.12s, filter 0.15s;
+}
+.unlock-go:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.unlock-go:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.unlock-go:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.unlock-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid var(--u-brand);
+  background: transparent;
+  color: var(--u-brand);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+.unlock-ghost:disabled {
+  opacity: 0.55;
+}
+.unlock-link {
+  border: 0;
+  background: none;
+  color: var(--u-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.unlock-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--u-faint);
+  font-size: 0.75rem;
+  width: 100%;
+}
+.unlock-or::before,
+.unlock-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--u-line);
+  opacity: 0.6;
+}
+.unlock-demo {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--u-brand);
+  background: color-mix(in srgb, var(--u-brand) 12%, transparent);
+  border-radius: 999px;
+  padding: 3px 12px;
+}
+@keyframes unlock-shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(5px); }
+  30%, 50%, 70% { transform: translateX(-9px); }
+  40%, 60% { transform: translateX(9px); }
+}
+@keyframes unlock-in {
+  from { opacity: 0; transform: translateY(26px) scale(0.92); }
+}
+@keyframes unlock-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes unlock-breathe {
+  50% { transform: translateY(-3px); }
+}
+
+/* Il collegamento "Sblocca con un dispositivo fidato" (v. DevicePairingUnlock), che ha i suoi colori: qui prende quelli della finestra */
+.unlock-pairing {
+  width: 100%;
+  text-align: center;
+}
+.unlock-pairing > button {
+  color: var(--u-muted) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.unlock-fp-wrap .unlock-pairing > button {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Vetro: una lastra sfocata, con una luce colorata che le gira dietro e un lucchetto che si apre */
+.unlock-glass {
+  position: relative;
+  width: min(400px, 100%);
+  border-radius: 30px;
+  padding: 28px 26px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: var(--u-glass);
+  border: 1px solid var(--u-glass-line);
+  backdrop-filter: blur(22px) saturate(1.4);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  box-shadow: 0 30px 80px -20px rgba(8, 14, 50, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  animation: unlock-in 0.7s cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+  overflow: hidden;
+  isolation: isolate;
+}
+.unlock-glass::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  background: conic-gradient(from 0deg, rgba(43, 79, 196, 0.35), rgba(18, 165, 143, 0.3), rgba(194, 79, 208, 0.3), rgba(43, 79, 196, 0.35));
+  filter: blur(46px);
+  animation: unlock-spin 14s linear infinite;
+}
+.unlock-glass h2 {
+  font-family: var(--font-heading), system-ui, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.unlock-glass .unlock-sub {
+  color: var(--u-muted);
+  font-size: 0.875rem;
+}
+.unlock-glass form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.unlock-lock {
+  width: 92px;
+  height: 106px;
+  overflow: visible;
+}
+.unlock-lock .u-body {
+  fill: var(--u-brand);
+}
+.unlock-lock .u-hole {
+  fill: #fff;
+}
+.unlock-lock .u-shackle {
+  fill: none;
+  stroke: var(--u-brand);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transform-origin: 66px 48px;
+  transition: transform 0.6s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.unlock-glass[data-phase="idle"] .unlock-lock {
+  animation: unlock-breathe 3.2s ease-in-out infinite;
+}
+.unlock-glass[data-phase="typing"] .u-shackle {
+  transform: translateY(-3px);
+}
+.unlock-glass[data-phase="verifying"] .unlock-lock {
+  animation: unlock-breathe 0.7s ease-in-out infinite;
+}
+.unlock-glass[data-phase="error"] .u-body {
+  fill: var(--u-danger);
+}
+.unlock-glass[data-phase="error"] .u-shackle {
+  stroke: var(--u-danger);
+}
+.unlock-glass[data-phase="error"] .unlock-lock {
+  animation: unlock-shake 0.45s;
+}
+.unlock-glass[data-phase="success"] .u-shackle {
+  transform: translateY(-15px) rotate(-32deg);
+  stroke: var(--u-ok);
+}
+.unlock-glass[data-phase="success"] .u-body {
+  fill: var(--u-ok);
+}
+.unlock-glass[data-phase="success"] {
+  animation: unlock-glass-out 0.6s 0.45s cubic-bezier(0.5, 0, 0.9, 0.4) forwards;
+}
+@keyframes unlock-glass-out {
+  to { opacity: 0; transform: translateY(-16px) scale(1.06); filter: blur(6px); }
+}
+
+/* Cassaforte: la porta con la ruota, che si apre piano */
+.unlock-vault-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  perspective: 1100px;
+  animation: unlock-in 0.7s cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+  width: min(380px, 100%);
+}
+.unlock-vault {
+  position: relative;
+  width: min(260px, 60vw);
+  aspect-ratio: 1;
+}
+.unlock-vault-inside {
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, #14245c, #040816);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.7);
+}
+.unlock-door {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  transform-origin: 0% 50%;
+  background: radial-gradient(circle at 35% 30%, #5d6f9c, #29356a 55%, #151d44);
+  box-shadow: 0 24px 50px -10px rgba(5, 10, 40, 0.7), inset 0 0 0 6px rgba(255, 255, 255, 0.08);
+  transition: transform 1.5s cubic-bezier(0.45, 0, 0.2, 1) 0.7s;
+}
+.unlock-door svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.unlock-door .u-ring {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.18);
+  stroke-width: 2;
+}
+.unlock-door .u-tick {
+  stroke: #c7d2ff;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.unlock-dial {
+  transform-origin: 100px 100px;
+  transform: rotate(var(--dial, 0deg));
+  transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.unlock-dial .u-face {
+  fill: #1c2656;
+  stroke: #8da2ff;
+  stroke-width: 2;
+}
+.unlock-dial .u-mark {
+  fill: #ffd23f;
+}
+.unlock-handle {
+  transform-origin: 100px 100px;
+  transition: transform 0.8s cubic-bezier(0.3, 1.2, 0.5, 1) 0.15s;
+}
+.unlock-handle line {
+  stroke: #dfe6ff;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.unlock-handle circle {
+  fill: #dfe6ff;
+}
+.unlock-bolt {
+  fill: #9fb0e8;
+  transition: transform 0.5s ease;
+}
+.unlock-led {
+  position: absolute;
+  right: 12%;
+  top: 14%;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #8a91ad;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.unlock-vault-wrap[data-phase="verifying"] .unlock-dial {
+  animation: unlock-spin 1s linear infinite;
+}
+.unlock-vault-wrap[data-phase="error"] .unlock-door {
+  animation: unlock-shake 0.45s;
+}
+.unlock-vault-wrap[data-phase="error"] .unlock-handle {
+  animation: unlock-jerk 0.45s;
+}
+.unlock-vault-wrap[data-phase="error"] .unlock-led {
+  background: #ff5a4a;
+  box-shadow: 0 0 14px #ff5a4a;
+}
+.unlock-vault-wrap[data-phase="success"] .unlock-led {
+  background: #3be0a4;
+  box-shadow: 0 0 14px #3be0a4;
+}
+.unlock-vault-wrap[data-phase="success"] .unlock-bolt {
+  transform: translateX(14px);
+}
+.unlock-vault-wrap[data-phase="success"] .unlock-handle {
+  transform: rotate(90deg);
+}
+.unlock-vault-wrap[data-phase="success"] .unlock-door {
+  transform: rotateY(-105deg);
+}
+/* Niente stacco: dopo che la porta si è aperta, tutto sfuma e si ingrandisce appena, mentre la sfocatura si dissolve. */
+.unlock-vault-wrap[data-phase="success"] {
+  animation: unlock-vault-out 1s cubic-bezier(0.4, 0, 0.6, 1) 1.55s forwards;
+}
+@keyframes unlock-vault-out {
+  to { opacity: 0; transform: scale(1.07); }
+}
+@keyframes unlock-jerk {
+  30% { transform: rotate(-22deg); }
+  60% { transform: rotate(14deg); }
+}
+.unlock-vault-panel {
+  width: 100%;
+  background: var(--u-glass);
+  border: 1px solid var(--u-glass-line);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 22px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 20px 50px -18px rgba(8, 14, 50, 0.6);
+  transition: opacity 0.4s, transform 0.4s;
+}
+.unlock-vault-wrap[data-phase="success"] .unlock-vault-panel {
+  opacity: 0;
+  transform: translateY(14px);
+}
+.unlock-vault-panel h2 {
+  font-family: var(--font-heading), system-ui, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+.unlock-vault-panel form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.unlock-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Impronta: un anello da toccare, e un'onda che libera lo schermo */
+.unlock-fp-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  width: min(380px, 100%);
+  color: #fff;
+  animation: unlock-in 0.7s cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+}
+.unlock-fp-wrap h2 {
+  font-family: var(--font-heading), system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+}
+.unlock-fp-wrap .unlock-sub {
+  opacity: 0.85;
+  font-size: 0.875rem;
+}
+.unlock-fp {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  border: 0;
+  background: radial-gradient(circle, rgba(127, 155, 255, 0.35), rgba(127, 155, 255, 0.06) 70%);
+  border-radius: 50%;
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+button.unlock-fp {
+  cursor: pointer;
+}
+.unlock-fp::before,
+.unlock-fp::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(160, 185, 255, 0.7);
+  animation: unlock-ripple 2.6s ease-out infinite;
+}
+.unlock-fp::after {
+  animation-delay: 1.3s;
+}
+@keyframes unlock-ripple {
+  from { transform: scale(0.7); opacity: 0.9; }
+  to { transform: scale(1.5); opacity: 0; }
+}
+.unlock-fp svg {
+  width: 78px;
+  height: 78px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  position: relative;
+  z-index: 2;
+}
+.unlock-fp-sweep {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 14%;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, #9fe9ff, transparent);
+  box-shadow: 0 0 14px #7fdcff;
+  opacity: 0;
+  z-index: 3;
+}
+.unlock-fp-spin {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #9fe9ff, transparent 55%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  opacity: 0;
+}
+.unlock-fp-wrap[data-phase="verifying"] .unlock-fp::before,
+.unlock-fp-wrap[data-phase="verifying"] .unlock-fp::after {
+  animation: none;
+  opacity: 0;
+}
+.unlock-fp-wrap[data-phase="verifying"] .unlock-fp-sweep {
+  opacity: 1;
+  animation: unlock-sweep 1s ease-in-out infinite alternate;
+}
+.unlock-fp-wrap[data-phase="verifying"] .unlock-fp-spin {
+  opacity: 1;
+  animation: unlock-spin 1s linear infinite;
+}
+@keyframes unlock-sweep {
+  to { top: 84%; }
+}
+.unlock-fp-wrap[data-phase="error"] .unlock-fp {
+  animation: unlock-shake 0.45s;
+  background: radial-gradient(circle, rgba(255, 90, 74, 0.4), rgba(255, 90, 74, 0.08) 70%);
+}
+.unlock-fp-wrap[data-phase="success"] .unlock-fp {
+  background: radial-gradient(circle, rgba(59, 224, 164, 0.5), rgba(59, 224, 164, 0.1) 70%);
+}
+.unlock-fp-wrap[data-phase="success"] .unlock-fp::before {
+  animation: unlock-wave 1s ease-out forwards;
+  opacity: 1;
+  border-color: rgba(120, 240, 190, 0.8);
+}
+.unlock-fp-wrap[data-phase="success"] .unlock-fp::after {
+  animation: none;
+  opacity: 0;
+}
+@keyframes unlock-wave {
+  from { transform: scale(0.9); opacity: 0.9; }
+  to { transform: scale(16); opacity: 0; }
+}
+.unlock-fp-wrap[data-phase="success"] {
+  animation: unlock-fp-out 0.6s ease-in 0.45s forwards;
+}
+@keyframes unlock-fp-out {
+  to { opacity: 0; transform: scale(1.04); }
+}
+.unlock-fp-drawer {
+  width: 100%;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: max-height 0.45s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.3s, visibility 0s 0.45s;
+}
+.unlock-fp-wrap[data-open="true"] .unlock-fp-drawer {
+  max-height: 340px;
+  opacity: 1;
+  visibility: visible;
+  transition: max-height 0.45s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.3s, visibility 0s;
+}
+.unlock-fp-drawer form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 3px 3px;
+}
+.unlock-fp-wrap .unlock-link {
+  color: rgba(255, 255, 255, 0.85);
+}
+.unlock-fp-wrap .unlock-err {
+  color: #ffb4ab;
+  text-align: center;
+}
+.unlock-fp-wrap .unlock-field label {
+  color: #fff;
+}
+
+/* Chi preferisce meno movimento: niente animazioni, solo i cambi di stato */
+.unlock-reduced *,
+.unlock-reduced *::before,
+.unlock-reduced *::after {
+  animation: none !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+}

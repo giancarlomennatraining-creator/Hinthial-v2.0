@@ -3,6 +3,7 @@ import { createClient } from "@/lib/db/supabase/server";
 import { avatarPublicUrl } from "@/lib/storage/avatars-bucket";
 import { parseNavOrientation, type NavOrientation } from "@/lib/nav-orientation";
 import { parseDashboardStyle, type DashboardStyle } from "@/lib/dashboard-style";
+import { parseUnlockStyle, type UnlockStyle } from "@/lib/unlock-style";
 import { parseBottomNavItems, type BottomNavItems } from "@/lib/bottom-nav";
 import { parseMainNavItems, type MainNavItems } from "@/lib/main-nav";
 import { NAV_ITEMS } from "@/components/layout/nav-items";
@@ -24,6 +25,8 @@ export interface CurrentUser {
   navOrientation: NavOrientation;
   /** Lo stile della Dashboard (v. lib/dashboard-style.ts) --- letto qui, non lato client, per non mostrare per un istante lo stile sbagliato. */
   dashboardStyle: DashboardStyle;
+  /** Come si presenta la finestra di sblocco (v. lib/unlock-style.ts) --- letto qui per mostrarla subito nello stile giusto. */
+  unlockStyle: UnlockStyle;
   /** Voci di NAV_ITEMS mostrate nella barra fissa in basso su smartphone (v. lib/bottom-nav.ts) --- come navOrientation, letto qui per evitare un lampo delle icone sbagliate al primo render. */
   bottomNavItems: BottomNavItems;
   /** Voci di NAV_ITEMS mostrate nella barra di navigazione generale, e in che ordine (v. lib/main-nav.ts) --- come bottomNavItems, letto qui per evitare un lampo. */
@@ -64,7 +67,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "first_name, last_name, avatar_path, birth_date, nav_orientation, dashboard_style, bottom_nav_items, main_nav_items, onboarding_widget_hidden, master_key_intro_seen, ai_master_enabled, ai_chat_consent, ai_extraction_consent, ai_transcription_consent, ai_proactive_alerts_consent",
+      "first_name, last_name, avatar_path, birth_date, nav_orientation, dashboard_style, unlock_style, bottom_nav_items, main_nav_items, onboarding_widget_hidden, master_key_intro_seen, ai_master_enabled, ai_chat_consent, ai_extraction_consent, ai_transcription_consent, ai_proactive_alerts_consent",
     )
     .eq("id", user.id)
     .single();
@@ -84,6 +87,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     birthDate: profile?.birth_date ?? null,
     navOrientation: parseNavOrientation(profile?.nav_orientation),
     dashboardStyle: parseDashboardStyle(profile?.dashboard_style),
+    unlockStyle: parseUnlockStyle(profile?.unlock_style),
     bottomNavItems: parseBottomNavItems(
       profile?.bottom_nav_items,
       NAV_ITEMS.map((item) => item.href),
