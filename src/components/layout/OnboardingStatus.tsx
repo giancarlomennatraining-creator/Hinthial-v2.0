@@ -5,6 +5,7 @@ import { createClient } from "@/lib/db/supabase/client";
 import { SidePanel } from "@/components/ui/SidePanel";
 import { buildSummaryContext } from "@/domain/ai/context";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
+import { useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 import { OnboardingChecklist, type OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
 import {
   computeBasicOnboardingSteps,
@@ -25,12 +26,14 @@ import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWid
 export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean }) {
   const supabase = useRef(createClient()).current;
   const { status } = useMasterKey();
+  const { settling } = useUnlockPrompt();
 
   const [steps, setSteps] = useState<OnboardingStep[] | null>(null);
   const [open, setOpen] = useState(false);
 
   const { hidden, setHidden } = useOnboardingWidgetVisibility();
-  const masterKey = status.kind === "unlocked" ? status.masterKey : null;
+  // Non prima che la finestra di sblocco abbia finito di dissolversi: la pagina si popola dopo l'animazione.
+  const masterKey = status.kind === "unlocked" && !settling ? status.masterKey : null;
 
   function hide() {
     setHidden(true);

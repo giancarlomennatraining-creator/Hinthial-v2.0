@@ -49,7 +49,7 @@ export function DashboardPanel({ displayName, style }: { displayName: string; st
   const { status } = useMasterKey();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { requestUnlock, releaseUnlock } = useUnlockPrompt();
+  const { requestUnlock, releaseUnlock, settling } = useUnlockPrompt();
 
   // "?justLoggedIn=1" arriva da signIn/signUp/verifyMfaCode (v. auth/actions.ts) --- letto una sola volta
   // all'apertura, poi subito tolto dall'URL: un refresh o un ritorno alla Dashboard più tardi non lo rivede più.
@@ -105,7 +105,7 @@ export function DashboardPanel({ displayName, style }: { displayName: string; st
         ) : null}
       </div>
 
-      {status.kind === "unlocked" ? (
+      {status.kind === "unlocked" && !settling ? (
         <>
           <SharedCapsuleNotificationPopup />
           <FriendRequestNotificationPopup masterKey={status.masterKey} />
@@ -113,20 +113,23 @@ export function DashboardPanel({ displayName, style }: { displayName: string; st
         </>
       ) : status.kind === "checking" ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
-      ) : status.kind === "locked" ? (
+      ) : status.kind === "locked" || status.kind === "unlocked" ? (
         <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-            <p className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
-              La cassaforte è bloccata: sblocca per vedere le tue scadenze e il tuo archivio recente.
-            </p>
-            <button
-              type="button"
-              onClick={() => requestUnlock({ dismissible: true, onDismiss: rememberUnlockDismissed })}
-              className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
-            >
-              Sblocca ora
-            </button>
-          </div>
+          {/* Con la finestra che si sta dissolvendo dopo lo sblocco la dashboard resta uno scheletro: si popola a fine animazione. */}
+          {status.kind === "locked" ? (
+            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+              <p className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
+                La cassaforte è bloccata: sblocca per vedere le tue scadenze e il tuo archivio recente.
+              </p>
+              <button
+                type="button"
+                onClick={() => requestUnlock({ dismissible: true, onDismiss: rememberUnlockDismissed })}
+                className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+              >
+                Sblocca ora
+              </button>
+            </div>
+          ) : null}
           {/* Lo scheletro dà alla finestra di sblocco qualcosa da sfocare dietro: è la forma della dashboard che arriverà. */}
           <div aria-hidden="true">
             <DashboardSkeleton />

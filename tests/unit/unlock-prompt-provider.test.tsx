@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { UnlockPromptProvider, useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 import { UnlockStyleSettings } from "@/components/settings/UnlockStyleSettings";
 import { parseUnlockStyle, UNLOCK_STYLE_OPTIONS } from "@/lib/unlock-style";
@@ -10,6 +11,7 @@ const showToast = vi.fn();
 const updateUnlockStyle = vi.fn();
 
 vi.mock("@/components/crypto/MasterKeyProvider", () => ({ useMasterKey: () => masterKey }));
+vi.mock("@/components/crypto/SetupMasterKeyForm", () => ({ SetupMasterKeyForm: () => <div>setup</div> }));
 vi.mock("@/components/ui/ToastProvider", () => ({ useToast: () => showToast }));
 vi.mock("@/lib/db/supabase/client", () => ({ createClient: () => ({}) }));
 vi.mock("@/domain/profile/repository", () => ({ updateUnlockStyle: (...args: unknown[]) => updateUnlockStyle(...args) }));
@@ -149,6 +151,46 @@ describe("UnlockPromptProvider", () => {
     );
     expect(screen.getAllByRole("dialog")).toHaveLength(1);
     expect(screen.getByRole("dialog")).toHaveAttribute("data-dismissible", "false"); // vince la prima
+  });
+});
+
+describe("la pagina si popola dopo l'animazione di sblocco", () => {
+  function Page() {
+    return <RequireMasterKey>{() => <p>contenuto vero</p>}</RequireMasterKey>;
+  }
+
+  it("a vault bloccato la pagina è uno scheletro e la finestra è aperta", () => {
+    renderProvider(<Page />);
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.queryByText("contenuto vero")).not.toBeInTheDocument();
+    expect(screen.getByText("La cassaforte è bloccata.")).toBeInTheDocument();
+  });
+
+  it("appena sbloccato, finché la finestra si dissolve, il contenuto non c'è ancora; compare quando la finestra è sparita", () => {
+    const { rerender } = renderProvider(<Page />);
+
+    // Il vault risulta sbloccato mentre la finestra sta ancora animando l'uscita.
+    masterKey.status = { kind: "unlocked", masterKey: {} } as never;
+    rerender(
+      <UnlockPromptProvider userId="u1" initialStyle="glass">
+        <Page />
+      </UnlockPromptProvider>,
+    );
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.queryByText("contenuto vero")).not.toBeInTheDocument();
+
+    // L'animazione finisce: la finestra si chiude e la pagina si popola.
+    fireEvent.click(screen.getByRole("button", { name: "finito" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByText("contenuto vero")).toBeInTheDocument();
+  });
+
+  it("già sbloccato, senza finestra aperta, il contenuto c'è subito", () => {
+    masterKey.status = { kind: "unlocked", masterKey: {} } as never;
+    renderProvider(<Page />);
+
+    expect(screen.getByText("contenuto vero")).toBeInTheDocument();
   });
 });
 

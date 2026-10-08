@@ -21,6 +21,8 @@ interface UnlockPromptContextValue {
   setStyle: (next: UnlockStyle) => Promise<void>;
   /** Apre la finestra di sblocco, se il vault è bloccato (altrimenti non fa nulla). Se è già aperta come chiudibile e chi chiede ora non la vuole chiudibile, diventa non chiudibile. */
   requestUnlock: (options?: RequestOptions) => void;
+  /** Vero dallo sblocco riuscito fino alla fine dell'animazione di uscita: il vault è già sbloccato ma la pagina non deve ancora popolarsi, solo quando la finestra è sparita. */
+  settling: boolean;
   /** Chi aveva aperto la finestra come chiudibile (la Dashboard) la ritira quando esce di scena: non deve restare sopra un'altra pagina. */
   releaseUnlock: () => void;
   /** Mostra una pelle in anteprima, senza sbloccare nulla (per le Impostazioni). */
@@ -83,13 +85,16 @@ export function UnlockPromptProvider({
     [statusKind],
   );
 
+  // La finestra resta montata durante l'animazione di uscita: finché c'è, e il vault è già sbloccato, si sta chiudendo.
+  const settling = prompt !== null && status.kind === "unlocked";
+
   const releaseUnlock = useCallback(() => setPrompt((current) => (current?.dismissible ? null : current)), []);
 
   const preview = useCallback((next: UnlockStyle) => setPreviewStyle(next), []);
 
   const value = useMemo<UnlockPromptContextValue>(
-    () => ({ style, setStyle, requestUnlock, releaseUnlock, preview }),
-    [style, setStyle, requestUnlock, releaseUnlock, preview],
+    () => ({ style, setStyle, requestUnlock, releaseUnlock, settling, preview }),
+    [style, setStyle, requestUnlock, releaseUnlock, settling, preview],
   );
 
   return (
