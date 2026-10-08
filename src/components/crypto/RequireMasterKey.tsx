@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
+import { LockedPlaceholder } from "@/components/crypto/LockedPlaceholder";
 import { SetupMasterKeyForm } from "@/components/crypto/SetupMasterKeyForm";
 import { useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 
@@ -16,7 +17,7 @@ export function RequireMasterKey({
   children: (masterKey: CryptoKey) => React.ReactNode;
 }) {
   const { status } = useMasterKey();
-  const { requestUnlock } = useUnlockPrompt();
+  const { requestUnlock, settling } = useUnlockPrompt();
 
   // Senza la chiave questa pagina non ha nulla da mostrare: la finestra di sblocco si apre da sola e non si chiude finché non si sblocca.
   useEffect(() => {
@@ -29,8 +30,9 @@ export function RequireMasterKey({
     case "not-set-up":
       return <SetupMasterKeyForm />;
     case "locked":
-      return <p className="text-sm text-zinc-500 dark:text-zinc-400">La cassaforte è bloccata.</p>;
+      return <LockedPlaceholder />;
     case "unlocked":
-      return <>{children(status.masterKey)}</>;
+      // Appena sbloccato la finestra si sta ancora dissolvendo: la pagina si popola dopo, non durante.
+      return settling ? <LockedPlaceholder /> : <>{children(status.masterKey)}</>;
   }
 }

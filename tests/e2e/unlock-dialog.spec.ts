@@ -19,6 +19,14 @@ const test = base.extend({
   },
 });
 
+/** Sceglie una pelle e aspetta che il salvataggio sul profilo sia finito: ricaricare subito dopo lo interromperebbe a metà. */
+async function chooseSkin(page: Page, name: RegExp) {
+  const saved = page.waitForResponse((r) => r.url().includes("/rest/v1/profiles") && r.request().method() === "PATCH");
+  await page.getByRole("radio", { name }).click();
+  await saved;
+  await expect(page.getByRole("radio", { name })).toHaveAttribute("aria-checked", "true");
+}
+
 const MASTER_PASSWORD = "una-master-password-solida";
 
 async function loginAndCreateVault(page: Page): Promise<TestUser> {
@@ -75,6 +83,9 @@ test("lo sblocco è una finestra sopra la dashboard: compare subito, si chiude c
   // Quella giusta sblocca: la finestra sfuma, compare "Cassaforte sbloccata." e la dashboard si vede.
   await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
+  // Mentre la finestra si dissolve la dashboard non è ancora popolata: lo fa solo a fine animazione.
+  await expect(page.locator('.unlock-glass[data-phase="success"]')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: "Prossime scadenze" })).not.toBeVisible();
   await expect(page.getByText("Cassaforte sbloccata.")).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await expect(page.getByRole("heading", { name: "Prossime scadenze" })).toBeVisible({ timeout: 15_000 });
@@ -105,8 +116,7 @@ test("in Impostazioni > Aspetto > Sblocco si sceglie la pelle e la si prova; le 
   await expect(page.getByText("Cassaforte sbloccata.")).not.toBeVisible();
 
   // Si sceglie la Cassaforte.
-  await vault.click();
-  await expect(vault).toHaveAttribute("aria-checked", "true");
+  await chooseSkin(page, /Cassaforte/);
 
   // Un contenuto che serve la chiave (l'Archivio) la apre da solo, non si può chiudere, e sblocca nella pelle scelta.
   await page.goto("/archive");
@@ -119,8 +129,11 @@ test("in Impostazioni > Aspetto > Sblocco si sceglie la pelle e la si prova; le 
 
   await dialog.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
   await dialog.getByRole("button", { name: "Sblocca", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible({ timeout: 20_000 });
+  // La Cassaforte si apre piano: per tutto il tempo che la porta si apre la pagina resta uno scheletro, poi si popola.
+  await expect(dialog.locator('.unlock-vault-wrap[data-phase="success"]')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: "Archivio" })).not.toBeVisible();
   await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible({ timeout: 20_000 });
 });
 
 test("la pelle Impronta, senza impronta su questo dispositivo, mostra la password già a vista", async ({ page }) => {
@@ -130,8 +143,7 @@ test("la pelle Impronta, senza impronta su questo dispositivo, mostra la passwor
   await openSettings(page, user);
   await page.getByRole("tab", { name: "Aspetto" }).click();
   await page.getByRole("tab", { name: "Sblocco" }).click();
-  await page.getByRole("radio", { name: /Impronta/ }).click();
-  await expect(page.getByRole("radio", { name: /Impronta/ })).toHaveAttribute("aria-checked", "true");
+  await chooseSkin(page, /Impronta/);
 
   await page.goto("/archive");
   const dialog = page.getByRole("dialog");
