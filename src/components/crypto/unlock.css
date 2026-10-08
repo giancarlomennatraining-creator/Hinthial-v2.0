@@ -56,7 +56,11 @@
 }
 .unlock-layer {
   position: fixed;
-  inset: 0;
+  /* --vv-*: la parte visibile dello schermo, più piccola con la tastiera su telefono (v. DialogShell). */
+  top: var(--vv-top, 0px);
+  left: 0;
+  right: 0;
+  height: var(--vv-height, 100%);
   z-index: 61;
   display: flex;
   overflow-y: auto;
@@ -634,6 +638,34 @@ button.unlock-fp {
 }
 .unlock-fp-wrap .unlock-field label {
   color: #fff;
+}
+
+/* Il modo di lasciare una pagina che serve la chiave, sotto la finestra (sul velo scuro) */
+.unlock-leave {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+  padding: 4px 8px;
+}
+
+/* Larghezza maggiore per la creazione della master password, che ha più testo dello sblocco */
+.unlock-wide {
+  width: min(480px, 100%);
+}
+.unlock-fp-panel {
+  width: 100%;
+  background: var(--u-glass);
+  border: 1px solid var(--u-glass-line);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 22px;
+  padding: 16px;
+  color: var(--u-fg);
+  text-align: left;
+  box-shadow: 0 20px 50px -18px rgba(8, 14, 50, 0.6);
 }
 
 /* Chi preferisce meno movimento: niente animazioni, solo i cambi di stato */

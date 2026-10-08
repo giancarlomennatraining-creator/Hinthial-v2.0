@@ -41,7 +41,7 @@ export function DashboardWidgets({ masterKey, style }: { masterKey: CryptoKey; s
     return <DashboardStories supabase={supabase} masterKey={masterKey} context={context} now={now} />;
   }
   if (style === "bento") {
-    return <DashboardBento context={context} now={now} />;
+    return <DashboardBento supabase={supabase} masterKey={masterKey} context={context} now={now} />;
   }
   return <DashboardClassic context={context} />;
 }

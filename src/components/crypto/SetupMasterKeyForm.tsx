@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { TextField } from "@/components/ui/TextField";
-import { SecurityIcon, KeyIcon } from "@/components/icons/nav-icons";
 import { saveBlobAsFile } from "@/lib/download";
 import { printOnlyMarkedContent } from "@/lib/print";
 import type { MasterKeySetup } from "@/lib/crypto";
@@ -27,16 +27,18 @@ function StepStepper({ step }: { step: 1 | 2 }) {
   );
 }
 
-/** Il medaglione con l'icona, un'icona diversa per passo (lucchetto mentre proteggi, chiave mentre conservi la via d'emergenza). */
-function Medallion({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-16 w-16 items-center justify-center self-center rounded-full bg-[radial-gradient(circle,rgba(43,79,196,0.14),transparent_72%)]">
-      {children}
-    </div>
-  );
+/** Cosa sta facendo la creazione, per la finestra che la ospita (v. SetupDialog): il passo e se sta lavorando. */
+export interface SetupFormState {
+  step: 1 | 2;
+  busy: boolean;
 }
 
-export function SetupMasterKeyForm() {
+/**
+ * La creazione della master password in due passi: scegliere la password, poi salvare la recovery key. Mostra solo il
+ * contenuto (niente scheda attorno): lo ospita la finestra di creazione (v. SetupDialog), che gli dà la cornice
+ * della pelle scelta. Non scrive nulla finché la recovery key non è stata dichiarata salvata (`confirmSetup`).
+ */
+export function SetupMasterKeyForm({ onStateChange }: { onStateChange?: (state: SetupFormState) => void }) {
   const { setup, confirmSetup } = useMasterKey();
   const [pending, setPending] = useState<PendingSetup | null>(null);
   const [confirmedSaved, setConfirmedSaved] = useState(false);
@@ -45,6 +47,11 @@ export function SetupMasterKeyForm() {
   const [copied, setCopied] = useState(false);
   // Generato non appena la recovery key è pronta: se fallisce, il kit stampabile resta comunque completo, solo senza QR.
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  const step: 1 | 2 = pending ? 2 : 1;
+  useEffect(() => {
+    onStateChange?.({ step, busy });
+  }, [step, busy, onStateChange]);
 
   useEffect(() => {
     if (!pending) return;
@@ -141,51 +148,48 @@ export function SetupMasterKeyForm() {
 
   if (pending) {
     return (
-      <div className="mx-auto mt-6 flex max-w-md flex-col gap-3">
+      <div className="flex w-full flex-col gap-4 text-left">
         <StepStepper step={2} />
-        <div className="flex flex-col gap-5 rounded-3xl border border-zinc-200 bg-white p-8 shadow-[0_1px_2px_rgba(23,31,60,0.05),0_20px_44px_-22px_rgba(23,31,60,0.22)] dark:border-zinc-800 dark:bg-zinc-950">
-          <Medallion>
-            <KeyIcon width={26} height={26} className="text-brand" />
-          </Medallion>
 
-          <div className="flex flex-col gap-1 text-center">
-            <h1 className="text-lg font-semibold text-brand">Salva la tua recovery key</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Se dimentichi la master password, solo questa recovery key potrà farti recuperare
-              i tuoi documenti. HINTHIAL non la conserva da nessuna parte: viene mostrata una
-              sola volta, adesso.
-            </p>
-          </div>
+        <div className="flex flex-col gap-1 text-center">
+          <h1 className="text-lg font-semibold text-brand">Salva la tua recovery key</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Se dimentichi la master password, solo questa recovery key potrà farti recuperare
+            i tuoi documenti. HINTHIAL non la conserva da nessuna parte: viene mostrata una
+            sola volta, adesso.
+          </p>
+        </div>
 
-          <code className="break-all rounded-2xl bg-zinc-100 p-4 text-center text-sm font-mono text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
-            {pending.setup.recoveryKey.formatted}
-          </code>
+        <code className="break-all rounded-2xl bg-zinc-100 p-4 text-center text-sm font-mono text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
+          {pending.setup.recoveryKey.formatted}
+        </code>
 
-          <div className="flex flex-wrap justify-center gap-2">
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="rounded-full border border-zinc-300 px-3.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              ⬇️ Scarica .txt
-            </button>
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="rounded-full border border-zinc-300 px-3.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              {copied ? "✓ Copiata" : "📋 Copia negli appunti"}
-            </button>
-            <button
-              type="button"
-              onClick={printOnlyMarkedContent}
-              className="rounded-full border border-zinc-300 px-3.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              🖨️ Stampa kit di recovery
-            </button>
-          </div>
+        <div className="flex flex-wrap justify-center gap-2">
+          <button
+            type="button"
+            onClick={handleDownload}
+            className="rounded-full border border-zinc-300 px-3.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          >
+            ⬇️ Scarica .txt
+          </button>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="rounded-full border border-zinc-300 px-3.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          >
+            {copied ? "✓ Copiata" : "📋 Copia negli appunti"}
+          </button>
+          <button
+            type="button"
+            onClick={printOnlyMarkedContent}
+            className="rounded-full border border-zinc-300 px-3.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          >
+            🖨️ Stampa kit di recovery
+          </button>
+        </div>
 
-          {/* Fuori vista sullo schermo, mostrato solo in stampa (v. lib/print.ts): un foglio da conservare fisicamente, con la chiave anche come QR. */}
+        {/* Fuori vista sullo schermo, mostrato solo in stampa (v. lib/print.ts): un foglio da conservare fisicamente, con la chiave anche come QR. Direttamente nel body, fuori dalla finestra, per non essere tagliato dai suoi bordi. */}
+        {createPortal(
           <div className="print-only hidden flex-col items-center gap-6 p-12 text-center print:flex">
             {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
             <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-12 w-auto" />
@@ -213,111 +217,107 @@ export function SetupMasterKeyForm() {
               Generato il{" "}
               {new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}
             </p>
-          </div>
+          </div>,
+          document.body,
+        )}
 
-          <label className="flex items-start gap-2.5 rounded-2xl border border-zinc-200 bg-zinc-50 p-3.5 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
-            <input
-              type="checkbox"
-              className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-brand"
-              checked={confirmedSaved}
-              onChange={(e) => setConfirmedSaved(e.target.checked)}
-            />
-            Ho salvato la recovery key in un posto sicuro.
-          </label>
+        <label className="flex items-start gap-2.5 rounded-2xl border border-zinc-200 bg-zinc-50 p-3.5 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-brand"
+            checked={confirmedSaved}
+            onChange={(e) => setConfirmedSaved(e.target.checked)}
+          />
+          Ho salvato la recovery key in un posto sicuro.
+        </label>
 
-          {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-              {error}
-            </p>
-          ) : null}
+        {error ? (
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            {error}
+          </p>
+        ) : null}
 
-          <button
-            type="button"
-            disabled={!confirmedSaved || busy}
-            onClick={handleConfirm}
-            className="rounded-full bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-          >
-            {busy ? "Attendere…" : "Continua"}
-          </button>
-        </div>
+        <button
+          type="button"
+          disabled={!confirmedSaved || busy}
+          onClick={handleConfirm}
+          className="rounded-full bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+        >
+          {busy ? "Attendere…" : "Continua"}
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto mt-6 flex max-w-sm flex-col gap-3">
+    <div className="flex w-full flex-col gap-4 text-left">
       <StepStepper step={1} />
-      <div className="flex flex-col gap-5 rounded-3xl border border-zinc-200 bg-white p-8 shadow-[0_1px_2px_rgba(23,31,60,0.05),0_20px_44px_-22px_rgba(23,31,60,0.22)] dark:border-zinc-800 dark:bg-zinc-950">
-        <Medallion>
-          <SecurityIcon width={26} height={26} className="text-brand" />
-        </Medallion>
 
-        <div className="flex flex-col gap-1 text-center">
-          <h1 className="text-lg font-semibold text-brand">Configura la cifratura</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Crea una master password per proteggere i tuoi documenti. È diversa dalla password
-            del tuo account e non lascia mai questo dispositivo.
-          </p>
-        </div>
-
-        {/* Stessa nota di PasswordComparisonNote (condivisa con MasterKeyIntroModal), riscritta in locale per non toccare quel componente. */}
-        <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-3.5 text-xs dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex items-start gap-2 text-zinc-600 dark:text-zinc-400">
-            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-            <span>
-              <strong className="text-zinc-800 dark:text-zinc-200">Password account</strong> →
-              per accedere al servizio.
-            </span>
-          </div>
-          <div className="flex items-start gap-2 text-zinc-600 dark:text-zinc-400">
-            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
-            <span>
-              <strong className="text-zinc-800 dark:text-zinc-200">Master password</strong> →
-              decifra i tuoi dati: è come la chiave di una cassaforte che tieni solo tu, nemmeno
-              noi la vediamo.
-            </span>
-          </div>
-        </div>
-
-        <p className="text-center text-xs text-zinc-400 dark:text-zinc-500">
-          Ci vuole un minuto: crei una password, salvi una chiave di recupero, poi sei dentro.
+      <div className="flex flex-col gap-1 text-center">
+        <h1 className="text-lg font-semibold text-brand">Configura la cifratura</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Crea una master password per proteggere i tuoi documenti. È diversa dalla password
+          del tuo account e non lascia mai questo dispositivo.
         </p>
-
-        <form onSubmit={handleCreate} className="flex flex-col gap-4 text-left">
-          <TextField
-            id="masterPassword"
-            name="masterPassword"
-            label="Master password"
-            type="password"
-            autoComplete="new-password"
-            variant="halo"
-            required
-          />
-          <TextField
-            id="confirmMasterPassword"
-            name="confirmMasterPassword"
-            label="Conferma master password"
-            type="password"
-            autoComplete="new-password"
-            variant="halo"
-            required
-          />
-
-          {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-              {error}
-            </p>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={busy}
-            className="rounded-full bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-          >
-            {busy ? "Configurazione…" : "Crea"}
-          </button>
-        </form>
       </div>
+
+      {/* Stessa nota di PasswordComparisonNote (condivisa con MasterKeyIntroModal), riscritta in locale per non toccare quel componente. */}
+      <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-3.5 text-xs dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex items-start gap-2 text-zinc-600 dark:text-zinc-400">
+          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+          <span>
+            <strong className="text-zinc-800 dark:text-zinc-200">Password account</strong> →
+            per accedere al servizio.
+          </span>
+        </div>
+        <div className="flex items-start gap-2 text-zinc-600 dark:text-zinc-400">
+          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+          <span>
+            <strong className="text-zinc-800 dark:text-zinc-200">Master password</strong> →
+            decifra i tuoi dati: è come la chiave di una cassaforte che tieni solo tu, nemmeno
+            noi la vediamo.
+          </span>
+        </div>
+      </div>
+
+      <p className="text-center text-xs text-zinc-400 dark:text-zinc-500">
+        Ci vuole un minuto: crei una password, salvi una chiave di recupero, poi sei dentro.
+      </p>
+
+      <form onSubmit={handleCreate} className="flex flex-col gap-4 text-left">
+        <TextField
+          id="masterPassword"
+          name="masterPassword"
+          label="Master password"
+          type="password"
+          autoComplete="new-password"
+          variant="halo"
+          required
+        />
+        <TextField
+          id="confirmMasterPassword"
+          name="confirmMasterPassword"
+          label="Conferma master password"
+          type="password"
+          autoComplete="new-password"
+          variant="halo"
+          required
+        />
+
+        {error ? (
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            {error}
+          </p>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={busy}
+          className="rounded-full bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+        >
+          {busy ? "Configurazione…" : "Crea"}
+        </button>
+      </form>
     </div>
   );
 }

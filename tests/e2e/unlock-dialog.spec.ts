@@ -1,5 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
-import { createConfirmedTestUser, uniqueTestUser, type TestUser } from "./test-users";
+import { createConfirmedTestUser, fullName, uniqueTestUser, type TestUser } from "./test-users";
 import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
@@ -153,4 +153,68 @@ test("la pelle Impronta, senza impronta su questo dispositivo, mostra la passwor
   await dialog.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
   await dialog.getByRole("button", { name: "Sblocca", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible({ timeout: 20_000 });
+});
+
+test("la creazione della master password è una finestra nella pelle scelta; poi la cassaforte si può bloccare dal menu e si riapre lo sblocco", async ({
+  page,
+}) => {
+  test.slow();
+
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password").fill(user.password);
+  await page.getByRole("button", { name: "Accedi" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+
+  // La pelle si sceglie già prima di creare la cassaforte (le Impostazioni non ne hanno bisogno).
+  await openSettings(page, user);
+  await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("tab", { name: "Sblocco" }).click();
+  await chooseSkin(page, /Cassaforte/);
+
+  // Una pagina che serve la chiave apre la creazione, nella cornice scelta, e non si può chiudere.
+  await page.goto("/archive");
+  const dialog = page.getByRole("dialog", { name: "Crea la master password" });
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await expect(dialog.locator(".unlock-vault-wrap")).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Più tardi" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeVisible();
+
+  // Password diverse: un errore chiaro, la finestra resta.
+  await dialog.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
+  await dialog.getByLabel("Conferma master password").fill("un-altra-password");
+  await dialog.getByRole("button", { name: "Crea" }).click();
+  await expect(dialog.getByRole("alert")).toContainText("non coincidono");
+
+  await dialog.getByLabel("Conferma master password").fill(MASTER_PASSWORD);
+  await dialog.getByRole("button", { name: "Crea" }).click();
+  await expect(dialog.getByRole("heading", { name: "Salva la tua recovery key" })).toBeVisible({ timeout: 45_000 });
+  await dialog.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
+  await dialog.getByRole("button", { name: "Continua" }).click();
+
+  // L'uscita è quella della cassaforte; la pagina si popola solo a fine animazione.
+  await expect(dialog.locator('.unlock-vault-wrap[data-phase="success"]')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText("Ancora nulla in archivio")).not.toBeVisible();
+  await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText("Ancora nulla in archivio")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText("Master password creata.")).toBeVisible();
+
+  // Dal menu utente si blocca la cassaforte a mano: la pagina torna da sbloccare, nella stessa pelle.
+  await page.getByRole("button", { name: fullName(user) }).click();
+  await page.getByRole("button", { name: "Blocca la cassaforte" }).click();
+  const unlock = page.getByRole("dialog", { name: "Sblocca la cassaforte" });
+  await expect(unlock).toBeVisible({ timeout: 15_000 });
+  await expect(unlock.locator(".unlock-vault-wrap")).toBeVisible();
+  await expect(page.getByText("Ancora nulla in archivio")).not.toBeVisible();
+
+  await unlock.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
+  await unlock.getByRole("button", { name: "Sblocca", exact: true }).click();
+  await expect(page.getByText("Ancora nulla in archivio")).toBeVisible({ timeout: 25_000 });
+
+  // Da sbloccata, nel menu c'è "Blocca la cassaforte"; bloccata (o dopo un ricaricamento) non c'è.
+  await page.getByRole("button", { name: fullName(user) }).click();
+  await expect(page.getByRole("button", { name: "Blocca la cassaforte" })).toBeVisible();
 });

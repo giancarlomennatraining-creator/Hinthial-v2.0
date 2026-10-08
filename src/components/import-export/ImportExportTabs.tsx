@@ -46,7 +46,7 @@ export function ImportExportTabs({
         ))}
       </div>
 
-      <RequireMasterKey>
+      <RequireMasterKey inline>
         {(masterKey) =>
           tab === "import" ? (
             <ImportWizard masterKey={masterKey} />

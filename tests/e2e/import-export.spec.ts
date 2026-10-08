@@ -20,9 +20,10 @@ test("importa amici da CSV: template, anteprima con riga da correggere, risultat
   await page.goto("/settings");
   await expect(page).toHaveURL(/\/settings$/);
   await page.getByRole("tab", { name: "Importa/Esporta" }).click();
+  await page.getByRole("button", { name: "Crea la master password" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
-  await page.getByRole("button", { name: "Crea" }).click();
+  await page.getByRole("button", { name: "Crea", exact: true }).click();
   await expect(
     page.getByLabel("Ho salvato la recovery key in un posto sicuro."),
   ).toBeVisible({ timeout: 45_000 });
@@ -90,6 +91,7 @@ test("importa amici da CSV: template, anteprima con riga da correggere, risultat
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Importa/Esporta" }).click();
   // goto ricarica la pagina: la Master Key torna bloccata e va sbloccata.
+  await page.getByRole("button", { name: "Sblocca ora" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await exportTab.click();
@@ -111,9 +113,10 @@ test("importa beni da CSV: corregge una categoria non trovata creandola al volo"
   await page.goto("/settings");
   await expect(page).toHaveURL(/\/settings$/);
   await page.getByRole("tab", { name: "Importa/Esporta" }).click();
+  await page.getByRole("button", { name: "Crea la master password" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
-  await page.getByRole("button", { name: "Crea" }).click();
+  await page.getByRole("button", { name: "Crea", exact: true }).click();
   await expect(
     page.getByLabel("Ho salvato la recovery key in un posto sicuro."),
   ).toBeVisible({ timeout: 45_000 });

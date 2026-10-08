@@ -322,7 +322,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
       </button>
 
       <div className="flex flex-col gap-4 border-t border-zinc-200 pt-10 dark:border-zinc-800">
-        <RequireMasterKey>
+        <RequireMasterKey inline>
           {(masterKey) => <DigitalLegacyRehearsal masterKey={masterKey} settings={settings} />}
         </RequireMasterKey>
       </div>

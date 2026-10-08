@@ -75,7 +75,14 @@ test("il tasto \"Crea la tua master key\" porta al modulo di creazione", async (
   await expect(modal).toBeVisible();
   await modal.getByRole("button", { name: "Crea la tua master key" }).click();
 
-  await expect(page).toHaveURL(/\/archive$/);
+  // La creazione si apre sul posto, sopra la dashboard sfocata: non serve andare all'Archivio.
   await expect(modal).not.toBeVisible();
-  await expect(page.getByRole("heading", { name: "Configura la cifratura" })).toBeVisible();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  const setup = page.getByRole("dialog", { name: "Crea la master password" });
+  await expect(setup).toBeVisible();
+  await expect(setup.getByRole("heading", { name: "Configura la cifratura" })).toBeVisible();
+  // Qui si può rimandare.
+  await setup.getByRole("button", { name: "Più tardi" }).click();
+  await expect(setup).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Crea la master password" })).toBeVisible();
 });

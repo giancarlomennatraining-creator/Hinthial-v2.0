@@ -67,6 +67,8 @@ test("compilare la scheda d'emergenza aggiorna l'anteprima, si salva e sopravviv
   // dei soli parametri: va sbloccata di nuovo per rivederla.
   await page.reload();
   await page.getByRole("tab", { name: "Scheda d'emergenza" }).click();
+  // La sezione è "inline": nessuna finestra automatica, si apre dal riquadro.
+  await page.getByRole("button", { name: "Sblocca ora" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await expect(page.getByLabel("Gruppo sanguigno")).toHaveValue("0+");

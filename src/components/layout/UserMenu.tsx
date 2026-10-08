@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
+import { useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 import { signOut } from "@/lib/auth/actions";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 
 /**
- * Avatar + nome utente, apre un menu con "Impostazioni" e "Esci". `collapsed`: nasconde nome e freccetta, l'avatar
+ * Avatar + nome utente, apre un menu con "Impostazioni", "Blocca la cassaforte" (solo a cassaforte sbloccata) e "Esci". `collapsed`: nasconde nome e freccetta, l'avatar
  * resta visibile. `menuPosition`: nella barra laterale il pulsante è in fondo, il menu si apre verso l'alto
  * (default "up"); nella barra orizzontale è in cima, va aperto verso il basso ("down").
  */
@@ -29,6 +31,8 @@ export function UserMenu({
   menuPosition?: "up" | "down";
 }) {
   const [open, setOpen] = useState(false);
+  const { status } = useMasterKey();
+  const { lockNow } = useUnlockPrompt();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -75,6 +79,18 @@ export function UserMenu({
           >
             Impostazioni
           </Link>
+          {status.kind === "unlocked" ? (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                lockNow();
+              }}
+              className="block w-full px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            >
+              Blocca la cassaforte
+            </button>
+          ) : null}
           <form action={signOut}>
             <button
               type="submit"

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import type { AISource } from "@/domain/ai/types";
 
 export interface ChatMessage {
@@ -26,7 +27,16 @@ const AIChatContext = createContext<AIChatContextValue | null>(null);
  * il testo della chat è già contenuto sensibile in chiaro, non solo la chiave per leggerlo.
  */
 export function AIChatProvider({ children }: { children: React.ReactNode }) {
+  const { status } = useMasterKey();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  // Bloccando la cassaforte la chat sparisce: contiene dati in chiaro, non deve restare a vault chiuso.
+  const unlocked = status.kind === "unlocked";
+  const [wasUnlocked, setWasUnlocked] = useState(unlocked);
+  if (unlocked !== wasUnlocked) {
+    setWasUnlocked(unlocked);
+    if (!unlocked) setMessages([]);
+  }
 
   const addMessages = useCallback((newMessages: ChatMessage[]) => {
     setMessages((prev) => [...prev, ...newMessages]);

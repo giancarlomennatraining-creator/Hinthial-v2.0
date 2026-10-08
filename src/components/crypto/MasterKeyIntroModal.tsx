@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { createClient } from "@/lib/db/supabase/client";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
+import { useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 import { PasswordComparisonNote } from "@/components/crypto/PasswordComparisonNote";
 import { markMasterKeyIntroSeen } from "@/domain/profile/repository";
 
@@ -22,8 +22,8 @@ export function MasterKeyIntroModal({
   initialSeen: boolean;
 }) {
   const { status } = useMasterKey();
-  const router = useRouter();
   const [seen, setSeen] = useState(initialSeen);
+  const { requestSetup, setupOpen } = useUnlockPrompt();
 
   function dismiss() {
     setSeen(true);
@@ -33,12 +33,14 @@ export function MasterKeyIntroModal({
     });
   }
 
+  // La creazione si apre qui, sopra la pagina in cui si è: non serve andare all'Archivio. Chiudibile, perché si è scelto di farla ora.
   function handleCreate() {
     dismiss();
-    router.push("/archive");
+    requestSetup({ dismissible: true });
   }
 
-  if (seen || status.kind !== "not-set-up") return null;
+  // Con la finestra di creazione già aperta (una pagina che serve la chiave l'ha aperta da sola) il popup sarebbe un doppione.
+  if (seen || status.kind !== "not-set-up" || setupOpen) return null;
 
   return createPortal(
     <div

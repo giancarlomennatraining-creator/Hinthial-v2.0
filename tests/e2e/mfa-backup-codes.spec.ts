@@ -91,7 +91,8 @@ test("i codici di backup coprono la perdita dei dispositivi MFA: generazione, us
   await expect(page).toHaveURL(/\/login\/mfa$/, { timeout: 15_000 });
   await page.getByLabel("Codice a 6 cifre o di backup").fill(usedCode);
   await page.getByRole("button", { name: "Verifica" }).click();
-  await expect(page.getByText("Codice non valido. Riprova.")).toBeVisible();
+  // Il server di Supabase può rallentare le verifiche ravvicinate: si dà più tempo al messaggio.
+  await expect(page.getByText("Codice non valido. Riprova.")).toBeVisible({ timeout: 20_000 });
 
   // Un codice TOTP valido resta comunque utilizzabile qui.
   await page.getByLabel("Codice a 6 cifre o di backup").fill(codeFor(secret));

@@ -6,18 +6,25 @@ import { UnlockPromptProvider, useUnlockPrompt } from "@/components/crypto/Unloc
 import { UnlockStyleSettings } from "@/components/settings/UnlockStyleSettings";
 import { parseUnlockStyle, UNLOCK_STYLE_OPTIONS } from "@/lib/unlock-style";
 
-const masterKey = { status: { kind: "locked" } as { kind: string } };
+const masterKey = { status: { kind: "locked" } as { kind: string }, lock: vi.fn() };
 const showToast = vi.fn();
 const updateUnlockStyle = vi.fn();
 
 vi.mock("@/components/crypto/MasterKeyProvider", () => ({ useMasterKey: () => masterKey }));
-vi.mock("@/components/crypto/SetupMasterKeyForm", () => ({ SetupMasterKeyForm: () => <div>setup</div> }));
+vi.mock("@/components/crypto/SetupDialog", () => ({
+  SetupDialog: (props: { style: string; dismissible: boolean; onDismiss: () => void; onDone: () => void }) => (
+    <div role="dialog" aria-label="Crea" data-style={props.style} data-dismissible={String(props.dismissible)}>
+      <button onClick={props.onDismiss}>chiudi</button>
+      <button onClick={props.onDone}>finito</button>
+    </div>
+  ),
+}));
 vi.mock("@/components/ui/ToastProvider", () => ({ useToast: () => showToast }));
 vi.mock("@/lib/db/supabase/client", () => ({ createClient: () => ({}) }));
 vi.mock("@/domain/profile/repository", () => ({ updateUnlockStyle: (...args: unknown[]) => updateUnlockStyle(...args) }));
 vi.mock("@/components/crypto/UnlockDialog", () => ({
-  UnlockDialog: (props: { style: string; demo: boolean; dismissible: boolean; onDismiss: () => void; onDone: () => void }) => (
-    <div role="dialog" data-style={props.style} data-demo={String(props.demo)} data-dismissible={String(props.dismissible)}>
+  UnlockDialog: (props: { style: string; demo: boolean; dismissible: boolean; leaveHref?: string; onDismiss: () => void; onDone: () => void }) => (
+    <div role="dialog" data-style={props.style} data-demo={String(props.demo)} data-dismissible={String(props.dismissible)} data-leave={props.leaveHref ?? ""}>
       <button onClick={props.onDismiss}>chiudi</button>
       <button onClick={props.onDone}>finito</button>
     </div>
@@ -42,6 +49,8 @@ function renderProvider(children: React.ReactNode, initialStyle: "glass" | "vaul
 
 beforeEach(() => {
   masterKey.status = { kind: "locked" };
+  masterKey.lock.mockReset();
+  sessionStorage.clear();
   showToast.mockReset();
   updateUnlockStyle.mockReset().mockResolvedValue(undefined);
 });
@@ -151,6 +160,119 @@ describe("UnlockPromptProvider", () => {
     );
     expect(screen.getAllByRole("dialog")).toHaveLength(1);
     expect(screen.getByRole("dialog")).toHaveAttribute("data-dismissible", "false"); // vince la prima
+  });
+});
+
+describe("creazione della master password e blocco a mano", () => {
+  function Setupper({ dismissible }: { dismissible?: boolean }) {
+    const { requestSetup } = useUnlockPrompt();
+    useEffect(() => {
+      requestSetup({ dismissible });
+    }, [requestSetup, dismissible]);
+    return null;
+  }
+
+  it("se la master password non c'è ancora, 'requestSetup' apre la finestra di creazione nello stile scelto", () => {
+    masterKey.status = { kind: "not-set-up" };
+    renderProvider(<Setupper dismissible />, "fingerprint");
+
+    const dialog = screen.getByRole("dialog", { name: "Crea" });
+    expect(dialog).toHaveAttribute("data-style", "fingerprint");
+    expect(dialog).toHaveAttribute("data-dismissible", "true");
+  });
+
+  it("con la master password già creata, 'requestSetup' non fa nulla; e 'requestUnlock' non apre la creazione", () => {
+    renderProvider(<Setupper />); // vault bloccato = già creato
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("a creazione finita dice 'Master password creata.'", () => {
+    masterKey.status = { kind: "not-set-up" };
+    renderProvider(<Setupper />);
+
+    fireEvent.click(screen.getByRole("button", { name: "finito" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(showToast).toHaveBeenCalledWith("Master password creata.");
+  });
+
+  it("una pagina che serve la chiave, a master password non creata, apre la creazione e non si può chiudere", () => {
+    masterKey.status = { kind: "not-set-up" };
+    renderProvider(<RequireMasterKey>{() => <p>contenuto vero</p>}</RequireMasterKey>);
+
+    expect(screen.getByRole("dialog", { name: "Crea" })).toHaveAttribute("data-dismissible", "false");
+    expect(screen.queryByText("contenuto vero")).not.toBeInTheDocument();
+  });
+
+  it("'lockNow' blocca la cassaforte, dice che è bloccata e riabilita la finestra chiusa con 'Più tardi'", () => {
+    masterKey.status = { kind: "unlocked", masterKey: {} } as never;
+    sessionStorage.setItem("hinthial.unlock-dismissed", "1");
+    function Locker() {
+      const { lockNow } = useUnlockPrompt();
+      return <button onClick={lockNow}>blocca</button>;
+    }
+    renderProvider(<Locker />);
+
+    fireEvent.click(screen.getByRole("button", { name: "blocca" }));
+    expect(masterKey.lock).toHaveBeenCalledTimes(1);
+    expect(showToast).toHaveBeenCalledWith("Cassaforte bloccata.");
+    expect(sessionStorage.getItem("hinthial.unlock-dismissed")).toBeNull();
+  });
+});
+
+describe("RequireMasterKey: a pagina intera o in una sezione", () => {
+  it("a pagina intera la finestra si apre da sola, non si chiude e offre di tornare alla dashboard", () => {
+    renderProvider(<RequireMasterKey>{() => <p>contenuto vero</p>}</RequireMasterKey>);
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAttribute("data-dismissible", "false");
+    expect(dialog).toHaveAttribute("data-leave", "/dashboard");
+  });
+
+  it("lasciando la pagina la finestra si ritira e non resta sopra un'altra", () => {
+    const { rerender } = renderProvider(<RequireMasterKey>{() => <p>contenuto vero</p>}</RequireMasterKey>);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    rerender(
+      <UnlockPromptProvider userId="u1" initialStyle="glass">
+        <p>un altra pagina</p>
+      </UnlockPromptProvider>,
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("in una sezione (inline) non si apre niente da solo: un riquadro con il pulsante per sbloccare, chiudibile", () => {
+    renderProvider(<RequireMasterKey inline>{() => <p>contenuto vero</p>}</RequireMasterKey>);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByText(/La cassaforte è bloccata/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Sblocca ora" }));
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAttribute("data-dismissible", "true");
+    expect(dialog).toHaveAttribute("data-leave", "");
+  });
+
+  it("in una sezione, a master password non creata, il pulsante apre la creazione", () => {
+    masterKey.status = { kind: "not-set-up" };
+    renderProvider(<RequireMasterKey inline>{() => <p>contenuto vero</p>}</RequireMasterKey>);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Crea la master password" }));
+    expect(screen.getByRole("dialog", { name: "Crea" })).toHaveAttribute("data-dismissible", "true");
+  });
+
+  it("il popup di benvenuto non sta sopra la finestra di creazione", () => {
+    // Il suo comportamento è provato in e2e (master-key-intro); qui basta che il provider lo dica.
+    masterKey.status = { kind: "not-set-up" };
+    function Probe() {
+      return useUnlockPrompt().setupOpen ? <p>la creazione è aperta</p> : null;
+    }
+    renderProvider(
+      <>
+        <Probe />
+        <RequireMasterKey>{() => <p>contenuto vero</p>}</RequireMasterKey>
+      </>,
+    );
+    expect(screen.getByText("la creazione è aperta")).toBeInTheDocument();
   });
 });
 
