@@ -305,7 +305,7 @@ function FileReadingStatus({ reading }: { reading: ReadingState }) {
  * Dopo il salvataggio, i passi di cosa succede dopo (v. "Concept D"), invece del ritorno diretto all'archivio.
  */
 export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
+  const [supabase] = useState(() => createClient());
   const router = useRouter();
   const searchParams = useSearchParams();
   const { masterEnabled, extractionConsent } = useAIProcessingConsent();
