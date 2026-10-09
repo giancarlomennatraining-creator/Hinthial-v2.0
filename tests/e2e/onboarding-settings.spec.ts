@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -31,8 +32,7 @@ test("Impostazioni > Onboarding mostra la percentuale, un messaggio e le attivit
   // Si naviga a Impostazioni via menu utente (link, non page.goto): la
   // master key vive solo in memoria e una navigazione vera la perderebbe,
   // ma questa scheda la richiede (v. RequireMasterKey in SettingsTabs).
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Onboarding" }).click();
 
   // Percentuale in grande (2/8 -> 25%) e messaggio di incoraggiamento accanto.
@@ -59,8 +59,7 @@ test("Impostazioni > Onboarding mostra la percentuale, un messaggio e le attivit
 
   // ...e il pulsante in Impostazioni > Onboarding lo nasconde, senza
   // bisogno di passare dal pannello del gadget stesso.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Onboarding" }).click();
   await page
     .getByRole("button", { name: "Nascondi l'indicatore dalla barra di navigazione" })
@@ -73,8 +72,7 @@ test("Impostazioni > Onboarding mostra la percentuale, un messaggio e le attivit
   await expect(statusButton).not.toBeVisible();
 
   // Farlo ricomparire funziona allo stesso modo, in entrambe le direzioni.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Onboarding" }).click();
   await page
     .getByRole("button", { name: "Mostra di nuovo l'indicatore nella barra di navigazione" })

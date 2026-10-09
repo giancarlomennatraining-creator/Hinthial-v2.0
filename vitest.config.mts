@@ -16,6 +16,8 @@ export default defineConfig(({ mode }) => {
       include: ["tests/unit/**/*.test.{ts,tsx}"],
       setupFiles: ["./tests/unit/setup.ts"],
       globals: true,
+      // Con la suite in parallelo un test che disegna molti elementi supera i 5 secondi standard senza che ci sia un errore.
+      testTimeout: 20_000,
     },
     resolve: {
       alias: {

@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -46,8 +47,7 @@ test("esporta tutti i dati in un unico archivio .zip", async ({ page }) => {
   await expect(page.getByText("appunti.txt")).toBeVisible({ timeout: 15_000 });
 
   // Impostazioni -> Importa/Esporta -> Esporta.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await expect(page).toHaveURL(/\/settings$/);
   await page.getByRole("tab", { name: "Importa/Esporta" }).click();
   // exact: true --- la scheda di Impostazioni appena cliccata sopra

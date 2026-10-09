@@ -1,6 +1,7 @@
 import { TOTP } from "otpauth";
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 // Requires TOTP MFA enabled on the Supabase project (Authentication >
@@ -25,11 +26,7 @@ test("attivare l'autenticazione a due fattori richiede il codice al login succes
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  // Il popup di benvenuto può comparire a menu già aperto e, chiudendosi, richiuderlo: si riapre finché il link non si clicca.
-  await expect(async () => {
-    await page.getByRole("button", { name: fullName(user) }).click({ timeout: 3_000 });
-    await page.getByRole("link", { name: "Impostazioni" }).click({ timeout: 3_000 });
-  }).toPass({ timeout: 20_000 });
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Autenticazione" }).click();
   await expect(page.getByText("Non attiva")).toBeVisible();
 
@@ -87,8 +84,7 @@ test("attivare l'autenticazione a due fattori richiede il codice al login succes
   // sarebbe ridondante: la copertura del gate diretto vive a parte.
 
   // Rimuovere il dispositivo disattiva di nuovo l'MFA.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Autenticazione" }).click();
   await expect(page.getByText("Telefono di test")).toBeVisible();
   await page.getByRole("button", { name: "Rimuovi" }).click();

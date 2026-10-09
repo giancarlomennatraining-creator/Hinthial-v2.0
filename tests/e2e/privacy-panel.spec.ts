@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -18,8 +19,7 @@ test("Impostazioni > Privacy mostra dati reali dell'account e non richiede la ma
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   // Consultabile subito, prima ancora di configurare la cifratura.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Privacy" }).click();
 
   await expect(page.getByRole("heading", { name: "Cosa sa Hinthial di te" })).toBeVisible();
@@ -67,8 +67,7 @@ test("Impostazioni > Privacy mostra dati reali dell'account e non richiede la ma
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Privacy" }).click();
   await expect(page.getByText("1 contenuti in archivio")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText(/Le tue categorie: .*Assicurazioni/)).toBeVisible();

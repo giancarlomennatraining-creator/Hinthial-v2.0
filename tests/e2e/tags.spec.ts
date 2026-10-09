@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -83,8 +84,7 @@ test("gestisce i tag: aggregazione con merge, rinomina, eliminazione, e il filtr
   await expect(page.getByText("documento-tre.txt")).toBeVisible({ timeout: 15_000 });
 
   // --- Impostazioni --> Tag: "casa"/"Casa" sono un solo tag, con 2 documenti.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Tag" }).click();
   await expect(page.getByRole("heading", { name: "Tag" })).toBeVisible();
   await expect(page.getByText("🏷️ casa")).toBeVisible({ timeout: 10_000 });
