@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 // Nessuna delle due sezioni richiede la Master Key: nome/cognome ed
@@ -17,8 +18,7 @@ test("Impostazioni è organizzata a schede: Informazioni utente e Categorie", as
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await expect(page).toHaveURL(/\/settings$/);
 
   // Atterra sulla scheda "Informazioni utente" per default.
@@ -53,8 +53,7 @@ test("modifica nome e cognome: salva e aggiorna il nome mostrato in sidebar", as
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await expect(page).toHaveURL(/\/settings$/);
 
   await page.locator("#firstName").fill("Grace");
@@ -88,8 +87,7 @@ test("cambio email: rifiuta di reinviare la conferma per l'email già attuale", 
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await expect(page).toHaveURL(/\/settings$/);
 
   await page.getByLabel("Nuova email").fill(user.email);

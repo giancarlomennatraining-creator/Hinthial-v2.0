@@ -16,8 +16,11 @@ export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // In locale i test girano in parallelo contro un solo server e un solo Supabase: con troppi lavoratori alcuni test
+  // (lettura OCR, documenti, fascicoli) superano i tempi senza che ci sia un errore. Meno lavoratori e un secondo
+  // tentativo tengono la suite stabile; un test che fallisce due volte è un errore vero.
+  retries: process.env.CI ? 2 : 1,
+  workers: process.env.CI ? 1 : 4,
   reporter: "html",
   globalTeardown: "./tests/e2e/global-teardown.ts",
   use: {

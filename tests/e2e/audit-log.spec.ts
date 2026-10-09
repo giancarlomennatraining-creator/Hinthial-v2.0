@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -20,8 +21,7 @@ test("Impostazioni > Attività si interroga con filtri (area, elemento) e apre i
   // Il login stesso è già un evento --- consultabile subito, senza
   // sbloccare la cifratura (è un registro tecnico in chiaro). L'elenco si
   // carica da solo, senza premere nulla.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Attività" }).click();
 
   // Le schede di Impostazioni possono montare il pannello due volte (mobile/desktop): si lavora su ciò che si vede.
@@ -86,8 +86,7 @@ test("Impostazioni > Attività si interroga con filtri (area, elemento) e apre i
   await page.getByRole("button", { name: "Aggiungi amico" }).click();
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Attività" }).click();
 
   // Ora anche le azioni sui contenuti stanno qui, ciascuna agganciata al proprio elemento.

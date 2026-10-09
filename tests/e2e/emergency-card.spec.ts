@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -28,8 +29,7 @@ test("compilare la scheda d'emergenza aggiorna l'anteprima, si salva e sopravviv
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Scheda d'emergenza" }).click();
   await expect(page.getByRole("heading", { name: "Scheda d'emergenza" })).toBeVisible();
 

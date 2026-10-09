@@ -1,6 +1,7 @@
 import { TOTP } from "otpauth";
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
 
 function codeFor(secret: string): string {
   return new TOTP({ secret }).generate();
@@ -10,9 +11,6 @@ test("i codici di backup coprono la perdita dei dispositivi MFA: generazione, us
   page,
 }) => {
   test.slow();
-  page.on("console", (msg) => {
-    if (msg.text().includes("DEBUG")) console.log("BROWSER:", msg.text());
-  });
 
   const user = uniqueTestUser();
   await createConfirmedTestUser(user);
@@ -23,8 +21,7 @@ test("i codici di backup coprono la perdita dei dispositivi MFA: generazione, us
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Autenticazione" }).click();
 
   // Senza nessun fattore attivo, i codici di backup non hanno senso: la sezione non compare.
@@ -77,8 +74,7 @@ test("i codici di backup coprono la perdita dei dispositivi MFA: generazione, us
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   // Il conteggio scende di uno, e lo stesso codice non funziona una seconda volta.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Autenticazione" }).click();
   await expect(page.getByText("9 codici rimasti.")).toBeVisible();
 
@@ -100,8 +96,7 @@ test("i codici di backup coprono la perdita dei dispositivi MFA: generazione, us
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   // Rigenerare invalida subito tutti i codici precedenti (anche quelli mai usati).
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Autenticazione" }).click();
   await page.getByRole("button", { name: "Rigenera codici di backup" }).click();
   await expect(page.getByText("Salvane una copia adesso")).toBeVisible();
@@ -121,5 +116,5 @@ test("i codici di backup coprono la perdita dei dispositivi MFA: generazione, us
   await expect(page).toHaveURL(/\/login\/mfa$/, { timeout: 15_000 });
   await page.getByLabel("Codice a 6 cifre o di backup").fill(backupCodes[1]);
   await page.getByRole("button", { name: "Verifica" }).click();
-  await expect(page.getByText("Codice non valido. Riprova.")).toBeVisible();
+  await expect(page.getByText("Codice non valido. Riprova.")).toBeVisible({ timeout: 20_000 });
 });

@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
-import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -29,8 +30,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Categorie" }).click();
   await page.getByLabel("Icona").fill("🎯");
   await page.getByLabel("Nome").fill("Hobby");
@@ -99,8 +99,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await expect(page.getByText("Per Maria")).toBeVisible({ timeout: 10_000 });
 
   // "Reimposta l'account" (prima "Cancella tutto").
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Zona pericolosa" }).click();
   await expect(page.getByRole("heading", { name: "Reimposta l'account" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Cancella il tuo account" })).toBeVisible();
@@ -135,8 +134,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await expect(page.getByText("Nessuna capsula ancora")).toBeVisible({ timeout: 10_000 });
 
   // Le categorie sono di nuovo le 10 predefinite --- non più "Hobby".
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Categorie" }).click();
   await expect(page.locator("li > p", { hasText: "👤 Personale" })).toBeVisible();
   await expect(page.locator("li > p", { hasText: "📦 Altro" })).toBeVisible();
@@ -173,8 +171,7 @@ test("\"Cancella il tuo account\" richiede la master password corretta, poi canc
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Zona pericolosa" }).click();
 
   await page.getByRole("button", { name: "Cancella account" }).click();

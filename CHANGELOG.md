@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-09 (69)
+
+### Test più stabili
+
+**Cosa fa:**
+- Nessun cambiamento per chi usa Hinthial: riguarda solo i test automatici, che a volte fallivano senza che ci fosse un errore vero.
+- **Unit test**: il tempo massimo per ogni test sale da 5 a 20 secondi (la galleria con 75 documenti ne impiegava 6 sotto carico).
+- **E2E**: i test che aprono le Impostazioni dal menu utente usano tutti lo stesso gesto (`openSettings`), che si ripete se il popup di benvenuto chiude il menu mentre si clicca. In locale i test girano con 4 lavoratori invece di 6 e con un secondo tentativo; un test che fallisce due volte è un errore vero.
+- `mfa-backup-codes`: tolto il codice di debug e dato più tempo all'ultimo messaggio d'errore, come già agli altri.
+
+---
+
 ## 2026-10-09 (68)
 
 ### Pulizia del lint

@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -50,8 +51,7 @@ test("registra questo dispositivo come fidato e lo sblocca di nuovo con l'impron
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   // Registra questo dispositivo: richiede di nuovo la master password, la sola occasione in cui il Master Key diventa temporaneamente esportabile.
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Autenticazione" }).click();
   await page.getByRole("tab", { name: "Dispositivi fidati" }).click();
   await expect(page.getByRole("heading", { name: "Dispositivi fidati", exact: true })).toBeVisible();
@@ -103,8 +103,7 @@ test("\"dimentica questo dispositivo\" fa tornare a chiedere la master password"
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Autenticazione" }).click();
   await page.getByRole("tab", { name: "Dispositivi fidati" }).click();
   await page.getByLabel("Nome del dispositivo fidato").fill("Dispositivo di test");
@@ -151,8 +150,7 @@ test("un dispositivo fidato compare nell'elenco anche da un altro dispositivo, e
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
 
-  await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await openSettings(page, user);
   await page.getByRole("tab", { name: "Autenticazione" }).click();
   await page.getByRole("tab", { name: "Dispositivi fidati" }).click();
   await expect(page.getByText("Verifica del dispositivo in corso…")).not.toBeVisible({ timeout: 15_000 });
