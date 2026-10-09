@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-09 (71)
+
+### Pulizia del codice: i moduli delle capsule
+
+**Cosa fa:**
+- Nessun cambiamento visibile: la creazione e la modifica di una capsula si comportano come prima.
+- I pezzi che i due moduli copiavano (intestazione con i passi, cornice, campo Titolo, messaggio d'errore, pulsanti Indietro/Annulla, sezione degli allegati con le etichette dei file) vivono ora in un solo file, `capsule-form-parts.tsx`; `CreateCapsuleForm` e `EditCapsuleForm` tengono solo ciò che le distingue.
+
+---
+
 ## 2026-10-09 (70)
 
 ### Pulizia del codice: codice morto e duplicazioni
