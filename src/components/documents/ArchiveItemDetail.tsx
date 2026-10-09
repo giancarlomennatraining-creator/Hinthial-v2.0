@@ -96,7 +96,7 @@ export function ArchiveItemDetail({
   masterKey: CryptoKey;
   documentId: string;
 }) {
-  const supabase = useRef(createClient()).current;
+  const [supabase] = useState(() => createClient());
   const router = useRouter();
   const showToast = useToast();
   const { masterEnabled, extractionConsent } = useAIProcessingConsent();

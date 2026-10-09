@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-09 (68)
+
+### Pulizia del lint
+
+**Cosa fa:**
+- Nessun cambiamento visibile: nella scheda di un documento e nel modulo di creazione il client del database si crea ora con `useState(() => createClient())` invece di leggere un riferimento durante il disegno. `npm run lint` torna senza errori.
+- Il presunto bug del login (secondo invio dopo uno sbagliato) era già stato risolto il 2026-10-02: i campi si svuotavano per il comportamento di React 19, ora l'email resta nel campo (`login-retry.spec.ts` lo verifica).
+
+---
+
 ## 2026-10-08 (67)
 
 ### Rifiniture: creazione della master password in finestra, "Blocca la cassaforte", tasto indietro nella Rubrica, proposte e richieste nelle dashboard
