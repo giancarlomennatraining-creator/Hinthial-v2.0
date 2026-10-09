@@ -6,6 +6,7 @@ import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import type { Category } from "@/domain/categories/types";
 import type { DocumentSummary } from "@/domain/documents/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
+import { INPUT_FIELD } from "@/components/ui/styles";
 
 /**
  * Attacca uno o più elementi già esistenti in Archivio a una capsula: filtra per categoria, scegli un elemento,
@@ -83,7 +84,7 @@ export function DocumentAttachmentPicker({
             id={`${idPrefix}-category`}
             value={categoryId}
             onChange={(e) => handleCategoryChange(e.target.value)}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className={INPUT_FIELD}
           >
             <option value="">Scegli una categoria</option>
             {categories.map((category) => (
@@ -142,7 +143,7 @@ export function DocumentAttachmentPicker({
               id={`${idPrefix}-dossier`}
               value={dossierId}
               onChange={(e) => setDossierId(e.target.value)}
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={INPUT_FIELD}
             >
               <option value="">Scegli un fascicolo</option>
               {sortAlphabetically(dossiers, (d) => d.title).map((dossier) => (

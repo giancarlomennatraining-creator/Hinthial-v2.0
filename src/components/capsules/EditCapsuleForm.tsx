@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { listCapsules, updateCapsule } from "@/domain/capsules/repository";
 import { listFriends } from "@/domain/friends/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
@@ -20,6 +20,7 @@ import type { FriendListItem } from "@/domain/friends/types";
 import type { DocumentSummary } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -41,7 +42,7 @@ const STEP_LABEL: Record<Step, string> = {
  * audio/video esistenti sono rimovibili e nuovi aggiungibili nello stesso salvataggio.
  */
 export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey; capsuleId: string }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const router = useRouter();
 
   const [capsule, setCapsule] = useState<CapsuleListItem | null>(null);
@@ -221,7 +222,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                  className={INPUT_FIELD}
                 />
               </div>
 
@@ -244,13 +245,13 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                 <button
                   type="button"
                   onClick={handleNextFromStep1}
-                  className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+                  className={`self-start ${BTN_PRIMARY}`}
                 >
                   Avanti
                 </button>
                 <Link
                   href="/capsules"
-                  className="self-start rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  className={`self-start ${BTN_SECONDARY}`}
                 >
                   Annulla
                 </Link>
@@ -277,20 +278,20 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="self-start rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  className={`self-start ${BTN_SECONDARY}`}
                 >
                   Indietro
                 </button>
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+                  className={`self-start ${BTN_PRIMARY}`}
                 >
                   Avanti
                 </button>
                 <Link
                   href="/capsules"
-                  className="self-start rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  className={`self-start ${BTN_SECONDARY}`}
                 >
                   Annulla
                 </Link>
@@ -389,7 +390,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="self-start rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  className={`self-start ${BTN_SECONDARY}`}
                 >
                   Indietro
                 </button>
@@ -397,13 +398,13 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                   type="button"
                   disabled={saving}
                   onClick={handleSave}
-                  className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                  className={`self-start ${BTN_PRIMARY} disabled:opacity-50`}
                 >
                   {saving ? "Salvataggio…" : "Salva modifiche"}
                 </button>
                 <Link
                   href="/capsules"
-                  className="self-start rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  className={`self-start ${BTN_SECONDARY}`}
                 >
                   Annulla
                 </Link>

@@ -3,7 +3,7 @@ import type { DocumentSummary } from "@/domain/documents/types";
 import { buildBento, type BentoCapsule } from "@/domain/dashboard/bento";
 import { daysUntil } from "@/domain/dashboard/deadlines";
 
-export interface StoryDeadline {
+interface StoryDeadline {
   id: string;
   title: string;
   dueAt: string;

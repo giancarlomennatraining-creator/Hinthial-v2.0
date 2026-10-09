@@ -1,10 +1,10 @@
 "use client";
 
 import { mimeTypeOfFile } from "@/lib/file-mime";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { listDocumentSummaries, uploadDocument } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { createDossier, listDossiers } from "@/domain/dossiers/repository";
@@ -17,6 +17,7 @@ import { sortAlphabetically } from "@/lib/utils";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { Category } from "@/domain/categories/types";
 import type { DocumentMetadataInput } from "@/domain/documents/types";
+import { BTN_PRIMARY, BTN_SECONDARY } from "@/components/ui/styles";
 
 /** Pubblica di natura (v. .env.local) --- undefined se la FASE 25 non è configurata in questo ambiente: in quel caso il bottone sotto non compare, invece di rompersi al clic. */
 const GOOGLE_DRIVE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID;
@@ -58,7 +59,7 @@ type Phase =
   | { step: "importing"; done: number; total: number };
 
 export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const router = useRouter();
   const showToast = useToast();
 
@@ -492,13 +493,13 @@ export function BulkImportForm({ masterKey }: { masterKey: CryptoKey }) {
                 type="button"
                 onClick={handleImportAll}
                 disabled={allDrafts.length === 0}
-                className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                className={`${BTN_PRIMARY} disabled:opacity-50`}
               >
                 Importa tutto
               </button>
               <Link
                 href="/archive"
-                className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                className={BTN_SECONDARY}
               >
                 Annulla
               </Link>

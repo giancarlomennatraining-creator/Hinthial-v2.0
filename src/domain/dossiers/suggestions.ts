@@ -8,7 +8,7 @@ import type { DossierListItem } from "@/domain/dossiers/types";
  */
 
 /** Quanti documenti dello stesso bene, senza fascicolo, bastano a proporne uno nuovo. */
-export const MIN_DOCUMENTS_FOR_NEW_DOSSIER = 3;
+const MIN_DOCUMENTS_FOR_NEW_DOSSIER = 3;
 
 /** Oltre questo numero, una scheda di suggerimenti diventa una lista da sbrigare: se ne mostrano di meno. */
 const MAX_CANDIDATES = 5;

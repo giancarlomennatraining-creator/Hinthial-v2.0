@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   addDossierPerson,
   addDossierStep,
@@ -61,7 +61,7 @@ import type { ReminderListItem } from "@/domain/reminders/types";
  * del documento; le note nascono qui, come note dell'Archivio collegate al fascicolo.
  */
 export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; dossierId: string }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();

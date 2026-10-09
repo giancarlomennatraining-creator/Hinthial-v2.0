@@ -23,7 +23,7 @@ export type ListViewMode = "list" | "table";
  */
 export type ArchiveViewMode = ListViewMode | "gallery" | "timeline" | "collections" | "shelf";
 
-export const ARCHIVE_VIEW_MODES: ArchiveViewMode[] = ["list", "table", "gallery", "timeline", "collections", "shelf"];
+const ARCHIVE_VIEW_MODES: ArchiveViewMode[] = ["list", "table", "gallery", "timeline", "collections", "shelf"];
 
 export interface ArchiveViewOption {
   value: ArchiveViewMode;

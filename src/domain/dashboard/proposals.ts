@@ -22,7 +22,7 @@ export interface PendingProposals {
 const MAX_DOCUMENTS = 12;
 
 /** Quante proposte restano da decidere su un documento letto: quelle della sua lettura, tolte le già decise (come nella scheda). */
-export function pendingProposalCount(
+function pendingProposalCount(
   doc: DocumentListItem,
   categories: { id: string; name?: string }[],
   typeCategories: TypeCategoryOverrides,

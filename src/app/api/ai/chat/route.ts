@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@/lib/db/supabase/server";
+import { authenticate, readJsonBody } from "@/lib/http/api-guards";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import type { MinimalItem } from "@/domain/ai/claude-provider";
 
@@ -43,13 +43,9 @@ function formatItems(items: MinimalItem[]): string {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Devi essere autenticato." }, { status: 401 });
-  }
+  const auth = await authenticate();
+  if (auth instanceof NextResponse) return auth;
+  const { supabase, user } = auth;
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -63,12 +59,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Richiesta non valida." }, { status: 400 });
-  }
+  const parsedBody = await readJsonBody(request);
+  if (parsedBody instanceof NextResponse) return parsedBody;
+  const { body } = parsedBody;
 
   const { query, items } = (body ?? {}) as { query?: unknown; items?: unknown };
   if (typeof query !== "string" || !query.trim()) {

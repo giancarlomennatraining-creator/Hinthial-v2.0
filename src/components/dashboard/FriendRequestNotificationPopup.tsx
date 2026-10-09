@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getLocalUserId } from "@/lib/auth/local-user";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   acceptFriendRequest,
   listIncomingFriendRequests,
@@ -12,6 +12,7 @@ import {
 import { useMountedTransition } from "@/lib/use-mounted-transition";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/ToastProvider";
+import { BTN_PRIMARY } from "@/components/ui/styles";
 
 /**
  * Avvisa in Dashboard di una richiesta di amicizia in arrivo --- v.
@@ -24,7 +25,7 @@ import { useToast } from "@/components/ui/ToastProvider";
  * comparire da sola al giro successivo.
  */
 export function FriendRequestNotificationPopup({ masterKey }: { masterKey: CryptoKey }) {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const [userId, setUserId] = useState<string | null>(null);
   const [queue, setQueue] = useState<IncomingFriendRequest[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -118,7 +119,7 @@ export function FriendRequestNotificationPopup({ masterKey }: { masterKey: Crypt
             type="button"
             disabled={busy}
             onClick={handleAccept}
-            className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+            className={`${BTN_PRIMARY} disabled:opacity-50`}
           >
             Accetta
           </button>

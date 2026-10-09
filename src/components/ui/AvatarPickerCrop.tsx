@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { clampOffset, computeCropRect, coverScale } from "@/lib/image-crop";
+import { BTN_PRIMARY, BTN_SECONDARY } from "@/components/ui/styles";
 
 const CONTAINER_SIZE = 240;
 const OUTPUT_SIZE = 256;
@@ -268,7 +269,7 @@ export function AvatarPickerCrop({
               type="button"
               onClick={handleSave}
               disabled={disabled || !naturalSize}
-              className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+              className={`${BTN_PRIMARY} disabled:opacity-50`}
             >
               {saving ? "Salvataggio…" : "Salva foto"}
             </button>
@@ -299,14 +300,14 @@ export function AvatarPickerCrop({
             <button
               type="button"
               onClick={handleWebcamCapture}
-              className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+              className={BTN_PRIMARY}
             >
               📷 Scatta
             </button>
             <button
               type="button"
               onClick={handleStopWebcam}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              className={BTN_SECONDARY}
             >
               Annulla
             </button>
@@ -323,7 +324,7 @@ export function AvatarPickerCrop({
           />
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap gap-2">
-              <label className="w-fit cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900">
+              <label className={`w-fit cursor-pointer ${BTN_SECONDARY}`}>
                 {currentAvatarUrl ? "Cambia foto" : "Carica foto"}
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
               </label>

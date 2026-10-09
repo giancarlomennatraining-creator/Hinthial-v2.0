@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useCallback, useEffect, useState } from "react";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { SidePanel } from "@/components/ui/SidePanel";
 import { buildSummaryContext } from "@/domain/ai/context";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
@@ -24,7 +24,7 @@ import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWid
  * OnboardingWidgetVisibilityProvider): l'avanzamento resta comunque consultabile da Impostazioni > Onboarding.
  */
 export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const { status } = useMasterKey();
   const { settling } = useUnlockPrompt();
 
@@ -58,6 +58,7 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
   }, [supabase, masterKey]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
 

@@ -58,7 +58,7 @@ export interface AnalysisProgress {
 }
 
 /** Dove e con che chiave tenere la lettura: senza, l'analisi vive solo finché la pagina è aperta. */
-export interface AnalysisPersistence {
+interface AnalysisPersistence {
   masterKey: CryptoKey;
   /** La lettura già salvata per questo documento, se c'è: se vale ancora si riprende da lì invece di ripartire. */
   saved: PersistedContentAnalysis | null;

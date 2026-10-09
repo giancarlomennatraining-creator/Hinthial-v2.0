@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useCallback, useEffect, useState } from "react";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { listDocumentSummaries, updateDocumentMetadata } from "@/domain/documents/repository";
 import { aggregateTags, listIncludesTag, removeTagFromList, renameTagInList } from "@/domain/documents/tags";
 import type { DocumentSummary } from "@/domain/documents/types";
+import { INPUT_FIELD } from "@/components/ui/styles";
 
 /**
  * A differenza di CategoriesPanel, qui non c'è nulla da creare: un tag è solo "qualcosa che uno o più documenti
@@ -13,7 +14,7 @@ import type { DocumentSummary } from "@/domain/documents/types";
  * Richiede la master key sbloccata: a differenza delle categorie, i tag sono cifrati.
  */
 export function TagsSettingsPanel({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
 
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,7 +156,7 @@ export function TagsSettingsPanel({ masterKey }: { masterKey: CryptoKey }) {
                       type="text"
                       value={editValue}
                       onChange={(e) => setEditValue(e.target.value)}
-                      className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                      className={INPUT_FIELD}
                     />
                   </div>
                   <button

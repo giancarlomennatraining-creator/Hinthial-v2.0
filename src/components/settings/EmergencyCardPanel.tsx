@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { getEmergencyCard, saveEmergencyCard } from "@/domain/emergency-card/repository";
 import { BLOOD_TYPES, EMPTY_EMERGENCY_CARD, isEmergencyCardEmpty, type EmergencyCard, type EmergencyContact } from "@/domain/emergency-card/types";
 import { printOnlyMarkedContent } from "@/lib/print";
 import { useToast } from "@/components/ui/ToastProvider";
+import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 
 function emptyContact(): EmergencyContact {
   return { name: "", relation: "", phone: "" };
@@ -30,7 +31,7 @@ export function EmergencyCardPanel({
   lastName: string;
   birthDate: string | null;
 }) {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const showToast = useToast();
 
   const [card, setCard] = useState<EmergencyCard>(EMPTY_EMERGENCY_CARD);
@@ -116,7 +117,7 @@ export function EmergencyCardPanel({
                 id="blood-type"
                 value={card.bloodType}
                 onChange={(e) => setCard((prev) => ({ ...prev, bloodType: e.target.value }))}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                className={INPUT_FIELD}
               >
                 <option value="">Non specificato</option>
                 {BLOOD_TYPES.map((type) => (
@@ -138,7 +139,7 @@ export function EmergencyCardPanel({
               value={card.allergies}
               onChange={(e) => setCard((prev) => ({ ...prev, allergies: e.target.value }))}
               placeholder="es. Penicillina, arachidi"
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={`w-full ${INPUT_FIELD}`}
             />
           </div>
 
@@ -152,7 +153,7 @@ export function EmergencyCardPanel({
               value={card.conditions}
               onChange={(e) => setCard((prev) => ({ ...prev, conditions: e.target.value }))}
               placeholder="es. Asma lieve, diabete di tipo 1"
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={`w-full ${INPUT_FIELD}`}
             />
           </div>
 
@@ -166,7 +167,7 @@ export function EmergencyCardPanel({
               value={card.medications}
               onChange={(e) => setCard((prev) => ({ ...prev, medications: e.target.value }))}
               placeholder="Facoltativo"
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={`w-full ${INPUT_FIELD}`}
             />
           </div>
 
@@ -182,7 +183,7 @@ export function EmergencyCardPanel({
                 onChange={(e) => setCard((prev) => ({ ...prev, doctorName: e.target.value }))}
                 placeholder="Nome del medico"
                 aria-label="Nome del medico di riferimento"
-                className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                className={`min-w-0 flex-1 ${INPUT_FIELD}`}
               />
               <input
                 type="text"
@@ -190,7 +191,7 @@ export function EmergencyCardPanel({
                 onChange={(e) => setCard((prev) => ({ ...prev, doctorPhone: e.target.value }))}
                 placeholder="Telefono"
                 aria-label="Telefono del medico di riferimento"
-                className="w-36 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                className={`w-36 ${INPUT_FIELD}`}
               />
             </div>
           </div>
@@ -210,7 +211,7 @@ export function EmergencyCardPanel({
                     onChange={(e) => updateContact(index, { name: e.target.value })}
                     placeholder="Nome"
                     aria-label={`Nome del contatto ${index + 1}`}
-                    className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                    className={`min-w-0 flex-1 ${INPUT_FIELD}`}
                   />
                   <button
                     type="button"
@@ -228,7 +229,7 @@ export function EmergencyCardPanel({
                     onChange={(e) => updateContact(index, { relation: e.target.value })}
                     placeholder="Relazione"
                     aria-label={`Relazione del contatto ${index + 1}`}
-                    className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                    className={`min-w-0 flex-1 ${INPUT_FIELD}`}
                   />
                   <input
                     type="text"
@@ -236,7 +237,7 @@ export function EmergencyCardPanel({
                     onChange={(e) => updateContact(index, { phone: e.target.value })}
                     placeholder="Telefono"
                     aria-label={`Telefono del contatto ${index + 1}`}
-                    className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                    className={`min-w-0 flex-1 ${INPUT_FIELD}`}
                   />
                 </div>
               </div>
@@ -260,7 +261,7 @@ export function EmergencyCardPanel({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="w-fit rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+            className={`w-fit ${BTN_PRIMARY} disabled:opacity-50`}
           >
             {saving ? "Salvataggio…" : "Salva e aggiorna la scheda"}
           </button>

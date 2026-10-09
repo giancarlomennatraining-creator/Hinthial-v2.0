@@ -5,8 +5,13 @@
  */
 import { pathToFileURL } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
-import { extractText, canExtractText } from "@/domain/extraction/extract-text";
+import { extractContent, canExtractText } from "@/domain/extraction/extract-text";
 import { normalizeExtractedText, MAX_EXTRACTED_CHARS } from "@/domain/extraction/types";
+
+/** Solo il testo di ciò che si legge, o null: è quanto va in `extractedText`. */
+async function extractText(...args: Parameters<typeof extractContent>): Promise<string | null> {
+  return (await extractContent(...args))?.text ?? null;
+}
 
 // Qui i test girano in jsdom: il loader ESM di Node accetta solo file:/data:, non l'URL http:// che userebbe il browser. Si indica il worker come file locale: l'estrattore rispetta una configurazione già presente.
 beforeAll(async () => {

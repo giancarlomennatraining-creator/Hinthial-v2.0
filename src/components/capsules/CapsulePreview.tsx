@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useEffect, useState } from "react";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { downloadCapsuleAttachment } from "@/domain/capsules/repository";
 import { downloadDocument } from "@/domain/documents/repository";
 import { saveBytesAsFile } from "@/lib/download";
@@ -52,7 +52,7 @@ export function CapsulePreview({
   showCountdown?: boolean;
   onClose: () => void;
 }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const open = capsule !== null;
   const { mounted, entered } = useMountedTransition(open, 150);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { downloadSharedCapsuleAttachment, openSharedCapsule } from "@/domain/capsules/repository";
 import { contentKindFor, CONTENT_KIND_ICON, hasInlinePlayer } from "@/lib/content-kind";
 import { useMountedTransition } from "@/lib/use-mounted-transition";
@@ -37,7 +37,7 @@ export function SharedCapsuleViewer({
   ownerName: string;
   onClose: () => void;
 }) {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const open = capsuleId !== null;
   const { mounted, entered } = useMountedTransition(open, 150);
 

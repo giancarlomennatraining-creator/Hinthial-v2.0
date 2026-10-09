@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   listCapsulesSharedWithMe,
   dismissCapsuleShareNotification,
@@ -9,6 +9,7 @@ import {
 import { useMountedTransition } from "@/lib/use-mounted-transition";
 import { cn } from "@/lib/utils";
 import type { SharedCapsuleListItem } from "@/domain/capsules/types";
+import { BTN_PRIMARY } from "@/components/ui/styles";
 
 function formatDateTime(iso: string): string {
   const date = new Date(iso);
@@ -22,7 +23,7 @@ function formatDateTime(iso: string): string {
  * dispositivo). Più capsule non ancora viste si mostrano una alla volta, in coda.
  */
 export function SharedCapsuleNotificationPopup() {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const [queue, setQueue] = useState<SharedCapsuleListItem[] | null>(null);
   const [dismissing, setDismissing] = useState(false);
 
@@ -97,7 +98,7 @@ export function SharedCapsuleNotificationPopup() {
           type="button"
           disabled={dismissing}
           onClick={handleDismiss}
-          className="self-end rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+          className={`self-end ${BTN_PRIMARY} disabled:opacity-50`}
         >
           Ho capito
         </button>

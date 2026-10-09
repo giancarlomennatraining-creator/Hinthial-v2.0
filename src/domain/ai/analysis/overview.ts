@@ -10,7 +10,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
  * non dà un numero e non se ne inventa uno.
  */
 
-export type OverviewFactKind = "expiry" | "issuer" | "category" | "field" | "event";
+type OverviewFactKind = "expiry" | "issuer" | "category" | "field" | "event";
 
 export interface OverviewFact {
   /** Chiave stabile dentro l'elenco (per React). */

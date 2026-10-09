@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useCallback, useEffect, useState } from "react";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { fetchAccountVisibilitySummary } from "@/domain/privacy/repository";
 import { NAV_ORIENTATION_LABEL } from "@/lib/nav-orientation";
 import type { AccountVisibilitySummary } from "@/domain/privacy/types";
@@ -41,7 +41,7 @@ export function PrivacyPanel({
   email: string;
   birthDate: string | null;
 }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const [summary, setSummary] = useState<AccountVisibilitySummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 

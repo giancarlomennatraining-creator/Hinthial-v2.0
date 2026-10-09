@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   computeBasicOnboardingSteps,
   computeOnboardingSteps,
-  isOnboardingComplete,
   onboardingCompletionPercent,
   type OnboardingSourceData,
 } from "@/domain/onboarding/steps";
@@ -74,10 +73,10 @@ describe("computeOnboardingSteps", () => {
   });
 });
 
-describe("isOnboardingComplete", () => {
+describe("tutti i passi fatti", () => {
   it("is false until every single step is done", () => {
     const steps = computeOnboardingSteps(buildData());
-    expect(isOnboardingComplete(steps)).toBe(false);
+    expect(steps.every((s) => s.done)).toBe(false);
   });
 
   it("is true once every step is done", () => {
@@ -153,7 +152,7 @@ describe("isOnboardingComplete", () => {
         ],
       }),
     );
-    expect(isOnboardingComplete(steps)).toBe(true);
+    expect(steps.every((s) => s.done)).toBe(true);
   });
 });
 

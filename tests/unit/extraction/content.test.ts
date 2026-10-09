@@ -5,7 +5,7 @@
 import { pathToFileURL } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
 import { buildExtractedContent } from "@/domain/extraction/content";
-import { extractContent, extractText } from "@/domain/extraction/extract-text";
+import { extractContent } from "@/domain/extraction/extract-text";
 import { detectLanguage } from "@/domain/extraction/language";
 import { inspectImage, parsePdfDate } from "@/domain/extraction/technical";
 import { cleanExtractedText, MAX_EXTRACTED_CHARS } from "@/domain/extraction/types";
@@ -78,7 +78,7 @@ describe("contenuto per pagina di un PDF", () => {
     const pdf = buildPdf([PAGE_ONE, PAGE_THREE]);
 
     const content = await extractContent(pdf, "application/pdf");
-    const text = await extractText(pdf, "application/pdf");
+    const text = (await extractContent(pdf, "application/pdf"))?.text ?? null;
 
     expect(text).toBe(content!.text);
     expect(text).toBe(`${PAGE_ONE}\n\n${PAGE_THREE}`);

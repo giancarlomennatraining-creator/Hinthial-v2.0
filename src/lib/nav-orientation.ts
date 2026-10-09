@@ -9,7 +9,7 @@
 
 export type NavOrientation = "sidebar-left" | "sidebar-right" | "topbar";
 
-export const DEFAULT_NAV_ORIENTATION: NavOrientation = "sidebar-left";
+const DEFAULT_NAV_ORIENTATION: NavOrientation = "sidebar-left";
 
 export const NAV_ORIENTATION_LABEL: Record<NavOrientation, string> = {
   "sidebar-left": "Verticale (a sinistra)",

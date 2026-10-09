@@ -155,18 +155,6 @@ export function SecurityIcon(props: IconProps) {
   );
 }
 
-/** Salva la recovery key (v. SetupMasterKeyForm) --- l'impugnatura e il gambo con due tacche, non una chiave realistica: leggibile a piccole dimensioni quanto il lucchetto di SecurityIcon. */
-export function KeyIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <circle cx="8" cy="16" r="3.2" />
-      <path d="M10.3 13.7L19 5" />
-      <path d="M15 9l1.4 1.4" />
-      <path d="M17 7l1.4 1.4" />
-    </svg>
-  );
-}
-
 /** Sblocco con impronta/Face ID (v. FingerprintSkin) --- archi concentrici su una base comune, non un'impronta realistica: leggibile a 16px quanto a 40px. */
 export function FingerprintIcon(props: IconProps) {
   return (
@@ -283,19 +271,6 @@ export function CircleIcon(props: IconProps) {
   return (
     <svg {...baseProps(props)}>
       <circle cx="12" cy="12" r="9" />
-    </svg>
-  );
-}
-
-/** Cestino --- documenti eliminati in attesa di scadere o essere ripristinati. */
-export function TrashIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <path d="M4 7h16" />
-      <path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-      <path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
-      <line x1="10" y1="11" x2="10" y2="17" />
-      <line x1="14" y1="11" x2="14" y2="17" />
     </svg>
   );
 }

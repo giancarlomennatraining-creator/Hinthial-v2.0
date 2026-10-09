@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { createReminder } from "@/domain/reminders/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { sortAlphabetically } from "@/lib/utils";
 import type { DocumentSummary } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
 
 /**
  * Pagina dedicata alla creazione di una scadenza (estratta da
@@ -19,7 +20,7 @@ import type { AssetListItem } from "@/domain/assets/types";
  * in chiaro nella cronologia del browser.
  */
 export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const router = useRouter();
 
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
@@ -132,7 +133,7 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
               type="text"
               required
               placeholder="es. Rinnovo assicurazione auto"
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={INPUT_FIELD}
             />
           </div>
 
@@ -145,7 +146,7 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
               name="dueAt"
               type="date"
               required
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={INPUT_FIELD}
             />
           </div>
 
@@ -161,7 +162,7 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
               name="relatedAssetId"
               value={selectedAssetId}
               onChange={(e) => setSelectedAssetId(e.target.value)}
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={INPUT_FIELD}
             >
               <option value="">Nessuno</option>
               {sortedAssets.map((asset) => (
@@ -206,13 +207,13 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
           <button
             type="submit"
             disabled={creating}
-            className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+            className={`${BTN_PRIMARY} disabled:opacity-50`}
           >
             {creating ? "Creazione…" : "Aggiungi scadenza"}
           </button>
           <Link
             href="/reminders"
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            className={BTN_SECONDARY}
           >
             Annulla
           </Link>

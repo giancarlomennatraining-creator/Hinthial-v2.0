@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useCallback, useEffect, useState } from "react";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { deleteDocument, listTrashedDocuments, restoreDocuments } from "@/domain/documents/repository";
 import { daysRemaining } from "@/domain/documents/trash";
 import { formatDate } from "@/lib/format";
@@ -17,7 +17,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
  * documento eliminato per sempre da qui, o dal cron di purga (v. app/api/cron/trash-purge), non torna più.
  */
 export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const showToast = useToast();
 
   const [documents, setDocuments] = useState<DocumentListItem[]>([]);

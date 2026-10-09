@@ -31,7 +31,7 @@ import {
  * ricifra con una chiave nuova che sta solo nel link (v. migrazione dossier_shares): il server non la vede mai.
  */
 
-export type ShareableDocument = Pick<
+type ShareableDocument = Pick<
   DocumentSummary,
   "id" | "filename" | "mimeType" | "size" | "createdAt" | "storagePath" | "wrappedDocumentKey"
 >;

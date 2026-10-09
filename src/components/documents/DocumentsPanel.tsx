@@ -35,6 +35,7 @@ import { ContentTypeIcon } from "@/components/documents/ContentTypeIcon";
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { useToast } from "@/components/ui/ToastProvider";
+import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -424,7 +425,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 type="button"
                 disabled={extractionProgress !== null}
                 onClick={handleExtractPending}
-                className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                className={`shrink-0 ${BTN_PRIMARY} disabled:opacity-50`}
               >
                 {extractionProgress ? "Lettura in corso…" : "Leggili ora"}
               </button>
@@ -436,7 +437,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               aria-label="Filtra per categoria"
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={INPUT_FIELD}
             >
               <option value="">Tutte le categorie</option>
               {sortAlphabetically(categories, (c) => c.name).map((category) => (
@@ -770,7 +771,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                                             setNoteDraft((prev) => ({ ...prev, body: e.target.value }))
                                           }
                                           aria-label="Testo della nota"
-                                          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                                          className={INPUT_FIELD}
                                         />
                                         <div className="flex gap-3">
                                           <button
@@ -814,7 +815,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                                       value={transcriptDraft}
                                       onChange={(e) => setTranscriptDraft(e.target.value)}
                                       placeholder="Scrivi qui la trascrizione, o provaci con il tasto qui sopra…"
-                                      className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                                      className={INPUT_FIELD}
                                     />
                                     <div className="flex gap-3">
                                       <button
@@ -974,7 +975,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                               value={noteDraft.body}
                               onChange={(e) => setNoteDraft((prev) => ({ ...prev, body: e.target.value }))}
                               aria-label="Testo della nota"
-                              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                              className={INPUT_FIELD}
                             />
                             <div className="flex gap-3">
                               <button
@@ -1018,7 +1019,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           value={transcriptDraft}
                           onChange={(e) => setTranscriptDraft(e.target.value)}
                           placeholder="Scrivi qui la trascrizione, o provaci con il tasto qui sopra…"
-                          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                          className={INPUT_FIELD}
                         />
                         <div className="flex gap-3">
                           <button

@@ -7,7 +7,7 @@ import { NAV_ITEMS } from "@/components/layout/nav-items";
  */
 export type MainNavItems = string[];
 
-export const DEFAULT_MAIN_NAV_ITEMS: MainNavItems = NAV_ITEMS.map((item) => item.href);
+const DEFAULT_MAIN_NAV_ITEMS: MainNavItems = NAV_ITEMS.map((item) => item.href);
 
 /** Legge il valore grezzo (jsonb) da profiles: un array di href filtrato sui soli valori ancora validi e senza duplicati. Se mai personalizzato, il default è l'intero elenco nell'ordine di NAV_ITEMS. */
 export function parseMainNavItems(raw: unknown, validHrefs: readonly string[] = DEFAULT_MAIN_NAV_ITEMS): MainNavItems {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { LandingCarousel } from "@/components/landing/LandingCarousel";
 import { ArrowRightIcon, SecurityIcon } from "@/components/icons/nav-icons";
+import { BTN_PRIMARY } from "@/components/ui/styles";
 
 const STRENGTHS: { icon: string; title: string; description: string }[] = [
   {
@@ -74,7 +75,7 @@ export default async function Home() {
         {user ? (
           <Link
             href="/dashboard"
-            className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+            className={`shrink-0 ${BTN_PRIMARY}`}
           >
             Vai alla dashboard
           </Link>
@@ -88,7 +89,7 @@ export default async function Home() {
             </Link>
             <Link
               href="/register"
-              className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+              className={BTN_PRIMARY}
             >
               Registrati
             </Link>

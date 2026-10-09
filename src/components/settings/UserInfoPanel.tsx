@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { updateProfile } from "@/domain/profile/repository";
 import { TextField } from "@/components/ui/TextField";
 import { AvatarUploadForm } from "@/components/settings/AvatarUploadForm";
+import { BTN_PRIMARY } from "@/components/ui/styles";
 
 function translateEmailChangeError(message: string): string {
   const normalized = message.toLowerCase();
@@ -44,7 +45,7 @@ export function UserInfoPanel({
   avatarUrl: string | null;
   birthDate: string | null;
 }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const router = useRouter();
 
   const [firstName, setFirstName] = useState(initialFirstName);
@@ -187,7 +188,7 @@ export function UserInfoPanel({
           <button
             type="submit"
             disabled={nameSaving}
-            className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+            className={`self-start ${BTN_PRIMARY} disabled:opacity-50`}
           >
             {nameSaving ? "Salvataggio…" : "Salva"}
           </button>
@@ -231,7 +232,7 @@ export function UserInfoPanel({
           <button
             type="submit"
             disabled={emailSaving}
-            className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+            className={`self-start ${BTN_PRIMARY} disabled:opacity-50`}
           >
             {emailSaving ? "Invio…" : "Cambia email"}
           </button>

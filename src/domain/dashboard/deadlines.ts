@@ -47,7 +47,7 @@ export function addDaysIso(iso: string, n: number): string {
   return date.toISOString();
 }
 
-export interface WeekDay {
+interface WeekDay {
   /** Il giorno di calendario, nel fuso dell'utente (`YYYY-MM-DD`). */
   key: string;
   /** Il primo istante di quel giorno: serve a etichettarlo (lun, mar...). */

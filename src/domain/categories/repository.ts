@@ -163,7 +163,7 @@ export async function deleteCategory(
 }
 
 /** Stessa lista di seed_default_categories() (v. supabase/migrations, FASE 2) --- qui per ripristinarla anche a un utente già esistente (v. domain/danger-zone, "Cancella tutto"), non solo a uno nuovo. */
-export const DEFAULT_CATEGORIES: CategoryInput[] = [
+const DEFAULT_CATEGORIES: CategoryInput[] = [
   { name: "Personale", icon: "👤" },
   { name: "Casa", icon: "🏠" },
   { name: "Veicoli", icon: "🚗" },

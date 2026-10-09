@@ -168,7 +168,7 @@ export function describeDigitalLegacySettings(settings: DigitalLegacyPresetValue
  * da sé, senza durata propria). "triggered" è irreversibile nell'EFFETTO (v. digital_legacy_triggered_at, marcatore
  * permanente): l'accesso già concesso non si ritira, anche se lo STATO può tornare "normal" con un accesso successivo.
  */
-export type DigitalLegacyState =
+type DigitalLegacyState =
   | "normal"
   | "reminding"
   | "grace_period"
@@ -305,7 +305,7 @@ export function computeDigitalLegacyTransition(params: {
 }
 
 /** Quante richieste ai guardiani, per l'episodio in corso, hanno già una risposta --- letto da guardian_verification_requests dal solo proprietario (v. domain/digital-legacy/repository.ts, getDigitalLegacyStatus). */
-export interface GuardianResponseCounts {
+interface GuardianResponseCounts {
   total: number;
   responded: number;
   unreachable: number;

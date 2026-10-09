@@ -28,14 +28,14 @@ export interface SearchResult {
   rank: 0 | 1 | 2;
 }
 
-export function normalizeForSearch(text: string): string {
+function normalizeForSearch(text: string): string {
   return flattenForSearch(text)
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase();
 }
 
-export function searchTerms(query: string): string[] {
+function searchTerms(query: string): string[] {
   return normalizeForSearch(query)
     .split(" ")
     .filter((term) => term.length > 0);

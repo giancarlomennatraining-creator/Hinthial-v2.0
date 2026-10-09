@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { bytesToUtf8 } from "@/lib/crypto";
 import {
   deleteDocument,
@@ -80,6 +80,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
+import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 
 /**
  * Scheda di un contenuto d'Archivio --- fonde vista e modifica (v. feedback utente: due pagine separate creavano
@@ -96,7 +97,7 @@ export function ArchiveItemDetail({
   masterKey: CryptoKey;
   documentId: string;
 }) {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const router = useRouter();
   const showToast = useToast();
   const { masterEnabled, extractionConsent } = useAIProcessingConsent();
@@ -728,7 +729,7 @@ export function ArchiveItemDetail({
           type="button"
           disabled={!fieldsDirty || savingFields}
           onClick={handleSaveFields}
-          className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+          className={`${BTN_PRIMARY} disabled:opacity-50`}
         >
           {savingFields ? "Salvataggio…" : "Salva modifiche"}
         </button>
@@ -933,7 +934,7 @@ export function ArchiveItemDetail({
                       type="text"
                       value={titleValue}
                       onChange={(e) => setTitleValue(e.target.value)}
-                      className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                      className={`w-full ${INPUT_FIELD}`}
                     />
                   </div>
                 ) : null}
@@ -962,7 +963,7 @@ export function ArchiveItemDetail({
                             type={inferFieldInputType(doc.structuredFields[key] ?? value)}
                             value={value}
                             onChange={(e) => setStructuredValues({ ...structuredValues, [key]: e.target.value })}
-                            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                            className={`w-full ${INPUT_FIELD}`}
                           />
                         </div>
                       );

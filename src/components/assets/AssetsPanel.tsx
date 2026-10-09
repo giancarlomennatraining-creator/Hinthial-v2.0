@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { assetDeadlines } from "@/domain/assets/deadlines";
 import { deleteAsset, listAssets } from "@/domain/assets/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
@@ -26,6 +26,7 @@ import type { DocumentSummary } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
 import { useToast } from "@/components/ui/ToastProvider";
+import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -38,7 +39,7 @@ function formatDate(iso: string): string {
 type SortColumn = "name" | "category" | "documents" | "reminders" | "createdAt";
 
 export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();
@@ -175,7 +176,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
         <Link
           href="/assets/new"
-          className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
+          className={`hidden shrink-0 ${BTN_PRIMARY} sm:block`}
         >
           + Crea bene
         </Link>
@@ -204,7 +205,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               aria-label="Filtra per categoria"
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={INPUT_FIELD}
             >
               <option value="">Tutte le categorie</option>
               {sortAlphabetically(categories, (c) => c.name).map((category) => (

@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   createDossier,
   deleteDossier,
@@ -47,6 +47,7 @@ import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { DossierListItem, DossierStatus } from "@/domain/dossiers/types";
 import type { DocumentSummary } from "@/domain/documents/types";
+import { BTN_PRIMARY } from "@/components/ui/styles";
 
 type SortColumn = "title" | "status" | "documents" | "createdAt";
 
@@ -59,7 +60,7 @@ const STATUS_ICON: Record<DossierStatus, string> = { open: "📂", closed: "🗂
  * gestiscono solo gli oggetti --- crea, rinomina, apri/chiudi, elimina.
  */
 export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();
@@ -267,7 +268,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
         <Link
           href="/dossiers/new"
-          className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
+          className={`hidden shrink-0 ${BTN_PRIMARY} sm:block`}
         >
           + Nuovo fascicolo
         </Link>

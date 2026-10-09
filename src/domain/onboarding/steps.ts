@@ -92,10 +92,6 @@ export function computeBasicOnboardingSteps(encryptionConfigured: boolean): Onbo
   return [ACCOUNT_STEP, securityStep(encryptionConfigured)];
 }
 
-export function isOnboardingComplete(steps: OnboardingStep[]): boolean {
-  return steps.every((s) => s.done);
-}
-
 /** Percentuale su tutti i passi --- stesso denominatore del "X/Y" già mostrato in OnboardingChecklist. */
 export function onboardingCompletionPercent(steps: OnboardingStep[]): number {
   if (steps.length === 0) return 100;

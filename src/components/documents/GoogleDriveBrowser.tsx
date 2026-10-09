@@ -8,6 +8,7 @@ import {
   resolveDriveSelection,
 } from "@/domain/google-drive/client";
 import type { GoogleDriveItem } from "@/domain/google-drive/types";
+import { BTN_PRIMARY, BTN_SECONDARY } from "@/components/ui/styles";
 
 /**
  * File browser di Google Drive con la grafica di Hinthial. Un solo livello di cartella caricato alla volta,
@@ -281,7 +282,7 @@ export function GoogleDriveBrowser({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  className={BTN_SECONDARY}
                 >
                   Annulla
                 </button>
@@ -289,7 +290,7 @@ export function GoogleDriveBrowser({
                   type="button"
                   onClick={handleConfirm}
                   disabled={selectionCount === 0 || resolving}
-                  className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                  className={`${BTN_PRIMARY} disabled:opacity-50`}
                 >
                   {downloadProgress
                     ? `Scaricamento… ${downloadProgress.done} di ${downloadProgress.total}`

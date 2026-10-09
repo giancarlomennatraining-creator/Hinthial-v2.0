@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   acceptGuardianRoleRequest,
   listIncomingGuardianRoleRequests,
@@ -28,7 +28,7 @@ function formatDate(iso: string): string {
  * niente RequireMasterKey.
  */
 export function ProtectedPanel() {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const showToast = useToast();
 
   const [requests, setRequests] = useState<IncomingGuardianRoleRequest[]>([]);

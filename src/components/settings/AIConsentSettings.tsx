@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useCallback, useEffect, useState } from "react";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { cn } from "@/lib/utils";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { listCategories, setCategoryAIExtractionEnabled } from "@/domain/categories/repository";
@@ -33,7 +33,7 @@ export function AIConsentSettings() {
     setProactiveAlertsConsent,
   } = useAIProcessingConsent();
 
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesError, setCategoriesError] = useState(false);
   const [busyCategoryId, setBusyCategoryId] = useState<string | null>(null);

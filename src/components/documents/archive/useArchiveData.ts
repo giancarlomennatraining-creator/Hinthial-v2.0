@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getLocalUserId } from "@/lib/auth/local-user";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   downloadDocument,
   listDocumentSummaries,
@@ -29,7 +29,7 @@ export type BulkPopover = "category" | "tag" | "dossier" | null;
  * (player inline, note, trascrizione, ordinamento a colonne) resta in DocumentsPanel.
  */
 export function useArchiveData(masterKey: CryptoKey) {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const showToast = useToast();
 
   const [categories, setCategories] = useState<Category[]>([]);

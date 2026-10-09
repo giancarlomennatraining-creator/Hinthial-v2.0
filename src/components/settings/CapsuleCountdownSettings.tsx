@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { getCapsuleCountdownVisible, updateCapsuleCountdownVisible } from "@/domain/profile/repository";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
  * bisogno di restare sincronizzati in tempo reale tra loro.
  */
 export function CapsuleCountdownSettings() {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const [visible, setVisible] = useState(true);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);

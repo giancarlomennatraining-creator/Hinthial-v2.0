@@ -1,17 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/db/supabase/client";
+import { useFriendNameFields } from "@/components/friends/useFriendNameFields";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { listFriends, removeFriendAvatar, updateFriend, updateFriendAvatar } from "@/domain/friends/repository";
 import { inviteFriendToHinthial } from "@/lib/friends/actions";
 import { AvatarPickerCrop } from "@/components/ui/AvatarPickerCrop";
 import type { FriendListItem } from "@/domain/friends/types";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
 
 /** Pagina di modifica di un amico. Conferma via `?updated=1` nell'URL, mai il nome in chiaro. Nessun elenco per id lato repository: si carica l'intero elenco già decifrato e si cerca l'id. */
 export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; friendId: string }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const router = useRouter();
 
   const [friend, setFriend] = useState<FriendListItem | null>(null);
@@ -22,10 +24,8 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
 
   // Campi controllati, seminati una sola volta al primo caricamento di `friend`, non ad ogni refresh.
   const [hydrated, setHydrated] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [displayNameEdited, setDisplayNameEdited] = useState(false);
+  const { firstName, lastName, displayName, fill, handleFirstNameChange, handleLastNameChange, handleDisplayNameChange } =
+    useFriendNameFields();
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarBusy, setAvatarBusy] = useState(false);
@@ -51,33 +51,12 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
   useEffect(() => {
     if (hydrated || !friend) return;
     // Idratazione una tantum dal dato appena arrivato da refresh() (fetch asincrono, non stato derivato da props/state).
+    fill(friend);
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFirstName(friend.firstName);
-    setLastName(friend.lastName);
-    setDisplayName(friend.name);
-    // Se il nome visualizzato coincide già con "nome cognome", resta "automatico" finché non viene toccato direttamente.
-    setDisplayNameEdited(friend.name !== `${friend.firstName} ${friend.lastName}`.trim());
     setAvatarPath(friend.avatarPath);
     setAvatarUrl(friend.avatarUrl);
     setHydrated(true);
-  }, [friend, hydrated]);
-
-  function handleFirstNameChange(event: ChangeEvent<HTMLInputElement>) {
-    const value = event.target.value;
-    setFirstName(value);
-    if (!displayNameEdited) setDisplayName(`${value} ${lastName}`.trim());
-  }
-
-  function handleLastNameChange(event: ChangeEvent<HTMLInputElement>) {
-    const value = event.target.value;
-    setLastName(value);
-    if (!displayNameEdited) setDisplayName(`${firstName} ${value}`.trim());
-  }
-
-  function handleDisplayNameChange(event: ChangeEvent<HTMLInputElement>) {
-    setDisplayName(event.target.value);
-    setDisplayNameEdited(true);
-  }
+  }, [friend, hydrated, fill]);
 
   async function handleAvatarCropped(blob: Blob) {
     setAvatarBusy(true);
@@ -196,7 +175,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
                 type="text"
                 value={firstName}
                 onChange={handleFirstNameChange}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                className={INPUT_FIELD}
               />
             </div>
 
@@ -210,7 +189,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
                 type="text"
                 value={lastName}
                 onChange={handleLastNameChange}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                className={INPUT_FIELD}
               />
             </div>
 
@@ -225,7 +204,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
                 required
                 value={displayName}
                 onChange={handleDisplayNameChange}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                className={INPUT_FIELD}
               />
             </div>
 
@@ -239,7 +218,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
                 type="email"
                 required
                 defaultValue={friend.email}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                className={INPUT_FIELD}
               />
             </div>
 
@@ -253,7 +232,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
                 type="text"
                 required
                 defaultValue={friend.role}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                className={INPUT_FIELD}
               />
             </div>
 
@@ -275,13 +254,13 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
             <button
               type="submit"
               disabled={saving}
-              className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+              className={`${BTN_PRIMARY} disabled:opacity-50`}
             >
               {saving ? "Salvataggio…" : "Salva modifiche"}
             </button>
             <Link
               href="/friends"
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              className={BTN_SECONDARY}
             >
               Annulla
             </Link>

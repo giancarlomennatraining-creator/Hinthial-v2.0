@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   closeCapsule,
   deleteCapsule,
@@ -41,6 +41,7 @@ import type {
 } from "@/domain/capsules/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import { useToast } from "@/components/ui/ToastProvider";
+import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -81,7 +82,7 @@ type SortColumn = "title" | "status" | "recipients" | "openAt" | "contents";
  * dagli originali. Non concede ancora alcun accesso ai destinatari (v. HINTHIAL_MVP.md).
  */
 export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();
@@ -376,7 +377,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
         <Link
           href="/capsules/new"
-          className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
+          className={`hidden shrink-0 ${BTN_PRIMARY} sm:block`}
         >
           + Crea capsula
         </Link>
@@ -496,7 +497,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as CapsuleStatus | "all")}
               aria-label="Filtra per stato"
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={INPUT_FIELD}
             >
               <option value="all">Tutte</option>
               <option value="draft">Bozza</option>
@@ -752,7 +753,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                                     value={transcriptDraft}
                                     onChange={(e) => setTranscriptDraft(e.target.value)}
                                     placeholder="Scrivi qui la trascrizione, o provaci con il tasto qui sopra…"
-                                    className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                                    className={INPUT_FIELD}
                                   />
                                   <div className="flex gap-3">
                                     <button

@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { buildAIContext } from "@/domain/ai/context";
 import { mockAIProvider } from "@/domain/ai/mock-provider";
 import { answerWithClaude } from "@/domain/ai/claude-provider";
@@ -64,7 +64,7 @@ export function AIPanel({
   lastName: string;
   avatarUrl: string | null;
 }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const messagesRef = useRef<HTMLDivElement>(null);
 
   const { messages, addMessages, clear } = useAIChat();

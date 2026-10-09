@@ -10,7 +10,7 @@ import type { UnlockPhase } from "@/components/crypto/unlock/useUnlockFlow";
  */
 
 /** Il lucchetto: il fermo si solleva mentre si scrive, diventa rosso e trema se si sbaglia, si apre quando riesce. */
-export function LockGlyph() {
+function LockGlyph() {
   return (
     <svg className="unlock-lock" viewBox="0 0 92 106" aria-hidden="true">
       <path className="u-shackle" d="M26 48 V34 a20 20 0 0 1 40 0 V48" />
@@ -31,7 +31,7 @@ export function GlassFrame({ phase, wide, children }: { phase: UnlockPhase; wide
 }
 
 /** Quanti gradi gira la ruota per ogni carattere scritto. */
-export const DEGREES_PER_CHARACTER = 27;
+const DEGREES_PER_CHARACTER = 27;
 
 const TICKS = Array.from({ length: 40 }, (_, i) => {
   const angle = (i * 9 * Math.PI) / 180;
