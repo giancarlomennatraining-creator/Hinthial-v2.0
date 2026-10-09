@@ -8,7 +8,7 @@
 
 export type BottomNavItems = string[];
 
-export const DEFAULT_BOTTOM_NAV_ITEMS: BottomNavItems = [
+const DEFAULT_BOTTOM_NAV_ITEMS: BottomNavItems = [
   "/dashboard",
   "/archive",
   "/reminders",

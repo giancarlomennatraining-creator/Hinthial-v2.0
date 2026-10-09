@@ -7,9 +7,6 @@ export const PBKDF2_ITERATIONS = 600_000;
 /** AES-GCM recommended IV length: 96 bits. */
 export const IV_LENGTH_BYTES = 12;
 
-/** AES-256 key length. */
-export const KEY_LENGTH_BYTES = 32;
-
 /** PBKDF2 salt length. */
 export const SALT_LENGTH_BYTES = 16;
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { deleteReminder, listReminders, setReminderCompleted } from "@/domain/reminders/repository";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { PageHelp } from "@/components/help/PageHelp";
@@ -20,6 +20,7 @@ import { saveBlobAsFile } from "@/lib/download";
 import { sanitizeFilename } from "@/lib/utils";
 import type { ReminderListItem } from "@/domain/reminders/types";
 import { useToast } from "@/components/ui/ToastProvider";
+import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 
 type StatusFilter = "all" | "pending" | "completed";
 
@@ -61,7 +62,7 @@ function sortValueFor(reminder: ReminderListItem, column: SortColumn): string {
 }
 
 export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();
@@ -187,7 +188,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
         <Link
           href="/reminders/new"
-          className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
+          className={`hidden shrink-0 ${BTN_PRIMARY} sm:block`}
         >
           + Crea scadenza
         </Link>
@@ -216,7 +217,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
               aria-label="Filtra per stato"
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={INPUT_FIELD}
             >
               <option value="all">Tutte</option>
               <option value="pending">Da completare</option>

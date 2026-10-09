@@ -7,6 +7,7 @@ import type { Category } from "@/domain/categories/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import type { DocumentListItem } from "@/domain/documents/types";
+import { INPUT_FIELD } from "@/components/ui/styles";
 
 export interface DocumentMetadataFieldsValue {
   categoryId: string;
@@ -262,7 +263,7 @@ export function DocumentMetadataFields({
             value={value.issuer}
             onChange={(e) => onChange({ ...value, issuer: e.target.value })}
             placeholder="es. Generali Italia S.p.A."
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className={`w-full ${INPUT_FIELD}`}
           />
         </div>
       ) : null}
@@ -280,7 +281,7 @@ export function DocumentMetadataFields({
           value={value.tagsInput}
           onChange={(e) => onChange({ ...value, tagsInput: e.target.value })}
           placeholder="es. fattura, 2026, casa"
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+          className={`w-full ${INPUT_FIELD}`}
         />
       </div>
 
@@ -296,7 +297,7 @@ export function DocumentMetadataFields({
           value={value.notes}
           onChange={(e) => onChange({ ...value, notes: e.target.value })}
           rows={2}
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+          className={`w-full ${INPUT_FIELD}`}
         />
       </div>
     </div>

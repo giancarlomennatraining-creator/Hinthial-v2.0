@@ -1,179 +1,51 @@
 "use client";
 
-import { PasswordInput } from "@/components/ui/PasswordInput";
-import { useRef, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
-import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
-import { wipeVault } from "@/domain/danger-zone/repository";
-import { sendAccountResetConfirmationEmail } from "@/lib/account/actions";
+import { DangerConfirmCard } from "@/components/settings/DangerConfirmCard";
 import { CheckCircleIcon } from "@/components/icons/nav-icons";
-
-const CONFIRM_PHRASE = "REIMPOSTA TUTTO";
+import { wipeVault } from "@/domain/danger-zone/repository";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
+import { sendAccountResetConfirmationEmail } from "@/lib/account/actions";
 
 /**
  * "Reimposta l'account", irreversibile (v. domain/danger-zone/repository.ts per cosa viene eliminato). A differenza
- * di DeleteAccountCard, l'account resta attivo: solo il suo contenuto viene svuotato. Richiede di reinserire la
- * master password, verificata riprovando a sbloccare con `useMasterKey().unlockWithPassword`: zero-knowledge, il
- * server non la vede mai. La Master Key già sbloccata serve invece a scoprire i path in Storage per `wipeVault`.
+ * di DeleteAccountCard, l'account resta attivo: solo il suo contenuto viene svuotato. La Master Key già sbloccata
+ * serve a scoprire i path in Storage per `wipeVault`.
  */
 export function ResetAccountCard({ userId, masterKey }: { userId: string; masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
-  const { unlockWithPassword } = useMasterKey();
-
-  const [open, setOpen] = useState(false);
-  const [confirmText, setConfirmText] = useState("");
-  const [masterPassword, setMasterPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
-
-  function openModal() {
-    setConfirmText("");
-    setMasterPassword("");
-    setError(null);
-    setOpen(true);
-  }
-
-  function closeModal() {
-    if (busy) return;
-    setOpen(false);
-  }
-
-  async function handleConfirm() {
-    setBusy(true);
-    setError(null);
-    try {
-      try {
-        await unlockWithPassword(masterPassword);
-      } catch {
-        throw new Error("Master password non corretta.");
-      }
-
-      await wipeVault(supabase, masterKey, userId);
-      setOpen(false);
-      setDone(true);
-
-      // Best-effort: l'operazione è già avvenuta, un'email non riuscita non deve farla sembrare fallita.
-      await sendAccountResetConfirmationEmail().catch(() => {});
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile completare l'operazione.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const supabase = useSupabase();
 
   return (
-    <div className="flex max-w-md flex-col gap-4 rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
-      <div>
-        <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">
-          Reimposta l&apos;account
-        </h2>
-        <p className="mt-1 text-sm text-red-800/90 dark:text-red-400/90">
-          Svuota completamente il tuo vault (Archivio, Beni, Amici e Capsule) e
-          ripristina le categorie predefinite, mantenendo l&apos;account attivo — utile per
-          ricominciare da capo senza cancellarti. Le Scadenze non vengono eliminate — restano,
-          solo scollegate da ciò che viene cancellato. Richiede la tua master password.
+    <DangerConfirmCard
+      title="Reimposta l'account"
+      description={
+        <>
+          Svuota completamente il tuo vault (Archivio, Beni, Amici e Capsule) e ripristina le categorie predefinite,
+          mantenendo l&apos;account attivo — utile per ricominciare da capo senza cancellarti. Le Scadenze non vengono
+          eliminate — restano, solo scollegate da ciò che viene cancellato. Richiede la tua master password.
           L&apos;operazione non è reversibile, e riceverai un&apos;email di conferma.
-        </p>
-      </div>
-
-      {done ? (
+        </>
+      }
+      triggerLabel="Reimposta account"
+      dialogLabel="Conferma reimpostazione account"
+      dialogText="Archivio, Beni, Amici e Capsule verranno eliminati per sempre. Non si può annullare."
+      confirmPhrase="REIMPOSTA TUTTO"
+      idPrefix="reset"
+      confirmLabel="Reimposta definitivamente"
+      busyLabel="Reimpostazione…"
+      fallbackError="Impossibile completare l'operazione."
+      doneMessage={
         <p className="flex items-start gap-1.5 text-sm font-medium text-red-700 dark:text-red-400">
           <CheckCircleIcon width={16} height={16} className="mt-0.5 shrink-0" />
           Il vault è stato svuotato. Le categorie predefinite sono di nuovo disponibili.
         </p>
-      ) : (
-        <button
-          type="button"
-          onClick={openModal}
-          className="self-start rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-        >
-          Reimposta account
-        </button>
-      )}
+      }
+      run={async (markDone) => {
+        await wipeVault(supabase, masterKey, userId);
+        markDone();
 
-      {open ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={closeModal}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Conferma reimpostazione account"
-            onClick={(e) => e.stopPropagation()}
-            className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
-          >
-            <div>
-              <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">Sei sicuro?</h3>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                Archivio, Beni, Amici e Capsule verranno eliminati per sempre. Non
-                si può annullare.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="reset-master-password"
-                className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-              >
-                Master password
-              </label>
-              <PasswordInput
-                id="reset-master-password"
-                value={masterPassword}
-                onChange={(e) => setMasterPassword(e.target.value)}
-                autoComplete="current-password"
-                disabled={busy}
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="confirm-reset"
-                className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-              >
-                Scrivi <strong>{CONFIRM_PHRASE}</strong> per confermare
-              </label>
-              <input
-                id="confirm-reset"
-                type="text"
-                value={confirmText}
-                onChange={(e) => setConfirmText(e.target.value)}
-                autoComplete="off"
-                disabled={busy}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-              />
-            </div>
-
-            {error ? (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-                {error}
-              </p>
-            ) : null}
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                disabled={confirmText !== CONFIRM_PHRASE || !masterPassword || busy}
-                onClick={handleConfirm}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {busy ? "Reimpostazione…" : "Reimposta definitivamente"}
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={closeModal}
-                className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-              >
-                Annulla
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </div>
+        // Best-effort: l'operazione è già avvenuta, un'email non riuscita non deve farla sembrare fallita.
+        await sendAccountResetConfirmationEmail().catch(() => {});
+      }}
+    />
   );
 }

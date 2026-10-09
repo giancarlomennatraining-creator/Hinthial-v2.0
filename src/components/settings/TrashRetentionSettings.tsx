@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { getTrashRetentionDays, updateTrashRetentionDays } from "@/domain/profile/repository";
 
 /** Le uniche opzioni previste (v. richiesta utente) --- non un numero libero, stessa disciplina di digital_legacy_preset. */
@@ -15,7 +15,7 @@ const TRASH_RETENTION_DAYS_OPTIONS = [5, 10, 15, 20, 25, 30] as const;
  * Provider condiviso).
  */
 export function TrashRetentionSettings() {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const [days, setDays] = useState(15);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);

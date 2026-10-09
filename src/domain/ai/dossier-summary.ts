@@ -8,12 +8,12 @@ import type { DossierSummary } from "@/domain/dossiers/types";
  */
 
 export const MAX_SUMMARY_DOCUMENTS = 30;
-export const MAX_SYNTHESIS_CHARS = 1_500;
-export const MAX_FIELDS_PER_DOCUMENT = 8;
-export const MAX_FIELD_VALUE_CHARS = 120;
-export const MAX_TITLE_CHARS = 200;
+const MAX_SYNTHESIS_CHARS = 1_500;
+const MAX_FIELDS_PER_DOCUMENT = 8;
+const MAX_FIELD_VALUE_CHARS = 120;
+const MAX_TITLE_CHARS = 200;
 
-export interface DossierSummaryDocument {
+interface DossierSummaryDocument {
   id: string;
   name: string;
   /** `YYYY-MM-DD`: quando è entrato in Hinthial. */

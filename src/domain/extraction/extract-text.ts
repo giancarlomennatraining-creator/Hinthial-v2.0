@@ -39,12 +39,3 @@ export async function extractContent(
     return null;
   }
 }
-
-/** Solo il testo (ciò che va in `extractedText`), o null se non c'è nulla da estrarre. Non lancia mai. */
-export async function extractText(
-  bytes: Uint8Array,
-  mimeType: string,
-  onProgress?: ExtractionProgress,
-): Promise<string | null> {
-  return (await extractContent(bytes, mimeType, onProgress))?.text ?? null;
-}

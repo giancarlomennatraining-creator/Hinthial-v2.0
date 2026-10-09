@@ -12,7 +12,7 @@ import type {
  * dice il documento. "pending" = in corso o interrotta, "failed" = fermata da un errore, "partial" = letto tutto ma
  * senza la sintesi finale o solo in parte (tetto per documento), "completed" = letto e sintetizzato.
  */
-export const ANALYSIS_STATUSES = ["pending", "completed", "partial", "failed"] as const;
+const ANALYSIS_STATUSES = ["pending", "completed", "partial", "failed"] as const;
 export type AnalysisStatus = (typeof ANALYSIS_STATUSES)[number];
 
 export function isAnalysisStatus(value: unknown): value is AnalysisStatus {

@@ -39,7 +39,7 @@ const COMMON_PASSWORDS = new Set([
   "iloveyou1",
 ]);
 
-export type PasswordStrengthLevel =
+type PasswordStrengthLevel =
   | "molto-debole"
   | "debole"
   | "discreta"

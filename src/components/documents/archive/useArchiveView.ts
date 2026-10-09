@@ -7,7 +7,7 @@ import { useMediaQuery } from "@/lib/use-media-query";
 import { isArchiveViewMode, type ArchiveViewMode } from "@/lib/list-view";
 
 /** Nome del parametro dell'indirizzo che sceglie la vista solo per questa visita (`/archive?vista=timeline`). */
-export const ARCHIVE_VIEW_PARAM = "vista";
+const ARCHIVE_VIEW_PARAM = "vista";
 
 /**
  * La vista dell'Archivio che si sta guardando: quella dell'indirizzo se c'è (vale per questa visita, il tasto indietro

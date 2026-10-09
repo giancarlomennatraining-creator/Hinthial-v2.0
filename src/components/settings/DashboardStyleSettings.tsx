@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { getDashboardStyle, updateDashboardStyle } from "@/domain/profile/repository";
 import {
   DASHBOARD_STYLE_OPTIONS,
@@ -88,7 +88,7 @@ function StylePreview({ style }: { style: DashboardStyle }) {
  * spiegazione per ognuno. Sincronizzato sul server: la Dashboard lo legge al prossimo caricamento della pagina.
  */
 export function DashboardStyleSettings() {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const [style, setStyle] = useState<DashboardStyle>(DEFAULT_DASHBOARD_STYLE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

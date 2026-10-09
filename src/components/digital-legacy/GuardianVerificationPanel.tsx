@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   getGuardianVerificationRequest,
   respondToGuardianVerificationRequest,
   type GuardianVerificationRequestView,
   type GuardianVerificationResponse,
 } from "@/domain/digital-legacy/guardians";
+import { BTN_PRIMARY } from "@/components/ui/styles";
 
 /**
  * FASE 12, coinvolgimento guardiani --- dove porta il link nell'email
@@ -17,7 +18,7 @@ import {
  * vault coinvolto.
  */
 export function GuardianVerificationPanel({ requestId }: { requestId: string }) {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const [request, setRequest] = useState<GuardianVerificationRequestView | null | "loading">("loading");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -108,7 +109,7 @@ export function GuardianVerificationPanel({ requestId }: { requestId: string }) 
           type="button"
           disabled={busy}
           onClick={() => handleRespond("ok")}
-          className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+          className={`${BTN_PRIMARY} disabled:opacity-50`}
         >
           Sì, sta bene
         </button>

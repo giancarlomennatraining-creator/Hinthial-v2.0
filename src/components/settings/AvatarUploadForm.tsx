@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useState } from "react";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { removeAvatar, updateAvatar } from "@/domain/profile/repository";
 import { AvatarPickerCrop } from "@/components/ui/AvatarPickerCrop";
 
@@ -26,7 +26,7 @@ export function AvatarUploadForm({
   avatarPath: string | null;
   avatarUrl: string | null;
 }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const [avatarPath, setAvatarPath] = useState(initialAvatarPath);
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
 

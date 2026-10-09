@@ -4,6 +4,7 @@
  * delicata e identica per entrambi.
  */
 
+import type { PDFPageProxy } from "pdfjs-dist";
 import type { PageTextItem } from "@/domain/ai/analysis/page-highlight";
 
 /**
@@ -47,6 +48,22 @@ export interface PdfPageWithText {
   items: PageTextItem[];
 }
 
+/** Disegna una pagina su un canvas della larghezza data, su fondo bianco (le pagine con trasparenze arriverebbero su nero). Null dove non c'è un contesto 2D. */
+async function drawPage(page: PDFPageProxy, width: number) {
+  const unscaled = page.getViewport({ scale: 1 });
+  const viewport = page.getViewport({ scale: width / unscaled.width });
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+  canvas.width = Math.round(viewport.width);
+  canvas.height = Math.round(viewport.height);
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  await page.render({ canvas, viewport }).promise;
+  return { canvas, viewport };
+}
+
 /** Disegna la pagina `pageNumber` e ne restituisce anche il testo con le coordinate, per evidenziarvi una frase. Null dove non si può disegnare. */
 export async function renderPdfPageWithText(
   bytes: Uint8Array,
@@ -62,17 +79,9 @@ export async function renderPdfPageWithText(
     if (pageNumber < 1 || pageNumber > doc.numPages) return null;
     const page = await doc.getPage(pageNumber);
     try {
-      const unscaled = page.getViewport({ scale: 1 });
-      const viewport = page.getViewport({ scale: width / unscaled.width });
-
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-      if (!context) return null;
-      canvas.width = Math.round(viewport.width);
-      canvas.height = Math.round(viewport.height);
-      context.fillStyle = "#ffffff";
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      await page.render({ canvas, viewport }).promise;
+      const drawn = await drawPage(page, width);
+      if (!drawn) return null;
+      const { canvas, viewport } = drawn;
 
       const content = await page.getTextContent();
       const items: PageTextItem[] = [];
@@ -113,20 +122,9 @@ export async function renderPdfFirstPage(
     const doc = await loadingTask.promise;
     const page = await doc.getPage(1);
     try {
-      const unscaled = page.getViewport({ scale: 1 });
-      const viewport = page.getViewport({ scale: width / unscaled.width });
-
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-      if (!context) return null;
-
-      canvas.width = Math.round(viewport.width);
-      canvas.height = Math.round(viewport.height);
-      // Le pagine con trasparenze arriverebbero su fondo nero.
-      context.fillStyle = "#ffffff";
-      context.fillRect(0, 0, canvas.width, canvas.height);
-
-      await page.render({ canvas, viewport }).promise;
+      const drawn = await drawPage(page, width);
+      if (!drawn) return null;
+      const { canvas } = drawn;
 
       // JPEG e non PNG: una pagina scansionata è una fotografia, e in PNG
       // peserebbe alcuni megabyte per un'anteprima che si guarda e basta.

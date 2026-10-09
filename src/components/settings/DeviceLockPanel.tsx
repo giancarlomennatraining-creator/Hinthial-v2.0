@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { getDeviceLockRecord } from "@/lib/device-lock-storage";
 import {
   listTrustedDevices,
@@ -11,6 +11,7 @@ import {
 } from "@/domain/trusted-devices/repository";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import { TextField } from "@/components/ui/TextField";
+import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 
 /** Solo un suggerimento amichevole, mai affidabile al 100% --- l'utente può sempre correggerlo. */
 function guessDeviceLabel(): string {
@@ -50,7 +51,7 @@ function formatDate(iso: string): string {
  * ma da sola non basta più a nulla una volta che il server non lo riconosce più come fidato.
  */
 export function DeviceLockPanel({ userId }: { userId: string }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const {
     deviceLockSupported,
     deviceLockAvailable,
@@ -194,7 +195,7 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="es. Il mio telefono"
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={INPUT_FIELD}
             />
           </div>
 
@@ -227,7 +228,7 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
           <button
             type="submit"
             disabled={busy || !confirmed}
-            className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+            className={`self-start ${BTN_PRIMARY} disabled:opacity-50`}
           >
             {busy ? "Registrazione…" : "Rendi fidato questo dispositivo"}
           </button>

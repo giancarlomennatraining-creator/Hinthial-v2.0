@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { listDossiers } from "@/domain/dossiers/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
 import { createDossierShare, listDossierShares, revokeDossierShare, type DossierShare } from "@/domain/dossiers/shares-repository";
@@ -45,7 +45,7 @@ const OPTION_BASE = "flex cursor-pointer items-start gap-2.5 rounded-xl border-[
  * la vede mai. Il link si chiude da solo alla scadenza e si può revocare quando si vuole.
  */
 export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKey; dossierId: string }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const showToast = useToast();
 
   const [dossier, setDossier] = useState<DossierListItem | null>(null);

@@ -6,7 +6,7 @@
 
 export type AnalysisValueType = "date" | "text" | "amount" | "identifier";
 
-export interface SchemaField {
+interface SchemaField {
   /** snake_case, stessa convenzione del vocabolario dei campi (domain/structured-fields). */
   key: string;
   label: string;

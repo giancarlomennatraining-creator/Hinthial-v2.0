@@ -1,7 +1,7 @@
 export type ImportKind = "friends" | "assets" | "reminders";
 
 /** One CSV column, described for both the template generator and the step-2 explanation. */
-export interface ImportColumn {
+interface ImportColumn {
   /** Internal field key --- not shown to the user. */
   key: string;
   /** CSV header text, also the on-screen column label. */

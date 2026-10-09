@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   countCategoryUsage,
   createCategory,
@@ -13,6 +13,7 @@ import type { Category } from "@/domain/categories/types";
 import { DocumentTypeCategoriesPanel } from "@/components/settings/DocumentTypeCategoriesPanel";
 import { IconPicker } from "@/components/ui/IconPicker";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
+import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 
 const DEFAULT_ICON = "📁";
 
@@ -21,7 +22,7 @@ const DEFAULT_ICON = "📁";
  * (a generic label, not personal content, see the categories migration).
  */
 export function CategoriesPanel() {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   // Serve solo a cifrare il nome nell'evento di eliminazione, quando il vault è sbloccato.
   const { status } = useMasterKey();
 
@@ -204,14 +205,14 @@ export function CategoriesPanel() {
             type="text"
             required
             placeholder="es. Hobby"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className={INPUT_FIELD}
           />
         </div>
 
         <button
           type="submit"
           disabled={creating}
-          className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+          className={`${BTN_PRIMARY} disabled:opacity-50`}
         >
           {creating ? "Creazione…" : "Aggiungi categoria"}
         </button>
@@ -261,7 +262,7 @@ export function CategoriesPanel() {
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                      className={INPUT_FIELD}
                     />
                   </div>
                   <button

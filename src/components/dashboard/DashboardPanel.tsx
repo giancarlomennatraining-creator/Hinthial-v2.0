@@ -12,6 +12,7 @@ import { PageHelp } from "@/components/help/PageHelp";
 import { rememberUnlockDismissed, unlockWasDismissed, useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import type { DashboardStyle } from "@/lib/dashboard-style";
+import { BTN_PRIMARY } from "@/components/ui/styles";
 
 /**
  * The greeting always renders, regardless of encryption status ---
@@ -105,7 +106,7 @@ export function DashboardPanel({ displayName, style }: { displayName: string; st
               <button
                 type="button"
                 onClick={() => requestUnlock({ dismissible: true, onDismiss: rememberUnlockDismissed })}
-                className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+                className={BTN_PRIMARY}
               >
                 Sblocca ora
               </button>
@@ -124,7 +125,7 @@ export function DashboardPanel({ displayName, style }: { displayName: string; st
           <button
             type="button"
             onClick={() => requestSetup({ dismissible: true })}
-            className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+            className={BTN_PRIMARY}
           >
             Crea la master password
           </button>

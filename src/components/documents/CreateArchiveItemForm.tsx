@@ -10,7 +10,7 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   createTextNote,
   getDocumentById,
@@ -62,6 +62,7 @@ import type {
   DocumentListItem,
   DocumentMetadataInput,
 } from "@/domain/documents/types";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
 
 type CreationMode = "upload" | "record" | "note";
 
@@ -305,7 +306,7 @@ function FileReadingStatus({ reading }: { reading: ReadingState }) {
  * Dopo il salvataggio, i passi di cosa succede dopo (v. "Concept D"), invece del ritorno diretto all'archivio.
  */
 export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { masterEnabled, extractionConsent } = useAIProcessingConsent();
@@ -925,7 +926,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                           placeholder={
                             pickedFile?.name ?? "es. Polizza auto 2026"
                           }
-                          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                          className={`w-full ${INPUT_FIELD}`}
                         />
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
                           Lascia vuoto per usare il nome del file.
@@ -960,7 +961,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                           placeholder={
                             recordedFile?.name ?? "es. Colloquio col notaio"
                           }
-                          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                          className={`w-full ${INPUT_FIELD}`}
                         />
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
                           Lascia vuoto per usare il nome della registrazione.
@@ -982,7 +983,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                           value={noteTitle}
                           onChange={(e) => setNoteTitle(e.target.value)}
                           placeholder="es. Combinazione della cassaforte"
-                          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                          className={INPUT_FIELD}
                         />
                       </div>
                       <div className="flex flex-col gap-1">
@@ -997,7 +998,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                           rows={6}
                           value={noteBody}
                           onChange={(e) => setNoteBody(e.target.value)}
-                          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                          className={INPUT_FIELD}
                         />
                       </div>
                     </div>
@@ -1145,13 +1146,13 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
             <div className="flex flex-wrap gap-3">
               <Link
                 href={`/archive/${savedDoc.id}`}
-                className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+                className={BTN_PRIMARY}
               >
                 Vai alla scheda del documento →
               </Link>
               <Link
                 href="/archive?created=1"
-                className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                className={BTN_SECONDARY}
               >
                 Torna all&apos;archivio
               </Link>

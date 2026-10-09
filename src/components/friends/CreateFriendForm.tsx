@@ -1,12 +1,14 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/db/supabase/client";
+import { useFriendNameFields } from "@/components/friends/useFriendNameFields";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { createFriend, updateFriendAvatar } from "@/domain/friends/repository";
 import { inviteFriendToHinthial } from "@/lib/friends/actions";
 import { AvatarPickerCrop } from "@/components/ui/AvatarPickerCrop";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
 
 /** Un seed stabile per il colore delle iniziali finché l'amico non ha ancora un id --- basta che non cambi ad ogni digitazione. */
 function avatarSeedFor(firstName: string, lastName: string): string {
@@ -15,38 +17,18 @@ function avatarSeedFor(firstName: string, lastName: string): string {
 
 /** Pagina di creazione di un amico. Alla creazione torna a /friends con `?created=1`, mai il nome (finirebbe in chiaro nella cronologia del browser). */
 export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const router = useRouter();
 
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [invite, setInvite] = useState(false);
 
-  // "Nome visualizzato" parte come "Nome Cognome" e resta in sincronia finché non viene toccato direttamente.
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [displayNameEdited, setDisplayNameEdited] = useState(false);
+  const { firstName, lastName, displayName, handleFirstNameChange, handleLastNameChange, handleDisplayNameChange } =
+    useFriendNameFields();
 
   const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
-
-  function handleFirstNameChange(event: ChangeEvent<HTMLInputElement>) {
-    const value = event.target.value;
-    setFirstName(value);
-    if (!displayNameEdited) setDisplayName(`${value} ${lastName}`.trim());
-  }
-
-  function handleLastNameChange(event: ChangeEvent<HTMLInputElement>) {
-    const value = event.target.value;
-    setLastName(value);
-    if (!displayNameEdited) setDisplayName(`${firstName} ${value}`.trim());
-  }
-
-  function handleDisplayNameChange(event: ChangeEvent<HTMLInputElement>) {
-    setDisplayName(event.target.value);
-    setDisplayNameEdited(true);
-  }
 
   function handleAvatarCropped(blob: Blob) {
     if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
@@ -158,7 +140,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
             placeholder="es. Maria"
             value={firstName}
             onChange={handleFirstNameChange}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className={INPUT_FIELD}
           />
         </div>
 
@@ -173,7 +155,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
             placeholder="es. Rossi"
             value={lastName}
             onChange={handleLastNameChange}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className={INPUT_FIELD}
           />
         </div>
 
@@ -189,7 +171,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
             placeholder="es. Maria Rossi"
             value={displayName}
             onChange={handleDisplayNameChange}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className={INPUT_FIELD}
           />
         </div>
 
@@ -203,7 +185,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
             type="email"
             required
             placeholder="maria.rossi@esempio.it"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className={INPUT_FIELD}
           />
         </div>
 
@@ -217,7 +199,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
             type="text"
             required
             placeholder="es. Coniuge"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className={INPUT_FIELD}
           />
         </div>
 
@@ -239,13 +221,13 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
         <button
           type="submit"
           disabled={creating}
-          className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+          className={`${BTN_PRIMARY} disabled:opacity-50`}
         >
           {creating ? "Aggiunta…" : "Aggiungi amico"}
         </button>
         <Link
           href="/friends"
-          className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          className={BTN_SECONDARY}
         >
           Annulla
         </Link>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useDismissOnOutside } from "@/lib/use-dismiss-on-outside";
 
 export interface ChipOption {
   value: string;
@@ -29,21 +30,7 @@ export function ChipMenu({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
-    }
-    function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [open]);
+  useDismissOnOutside(ref, open, () => setOpen(false), { escape: true });
 
   const selected = options.find((o) => o.value === value);
 

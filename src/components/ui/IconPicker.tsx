@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useDismissOnOutside } from "@/lib/use-dismiss-on-outside";
 
 /** Curated set --- not exhaustive, just a practical starting point for category icons. */
 const ICON_CHOICES = [
@@ -33,15 +34,7 @@ export function IconPicker({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  useDismissOnOutside(containerRef, open, () => setOpen(false));
 
   return (
     <div ref={containerRef} className="relative">

@@ -106,7 +106,7 @@ function startOfDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
 
-export function daysBetween(from: Date, to: Date): number {
+function daysBetween(from: Date, to: Date): number {
   return Math.round((startOfDay(to) - startOfDay(from)) / DAY_MS);
 }
 
@@ -148,7 +148,7 @@ export function monthLong(index: number): string {
   return MONTHS_LONG[index];
 }
 
-export function monthShort(index: number): string {
+function monthShort(index: number): string {
   return MONTHS_SHORT[index];
 }
 
@@ -181,7 +181,7 @@ export function relativeDay(iso: string, now: Date): string {
 export type ArchiveViewPreset = "all" | "expiring" | "unread" | "uncategorized" | "recent" | "duplicates";
 
 /** Il testo su cui si cerca: nome, emittente, note, tag, campi della Scheda (targa, numero polizza...), categoria e bene. */
-export function searchableText(
+function searchableText(
   doc: DocumentSummary,
   categories: Pick<Category, "id" | "name">[],
   assets: Pick<AssetListItem, "id" | "name">[],
@@ -322,7 +322,7 @@ export interface MonthGroup {
   docs: DocumentSummary[];
 }
 
-export function monthKeyOf(iso: string): string {
+function monthKeyOf(iso: string): string {
   const d = new Date(iso);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
@@ -404,7 +404,7 @@ export function buildCollections(docs: DocumentSummary[], categories: Category[]
 // ---------------------------------------------------------------------------------------------------------------
 
 export const SHELF_COLUMNS = 42;
-export const SHELF_ROWS = 4;
+const SHELF_ROWS = 4;
 const SPINE_MIN_HEIGHT = 96;
 const SPINE_MAX_HEIGHT = 152;
 

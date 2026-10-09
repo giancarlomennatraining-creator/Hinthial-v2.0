@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useCallback, useEffect, useState } from "react";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   countBackupCodes,
   enrollTotpFactor,
@@ -15,6 +15,7 @@ import { saveBlobAsFile } from "@/lib/download";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import type { MfaFactor, TotpEnrollment } from "@/domain/mfa/types";
 import { AlertTriangleIcon } from "@/components/icons/nav-icons";
+import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
@@ -60,7 +61,7 @@ function FactorList({
  * modo per attivarla per questo scopo, solo per il login primario.
  */
 export function MfaSettingsPanel({ userId }: { userId: string }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
 
   const [factors, setFactors] = useState<MfaFactor[] | null>(null);
   const [backupCodesCount, setBackupCodesCount] = useState<number | null>(null);
@@ -251,7 +252,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="000000"
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                className={INPUT_FIELD}
               />
             </div>
 
@@ -266,7 +267,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
                 type="button"
                 disabled={busy}
                 onClick={handleConfirmEnroll}
-                className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                className={`${BTN_PRIMARY} disabled:opacity-50`}
               >
                 {busy ? "Verifica…" : "Conferma"}
               </button>
@@ -309,14 +310,14 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
                   value={deviceName}
                   onChange={(e) => setDeviceName(e.target.value)}
                   placeholder="es. Il mio telefono"
-                  className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                  className={INPUT_FIELD}
                 />
               </div>
               <button
                 type="button"
                 disabled={busy}
                 onClick={handleStartEnroll}
-                className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                className={`${BTN_PRIMARY} disabled:opacity-50`}
               >
                 {factors.length > 0 ? "+ Aggiungi un altro dispositivo" : "Attiva l'autenticazione a due fattori"}
               </button>
@@ -381,7 +382,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
                 type="button"
                 disabled={!confirmedSavedCodes}
                 onClick={handleDismissRevealedCodes}
-                className="self-start rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                className={`self-start ${BTN_PRIMARY} disabled:opacity-50`}
               >
                 Fatto
               </button>

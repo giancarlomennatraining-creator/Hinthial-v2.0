@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { useMountedTransition } from "@/lib/use-mounted-transition";
 import { cn } from "@/lib/utils";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
@@ -77,7 +77,7 @@ function Highlighted({ text, query }: { text: string; query: string }) {
 export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
   const router = useRouter();
   const { status } = useMasterKey();
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 

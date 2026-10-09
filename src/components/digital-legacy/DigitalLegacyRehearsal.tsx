@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { listFriends } from "@/domain/friends/repository";
 import { listCapsules } from "@/domain/capsules/repository";
 import {
@@ -108,7 +108,7 @@ export function DigitalLegacyRehearsal({
   masterKey: CryptoKey;
   settings: DigitalLegacySettings;
 }) {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

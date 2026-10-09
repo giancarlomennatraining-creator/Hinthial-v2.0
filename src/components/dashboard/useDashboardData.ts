@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { buildSummaryContext } from "@/domain/ai/context";
 import type { SummaryContext } from "@/domain/ai/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
@@ -13,7 +13,7 @@ import type { ReminderListItem } from "@/domain/reminders/types";
  * già salvato (o in modo ottimistico): evita di ricostruire e decifrare tutto per un "segna fatta".
  */
 export function useDashboardData(masterKey: CryptoKey) {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const [context, setContext] = useState<SummaryContext | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -1,29 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
-import {
-  encryptBytes,
-  decryptBytes,
-  parseEnvelope,
-  serializeEnvelope,
-  utf8ToBytes,
-  bytesToUtf8,
-} from "@/lib/crypto";
 import { EMPTY_EMERGENCY_CARD, type EmergencyCard, type EmergencyContact } from "@/domain/emergency-card/types";
+import { decryptOptionalText, encryptOptionalText } from "@/lib/crypto/optional-text";
 
 const COLUMNS =
   "encrypted_blood_type, encrypted_allergies, encrypted_conditions, encrypted_medications, encrypted_doctor_name, encrypted_doctor_phone, encrypted_contacts, updated_at";
-
-/** null/vuoto in -> null fuori: niente da cifrare, niente da salvare --- v. domain/documents/repository.ts, encryptOptionalText. */
-async function encryptOptionalText(masterKey: CryptoKey, text: string): Promise<string | null> {
-  if (!text.trim()) return null;
-  return serializeEnvelope(await encryptBytes(masterKey, utf8ToBytes(text)));
-}
-
-async function decryptOptionalText(masterKey: CryptoKey, serialized: string | null): Promise<string> {
-  if (!serialized) return "";
-  const bytes = await decryptBytes(masterKey, parseEnvelope(serialized));
-  return bytesToUtf8(bytes);
-}
 
 /** Un contatto malformato (o l'intero campo corrotto) viene scartato in silenzio --- una scheda d'emergenza illeggibile non deve mai bloccare le impostazioni. */
 function parseContacts(json: string): EmergencyContact[] {

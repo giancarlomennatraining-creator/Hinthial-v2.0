@@ -371,7 +371,7 @@ export async function closeCapsule(
 }
 
 /** Cambio di stato registrato, nient'altro --- v. shareCapsule per il vero significato di "Condividi", che lo usa internamente. */
-export async function setCapsuleStatus(
+async function setCapsuleStatus(
   supabase: SupabaseClient<Database>,
   capsuleId: string,
   status: CapsuleStatus,

@@ -10,6 +10,27 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-09 (70)
+
+### Pulizia del codice: codice morto e duplicazioni
+
+**Cosa fa:**
+- Nessun cambiamento visibile per chi usa Hinthial: è una pulizia interna, con più di 700 righe in meno (523 aggiunte, 1230 tolte su 112 file).
+- **Tolto il codice che nessuno usava**: due icone (`KeyIcon`, `TrashIcon`), una costante di cifratura, la funzione `extractText` (restava solo `extractContent`), `isOnboardingComplete`, e il modulo `domain/dossiers/timeline.ts` con il suo test (la cronologia di un fascicolo non è più in uso). Una quarantina di funzioni, costanti e tipi usati solo dentro il loro file non sono più esportati.
+- **Un solo punto per ciò che era copiato**:
+  - `useSupabase()` al posto di due modi diversi di creare il client del database in 50 componenti;
+  - `NavItemsEditor`: l'editor delle voci di navigazione, prima copiato tra "Barra in basso" e "Menu principale";
+  - `DangerConfirmCard`: la scheda con finestra di conferma, prima copiata tra "Reimposta account" e "Cancella account";
+  - `useDismissOnOutside`: la chiusura di menu e pannelli al click fuori (6 copie);
+  - `useFriendNameFields`: i campi nome di un amico, copiati tra creazione e modifica;
+  - `lib/http/api-guards.ts`: autenticazione e lettura del corpo nelle 3 rotte `api/ai`;
+  - `lib/crypto/optional-text.ts`: cifratura/decifratura di un testo facoltativo, copiata in 3 repository;
+  - `ui/styles.ts`: le classi di pulsante principale, secondario e campo di testo, ripetute in 130 punti;
+  - disegno di una pagina PDF su canvas, copiato due volte in `lib/pdf.ts`.
+- Il lint ora analizza anche i componenti che prima sfuggivano alla regola sui riferimenti: due punti hanno richiesto un'esenzione motivata (caricamento al montaggio).
+
+---
+
 ## 2026-10-09 (69)
 
 ### Test più stabili

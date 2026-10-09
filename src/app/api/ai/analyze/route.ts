@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/lib/db/supabase/server";
+import { authenticate, readJsonBody } from "@/lib/http/api-guards";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
 import { createClaudeAnalysisProvider } from "@/lib/ai/claude-analysis-provider";
@@ -27,20 +27,13 @@ function isCategoryOption(value: unknown): value is CategoryOption {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Devi essere autenticato." }, { status: 401 });
-  }
+  const auth = await authenticate();
+  if (auth instanceof NextResponse) return auth;
+  const { supabase, user } = auth;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Richiesta non valida." }, { status: 400 });
-  }
+  const parsedBody = await readJsonBody(request);
+  if (parsedBody instanceof NextResponse) return parsedBody;
+  const { body } = parsedBody;
 
   const { documentId, mode, block, partials, documentType, categories, scope, reread } = (body ?? {}) as {
     documentId?: unknown;

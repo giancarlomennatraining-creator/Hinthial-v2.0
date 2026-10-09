@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   getDigitalLegacySettings,
   updateDigitalLegacySettings,
@@ -23,6 +23,7 @@ import { DigitalLegacyStatusBanner } from "@/components/digital-legacy/DigitalLe
 import { DigitalLegacyRehearsal } from "@/components/digital-legacy/DigitalLegacyRehearsal";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { cn } from "@/lib/utils";
+import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 
 const GUARDIAN_QUORUM_ORDER: GuardianQuorum[] = ["unanimous", "majority", "single"];
 
@@ -69,7 +70,7 @@ const NUMERIC_FIELDS: {
  * la scelta a "Personalizzato".
  */
 export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const showToast = useToast();
 
   const [settings, setSettings] = useState<DigitalLegacySettings | null>(null);
@@ -289,7 +290,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
                 id="digital-legacy-guardian-quorum"
                 value={settings.guardianQuorum}
                 onChange={(e) => updateQuorum(e.target.value as GuardianQuorum)}
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                className={`w-full ${INPUT_FIELD}`}
               >
                 {GUARDIAN_QUORUM_ORDER.map((quorum) => (
                   <option key={quorum} value={quorum}>
@@ -316,7 +317,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
         type="button"
         onClick={handleSave}
         disabled={saving}
-        className="w-fit rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+        className={`w-fit ${BTN_PRIMARY} disabled:opacity-50`}
       >
         {saving ? "Salvataggio…" : "Salva"}
       </button>

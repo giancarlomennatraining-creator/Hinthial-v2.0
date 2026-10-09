@@ -16,6 +16,7 @@ import {
   parseEnvelope,
 } from "@/lib/crypto";
 import { TextField } from "@/components/ui/TextField";
+import { BTN_PRIMARY } from "@/components/ui/styles";
 
 /**
  * Lato dispositivo già fidato, dopo aver scansionato il QR mostrato dal dispositivo nuovo: cifra il Master Key
@@ -161,7 +162,7 @@ export function PairingApprovalPanel({ requestId }: { requestId: string }) {
       <button
         type="submit"
         disabled={busy}
-        className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+        className={`${BTN_PRIMARY} disabled:opacity-50`}
       >
         {busy ? "Autorizzazione…" : "Autorizza"}
       </button>

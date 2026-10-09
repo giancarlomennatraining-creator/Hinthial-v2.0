@@ -6,7 +6,7 @@
 
 export type UnlockStyle = "glass" | "vault" | "fingerprint";
 
-export const DEFAULT_UNLOCK_STYLE: UnlockStyle = "glass";
+const DEFAULT_UNLOCK_STYLE: UnlockStyle = "glass";
 
 export interface UnlockStyleOption {
   value: UnlockStyle;
@@ -36,9 +36,9 @@ export const UNLOCK_STYLE_OPTIONS: UnlockStyleOption[] = [
   },
 ];
 
-export const UNLOCK_STYLES: UnlockStyle[] = UNLOCK_STYLE_OPTIONS.map((o) => o.value);
+const UNLOCK_STYLES: UnlockStyle[] = UNLOCK_STYLE_OPTIONS.map((o) => o.value);
 
-export function isUnlockStyle(value: unknown): value is UnlockStyle {
+function isUnlockStyle(value: unknown): value is UnlockStyle {
   return typeof value === "string" && (UNLOCK_STYLES as string[]).includes(value);
 }
 

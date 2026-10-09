@@ -24,9 +24,9 @@ export const DASHBOARD_STYLE_OPTIONS: DashboardStyleOption[] = [
   { value: "board", label: "Lavagna", description: "Le scadenze in colonne per tempo: trascina una carta in un'altra colonna per spostarne la data, o in «Fatte» per segnarla. Ogni spostamento si annulla." },
 ];
 
-export const DASHBOARD_STYLES: DashboardStyle[] = DASHBOARD_STYLE_OPTIONS.map((o) => o.value);
+const DASHBOARD_STYLES: DashboardStyle[] = DASHBOARD_STYLE_OPTIONS.map((o) => o.value);
 
-export function isDashboardStyle(value: unknown): value is DashboardStyle {
+function isDashboardStyle(value: unknown): value is DashboardStyle {
   return typeof value === "string" && (DASHBOARD_STYLES as string[]).includes(value);
 }
 

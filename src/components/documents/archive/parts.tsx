@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import type { ExpiryInfo, ExpiryLevel } from "@/domain/documents/archive-views";
 import type { MobileAddFabMenuItem } from "@/components/ui/MobileAddFab";
 import { cn } from "@/lib/utils";
+import { useDismissOnOutside } from "@/lib/use-dismiss-on-outside";
 
 /** Pezzi condivisi dalle viste alternative dell'Archivio: pagina disegnata, scadenza, puntino di lettura, menu "Aggiungi". */
 
@@ -109,15 +110,8 @@ export function AddContentMenu({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Si chiude a un click fuori da bottone e pannello (v. UserMenu.tsx per lo stesso pattern).
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  // Si chiude a un click fuori da bottone e pannello.
+  useDismissOnOutside(ref, open, () => setOpen(false));
 
   return (
     <div ref={ref} className="relative hidden shrink-0 sm:block">

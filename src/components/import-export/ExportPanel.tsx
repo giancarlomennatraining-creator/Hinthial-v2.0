@@ -5,6 +5,7 @@ import { downloadZip } from "client-zip";
 import { createClient } from "@/lib/db/supabase/client";
 import { buildExport } from "@/domain/export/repository";
 import { saveBlobAsFile } from "@/lib/download";
+import { BTN_PRIMARY } from "@/components/ui/styles";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -95,7 +96,7 @@ export function ExportPanel({
         type="button"
         onClick={handleExport}
         disabled={busy}
-        className="w-fit rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+        className={`w-fit ${BTN_PRIMARY} disabled:opacity-50`}
       >
         {busy ? "Preparazione dell'archivio…" : "⬇️ Scarica tutti i dati (.zip)"}
       </button>

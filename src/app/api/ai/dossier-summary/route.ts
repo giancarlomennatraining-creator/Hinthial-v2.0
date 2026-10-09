@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/lib/db/supabase/server";
+import { authenticate, readJsonBody } from "@/lib/http/api-guards";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
 import { parseSummaryRequest } from "@/domain/ai/dossier-summary";
@@ -13,20 +13,13 @@ import { summarizeDossierWithClaude } from "@/lib/ai/claude-dossier-summary";
  * saltato; "solo questa volta" non vale qui, perché il permesso riguarda un solo documento alla volta.
  */
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Devi essere autenticato." }, { status: 401 });
-  }
+  const auth = await authenticate();
+  if (auth instanceof NextResponse) return auth;
+  const { supabase, user } = auth;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Richiesta non valida." }, { status: 400 });
-  }
+  const parsedBody = await readJsonBody(request);
+  if (parsedBody instanceof NextResponse) return parsedBody;
+  const { body } = parsedBody;
   const parsed = parseSummaryRequest(body);
   if (!parsed) {
     return NextResponse.json({ error: "Richiesta non valida." }, { status: 400 });

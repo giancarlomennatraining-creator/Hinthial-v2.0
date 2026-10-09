@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ArchiveViewIcon } from "@/components/documents/archive/ArchiveViewIcon";
 import { useArchiveView } from "@/components/documents/archive/useArchiveView";
 import { ARCHIVE_VIEW_OPTIONS } from "@/lib/list-view";
 import { cn } from "@/lib/utils";
+import { useDismissOnOutside } from "@/lib/use-dismiss-on-outside";
 
 /**
  * Il menu "Vista": cambia il modo di guardare l'Archivio. Scegliere una vista vale per questa visita (finisce
@@ -18,21 +19,7 @@ export function ArchiveViewSwitcher({ align = "right" }: { align?: "left" | "rig
   const [error, setError] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
-    }
-    function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [open]);
+  useDismissOnOutside(rootRef, open, () => setOpen(false), { escape: true });
 
   const current = ARCHIVE_VIEW_OPTIONS.find((o) => o.value === view) ?? ARCHIVE_VIEW_OPTIONS[0];
   const defaultOption = ARCHIVE_VIEW_OPTIONS.find((o) => o.value === defaultView) ?? ARCHIVE_VIEW_OPTIONS[0];

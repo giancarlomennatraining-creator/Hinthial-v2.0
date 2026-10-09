@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { listCategories } from "@/domain/categories/repository";
 import { listAssets } from "@/domain/assets/repository";
 import { parseCsv } from "@/domain/import/csv";
@@ -23,6 +23,7 @@ import type {
 } from "@/domain/import/types";
 import type { Category } from "@/domain/categories/types";
 import type { AssetListItem } from "@/domain/assets/types";
+import { BTN_PRIMARY, BTN_SECONDARY } from "@/components/ui/styles";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -46,7 +47,7 @@ const DESTINATION_LINK: Record<ImportKind, { href: string; label: string }> = {
  * chiama semplicemente createFriend/createAsset/createReminder in loop).
  */
 export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>(1);
@@ -65,6 +66,7 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshReferenceData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -240,14 +242,14 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
             <button
               type="button"
               onClick={handleDownloadTemplate}
-              className="w-fit rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+              className={`w-fit ${BTN_PRIMARY}`}
             >
               ⬇️ Scarica template .csv
             </button>
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="w-fit rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              className={`w-fit ${BTN_SECONDARY}`}
             >
               Avanti
             </button>
@@ -329,7 +331,7 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
               type="button"
               onClick={handleImport}
               disabled={busy || readyCount === 0}
-              className="w-fit rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+              className={`w-fit ${BTN_PRIMARY} disabled:opacity-50`}
             >
               {busy ? "Importazione…" : `Importa ${readyCount} ${readyCount === 1 ? "riga" : "righe"}`}
             </button>
@@ -548,14 +550,14 @@ function ImportResultView({
       <div className="flex flex-wrap gap-3">
         <Link
           href={destination.href}
-          className="w-fit rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          className={`w-fit ${BTN_PRIMARY}`}
         >
           {destination.label}
         </Link>
         <button
           type="button"
           onClick={onRestart}
-          className="w-fit rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          className={`w-fit ${BTN_SECONDARY}`}
         >
           Importa un altro file
         </button>

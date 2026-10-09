@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useState } from "react";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { buildAIContext } from "@/domain/ai/context";
@@ -38,7 +38,7 @@ export function PageHelp({
   /** false dove chiedere a Hinthia è già l'intera pagina (v. /ai): niente sezione domanda, sarebbe ridondante. */
   chatEnabled?: boolean;
 }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const { status } = useMasterKey();
   const { masterEnabled, chatConsent } = useAIProcessingConsent();
   const active = masterEnabled && chatConsent;

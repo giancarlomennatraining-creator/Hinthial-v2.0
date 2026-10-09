@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 import { signOut } from "@/lib/auth/actions";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
+import { useDismissOnOutside } from "@/lib/use-dismiss-on-outside";
 
 /**
  * Avatar + nome utente, apre un menu con "Impostazioni", "Blocca la cassaforte" (solo a cassaforte sbloccata) e "Esci". `collapsed`: nasconde nome e freccetta, l'avatar
@@ -35,15 +36,7 @@ export function UserMenu({
   const { lockNow } = useUnlockPrompt();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  useDismissOnOutside(containerRef, open, () => setOpen(false));
 
   return (
     <div ref={containerRef} className="relative">

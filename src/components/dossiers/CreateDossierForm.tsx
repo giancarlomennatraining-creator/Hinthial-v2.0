@@ -3,12 +3,13 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { addExpectedItem, createDossier, replaceDocumentDossierLinks, setDossierPhases } from "@/domain/dossiers/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
 import { MAX_PHASE_NAME_LENGTH, MAX_PHASES, normalizePhases, parsePhaseNames } from "@/domain/dossiers/phases";
 import { DOSSIER_TEMPLATES, findTemplateMatches, templateMeta, type DossierTemplate, type TemplateMatch } from "@/domain/dossiers/templates";
 import { CARD, CARD_TITLE, TEXT_INPUT } from "@/components/dossiers/styles";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
 
 /**
  * Creazione di un fascicolo: da zero (solo titolo e descrizione, lo stato nasce "aperto") oppure da un modello, che
@@ -16,7 +17,7 @@ import { CARD, CARD_TITLE, TEXT_INPUT } from "@/components/dossiers/styles";
  * cambiare prima di creare, e poi dalla scheda. I documenti si collegano anche dal loro form (campo "Fascicolo").
  */
 export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const router = useRouter();
 
   const [error, setError] = useState<string | null>(null);
@@ -179,7 +180,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
               setTitleTouched(true);
             }}
             placeholder="es. Intervento al ginocchio"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className={INPUT_FIELD}
           />
         </div>
 
@@ -194,7 +195,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Facoltativa: qualche riga per ricordarti di cosa si tratta."
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className={INPUT_FIELD}
           />
         </div>
 
@@ -298,13 +299,13 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
           <button
             type="submit"
             disabled={creating || createdId !== null}
-            className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+            className={`${BTN_PRIMARY} disabled:opacity-50`}
           >
             {creating ? "Creazione…" : "Crea fascicolo"}
           </button>
           <Link
             href="/dossiers"
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            className={BTN_SECONDARY}
           >
             Annulla
           </Link>

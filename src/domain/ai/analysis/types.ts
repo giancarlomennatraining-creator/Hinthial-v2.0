@@ -56,7 +56,7 @@ export interface RawBlockAnalysis {
   synthesis: string | null;
 }
 
-export interface VocabularyEntry {
+interface VocabularyEntry {
   field_key: string;
   label: string;
 }

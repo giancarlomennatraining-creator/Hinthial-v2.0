@@ -46,12 +46,13 @@ import type {
   DocumentMetadataInput,
   TextNoteInput,
 } from "@/domain/documents/types";
+import { decryptOptionalText, encryptOptionalText } from "@/lib/crypto/optional-text";
 
 /** V. uploadDocument, `onPhase` --- "reading" può durare da secondi a decine su OCR di una foto. */
 export type UploadPhase = "reading" | "saving";
 
 /** `null` = non stimabile (mostra attesa senza percentuale), non "zero" (v. FASE 17c). */
-export type UploadPhaseListener = (phase: UploadPhase, progress: number | null) => void;
+type UploadPhaseListener = (phase: UploadPhase, progress: number | null) => void;
 
 /** FASE 19b: una lettura già fatta al momento della scelta del file, per non rileggere al salvataggio. `attempted: false` = si è salvato mentre leggeva ancora, `extracted_at` resta nullo (recuperato da "Leggili ora", FASE 17b). */
 export interface PriorExtraction {
@@ -104,24 +105,6 @@ type DocumentRow = {
   analysis_updated_at: string | null;
   created_at: string;
 };
-
-/** null/empty in -> null out: nothing to encrypt, nothing stored. */
-async function encryptOptionalText(
-  masterKey: CryptoKey,
-  text: string,
-): Promise<string | null> {
-  if (!text.trim()) return null;
-  return serializeEnvelope(await encryptBytes(masterKey, utf8ToBytes(text)));
-}
-
-async function decryptOptionalText(
-  masterKey: CryptoKey,
-  serialized: string | null,
-): Promise<string> {
-  if (!serialized) return "";
-  const bytes = await decryptBytes(masterKey, parseEnvelope(serialized));
-  return bytesToUtf8(bytes);
-}
 
 async function encryptTags(masterKey: CryptoKey, tags: string[]): Promise<string | null> {
   if (tags.length === 0) return null;

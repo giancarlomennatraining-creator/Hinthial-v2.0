@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { getDigitalLegacyStatus } from "@/domain/digital-legacy/repository";
 import { describeDigitalLegacyStatus, type DigitalLegacyStatus } from "@/domain/digital-legacy/types";
 
@@ -14,7 +14,7 @@ import { describeDigitalLegacyStatus, type DigitalLegacyStatus } from "@/domain/
  * rubrica Amici).
  */
 export function DigitalLegacyStatusBanner({ userId, reminderCount }: { userId: string; reminderCount: number }) {
-  const [supabase] = useState(() => createClient());
+  const supabase = useSupabase();
   const [status, setStatus] = useState<DigitalLegacyStatus | null>(null);
 
   useEffect(() => {

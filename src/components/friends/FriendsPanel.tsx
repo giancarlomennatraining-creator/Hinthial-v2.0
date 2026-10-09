@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/db/supabase/client";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   deleteFriend,
   getLinkedFriendAvatarUrl,
@@ -43,6 +43,7 @@ import type { CapsuleListItem } from "@/domain/capsules/types";
 import { AddressBook } from "@/components/friends/AddressBook";
 import { useToast } from "@/components/ui/ToastProvider";
 import { AlertTriangleIcon } from "@/components/icons/nav-icons";
+import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 
 const STATUS_LABEL: Record<FriendStatus, string> = {
   active: "Attivo",
@@ -134,7 +135,7 @@ function IncomingRequestsBanner({
 
 /** Ogni riga è per default una PERSONA (contatto privato). Diventa AMICO solo con richiesta reciproca accettata (v. domain/friends/friend-requests); solo un AMICO può diventare GUARDIANO, anch'esso su richiesta accettata --- mai flag impostati unilateralmente. */
 export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();
@@ -484,7 +485,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
         <Link
           href="/friends/new"
-          className="hidden shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover sm:block"
+          className={`hidden shrink-0 ${BTN_PRIMARY} sm:block`}
         >
           + Aggiungi amico
         </Link>
@@ -528,7 +529,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as FriendStatus | "all")}
               aria-label="Filtra per stato"
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className={INPUT_FIELD}
             >
               <option value="all">Tutti</option>
               <option value="active">Attivi</option>

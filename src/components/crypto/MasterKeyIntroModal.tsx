@@ -7,6 +7,7 @@ import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 import { PasswordComparisonNote } from "@/components/crypto/PasswordComparisonNote";
 import { markMasterKeyIntroSeen } from "@/domain/profile/repository";
+import { BTN_PRIMARY } from "@/components/ui/styles";
 
 /**
  * Popup mostrato una sola volta, subito dopo il login, a chi non ha ancora configurato la cifratura; non sostituisce
@@ -79,7 +80,7 @@ export function MasterKeyIntroModal({
           <button
             type="button"
             onClick={handleCreate}
-            className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+            className={BTN_PRIMARY}
           >
             Crea la tua master key
           </button>

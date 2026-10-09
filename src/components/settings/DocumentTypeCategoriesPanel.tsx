@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/db/supabase/client";
+import { useCallback, useEffect, useState } from "react";
+import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { getLocalUserId } from "@/lib/auth/local-user";
 import { listTypeCategoryOverrides, resetTypeCategory, setTypeCategory } from "@/domain/categories/type-categories";
 import type { Category } from "@/domain/categories/types";
@@ -17,7 +17,7 @@ const NONE = "none";
  * la predefinita.
  */
 export function DocumentTypeCategoriesPanel({ categories }: { categories: Category[] }) {
-  const supabase = useRef(createClient()).current;
+  const supabase = useSupabase();
   const [overrides, setOverrides] = useState<TypeCategoryOverrides>({});
   const [loading, setLoading] = useState(true);
   const [busyType, setBusyType] = useState<string | null>(null);

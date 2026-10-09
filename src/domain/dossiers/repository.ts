@@ -22,6 +22,7 @@ import {
   type DossierStep,
 } from "@/domain/dossiers/items";
 import type { ExpectedItem } from "@/domain/dossiers/expected";
+import { decryptOptionalText, encryptOptionalText } from "@/lib/crypto/optional-text";
 
 const DOSSIER_COLUMNS =
   "id, encrypted_title, encrypted_description, encrypted_phases, encrypted_summary, status, created_at, closed_at";
@@ -36,18 +37,6 @@ type DossierRow = {
   created_at: string;
   closed_at: string | null;
 };
-
-/** null/empty in -> null out --- v. domain/documents/repository.ts, encryptOptionalText. */
-async function encryptOptionalText(masterKey: CryptoKey, text: string): Promise<string | null> {
-  if (!text.trim()) return null;
-  return serializeEnvelope(await encryptBytes(masterKey, utf8ToBytes(text)));
-}
-
-async function decryptOptionalText(masterKey: CryptoKey, serialized: string | null): Promise<string> {
-  if (!serialized) return "";
-  const bytes = await decryptBytes(masterKey, parseEnvelope(serialized));
-  return bytesToUtf8(bytes);
-}
 
 /** Un JSON cifrato mai scritto (null) o guasto vale "niente": fasi e riassunto non devono mai bloccare l'apertura di un fascicolo. */
 async function decryptOptionalJson<T>(masterKey: CryptoKey, serialized: string | null, parse: (json: string) => T | null): Promise<T | null> {
