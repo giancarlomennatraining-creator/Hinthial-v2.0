@@ -1156,30 +1156,6 @@ export type Database = {
           },
         ];
       };
-      product_updates: {
-        Row: {
-          id: string;
-          title: string;
-          description: string;
-          published_on: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          title: string;
-          description: string;
-          published_on: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          title?: string;
-          description?: string;
-          published_on?: string;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
       trusted_devices: {
         Row: {
           id: string;
