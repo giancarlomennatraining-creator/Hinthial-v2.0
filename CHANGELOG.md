@@ -10,6 +10,15 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-10 (72)
+
+### Tolta la tabella delle Novità
+
+**Cosa fa:**
+- Nessun cambiamento visibile: la sezione "Novità" della Dashboard era già stata rimossa, e la tabella `product_updates` che la alimentava non veniva più letta da nessuna parte. Una nuova migrazione (`20261012000000_drop_product_updates.sql`) la elimina; conteneva solo testi di prodotto, nessun dato degli utenti. Il tipo corrispondente è tolto da `types/supabase.ts`.
+
+---
+
 ## 2026-10-09 (71)
 
 ### Pulizia del codice: i moduli delle capsule
