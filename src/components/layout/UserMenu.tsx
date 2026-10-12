@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { useDismissOnOutside } from "@/lib/use-dismiss-on-outside";
 
 /**
- * Avatar + nome utente, apre un menu con "Impostazioni", "Blocca la cassaforte" (solo a cassaforte sbloccata) e "Esci". `collapsed`: nasconde nome e freccetta, l'avatar
+ * Avatar + nome utente, apre un menu con "Impostazioni", "Blocca Hinthial" (solo a cassaforte sbloccata) e "Esci". `collapsed`: nasconde nome e freccetta, l'avatar
  * resta visibile. `menuPosition`: nella barra laterale il pulsante è in fondo, il menu si apre verso l'alto
  * (default "up"); nella barra orizzontale è in cima, va aperto verso il basso ("down").
  */
@@ -81,7 +81,7 @@ export function UserMenu({
               }}
               className="block w-full px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
-              Blocca la cassaforte
+              Blocca Hinthial
             </button>
           ) : null}
           <form action={signOut}>

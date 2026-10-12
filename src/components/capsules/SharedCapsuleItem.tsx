@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import "@/components/capsules/opening/opening.css";
 import { CapsuleArt, type CapsuleArtState } from "@/components/capsules/CapsuleArt";
 import { formatDateTime } from "@/components/capsules/CapsuleCardParts";
 import { CapsuleCountdown } from "@/components/capsules/CapsuleCountdown";
@@ -59,6 +60,12 @@ export function SharedCapsuleItem({
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[shared.status]}`}>
           {CAPSULE_STATUS_LABEL[shared.status]}
         </span>
+        {canOpen ? (
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#D8F5E3] px-2.5 py-0.5 text-xs font-bold text-[#1c7c5a] dark:bg-green-950 dark:text-green-300">
+            <span className="h-2 w-2 rounded-full bg-[#2FD27E]" aria-hidden="true" />
+            Pronta da aprire
+          </span>
+        ) : null}
       </div>
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
         Condivisa il {formatDate(shared.sharedAt)}
@@ -76,7 +83,7 @@ export function SharedCapsuleItem({
           ref={buttonRef}
           type="button"
           onClick={() => onOpen(originOf(artRef.current) ?? originOf(buttonRef.current))}
-          className="mt-1 w-fit rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-hover"
+          className="mt-1 w-fit rounded-md bg-[#1c7c5a] px-3.5 py-2 text-xs font-bold text-white shadow-[0_2px_6px_rgba(28,124,90,.35)] hover:bg-[#166a4c]"
         >
           🔓 Apri
         </button>
@@ -88,7 +95,7 @@ export function SharedCapsuleItem({
 
   if (style === "porthole") {
     return (
-      <li className="grid grid-cols-[76px_minmax(0,1fr)] items-start gap-4 rounded-[18px] border border-[#dfe3f0] bg-white p-3 shadow-[0_2px_8px_rgba(18,26,53,0.05)] sm:grid-cols-[92px_minmax(0,1fr)] dark:border-zinc-800 dark:bg-zinc-950">
+      <li className={cn("relative grid min-w-0 grid-cols-[76px_minmax(0,1fr)] items-start gap-4 rounded-[18px] border border-[#dfe3f0] bg-white p-3 pr-3 shadow-[0_2px_8px_rgba(18,26,53,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(18,26,53,0.12)] sm:grid-cols-[92px_minmax(0,1fr)] dark:border-zinc-800 dark:bg-zinc-950", canOpen && "capsule-ajar")}>
         <CapsulePorthole
           ref={artRef}
           state={state}
@@ -102,7 +109,7 @@ export function SharedCapsuleItem({
 
   if (style === "flat") {
     return (
-      <li className="flex min-w-0 flex-col rounded-[18px] border border-[#dfe3f0] bg-white shadow-[0_2px_8px_rgba(18,26,53,0.05)] dark:border-zinc-800 dark:bg-zinc-950">
+      <li className={cn("group relative flex min-w-0 flex-col rounded-[18px] border border-[#dfe3f0] bg-white shadow-[0_2px_8px_rgba(18,26,53,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_26px_rgba(18,26,53,0.12)] dark:border-zinc-800 dark:bg-zinc-950", canOpen && "capsule-ajar")}>
         <div
           className={cn(
             "relative flex h-[92px] items-center overflow-hidden rounded-t-[17px] bg-gradient-to-b px-[18px]",
@@ -121,5 +128,15 @@ export function SharedCapsuleItem({
     );
   }
 
-  return <li className="flex flex-col gap-2 p-4">{body}</li>;
+  // Buste: la riga di sempre; quando si può aprire ha la capsula illustrata con la capsula dal coperchio sollevato.
+  if (!canOpen) return <li className="flex flex-col gap-2 p-4">{body}</li>;
+
+  return (
+    <li className="capsule-ajar flex items-center gap-4 p-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-2">{body}</div>
+      <span ref={artRef} className="block w-[96px] shrink-0 -rotate-[7deg] sm:w-[130px]">
+        <CapsuleArt variant="flat" state="ready" className="w-full [filter:drop-shadow(0_0_10px_rgba(47,210,126,.7))]" />
+      </span>
+    </li>
+  );
 }

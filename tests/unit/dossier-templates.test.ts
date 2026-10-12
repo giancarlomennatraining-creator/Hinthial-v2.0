@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MAX_PHASE_NAME_LENGTH, MAX_PHASES } from "@/domain/dossiers/phases";
-import { DOSSIER_TEMPLATES, findTemplateMatches, templateMeta } from "@/domain/dossiers/templates";
+import { DOSSIER_TEMPLATES, filterTemplates, findTemplateMatches, templateMeta } from "@/domain/dossiers/templates";
 import { matchExpected } from "@/domain/dossiers/expected";
 
 function doc(id: string, filename: string, over: Record<string, unknown> = {}) {
@@ -58,5 +58,34 @@ describe("findTemplateMatches", () => {
   it("senza documenti o senza corrispondenze non propone niente", () => {
     expect(findTemplateMatches(casa, [])).toEqual([]);
     expect(findTemplateMatches(casa, [doc("a", "Ricetta.jpg")])).toEqual([]);
+  });
+});
+
+describe("filterTemplates", () => {
+  const ids = (query: string) => filterTemplates(DOSSIER_TEMPLATES, query).map((t) => t.id);
+
+  it("senza testo li lascia tutti", () => {
+    expect(ids("")).toHaveLength(DOSSIER_TEMPLATES.length);
+    expect(ids("   ")).toHaveLength(DOSSIER_TEMPLATES.length);
+  });
+
+  it("trova il modello dalle parole con cui si racconta la vicenda", () => {
+    expect(ids("mutuo")).toEqual(["casa"]);
+    expect(ids("ginocchio")).toEqual(["cura"]);
+    expect(ids("tamponamento")).toEqual(["incidente"]);
+  });
+
+  it("non distingue maiuscole e accenti", () => {
+    expect(ids("EREDITA")).toEqual(["successione"]);
+    expect(ids("eredità")).toEqual(["successione"]);
+  });
+
+  it("con più parole devono esserci tutte", () => {
+    expect(ids("mutuo rogito")).toEqual(["casa"]);
+    expect(ids("mutuo ginocchio")).toEqual([]);
+  });
+
+  it("ogni modello si ritrova dal proprio nome", () => {
+    for (const template of DOSSIER_TEMPLATES) expect(ids(template.name)).toContain(template.id);
   });
 });

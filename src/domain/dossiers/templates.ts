@@ -20,6 +20,8 @@ export interface DossierTemplate {
   phases: string[];
   /** I documenti che servono di solito, nell'ordine in cui di solito arrivano. */
   expected: string[];
+  /** Le parole con cui una persona descrive la vicenda ("mutuo", "ginocchio", "eredità"), per ritrovare il modello cercando. */
+  keywords: string;
 }
 
 export const DOSSIER_TEMPLATES: DossierTemplate[] = [
@@ -41,6 +43,7 @@ export const DOSSIER_TEMPLATES: DossierTemplate[] = [
       "Certificato di agibilità",
       "Atto di compravendita",
     ],
+    keywords: "casa mutuo rogito immobile appartamento comprare acquisto notaio",
   },
   {
     id: "incidente",
@@ -58,6 +61,7 @@ export const DOSSIER_TEMPLATES: DossierTemplate[] = [
       "Fattura della riparazione",
       "Liquidazione del sinistro",
     ],
+    keywords: "auto macchina sinistro assicurazione carrozzeria tamponamento",
   },
   {
     id: "cura",
@@ -68,6 +72,7 @@ export const DOSSIER_TEMPLATES: DossierTemplate[] = [
     icon: "M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z",
     phases: ["Diagnosi", "Terapia", "Controlli"],
     expected: ["Referto di diagnosi", "Impegnativa", "Piano terapeutico", "Ricette", "Referti dei controlli", "Ricevute per la detrazione"],
+    keywords: "salute medico visita esami ginocchio operazione terapia ospedale malattia",
   },
   {
     id: "lavori",
@@ -85,6 +90,7 @@ export const DOSSIER_TEMPLATES: DossierTemplate[] = [
       "Bonifici parlanti",
       "Dichiarazione di conformità",
     ],
+    keywords: "lavori bagno cucina cantiere bonus detrazioni impresa ristrutturare",
   },
   {
     id: "successione",
@@ -102,6 +108,7 @@ export const DOSSIER_TEMPLATES: DossierTemplate[] = [
       "Estratti conto",
       "Ricevute delle imposte",
     ],
+    keywords: "eredità erede lutto testamento defunto decesso",
   },
   {
     id: "trasloco",
@@ -112,6 +119,7 @@ export const DOSSIER_TEMPLATES: DossierTemplate[] = [
     icon: "M3 7h11v10H3Z M14 10h4l3 3v4h-7 M7 20a2 2 0 1 0 0-4 M17 20a2 2 0 1 0 0-4",
     phases: ["Preparazione", "Trasloco", "Sistemazione"],
     expected: ["Contratto d'affitto", "Preventivo del trasloco", "Voltura luce e gas", "Cambio di residenza", "Disdetta del vecchio contratto"],
+    keywords: "affitto cambio casa residenza utenze voltura spostarsi",
   },
   {
     id: "lavoro",
@@ -122,6 +130,7 @@ export const DOSSIER_TEMPLATES: DossierTemplate[] = [
     icon: "M4 7h16v12H4Z M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2",
     phases: ["Offerta", "Contratto", "Primi mesi"],
     expected: ["Lettera d'offerta", "Contratto di lavoro", "Buste paga", "Iscrizione previdenziale", "Polizza sanitaria aziendale"],
+    keywords: "assunzione contratto stipendio azienda impiego",
   },
   {
     id: "nascita",
@@ -132,8 +141,24 @@ export const DOSSIER_TEMPLATES: DossierTemplate[] = [
     icon: "M12 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M6 22v-6a6 6 0 0 1 12 0v6",
     phases: ["Nascita", "Registrazioni", "Bonus e detrazioni"],
     expected: ["Atto di nascita", "Codice fiscale", "Scelta del pediatra", "Domanda di bonus", "Aggiunta alla polizza sanitaria"],
+    keywords: "bambino neonato figlio pediatra bebè parto",
   },
 ];
+
+/** Minuscole e senza accenti, per cercare "eredita" e trovare "eredità". */
+function normalizeSearch(text: string): string {
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+/** I modelli che rispondono a ciò che si è scritto ("mutuo", "ginocchio"): ogni parola deve comparire nel nome, nella descrizione o nelle parole chiave. Senza testo, tutti. */
+export function filterTemplates(templates: DossierTemplate[], query: string): DossierTemplate[] {
+  const words = normalizeSearch(query).split(/\s+/).filter(Boolean);
+  if (words.length === 0) return templates;
+  return templates.filter((template) => {
+    const haystack = normalizeSearch(`${template.name} ${template.description} ${template.keywords}`);
+    return words.every((word) => haystack.includes(word));
+  });
+}
 
 export function templateMeta(template: DossierTemplate): string {
   return `${template.phases.length} fasi · ${template.expected.length} documenti attesi`;

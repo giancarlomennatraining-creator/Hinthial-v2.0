@@ -38,7 +38,6 @@ export function SharedCapsuleViewer({
 
   const [content, setContent] = useState<SharedCapsuleOpenedContent | null>(null);
   const [loadedForId, setLoadedForId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,7 +45,6 @@ export function SharedCapsuleViewer({
     let cancelled = false;
     // Fetch-on-mount (v. DocumentsPanel.tsx per il motivo per cui è legittimo qui).
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
     setError(null);
     setContent(null);
     (async () => {
@@ -58,8 +56,6 @@ export function SharedCapsuleViewer({
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Impossibile aprire la capsula.");
-      } finally {
-        if (!cancelled) setLoading(false);
       }
     })();
     return () => {
@@ -96,7 +92,9 @@ export function SharedCapsuleViewer({
 
   if (!shared) return null;
 
+  // Finché si decifra non si mostra nulla (sarebbe una finestra che lampeggia un attimo prima dell'effetto): compare solo un errore.
   if (!view || !content) {
+    if (!error) return null;
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
         <div
@@ -107,13 +105,9 @@ export function SharedCapsuleViewer({
           className="flex w-full max-w-sm flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
         >
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Da {shared.ownerName}</p>
-          {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-              {error}
-            </p>
-          ) : loading ? (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Decifratura in corso…</p>
-          ) : null}
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            {error}
+          </p>
           <button type="button" onClick={onClose} className="w-fit rounded-md px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900">
             Chiudi
           </button>

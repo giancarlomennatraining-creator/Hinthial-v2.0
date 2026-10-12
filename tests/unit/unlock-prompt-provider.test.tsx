@@ -214,7 +214,7 @@ describe("creazione della master password e blocco a mano", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "blocca" }));
     expect(masterKey.lock).toHaveBeenCalledTimes(1);
-    expect(showToast).toHaveBeenCalledWith("Cassaforte bloccata.");
+    expect(showToast).toHaveBeenCalledWith("Hinthial bloccato.");
     expect(sessionStorage.getItem("hinthial.unlock-dismissed")).toBeNull();
   });
 });

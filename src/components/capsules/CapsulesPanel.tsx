@@ -15,6 +15,7 @@ import {
 } from "@/domain/capsules/repository";
 import { deleteReply, listReceivedReplies, type CapsuleReply } from "@/domain/capsules/replies-repository";
 import { downloadDocument } from "@/domain/documents/repository";
+import { lookupFriendAccount, setFriendLinkedUser } from "@/domain/friends/repository";
 import { getCapsuleAppearance, getCapsuleCountdownVisible } from "@/domain/profile/repository";
 import { cn, sortAlphabetically } from "@/lib/utils";
 import { saveBytesAsFile } from "@/lib/download";
@@ -101,7 +102,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [busyAttachment, setBusyAttachment] = useState<string | null>(null);
-  const [now] = useState(() => new Date());
+  const [now, setNow] = useState(() => new Date());
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "title", direction: "asc" });
   const [previewCapsule, setPreviewCapsule] = useState<CapsuleListItem | null>(null);
@@ -139,6 +140,12 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   // "?created=1"/"?updated=1": solo un flag, mai il titolo o contenuto (finirebbe in chiaro nell'URL). Stato pigro: il messaggio non deve sparire quando ripuliamo l'URL con router.replace.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
   const [showUpdatedMessage] = useState(() => searchParams.get("updated") === "1");
+  // Una capsula condivisa la cui data arriva mentre la pagina è aperta cambia aspetto da sola, senza ricaricare.
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
   useEffect(() => {
     if (showCreatedMessage) showToast("Capsula creata.");
     if (showUpdatedMessage) showToast("Capsula aggiornata.");
@@ -241,9 +248,30 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
 
-      await shareCapsule(supabase, masterKey, user.id, capsule);
-      setCapsules((prev) => prev.map((c) => (c.id === capsule.id ? { ...c, status: "shared" } : c)));
-      showToast("Capsula condivisa.");
+      // Un amico si "collega" a un account solo quando qualcuno lo verifica (v. FriendsPanel): se l'account è nato dopo, qui
+      // il legame mancherebbe e la capsula resterebbe invisibile al destinatario. Si verifica quindi al momento di condividere.
+      const relatedFriends = await Promise.all(
+        capsule.relatedFriends.map(async (friend) => {
+          if (friend.linkedUserId !== null) return friend;
+          try {
+            const match = await lookupFriendAccount(supabase, friend.email);
+            if (!match) return friend;
+            await setFriendLinkedUser(supabase, friend.id, match.userId);
+            return { ...friend, linkedUserId: match.userId };
+          } catch {
+            return friend;
+          }
+        }),
+      );
+      const notLinked = relatedFriends.filter((friend) => friend.linkedUserId === null);
+
+      await shareCapsule(supabase, masterKey, user.id, { ...capsule, relatedFriends });
+      setCapsules((prev) => prev.map((c) => (c.id === capsule.id ? { ...c, status: "shared", relatedFriends } : c)));
+      showToast(
+        notLinked.length > 0
+          ? `Capsula condivisa. ${notLinked.map((f) => f.name).join(", ")} non ha ancora un account Hinthial con quell'email: quando lo avrà, apri Amici e la capsula gli arriverà.`
+          : "Capsula condivisa.",
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile condividere la capsula.");
     } finally {

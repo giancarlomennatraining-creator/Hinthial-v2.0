@@ -7,7 +7,7 @@ import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { addExpectedItem, createDossier, replaceDocumentDossierLinks, setDossierPhases } from "@/domain/dossiers/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
 import { MAX_PHASE_NAME_LENGTH, MAX_PHASES, normalizePhases, parsePhaseNames } from "@/domain/dossiers/phases";
-import { DOSSIER_TEMPLATES, findTemplateMatches, templateMeta, type DossierTemplate, type TemplateMatch } from "@/domain/dossiers/templates";
+import { DOSSIER_TEMPLATES, filterTemplates, findTemplateMatches, type DossierTemplate, type TemplateMatch } from "@/domain/dossiers/templates";
 import { CARD, CARD_TITLE, TEXT_INPUT } from "@/components/dossiers/styles";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
 
@@ -25,6 +25,8 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
   const [createdId, setCreatedId] = useState<string | null>(null);
 
   const [template, setTemplate] = useState<DossierTemplate | null>(null);
+  // Ciò che si scrive in "Cosa sta succedendo?": filtra l'elenco dei modelli.
+  const [query, setQuery] = useState("");
   const [title, setTitle] = useState("");
   const [titleTouched, setTitleTouched] = useState(false);
   const [description, setDescription] = useState("");
@@ -106,6 +108,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
+  const visibleTemplates = filterTemplates(DOSSIER_TEMPLATES, query);
   const phaseNames = parsePhaseNames(phasesText);
   const chosenExpected = template ? template.expected.filter((l) => !skippedExpected.has(l)).length : 0;
 
@@ -125,41 +128,120 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
         </p>
       </div>
 
-      <section aria-label="Modelli" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {DOSSIER_TEMPLATES.map((item) => {
-          const active = template?.id === item.id;
-          return (
+      <section aria-label="Modelli" className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="template-search" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            Cosa sta succedendo?
+          </label>
+          <input
+            id="template-search"
+            type="search"
+            autoComplete="off"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              // Con un solo modello rimasto, Invio lo sceglie (e non invia il modulo).
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (visibleTemplates.length === 1) void handlePick(visibleTemplates[0]);
+              }
+            }}
+            placeholder="es. mutuo, ginocchio, eredità…"
+            className={INPUT_FIELD}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(240px,300px)_minmax(0,1fr)]">
+          <div role="radiogroup" aria-label="Modello" className="flex min-w-0 flex-col gap-0.5 rounded-[14px] border border-[#dfe3f0] bg-white p-1.5 dark:border-zinc-800 dark:bg-zinc-950">
+            {visibleTemplates.map((item) => {
+              const active = template?.id === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => void handlePick(item)}
+                  className={`flex items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left transition-colors ${
+                    active ? "bg-[#e8edfc] dark:bg-brand/15" : "hover:bg-[#f3f6ff] dark:hover:bg-zinc-900"
+                  }`}
+                >
+                  <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px]" style={{ background: item.tint }} aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={item.color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d={item.icon} />
+                    </svg>
+                  </span>
+                  <span className={`min-w-0 flex-1 font-heading text-[14.5px] leading-tight font-extrabold ${active ? "text-brand" : ""}`}>{item.name}</span>
+                </button>
+              );
+            })}
+            {visibleTemplates.length === 0 ? (
+              <p className="px-2.5 py-2 text-sm text-[#5b6483] dark:text-zinc-400">Nessun modello per “{query.trim()}”.</p>
+            ) : null}
             <button
-              key={item.id}
               type="button"
-              aria-pressed={active}
-              onClick={() => void handlePick(item)}
-              className={`flex flex-col gap-2 rounded-[16px] border-[1.5px] bg-white p-3.5 text-left transition-all hover:-translate-y-0.5 dark:bg-zinc-950 ${
-                active ? "border-brand shadow-[0_10px_26px_rgba(43,79,196,0.18)]" : "border-[#dfe3f0] shadow-[0_2px_8px_rgba(18,26,53,0.04)] dark:border-zinc-800"
+              role="radio"
+              aria-checked={template === null}
+              onClick={() => void handlePick(null)}
+              className={`flex items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left transition-colors ${
+                template === null ? "bg-[#e8edfc] dark:bg-brand/15" : "hover:bg-[#f3f6ff] dark:hover:bg-zinc-900"
               }`}
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-[10px]" style={{ background: item.tint }} aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={item.color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d={item.icon} />
+              <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px] bg-[#f3f6ff] dark:bg-zinc-900" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b6483" strokeWidth="2.2" strokeLinecap="round">
+                  <path d="M12 5v14M5 12h14" />
                 </svg>
               </span>
-              <span className="font-heading text-[15px] leading-tight font-extrabold">{item.name}</span>
-              <span className="text-xs leading-snug text-[#5b6483] dark:text-zinc-400">{item.description}</span>
-              <span className="text-[11.5px] font-bold text-[#8a91ad] dark:text-zinc-500">{templateMeta(item)}</span>
+              <span className={`min-w-0 flex-1 font-heading text-[14.5px] leading-tight font-extrabold ${template === null ? "text-brand" : ""}`}>Parti da zero</span>
             </button>
-          );
-        })}
+          </div>
+
+          <div aria-live="polite" className="flex min-w-0 flex-col gap-4 rounded-[14px] border border-[#dfe3f0] bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+            {template ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[14px]" style={{ background: template.tint }} aria-hidden="true">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={template.color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d={template.icon} />
+                    </svg>
+                  </span>
+                  <div className="min-w-0">
+                    <h2 className="font-heading text-xl leading-tight font-extrabold">{template.name}</h2>
+                    <p className="text-sm text-[#5b6483] dark:text-zinc-400">{template.description}</p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-xs font-extrabold text-[#5b6483] dark:text-zinc-400">Le fasi, in ordine</h3>
+                  <ol className="flex overflow-x-auto">
+                    {template.phases.map((phase) => (
+                      <li
+                        key={phase}
+                        className="relative min-w-[84px] flex-1 pt-[22px] text-[12.5px] font-bold before:absolute before:left-0 before:right-0 before:top-[5px] before:h-0.5 before:bg-[#dfe3f0] after:absolute after:left-0 after:top-0 after:h-3 after:w-3 after:rounded-full after:border-[2.5px] after:border-brand after:bg-white last:before:right-1/2 dark:before:bg-zinc-800 dark:after:bg-zinc-950"
+                      >
+                        {phase}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <h3 className="text-xs font-extrabold text-[#5b6483] dark:text-zinc-400">Documenti che servono di solito</h3>
+                  <p className="text-sm leading-relaxed text-[#5b6483] dark:text-zinc-400">{template.expected.join(" · ")}</p>
+                </div>
+                <p className="text-xs text-[#8a91ad] dark:text-zinc-500">
+                  Cercherò tra i tuoi documenti quelli che sembrano già appartenere a questa vicenda. Fasi e documenti si cambiano più sotto.
+                </p>
+              </>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <h2 className="font-heading text-xl leading-tight font-extrabold">Parti da zero</h2>
+                <p className="text-sm text-[#5b6483] dark:text-zinc-400">
+                  Un fascicolo vuoto: solo titolo e descrizione. Le fasi e i documenti attesi li aggiungi tu quando ti servono.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </section>
-      <button
-        type="button"
-        aria-pressed={template === null}
-        onClick={() => void handlePick(null)}
-        className={`self-start rounded-xl border-[1.5px] px-3.5 py-2 text-[13px] font-bold ${
-          template === null ? "border-brand bg-[#f3f6ff] text-brand dark:bg-brand/10" : "border-dashed border-[#c9d0e6] text-brand dark:border-zinc-700"
-        }`}
-      >
-        Parti da zero: solo un titolo e una descrizione
-      </button>
 
       <form
         onSubmit={handleCreate}

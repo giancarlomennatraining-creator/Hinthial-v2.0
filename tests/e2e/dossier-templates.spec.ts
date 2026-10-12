@@ -19,7 +19,21 @@ test("un fascicolo nato da un modello ha le fasi, i documenti attesi e i documen
   await expect(page.getByRole("region", { name: "Le fasi" })).toHaveCount(0);
 
   // Scegliere un modello compila il titolo e mostra fasi, documenti attesi e quelli già trovati.
-  await page.getByRole("button", { name: /Acquisto di una casa/ }).click();
+  await expect(page.getByRole("radio", { name: "Parti da zero" })).toHaveAttribute("aria-checked", "true");
+
+  // Si cerca con parole proprie: l'elenco si restringe al modello giusto, e Invio lo sceglie.
+  await page.getByLabel("Cosa sta succedendo?").fill("ginocchio");
+  await expect(page.getByRole("radio", { name: "Cura medica" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Acquisto di una casa/ })).toHaveCount(0);
+  await page.getByLabel("Cosa sta succedendo?").fill("niente di niente");
+  await expect(page.getByText("Nessun modello per")).toBeVisible();
+  await page.getByLabel("Cosa sta succedendo?").fill("mutuo");
+  await page.getByLabel("Cosa sta succedendo?").press("Enter");
+  await expect(page.getByRole("radio", { name: /Acquisto di una casa/ })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("heading", { name: "Acquisto di una casa" })).toBeVisible();
+  // L'anteprima mostra le fasi e i documenti che servono di solito.
+  await expect(page.getByText("Le fasi, in ordine")).toBeVisible();
+  await expect(page.getByText("Delibera del mutuo · Perizia della banca")).toBeVisible();
   await expect(page.getByLabel("Titolo")).toHaveValue("Acquisto di una casa");
   await expect(page.getByLabel("Nomi delle fasi")).toHaveValue(/Ricerca, Proposta, Mutuo, Rogito, Chiavi in mano/);
   await expect(page.getByRole("region", { name: "Documenti attesi" })).toContainText("8 scelti");
