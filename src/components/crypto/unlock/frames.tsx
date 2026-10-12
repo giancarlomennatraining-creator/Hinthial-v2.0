@@ -21,6 +21,22 @@ function LockGlyph() {
   );
 }
 
+/**
+ * Un testo che cambia (es. "Inserisci la tua master password…" → "Verifica in corso…") senza che la finestra cambi altezza:
+ * tutte le versioni stanno sovrapposte nella stessa cella, ne è visibile una sola, e la cella è alta quanto la più lunga.
+ */
+export function StableText({ texts, active }: { texts: string[]; active: number }) {
+  return (
+    <span className="grid">
+      {texts.map((text, i) => (
+        <span key={text} style={{ gridArea: "1 / 1" }} className={i === active ? undefined : "invisible"} aria-hidden={i === active ? undefined : true}>
+          {text}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export function GlassFrame({ phase, wide, children }: { phase: UnlockPhase; wide?: boolean; children: ReactNode }) {
   return (
     <div className={wide ? "unlock-glass unlock-wide" : "unlock-glass"} data-phase={phase}>

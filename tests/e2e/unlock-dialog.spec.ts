@@ -204,7 +204,7 @@ test("la creazione della master password è una finestra nella pelle scelta; poi
 
   // Dal menu utente si blocca la cassaforte a mano: la pagina torna da sbloccare, nella stessa pelle.
   await page.getByRole("button", { name: fullName(user) }).click();
-  await page.getByRole("button", { name: "Blocca la cassaforte" }).click();
+  await page.getByRole("button", { name: "Blocca Hinthial" }).click();
   const unlock = page.getByRole("dialog", { name: "Sblocca la cassaforte" });
   await expect(unlock).toBeVisible({ timeout: 15_000 });
   await expect(unlock.locator(".unlock-vault-wrap")).toBeVisible();
@@ -214,7 +214,7 @@ test("la creazione della master password è una finestra nella pelle scelta; poi
   await unlock.getByRole("button", { name: "Sblocca", exact: true }).click();
   await expect(page.getByText("Ancora nulla in archivio")).toBeVisible({ timeout: 25_000 });
 
-  // Da sbloccata, nel menu c'è "Blocca la cassaforte"; bloccata (o dopo un ricaricamento) non c'è.
+  // Da sbloccata, nel menu c'è "Blocca Hinthial"; bloccata (o dopo un ricaricamento) non c'è.
   await page.getByRole("button", { name: fullName(user) }).click();
-  await expect(page.getByRole("button", { name: "Blocca la cassaforte" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Blocca Hinthial" })).toBeVisible();
 });

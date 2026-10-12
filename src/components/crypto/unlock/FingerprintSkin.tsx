@@ -1,9 +1,14 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { FingerprintRing } from "@/components/crypto/unlock/frames";
+import { FingerprintRing, StableText } from "@/components/crypto/unlock/frames";
 import { UnlockForm } from "@/components/crypto/unlock/UnlockForm";
 import type { UnlockFlow } from "@/components/crypto/unlock/useUnlockFlow";
+
+const FP_TOUCH = "Tocca l'anello: impronta o Face ID di questo dispositivo.";
+const FP_PASSWORD = "Inserisci la tua master password per accedere ai documenti.";
+const FP_VERIFYING = "Verifica in corso…";
+const FP_SUCCESS = "Riconosciuto.";
 
 /**
  * La pelle "Impronta": un anello da toccare per sbloccare con impronta o Face ID; una linea lo scansiona e, al
@@ -35,13 +40,10 @@ export function FingerprintSkin({
       <div>
         <h2>Sblocca</h2>
         <p className="unlock-sub" aria-live="polite">
-          {flow.phase === "verifying"
-            ? "Verifica in corso…"
-            : flow.phase === "success"
-              ? "Riconosciuto."
-              : flow.deviceLock
-                ? "Tocca l'anello: impronta o Face ID di questo dispositivo."
-                : "Inserisci la tua master password per accedere ai documenti."}
+          <StableText
+            texts={[FP_TOUCH, FP_PASSWORD, FP_VERIFYING, FP_SUCCESS]}
+            active={flow.phase === "verifying" ? 2 : flow.phase === "success" ? 3 : flow.deviceLock ? 0 : 1}
+          />
         </p>
       </div>
 

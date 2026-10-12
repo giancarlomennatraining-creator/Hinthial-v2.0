@@ -2,17 +2,14 @@
 
 import type { ReactNode } from "react";
 import { FingerprintIcon } from "@/components/icons/nav-icons";
-import { GlassFrame } from "@/components/crypto/unlock/frames";
+import { GlassFrame, StableText } from "@/components/crypto/unlock/frames";
 import { UnlockForm } from "@/components/crypto/unlock/UnlockForm";
 import type { UnlockFlow } from "@/components/crypto/unlock/useUnlockFlow";
 
-function subtitle(flow: UnlockFlow): string {
-  if (flow.phase === "verifying") return "Verifica in corso…";
-  if (flow.phase === "success") return "Cassaforte aperta.";
-  return flow.recovery
-    ? "Inserisci la tua recovery key."
-    : "Inserisci la tua master password per accedere ai documenti.";
-}
+const IDLE_PASSWORD = "Inserisci la tua master password per accedere ai documenti.";
+const IDLE_RECOVERY = "Inserisci la tua recovery key.";
+const VERIFYING = "Verifica in corso…";
+const SUCCESS = "Cassaforte aperta.";
 
 /** La pelle "Vetro": una lastra di vetro sfocata con una luce colorata dietro, e un lucchetto che si apre. */
 export function GlassSkin({
@@ -30,7 +27,10 @@ export function GlassSkin({
       <div>
         <h2>Sblocca</h2>
         <p className="unlock-sub" aria-live="polite">
-          {subtitle(flow)}
+          <StableText
+            texts={[IDLE_PASSWORD, IDLE_RECOVERY, VERIFYING, SUCCESS]}
+            active={flow.phase === "verifying" ? 2 : flow.phase === "success" ? 3 : flow.recovery ? 1 : 0}
+          />
         </p>
       </div>
       <UnlockForm flow={flow} />

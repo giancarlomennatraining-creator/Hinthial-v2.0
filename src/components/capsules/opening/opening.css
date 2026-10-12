@@ -69,3 +69,29 @@
     opacity: 0.55;
   }
 }
+
+/* Una capsula condivisa con me la cui data è arrivata (Capsule > Condivise con me): il coperchio si solleva appena, come per
+   aprirsi, (la scheda resta identica a quelle dell'elenco "Le mie capsule"). Con "riduci movimento" il coperchio resta sollevato e fermo. */
+
+@keyframes capsule-lid-ajar {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(9px, -3px) rotate(7deg);
+  }
+}
+
+.capsule-ajar .cap-lid {
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+  animation: capsule-lid-ajar 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .capsule-ajar .cap-lid {
+    animation: none;
+    transform: translate(9px, -3px) rotate(7deg);
+  }
+}

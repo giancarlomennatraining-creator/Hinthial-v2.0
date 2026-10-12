@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { UserMenu } from "@/components/layout/UserMenu";
 
-// Il menu offre anche "Blocca la cassaforte" (v. lock-now.test.tsx): qui basta una cassaforte già bloccata.
+// Il menu offre anche "Blocca Hinthial" (v. lock-now.test.tsx): qui basta una cassaforte già bloccata.
 vi.mock("@/components/crypto/MasterKeyProvider", () => ({ useMasterKey: () => ({ status: { kind: "locked" } }) }));
 vi.mock("@/components/crypto/UnlockPromptProvider", () => ({ useUnlockPrompt: () => ({ lockNow: vi.fn() }) }));
 

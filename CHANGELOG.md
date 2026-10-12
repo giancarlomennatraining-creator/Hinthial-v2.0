@@ -56,6 +56,82 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (86)
+
+### Menu utente: "Blocca Hinthial" al posto di "Blocca la cassaforte"
+
+**Cosa fa:**
+- La voce del menu utente per bloccare subito l'app si chiama ora **"Blocca Hinthial"**, e il messaggio che compare dopo è "Hinthial bloccato." (prima "Blocca la cassaforte" / "Cassaforte bloccata."). Il resto del testo (finestra "Sblocca", "La cassaforte è bloccata…") non è cambiato.
+
+**Note tecniche:**
+- Solo testi: `UserMenu`, `UnlockPromptProvider` e i test che li cercano (`lock-now`, `user-menu`, `unlock-prompt-provider`, `unlock-dialog.spec`).
+
+---
+
+## 2026-10-15 (85)
+
+### Nuovo fascicolo: i modelli si scelgono da un elenco con anteprima, e si cercano con parole proprie
+
+**Cosa fa:**
+- In **Nuovo fascicolo** la griglia di otto schede è sostituita da una selezione: sopra il campo **"Cosa sta succedendo?"**, sotto a sinistra l'**elenco dei modelli** (uno per riga, con la sua icona) e a destra l'**anteprima** del modello scelto: descrizione, le **fasi in sequenza** e i **documenti che servono di solito**. Su telefono l'anteprima va sotto l'elenco. "Parti da zero" è l'ultima riga dell'elenco, scelta di partenza.
+- Scrivendo nel campo l'elenco si restringe: "mutuo" trova Acquisto di una casa, "ginocchio" Cura medica, "eredità" Successione (senza badare a maiuscole e accenti; con più parole devono esserci tutte). Con un solo modello rimasto, **Invio** lo sceglie. Se nulla corrisponde lo dice, e "Parti da zero" resta sempre disponibile.
+- Il resto non cambia: scegliere un modello compila il titolo e mostra più sotto le fasi modificabili, i documenti attesi da spuntare e i documenti già trovati.
+
+**Note tecniche:**
+- `DossierTemplate.keywords` (le parole con cui si racconta la vicenda) e `filterTemplates()` in `domain/dossiers/templates.ts`, puro e coperto da `dossier-templates.test.ts`. L'elenco è un `radiogroup` (ogni riga `role="radio"`); `dossier-templates.spec` ora sceglie con `getByRole("radio")`, prova la ricerca e l'anteprima. Concept: i concept D ed E.
+
+---
+
+## 2026-10-15 (84)
+
+### Finestra di sblocco: non cambia più dimensione dopo aver inserito la password
+
+**Cosa fa:**
+- Dopo aver inviato la master password la finestra di sblocco resta della stessa dimensione: prima si accorciava (la frase sotto "Sblocca" passava da due righe a una, "Verifica in corso…") e, a sblocco riuscito, si ingrandiva mentre sfumava. Ora l'altezza è sempre quella della frase più lunga e la dissolvenza finale è solo di trasparenza (nel Vetro anche un piccolo scorrimento verso l'alto e la sfocatura).
+
+**Note tecniche:**
+- Nuovo `StableText` in `crypto/unlock/frames.tsx`: tutte le versioni del testo stanno sovrapposte nella stessa cella di una griglia, una sola è visibile (le altre `invisible` e `aria-hidden`). Lo usano le pelli Vetro e Impronta; la Cassaforte non ha frasi che cambiano. In `unlock.css` tolti gli `scale` di `unlock-glass-out`, `unlock-vault-out` e `unlock-fp-out`.
+
+---
+
+## 2026-10-15 (83)
+
+### Condivise con me: niente finestra che lampeggia prima dell'apertura
+
+**Cosa fa:**
+- Premendo "Apri" su una capsula condivisa non compare più, per un attimo, una finestra al centro ("Decifratura in corso…"): la capsula si apre direttamente con il suo effetto. Se qualcosa va storto (capsula non ancora apribile, chiave non arrivata) la finestra con l'errore compare come prima.
+
+**Note tecniche:**
+- `SharedCapsuleViewer` non disegna nulla finché decifra e non c'è un errore; tolto lo stato `loading`.
+
+---
+
+## 2026-10-15 (82)
+
+### Condivise con me: la capsula la cui data è arrivata si presenta come "pronta da aprire"
+
+**Cosa fa:**
+- In **Capsule > Condivise con me**, quando la data di apertura di una capsula arriva, la capsula cambia aspetto come per aprirsi: il **coperchio si solleva appena** (con un leggero dondolio), compare la pillola **"Pronta da aprire"** e il pulsante **"🔓 Apri"** diventa verde e più evidente. Vale per tutti e tre gli stili: Buste (resta una riga dell'elenco, con in più la capsula illustrata), Flat e Oblò.
+- Il cambio avviene da solo, **senza ricaricare la pagina**: se la data arriva mentre si guarda l'elenco, entro mezzo minuto la capsula si "sveglia". La scheda ha lo stesso bordo, lo stesso rilievo e la stessa distanza dalle altre dell'elenco "Le mie capsule" (Oblò e Flat). Con "riduci movimento" attivo nel sistema il coperchio resta sollevato e fermo.
+
+**Note tecniche:**
+- L'animazione (`capsule-ajar`) stanno in `opening/opening.css`, importato anche da `SharedCapsuleItem`. In `CapsulesPanel` l'orologio `now` ora si aggiorna ogni 30 secondi. `capsule-effects.spec` verifica che le cinque capsule aperte mostrino "Pronta da aprire".
+
+---
+
+## 2026-10-15 (81)
+
+### Capsule: condividere con un amico non ancora collegato non lascia più la capsula invisibile
+
+**Cosa fa:**
+- Quando si preme "Condividi", gli amici della capsula che non risultano ancora collegati a un account Hinthial vengono verificati in quel momento: se l'email corrisponde a un account, la capsula arriva subito nel suo "Condivise con me".
+- Se un amico non ha ancora un account con quell'email, il messaggio lo dice (con il nome) e spiega cosa fare: quando lo avrà, aprire Amici e la capsula gli arriverà.
+
+**Note tecniche:**
+- Prima il collegamento amico-account avveniva solo aprendo la pagina Amici (`FriendsPanel.checkLinkedAccounts`): condividere con un amico non ancora collegato segnava la capsula "Condivisa" senza creare né il legame né la busta cifrata, e senza avvisare. Ora `handleShare` in `CapsulesPanel` usa `lookupFriendAccount`/`setFriendLinkedUser` prima di `shareCapsule`. Una capsula già condivisa in quello stato si sistema aprendo Amici (sincronizzazione retroattiva già esistente).
+
+---
+
 ## 2026-10-14 (80)
 
 ### Capsule: via le pillole dei filtri; l'Anteprima mostra l'effetto vero di apertura

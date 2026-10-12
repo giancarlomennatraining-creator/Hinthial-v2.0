@@ -51,7 +51,7 @@ interface UnlockPromptContextValue {
   requestUnlock: (options?: RequestOptions) => void;
   /** Apre la finestra di creazione della master password, se non è ancora stata creata (altrimenti non fa nulla). Stesse regole di `requestUnlock`. */
   requestSetup: (options?: RequestOptions) => void;
-  /** Blocca la cassaforte adesso (dal menu utente): torna da sbloccare, e la finestra si riapre dove serve. */
+  /** Blocca Hinthial adesso (dal menu utente): torna da sbloccare, e la finestra si riapre dove serve. */
   lockNow: () => void;
   /** Vero dallo sblocco riuscito fino alla fine dell'animazione di uscita: il vault è già sbloccato ma la pagina non deve ancora popolarsi, solo quando la finestra è sparita. */
   settling: boolean;
@@ -140,7 +140,7 @@ export function UnlockPromptProvider({
     // Un blocco voluto non deve restare ignorato perché prima si era scelto "Più tardi" sulla dashboard.
     clearUnlockDismissed();
     lock();
-    showToast("Cassaforte bloccata.");
+    showToast("Hinthial bloccato.");
   }, [lock, showToast]);
 
   const closeUnlock = useCallback(() => setPrompt(null), []);

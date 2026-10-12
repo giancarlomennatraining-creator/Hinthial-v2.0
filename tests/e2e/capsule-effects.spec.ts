@@ -120,6 +120,8 @@ test("ogni capsula si apre per chi la riceve con l'effetto scelto da chi l'ha sc
   await page.getByRole("tab", { name: /Condivise con me/ }).click();
   const aperture = page.getByRole("button", { name: "🔓 Apri" });
   await expect(aperture).toHaveCount(EFFECTS.length, { timeout: 20_000 });
+  // Con la data arrivata, ogni capsula si presenta come pronta da aprire.
+  await expect(page.getByText("Pronta da aprire")).toHaveCount(EFFECTS.length);
 
   const seen: string[] = [];
   for (let i = 0; i < EFFECTS.length; i++) {
