@@ -1104,6 +1104,58 @@ export type Database = {
           },
         ];
       };
+      capsule_replies: {
+        Row: {
+          id: string;
+          capsule_id: string;
+          owner_id: string;
+          author_id: string;
+          ephemeral_public_key: string;
+          encrypted_payload: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          capsule_id: string;
+          owner_id: string;
+          author_id: string;
+          ephemeral_public_key: string;
+          encrypted_payload: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          capsule_id?: string;
+          owner_id?: string;
+          author_id?: string;
+          ephemeral_public_key?: string;
+          encrypted_payload?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "capsule_replies_capsule_id_fkey";
+            columns: ["capsule_id"];
+            isOneToOne: false;
+            referencedRelation: "capsules";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "capsule_replies_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "capsule_replies_author_id_fkey";
+            columns: ["author_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       capsule_share_keys: {
         Row: {
           id: string;
@@ -1446,6 +1498,10 @@ export type Database = {
       };
       get_linked_friend_public_key: {
         Args: { p_friend_id: string };
+        Returns: string | null;
+      };
+      get_capsule_owner_public_key: {
+        Args: { p_capsule_id: string };
         Returns: string | null;
       };
       accept_friend_request: {

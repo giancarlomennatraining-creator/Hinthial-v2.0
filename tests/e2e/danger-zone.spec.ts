@@ -96,7 +96,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await page.getByRole("button", { name: "Avanti" }).click();
   await page.getByRole("button", { name: "Crea capsula" }).click();
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
-  await expect(page.getByText("Per Maria")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("heading", { name: "Per Maria" })).toBeVisible({ timeout: 10_000 });
 
   // "Reimposta l'account" (prima "Cancella tutto").
   await openSettings(page, user);

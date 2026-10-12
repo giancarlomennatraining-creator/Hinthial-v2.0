@@ -189,9 +189,9 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   expect(await fs.readFile(newDownloadPath!, "utf-8")).toBe(newFileContent);
 
   // Stato: Bozza -> Chiusa -> Condivisa. Chiudere è irreversibile, quindi conferma esplicita.
-  page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(updatedRow);
   await page.getByRole("menuitem", { name: "Chiudi la capsula" }).click();
+  await page.getByRole("dialog", { name: "Prima di chiudere la capsula" }).getByRole("button", { name: "Chiudi la capsula" }).click();
   await expect(updatedRow.getByText("Chiusa", { exact: true })).toBeVisible({ timeout: 10_000 });
   // Ora che non è più una bozza, il countdown compare: oltre i 100 giorni mostra il numero secco invece dei cartellini.
   await expect(updatedRow.getByRole("img", { name: /Si aprirà tra \d+ giorni/ })).toBeVisible();
@@ -461,9 +461,9 @@ test("chiudere una capsula copia il contenuto collegato al suo interno; l'origin
   await expect(capsuleRow).toBeVisible({ timeout: 15_000 });
 
   // Si chiude la capsula (conferma esplicita, irreversibile): il contenuto collegato viene copiato al suo interno.
-  page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(capsuleRow);
   await page.getByRole("menuitem", { name: "Chiudi la capsula" }).click();
+  await page.getByRole("dialog", { name: "Prima di chiudere la capsula" }).getByRole("button", { name: "Chiudi la capsula" }).click();
   await expect(capsuleRow.getByText("Chiusa", { exact: true })).toBeVisible({ timeout: 10_000 });
   // La capsula continua a mostrare il contenuto: ora una copia propria.
   await expect(capsuleRow.getByText("polizza.txt")).toBeVisible();

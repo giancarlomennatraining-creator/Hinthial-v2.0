@@ -196,6 +196,8 @@ test("la ricerca globale e il filtro per stato funzionano in Scadenze, Amici e C
   await page.getByLabel("Data e ora di apertura", { exact: true }).fill("2027-01-01T10:00");
   await page.getByRole("button", { name: "Avanti" }).click();
   await page.getByRole("button", { name: "Avanti" }).click();
+  // Una capsula senza lettera né allegato non si chiude.
+  await page.getByLabel("Il tuo messaggio").fill("Un pensiero per te.");
   await page.getByRole("button", { name: "Crea capsula" }).click();
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
 
@@ -209,9 +211,9 @@ test("la ricerca globale e il filtro per stato funzionano in Scadenze, Amici e C
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
 
   const perMariaRow = page.getByRole("listitem").filter({ hasText: "Per Maria" });
-  page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(perMariaRow);
   await page.getByRole("menuitem", { name: "Chiudi la capsula" }).click();
+  await page.getByRole("dialog", { name: "Prima di chiudere la capsula" }).getByRole("button", { name: "Chiudi la capsula" }).click();
   await expect(
     page.getByRole("listitem").filter({ hasText: "Per Maria" }).getByText("Chiusa"),
   ).toBeVisible();
@@ -221,7 +223,7 @@ test("la ricerca globale e il filtro per stato funzionano in Scadenze, Amici e C
   await expect(capsulesSearch.getByRole("button", { name: /Per Maria/ })).toHaveCount(0);
   await closeGlobalSearch(page);
 
-  await page.getByLabel("Filtra per stato").selectOption({ label: "Chiusa" });
-  await expect(page.getByText("Per Maria")).toBeVisible();
+  await page.getByRole("group", { name: "Filtra per stato" }).getByRole("button", { name: /^Chiusa/ }).click();
+  await expect(page.getByRole("listitem").filter({ hasText: "Per Maria" })).toBeVisible();
   await expect(page.getByText("Ricordi di famiglia")).not.toBeVisible();
 });
