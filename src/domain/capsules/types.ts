@@ -1,6 +1,8 @@
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { FriendListItem } from "@/domain/friends/types";
 
+import type { CapsuleOpenEffect } from "@/domain/capsules/open-effects";
+
 /** FASE 8: bozza -> chiusa -> condivisa. Chiudere è irreversibile e rende la capsula autosufficiente (v. closeCapsule); "Condividi" resta solo un cambio di stato, l'apertura vera arriva dal Dead Man's Switch (FASE 12-13). */
 export type CapsuleStatus = "draft" | "ready" | "shared";
 
@@ -30,6 +32,8 @@ export interface CapsuleListItem {
   content: string;
   /** "simple" per le capsule create prima che questa scelta esistesse. */
   contentStyle: CapsuleContentStyle;
+  /** Come si apre per chi la riceve (v. open-effects.ts); "discreet" per le capsule create prima che esistesse. */
+  openEffect: CapsuleOpenEffect;
   attachments: CapsuleAttachment[];
   /** Solo mentre draft, riusa la Document Key dell'item --- closeCapsule le trasforma in CapsuleAttachment propri e svuota la lista. */
   linkedDocuments: DocumentListItem[];
@@ -47,6 +51,7 @@ export interface CapsuleInput {
   title: string;
   content: string;
   contentStyle: CapsuleContentStyle;
+  openEffect: CapsuleOpenEffect;
   relatedFriendIds: string[];
   files: File[];
   linkedDocumentIds: string[];
@@ -58,6 +63,7 @@ export interface CapsuleEditInput {
   title: string;
   content: string;
   contentStyle: CapsuleContentStyle;
+  openEffect: CapsuleOpenEffect;
   relatedFriendIds: string[];
   linkedDocumentIds: string[];
   newFiles: File[];
@@ -97,5 +103,7 @@ export interface SharedCapsuleOpenedContent {
   title: string;
   content: string;
   contentStyle: CapsuleContentStyle;
+  /** Assente nelle capsule condivise prima che esistesse: si legge con parseOpenEffect. */
+  openEffect?: CapsuleOpenEffect;
   attachments: SharedCapsuleAttachment[];
 }

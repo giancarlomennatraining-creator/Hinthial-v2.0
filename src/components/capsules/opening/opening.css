@@ -1,0 +1,71 @@
+/* Animazioni degli effetti di apertura delle capsule (v. components/capsules/opening/). Con "riduci movimento" attivo nel
+   sistema si ferma tutto: ogni effetto salta direttamente alla pagina di lettura (v. prefersReducedMotion in helpers.ts),
+   e queste regole fanno in modo che nulla resti nascosto in attesa di un'animazione che non parte. */
+
+@keyframes capsule-lamp {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(26);
+    opacity: 0.55;
+  }
+}
+
+@keyframes capsule-line-in {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes capsule-wheel-spin {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  to {
+    transform: rotate(200deg) scale(1.15);
+  }
+}
+
+.capsule-lamp {
+  animation: capsule-lamp 2.2s ease-out forwards;
+}
+
+.capsule-line {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: capsule-line-in 0.9s ease forwards;
+  animation-delay: calc(1.1s + var(--i, 0) * 0.75s);
+}
+
+/* "Salta": tutto subito, senza attese. */
+.capsule-skipped .capsule-line {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+.capsule-skipped .capsule-lamp {
+  animation: none;
+  transform: scale(26);
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .capsule-line {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .capsule-lamp {
+    animation: none;
+    transform: scale(26);
+    opacity: 0.55;
+  }
+}

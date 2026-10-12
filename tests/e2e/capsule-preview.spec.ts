@@ -4,7 +4,7 @@ import { openRowMenu } from "./row-actions";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("l'anteprima di una capsula mostra titolo, contenuto e allegati come li vedrà chi la riceve", async ({
+test("l'anteprima di una capsula mostra titolo, contenuto e allegati con l'effetto che vedrà chi la riceve", async ({
   page,
 }) => {
   test.slow();
@@ -37,6 +37,8 @@ test("l'anteprima di una capsula mostra titolo, contenuto e allegati come li ved
   await page.getByRole("button", { name: "Avanti" }).click();
   await expect(page.getByText("Passo 3 di 3")).toBeVisible();
   await page.getByLabel("Il tuo messaggio").fill("Un pensiero per te, per sempre.");
+  // L'anteprima mostra l'effetto scelto per la capsula, non una pagina generica.
+  await page.getByRole("radio", { name: /^Luce e lettera/ }).click();
   const fileContent = `messaggio segreto --- ${Date.now()}`;
   // Gli strumenti per aggiungere un allegato sono un'aggiunta secondaria
   // e discreta (v. "capsule come lettere"): nascosti finché non si
@@ -54,11 +56,13 @@ test("l'anteprima di una capsula mostra titolo, contenuto e allegati come li ved
   await expect(row).toBeVisible({ timeout: 15_000 });
 
   await openRowMenu(row);
-  await page.getByRole("menuitem", { name: "👁️ Anteprima" }).click();
+  await page.getByRole("menuitem", { name: "Anteprima" }).click();
 
   const dialog = page.getByRole("dialog", { name: "Anteprima capsula" });
   await expect(dialog).toBeVisible();
+  await expect(dialog).toHaveAttribute("data-effect", "light");
   await expect(dialog.getByText("Così la vedrà chi la riceve")).toBeVisible();
+  await dialog.getByRole("button", { name: "Salta" }).click();
   await expect(dialog.getByRole("heading", { name: "Per Maria" })).toBeVisible();
   await expect(dialog.getByText("Un pensiero per te, per sempre.")).toBeVisible();
   await expect(dialog.getByText("messaggio.mp3")).toBeVisible();

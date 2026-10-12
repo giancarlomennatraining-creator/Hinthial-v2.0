@@ -138,10 +138,9 @@ test("chiudere e condividere una capsula la rende apribile dal destinatario coll
   const viewer = page.getByRole("dialog", { name: "Capsula condivisa" });
   await expect(viewer).toBeVisible();
 
-  // La capsula arriva come una busta sigillata, con il titolo ma non ancora la lettera: si rompe il sigillo per leggerla.
-  await expect(viewer.getByText("Per il destinatario collegato")).toBeVisible({ timeout: 15_000 });
-  await expect(viewer.getByText(secretMessage)).toHaveCount(0);
-  await viewer.getByRole("button", { name: "Rompi il sigillo" }).click();
+  // Senza un effetto scelto da chi l'ha scritta (default "Sblocco discreto"), la capsula si apre in una pagina con titolo e lettera.
+  await expect(viewer).toHaveAttribute("data-effect", "discreet");
+  await expect(viewer.getByRole("heading", { name: "Per il destinatario collegato" })).toBeVisible({ timeout: 15_000 });
   await expect(viewer.getByText(secretMessage)).toBeVisible();
 
   // Lascia un pensiero a chi l'ha scritta: cifrato sul dispositivo per il proprietario.

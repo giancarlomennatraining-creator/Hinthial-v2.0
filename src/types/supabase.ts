@@ -118,6 +118,8 @@ export type Database = {
           list_view_preferences: Json;
           nav_orientation: NavOrientationColumn;
           dashboard_style: DashboardStyleColumn;
+          capsule_style: string;
+          capsule_open_effect: string;
           unlock_style: UnlockStyleColumn;
           bottom_nav_items: Json;
           main_nav_items: Json | null;
@@ -156,6 +158,8 @@ export type Database = {
           list_view_preferences?: Json;
           nav_orientation?: NavOrientationColumn;
           dashboard_style?: DashboardStyleColumn;
+          capsule_style?: string;
+          capsule_open_effect?: string;
           unlock_style?: UnlockStyleColumn;
           bottom_nav_items?: Json;
           main_nav_items?: Json | null;
@@ -194,6 +198,8 @@ export type Database = {
           list_view_preferences?: Json;
           nav_orientation?: NavOrientationColumn;
           dashboard_style?: DashboardStyleColumn;
+          capsule_style?: string;
+          capsule_open_effect?: string;
           unlock_style?: UnlockStyleColumn;
           bottom_nav_items?: Json;
           main_nav_items?: Json | null;

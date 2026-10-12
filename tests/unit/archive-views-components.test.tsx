@@ -199,12 +199,12 @@ describe("Collezioni", () => {
   it("aprire una collezione mostra la tabella, e si torna indietro", () => {
     render(<CollectionsView data={makeData()} />);
     fireEvent.click(screen.getByRole("button", { name: /Apri Casa, 2 documenti/ }));
-    expect(screen.getByRole("heading", { level: 1, name: "Casa" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Casa" })).toBeInTheDocument();
     expect(screen.getByText("2 documenti · ordinati per data di aggiunta")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Bolletta luce.pdf" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Polizza RCA.pdf" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Archivio/ }));
-    expect(screen.getByRole("heading", { level: 1, name: "Archivio" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 2, name: "Casa" })).toBeNull();
   });
 
   it("le colonne si ordinano e il verso si inverte al secondo clic", () => {
@@ -220,7 +220,7 @@ describe("Collezioni", () => {
   it("una card di attenzione apre l'elenco di quei documenti", () => {
     render(<CollectionsView data={makeData()} />);
     fireEvent.click(screen.getByRole("button", { name: /Da leggere con Hinthia/ }));
-    expect(screen.getByRole("heading", { level: 1, name: "Da leggere con Hinthia" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Da leggere con Hinthia" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Polizza RCA.pdf" })).toBeNull();
     expect(screen.getByRole("link", { name: "Foto.jpg" })).toBeInTheDocument();
   });
@@ -228,7 +228,7 @@ describe("Collezioni", () => {
   it("la ricerca in alto trova nei documenti di tutta la collezione", () => {
     render(<CollectionsView data={makeData()} />);
     fireEvent.change(screen.getByLabelText("Cerca nell'archivio"), { target: { value: "bolletta" } });
-    expect(screen.getByRole("heading", { level: 1, name: "Risultati" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Risultati" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Bolletta luce.pdf" })).toBeInTheDocument();
   });
 });

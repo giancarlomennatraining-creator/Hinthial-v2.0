@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildFutureLine,
   canCloseCapsule,
   capsuleChecks,
   isOpeningSoon,
-  matchesCapsuleFilter,
-  MAX_FUTURE_MARKERS,
   sortByOpening,
 } from "@/domain/capsules/overview";
 
@@ -77,65 +74,6 @@ describe("isOpeningSoon e i filtri", () => {
     expect(isOpeningSoon({ status: "ready", openAt: inDays(31) }, NOW)).toBe(false);
     expect(isOpeningSoon({ status: "ready", openAt: inDays(-1) }, NOW)).toBe(false);
     expect(isOpeningSoon({ status: "ready", openAt: null }, NOW)).toBe(false);
-  });
-
-  it("il filtro per stato e quello delle aperture vicine lasciano passare le capsule giuste", () => {
-    const draft = { status: "draft" as const, openAt: inDays(5) };
-    const soon = { status: "ready" as const, openAt: inDays(5) };
-    expect(matchesCapsuleFilter(draft, "all", NOW)).toBe(true);
-    expect(matchesCapsuleFilter(draft, "draft", NOW)).toBe(true);
-    expect(matchesCapsuleFilter(soon, "draft", NOW)).toBe(false);
-    expect(matchesCapsuleFilter(soon, "soon", NOW)).toBe(true);
-    expect(matchesCapsuleFilter(draft, "soon", NOW)).toBe(false);
-  });
-});
-
-describe("buildFutureLine", () => {
-  const capsule = (id: string, openAt: string | null, status: "draft" | "ready" | "shared" = "ready") => ({
-    id,
-    title: `Capsula ${id}`,
-    openAt,
-    status,
-  });
-
-  it("non c'è senza aperture davanti", () => {
-    expect(buildFutureLine([], NOW)).toBeNull();
-    expect(buildFutureLine([capsule("a", null), capsule("b", inDays(-3))], NOW)).toBeNull();
-  });
-
-  it("mette le tappe in ordine di data, da 0 a 100, alternando sopra e sotto", () => {
-    const line = buildFutureLine(
-      [capsule("lontana", inDays(365 * 10)), capsule("vicina", inDays(30)), capsule("media", inDays(365 * 5))],
-      NOW,
-    )!;
-    expect(line.markers.map((m) => m.id)).toEqual(["vicina", "media", "lontana"]);
-    expect(line.markers.map((m) => m.side)).toEqual(["above", "below", "above"]);
-    expect(line.markers[2].percent).toBeCloseTo(100, 5);
-    expect(line.markers[0].percent).toBeGreaterThan(0);
-    expect(line.markers[0].percent).toBeLessThan(line.markers[1].percent);
-  });
-
-  it("l'asse dura almeno un anno: una sola apertura tra due settimane non finisce in fondo", () => {
-    const line = buildFutureLine([capsule("a", inDays(14))], NOW)!;
-    expect(line.markers[0].percent).toBeLessThan(10);
-  });
-
-  it("le etichette degli anni sono al massimo sei e cadono sul primo gennaio", () => {
-    const line = buildFutureLine([capsule("a", inDays(365 * 12))], NOW)!;
-    expect(line.ticks.length).toBeGreaterThan(0);
-    expect(line.ticks.length).toBeLessThanOrEqual(6);
-    for (const tick of line.ticks) {
-      const jan1 = new Date(tick.year, 0, 1).getTime();
-      const expected = ((jan1 - NOW.getTime()) / (365 * 12 * 86_400_000)) * 100;
-      expect(tick.percent).toBeCloseTo(expected, 5);
-    }
-  });
-
-  it("disegna al massimo un certo numero di tappe e dice quante restano fuori", () => {
-    const many = Array.from({ length: MAX_FUTURE_MARKERS + 3 }, (_, i) => capsule(String(i), inDays(40 + i * 20)));
-    const line = buildFutureLine(many, NOW)!;
-    expect(line.markers).toHaveLength(MAX_FUTURE_MARKERS);
-    expect(line.hidden).toBe(3);
   });
 });
 

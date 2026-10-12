@@ -140,7 +140,6 @@ export function ShelfView({ data }: { data: ArchiveData }) {
     <div className="flex flex-col gap-[18px] text-[#121a35] dark:text-zinc-100">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-0.5">
-          <h1 className="font-heading text-[30px] leading-tight font-extrabold tracking-[-0.02em] text-brand">Archivio</h1>
           <p className="text-[13.5px] text-[#5b6483] dark:text-zinc-400">
             {documents.length.toLocaleString("it-IT")} documenti · {totalSize >= 1024 * 1024 ? `${(totalSize / (1024 * 1024)).toFixed(1)} MB` : `${Math.round(totalSize / 1024)} KB`}, il più recente in alto e il più vecchio in basso
           </p>

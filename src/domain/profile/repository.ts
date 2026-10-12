@@ -9,6 +9,8 @@ import {
 import { parseListViewPreferences, type ListViewPreferences } from "@/lib/list-view";
 import { parseDashboardStyle, type DashboardStyle } from "@/lib/dashboard-style";
 import { type UnlockStyle } from "@/lib/unlock-style";
+import { parseCapsuleStyle, type CapsuleStyle } from "@/lib/capsule-style";
+import { parseOpenEffect, type CapsuleOpenEffect } from "@/domain/capsules/open-effects";
 import { type NavOrientation } from "@/lib/nav-orientation";
 import { type BottomNavItems } from "@/lib/bottom-nav";
 import type { ProfileInput } from "@/domain/profile/types";
@@ -373,5 +375,56 @@ export async function updateUnlockStyle(
 
   if (error) {
     throw new Error(`Impossibile salvare lo stile dello sblocco: ${error.message}`);
+  }
+}
+
+/** Come si presentano le capsule per chi le crea: lo stile dell'elenco e l'effetto di apertura proposto per default. */
+export interface CapsuleAppearance {
+  style: CapsuleStyle;
+  openEffect: CapsuleOpenEffect;
+}
+
+/**
+ * Le due preferenze delle capsule (Impostazioni > Aspetto > Capsule). Non lancia mai: se non si riescono a leggere (per
+ * esempio la migrazione che le aggiunge non è ancora applicata) valgono i default, e la pagina Capsule funziona lo stesso.
+ */
+export async function getCapsuleAppearance(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<CapsuleAppearance> {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("capsule_style, capsule_open_effect")
+      .eq("id", userId)
+      .single();
+    if (error) return { style: parseCapsuleStyle(null), openEffect: parseOpenEffect(null) };
+    return { style: parseCapsuleStyle(data?.capsule_style), openEffect: parseOpenEffect(data?.capsule_open_effect) };
+  } catch {
+    return { style: parseCapsuleStyle(null), openEffect: parseOpenEffect(null) };
+  }
+}
+
+export async function updateCapsuleStyle(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  style: CapsuleStyle,
+): Promise<void> {
+  const { error } = await supabase.from("profiles").update({ capsule_style: style }).eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare lo stile delle capsule: ${error.message}`);
+  }
+}
+
+export async function updateCapsuleOpenEffect(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  effect: CapsuleOpenEffect,
+): Promise<void> {
+  const { error } = await supabase.from("profiles").update({ capsule_open_effect: effect }).eq("id", userId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare l'effetto di apertura: ${error.message}`);
   }
 }

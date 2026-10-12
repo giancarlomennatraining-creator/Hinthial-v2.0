@@ -114,7 +114,6 @@ export function TimelineView({ data }: { data: ArchiveData }) {
     <div className="flex flex-col gap-[18px] text-[#121a35] dark:text-zinc-100">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-0.5">
-          <h1 className="font-heading text-[30px] leading-tight font-extrabold tracking-[-0.02em] text-brand">Archivio</h1>
           <p className="text-[13.5px] text-[#5b6483] dark:text-zinc-400">
             {documents.length} documenti{oldestDate ? ` dal ${monthLong(oldestDate.getMonth()).toLowerCase()} ${oldestDate.getFullYear()}` : ""} · {formatSize(totalSize)}, tutti cifrati sul tuo dispositivo
           </p>

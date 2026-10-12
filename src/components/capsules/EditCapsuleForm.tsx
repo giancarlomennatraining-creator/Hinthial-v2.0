@@ -13,6 +13,8 @@ import { FriendPicker } from "@/components/capsules/FriendPicker";
 import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachmentPicker";
 import { CapsuleOpenAtField } from "@/components/capsules/CapsuleOpenAtField";
 import { CapsuleLetterEditor } from "@/components/capsules/CapsuleLetterEditor";
+import { CapsuleOpenEffectPicker, previewAttachments } from "@/components/capsules/CapsuleOpenEffectPicker";
+import { DEFAULT_OPEN_EFFECT, type CapsuleOpenEffect } from "@/domain/capsules/open-effects";
 import { GENERIC_PROMPTS } from "@/domain/capsules/templates";
 import {
   AttachmentChip,
@@ -60,6 +62,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [contentStyle, setContentStyle] = useState<CapsuleContentStyle>("simple");
+  const [openEffect, setOpenEffect] = useState<CapsuleOpenEffect>(DEFAULT_OPEN_EFFECT);
   const [openAt, setOpenAt] = useState("");
   const [showAttachmentTools, setShowAttachmentTools] = useState(false);
   const [relatedFriends, setRelatedFriends] = useState<FriendListItem[]>([]);
@@ -96,6 +99,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
         setTitle(found.title);
         setContent(found.content);
         setContentStyle(found.contentStyle);
+        setOpenEffect(found.openEffect);
         setOpenAt(found.openAt ?? "");
         setRelatedFriends(found.relatedFriends);
         setLinkedDocuments(found.linkedDocuments);
@@ -160,6 +164,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
         title: title.trim(),
         content: content.trim(),
         contentStyle,
+        openEffect,
         relatedFriendIds: relatedFriends.map((c) => c.id),
         linkedDocumentIds: linkedDocuments.map((d) => d.id),
         newFiles,
@@ -268,6 +273,20 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                     />
                   </>
                 }
+              />
+
+              <CapsuleOpenEffectPicker
+                idPrefix="edit"
+                value={openEffect}
+                onChange={setOpenEffect}
+                title={title}
+                letter={content}
+                letterStyle={contentStyle}
+                attachments={previewAttachments([
+                  ...keptAttachments.map((a) => ({ id: a.id, filename: a.filename, mimeType: a.mimeType, size: a.size })),
+                  ...newFiles.map((f) => ({ filename: f.name, mimeType: f.type || "application/octet-stream", size: f.size })),
+                  ...linkedDocuments.map((d) => ({ id: d.id, filename: d.filename, mimeType: d.mimeType, size: d.size })),
+                ])}
               />
 
               <StepError error={error} />

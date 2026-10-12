@@ -42,6 +42,7 @@ function capsule(over: Partial<CapsuleListItem> = {}): CapsuleListItem {
     title: "Per quando non ci sarò più",
     content: "...",
     contentStyle: "simple",
+    openEffect: "discreet",
     attachments: [],
     linkedDocuments: [],
     relatedFriends: [],

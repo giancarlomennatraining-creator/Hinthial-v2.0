@@ -13,6 +13,9 @@ import { FriendPicker } from "@/components/capsules/FriendPicker";
 import { CapsuleOpenAtField } from "@/components/capsules/CapsuleOpenAtField";
 import { CapsuleLetterEditor } from "@/components/capsules/CapsuleLetterEditor";
 import { CapsuleTemplatePicker } from "@/components/capsules/CapsuleTemplatePicker";
+import { CapsuleOpenEffectPicker, previewAttachments } from "@/components/capsules/CapsuleOpenEffectPicker";
+import { DEFAULT_OPEN_EFFECT, type CapsuleOpenEffect } from "@/domain/capsules/open-effects";
+import { getCapsuleAppearance } from "@/domain/profile/repository";
 import {
   AttachmentSection,
   CapsuleFormCard,
@@ -55,6 +58,9 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   // Un modello compila titolo e data solo finché non li ha toccati chi scrive: mai sovrascrivere una scelta fatta a mano.
   const [template, setTemplate] = useState<CapsuleTemplate | null>(null);
   const [titleTouched, setTitleTouched] = useState(false);
+  // L'effetto di apertura parte da quello preferito in Impostazioni > Aspetto > Capsule, finché chi scrive non ne sceglie un altro.
+  const [openEffect, setOpenEffect] = useState<CapsuleOpenEffect>(DEFAULT_OPEN_EFFECT);
+  const [effectTouched, setEffectTouched] = useState(false);
   const [openAtTouched, setOpenAtTouched] = useState(false);
   const [pendingRelatedFriends, setPendingRelatedFriends] = useState<FriendListItem[]>([]);
 
@@ -90,6 +96,25 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
+        const appearance = await getCapsuleAppearance(supabase, user.id);
+        if (!cancelled && !effectTouched) setOpenEffect(appearance.openEffect);
+      } catch {
+        // Resta il default.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, effectTouched]);
 
   function handlePickTemplate(next: CapsuleTemplate | null) {
     setTemplate(next);
@@ -132,6 +157,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
         title: title.trim(),
         content: content.trim(),
         contentStyle,
+        openEffect,
         relatedFriendIds: pendingRelatedFriends.map((c) => c.id),
         files: recordedFiles,
         linkedDocumentIds: pendingLinkedDocuments.map((d) => d.id),
@@ -243,6 +269,22 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
                     onRemove={(index) => setRecordedFiles((prev) => prev.filter((_, j) => j !== index))}
                   />
                 }
+              />
+
+              <CapsuleOpenEffectPicker
+                idPrefix="create"
+                value={openEffect}
+                onChange={(next) => {
+                  setOpenEffect(next);
+                  setEffectTouched(true);
+                }}
+                title={title}
+                letter={content}
+                letterStyle={contentStyle}
+                attachments={previewAttachments([
+                  ...recordedFiles.map((f) => ({ filename: f.name, mimeType: f.type || "application/octet-stream", size: f.size })),
+                  ...pendingLinkedDocuments.map((d) => ({ id: d.id, filename: d.filename, mimeType: d.mimeType, size: d.size })),
+                ])}
               />
 
               <StepError error={error} />
