@@ -129,6 +129,7 @@ describe("tutti i passi fatti", () => {
             title: "Per Maria",
             content: "",
             contentStyle: "simple",
+            openEffect: "discreet",
             attachments: [],
             linkedDocuments: [],
             relatedFriends: [

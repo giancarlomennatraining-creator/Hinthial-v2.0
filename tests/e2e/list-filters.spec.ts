@@ -110,7 +110,7 @@ test("la ricerca globale e il filtro per categoria funzionano in Beni e Archivio
   await expect(page.getByText("polizza.txt")).not.toBeVisible();
 });
 
-test("la ricerca globale e il filtro per stato funzionano in Scadenze, Amici e Capsule", async ({
+test("la ricerca globale funziona in Scadenze, Amici e Capsule", async ({
   page,
 }) => {
   test.slow();
@@ -222,8 +222,4 @@ test("la ricerca globale e il filtro per stato funzionano in Scadenze, Amici e C
   await expect(capsulesSearch.getByRole("button", { name: /Ricordi di famiglia/ })).toBeVisible();
   await expect(capsulesSearch.getByRole("button", { name: /Per Maria/ })).toHaveCount(0);
   await closeGlobalSearch(page);
-
-  await page.getByRole("group", { name: "Filtra per stato" }).getByRole("button", { name: /^Chiusa/ }).click();
-  await expect(page.getByRole("listitem").filter({ hasText: "Per Maria" })).toBeVisible();
-  await expect(page.getByText("Ricordi di famiglia")).not.toBeVisible();
 });

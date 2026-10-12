@@ -1,26 +1,15 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CAPSULE_STATUS_LABEL } from "@/domain/capsules/labels";
-import { canCloseCapsule, capsuleChecks, isOpeningSoon } from "@/domain/capsules/overview";
+import { capsuleArtState } from "@/components/capsules/CapsuleArt";
+import { CapsuleChips, capsuleSubline } from "@/components/capsules/CapsuleCardParts";
 import type { CapsuleListItem, CapsuleStatus } from "@/domain/capsules/types";
-import { repliesLabel } from "@/domain/capsules/replies";
-import { sortAlphabetically } from "@/lib/utils";
-import { formatDate } from "@/lib/format";
 
 const BAND_COLOR: Record<CapsuleStatus, string> = {
   draft: "bg-zinc-100 dark:bg-zinc-900",
   ready: "bg-[#e8edfc] dark:bg-brand/15",
   shared: "bg-[#e3f4ec] dark:bg-green-950",
 };
-
-const BADGE_CLASS: Record<CapsuleStatus, string> = {
-  draft: "bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400",
-  ready: "bg-lime-100 text-lime-700 dark:bg-lime-950 dark:text-lime-400",
-  shared: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
-};
-
-const WARN_CHIP = "rounded-full bg-[#fdf3dd] px-2 py-0.5 text-xs font-bold text-[#8a5a00] dark:bg-amber-950 dark:text-amber-300";
 
 /** Le due linee oblique che fanno sembrare la fascia superiore la patta di una busta. */
 const FLAP_LINES =
@@ -60,15 +49,10 @@ function Seal({ status, opened }: { status: CapsuleStatus; opened: boolean }) {
   );
 }
 
-function formatDateTime(iso: string): string {
-  const time = new Date(iso).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
-  return `${formatDate(iso)}, ${time}`;
-}
-
 /**
- * Una capsula dell'elenco, come una busta: la patta in alto con il sigillo, il titolo, per chi è e quando si apre. Per una
- * bozza dice cosa le manca per essere chiusa. Il menu delle azioni, il conto alla rovescia e i contenuti (allegati con
- * "Apri" e "Trascrizione") li passa chi la disegna, perché dipendono dallo stato della pagina.
+ * Una capsula dell'elenco, come una busta (lo stile "Buste"): la patta in alto con il sigillo, il titolo, per chi è e quando
+ * si apre. Per una bozza dice cosa le manca per essere chiusa. Il menu delle azioni, il conto alla rovescia e i contenuti
+ * (allegati con "Apri" e "Trascrizione") li passa chi la disegna, perché dipendono dallo stato della pagina.
  */
 export function CapsuleCard({
   capsule,
@@ -90,12 +74,7 @@ export function CapsuleCard({
   /** I contenuti allegati, con le loro azioni. */
   children?: ReactNode;
 }) {
-  const opened = capsule.status !== "draft" && capsule.openAt !== null && new Date(capsule.openAt) <= now;
-  const checks = capsule.status === "draft" ? capsuleChecks(capsule, now) : [];
-  const warnings = checks.filter((check) => check.state === "warn").length;
-  const recipients = sortAlphabetically(capsule.relatedFriends, (c) => c.name)
-    .map((c) => c.name)
-    .join(", ");
+  const opened = capsuleArtState(capsule, now) === "ready";
 
   return (
     <li className="relative flex min-w-0 flex-col rounded-[18px] border border-[#dfe3f0] bg-white shadow-[0_2px_8px_rgba(18,26,53,0.05)] dark:border-zinc-800 dark:bg-zinc-950">
@@ -112,42 +91,10 @@ export function CapsuleCard({
           <h3 className="font-heading text-[17px] leading-tight font-extrabold tracking-[-0.01em] text-[#121a35] dark:text-zinc-100">
             {capsule.title}
           </h3>
-          <p className="text-xs text-[#5b6483] dark:text-zinc-400">
-            {recipients ? `Per ${recipients} · ` : ""}
-            dal {formatDate(capsule.createdAt)}
-            {capsule.openAt ? ` · apertura prevista ${formatDateTime(capsule.openAt)}` : ""}
-          </p>
+          <p className="text-xs text-[#5b6483] dark:text-zinc-400">{capsuleSubline(capsule)}</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${BADGE_CLASS[capsule.status]}`}>
-            {CAPSULE_STATUS_LABEL[capsule.status]}
-          </span>
-          {isOpeningSoon(capsule, now) ? <span className={WARN_CHIP}>Si apre presto</span> : null}
-          {repliesCount > 0 && onOpenReplies ? (
-            <button
-              type="button"
-              onClick={onOpenReplies}
-              aria-label={`Leggi ${repliesLabel(repliesCount)} su ${capsule.title}`}
-              className="rounded-full bg-[#e8edfc] px-2 py-0.5 text-xs font-bold text-brand hover:bg-[#d9e2fb] dark:bg-brand/20 dark:text-[#9db6ff]"
-            >
-              {repliesLabel(repliesCount)}
-            </button>
-          ) : null}
-          {capsule.status === "draft" ? (
-            !canCloseCapsule(checks) ? (
-              <span className={WARN_CHIP}>Manca {checks.find((c) => c.state === "todo")?.label.toLowerCase()}</span>
-            ) : warnings > 0 ? (
-              <span className={WARN_CHIP}>
-                Pronta da chiudere, {warnings} {warnings === 1 ? "avviso" : "avvisi"}
-              </span>
-            ) : (
-              <span className="rounded-full bg-[#e3f4ec] px-2 py-0.5 text-xs font-bold text-[#1c7c5a] dark:bg-green-950 dark:text-green-300">
-                Pronta da chiudere
-              </span>
-            )
-          ) : null}
-        </div>
+        <CapsuleChips capsule={capsule} now={now} repliesCount={repliesCount} onOpenReplies={onOpenReplies} />
 
         {countdown}
         {children}

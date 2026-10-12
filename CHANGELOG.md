@@ -10,6 +10,66 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (79)
+
+### Archivio: il titolo sta sopra le schede in tutte le viste
+
+**Cosa fa:**
+- Nelle viste Collezioni, Cassettiera, Linea del tempo e Scaffale, "Archivio" non è più un grande titolo sotto le schede (Contenuti, Fascicolo, Cestino): sta sopra, con il tasto Aiuto, nello stesso stile e posto del nome di ogni altra sezione. Sotto le schede resta il riepilogo ("50 documenti · 3.8 MB, tutti cifrati sul tuo dispositivo") con gli strumenti della vista.
+- Dentro una collezione o tra i risultati di una ricerca, il nome (es. "Senza categoria", "Risultati") resta come sottotitolo più piccolo, sotto il percorso "← Archivio".
+
+**Note tecniche:**
+- Le quattro viste alternative non rendono più il proprio `h1` "Archivio" (in Collezioni, solo il nome della collezione, come `h2`); la testata sta in `DocumentsPanel` e i consigli del tasto Aiuto sono una sola costante (`ARCHIVE_HELP_TIPS`). Nessuna migrazione.
+
+---
+
+## 2026-10-15 (78)
+
+### Capsule: via la linea del futuro, e l'anello dell'oblò più chiaro
+
+**Cosa fa:**
+- La **linea del futuro** (il riquadro con le tappe e gli anni sopra l'elenco) non c'è più dalla pagina Capsule, in nessuno stile. Le buste restano ordinate dalla prossima ad aprirsi alla più lontana.
+- Nello stile **Oblò** l'anello attorno alla capsula è un po' più spesso e più azzurro, e dice a parole a che punto è (per uno screen reader e al passaggio del mouse: "Trascorso il 12% del tempo", "Si può aprire ora", "Bozza: il tempo non è ancora partito"). L'anello continua a riempirsi di blu in proporzione al tempo trascorso dalla creazione alla data di apertura, e diventa verde e pieno quando la capsula si può aprire.
+
+**Note tecniche:**
+- Tolti `CapsuleFutureLine` e, da `domain/capsules/overview.ts`, `buildFutureLine` con i suoi tipi e i relativi test; `capsule-room.spec.ts` non controlla più la linea. Nessuna migrazione.
+- Poiché l'anello è proporzionale all'intero periodo, una capsula appena creata con una data lontana mostra un anello quasi vuoto (parte da un minimo visibile del 3%): è corretto, non un difetto.
+
+---
+
+## 2026-10-14 (77)
+
+### Capsule: stili dell'elenco (Flat e Oblò) e cinque effetti di apertura scelti da chi scrive
+
+**Cosa fa:**
+- In **Impostazioni > Aspetto > Capsule** c'è lo **Stile delle capsule**, come lo stile della Dashboard: **Buste** (quello di sempre), **Flat** (una piccola capsula del tempo illustrata in cima a ogni scheda, colori tenui, e nella linea del futuro mini capsule al posto dei puntini) e **Oblò** (righe compatte con un oblò rotondo e un anello che si riempie man mano che la data si avvicina, verde quando la capsula si può aprire). Ogni stile ha la sua miniatura e vale anche per "Condivise con me". La scelta segue l'utente su ogni dispositivo.
+- Sempre in Aspetto > Capsule, **Come si aprono**: l'effetto con cui chi riceve una capsula la vede aprirsi, una volta disponibile. Cinque effetti, ognuno con il suo pulsante **Provalo** (si prova con una capsula di esempio, nulla si apre davvero): **Sblocco discreto** (default: una pagina calma con la lettera, gli allegati e "La storia di questa capsula"), **Zoom nell'oblò** (l'oblò si allarga su tutta la pagina, il volantino gira e la luce diventa la pagina di lettura), **Tieni premuto** (si tiene premuto l'oblò finché l'anello si riempie; poi un foglio dal basso sul telefono, un pannello da destra sul desktop; da tastiera basta Invio), **Ricordi uno a uno** (lettera e allegati come carte da sfogliare, una per volta, fino al pensiero) e **Luce e lettera** (si abbassa la luce e la lettera appare riga per riga, in grande; "Salta" mostra tutto subito).
+- Chi **scrive** una capsula sceglie l'effetto per quella capsula, nell'ultimo passo di creazione e di modifica ("Come si apre per chi la riceve"): parte dall'effetto preferito in Impostazioni, e **"Prova l'effetto"** lo mostra con la sua lettera e i suoi allegati. **Chi la riceve vede proprio l'effetto scelto da chi l'ha scritta**. Le capsule create prima si aprono con lo Sblocco discreto.
+- La vecchia busta "Rompi il sigillo" nella finestra di chi riceve non c'è più: è sostituita dai cinque effetti. Con "riduci movimento" attivo nel sistema ogni effetto salta direttamente alla pagina di lettura.
+
+**Note tecniche:**
+- L'**effetto di ogni capsula viaggia nel payload cifrato** (`CapsulePayload.openEffect`, anche in quello per il destinatario): nessuna colonna in chiaro e nessuna migrazione per questa parte. Chi riceve lo conosce dopo aver decifrato, che è proprio il momento in cui serve (per questo "Tieni premuto" avviene dentro l'apertura, sull'oblò grande). `domain/capsules/open-effects.ts` (tipi, opzioni, `parseOpenEffect`, `splitLetterLines`, coperto da `tests/unit/capsule-open-effects.test.ts`).
+- Le **due preferenze** (stile e effetto predefinito) stanno in `profiles` come `dashboard_style`: migrazione `20261014000000_capsule_appearance` (due colonne con check). **Da applicare a mano** con `npx supabase db query --linked -f supabase/migrations/20261014000000_capsule_appearance.sql` (non `db push`, v. nota alla voce 54). Sono lette dalla pagina Capsule e da Impostazioni con una query a parte, che non lancia mai: senza la migrazione valgono i default (Buste, Sblocco discreto), la pagina funziona lo stesso e il salvataggio mostra "Preferenza non salvata".
+- Nuovi: `CapsuleArt` (la capsula in SVG, versioni flat e acciaio), `CapsulePorthole`, `CapsuleStyledCards` (`CapsuleFlatCard`, `CapsulePortholeRow`), `CapsuleCardParts` (pillole e riga condivise; `CapsuleCard` le usa), `SharedCapsuleItem` (le condivise nei tre stili), `CapsuleOpenEffectPicker` (la scelta del mittente), e la cartella `components/capsules/opening/` con i cinque effetti (`EffectDiscreet`, `EffectZoom`, `EffectHold`, `EffectDeck`, `EffectLight`), `OpenEffectRenderer`, `CapsuleOpenPreview` e i pezzi comuni. `SharedCapsuleViewer` ora decifra e delega all'effetto; dal pannello "Condivise con me" l'apertura parte dall'oblò (o dalla capsula) toccato. Le liste portano `data-capsule-style` per i test.
+- Test: `capsule-effects.spec.ts` crea una capsula per ognuno dei cinque effetti, le condivide e verifica che il destinatario le veda aprirsi ciascuna a modo suo; `capsule-appearance.spec.ts` copre le Impostazioni, "Provalo", la scelta nel modulo e il cambio dell'elenco (le richieste alle due colonne nuove sono simulate, per non dipendere dalla migrazione); `capsule-sharing.spec.ts` non rompe più il sigillo. Nota: con cinque capsule la pagina scorre e il menu "⋮" si chiude a ogni scroll (`RowActionsMenu`): nei test si porta la riga in vista e si lascia assestare prima di aprirlo.
+- Rimandato: avvisare per email o in Dashboard chi ha scritto quando arriva un pensiero; capsule via link senza account.
+
+---
+
+## 2026-10-14 (80)
+
+### Capsule: via le pillole dei filtri; l'Anteprima mostra l'effetto vero di apertura
+
+**Cosa fa:**
+- Nella pagina Capsule non ci sono più i tasti per filtrare per stato (Tutte, Bozza, Chiusa, Condivisa, Si aprono presto): l'elenco mostra sempre tutte le capsule, dalla prossima ad aprirsi alla più lontana. Su telefono sparisce anche lo spazio vuoto che restava sopra l'elenco.
+- Nel menu di ogni capsula la voce è semplicemente **Anteprima**, senza l'icona dell'occhio. E ora **l'Anteprima mostra la stessa apertura che vedrà chi la riceve**: con l'effetto scelto per quella capsula (Sblocco discreto, Zoom, Tieni premuto, Ricordi uno a uno, Luce e lettera), la sua lettera e i suoi allegati veri, che si riproducono e si aprono. In alto a sinistra un cartellino dice "Così la vedrà chi la riceve"; "Lascia un pensiero" è un segnaposto (nessuno a cui rispondere). Vale anche dalla finestra "Prima di chiudere". Il vecchio riquadro con conto alla rovescia non c'è più.
+
+**Note tecniche:**
+- `CapsulePreview` ora usa `OpenEffectRenderer` come `SharedCapsuleViewer`; `EffectShell` sa di essere in anteprima tramite `OpenPreviewContext` (nome "Anteprima capsula", cartellino, "Chiudi anteprima"), e `OpenedParts` ha `LoadableAttachment` (riga allegato con una funzione di caricamento) di cui `LiveAttachment` è un caso. `capsule-preview.spec` sceglie "Luce e lettera" e verifica che l'anteprima si apra così.
+- Tolti `matchesCapsuleFilter` e `CapsuleFilter` (e il loro test) da `domain/capsules/overview.ts`; restano `isOpeningSoon` e le pillole di stato sulla singola capsula. Aggiornati gli e2e (`capsule-room`, `list-filters`, `capsule-preview`, `capsules`) e, per il titolo Archivio, i test di `CollectionsView` (ora il nome della collezione è un h2).
+
+---
+
 ## 2026-10-13 (76)
 
 ### L'apertura di una capsula: la busta e "Lascia un pensiero"

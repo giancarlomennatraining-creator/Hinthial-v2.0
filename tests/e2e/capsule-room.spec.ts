@@ -3,9 +3,9 @@ import { setUpWithDocument } from "./hinthia";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// L'elenco delle capsule come buste: lo stato in vista, cosa manca a una bozza, i filtri e la linea del futuro.
+// L'elenco delle capsule come buste: lo stato in vista e cosa manca a una bozza.
 
-test("le capsule sono buste con lo stato in vista, i filtri e la linea del futuro", async ({ page }) => {
+test("le capsule sono buste con lo stato in vista e cosa manca a una bozza", async ({ page }) => {
   test.slow();
 
   await setUpWithDocument(page);
@@ -26,26 +26,4 @@ test("le capsule sono buste con lo stato in vista, i filtri e la linea del futur
   await expect(busta).toBeVisible({ timeout: 15_000 });
   await expect(busta.getByText("Bozza")).toBeVisible();
   await expect(busta.getByText("Manca una lettera o un allegato")).toBeVisible();
-
-  // I filtri sono pillole con i conteggi.
-  const filtri = page.getByRole("group", { name: "Filtra per stato" });
-  await expect(filtri.getByRole("button", { name: /^Tutte\s*1$/ })).toBeVisible();
-  await expect(filtri.getByRole("button", { name: /^Bozza\s*1$/ })).toBeVisible();
-  await expect(filtri.getByRole("button", { name: /^Chiusa\s*0$/ })).toBeVisible();
-  await expect(filtri.getByRole("button", { name: /^Si aprono presto\s*0$/ })).toBeVisible();
-
-  // La linea del futuro mostra la tappa con il titolo e la data.
-  const linea = page.getByRole("region", { name: "Quando si apriranno" });
-  await expect(linea).toContainText("Oggi");
-  await expect(linea).toContainText("Per i miei 60 anni");
-  await expect(linea).toContainText("2038");
-
-  // Un filtro che non lascia nulla toglie anche la linea.
-  await filtri.getByRole("button", { name: /^Chiusa/ }).click();
-  await expect(page.getByText("Nessuna capsula corrisponde ai filtri.")).toBeVisible();
-  await expect(linea).toHaveCount(0);
-
-  await filtri.getByRole("button", { name: /^Bozza/ }).click();
-  await expect(busta).toBeVisible();
-  await expect(page.getByRole("region", { name: "Quando si apriranno" })).toBeVisible();
 });

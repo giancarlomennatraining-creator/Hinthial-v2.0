@@ -19,7 +19,7 @@ import type { DocumentSummary } from "@/domain/documents/types";
 import { formatDate, formatSize } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
-import { PageHelp } from "@/components/help/PageHelp";
+import { PageHelp, type HelpTip } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { Pagination } from "@/components/ui/Pagination";
 import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
@@ -48,6 +48,14 @@ function expiryStatus(expiresAt: string | null): "none" | "overdue" | "soon" | "
 }
 
 type SortColumn = "name" | "category" | "asset" | "size" | "createdAt" | "expiresAt";
+
+/** I consigli del tasto Aiuto di Archivio, uguali in tutte le viste. */
+const ARCHIVE_HELP_TIPS: HelpTip[] = [
+  { icon: "➕", text: "Aggiungi un contenuto nuovo, o trascinalo qui sopra." },
+  { icon: "🔍", text: "Premi Ctrl+K per cercare in tutto Hinthial: per nome, tag, note — o dentro ai documenti stessi." },
+  { icon: "🏷️", text: "Filtra per categoria dal menu in alto." },
+  { icon: "📂", text: "Passa a “Fascicolo” per raggruppare più contenuti insieme." },
+];
 
 /** "Archivio": documenti, immagini, audio, video e note testuali nella stessa lista con gli stessi attributi. Immagini/audio/video hanno un player inline (v. lib/content-kind.ts); una nota si apre e si modifica qui stesso. */
 export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
@@ -332,6 +340,10 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   if (isAlternativeView || archiveView.preferencesLoading) {
     return (
       <div className="flex flex-col gap-5 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight text-brand">Archivio</h1>
+          <PageHelp title="Archivio" tips={ARCHIVE_HELP_TIPS} />
+        </div>
         <ArchiveTabs />
         {error ? (
           <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -366,15 +378,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             <h1 className="text-2xl font-semibold tracking-tight text-brand">
               Archivio
             </h1>
-            <PageHelp
-              title="Archivio"
-              tips={[
-                { icon: "➕", text: "Aggiungi un contenuto nuovo, o trascinalo qui sopra." },
-                { icon: "🔍", text: "Premi Ctrl+K per cercare in tutto Hinthial: per nome, tag, note — o dentro ai documenti stessi." },
-                { icon: "🏷️", text: "Filtra per categoria dal menu in alto." },
-                { icon: "📂", text: "Passa a “Fascicolo” per raggruppare più contenuti insieme." },
-              ]}
-            />
+            <PageHelp title="Archivio" tips={ARCHIVE_HELP_TIPS} />
           </div>
         </div>
         <AddContentMenu />

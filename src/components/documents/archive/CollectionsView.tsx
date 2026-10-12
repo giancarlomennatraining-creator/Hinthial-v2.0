@@ -207,7 +207,9 @@ export function CollectionsView({ data }: { data: ArchiveData }) {
               <span className="font-semibold text-[#121a35] dark:text-zinc-100">{title}</span>
             </div>
           ) : null}
-          <h1 className="font-heading text-[30px] leading-tight font-extrabold tracking-[-0.02em] text-brand">{title}</h1>
+          {searching || place.kind !== "home" ? (
+            <h2 className="font-heading text-[26px] leading-tight font-extrabold tracking-[-0.02em] text-brand">{title}</h2>
+          ) : null}
           <p className="text-[13.5px] text-[#5b6483] dark:text-zinc-400">{subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">

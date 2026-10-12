@@ -111,7 +111,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await expect(row.getByText("messaggio.mp3")).toBeVisible();
   // Il testo del messaggio non si vede nella vista a elenco: verificato aprendo l'anteprima.
   await openRowMenu(row);
-  await page.getByRole("menuitem", { name: "👁️ Anteprima" }).click();
+  await page.getByRole("menuitem", { name: "Anteprima" }).click();
   const createPreview = page.getByRole("dialog", { name: "Anteprima capsula" });
   await expect(createPreview.getByText("Un pensiero per te.")).toBeVisible();
   await createPreview.getByRole("button", { name: "Chiudi anteprima" }).click();
@@ -165,7 +165,7 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   const updatedRow = page.locator("li", { hasText: "Per Maria (aggiornato)" });
   await expect(updatedRow).toBeVisible({ timeout: 10_000 });
   await openRowMenu(updatedRow);
-  await page.getByRole("menuitem", { name: "👁️ Anteprima" }).click();
+  await page.getByRole("menuitem", { name: "Anteprima" }).click();
   const updatedPreview = page.getByRole("dialog", { name: "Anteprima capsula" });
   await expect(updatedPreview.getByText("Un pensiero aggiornato per te.")).toBeVisible();
   await updatedPreview.getByRole("button", { name: "Chiudi anteprima" }).click();

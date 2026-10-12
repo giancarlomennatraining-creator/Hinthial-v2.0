@@ -197,6 +197,7 @@ describe("mockAIProvider.search", () => {
           title: "Per Maria",
           content: "un pensiero",
           contentStyle: "simple",
+          openEffect: "discreet",
           attachments: [
             {
               id: "att-1",
@@ -249,6 +250,7 @@ describe("mockAIProvider.retrieve", () => {
           title: "Per Maria",
           content: "un pensiero",
           contentStyle: "simple",
+          openEffect: "discreet",
           attachments: [],
           linkedDocuments: [
             {

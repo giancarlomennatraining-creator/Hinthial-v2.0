@@ -31,6 +31,7 @@ import { getFriendsByIds, getLinkedFriendPublicKey } from "@/domain/friends/repo
 import { logAuditEvent } from "@/lib/audit/log-event";
 import { encryptAuditLabel } from "@/lib/audit/label";
 import { notifyCapsuleShared } from "@/lib/capsules/actions";
+import { parseOpenEffect, type CapsuleOpenEffect } from "@/domain/capsules/open-effects";
 import type {
   CapsuleAccessCondition,
   CapsuleAttachment,
@@ -62,6 +63,8 @@ interface CapsulePayload {
   content: string;
   /** Assente nelle capsule create prima che questa scelta esistesse --- v. decryptPayload. */
   contentStyle: CapsuleContentStyle;
+  /** Come si apre per chi la riceve --- assente nelle capsule create prima che esistesse (v. decryptPayload). */
+  openEffect: CapsuleOpenEffect;
   attachments: CapsuleAttachment[];
   /** Ids of existing Documenti vault entries linked as attachments --- resolved via getDocumentsByIds. */
   linkedDocumentIds: string[];
@@ -91,6 +94,7 @@ async function decryptPayload(masterKey: CryptoKey, row: CapsuleRow): Promise<Ca
     title: payload.title ?? "",
     content: payload.content ?? "",
     contentStyle: payload.contentStyle ?? "simple",
+    openEffect: parseOpenEffect(payload.openEffect),
     attachments: payload.attachments ?? [],
     linkedDocumentIds: payload.linkedDocumentIds ?? [],
     relatedFriendIds: payload.relatedFriendIds ?? [],
@@ -139,6 +143,7 @@ export async function listCapsules(
       title: payload.title,
       content: payload.content,
       contentStyle: payload.contentStyle,
+      openEffect: payload.openEffect,
       attachments: payload.attachments,
       // Ids whose document/friend was since deleted resolve to nothing here --- filtered out on purpose.
       linkedDocuments: payload.linkedDocumentIds
@@ -218,6 +223,7 @@ export async function createCapsule(
     title: input.title,
     content: input.content,
     contentStyle: input.contentStyle,
+    openEffect: input.openEffect,
     attachments,
     linkedDocumentIds: input.linkedDocumentIds,
     relatedFriendIds: input.relatedFriendIds,
@@ -272,6 +278,7 @@ export async function updateCapsule(
     title: input.title,
     content: input.content,
     contentStyle: input.contentStyle,
+    openEffect: input.openEffect,
     attachments: [...keptAttachments, ...uploadedAttachments],
     linkedDocumentIds: input.linkedDocumentIds,
     relatedFriendIds: input.relatedFriendIds,
@@ -308,7 +315,7 @@ export async function closeCapsule(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
   ownerId: string,
-  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "attachments" | "linkedDocuments" | "relatedFriends" | "openAt">,
+  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "openEffect" | "attachments" | "linkedDocuments" | "relatedFriends" | "openAt">,
 ): Promise<void> {
   const newAttachments: CapsuleAttachment[] = [];
   try {
@@ -345,6 +352,7 @@ export async function closeCapsule(
     title: capsule.title,
     content: capsule.content,
     contentStyle: capsule.contentStyle,
+    openEffect: capsule.openEffect,
     attachments: [...capsule.attachments, ...newAttachments],
     // Tutto ciò che era un riferimento è ora una copia propria.
     linkedDocumentIds: [],
@@ -386,7 +394,7 @@ async function setCapsuleStatus(
 /** Prepara il contenuto per un destinatario: Document Key in chiaro qui (v. SharedCapsuleAttachment), non avvolta --- il destinatario non ha la Master Key del proprietario. */
 async function buildRecipientPayload(
   masterKey: CryptoKey,
-  capsule: Pick<CapsuleListItem, "title" | "content" | "contentStyle" | "attachments">,
+  capsule: Pick<CapsuleListItem, "title" | "content" | "contentStyle" | "openEffect" | "attachments">,
 ): Promise<SharedCapsuleOpenedContent> {
   const attachments: SharedCapsuleAttachment[] = await Promise.all(
     capsule.attachments.map(async (attachment) => {
@@ -403,7 +411,13 @@ async function buildRecipientPayload(
     }),
   );
 
-  return { title: capsule.title, content: capsule.content, contentStyle: capsule.contentStyle, attachments };
+  return {
+    title: capsule.title,
+    content: capsule.content,
+    contentStyle: capsule.contentStyle,
+    openEffect: capsule.openEffect,
+    attachments,
+  };
 }
 
 /** FASE C1: crea/rinnova la busta ECDH che permette a un destinatario collegato di decifrare la capsula dopo l'apertura. Best-effort e silenzioso se il destinatario non ha ancora una chiave pubblica --- nessun retry automatico, limite noto. */
@@ -411,7 +425,7 @@ async function createOrRefreshShareKey(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
   ownerId: string,
-  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "attachments">,
+  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "openEffect" | "attachments">,
   friendId: string,
   recipientUserId: string,
 ): Promise<void> {
@@ -449,7 +463,7 @@ export async function shareCapsule(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
   ownerId: string,
-  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "attachments" | "relatedFriends">,
+  capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "openEffect" | "attachments" | "relatedFriends">,
 ): Promise<void> {
   const linkedFriends = capsule.relatedFriends.filter((friend) => friend.linkedUserId !== null);
 
@@ -486,7 +500,7 @@ export async function syncCapsuleSharesForLinkedFriend(
   ownerId: string,
   friendId: string,
   linkedUserId: string,
-  sharedCapsules: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "attachments" | "relatedFriends">[],
+  sharedCapsules: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "openEffect" | "attachments" | "relatedFriends">[],
 ): Promise<void> {
   const relevant = sharedCapsules.filter((c) => c.relatedFriends.some((f) => f.id === friendId));
   if (relevant.length === 0) return;
@@ -637,7 +651,7 @@ export async function updateCapsuleAttachmentTranscript(
   masterKey: CryptoKey,
   capsule: Pick<
     CapsuleListItem,
-    "id" | "title" | "content" | "contentStyle" | "attachments" | "linkedDocuments" | "relatedFriends" | "openAt"
+    "id" | "title" | "content" | "contentStyle" | "openEffect" | "attachments" | "linkedDocuments" | "relatedFriends" | "openAt"
   >,
   attachmentId: string,
   transcript: string,
@@ -651,6 +665,7 @@ export async function updateCapsuleAttachmentTranscript(
     title: capsule.title,
     content: capsule.content,
     contentStyle: capsule.contentStyle,
+    openEffect: capsule.openEffect,
     attachments,
     linkedDocumentIds: capsule.linkedDocuments.map((d) => d.id),
     relatedFriendIds: capsule.relatedFriends.map((c) => c.id),

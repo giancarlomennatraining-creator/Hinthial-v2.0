@@ -20,6 +20,8 @@ import { BottomNavItemsSettings } from "@/components/settings/BottomNavItemsSett
 import { MainNavItemsSettings } from "@/components/settings/MainNavItemsSettings";
 import { ListViewSettings } from "@/components/settings/ListViewSettings";
 import { CapsuleCountdownSettings } from "@/components/settings/CapsuleCountdownSettings";
+import { CapsuleOpenEffectSettings } from "@/components/settings/CapsuleOpenEffectSettings";
+import { CapsuleStyleSettings } from "@/components/settings/CapsuleStyleSettings";
 import { DashboardStyleSettings } from "@/components/settings/DashboardStyleSettings";
 import { UnlockStyleSettings } from "@/components/settings/UnlockStyleSettings";
 import { TrashRetentionSettings } from "@/components/settings/TrashRetentionSettings";
@@ -464,9 +466,23 @@ export function SettingsTabs({
       }
       if (activeSection === "capsules") {
         return (
-          <FunctionBlock title="Capsule" description="Elementi visivi propri di questa sezione.">
-            <CapsuleCountdownSettings />
-          </FunctionBlock>
+          <div className="flex flex-col gap-8">
+            <FunctionBlock
+              title="Stile delle capsule"
+              description="Scegli come si presenta l'elenco delle capsule: gli stessi dati, con un involucro diverso. La scelta resta la stessa su tutti i tuoi dispositivi."
+            >
+              <CapsuleStyleSettings />
+            </FunctionBlock>
+            <FunctionBlock
+              title="Come si aprono"
+              description="L'effetto con cui chi riceve una capsula la vede aprirsi, una volta disponibile. Qui scegli quello che ti propongo quando ne crei una; per ognuna puoi sceglierne un altro."
+            >
+              <CapsuleOpenEffectSettings />
+            </FunctionBlock>
+            <FunctionBlock title="Capsule" description="Elementi visivi propri di questa sezione.">
+              <CapsuleCountdownSettings />
+            </FunctionBlock>
+          </div>
         );
       }
       if (activeSection === "archive") {
