@@ -101,9 +101,9 @@ test("chiudere e condividere una capsula la rende apribile dal destinatario coll
   await expect(capsuleRow).toBeVisible({ timeout: 15_000 });
 
   // Chiudi (irreversibile, conferma esplicita) e condividi: solo a questo punto scatta la vera cifratura ibrida per il destinatario.
-  page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(capsuleRow);
   await page.getByRole("menuitem", { name: "Chiudi la capsula" }).click();
+  await page.getByRole("dialog", { name: "Prima di chiudere la capsula" }).getByRole("button", { name: "Chiudi la capsula" }).click();
   await expect(capsuleRow.getByText("Chiusa", { exact: true })).toBeVisible({ timeout: 10_000 });
 
   await openRowMenu(capsuleRow);
@@ -137,6 +137,47 @@ test("chiudere e condividere una capsula la rende apribile dal destinatario coll
 
   const viewer = page.getByRole("dialog", { name: "Capsula condivisa" });
   await expect(viewer).toBeVisible();
+
+  // La capsula arriva come una busta sigillata, con il titolo ma non ancora la lettera: si rompe il sigillo per leggerla.
   await expect(viewer.getByText("Per il destinatario collegato")).toBeVisible({ timeout: 15_000 });
+  await expect(viewer.getByText(secretMessage)).toHaveCount(0);
+  await viewer.getByRole("button", { name: "Rompi il sigillo" }).click();
   await expect(viewer.getByText(secretMessage)).toBeVisible();
+
+  // Lascia un pensiero a chi l'ha scritta: cifrato sul dispositivo per il proprietario.
+  const pensiero = viewer.getByRole("region", { name: "Lascia un pensiero" });
+  await expect(pensiero.getByRole("button", { name: "Invia il pensiero" })).toBeDisabled();
+  await pensiero.getByLabel(/^Due righe per/).fill("Grazie, l'ho letta tre volte.");
+  await pensiero.getByRole("button", { name: "Invia il pensiero" }).click();
+  await expect(pensiero.getByText(/Il tuo pensiero è arrivato a/)).toBeVisible({ timeout: 15_000 });
+  await expect(pensiero.getByRole("button", { name: "Ritira il pensiero" })).toBeVisible();
+
+  await viewer.getByRole("button", { name: "Chiudi" }).click();
+  await page.getByRole("button", { name: fullName(recipient) }).click();
+  await page.getByRole("button", { name: "Esci" }).click();
+  await expect(page).toHaveURL(/\/$/);
+
+  // Il proprietario ritrova il pensiero sulla busta e lo legge, con il nome di chi l'ha scritto.
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(owner.email);
+  await page.getByLabel("Password").fill(owner.password);
+  await page.getByRole("button", { name: "Accedi" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+
+  await page.getByRole("link", { name: "Capsule" }).click();
+  await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible();
+  await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Capsule" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Leggi 1 pensiero su Per il destinatario collegato" }).click();
+  const pensieri = page.getByRole("dialog", { name: "Pensieri ricevuti" });
+  await expect(pensieri.getByText("Grazie, l'ho letta tre volte.")).toBeVisible({ timeout: 15_000 });
+  await expect(pensieri.getByText(fullName(recipient))).toBeVisible();
+
+  // Lo toglie dalla raccolta: la busta non ne segnala più.
+  await pensieri.getByRole("button", { name: "Togli" }).click();
+  await expect(pensieri.getByText("Nessun pensiero, per ora.")).toBeVisible({ timeout: 10_000 });
+  await pensieri.getByRole("button", { name: "Chiudi" }).click();
+  await expect(page.getByRole("button", { name: /Leggi .* pensier/ })).toHaveCount(0);
 });

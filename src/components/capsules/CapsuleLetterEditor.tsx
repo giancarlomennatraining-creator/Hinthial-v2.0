@@ -1,6 +1,8 @@
 "use client";
 
+import { useRef } from "react";
 import type { CapsuleContentStyle } from "@/domain/capsules/types";
+import { appendPrompt, isPromptUsed } from "@/domain/capsules/templates";
 
 const TOGGLE_OPTIONS: { value: CapsuleContentStyle; label: string }[] = [
   { value: "simple", label: "Scrittura semplice" },
@@ -22,6 +24,7 @@ export function CapsuleLetterEditor({
   contentStyle,
   onContentStyleChange,
   placeholder,
+  prompts,
 }: {
   id: string;
   content: string;
@@ -29,7 +32,23 @@ export function CapsuleLetterEditor({
   contentStyle: CapsuleContentStyle;
   onContentStyleChange: (next: CapsuleContentStyle) => void;
   placeholder?: string;
+  /** Spunti per cominciare (v. domain/capsules/templates): toccato, uno entra in fondo alla lettera come riga da completare. */
+  prompts?: string[];
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function insertPrompt(prompt: string) {
+    onContentChange(appendPrompt(content, prompt));
+    // Il cursore va in fondo, pronto a scrivere la risposta allo spunto.
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+      el.scrollTop = el.scrollHeight;
+    });
+  }
+
   return (
     <div className="flex flex-1 min-h-[220px] flex-col overflow-hidden rounded-2xl border border-[#EDE1C4] bg-[#FBF6EA] shadow-[0_10px_26px_rgba(139,111,45,0.10)]">
       <div className="flex items-center justify-between px-8 pt-5">
@@ -64,6 +83,7 @@ export function CapsuleLetterEditor({
       </div>
 
       <textarea
+        ref={textareaRef}
         id={id}
         value={content}
         onChange={(e) => onContentChange(e.target.value)}
@@ -74,6 +94,23 @@ export function CapsuleLetterEditor({
             : "flex-1 resize-none bg-transparent px-8 pb-8 pt-3 text-[17px] leading-relaxed text-[#3B331F] placeholder:text-[#B3A374] focus:outline-none"
         }
       />
+
+      {prompts && prompts.length > 0 ? (
+        <div role="group" aria-label="Spunti per cominciare" className="flex flex-wrap items-center gap-2 border-t border-[#EDE1C4] px-8 py-3">
+          <span className="text-xs font-bold uppercase tracking-wide text-[#6B5730]">Spunti</span>
+          {prompts.map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              disabled={isPromptUsed(content, prompt)}
+              onClick={() => insertPrompt(prompt)}
+              className="rounded-full border border-[#E3D6B3] bg-white/70 px-3 py-1 text-xs font-semibold text-[#3B331F] hover:bg-white disabled:cursor-default disabled:opacity-40"
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

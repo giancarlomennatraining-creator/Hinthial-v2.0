@@ -13,6 +13,7 @@ import { FriendPicker } from "@/components/capsules/FriendPicker";
 import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachmentPicker";
 import { CapsuleOpenAtField } from "@/components/capsules/CapsuleOpenAtField";
 import { CapsuleLetterEditor } from "@/components/capsules/CapsuleLetterEditor";
+import { GENERIC_PROMPTS } from "@/domain/capsules/templates";
 import {
   AttachmentChip,
   AttachmentSection,
@@ -238,6 +239,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
                 onContentChange={setContent}
                 contentStyle={contentStyle}
                 onContentStyleChange={setContentStyle}
+                prompts={GENERIC_PROMPTS}
               />
 
               {/* Allegati: esistenti (rimovibili) + nuovi. */}

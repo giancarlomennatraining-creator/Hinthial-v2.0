@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { downloadSharedCapsuleAttachment, openSharedCapsule } from "@/domain/capsules/repository";
 import { contentKindFor, CONTENT_KIND_ICON, hasInlinePlayer } from "@/lib/content-kind";
+import { CapsuleReplyBox } from "@/components/capsules/CapsuleReplyBox";
 import { useMountedTransition } from "@/lib/use-mounted-transition";
 import { cn } from "@/lib/utils";
 import type { SharedCapsuleAttachment, SharedCapsuleOpenedContent } from "@/domain/capsules/types";
@@ -15,6 +16,9 @@ function formatSize(bytes: number): string {
 }
 
 /**
+ * La busta si apre in due tempi: prima arriva sigillata ("Rompi il sigillo"), poi si legge la lettera con gli allegati e,
+ * in fondo, si può lasciare un pensiero a chi l'ha scritta (v. CapsuleReplyBox).
+ *
  * FASE C1 --- apre davvero una capsula condivisa: a differenza di
  * CapsulePreview (il proprietario, sui propri dati già decifrati), qui
  * il contenuto non è ancora in memoria all'apertura del pannello ---
@@ -51,6 +55,10 @@ export function SharedCapsuleViewer({
   const [playerLoading, setPlayerLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  // La busta arriva sigillata: "breaking" è il breve istante in cui il sigillo si spezza (saltato con il movimento ridotto).
+  const [seal, setSeal] = useState<"sealed" | "breaking" | "open">("sealed");
+  const sealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (!capsuleId || capsuleId === loadedForId) return;
     let cancelled = false;
@@ -59,6 +67,7 @@ export function SharedCapsuleViewer({
     setLoading(true);
     setError(null);
     setContent(null);
+    setSeal("sealed");
     (async () => {
       try {
         const result = await openSharedCapsule(supabase, masterKey, capsuleId);
@@ -92,7 +101,22 @@ export function SharedCapsuleViewer({
     };
   }, [playerUrl]);
 
+  useEffect(() => {
+    return () => {
+      if (sealTimer.current) clearTimeout(sealTimer.current);
+    };
+  }, []);
+
   if (!mounted) return null;
+
+  function breakSeal() {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setSeal("open");
+      return;
+    }
+    setSeal("breaking");
+    sealTimer.current = setTimeout(() => setSeal("open"), 380);
+  }
 
   async function downloadBytes(attachment: SharedCapsuleAttachment) {
     return downloadSharedCapsuleAttachment(supabase, ownerId, capsuleId as string, attachment);
@@ -162,7 +186,7 @@ export function SharedCapsuleViewer({
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Da {ownerName}
             </p>
-            {content ? (
+            {content && seal === "open" ? (
               <h2 className="mt-0.5 truncate text-lg font-semibold text-zinc-950 dark:text-zinc-50">
                 {content.title}
               </h2>
@@ -186,6 +210,40 @@ export function SharedCapsuleViewer({
 
         {loading ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Decifratura in corso…</p>
+        ) : content && seal !== "open" ? (
+          <div className="flex flex-col items-center gap-5 py-6">
+            <div className="w-full max-w-xs overflow-visible rounded-xl border border-zinc-200 bg-white shadow-[0_10px_26px_rgba(22,48,127,0.12)] dark:border-zinc-800 dark:bg-zinc-950">
+              <div
+                className="relative h-[74px] rounded-t-xl border-b border-zinc-200 bg-[#e8edfc] dark:border-zinc-800 dark:bg-brand/15"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to bottom right, transparent 49.4%, rgba(138,145,173,.35) 49.4%, rgba(138,145,173,.35) 50.6%, transparent 50.6%), linear-gradient(to bottom left, transparent 49.4%, rgba(138,145,173,.35) 49.4%, rgba(138,145,173,.35) 50.6%, transparent 50.6%)",
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "absolute -bottom-5 left-1/2 flex h-11 w-11 -translate-x-1/2 items-center justify-center rounded-full bg-[#b3302f] font-heading text-xl font-bold text-white shadow-[0_3px_8px_rgba(0,0,0,0.25)] transition-all duration-300",
+                    seal === "breaking" ? "scale-125 rotate-12 opacity-0" : "scale-100 opacity-100",
+                  )}
+                >
+                  {ownerName.trim().charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5 px-5 pb-5 pt-8 text-center">
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">Da {ownerName}, per te</span>
+                <strong className="font-heading text-xl text-[#16307f] dark:text-zinc-50">{content.title}</strong>
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={seal === "breaking"}
+              onClick={breakSeal}
+              className="rounded-xl bg-[#b3302f] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#9a2827] disabled:opacity-60"
+            >
+              Rompi il sigillo
+            </button>
+          </div>
         ) : content ? (
           <>
             <div className="rounded-2xl border border-[#EDE1C4] bg-[#FBF6EA] px-6 py-5">
@@ -194,7 +252,7 @@ export function SharedCapsuleViewer({
                   className={
                     content.contentStyle === "handwritten"
                       ? "whitespace-pre-wrap font-caveat text-[22px] leading-relaxed text-[#3B331F]"
-                      : "whitespace-pre-wrap text-sm leading-relaxed text-[#3B331F]"
+                      : "whitespace-pre-wrap text-[15px] leading-relaxed text-[#3B331F]"
                   }
                 >
                   {content.content}
@@ -255,6 +313,8 @@ export function SharedCapsuleViewer({
                 })}
               </ul>
             ) : null}
+
+            <CapsuleReplyBox capsuleId={capsuleId as string} ownerId={ownerId} ownerName={ownerName} />
           </>
         ) : null}
       </div>

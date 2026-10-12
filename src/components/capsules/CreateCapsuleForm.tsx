@@ -12,6 +12,7 @@ import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachme
 import { FriendPicker } from "@/components/capsules/FriendPicker";
 import { CapsuleOpenAtField } from "@/components/capsules/CapsuleOpenAtField";
 import { CapsuleLetterEditor } from "@/components/capsules/CapsuleLetterEditor";
+import { CapsuleTemplatePicker } from "@/components/capsules/CapsuleTemplatePicker";
 import {
   AttachmentSection,
   CapsuleFormCard,
@@ -27,10 +28,11 @@ import type { DocumentSummary } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import type { CapsuleContentStyle } from "@/domain/capsules/types";
+import { promptsFor, suggestedOpenAt, type CapsuleTemplate } from "@/domain/capsules/templates";
 import { BTN_PRIMARY } from "@/components/ui/styles";
 
 /**
- * Wizard a tre passi: chi/quando (titolo, data e ora di apertura, destinatari), elementi già in Archivio da
+ * Wizard a tre passi: chi/quando (titolo, data e ora di apertura, destinatari, e in cima un modello da cui partire), elementi già in Archivio da
  * collegare, contenuto scritto e audio/video registrati o caricati sul momento --- questi ultimi restano privati
  * della capsula, mai copiati in Archivio. Alla creazione torna a /capsules con `?created=1`, mai il titolo o altro
  * contenuto della capsula, che finirebbe in chiaro nella cronologia del browser.
@@ -50,6 +52,10 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const [step, setStep] = useState<CapsuleFormStep>(1);
   const [title, setTitle] = useState("");
   const [openAt, setOpenAt] = useState("");
+  // Un modello compila titolo e data solo finché non li ha toccati chi scrive: mai sovrascrivere una scelta fatta a mano.
+  const [template, setTemplate] = useState<CapsuleTemplate | null>(null);
+  const [titleTouched, setTitleTouched] = useState(false);
+  const [openAtTouched, setOpenAtTouched] = useState(false);
   const [pendingRelatedFriends, setPendingRelatedFriends] = useState<FriendListItem[]>([]);
 
   const [content, setContent] = useState("");
@@ -84,6 +90,12 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
+
+  function handlePickTemplate(next: CapsuleTemplate | null) {
+    setTemplate(next);
+    if (!titleTouched) setTitle(next ? next.title : "");
+    if (!openAtTouched) setOpenAt(next ? (suggestedOpenAt(next, new Date()) ?? "") : "");
+  }
 
   function handleNextFromStep1() {
     if (!title.trim()) {
@@ -143,13 +155,22 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
         step={step}
       />
 
+      {!loading && step === 1 ? <CapsuleTemplatePicker selected={template} onPick={handlePickTemplate} /> : null}
+
       {loading ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
       ) : (
         <CapsuleFormCard onSubmit={handleCreate}>
           {step === 1 ? (
             <>
-              <CapsuleTitleField value={title} onChange={setTitle} placeholder="es. Per Maria" />
+              <CapsuleTitleField
+                value={title}
+                onChange={(value) => {
+                  setTitle(value);
+                  setTitleTouched(true);
+                }}
+                placeholder="es. Per Maria"
+              />
 
               <FriendPicker
                 idPrefix="create"
@@ -158,7 +179,14 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
                 onChange={setPendingRelatedFriends}
               />
 
-              <CapsuleOpenAtField id="openAt" value={openAt} onChange={setOpenAt} />
+              <CapsuleOpenAtField
+                id="openAt"
+                value={openAt}
+                onChange={(value) => {
+                  setOpenAt(value);
+                  setOpenAtTouched(true);
+                }}
+              />
 
               <StepError error={error} />
 
@@ -196,7 +224,14 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
                 contentStyle={contentStyle}
                 onContentStyleChange={setContentStyle}
                 placeholder="Cosa vuoi lasciare scritto..."
+                prompts={promptsFor(template)}
               />
+
+              {template ? (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Dal modello «{template.name}», di solito ci stanno bene: {template.attachmentIdeas.join(", ").toLowerCase()}.
+                </p>
+              ) : null}
 
               <AttachmentSection
                 showTools={showAttachmentTools}

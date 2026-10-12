@@ -10,6 +10,77 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-13 (76)
+
+### L'apertura di una capsula: la busta e "Lascia un pensiero"
+
+**Cosa fa:**
+- Chi riceve una capsula (Capsule > Condivise con me > Apri) trova una **busta sigillata**: "Da Giulia, per te", il titolo e un sigillo rosso con l'iniziale di chi l'ha scritta. **"Rompi il sigillo"** lo spezza (con il movimento ridotto, senza animazione) e mostra la lettera, con gli allegati da riprodurre o aprire come prima.
+- In fondo alla lettera c'è **"Lascia un pensiero a Giulia"**: due righe (al massimo 600 caratteri) che arrivano a chi ha scritto la capsula. Il pensiero è **cifrato sul dispositivo** di chi lo scrive: lo legge solo chi ha lasciato la capsula, nemmeno Hinthial né chi l'ha scritto possono rileggerlo. Dopo l'invio compare "Il tuo pensiero è arrivato a Giulia il …" e **"Ritira il pensiero"** permette di toglierlo e scriverne un altro. Un pensiero a testa per capsula.
+- Chi ha lasciato la capsula, in "Le mie", vede sulla busta un segno **"1 pensiero"** (o "3 pensieri"): toccandolo si apre **"Pensieri ricevuti"**, con il testo, il nome di chi l'ha scritto e la data. **"Togli"** lo toglie dalla raccolta.
+- Se la funzione non è disponibile (la migrazione non è stata applicata), il riquadro del pensiero non compare e la capsula si legge lo stesso.
+
+**Note tecniche:**
+- Migrazione `20261013000000_capsule_replies` (additiva: una tabella e una funzione): `capsule_replies` (capsula, proprietario, autore, chiave pubblica effimera, payload cifrato di al massimo 12.000 caratteri, un pensiero per autore e capsula) e `get_capsule_owner_public_key(capsule_id)`. **Da applicare a mano** con `npx supabase db query --linked -f supabase/migrations/20261013000000_capsule_replies.sql` (non `db push`, v. nota alla voce 54). Il tipo corrispondente è già in `types/supabase.ts`.
+- Cifratura: lo stesso scambio ECDH P-256 + AES-GCM delle capsule, in senso inverso. Chi scrive cifra nome, testo e data con una chiave derivata dalla chiave pubblica del proprietario e da una coppia effimera, e butta la privata effimera; il proprietario ridrive la chiave con la propria privata (`replies-repository.ts`; coperto da `tests/unit/capsule-replies.test.ts`, che verifica anche che un altro account non decifra).
+- Regole del database: si scrive solo se si è un destinatario che può già leggere la capsula (l'inserimento si appoggia alle regole di `capsule_share_keys`, che nega la riga prima della data di apertura o dell'eredità digitale), si legge solo da proprietario o autore (l'autore sa solo di averlo scritto), e lo tolgono entrambi. La funzione restituisce solo la chiave pubblica e solo a un destinatario della capsula.
+- Componenti nuovi: `CapsuleReplyBox`, `CapsuleRepliesDialog`; `SharedCapsuleViewer` ha ora le due fasi (busta e lettera) e `CapsuleCard` il segno dei pensieri. La lettura dei pensieri ricevuti in `CapsulesPanel` non blocca il resto della pagina (prima la rallentava e un test sul menu delle azioni diventava instabile). Test e2e: `capsule-sharing.spec.ts` ora copre busta, invio, lettura e rimozione.
+- Nessun avviso a chi riceve il pensiero (email o notifica in Dashboard): il segno compare sulla busta quando si apre Capsule. Rimandato: le capsule via link senza account.
+
+---
+
+## 2026-10-12 (75)
+
+### Prima di chiudere una capsula si fa il punto
+
+**Cosa fa:**
+- "Chiudi la capsula" (dal menu di una bozza, in buste e in tabella) non chiede più un "Sei sicuro?" del browser: apre la finestra **"Prima di chiudere"**, con le verifiche e un'anteprima. Ogni verifica ha il suo segno: ✓ a posto, ! attenzione, × manca.
+- Le verifiche: la **data di apertura** (si aprirà il 12 marzo 2038 alle 10:00; avviso se è già passata, perché la capsula si aprirebbe subito); il **contenuto** (lettera di 29 parole e 2 allegati); **per chi è**; e gli **account** (avviso se un destinatario non ha ancora un account Hinthial, perché non potrà aprirla).
+- **Senza lettera né allegato, o senza data, non si chiude**: il pulsante resta spento e la finestra dice cosa fare. Gli **avvisi non bloccano** (nessun destinatario è lecito: una lettera a se stessi la apri solo tu).
+- La finestra mostra **come comincia la lettera** (in corsivo a mano se l'hai scritta così) e "Guarda come la vedrà chi la riceve" apre l'anteprima completa, che si sovrappone e, chiusa, riporta qui. Ripete cosa non si potrà più cambiare e, se ci sono documenti d'Archivio collegati, che verranno copiati dentro.
+- Nell'elenco la busta di una bozza dice "Pronta da chiudere", "Pronta da chiudere, N avvisi" oppure "Manca una lettera o un allegato".
+
+**Note tecniche:**
+- Nessuna migrazione. Le verifiche sono pure (`capsuleChecks` e `canCloseCapsule` in `domain/capsules/overview.ts`, coperte da `tests/unit/capsule-overview.test.ts`); la finestra è `CloseCapsuleDialog`, e `handleClose` in `CapsulesPanel` non ha più la conferma del browser (la dà la finestra). Esc e un clic fuori annullano, tranne mentre si chiude o con l'anteprima aperta sopra.
+- Chiudere resta irreversibile: dopo la chiusura una capsula non è più modificabile (destinatari compresi), per questo "senza destinatario" avvisa soltanto ma "senza contenuto" blocca. Test e2e: `capsule-close.spec.ts`; gli altri test che chiudevano una capsula (`capsules`, `capsule-sharing`, `list-filters`) ora premono il pulsante della finestra, e quello di `list-filters` scrive una lettera perché una capsula vuota non si chiude più.
+- Rimandato: l'apertura curata per il destinatario e le capsule via link senza account.
+
+---
+
+## 2026-10-12 (74)
+
+### Le capsule diventano buste: stato in vista, filtri e linea del futuro
+
+**Cosa fa:**
+- L'elenco "Le mie" non è più una lista di righe: ogni capsula è una **busta**. In alto la patta con il **sigillo** (rosso se la capsula è chiusa o condivisa e non si può ancora aprire, verde se la data è già arrivata, tratteggiato con una penna se è ancora una bozza), poi titolo, per chi è, quando si apre e il conto alla rovescia. Il menu delle azioni e gli allegati con "Apri" e "Trascrizione" restano dove erano, dentro la busta. Le buste vanno dalla prossima ad aprirsi alla più lontana, poi le già aperte, per ultime quelle senza data. La vista a tabella resta com'era.
+- Una **bozza** dice da sola a che punto è: "Manca una lettera o un allegato", "Pronta da chiudere" oppure "Pronta da chiudere, 1 avviso" (v. voce 75). Una capsula chiusa o condivisa che si apre entro 30 giorni porta il segno "Si apre presto".
+- I filtri sono **pillole con i conteggi** come nei fascicoli: Tutte, Bozza, Chiusa, Condivisa e il nuovo **Si aprono presto**.
+- Sopra le buste la **linea del futuro**: da oggi all'ultima apertura prevista, con ogni capsula non ancora aperta come una tappa (titolo e data), gli anni sull'asse, e le tappe alternate sopra e sotto per non sovrapporsi. Segue i filtri; con più di otto aperture ne disegna otto e dice quante restano fuori. Sullo schermo stretto scorre di lato nel suo riquadro.
+
+**Note tecniche:**
+- Nessuna migrazione e nessun dato in più: tutto si calcola da ciò che la pagina ha già (`domain/capsules/overview.ts`, coperto da `tests/unit/capsule-overview.test.ts`: cosa manca a una bozza, "si apre presto", filtri, ordine di apertura, posizioni e anni della linea). Componenti nuovi: `CapsuleCard` e `CapsuleFutureLine`; in `CapsulesPanel` il menu (`renderMenu`) e i contenuti (`renderContents`) sono ora funzioni usate da tabella e buste.
+- La vista "elenco" delle capsule è quindi una griglia di buste, come quella dei fascicoli; il filtro per stato non è più un menu a tendina, e `list-filters.spec.ts` clicca la pillola. Test e2e: `capsule-room.spec.ts`.
+- Rimandato: "cosa manca prima di sigillare" con l'anteprima di come la vedrà chi riceve, l'apertura curata per il destinatario, le capsule via link senza account.
+
+---
+
+## 2026-10-11 (73)
+
+### Nuova capsula da un modello, con spunti per scrivere
+
+**Cosa fa:**
+- In "Nuova capsula" si può partire da un **modello**: Per i tuoi 18 anni, Al me stesso di domani, Per un bambino che nasce, Per un matrimonio, Ricette e ricordi di famiglia, Se mi succede qualcosa. Scegliendone uno il **titolo** si compila da solo e, se il modello ha senso con una data (una lettera a se stessi: tra 5 anni; un primo compleanno: tra 1 anno; "Se mi succede qualcosa": tra 30 anni, solo come limite), anche la **data di apertura**, alle 10:00. Sotto le schede un riquadro dice quando si apre, quali spunti propone e quali allegati ci stanno bene. **"Parti da zero"** resta il percorso di sempre.
+- Titolo e data si compilano solo finché non li hai scritti tu: scegliere un altro modello non scavalca mai ciò che hai già digitato.
+- Nell'ultimo passo, sotto la lettera, ci sono gli **spunti** ("Cosa spero per te", "Un consiglio che avrei voluto ricevere"...): toccandone uno entra in fondo alla lettera come riga da completare, con il cursore pronto a scrivere, e lo spunto già usato si spegne. Senza modello valgono quattro spunti generici; ci sono anche quando si modifica una bozza.
+- Il modello "Se mi succede qualcosa" spiega che la capsula si apre prima se scatta l'eredità digitale, e che la data è solo il limite massimo.
+
+**Note tecniche:**
+- Nessuna migrazione e nessun dato in più sul server: i modelli sono solo dati (`domain/capsules/templates.ts`, coperto da `tests/unit/capsule-templates.test.ts`) e non usano l'intelligenza artificiale, quindi il testo non esce dal dispositivo. Gli spunti sono un'aggiunta opzionale a `CapsuleLetterEditor` (prop `prompts`); toccandone uno il testo diventa "spunto: " e finisce nella lettera come qualunque altra riga.
+- Componente nuovo: `CapsuleTemplatePicker`. Test e2e: `capsule-templates.spec.ts`; `capsules.spec.ts`, `capsule-preview.spec.ts` e `capsule-recording.spec.ts` restano verdi.
+- Rimandato (dalle idee dei concept): registrare la voce con la domanda sullo schermo, l'elenco a buste con la linea del futuro, "cosa manca prima di sigillare", l'apertura curata per chi riceve, le capsule via link senza account. Il modello "Se mi succede qualcosa" userà una regola per capsula (data oppure eredità) quando la semplificazione dell'eredità sarà fatta.
+
+---
+
 ## 2026-10-10 (72)
 
 ### Tolta la tabella delle Novità

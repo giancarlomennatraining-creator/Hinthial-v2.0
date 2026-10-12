@@ -13,13 +13,18 @@ import {
   shareCapsule,
   updateCapsuleAttachmentTranscript,
 } from "@/domain/capsules/repository";
+import { deleteReply, listReceivedReplies, type CapsuleReply } from "@/domain/capsules/replies-repository";
 import { downloadDocument } from "@/domain/documents/repository";
 import { getCapsuleCountdownVisible } from "@/domain/profile/repository";
 import { cn, sortAlphabetically } from "@/lib/utils";
 import { saveBytesAsFile } from "@/lib/download";
 import { contentKindFor, CONTENT_KIND_ICON, isTranscribable } from "@/lib/content-kind";
 import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
+import { CapsuleCard } from "@/components/capsules/CapsuleCard";
 import { CapsuleCountdown } from "@/components/capsules/CapsuleCountdown";
+import { CapsuleFutureLine } from "@/components/capsules/CapsuleFutureLine";
+import { CapsuleRepliesDialog } from "@/components/capsules/CapsuleRepliesDialog";
+import { CloseCapsuleDialog } from "@/components/capsules/CloseCapsuleDialog";
 import { CapsulePreview } from "@/components/capsules/CapsulePreview";
 import { SharedCapsuleViewer } from "@/components/capsules/SharedCapsuleViewer";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
@@ -33,6 +38,7 @@ import { useListViewPreferences } from "@/components/layout/ListViewPreferencesP
 import { TABLE_PAGE_SIZE } from "@/lib/list-view";
 import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { CAPSULE_STATUS_LABEL } from "@/domain/capsules/labels";
+import { buildFutureLine, isOpeningSoon, matchesCapsuleFilter, sortByOpening, type CapsuleFilter } from "@/domain/capsules/overview";
 import type {
   CapsuleAttachment,
   CapsuleListItem,
@@ -92,10 +98,17 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [busyAttachment, setBusyAttachment] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<CapsuleStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<CapsuleFilter>("all");
+  const [now] = useState(() => new Date());
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "title", direction: "asc" });
   const [previewCapsule, setPreviewCapsule] = useState<CapsuleListItem | null>(null);
+  // La bozza di cui si sta per decidere la chiusura (v. CloseCapsuleDialog): chiudere è irreversibile, si fa prima il punto.
+  const [closingCapsule, setClosingCapsule] = useState<CapsuleListItem | null>(null);
+  // I pensieri che i destinatari hanno lasciato (v. CapsuleReplyBox), per capsula; e la capsula di cui si stanno leggendo.
+  const [replies, setReplies] = useState<CapsuleReply[]>([]);
+  const [readingRepliesFor, setReadingRepliesFor] = useState<CapsuleListItem | null>(null);
+  const [busyReplyId, setBusyReplyId] = useState<string | null>(null);
   const [openingShared, setOpeningShared] = useState<SharedCapsuleListItem | null>(null);
 
   // "Condivise con me" è una scheda qui dentro, non una voce di menu a parte. Caricata insieme alle proprie capsule, così passare da una vista all'altra è istantaneo.
@@ -144,6 +157,14 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       setSharedError(err instanceof Error ? err.message : "Impossibile caricare le capsule condivise con te.");
     }
 
+    // Best-effort: i pensieri ricevuti non devono mai impedire di vedere le proprie capsule.
+    // Non si aspetta: arrivano quando arrivano, senza rallentare il resto della pagina.
+    listReceivedReplies(supabase, masterKey)
+      .then(setReplies)
+      .catch(() => {
+        // Nessun pensiero mostrato.
+      });
+
     // Best-effort: se fallisce si resta sul default (true).
     try {
       const {
@@ -161,15 +182,8 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     refresh();
   }, [refresh]);
 
+  /** La conferma l'ha già data CloseCapsuleDialog: qui si chiude davvero (copiando i contenuti collegati, v. closeCapsule). */
   async function handleClose(capsule: CapsuleListItem) {
-    const copyNote =
-      capsule.linkedDocuments.length > 0
-        ? ` ${capsule.linkedDocuments.length === 1 ? "Il contenuto collegato verrà copiato" : "I contenuti collegati verranno copiati"} al suo interno — l'originale in Archivio resterà libero di essere modificato o cancellato.`
-        : "";
-    if (!window.confirm(`Chiudere la capsula "${capsule.title}"? Non sarà più modificabile.${copyNote}`)) {
-      return;
-    }
-
     setBusyId(capsule.id);
     setError(null);
     try {
@@ -185,6 +199,20 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       setError(err instanceof Error ? err.message : "Impossibile chiudere la capsula.");
     } finally {
       setBusyId(null);
+      setClosingCapsule(null);
+    }
+  }
+
+  async function handleDeleteReply(reply: CapsuleReply) {
+    setBusyReplyId(reply.id);
+    setError(null);
+    try {
+      await deleteReply(supabase, reply.id);
+      setReplies((prev) => prev.filter((r) => r.id !== reply.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile togliere il pensiero.");
+    } finally {
+      setBusyReplyId(null);
     }
   }
 
@@ -344,9 +372,149 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     setSort((prev) => toggleSort(prev, column));
   }
 
-  const filteredCapsules = capsules.filter((capsule) => statusFilter === "all" || capsule.status === statusFilter);
+  /** Il menu delle azioni di una capsula, uguale nella vista a tabella e in quella a buste (cambia solo l'etichetta di "Chiudi"). */
+  function renderMenu(capsule: CapsuleListItem, busy: boolean, closeLabel: string) {
+    return (
+      <RowActionsMenu label={`Azioni per "${capsule.title}"`}>
+        <RowMenuItem disabled={busy} onClick={() => setPreviewCapsule(capsule)}>
+          👁️ Anteprima
+        </RowMenuItem>
+        {capsule.status === "draft" ? (
+          <RowMenuItem disabled={busy} onClick={() => router.push(`/capsules/${capsule.id}/edit`)}>
+            Modifica
+          </RowMenuItem>
+        ) : null}
+        {capsule.status === "draft" ? (
+          <RowMenuItem disabled={busy} onClick={() => setClosingCapsule(capsule)}>
+            {closeLabel}
+          </RowMenuItem>
+        ) : null}
+        {capsule.status === "ready" ? (
+          <RowMenuItem disabled={busy} onClick={() => handleShare(capsule)}>
+            Condividi
+          </RowMenuItem>
+        ) : null}
+        <RowMenuItem disabled={busy} danger onClick={() => handleDelete(capsule)}>
+          Elimina
+        </RowMenuItem>
+      </RowActionsMenu>
+    );
+  }
 
-  // Solo la vista a tabella si ordina --- l'elenco resta cronologico.
+  /** I contenuti di una capsula (allegati e documenti d'Archivio collegati), con le loro azioni: "Apri" e "Trascrizione". */
+  function renderContents(capsule: CapsuleListItem) {
+    if (capsule.attachments.length === 0 && capsule.linkedDocuments.length === 0) return null;
+    return (
+      <ul className="flex flex-col gap-1">
+        {capsule.attachments.map((attachment) => {
+          const kind = contentKindFor(attachment.mimeType);
+          const isTranscribingThis = transcribingAttachmentId === attachment.id;
+          return (
+            <li key={attachment.id} className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-3 rounded-md bg-zinc-50 px-3 py-1.5 text-xs dark:bg-zinc-900">
+                <span className="truncate text-zinc-700 dark:text-zinc-300">
+                  {CONTENT_KIND_ICON[kind]} {attachment.filename} · {formatSize(attachment.size)}
+                </span>
+                <div className="flex shrink-0 gap-3">
+                  {isTranscribable(kind) ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleAttachmentTranscript(attachment)}
+                      className="font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
+                    >
+                      📝 {isTranscribingThis ? "Chiudi" : "Trascrizione"}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    disabled={busyAttachment === attachment.id}
+                    onClick={() => handleOpenAttachment(capsule, attachment)}
+                    className="font-medium text-zinc-600 underline-offset-2 hover:underline disabled:opacity-50 dark:text-zinc-400"
+                  >
+                    {busyAttachment === attachment.id ? "Apertura…" : "Apri"}
+                  </button>
+                </div>
+              </div>
+              {isTranscribingThis ? (
+                <div className="flex flex-col gap-2 rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
+                  <div className="flex items-center justify-between gap-3">
+                    <label
+                      htmlFor={`transcript-${attachment.id}`}
+                      className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                    >
+                      Trascrizione
+                    </label>
+                    <button
+                      type="button"
+                      disabled={transcriptAutoBusy}
+                      onClick={() => handleAutoTranscribeAttachment(capsule, attachment)}
+                      className="text-xs font-medium text-zinc-600 underline-offset-2 hover:underline disabled:opacity-50 dark:text-zinc-400"
+                    >
+                      {transcriptAutoBusy ? "Provo…" : "Trascrivi automaticamente"}
+                    </button>
+                  </div>
+                  {transcriptAutoMessage ? (
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {transcriptAutoMessage}
+                    </p>
+                  ) : null}
+                  <textarea
+                    id={`transcript-${attachment.id}`}
+                    rows={4}
+                    value={transcriptDraft}
+                    onChange={(e) => setTranscriptDraft(e.target.value)}
+                    placeholder="Scrivi qui la trascrizione, o provaci con il tasto qui sopra…"
+                    className={INPUT_FIELD}
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      disabled={transcriptSaving}
+                      onClick={() => saveAttachmentTranscript(capsule, attachment)}
+                      className="self-start rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                    >
+                      {transcriptSaving ? "Salvataggio…" : "Salva trascrizione"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+        {capsule.linkedDocuments.map((doc) => (
+          <li
+            key={doc.id}
+            className="flex items-center justify-between gap-3 rounded-md bg-zinc-50 px-3 py-1.5 text-xs dark:bg-zinc-900"
+          >
+            <span className="truncate text-zinc-700 dark:text-zinc-300">
+              {CONTENT_KIND_ICON[contentKindFor(doc.mimeType)]} {doc.filename} · {formatSize(doc.size)}
+            </span>
+            <button
+              type="button"
+              disabled={busyAttachment === doc.id}
+              onClick={() => handleOpenLinkedDocument(doc)}
+              className="shrink-0 font-medium text-zinc-600 underline-offset-2 hover:underline disabled:opacity-50 dark:text-zinc-400"
+            >
+              {busyAttachment === doc.id ? "Apertura…" : "Apri"}
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  const filteredCapsules = capsules.filter((capsule) => matchesCapsuleFilter(capsule, statusFilter, now));
+  const futureLine = buildFutureLine(filteredCapsules, now);
+
+  const filterChips: { value: CapsuleFilter; label: string; count: number }[] = [
+    { value: "all", label: "Tutte", count: capsules.length },
+    { value: "draft", label: STATUS_LABEL.draft, count: capsules.filter((c) => c.status === "draft").length },
+    { value: "ready", label: STATUS_LABEL.ready, count: capsules.filter((c) => c.status === "ready").length },
+    { value: "shared", label: STATUS_LABEL.shared, count: capsules.filter((c) => c.status === "shared").length },
+    { value: "soon", label: "Si aprono presto", count: capsules.filter((c) => isOpeningSoon(c, now)).length },
+  ];
+
+  // La tabella si ordina a mano; le buste vanno dalla prossima ad aprirsi alla più lontana (v. sortByOpening).
   const sortedCapsules = applySort(filteredCapsules, sort, sortValueFor);
 
   // Si riclampa invece di resettare con un effect: un filtro che riduce i risultati torna da solo nel range.
@@ -364,7 +532,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
           <h1 className="text-2xl font-semibold tracking-tight text-brand">
             Capsule
           </h1>
-          {/* Il dettaglio sull'irreversibilità del chiudere è ripetuto al momento di farlo (v. handleClose):
+          {/* Il dettaglio sull'irreversibilità del chiudere è ripetuto al momento di farlo (v. CloseCapsuleDialog):
               qui basta un consiglio, non serve più il <details> a parte. */}
           <PageHelp
             title="Capsule"
@@ -493,19 +661,36 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       ) : (
         <>
           <div className="flex flex-wrap gap-3">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as CapsuleStatus | "all")}
-              aria-label="Filtra per stato"
-              className={INPUT_FIELD}
-            >
-              <option value="all">Tutte</option>
-              <option value="draft">Bozza</option>
-              <option value="ready">Chiusa</option>
-              <option value="shared">Condivisa</option>
-            </select>
             <ListViewToggle section="capsules" hideOnMobile />
           </div>
+
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtra per stato">
+            {filterChips.map((chip) => {
+              const active = statusFilter === chip.value;
+              return (
+                <button
+                  key={chip.value}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => {
+                    setStatusFilter(chip.value);
+                    setPage(1);
+                  }}
+                  className={cn(
+                    "flex items-center gap-2 rounded-full border px-3.5 py-[7px] text-[13.5px] font-semibold transition-colors",
+                    active
+                      ? "border-brand bg-brand text-white"
+                      : "border-[#dfe3f0] bg-white text-[#121a35] hover:bg-[#e8edfc] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900",
+                  )}
+                >
+                  <span>{chip.label}</span>
+                  <span className={cn("text-xs font-bold", active ? "text-[#cfdaff]" : "text-[#5b6483] dark:text-zinc-400")}>{chip.count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {futureLine ? <CapsuleFutureLine line={futureLine} /> : null}
 
           {filteredCapsules.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -599,29 +784,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                             {contentCount}
                           </td>
                           <td className="p-3">
-                            <RowActionsMenu label={`Azioni per "${capsule.title}"`}>
-                              <RowMenuItem disabled={busy} onClick={() => setPreviewCapsule(capsule)}>
-                                👁️ Anteprima
-                              </RowMenuItem>
-                              {capsule.status === "draft" ? (
-                                <RowMenuItem disabled={busy} onClick={() => router.push(`/capsules/${capsule.id}/edit`)}>
-                                  Modifica
-                                </RowMenuItem>
-                              ) : null}
-                              {capsule.status === "draft" ? (
-                                <RowMenuItem disabled={busy} onClick={() => handleClose(capsule)}>
-                                  Chiudi
-                                </RowMenuItem>
-                              ) : null}
-                              {capsule.status === "ready" ? (
-                                <RowMenuItem disabled={busy} onClick={() => handleShare(capsule)}>
-                                  Condividi
-                                </RowMenuItem>
-                              ) : null}
-                              <RowMenuItem disabled={busy} danger onClick={() => handleDelete(capsule)}>
-                                Elimina
-                              </RowMenuItem>
-                            </RowActionsMenu>
+                            {renderMenu(capsule, busy, "Chiudi")}
                           </td>
                         </tr>
                       );
@@ -635,168 +798,47 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
               <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
             </div>
           ) : (
-            <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
-              {filteredCapsules.map((capsule) => {
-                const busy = busyId === capsule.id;
-
-                return (
-                  <li key={capsule.id} className="flex flex-col gap-3 p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="flex items-center gap-2">
-                          <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            {capsule.title}
-                          </span>
-                          <span
-                            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[capsule.status]}`}
-                          >
-                            {STATUS_LABEL[capsule.status]}
-                          </span>
-                        </p>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                          {capsule.relatedFriends.length > 0
-                            ? `Per ${sortAlphabetically(capsule.relatedFriends, (c) => c.name)
-                                .map((c) => c.name)
-                                .join(", ")} · `
-                            : ""}
-                          dal {formatDate(capsule.createdAt)}
-                          {capsule.openAt ? ` · apertura prevista ${formatDateTime(capsule.openAt)}` : ""}
-                        </p>
-                        {capsule.openAt && capsule.status !== "draft" && showCountdown ? (
-                          <div className="mt-1.5">
-                            <CapsuleCountdown createdAt={capsule.createdAt} openAt={capsule.openAt} size="sm" showProgress />
-                          </div>
-                        ) : null}
-                      </div>
-                      <RowActionsMenu label={`Azioni per "${capsule.title}"`}>
-                        <RowMenuItem disabled={busy} onClick={() => setPreviewCapsule(capsule)}>
-                          👁️ Anteprima
-                        </RowMenuItem>
-                        {capsule.status === "draft" ? (
-                          <RowMenuItem disabled={busy} onClick={() => router.push(`/capsules/${capsule.id}/edit`)}>
-                            Modifica
-                          </RowMenuItem>
-                        ) : null}
-                        {capsule.status === "draft" ? (
-                          <RowMenuItem disabled={busy} onClick={() => handleClose(capsule)}>
-                            Chiudi la capsula
-                          </RowMenuItem>
-                        ) : null}
-                        {capsule.status === "ready" ? (
-                          <RowMenuItem disabled={busy} onClick={() => handleShare(capsule)}>
-                            Condividi
-                          </RowMenuItem>
-                        ) : null}
-                        <RowMenuItem disabled={busy} danger onClick={() => handleDelete(capsule)}>
-                          Elimina
-                        </RowMenuItem>
-                      </RowActionsMenu>
-                    </div>
-
-                    {capsule.attachments.length > 0 || capsule.linkedDocuments.length > 0 ? (
-                      <ul className="flex flex-col gap-1">
-                        {capsule.attachments.map((attachment) => {
-                          const kind = contentKindFor(attachment.mimeType);
-                          const isTranscribingThis = transcribingAttachmentId === attachment.id;
-                          return (
-                            <li key={attachment.id} className="flex flex-col gap-1.5">
-                              <div className="flex items-center justify-between gap-3 rounded-md bg-zinc-50 px-3 py-1.5 text-xs dark:bg-zinc-900">
-                                <span className="truncate text-zinc-700 dark:text-zinc-300">
-                                  {CONTENT_KIND_ICON[kind]} {attachment.filename} · {formatSize(attachment.size)}
-                                </span>
-                                <div className="flex shrink-0 gap-3">
-                                  {isTranscribable(kind) ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => toggleAttachmentTranscript(attachment)}
-                                      className="font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
-                                    >
-                                      📝 {isTranscribingThis ? "Chiudi" : "Trascrizione"}
-                                    </button>
-                                  ) : null}
-                                  <button
-                                    type="button"
-                                    disabled={busyAttachment === attachment.id}
-                                    onClick={() => handleOpenAttachment(capsule, attachment)}
-                                    className="font-medium text-zinc-600 underline-offset-2 hover:underline disabled:opacity-50 dark:text-zinc-400"
-                                  >
-                                    {busyAttachment === attachment.id ? "Apertura…" : "Apri"}
-                                  </button>
-                                </div>
-                              </div>
-                              {isTranscribingThis ? (
-                                <div className="flex flex-col gap-2 rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
-                                  <div className="flex items-center justify-between gap-3">
-                                    <label
-                                      htmlFor={`transcript-${attachment.id}`}
-                                      className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                                    >
-                                      Trascrizione
-                                    </label>
-                                    <button
-                                      type="button"
-                                      disabled={transcriptAutoBusy}
-                                      onClick={() => handleAutoTranscribeAttachment(capsule, attachment)}
-                                      className="text-xs font-medium text-zinc-600 underline-offset-2 hover:underline disabled:opacity-50 dark:text-zinc-400"
-                                    >
-                                      {transcriptAutoBusy ? "Provo…" : "Trascrivi automaticamente"}
-                                    </button>
-                                  </div>
-                                  {transcriptAutoMessage ? (
-                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                      {transcriptAutoMessage}
-                                    </p>
-                                  ) : null}
-                                  <textarea
-                                    id={`transcript-${attachment.id}`}
-                                    rows={4}
-                                    value={transcriptDraft}
-                                    onChange={(e) => setTranscriptDraft(e.target.value)}
-                                    placeholder="Scrivi qui la trascrizione, o provaci con il tasto qui sopra…"
-                                    className={INPUT_FIELD}
-                                  />
-                                  <div className="flex gap-3">
-                                    <button
-                                      type="button"
-                                      disabled={transcriptSaving}
-                                      onClick={() => saveAttachmentTranscript(capsule, attachment)}
-                                      className="self-start rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                                    >
-                                      {transcriptSaving ? "Salvataggio…" : "Salva trascrizione"}
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : null}
-                            </li>
-                          );
-                        })}
-                        {capsule.linkedDocuments.map((doc) => (
-                          <li
-                            key={doc.id}
-                            className="flex items-center justify-between gap-3 rounded-md bg-zinc-50 px-3 py-1.5 text-xs dark:bg-zinc-900"
-                          >
-                            <span className="truncate text-zinc-700 dark:text-zinc-300">
-                              {CONTENT_KIND_ICON[contentKindFor(doc.mimeType)]} {doc.filename} · {formatSize(doc.size)}
-                            </span>
-                            <button
-                              type="button"
-                              disabled={busyAttachment === doc.id}
-                              onClick={() => handleOpenLinkedDocument(doc)}
-                              className="shrink-0 font-medium text-zinc-600 underline-offset-2 hover:underline disabled:opacity-50 dark:text-zinc-400"
-                            >
-                              {busyAttachment === doc.id ? "Apertura…" : "Apri"}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </li>
-                );
-              })}
+            <ul className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {sortByOpening(filteredCapsules, now).map((capsule) => (
+                <CapsuleCard
+                  key={capsule.id}
+                  capsule={capsule}
+                  now={now}
+                  menu={renderMenu(capsule, busyId === capsule.id, "Chiudi la capsula")}
+                  repliesCount={replies.filter((r) => r.capsuleId === capsule.id).length}
+                  onOpenReplies={() => setReadingRepliesFor(capsule)}
+                  countdown={
+                    capsule.openAt && capsule.status !== "draft" && showCountdown ? (
+                      <CapsuleCountdown createdAt={capsule.createdAt} openAt={capsule.openAt} size="sm" showProgress />
+                    ) : null
+                  }
+                >
+                  {renderContents(capsule)}
+                </CapsuleCard>
+              ))}
             </ul>
           )}
         </>
       )}
+
+      <CapsuleRepliesDialog
+        title={readingRepliesFor?.title ?? null}
+        replies={readingRepliesFor ? replies.filter((r) => r.capsuleId === readingRepliesFor.id) : []}
+        busyId={busyReplyId}
+        onDelete={handleDeleteReply}
+        onClose={() => setReadingRepliesFor(null)}
+      />
+
+      {/* Prima dell'anteprima: aprendola da qui, l'anteprima resta sopra. Sempre montato per lo stesso motivo. */}
+      <CloseCapsuleDialog
+        capsule={closingCapsule}
+        now={now}
+        busy={closingCapsule !== null && busyId === closingCapsule.id}
+        previewOpen={previewCapsule !== null}
+        onConfirm={handleClose}
+        onOpenPreview={setPreviewCapsule}
+        onCancel={() => setClosingCapsule(null)}
+      />
 
       {/* Sempre montato (non condizionato a previewCapsule): gestisce da sé mount/unmount per animare la dissolvenza in uscita. */}
       <CapsulePreview
