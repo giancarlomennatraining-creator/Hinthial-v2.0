@@ -72,10 +72,11 @@ test("due file con lo stesso nome propongono un fascicolo, importati insieme a u
   await signInAndSetUpVault(page);
 
   await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
-  await page.getByRole("menuitem", { name: "Importa più file insieme" }).click();
-  await expect(page.getByRole("heading", { name: "Importa più file insieme" })).toBeVisible();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
 
-  await page.getByLabel("Scegli i file da importare").setInputFiles([
+  // Lo stesso percorso del file singolo, con più file: si scelgono insieme.
+  await page.setInputFiles('input[type="file"]', [
     {
       name: "bolletta-luce-01.pdf",
       mimeType: "application/pdf",
@@ -93,18 +94,24 @@ test("due file con lo stesso nome propongono un fascicolo, importati insieme a u
     },
   ]);
 
-  // Il riepilogo per gruppi: la proposta di un fascicolo nuovo per le
-  // due bollette, già selezionata (è un raggruppamento evidente).
-  const proposal = page.getByText(/hanno lo stesso nome/, { exact: false });
-  await expect(proposal).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("bolletta-luce-01.pdf")).toBeVisible();
+  // I tre file sono in elenco, letti uno alla volta.
+  await expect(page.getByText("bolletta-luce-01.pdf")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText("bolletta-luce-02.pdf")).toBeVisible();
   await expect(page.getByText("biglietto-treno.txt")).toBeVisible();
 
-  // Il titolo proposto per il fascicolo nuovo è il nome comune dei file.
-  await expect(page.locator('input[value="Bolletta luce"]')).toBeVisible();
+  // Anche a passo chiuso, il riepilogo dei Dettagli dice che un fascicolo è proposto.
+  await expect(page.getByText(/fascicolo «Bolletta luce»/)).toBeVisible();
 
-  await page.getByRole("button", { name: "Importa tutto" }).click();
+  // I Dettagli valgono per tutti i file, e la proposta di un fascicolo nuovo per le due bollette è già selezionata
+  // (è un raggruppamento evidente).
+  await page.getByRole("button", { name: "Continua →" }).click();
+  await expect(page.getByText("Questi dettagli valgono per tutti i 3 file.")).toBeVisible();
+  await expect(page.getByText(/hanno lo stesso nome/, { exact: false })).toBeVisible();
+
+  // Il titolo proposto per il fascicolo nuovo è il nome comune dei file.
+  await expect(page.getByLabel("Titolo del fascicolo proposto")).toHaveValue("Bolletta luce");
+
+  await page.getByRole("button", { name: "Aggiungi 3 file all'archivio" }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 60_000 });
 
   // I documenti si chiamano come i file: il contenuto non decide più il titolo.

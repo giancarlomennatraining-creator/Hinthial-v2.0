@@ -40,14 +40,15 @@ test("selezione multipla applica categoria e tag in blocco, poi l'eliminazione i
 
   // Tre contenuti, per avere di che selezionare in blocco.
   await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
-  await page.getByRole("menuitem", { name: "Importa più file insieme" }).click();
-  await page.getByLabel("Scegli i file da importare").setInputFiles([
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
+  await page.setInputFiles('input[type="file"]', [
     { name: "documento-uno.txt", mimeType: "text/plain", buffer: Buffer.from("primo documento di prova") },
     { name: "documento-due.txt", mimeType: "text/plain", buffer: Buffer.from("secondo documento di prova") },
     { name: "documento-tre.txt", mimeType: "text/plain", buffer: Buffer.from("terzo documento di prova") },
   ]);
-  await expect(page.getByText(/file pronto|file pronti/)).toBeVisible({ timeout: 30_000 });
-  await page.getByRole("button", { name: "Importa tutto" }).click();
+  await expect(page.getByText("documento-tre.txt")).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("button", { name: "Aggiungi 3 file all'archivio" }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 60_000 });
   await expect(page.getByText("documento-uno.txt")).toBeVisible({ timeout: 15_000 });
 

@@ -4,6 +4,7 @@ import { mimeTypeOfFile } from "@/lib/file-mime";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type FormEvent,
@@ -14,6 +15,7 @@ import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import {
   createTextNote,
   getDocumentById,
+  listDocumentSummaries,
   saveAISynthesis,
   saveContentAnalysis,
   updateDocumentAIExtractionExclusion,
@@ -27,7 +29,7 @@ import {
   grantCategoryAIExtractionTemporarily,
 } from "@/domain/categories/repository";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
-import { listDossiers } from "@/domain/dossiers/repository";
+import { createDossier, listDossiers } from "@/domain/dossiers/repository";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import { canExtractText, extractContent } from "@/domain/extraction/extract-text";
 import type { ContentSegment } from "@/domain/extraction/types";
@@ -35,6 +37,10 @@ import { loadDocumentSegments } from "@/domain/documents/segments";
 import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
 import { readingStateFor } from "@/domain/extraction/reading-state";
 import { FileDropZone } from "@/components/documents/FileDropZone";
+import { GoogleDriveBrowser } from "@/components/documents/GoogleDriveBrowser";
+import { detectDuplicates } from "@/domain/bulk-import/duplicates";
+import { groupByFilename } from "@/domain/bulk-import/grouping";
+import { useToast } from "@/components/ui/ToastProvider";
 import {
   AnalysisAbortedError,
   analysisConfirmMessage,
@@ -61,6 +67,7 @@ import type { AssetListItem } from "@/domain/assets/types";
 import type {
   DocumentListItem,
   DocumentMetadataInput,
+  DocumentSummary,
 } from "@/domain/documents/types";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
 
@@ -72,6 +79,21 @@ type ReadingState =
   | { status: "reading"; progress: number | null }
   | { status: "skipped" }
   | { status: "done"; text: string | null };
+
+/** Pubblica di natura (v. .env.local) --- undefined se Google Drive non è configurato in questo ambiente: in quel caso il bottone non compare. */
+const GOOGLE_DRIVE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID;
+
+/**
+ * Un file scelto. Uno o molti, il percorso è lo stesso: ognuno ha il suo stato di lettura e, se i file sono più d'uno, il
+ * suo titolo. `folderHint` è il nome della cartella Google Drive di provenienza, solo un suggerimento per la categoria.
+ */
+interface LotFile {
+  id: string;
+  file: File;
+  title: string;
+  folderHint: string | null;
+  reading: ReadingState;
+}
 
 const MODE_LABEL: Record<CreationMode, string> = {
   upload: "Carica un file",
@@ -86,7 +108,7 @@ const MODE_ICON: Record<CreationMode, string> = {
 };
 
 const MODE_DESCRIPTION: Record<CreationMode, string> = {
-  upload: "bollette, contratti, referti",
+  upload: "uno o più file: bollette, contratti, referti",
   record: "audio o video",
   note: "testo scritto ora",
 };
@@ -310,6 +332,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { masterEnabled, extractionConsent } = useAIProcessingConsent();
+  const showToast = useToast();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
@@ -331,28 +354,57 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     EMPTY_METADATA_FIELDS,
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [pickedFile, setPickedFile] = useState<File | null>(null);
+  // I file scelti: uno o molti, stesso percorso (v. addFiles). Ognuno si legge sul dispositivo appena scelto.
+  const [lot, setLot] = useState<LotFile[]>([]);
 
-  // FASE 19b: la lettura parte appena scegli il file, non a Salva --- avviene dentro il tempo che stavi già spendendo.
-  const [reading, setReading] = useState<ReadingState>({ status: "idle" });
-  // La zona resta visibile mentre il file si legge e un istante dopo (il timbro "Fatto"), poi lascia il posto alla scheda del file.
+  // FASE 19b: la lettura parte appena scegli i file, non a Salva --- avviene dentro il tempo che stavi già spendendo. Uno
+  // alla volta, non in parallelo: dieci file insieme su un telefono, alcuni con OCR, lo farebbero solo arrancare.
+  const readQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+  // La lettura di ogni file, per poterla aspettare al salvataggio se non ha ancora finito (v. uploadLot).
+  const readPromisesRef = useRef(new Map<string, Promise<PriorExtraction>>());
+  // La zona resta visibile mentre i file si leggono e un istante dopo (il timbro "Fatto"), poi lascia il posto alla scheda dei file.
   const [zoneSettled, setZoneSettled] = useState(false);
-  const zoneState = !pickedFile ? "idle" : reading.status === "reading" || reading.status === "idle" ? "loading" : "done";
-  const zoneProgress = reading.status === "reading" ? reading.progress : null;
+  const lotReading = lot.some((l) => l.reading.status === "idle" || l.reading.status === "reading");
+  const zoneState = lot.length === 0 ? "idle" : lotReading ? "loading" : "done";
+  const zoneProgress = (() => {
+    const current = lot.find((l) => l.reading.status === "reading");
+    const currentProgress = current && current.reading.status === "reading" ? current.reading.progress : null;
+    if (lot.length === 1) return currentProgress;
+    const finished = lot.filter((l) => l.reading.status === "done" || l.reading.status === "skipped").length;
+    return lotReading ? (finished + (currentProgress ?? 0)) / lot.length : null;
+  })();
   useEffect(() => {
-    if (!pickedFile || zoneState !== "done" || zoneSettled) return;
+    if (lot.length === 0 || zoneState !== "done" || zoneSettled) return;
     const timer = setTimeout(() => setZoneSettled(true), 1100);
     return () => clearTimeout(timer);
-  }, [pickedFile, zoneState, zoneSettled]);
+  }, [lot.length, zoneState, zoneSettled]);
+  /** Il titolo del contenuto quando è uno solo (un file, o la registrazione); con più file ognuno ha il suo, in `lot`. */
   const [title, setTitle] = useState("");
-  /** Cosa ha messo Hinthial --- sparisce appena l'utente tocca il campo, da quel momento il valore è suo. */
-  // Identifica il file in lettura: se ne scegli un altro prima che finisca, il risultato vecchio non deve sovrascrivere.
-  const readingTokenRef = useRef(0);
-  // La lettura in corso, per poterla aspettare al salvataggio se non ha ancora finito (v. extractionForSave).
-  const readingPromiseRef = useRef<Promise<PriorExtraction> | null>(null);
   const [recordedFile, setRecordedFile] = useState<File | null>(null);
   const [noteTitle, setNoteTitle] = useState("");
   const [noteBody, setNoteBody] = useState("");
+
+  // Cosa c'è già in Archivio, per riconoscere i doppioni e i fascicoli a cui un file sembra appartenere. Si legge una volta,
+  // alla prima scelta di un file: partire senza file non deve costare nulla.
+  const [existingDocuments, setExistingDocuments] = useState<Pick<DocumentSummary, "filename" | "size" | "createdAt" | "dossierIds">[]>([]);
+  const existingRequestedRef = useRef(false);
+  useEffect(() => {
+    if (lot.length === 0 || existingRequestedRef.current) return;
+    existingRequestedRef.current = true;
+    listDocumentSummaries(supabase, masterKey)
+      .then(setExistingDocuments)
+      .catch(() => {
+        // Senza, il file si carica lo stesso: solo non si avvisa dei doppioni.
+      });
+  }, [lot.length, supabase, masterKey]);
+  const duplicates = useMemo(() => detectDuplicates(lot, existingDocuments), [lot, existingDocuments]);
+  const groups = useMemo(() => groupByFilename(lot, existingDocuments, dossiers), [lot, existingDocuments, dossiers]);
+  // Le proposte di fascicolo: i gruppi con un fascicolo esistente o uno nuovo da creare (v. domain/bulk-import/grouping.ts).
+  const proposedGroups = groups.filter((g) => g.label !== null && (g.existingDossier || g.proposedDossierTitle));
+  // Per gruppo (per nome): se collegarlo, e con che titolo se nuovo. Le proposte partono selezionate: sono raggruppamenti evidenti.
+  const [groupChoices, setGroupChoices] = useState<Record<string, { link: boolean; title: string }>>({});
+  const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null);
+  const [driveOpen, setDriveOpen] = useState(false);
 
   // Concept D: dopo il salvataggio, il documento appena creato e i passi su cosa farne --- invece del ritorno
   // diretto all'archivio. `null` = form ancora in corso.
@@ -441,65 +493,85 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
 
   function handleModeChange(next: CreationMode) {
     setMode(next);
-    setPickedFile(null);
+    setLot([]);
+    readPromisesRef.current.clear();
+    setZoneSettled(false);
     setRecordedFile(null);
     setError(null);
-    // Azzera anche ciò che Hinthial aveva ricavato: una lettura in corso non deve riempire i campi di una nota scritta a mano.
-    readingTokenRef.current++;
-    setReading({ status: "idle" });
     setTitle("");
     setMetadata(EMPTY_METADATA_FIELDS);
   }
 
-  function pickFile(file: File | null) {
-    setPickedFile(file);
+  function updateLotFile(id: string, patch: Partial<Pick<LotFile, "title" | "reading">>) {
+    setLot((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  }
+
+  /** Aggiunge file al lotto (uno o molti) e ne avvia la lettura, dopo quelli già in coda. */
+  function addFiles(files: File[], folderHint: string | null = null) {
+    if (files.length === 0) return;
+    setError(null);
     setZoneSettled(false);
-    // Non si azzerano titolo/categoria/bene/fascicolo/tag/note: ciò che è già compilato non si tocca.
-    if (file) {
-      readingPromiseRef.current = readPickedFile(file);
-    } else {
-      readingPromiseRef.current = null;
-      setReading({ status: "idle" });
+    const added: LotFile[] = files.map((file) => ({
+      id: crypto.randomUUID(),
+      file,
+      title: "",
+      folderHint,
+      reading: { status: "idle" },
+    }));
+    // Passando da uno a più file il titolo scritto finora resta al primo, non si perde.
+    setLot((prev) => {
+      const next = prev.length === 1 && title ? prev.map((item) => ({ ...item, title })) : prev;
+      return [...next, ...added];
+    });
+    if (lot.length === 1 && title) setTitle("");
+    // Non si azzerano categoria/bene/fascicoli/tag/note: ciò che è già compilato non si tocca. Dalla cartella Drive nasce solo un suggerimento di categoria.
+    if (folderHint) {
+      const match = categories.find((c) => c.name.toLowerCase() === folderHint.toLowerCase());
+      if (match) setMetadata((prev) => (prev.categoryId ? prev : { ...prev, categoryId: match.id }));
+    }
+    for (const item of added) {
+      const promise = readQueueRef.current.then(() => readLotFile(item));
+      readQueueRef.current = promise;
+      readPromisesRef.current.set(item.id, promise);
     }
   }
 
-  function handleRemoveFile() {
-    readingTokenRef.current++;
-    pickFile(null);
-    setTitle("");
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  /** Toglie un file dal lotto (anche un doppione che non vale la pena riportare dentro). */
+  function removeFile(id: string) {
+    readPromisesRef.current.delete(id);
+    const remaining = lot.filter((item) => item.id !== id);
+    setLot(remaining);
+    // Tornando a un file solo, il suo titolo torna nel campo unico.
+    if (remaining.length === 1) setTitle(remaining[0].title);
+    if (remaining.length <= 1) setZoneSettled(remaining.length === 1);
+    if (remaining.length === 0) {
+      setTitle("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   /** Legge il testo del file sul dispositivo, per salvarlo con il contenuto (ricerca, analisi di Hinthia). Non compila nessun campo. */
-  async function readPickedFile(file: File): Promise<PriorExtraction> {
-    const token = ++readingTokenRef.current;
+  async function readLotFile({ id, file }: LotFile): Promise<PriorExtraction> {
     const mimeType = mimeTypeOfFile(file);
 
     if (!canExtractText(mimeType)) {
-      setReading({ status: "skipped" });
+      updateLotFile(id, { reading: { status: "skipped" } });
       return { text: null, attempted: false };
     }
 
-    setReading({ status: "reading", progress: null });
+    updateLotFile(id, { reading: { status: "reading", progress: null } });
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const content = await extractContent(bytes, mimeType, (progress) => {
-        if (token !== readingTokenRef.current) return;
-        setReading({ status: "reading", progress });
+        updateLotFile(id, { reading: { status: "reading", progress } });
         setReadProgress(progress);
       });
       const text = content?.text ?? null;
-
-      // Un altro file è stato scelto nel frattempo: risultato vecchio, non tocca niente (v. readingPromiseRef).
-      if (token === readingTokenRef.current) {
-        setReading({ status: "done", text });
-      }
-
+      updateLotFile(id, { reading: { status: "done", text } });
       return { text, segments: content?.segments, attempted: true };
     } catch {
       // Leggere è un di più: un file illeggibile non deve impedire di salvarlo.
-      if (token === readingTokenRef.current)
-        setReading({ status: "done", text: null });
+      updateLotFile(id, { reading: { status: "done", text: null } });
       return { text: null, attempted: false };
     }
   }
@@ -519,12 +591,73 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     event.target.removeAttribute("capture");
   }
 
-  /** Il risultato della lettura per il salvataggio --- se non ha ancora finito si aspetta (era già in corso dalla scelta del file), altrimenti il documento nascerebbe non cercabile. */
-  async function extractionForSave(): Promise<PriorExtraction> {
-    const pending = readingPromiseRef.current;
-    if (!pending) return { text: null, attempted: false };
-    if (reading.status === "reading") setPhase("reading");
-    return pending;
+  /** Import da Google Drive: il file browser (v. GoogleDriveBrowser.tsx) gira nel browser dell'utente, il server non vede token né file scelti. Restituisce File già scaricati, indistinguibili da qui in poi da uno scelto dal disco. */
+  function handleGoogleDriveImported(downloaded: { file: File; folderHint: string | null }[]) {
+    setDriveOpen(false);
+    for (const { file, folderHint } of downloaded) addFiles([file], folderHint);
+  }
+
+  /**
+   * Salva tutti i file del lotto, uno dopo l'altro, con gli stessi dettagli. Un fascicolo proposto (v. proposedGroups) si
+   * crea una volta per gruppo, non per file: dieci bollette non devono finire in dieci fascicoli. Con un file solo un errore
+   * si mostra e si ferma; con più file un file che non si riesce a salvare non ferma gli altri, si conta e si prosegue.
+   */
+  async function uploadLot(userId: string, metadataInput: DocumentMetadataInput) {
+    const strict = lot.length === 1;
+    const dossierByFile = new Map<string, string>();
+    let dossiersCreated = 0;
+    for (const group of proposedGroups) {
+      const key = group.label as string;
+      const choice = groupChoices[key];
+      if (choice && !choice.link) continue;
+      let dossierId = group.existingDossier?.id ?? null;
+      if (!dossierId && group.proposedDossierTitle) {
+        const dossierTitle = choice?.title.trim() || group.proposedDossierTitle;
+        try {
+          dossierId = await createDossier(supabase, masterKey, userId, { title: dossierTitle, description: "" });
+          dossiersCreated++;
+        } catch {
+          dossierId = null; // il fascicolo non nasce, ma i file si salvano comunque.
+        }
+      }
+      if (dossierId) for (const f of group.files) dossierByFile.set(f.id, dossierId);
+    }
+
+    const ids: string[] = [];
+    let failures = 0;
+    setBatchProgress({ done: 0, total: lot.length });
+    for (const [index, item] of lot.entries()) {
+      const groupDossier = dossierByFile.get(item.id);
+      const input: DocumentMetadataInput = {
+        ...metadataInput,
+        dossierIds:
+          groupDossier && !metadataInput.dossierIds.includes(groupDossier)
+            ? [...metadataInput.dossierIds, groupDossier]
+            : metadataInput.dossierIds,
+      };
+      try {
+        // Se la lettura non ha ancora finito si aspetta (era già in corso dalla scelta del file), altrimenti il documento nascerebbe non cercabile.
+        if (strict && item.reading.status === "reading") setPhase("reading");
+        const extraction = (await readPromisesRef.current.get(item.id)) ?? { text: null, attempted: false };
+        ids.push(
+          await uploadDocument(supabase, masterKey, userId, item.file, input, {
+            title: strict ? title : item.title || undefined,
+            extraction,
+            onPhase: strict
+              ? (nextPhase, progress) => {
+                  setPhase(nextPhase);
+                  setReadProgress(progress);
+                }
+              : undefined,
+          }),
+        );
+      } catch (err) {
+        if (strict) throw err;
+        failures++;
+      }
+      setBatchProgress({ done: index + 1, total: lot.length });
+    }
+    return { ids, failures, dossiersCreated };
   }
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
@@ -536,7 +669,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       setError("Inserisci un titolo per la nota.");
       return;
     }
-    if (mode === "upload" && !pickedFile) {
+    if (mode === "upload" && lot.length === 0) {
       setError("Scegli un file da caricare.");
       return;
     }
@@ -571,8 +704,22 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
           { title: noteTitle.trim(), body: noteBody },
           metadataInput,
         );
+      } else if (mode === "upload") {
+        const result = await uploadLot(user.id, metadataInput);
+        if (lot.length > 1) {
+          // Un lotto: niente passi di Hinthial per ognuno, si torna all'archivio con l'esito.
+          if (result.ids.length === 0) throw new Error("Nessun file è stato importato.");
+          showToast(
+            result.failures === 0
+              ? `${result.ids.length} contenuti importati${result.dossiersCreated > 0 ? `, ${result.dossiersCreated} nuovo fascicolo` : ""}.`
+              : `${result.ids.length} importati, ${result.failures} non riusciti.`,
+          );
+          router.push("/archive");
+          return;
+        }
+        newId = result.ids[0];
       } else {
-        const file = mode === "record" ? recordedFile! : pickedFile!;
+        const file = recordedFile!;
         newId = await uploadDocument(
           supabase,
           masterKey,
@@ -580,10 +727,8 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
           file,
           metadataInput,
           {
-            title: mode === "record" ? recordingTitle(title, file.name) : title,
+            title: recordingTitle(title, file.name),
             // Il file registrato non passa dalla lettura del form: lo legge uploadDocument come sempre.
-            extraction:
-              mode === "upload" ? await extractionForSave() : undefined,
             onPhase: (nextPhase, progress) => {
               setPhase(nextPhase);
               setReadProgress(progress);
@@ -705,24 +850,28 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   // Il file in gioco, qualunque sia il modo --- serve a parlare del contenuto giusto ("l'immagine", non "il documento").
-  const fileInHand = mode === "record" ? recordedFile : pickedFile;
-  const isImage = fileInHand?.type.startsWith("image/") ?? false;
+  const isImage =
+    mode === "record"
+      ? (recordedFile?.type.startsWith("image/") ?? false)
+      : lot.some((l) => l.file.type.startsWith("image/"));
 
   function readingLabel(): string {
-    const what = isImage ? "l'immagine" : "il documento";
+    const what = lot.length > 1 ? "i file" : isImage ? "l'immagine" : "il documento";
     const percent =
       readProgress === null ? "" : ` ${Math.round(readProgress * 100)}%`;
     return `Sto leggendo ${what}…${percent}`;
   }
 
   const canSubmit =
-    (mode === "upload" && pickedFile) ||
+    (mode === "upload" && lot.length > 0) ||
     (mode === "record" && recordedFile) ||
     (mode === "note" && noteTitle.trim());
 
   const step2Summary =
     mode === "upload"
-      ? (pickedFile?.name ?? "Nessun file scelto")
+      ? lot.length > 1
+        ? `${lot.length} file`
+        : (lot[0]?.file.name ?? "Nessun file scelto")
       : mode === "record"
         ? recordedFile
           ? "Registrazione pronta"
@@ -732,9 +881,16 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
           : "";
 
   const step3Category = categories.find((c) => c.id === metadata.categoryId);
-  const step3Summary = step3Category
-    ? `${step3Category.icon} ${step3Category.name}`
-    : "Nessun dettaglio aggiunto";
+  // Un fascicolo proposto si vede anche a passo chiuso: nasce solo se resta selezionato, e non deve nascere a insaputa di nessuno.
+  const step3Proposals =
+    mode === "upload"
+      ? proposedGroups
+          .filter((g) => groupChoices[g.label as string]?.link !== false)
+          .map((g) => `fascicolo «${g.existingDossier?.title ?? (groupChoices[g.label as string]?.title.trim() || g.proposedDossierTitle)}»`)
+      : [];
+  const step3Summary =
+    [step3Category ? `${step3Category.icon} ${step3Category.name}` : null, ...step3Proposals].filter(Boolean).join(" · ") ||
+    "Nessun dettaglio aggiunto";
 
   // --- Dopo il salvataggio: i passi 4 e 5 nella stessa fisarmonica.
   const aiCategory = savedDoc
@@ -855,38 +1011,108 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                 >
                   {mode === "upload" ? (
                     <div className="flex flex-col gap-3">
-                      {pickedFile && zoneSettled ? (
-                        <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-                          <span className="text-xl" aria-hidden="true">
-                            📄
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                              {pickedFile.name}
-                            </p>
+                      {lot.length > 0 && zoneSettled ? (
+                        <div className="flex flex-col gap-2">
+                          {lot.map((item, index) => {
+                            const duplicate = duplicates[index];
+                            return (
+                              <div key={item.id} className="flex flex-col gap-1.5">
+                                <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+                                  <span className="text-xl" aria-hidden="true">
+                                    {item.file.type.startsWith("image/") ? "🖼️" : "📄"}
+                                  </span>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                      {item.file.name}
+                                    </p>
+                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                      {formatSize(item.file.size)}
+                                    </p>
+                                  </div>
+                                  <FileReadingStatus reading={item.reading} />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeFile(item.id)}
+                                    aria-label={lot.length === 1 ? "Rimuovi file" : `Rimuovi ${item.file.name}`}
+                                    className="shrink-0 rounded-full p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                                {lot.length > 1 ? (
+                                  <input
+                                    type="text"
+                                    value={item.title}
+                                    onChange={(e) => updateLotFile(item.id, { title: e.target.value })}
+                                    placeholder="Titolo (facoltativo)"
+                                    aria-label={`Titolo per ${item.file.name}`}
+                                    className={`w-full ${INPUT_FIELD}`}
+                                  />
+                                ) : null}
+                                {duplicate ? (
+                                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+                                    <span>
+                                      🔁 Sembra già presente in Hinthial come &laquo;{duplicate.filename}&raquo;
+                                      {duplicate.createdAt
+                                        ? `, caricato il ${new Date(duplicate.createdAt).toLocaleDateString("it-IT")}`
+                                        : " (in questo stesso lotto)"}
+                                      — stesso nome, stessa dimensione.
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeFile(item.id)}
+                                      className="shrink-0 font-medium underline-offset-2 hover:underline"
+                                    >
+                                      Escludi dall&apos;importazione
+                                    </button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                          {lot.length > 1 ? (
                             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                              {formatSize(pickedFile.size)}
+                              {lot.length} file
+                              {duplicates.filter(Boolean).length > 0
+                                ? `, ${duplicates.filter(Boolean).length} possibile ${duplicates.filter(Boolean).length === 1 ? "duplicato" : "duplicati"}`
+                                : ""}
+                              . Hinthial li ha letti sul dispositivo, uno alla volta.
                             </p>
+                          ) : null}
+                          <div className="flex flex-wrap items-center gap-4">
+                            <label className="w-fit cursor-pointer text-sm font-medium text-brand hover:underline">
+                              ＋ Aggiungi altri file
+                              <input
+                                type="file"
+                                multiple
+                                className="sr-only"
+                                aria-label="Aggiungi altri file"
+                                onChange={(e) => {
+                                  addFiles(Array.from(e.target.files ?? []));
+                                  e.target.value = "";
+                                }}
+                              />
+                            </label>
+                            {GOOGLE_DRIVE_CLIENT_ID ? (
+                              <button
+                                type="button"
+                                onClick={() => setDriveOpen(true)}
+                                className="text-sm font-medium text-brand hover:underline"
+                              >
+                                📁 Importa da Google Drive
+                              </button>
+                            ) : null}
                           </div>
-                          <FileReadingStatus reading={reading} />
-                          <button
-                            type="button"
-                            onClick={handleRemoveFile}
-                            aria-label="Rimuovi file"
-                            className="shrink-0 rounded-full p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                          >
-                            ×
-                          </button>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center gap-3">
                           {/* Concept "Mirino" (v. FileDropZone): un'unica superficie, zona di rilascio e "clicca per scegliere"
-                        insieme; il campo vero la ricopre, invisibile ma presente. Resta visibile anche mentre il file si legge. */}
+                        insieme; il campo vero la ricopre, invisibile ma presente. Resta visibile anche mentre i file si leggono. */}
                           <FileDropZone
                             inputRef={fileInputRef}
                             state={zoneState}
                             progress={zoneProgress}
-                            onFile={pickFile}
+                            onFiles={(files) => addFiles(files)}
                             onInputBlur={handleFileInputBlur}
                           />
                           {/* Solo su smartphone --- su desktop capture non ha effetto e sarebbe ridondante. Fuori dal
@@ -898,6 +1124,15 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                           >
                             📷 Scatta foto
                           </button>
+                          {GOOGLE_DRIVE_CLIENT_ID && lot.length === 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => setDriveOpen(true)}
+                              className="text-sm font-medium text-brand hover:underline"
+                            >
+                              📁 Importa da Google Drive
+                            </button>
+                          ) : null}
                         </div>
                       )}
 
@@ -905,33 +1140,35 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                       {isImage && !creating ? (
                         <p className="text-sm text-zinc-500 dark:text-zinc-400">
                           Hinthial leggerà il testo scritto dentro
-                          l&apos;immagine, sul tuo dispositivo, per renderlo
+                          {lot.length > 1 ? " le immagini" : " l'immagine"}, sul tuo dispositivo, per renderlo
                           cercabile. Può richiedere qualche decina di secondi.
                         </p>
                       ) : null}
 
-                      {/* FASE 19b: "scan_0012.pdf" e "IMG_4821.jpg" sono il motivo per cui poi non si ritrova niente. */}
-                      <div className="flex flex-col gap-1">
-                        <label
-                          htmlFor="upload-title"
-                          className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                        >
-                          Titolo
-                        </label>
-                        <input
-                          id="upload-title"
-                          type="text"
-                          value={title}
-                          onChange={(e) => setTitle(e.target.value)}
-                          placeholder={
-                            pickedFile?.name ?? "es. Polizza auto 2026"
-                          }
-                          className={`w-full ${INPUT_FIELD}`}
-                        />
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                          Lascia vuoto per usare il nome del file.
-                        </p>
-                      </div>
+                      {/* FASE 19b: "scan_0012.pdf" e "IMG_4821.jpg" sono il motivo per cui poi non si ritrova niente. Con più file ognuno ha il suo titolo, nella sua riga. */}
+                      {lot.length <= 1 ? (
+                        <div className="flex flex-col gap-1">
+                          <label
+                            htmlFor="upload-title"
+                            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                          >
+                            Titolo
+                          </label>
+                          <input
+                            id="upload-title"
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder={
+                              lot[0]?.file.name ?? "es. Polizza auto 2026"
+                            }
+                            className={`w-full ${INPUT_FIELD}`}
+                          />
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                            Lascia vuoto per usare il nome del file.
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
                   ) : mode === "record" ? (
                     <div className="flex flex-col gap-2">
@@ -1023,6 +1260,11 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                   summary={step3Summary}
                   onOpen={() => setActiveStep(3)}
                 >
+                  {mode === "upload" && lot.length > 1 ? (
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      Questi dettagli valgono per tutti i {lot.length} file.
+                    </p>
+                  ) : null}
                   <DocumentMetadataFields
                     idPrefix="upload"
                     categories={categories}
@@ -1034,6 +1276,47 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                     showExpiry={false}
                     showIssuer={false}
                   />
+                  {mode === "upload"
+                    ? proposedGroups.map((group) => {
+                        const key = group.label as string;
+                        const choice = groupChoices[key] ?? { link: true, title: group.proposedDossierTitle ?? "" };
+                        return (
+                          <label
+                            key={key}
+                            className="flex items-start gap-2 rounded-2xl border border-brand/30 bg-brand/5 p-4 text-sm"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={choice.link}
+                              onChange={(e) => setGroupChoices((prev) => ({ ...prev, [key]: { ...choice, link: e.target.checked } }))}
+                              className="mt-0.5"
+                            />
+                            <span>
+                              {group.existingDossier ? (
+                                <>
+                                  {group.files.length === 1 ? "Questo documento sembra" : `Questi ${group.files.length} documenti sembrano`}{" "}
+                                  appartenere a &laquo;{group.existingDossier.title}&raquo; (stesso nome: {key}). Aggiungerli?
+                                </>
+                              ) : (
+                                <>
+                                  Questi {group.files.length} documenti hanno lo stesso nome ({key}) e sembrano la stessa
+                                  vicenda. Vuoi creare il fascicolo{" "}
+                                  <input
+                                    type="text"
+                                    value={choice.title}
+                                    disabled={!choice.link}
+                                    onChange={(e) => setGroupChoices((prev) => ({ ...prev, [key]: { ...choice, title: e.target.value } }))}
+                                    aria-label="Titolo del fascicolo proposto"
+                                    className="mx-1 rounded-md border border-zinc-300 bg-white px-2 py-0.5 text-sm text-zinc-950 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+                                  />
+                                  ?
+                                </>
+                              )}
+                            </span>
+                          </label>
+                        );
+                      })
+                    : null}
                 </AccordionStep>
 
                 {savedDoc ? (
@@ -1165,10 +1448,14 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                 className="w-full rounded-xl bg-brand px-4 py-2 sm:w-auto text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
               >
                 {creating
-                  ? phase === "reading"
-                    ? readingLabel()
-                    : "Salvataggio…"
-                  : "Aggiungi all'archivio"}
+                  ? lot.length > 1 && batchProgress
+                    ? `Salvo ${Math.min(batchProgress.done + 1, batchProgress.total)} di ${batchProgress.total}…`
+                    : phase === "reading"
+                      ? readingLabel()
+                      : "Salvataggio…"
+                  : lot.length > 1
+                    ? `Aggiungi ${lot.length} file all'archivio`
+                    : "Aggiungi all'archivio"}
               </button>
               <Link
                 href="/archive"
@@ -1180,6 +1467,14 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
           )}
         </form>
       )}
+
+      {driveOpen && GOOGLE_DRIVE_CLIENT_ID ? (
+        <GoogleDriveBrowser
+          clientId={GOOGLE_DRIVE_CLIENT_ID}
+          onClose={() => setDriveOpen(false)}
+          onConfirm={handleGoogleDriveImported}
+        />
+      ) : null}
     </div>
   );
 }

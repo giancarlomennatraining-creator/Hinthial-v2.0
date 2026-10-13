@@ -13,7 +13,6 @@ export const ADD_CONTENT_ITEMS: MobileAddFabMenuItem[] = [
   { href: "/archive/new", label: "Carica un file", icon: "📄" },
   { href: "/archive/new?mode=record", label: "Registra audio/video", icon: "🎬" },
   { href: "/archive/new?mode=note", label: "Scrivi una nota", icon: "📝" },
-  { href: "/archive/import", label: "Importa più file insieme", icon: "📥", separated: true },
 ];
 
 /** Una pagina disegnata: una fascia del colore della categoria e qualche riga di testo finto. Dove manca la miniatura vera. */

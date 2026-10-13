@@ -56,6 +56,23 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-16 (87)
+
+### Archivio: caricare uno o più file è lo stesso percorso
+
+**Cosa fa:**
+- "Carica un file" ora accetta **uno o più file** (si scelgono o si trascinano insieme, e si possono aggiungere altri con "＋ Aggiungi altri file"). Non esiste più l'importazione di massa come pagina a parte: con più file i passi sono gli stessi del file singolo e **valgono per tutti**.
+- **Contenuto:** ogni file si legge sul dispositivo, uno alla volta, e ha il suo titolo (facoltativo). I doppioni (stesso nome e stessa dimensione, in Archivio o nello stesso lotto) sono segnalati con "Escludi dall'importazione", anche quando il file è uno solo.
+- **Dettagli:** categoria, bene, fascicoli, tag e note valgono per tutti i file. Se più file hanno lo stesso nome a meno di numeri e date si propone un fascicolo (o si propone di aggiungerli a uno esistente); la proposta è visibile anche a passo chiuso nel riepilogo ("fascicolo «Bolletta luce»") e si toglie con la spunta.
+- **Salvataggio:** con un file solo restano i passi di Hinthial dopo il salvataggio (lettura e analisi); con più file si salvano uno dopo l'altro ("Salvo 3 di 10…"), un file che non si riesce a salvare non ferma gli altri, e si torna all'archivio con l'esito. Da Google Drive si importa dallo stesso passo, se è configurato.
+- Il vecchio collegamento a "Importa più file insieme" porta al nuovo percorso, e la voce non c'è più nel menu "Aggiungi contenuto".
+
+**Note tecniche:**
+- `CreateArchiveItemForm` tiene ora un lotto di file (`lot`, ognuno con la sua lettura) al posto di un file solo; `uploadLot` salva tutti, creando una volta sola il fascicolo di ogni gruppo. `BulkImportForm` è stato tolto, e `/archive/import` fa un redirect a `/archive/new?mode=upload`. `FileDropZone` accetta più file (`onFiles`). Il resto del raggruppamento e dei doppioni (`domain/bulk-import`) è invariato. È il pezzo 1 del flusso 1 ("Arriva un documento"); la schermata di conferma con le proposte per file è il pezzo 2.
+- Cambia rispetto a prima: con più file la categoria è una per tutti (prima si sceglieva per file), e il suggerimento dalla cartella Google Drive diventa la categoria comune se non ne è già scelta una.
+
+---
+
 ## 2026-10-15 (86)
 
 ### Menu utente: "Blocca Hinthial" al posto di "Blocca la cassaforte"
