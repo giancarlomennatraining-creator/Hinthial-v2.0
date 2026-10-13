@@ -707,20 +707,19 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         );
       } else if (mode === "upload") {
         const result = await uploadLot(user.id, metadataInput);
-        if (lot.length > 1) {
-          // Un lotto: niente passi di Hinthial per ognuno, si torna all'archivio con l'esito.
-          if (result.ids.length === 0) throw new Error("Nessun file è stato importato.");
-          showToast(
-            result.failures === 0
+        if (result.ids.length === 0) throw new Error("Nessun file è stato importato.");
+        // Uno o molti, dopo il salvataggio si va alla conferma (v. ConfirmImport): lettura di Hinthia, proposte, dettagli.
+        showToast(
+          lot.length === 1
+            ? "Documento aggiunto."
+            : result.failures === 0
               ? `${result.ids.length} contenuti importati${result.dossiersCreated > 0 ? `, ${result.dossiersCreated} nuovo fascicolo` : ""}.`
               : `${result.ids.length} importati, ${result.failures} non riusciti.`,
-          );
-          // Si ricordano da confermare su questo dispositivo, per riaprire la conferma da Archivio se la si chiude a metà.
-          addPendingConfirmation(user.id, result.ids);
-          router.push(`/archive/confirm?ids=${result.ids.join(",")}`);
-          return;
-        }
-        newId = result.ids[0];
+        );
+        // Si ricordano da confermare su questo dispositivo, per riaprire la conferma da Archivio se la si chiude a metà.
+        addPendingConfirmation(user.id, result.ids);
+        router.push(`/archive/confirm?ids=${result.ids.join(",")}`);
+        return;
       } else {
         const file = recordedFile!;
         newId = await uploadDocument(

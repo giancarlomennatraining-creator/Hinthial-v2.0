@@ -9,7 +9,10 @@ import {
   listAssetLinkedFields,
   saveAISynthesis,
   saveContentAnalysis,
+  updateDocumentMetadata,
 } from "@/domain/documents/repository";
+import { listDossiers } from "@/domain/dossiers/repository";
+import type { DossierListItem } from "@/domain/dossiers/types";
 import { loadDocumentSegments } from "@/domain/documents/segments";
 import { removePendingConfirmation } from "@/domain/documents/pending-confirmation";
 import { listAssets } from "@/domain/assets/repository";
@@ -32,12 +35,14 @@ import {
 import { onePerSlot, proposalsForDocument } from "@/domain/proposals/for-document";
 import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
 import { listDocumentReminderDates, localDateKey } from "@/domain/reminders/repository";
-import type { DocumentListItem } from "@/domain/documents/types";
+import type { DocumentListItem, DocumentMetadataInput } from "@/domain/documents/types";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { Spinner } from "@/components/ui/Spinner";
 import { BTN_PRIMARY, BTN_SECONDARY } from "@/components/ui/styles";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { formatDate } from "@/lib/format";
+import { INPUT_FIELD } from "@/components/ui/styles";
+import { sortAlphabetically } from "@/lib/utils";
 
 /** Un documento importato, con tutto ciò che serve per calcolarne le proposte (v. proposalsForDocument). */
 interface Item {
@@ -45,6 +50,19 @@ interface Item {
   rejections: ProposalRejection[];
   reminderDates: string[];
   linkedFields: LinkedDocumentFields[];
+}
+
+/** I dettagli di un documento nella forma che `updateDocumentMetadata` riscrive: si cambia un campo, gli altri restano. */
+function metadataOf(doc: DocumentListItem): DocumentMetadataInput {
+  return {
+    categoryId: doc.categoryId,
+    relatedAssetId: doc.relatedAssetId,
+    dossierIds: doc.dossierIds,
+    expiresAt: doc.expiresAt,
+    notes: doc.notes,
+    tags: doc.tags,
+    issuer: doc.issuer,
+  };
 }
 
 /** Cosa propone una proposta, a parole: "Scadenza del documento: 12 marzo 2027". */
@@ -92,6 +110,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
   const [items, setItems] = useState<Item[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
+  const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
   const [typeCategories, setTypeCategories] = useState<TypeCategoryOverrides>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,8 +119,12 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
   // La lettura di gruppo: quale documento è in corso (da 1), quanti sono, e a che punto è quello (parti di un documento lungo).
   const [reading, setReading] = useState<{ current: number; total: number; progress: AnalysisProgress | null } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  // L'ultima accettazione in blocco, per poterla annullare.
-  const [lastBulk, setLastBulk] = useState<{ docId: string; accepted: AcceptedProposal }[] | null>(null);
+  // L'ultima azione fatta su più documenti (accettare le sicure, applicare a tutti), per poterla annullare.
+  const [undo, setUndo] = useState<(() => Promise<void>) | null>(null);
+  // "Per tutti": categoria, bene e fascicolo da applicare a ogni documento. Vuoto = non cambiare.
+  const [allCategory, setAllCategory] = useState("");
+  const [allAsset, setAllAsset] = useState("");
+  const [allDossier, setAllDossier] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
 
   const loadItem = useCallback(
@@ -126,10 +149,11 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        const [loaded, categoriesResult, assetsResult, typeCategoriesResult] = await Promise.all([
+        const [loaded, categoriesResult, assetsResult, dossiersResult, typeCategoriesResult] = await Promise.all([
           Promise.all(idsKey.split(",").filter(Boolean).map((id) => loadItem(id))),
           listCategories(supabase),
           listAssets(supabase, masterKey),
+          listDossiers(supabase, masterKey).catch((): DossierListItem[] => []),
           listTypeCategoryOverrides(supabase).catch((): TypeCategoryOverrides => ({})),
         ]);
         if (cancelled) return;
@@ -137,6 +161,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
         setItems(loaded.filter((item): item is Item => item !== null));
         setCategories(categoriesResult);
         setAssets(assetsResult);
+        setDossiers(dossiersResult);
         setTypeCategories(typeCategoriesResult);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Impossibile caricare i documenti.");
@@ -179,14 +204,14 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   function handleAccept(item: Item, proposal: Proposal) {
-    setLastBulk(null);
+    setUndo(null);
     void runAction(item.doc.id, async (ownerId) => {
       await acceptProposal(supabase, masterKey, ownerId, item.doc, proposal, proposal.value);
     });
   }
 
   function handleReject(item: Item, proposal: Proposal) {
-    setLastBulk(null);
+    setUndo(null);
     void runAction(item.doc.id, async (ownerId) => {
       await rejectProposal(supabase, masterKey, ownerId, item.doc.id, proposal);
     });
@@ -278,7 +303,16 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
         // Anche a metà strada si ricarica: quel che è stato scritto resta, e si può annullare.
         if (accepted.length > 0) {
           await Promise.all([...new Set(accepted.map((a) => a.docId))].map((id) => reloadItem(id)));
-          setLastBulk(accepted);
+          setUndo(() => async () => {
+            const {
+              data: { user: undoUser },
+            } = await supabase.auth.getUser();
+            if (!undoUser) throw new Error("Devi essere autenticato.");
+            for (const entry of [...accepted].reverse()) {
+              await undoAcceptance(supabase, masterKey, undoUser.id, entry.docId, entry.accepted);
+            }
+            await Promise.all([...new Set(accepted.map((a) => a.docId))].map((id) => reloadItem(id)));
+          });
         }
       }
       setNotice(accepted.length === 1 ? "1 informazione aggiunta." : `${accepted.length} informazioni aggiunte ai documenti.`);
@@ -289,23 +323,61 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  async function handleUndoBulk() {
-    if (!lastBulk) return;
+  async function handleUndo() {
+    if (!undo) return;
     setBusyId("all");
     setError(null);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Devi essere autenticato.");
-      for (const entry of [...lastBulk].reverse()) {
-        await undoAcceptance(supabase, masterKey, user.id, entry.docId, entry.accepted);
-      }
-      await Promise.all([...new Set(lastBulk.map((a) => a.docId))].map((id) => reloadItem(id)));
-      setLastBulk(null);
+      await undo();
+      setUndo(null);
       setNotice("Annullato.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile annullare.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  /** Cambia i dettagli di un solo documento, subito: categoria o bene scelti dalla sua scheda. */
+  function handleSetDetail(item: Item, patch: Partial<Pick<DocumentMetadataInput, "categoryId" | "relatedAssetId">>) {
+    setUndo(null);
+    void runAction(item.doc.id, async () => {
+      await updateDocumentMetadata(supabase, masterKey, item.doc.id, { ...metadataOf(item.doc), ...patch });
+    });
+  }
+
+  /**
+   * Applica a tutti i documenti la categoria, il bene o il fascicolo scelti in cima: un gesto solo, con un sì esplicito.
+   * Il fascicolo si aggiunge a quelli che il documento ha già; categoria e bene sostituiscono. Si annulla.
+   */
+  async function handleApplyToAll() {
+    if (!allCategory && !allAsset && !allDossier) return;
+    setBusyId("all");
+    setError(null);
+    setNotice(null);
+    const before = items.map((item) => ({ id: item.doc.id, metadata: metadataOf(item.doc) }));
+    try {
+      for (const item of items) {
+        const current = metadataOf(item.doc);
+        await updateDocumentMetadata(supabase, masterKey, item.doc.id, {
+          ...current,
+          categoryId: allCategory || current.categoryId,
+          relatedAssetId: allAsset || current.relatedAssetId,
+          dossierIds: allDossier && !current.dossierIds.includes(allDossier) ? [...current.dossierIds, allDossier] : current.dossierIds,
+        });
+      }
+      await Promise.all(items.map((item) => reloadItem(item.doc.id)));
+      setUndo(() => async () => {
+        for (const entry of before) await updateDocumentMetadata(supabase, masterKey, entry.id, entry.metadata);
+        await Promise.all(before.map((entry) => reloadItem(entry.id)));
+      });
+      setNotice(items.length === 1 ? "Applicato a 1 documento." : `Applicato a ${items.length} documenti.`);
+      setAllCategory("");
+      setAllAsset("");
+      setAllDossier("");
+    } catch (err) {
+      await Promise.all(items.map((item) => reloadItem(item.doc.id))).catch(() => undefined);
+      setError(err instanceof Error ? err.message : "Impossibile applicare a tutti.");
     } finally {
       setBusyId(null);
     }
@@ -316,13 +388,20 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
     router.push("/archive");
   }
 
+  // Resta qualcosa da decidere? Una lettura che Hinthia può fare, o proposte da accettare o scartare.
+  const hasWork = (consentActive && readable.length > 0) || items.some((item) => proposalsOf(item).length > 0);
+  /** Lasciare la conferma a metà la tiene in sospeso (la si ritrova in Archivio); se non c'è più nulla da decidere non lascia promemoria. */
+  function handleLeave() {
+    if (!hasWork && userId) removePendingConfirmation(userId, ids);
+  }
+
   const working = busyId !== null || reading !== null;
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <Link href="/archive" className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400">
-          ← Torna all&apos;archivio
+          ← Archivio
         </Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
           {items.length === 1 ? "1 documento da confermare" : `${items.length} documenti da confermare`}
@@ -342,8 +421,8 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
       {notice ? (
         <p role="status" className="flex flex-wrap items-center gap-3 text-sm text-emerald-700 dark:text-emerald-400">
           {notice}
-          {lastBulk ? (
-            <button type="button" onClick={() => void handleUndoBulk()} disabled={working} className="font-semibold underline underline-offset-2 disabled:opacity-50">
+          {undo ? (
+            <button type="button" onClick={() => void handleUndo()} disabled={working} className="font-semibold underline underline-offset-2 disabled:opacity-50">
               Annulla
             </button>
           ) : null}
@@ -404,6 +483,60 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
         </section>
       ) : null}
 
+      {items.length > 1 ? (
+        <section aria-label="Per tutti" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+          <h2 className="font-heading text-base font-extrabold text-zinc-900 dark:text-zinc-100">Per tutti i {items.length} documenti</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              Categoria
+              <select value={allCategory} onChange={(e) => setAllCategory(e.target.value)} className={INPUT_FIELD}>
+                <option value="">Non cambiare</option>
+                {sortAlphabetically(categories, (c) => c.name).map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.icon} {category.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              Bene
+              <select value={allAsset} onChange={(e) => setAllAsset(e.target.value)} className={INPUT_FIELD}>
+                <option value="">Non cambiare</option>
+                {sortAlphabetically(assets, (a) => a.name).map((asset) => (
+                  <option key={asset.id} value={asset.id}>
+                    {asset.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              Aggiungi al fascicolo
+              <select value={allDossier} onChange={(e) => setAllDossier(e.target.value)} className={INPUT_FIELD}>
+                <option value="">Non cambiare</option>
+                {sortAlphabetically(dossiers, (d) => d.title).map((dossier) => (
+                  <option key={dossier.id} value={dossier.id}>
+                    {dossier.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              disabled={working || (!allCategory && !allAsset && !allDossier)}
+              onClick={() => void handleApplyToAll()}
+              className={`${BTN_SECONDARY} disabled:opacity-50`}
+            >
+              Applica a tutti
+            </button>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Categoria e bene sostituiscono quelli di ogni documento; il fascicolo si aggiunge. Si annulla. Per cambiarli su un documento solo, usa i suoi campi qui sotto.
+            </p>
+          </div>
+        </section>
+      ) : null}
+
       <ul className="flex flex-col gap-3">
         {items.map((item) => {
           const { doc } = item;
@@ -428,6 +561,37 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
                 ) : (
                   <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-bold text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">Niente testo da leggere</span>
                 )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <select
+                  value={doc.categoryId ?? ""}
+                  disabled={rowBusy || working}
+                  onChange={(e) => handleSetDetail(item, { categoryId: e.target.value || null })}
+                  aria-label={`Categoria per ${doc.filename}`}
+                  className={INPUT_FIELD}
+                >
+                  <option value="">Nessuna categoria</option>
+                  {sortAlphabetically(categories, (c) => c.name).map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.icon} {category.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={doc.relatedAssetId ?? ""}
+                  disabled={rowBusy || working}
+                  onChange={(e) => handleSetDetail(item, { relatedAssetId: e.target.value || null })}
+                  aria-label={`Bene per ${doc.filename}`}
+                  className={INPUT_FIELD}
+                >
+                  <option value="">Nessun bene</option>
+                  {sortAlphabetically(assets, (a) => a.name).map((asset) => (
+                    <option key={asset.id} value={asset.id}>
+                      {asset.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {proposals.length > 0 ? (
@@ -482,9 +646,9 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
           <button type="button" disabled={working} onClick={() => finish(true)} className={`${BTN_PRIMARY} w-full sm:w-auto disabled:opacity-50`}>
             Ho finito
           </button>
-          <button type="button" disabled={working} onClick={() => finish(false)} className={`${BTN_SECONDARY} w-full sm:w-auto disabled:opacity-50`}>
-            Più tardi
-          </button>
+          <Link href="/archive" onClick={handleLeave} className={`${BTN_SECONDARY} w-full text-center sm:w-auto`}>
+            Torna all&apos;archivio
+          </Link>
         </div>
       ) : null}
     </div>

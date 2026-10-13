@@ -75,27 +75,11 @@ test("il titolo si sceglie in inserimento (anche prima del file) e si modifica n
     buffer: Buffer.from("Contratto fornitura energia"),
   });
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  // Dopo il salvataggio si arriva alla conferma, con il titolo scelto prima del file.
   await expect(
-    page.getByRole("heading", { name: "Contratto luce" }),
+    page.getByRole("heading", { name: "1 documento da confermare" }),
   ).toBeVisible({ timeout: 30_000 });
-
-  // Fisarmonica fluida: dopo il salvataggio i primi tre passi restano visibili ma bloccati, si apre "Lettura dal
-  // dispositivo" e "Analisi di Hinthia" è il passo successivo.
-  await expect(
-    page.getByRole("button", { name: /Cosa vuoi aggiungere\?/ }),
-  ).toBeDisabled();
-  await expect(
-    page.getByRole("button", { name: /Lettura dal dispositivo/ }),
-  ).toHaveAttribute("aria-expanded", "true");
-  // Il passo 2 si ripiega (e poi smonta) in circa mezzo secondo: resta un solo "Continua →", quello del passo 4.
-  await expect(page.getByRole("button", { name: "Continua →" })).toHaveCount(1);
-  await page.getByRole("button", { name: "Continua →" }).click();
-  await expect(
-    page.getByRole("button", { name: /Analisi di Hinthia/ }),
-  ).toHaveAttribute("aria-expanded", "true");
-  await expect(
-    page.getByRole("button", { name: /Lettura dal dispositivo/ }),
-  ).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByRole("link", { name: "Contratto luce" })).toBeVisible();
 
   await page
     .getByRole("link", { name: "Torna all'archivio", exact: true })

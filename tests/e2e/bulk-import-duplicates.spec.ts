@@ -58,10 +58,10 @@ test("due file identici nello stesso lotto vengono segnalati come possibile dupl
   await expect(page.getByText(/possibile duplicato/)).not.toBeVisible();
   await expect(page.getByText("ricevuta.txt", { exact: true })).toHaveCount(1);
 
-  // Rimasto un file solo, è lo stesso percorso del caricamento singolo: si salva e si vedono i passi di Hinthial.
+  // Rimasto un file solo, è lo stesso percorso del caricamento singolo: si salva e si arriva alla conferma.
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
-  await expect(page.getByText("Documento salvato")).toBeVisible({ timeout: 60_000 });
-  await page.getByRole("link", { name: "Torna all'archivio" }).click();
-  await expect(page).toHaveURL(/\/archive\?created=1$/, { timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: "1 documento da confermare" })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("ricevuta.txt")).toBeVisible({ timeout: 15_000 });
 });
