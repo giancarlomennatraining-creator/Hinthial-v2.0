@@ -178,7 +178,7 @@ export interface TemplateMatch {
  */
 export function findTemplateMatches(
   template: Pick<DossierTemplate, "expected">,
-  documents: Pick<DocumentSummary, "id" | "filename" | "issuer" | "notes" | "tags" | "structuredFields" | "dossierIds">[],
+  documents: Pick<DocumentSummary, "id" | "filename" | "issuer" | "notes" | "structuredFields" | "dossierIds">[],
 ): TemplateMatch[] {
   const free = documents.filter((doc) => doc.dossierIds.length === 0);
   const summary = matchExpected(

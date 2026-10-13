@@ -99,7 +99,7 @@ test("la ricerca globale e il filtro per categoria funzionano in Beni e Archivio
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible({ timeout: 15_000 });
 
-  await expect(page.getByPlaceholder(/Cerca per nome, tag, note/)).toHaveCount(0);
+  await expect(page.getByPlaceholder(/Cerca per nome, note/)).toHaveCount(0);
   const archiveSearch = await searchGlobally(page, "polizza");
   await expect(archiveSearch.getByRole("button", { name: /polizza\.txt/ })).toBeVisible();
   await expect(archiveSearch.getByRole("button", { name: /contratto-affitto\.txt/ })).toHaveCount(0);

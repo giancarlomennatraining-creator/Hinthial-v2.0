@@ -4,7 +4,7 @@ import { DOSSIER_TEMPLATES, filterTemplates, findTemplateMatches, templateMeta }
 import { matchExpected } from "@/domain/dossiers/expected";
 
 function doc(id: string, filename: string, over: Record<string, unknown> = {}) {
-  return { id, filename, issuer: "", notes: "", tags: [] as string[], structuredFields: {}, dossierIds: [] as string[], ...over };
+  return { id, filename, issuer: "", notes: "", structuredFields: {}, dossierIds: [] as string[], ...over };
 }
 
 describe("i modelli", () => {

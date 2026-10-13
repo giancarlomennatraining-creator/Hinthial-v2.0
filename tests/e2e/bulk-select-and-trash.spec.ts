@@ -3,7 +3,7 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// Selezione multipla in Archivio (categoria/tag in blocco, poi
+// Selezione multipla in Archivio (poi
 // eliminazione in blocco) e il Cestino che ne raccoglie il risultato
 // (ripristino di un documento, eliminazione definitiva di un altro).
 
@@ -31,7 +31,7 @@ async function signInAndSetUpVault(page: import("@playwright/test").Page) {
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 }
 
-test("selezione multipla applica categoria e tag in blocco, poi l'eliminazione in blocco passa dal Cestino", async ({
+test("selezione multipla e poi l'eliminazione in blocco passa dal Cestino", async ({
   page,
 }) => {
   test.slow();
@@ -60,17 +60,13 @@ test("selezione multipla applica categoria e tag in blocco, poi l'eliminazione i
   await page.getByLabel("Seleziona documento-tre.txt").check();
   await expect(page.getByText("3 selezionati")).toBeVisible();
 
-  // Tag in blocco.
-  await page.getByRole("button", { name: "🏷️ Tag" }).click();
-  await page.getByLabel("Nuovo tag per i documenti selezionati").fill("prova-bulk");
-  await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
-  await expect(page.getByText("3 selezionati")).not.toBeVisible({ timeout: 15_000 }); // la selezione si svuota a fine operazione
-  await expect(page.getByText("prova-bulk").first()).toBeVisible();
+  // "Seleziona tutti" compare solo finché non lo sono già tutti; togliendone uno la selezione scende a due.
+  await expect(page.getByRole("button", { name: /Seleziona tutti/ })).toHaveCount(0);
+  await page.getByLabel("Seleziona documento-tre.txt").uncheck();
+  await expect(page.getByText("2 selezionati")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Seleziona tutti (3)" })).toBeVisible();
 
-  // Riseleziona due dei tre e li elimina in blocco --- ora sposta nel
-  // cestino, non elimina più subito per sempre.
-  await page.getByLabel("Seleziona documento-uno.txt").check();
-  await page.getByLabel("Seleziona documento-due.txt").check();
+  // Elimina i due selezionati in blocco --- ora sposta nel cestino, non elimina più subito per sempre.
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "🗑️ Elimina" }).click();
   await expect(page.getByText("documento-uno.txt")).not.toBeVisible({ timeout: 15_000 });

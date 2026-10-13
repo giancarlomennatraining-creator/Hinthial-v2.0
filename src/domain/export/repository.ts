@@ -51,7 +51,6 @@ export async function buildExport(
         relatedAssetId: doc.relatedAssetId,
         expiresAt: doc.expiresAt,
         notes: doc.notes,
-        tags: doc.tags,
         issuer: doc.issuer,
         createdAt: doc.createdAt,
         exportedAs,

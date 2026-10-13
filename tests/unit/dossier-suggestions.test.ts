@@ -19,7 +19,6 @@ function doc(id: string, over: Partial<DocumentSummary> = {}): DocumentSummary {
     dossierIds: [],
     expiresAt: null,
     notes: "",
-    tags: [],
     issuer: "",
     structuredFields: {},
     analysisStatus: "none",

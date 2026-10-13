@@ -13,7 +13,6 @@ import { DeviceLockPanel } from "@/components/settings/DeviceLockPanel";
 import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import type { AuditFilterParams } from "@/domain/audit/filters";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
-import { TagsSettingsPanel } from "@/components/settings/TagsSettingsPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { NavOrientationSettings } from "@/components/settings/NavOrientationSettings";
 import { BottomNavItemsSettings } from "@/components/settings/BottomNavItemsSettings";
@@ -46,7 +45,6 @@ import {
   SidebarLayoutIcon,
   SlidersIcon,
   SmartphoneIcon,
-  TagIcon,
   ThemeIcon,
   UserIcon,
 } from "@/components/icons/nav-icons";
@@ -59,7 +57,6 @@ type Tab =
   | "digital-legacy"
   | "emergency-card"
   | "categories"
-  | "tags"
   | "appearance"
   | "activity"
   | "import-export"
@@ -109,7 +106,6 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
       { id: "privacy", label: "Privacy", icon: EyeIcon },
       { id: "ai", label: "Hinthia", icon: AIIcon },
       { id: "categories", label: "Categorie", icon: CategoryIcon },
-      { id: "tags", label: "Tag", icon: TagIcon },
       { id: "import-export", label: "Importa/Esporta", icon: ImportExportIcon },
     ],
   },
@@ -232,10 +228,6 @@ const TAB_HELP: Record<Tab, HelpTip[]> = {
   categories: [
     { icon: "🏷️", text: "Le categorie predefinite coprono i casi più comuni; puoi aggiungerne altre." },
     { icon: "✏️", text: "Rinomina o elimina una categoria in ogni momento." },
-  ],
-  tags: [
-    { icon: "🏷️", text: "I tag si aggregano automaticamente, senza distinguere maiuscole e minuscole." },
-    { icon: "✏️", text: "Rinominali o eliminali da qui: l'effetto si vede su ogni contenuto che li usa." },
   ],
   appearance: [
     { icon: "🎨", text: "Tema, disposizione del menu e cosa mostrare dove: tutto qui." },
@@ -389,10 +381,6 @@ export function SettingsTabs({
     }
     if (activeTab === "categories") {
       return <CategoriesPanel />;
-    }
-    if (activeTab === "tags") {
-      // A differenza di Categorie, i tag sono cifrati: richiede la master key sbloccata.
-      return <RequireMasterKey inline>{(masterKey) => <TagsSettingsPanel masterKey={masterKey} />}</RequireMasterKey>;
     }
     if (activeTab === "appearance") {
       if (activeSection === "nav-layout") {

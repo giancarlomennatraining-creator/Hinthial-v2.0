@@ -21,11 +21,11 @@ import type { DossierListItem } from "@/domain/dossiers/types";
 import { saveBytesAsFile } from "@/lib/download";
 import { useToast } from "@/components/ui/ToastProvider";
 
-export type BulkPopover = "category" | "tag" | "dossier" | null;
+export type BulkPopover = "category" | "dossier" | null;
 
 /**
  * I dati dell'Archivio e le azioni che valgono per ogni vista: caricamento, selezione, azioni su più documenti
- * (categoria, tag, fascicolo, cestino), apertura e eliminazione di uno. Quello che serve solo a elenco e tabella
+ * (categoria, fascicolo, cestino), apertura e eliminazione di uno. Quello che serve solo a elenco e tabella
  * (player inline, note, trascrizione, ordinamento a colonne) resta in DocumentsPanel.
  */
 export function useArchiveData(masterKey: CryptoKey) {
@@ -46,7 +46,6 @@ export function useArchiveData(masterKey: CryptoKey) {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [trashRetentionDays, setTrashRetentionDays] = useState(15);
   const [bulkPopover, setBulkPopover] = useState<BulkPopover>(null);
-  const [bulkTagInput, setBulkTagInput] = useState("");
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -189,7 +188,6 @@ export function useArchiveData(masterKey: CryptoKey) {
           dossierIds: doc.dossierIds,
           expiresAt: doc.expiresAt,
           notes: doc.notes,
-          tags: doc.tags,
           issuer: doc.issuer,
         });
       }
@@ -197,34 +195,6 @@ export function useArchiveData(masterKey: CryptoKey) {
       clearSelection();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile aggiornare la categoria.");
-    } finally {
-      setBulkBusy(false);
-    }
-  }
-
-  async function handleBulkTag(tag: string) {
-    const trimmed = tag.trim();
-    if (!trimmed) return;
-    setBulkBusy(true);
-    setError(null);
-    try {
-      for (const doc of selectedDocuments) {
-        if (doc.tags.includes(trimmed)) continue; // già presente --- non doppio
-        await updateDocumentMetadata(supabase, masterKey, doc.id, {
-          categoryId: doc.categoryId,
-          relatedAssetId: doc.relatedAssetId,
-          dossierIds: doc.dossierIds,
-          expiresAt: doc.expiresAt,
-          notes: doc.notes,
-          tags: [...doc.tags, trimmed],
-          issuer: doc.issuer,
-        });
-      }
-      await refresh();
-      clearSelection();
-      setBulkTagInput("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiungere il tag.");
     } finally {
       setBulkBusy(false);
     }
@@ -284,13 +254,10 @@ export function useArchiveData(masterKey: CryptoKey) {
     bulkBusy,
     bulkPopover,
     setBulkPopover,
-    bulkTagInput,
-    setBulkTagInput,
     handleOpen,
     handleDelete,
     handleBulkDelete,
     handleBulkCategory,
-    handleBulkTag,
     handleBulkDossier,
     categoryFor,
     assetFor,

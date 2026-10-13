@@ -71,11 +71,11 @@ export interface UploadOptions {
 }
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, encrypted_ai_synthesis, ai_synthesis_generated_at, encrypted_content_analysis, analysis_status, analysis_updated_at, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, encrypted_ai_synthesis, ai_synthesis_generated_at, encrypted_content_analysis, analysis_status, analysis_updated_at, created_at";
 
 /** Come DOCUMENT_COLUMNS, senza testo letto, trascrizione, sintesi e analisi: v. DocumentSummary. */
 const DOCUMENT_SUMMARY_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_tags, encrypted_issuer, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, ai_synthesis_generated_at, analysis_status, analysis_updated_at, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_issuer, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, ai_synthesis_generated_at, analysis_status, analysis_updated_at, created_at";
 
 type DocumentRow = {
   id: string;
@@ -88,7 +88,6 @@ type DocumentRow = {
   related_asset_id: string | null;
   expires_at: string | null;
   encrypted_notes: string | null;
-  encrypted_tags: string | null;
   encrypted_issuer: string | null;
   encrypted_transcript: string | null;
   encrypted_extracted_text: string | null;
@@ -106,19 +105,7 @@ type DocumentRow = {
   created_at: string;
 };
 
-async function encryptTags(masterKey: CryptoKey, tags: string[]): Promise<string | null> {
-  if (tags.length === 0) return null;
-  return serializeEnvelope(await encryptBytes(masterKey, utf8ToBytes(JSON.stringify(tags))));
-}
-
-async function decryptTags(masterKey: CryptoKey, serialized: string | null): Promise<string[]> {
-  if (!serialized) return [];
-  const bytes = await decryptBytes(masterKey, parseEnvelope(serialized));
-  const parsed: unknown = JSON.parse(bytesToUtf8(bytes));
-  return Array.isArray(parsed) ? parsed.filter((t): t is string => typeof t === "string") : [];
-}
-
-/** Come encryptTags/decryptTags, ma per un oggetto {chiave: valore} invece di un array --- i campi eterogenei aperti (v. domain/proposals, kind "field"), mai le tre colonne dedicate esistenti. */
+/** Cifra un oggetto {chiave: valore} --- i campi eterogenei aperti (v. domain/proposals, kind "field"), mai le tre colonne dedicate esistenti. */
 export async function encryptStructuredFields(
   masterKey: CryptoKey,
   fields: Record<string, string>,
@@ -164,7 +151,6 @@ async function toDocumentListItem(
   const [
     filenameBytes,
     notes,
-    tags,
     issuer,
     transcript,
     extractedText,
@@ -175,7 +161,6 @@ async function toDocumentListItem(
     await Promise.all([
       decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
       decryptOptionalText(masterKey, row.encrypted_notes),
-      decryptTags(masterKey, row.encrypted_tags),
       decryptOptionalText(masterKey, row.encrypted_issuer),
       decryptOptionalText(masterKey, row.encrypted_transcript),
       decryptOptionalText(masterKey, row.encrypted_extracted_text),
@@ -197,7 +182,6 @@ async function toDocumentListItem(
     wrappedDocumentKey: row.wrapped_document_key,
     expiresAt: row.expires_at,
     notes,
-    tags,
     issuer,
     transcript,
     extractedText,
@@ -225,10 +209,9 @@ async function toDocumentSummary(
   row: DocumentSummaryRow,
   dossierIds: string[],
 ): Promise<DocumentSummary> {
-  const [filenameBytes, notes, tags, issuer, structuredFields] = await Promise.all([
+  const [filenameBytes, notes, issuer, structuredFields] = await Promise.all([
     decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
     decryptOptionalText(masterKey, row.encrypted_notes),
-    decryptTags(masterKey, row.encrypted_tags),
     decryptOptionalText(masterKey, row.encrypted_issuer),
     decryptStructuredFields(masterKey, row.encrypted_structured_fields),
   ]);
@@ -246,7 +229,6 @@ async function toDocumentSummary(
     wrappedDocumentKey: row.wrapped_document_key,
     expiresAt: row.expires_at,
     notes,
-    tags,
     issuer,
     extractedAt: row.extracted_at,
     hasThumbnail: row.has_thumbnail,
@@ -454,7 +436,6 @@ export async function uploadDocument(
     { wrappedDocumentKey, payload },
     encryptedFilename,
     encryptedNotes,
-    encryptedTags,
     encryptedIssuer,
     encryptedExtractedText,
     encryptedThumbnail,
@@ -463,7 +444,6 @@ export async function uploadDocument(
     // Il nome scelto dall'utente se c'è, altrimenti quello del file (FASE 19b lo sovrascrive col titolo ricavato).
     encryptBytes(masterKey, utf8ToBytes(title?.trim() || file.name)),
     encryptOptionalText(masterKey, metadata.notes),
-    encryptTags(masterKey, metadata.tags),
     encryptOptionalText(masterKey, metadata.issuer),
     encryptOptionalText(masterKey, extractedText ?? ""),
     encryptThumbnail(masterKey, thumbnailBlob),
@@ -503,7 +483,6 @@ export async function uploadDocument(
     related_asset_id: metadata.relatedAssetId,
     expires_at: metadata.expiresAt,
     encrypted_notes: encryptedNotes,
-    encrypted_tags: encryptedTags,
     encrypted_issuer: encryptedIssuer,
     encrypted_extracted_text: encryptedExtractedText,
     // null solo se nessun motore ha provato a leggere --- così "Leggili ora" lo ritrova.
@@ -535,13 +514,12 @@ export async function createTextNote(
   metadata: DocumentMetadataInput,
 ): Promise<string> {
   const plaintext = utf8ToBytes(note.body);
-  const [{ wrappedDocumentKey, payload }, encryptedFilename, encryptedNotes, encryptedTags, encryptedIssuer] =
+  const [{ wrappedDocumentKey, payload }, encryptedFilename, encryptedNotes, encryptedIssuer] =
     await Promise.all([
       encryptDocument(masterKey, plaintext),
       encryptBytes(masterKey, utf8ToBytes(note.title)),
       encryptOptionalText(masterKey, metadata.notes),
-      encryptTags(masterKey, metadata.tags),
-      encryptOptionalText(masterKey, metadata.issuer),
+        encryptOptionalText(masterKey, metadata.issuer),
     ]);
 
   const documentId = crypto.randomUUID();
@@ -561,7 +539,6 @@ export async function createTextNote(
     related_asset_id: metadata.relatedAssetId,
     expires_at: metadata.expiresAt,
     encrypted_notes: encryptedNotes,
-    encrypted_tags: encryptedTags,
     encrypted_issuer: encryptedIssuer,
   });
 
@@ -611,16 +588,15 @@ export async function updateTextNoteContent(
   await logAuditEvent(supabase, ownerId, "document_updated", { change: "note" }, documentRef(doc.id));
 }
 
-/** Aggiorna titolo/categoria/scadenza/note/tag/emittente --- mai il contenuto del file. Ricifra notes/tags/issuer (e il titolo, se cambia) con la Master Key. */
+/** Aggiorna titolo/categoria/scadenza/note/emittente --- mai il contenuto del file. Ricifra notes/issuer (e il titolo, se cambia) con la Master Key. */
 export async function updateDocumentMetadata(
   supabase: SupabaseClient<Database>,
   masterKey: CryptoKey,
   documentId: string,
   metadata: DocumentMetadataInput,
 ): Promise<void> {
-  const [encryptedNotes, encryptedTags, encryptedIssuer] = await Promise.all([
+  const [encryptedNotes, encryptedIssuer] = await Promise.all([
     encryptOptionalText(masterKey, metadata.notes),
-    encryptTags(masterKey, metadata.tags),
     encryptOptionalText(masterKey, metadata.issuer),
   ]);
 
@@ -644,8 +620,7 @@ export async function updateDocumentMetadata(
       related_asset_id: metadata.relatedAssetId,
       expires_at: metadata.expiresAt,
       encrypted_notes: encryptedNotes,
-      encrypted_tags: encryptedTags,
-      encrypted_issuer: encryptedIssuer,
+        encrypted_issuer: encryptedIssuer,
       ...structuredUpdate,
       ...titleUpdate,
     })

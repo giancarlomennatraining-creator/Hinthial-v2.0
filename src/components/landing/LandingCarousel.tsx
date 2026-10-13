@@ -21,7 +21,7 @@ const SLIDES: Slide[] = [
     icon: "🗄️",
     title: "Un archivio per tutto",
     description:
-      "Documenti, foto, audio, video e note testuali in un unico posto ordinato, con categorie, tag e scadenze — niente più cartelle sparse tra email, telefono e cassetti.",
+      "Documenti, foto, audio, video e note testuali in un unico posto ordinato, con categorie e scadenze — niente più cartelle sparse tra email, telefono e cassetti.",
   },
   {
     icon: "🏠",

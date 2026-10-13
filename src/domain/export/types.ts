@@ -38,7 +38,6 @@ export interface ExportManifest {
     relatedAssetId: string | null;
     expiresAt: string | null;
     notes: string;
-    tags: string[];
     issuer: string;
     createdAt: string;
     /** Path inside the archive where the decrypted file itself was included, or null if it couldn't be fetched. */

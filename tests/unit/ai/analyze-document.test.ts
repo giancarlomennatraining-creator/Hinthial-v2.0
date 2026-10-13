@@ -34,7 +34,6 @@ function doc(over: Partial<DocumentListItem> = {}): DocumentListItem {
     wrappedDocumentKey: "x",
     expiresAt: null,
     notes: "",
-    tags: [],
     transcript: "",
     extractedText: TEXT,
     extractedAt: "2026-09-18T10:00:00Z",

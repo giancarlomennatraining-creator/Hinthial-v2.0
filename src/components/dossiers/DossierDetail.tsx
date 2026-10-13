@@ -217,7 +217,6 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
         dossierIds: [dossierId],
         expiresAt: null,
         notes: "",
-        tags: [],
         issuer: "",
       });
       setNoteText("");

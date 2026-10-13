@@ -66,7 +66,7 @@ test("crea, completa ed elimina scadenze", async ({ page }) => {
   await expect(page.getByText("Nessuna scadenza ancora")).toBeVisible();
 });
 
-test("aggiunge scadenza, tag e note a un documento e li vede in dashboard", async ({
+test("aggiunge scadenza e note a un documento e li vede in dashboard", async ({
   page,
 }) => {
   test.slow();
@@ -74,7 +74,7 @@ test("aggiunge scadenza, tag e note a un documento e li vede in dashboard", asyn
   const user = await loginAndSetUpEncryption(page);
 
   // La scadenza non si inserisce in creazione (v. DocumentMetadataFields, showExpiry): qui si esercita solo
-  // tag e note, la scadenza si aggiunge dalla scheda del contenuto più sotto.
+  // le note, la scadenza si aggiunge dalla scheda del contenuto più sotto.
   await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
   await page.getByRole("menuitem", { name: "Carica un file" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
@@ -86,30 +86,25 @@ test("aggiunge scadenza, tag e note a un documento e li vede in dashboard", asyn
     buffer: Buffer.from("contenuto di prova"),
   });
   await page.getByRole("button", { name: "Dettagli" }).click();
-  await page.locator("#upload-tags").fill("fattura, 2026");
   await page.locator("#upload-notes").fill("Nota di prova");
   await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
 
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("documento-con-metadati.txt")).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText("fattura")).toBeVisible();
-  await expect(page.getByText("2026", { exact: true })).toBeVisible();
 
   // Modifica: sempre sulla scheda del contenuto, niente più pagina dedicata --- la scadenza si
-  // aggiunge qui, insieme al cambio dei tag.
+  // aggiunge qui.
   const docRow = page.locator("li", { hasText: "documento-con-metadati.txt" });
   await docRow.getByRole("link", { name: /documento-con-metadati\.txt/ }).click();
   await expect(page).toHaveURL(/\/archive\/[^/]+$/, { timeout: 15_000 });
   const future = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   await page.getByLabel("Scadenza").fill(future);
-  await page.getByLabel("Tag (separati da virgola)").fill("aggiornato");
   await page.getByRole("button", { name: "Salva modifiche" }).click();
   await expect(page.getByText("Modifiche salvate.")).toBeVisible();
   // Niente più un link "Torna all'archivio" qui (era della pagina di modifica ora rimossa): si torna dal nav.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
-  await expect(page.getByText("aggiornato", { exact: true })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText(/scade \d/)).toBeVisible();
 
   // La dashboard mostra il documento tra i recenti, e segnala la cifratura configurata.

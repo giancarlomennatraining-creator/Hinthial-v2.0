@@ -31,7 +31,6 @@ function projectSource(source: AISource, context: AIContext): MinimalItem | null
       const parts = [
         category ? `categoria: ${category}` : null,
         doc.expiresAt ? `scade il: ${doc.expiresAt}` : null,
-        doc.tags.length > 0 ? `tag: ${doc.tags.join(", ")}` : null,
       ].filter(Boolean);
       return { kind: "document", label: doc.filename, detail: parts.length > 0 ? parts.join("; ") : undefined };
     }
