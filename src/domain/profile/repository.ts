@@ -6,8 +6,6 @@ import {
   removeAvatarBlob,
   uploadAvatarBlob,
 } from "@/lib/storage/avatars-bucket";
-import { parseListViewPreferences, type ListViewPreferences } from "@/lib/list-view";
-import { parseCapsuleStyle, type CapsuleStyle } from "@/lib/capsule-style";
 import { parseOpenEffect, type CapsuleOpenEffect } from "@/domain/capsules/open-effects";
 import { type NavOrientation } from "@/lib/nav-orientation";
 import { type BottomNavItems } from "@/lib/bottom-nav";
@@ -66,40 +64,6 @@ export async function removeAvatar(
   }
 
   await removeAvatarBlob(supabase, currentPath).catch(() => {});
-}
-
-/** Preferenza elenco/tabella per sezione --- in chiaro, salvata server-side (a differenza del tema) per seguire l'account su ogni dispositivo. */
-export async function fetchListViewPreferences(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-): Promise<ListViewPreferences> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("list_view_preferences")
-    .eq("id", userId)
-    .single();
-
-  if (error) {
-    throw new Error(`Impossibile caricare le preferenze di visualizzazione: ${error.message}`);
-  }
-
-  return parseListViewPreferences(data.list_view_preferences);
-}
-
-/** Read-modify-write fatto dal chiamante (v. ListViewPreferencesProvider); qui solo l'update. */
-export async function updateListViewPreferences(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  preferences: ListViewPreferences,
-): Promise<void> {
-  const { error } = await supabase
-    .from("profiles")
-    .update({ list_view_preferences: preferences })
-    .eq("id", userId);
-
-  if (error) {
-    throw new Error(`Impossibile salvare la preferenza di visualizzazione: ${error.message}`);
-  }
 }
 
 /** Letta server-side alla prossima navigazione (v. getCurrentUser), nota prima del primo paint della shell. */
@@ -338,15 +302,14 @@ export async function updateTrashRetentionDays(
   }
 }
 
-/** Come si presentano le capsule per chi le crea: lo stile dell'elenco e l'effetto di apertura proposto per default. */
+/** Come si presentano le capsule per chi le crea: l'effetto di apertura proposto per default. */
 export interface CapsuleAppearance {
-  style: CapsuleStyle;
   openEffect: CapsuleOpenEffect;
 }
 
 /**
- * Le due preferenze delle capsule (Impostazioni > Aspetto > Capsule). Non lancia mai: se non si riescono a leggere (per
- * esempio la migrazione che le aggiunge non è ancora applicata) valgono i default, e la pagina Capsule funziona lo stesso.
+ * La preferenza delle capsule (Impostazioni > Aspetto > Capsule). Non lancia mai: se non si riesce a leggerla (per
+ * esempio la migrazione che l'aggiunge non è ancora applicata) vale il default, e la pagina Capsule funziona lo stesso.
  */
 export async function getCapsuleAppearance(
   supabase: SupabaseClient<Database>,
@@ -355,25 +318,13 @@ export async function getCapsuleAppearance(
   try {
     const { data, error } = await supabase
       .from("profiles")
-      .select("capsule_style, capsule_open_effect")
+      .select("capsule_open_effect")
       .eq("id", userId)
       .single();
-    if (error) return { style: parseCapsuleStyle(null), openEffect: parseOpenEffect(null) };
-    return { style: parseCapsuleStyle(data?.capsule_style), openEffect: parseOpenEffect(data?.capsule_open_effect) };
+    if (error) return { openEffect: parseOpenEffect(null) };
+    return { openEffect: parseOpenEffect(data?.capsule_open_effect) };
   } catch {
-    return { style: parseCapsuleStyle(null), openEffect: parseOpenEffect(null) };
-  }
-}
-
-export async function updateCapsuleStyle(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  style: CapsuleStyle,
-): Promise<void> {
-  const { error } = await supabase.from("profiles").update({ capsule_style: style }).eq("id", userId);
-
-  if (error) {
-    throw new Error(`Impossibile salvare lo stile delle capsule: ${error.message}`);
+    return { openEffect: parseOpenEffect(null) };
   }
 }
 

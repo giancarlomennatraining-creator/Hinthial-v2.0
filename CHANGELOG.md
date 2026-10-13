@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-22 (93)
+
+### Ristrutturazione, passo 3: ogni sezione ha un solo modo di mostrarsi
+
+**Cosa fa:**
+- **Archivio:** via le quattro viste alternative (Cassettiera, Linea del tempo, Collezioni, Scaffale) e il menu "Vista". Resta l'elenco.
+- **Tabella:** via l'interruttore elenco/tabella e la tabella impaginata da Archivio, Scadenze, Beni, Fascicoli, Amici e Capsule, con la sezione "Liste" nelle Impostazioni > Aspetto.
+- **Capsule:** resta solo l'Oblò (righe compatte con l'anello che si riempie), anche per le capsule condivise con me. Via Buste e Flat e la scelta dello stile nelle Impostazioni; l'effetto di apertura resta.
+- **Selezione:** nella barra delle azioni dell'Archivio compare "Seleziona tutti (N)" quando ne hai scelti solo alcuni, perché "seleziona tutti" stava solo nella tabella.
+
+**Note tecniche:**
+- Rimossi: `GalleryView`, `TimelineView`, `CollectionsView`, `ShelfView`, `ArchiveViewSwitcher`, `useArchiveView`, `ListViewPreferencesProvider`, `ListViewToggle`, `ListViewSettings`, `lib/list-view.ts`, `lib/table-sort.ts`, `SortableColumnHeader`, `CapsuleCard`, `CapsuleFlatCard`, `CapsuleStyleSettings`, `lib/capsule-style.ts`, `BulkActionsBar` e `ChipMenu`, con i loro test. `domain/documents/archive-views.ts` tiene solo colori, scadenze, date e ricerca. `CapsuleStyledCards` diventa `CapsulePortholeRow`. `Pagination` resta per il registro delle attività.
+- Migrazioni `20261015000002_drop_capsule_style.sql` e `20261015000003_drop_list_view_preferences.sql`: eliminano `profiles.capsule_style` e `profiles.list_view_preferences`. Il codice non le legge più, quindi si possono applicare in qualsiasi momento.
+
+---
+
 ## 2026-10-21 (92)
 
 ### Ristrutturazione, passo 2: la dashboard ha un solo aspetto

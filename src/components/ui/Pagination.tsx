@@ -1,6 +1,6 @@
 "use client";
 
-/** Controlli Precedente/Successiva per la modalità tabellare (v. lib/list-view.ts). Non renderizza nulla con una sola pagina. */
+/** Controlli Precedente/Successiva per un elenco a pagine (oggi il registro delle attività). Non renderizza nulla con una sola pagina. */
 export function Pagination({
   page,
   pageCount,

@@ -21,20 +21,12 @@ import { sortAlphabetically } from "@/lib/utils";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { PageHelp, type HelpTip } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
-import { Pagination } from "@/components/ui/Pagination";
 import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
-import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
 import { ArchiveTabs } from "@/components/documents/ArchiveTabs";
-import { AlternativeArchiveView } from "@/components/documents/archive/AlternativeArchiveView";
-import { ArchiveViewSwitcher } from "@/components/documents/archive/ArchiveViewSwitcher";
 import { AddContentMenu, ADD_CONTENT_ITEMS } from "@/components/documents/archive/parts";
 import { PendingConfirmationNotice } from "@/components/documents/PendingConfirmationNotice";
-import { ThumbnailProvider } from "@/components/documents/archive/thumbnails";
 import { useArchiveData } from "@/components/documents/archive/useArchiveData";
-import { useArchiveView } from "@/components/documents/archive/useArchiveView";
 import { ContentTypeIcon } from "@/components/documents/ContentTypeIcon";
-import { TABLE_PAGE_SIZE } from "@/lib/list-view";
-import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { useToast } from "@/components/ui/ToastProvider";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 
@@ -47,8 +39,6 @@ function expiryStatus(expiresAt: string | null): "none" | "overdue" | "soon" | "
   if (daysLeft <= 30) return "soon";
   return "ok";
 }
-
-type SortColumn = "name" | "category" | "asset" | "size" | "createdAt" | "expiresAt";
 
 /** I consigli del tasto Aiuto di Archivio, uguali in tutte le viste. */
 const ARCHIVE_HELP_TIPS: HelpTip[] = [
@@ -96,8 +86,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [categoryFilter, setCategoryFilter] = useState("");
   // Impostato cliccando un tag sul documento --- un solo tag alla volta, niente menu a tendina.
   const [tagFilter, setTagFilter] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "name", direction: "asc" });
   // Avanzamento della lettura dei documenti già archiviati; `fraction` è il progresso dentro il file corrente
   // (con l'OCR un singolo contenuto può occupare mezzo minuto, senza "3 di 7" resterebbe immobile).
   const [extractionProgress, setExtractionProgress] = useState<{
@@ -105,10 +93,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     total: number;
     fraction: number | null;
   } | null>(null);
-
-  // Elenco e tabella restano qui; le altre quattro viste sono componenti a parte (v. AlternativeArchiveView).
-  const archiveView = useArchiveView();
-  const viewMode = archiveView.view === "table" ? "table" : "list";
 
   // Player inline per immagini/audio/video --- un solo elemento aperto alla volta.
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -270,27 +254,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  function sortValueFor(doc: DocumentSummary, column: SortColumn): string {
-    switch (column) {
-      case "name":
-        return doc.filename;
-      case "category":
-        return categoryFor(doc)?.name ?? "";
-      case "asset":
-        return assetFor(doc)?.name ?? "";
-      case "size":
-        return formatSize(doc.size);
-      case "createdAt":
-        return formatDate(doc.createdAt);
-      case "expiresAt":
-        return doc.expiresAt ? formatDate(doc.expiresAt) : "";
-    }
-  }
-
-  function handleSort(column: SortColumn) {
-    setSort((prev) => toggleSort(prev, column));
-  }
-
   // Uno alla volta e non in parallelo: dieci letture insieme su un telefono lo farebbero solo arrancare.
   const pendingExtraction = documentsAwaitingExtraction(documents);
 
@@ -324,53 +287,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const filteredDocuments = documents
     .filter((doc) => !categoryFilter || doc.categoryId === categoryFilter)
     .filter((doc) => !tagFilter || listIncludesTag(doc.tags, tagFilter));
-
-  // L'ordinamento non tocca filteredDocuments: la vista a elenco resta nel suo ordine cronologico.
-  const sortedDocuments = applySort(filteredDocuments, sort, sortValueFor);
-
-  // Si riclampa invece di resettare con un effect: se un filtro riduce i risultati, la pagina torna da sola nel range.
-  const pageCount = Math.max(1, Math.ceil(filteredDocuments.length / TABLE_PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount);
-  const pagedDocuments = sortedDocuments.slice(
-    (currentPage - 1) * TABLE_PAGE_SIZE,
-    currentPage * TABLE_PAGE_SIZE,
-  );
-
-  const isAlternativeView = archiveView.view !== "list" && archiveView.view !== "table";
-
-  if (isAlternativeView || archiveView.preferencesLoading) {
-    return (
-      <div className="flex flex-col gap-5 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
-        <div className="flex items-start justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight text-brand">Archivio</h1>
-          <PageHelp title="Archivio" tips={ARCHIVE_HELP_TIPS} />
-        </div>
-        <ArchiveTabs />
-        <PendingConfirmationNotice existingIds={documents.map((d) => d.id)} />
-        {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-            {error}
-          </p>
-        ) : null}
-        {loading || archiveView.preferencesLoading ? (
-          <ListSkeleton />
-        ) : documents.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Ancora nulla in archivio. Aggiungi il tuo primo contenuto col tasto qui sotto.
-            </p>
-            <div className="mt-4 flex justify-center">
-              <AddContentMenu label="+ Aggiungi contenuto" />
-            </div>
-          </div>
-        ) : (
-          <ThumbnailProvider data={data}>
-            <AlternativeArchiveView view={archiveView.view} data={data} />
-          </ThumbnailProvider>
-        )}
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
@@ -454,9 +370,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 </option>
               ))}
             </select>
-            <div className="hidden md:ml-auto md:block">
-              <ArchiveViewSwitcher />
-            </div>
             {tagFilter ? (
               <button
                 type="button"
@@ -482,6 +395,15 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                   ✕
                 </button>
                 {selectedIds.size} {selectedIds.size === 1 ? "selezionato" : "selezionati"}
+                {selectedIds.size < filteredDocuments.length ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleSelectAll(filteredDocuments.map((d) => d.id))}
+                    className="font-medium underline underline-offset-2 hover:opacity-80"
+                  >
+                    Seleziona tutti ({filteredDocuments.length})
+                  </button>
+                ) : null}
               </div>
               <div className="flex flex-wrap gap-1">
                 <div className="relative">
@@ -581,273 +503,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Nessun contenuto corrisponde ai filtri.
             </p>
-          ) : viewMode === "table" ? (
-            <div className="flex flex-col gap-3">
-              {/* @container: le colonne secondarie si nascondono in base allo spazio vero del riquadro, non della finestra. Nome e Azioni non spariscono mai. */}
-              <div className="@container overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                      <th className="w-9 p-3">
-                        <input
-                          type="checkbox"
-                          checked={
-                            pagedDocuments.length > 0 && pagedDocuments.every((d) => selectedIds.has(d.id))
-                          }
-                          onChange={() => toggleSelectAll(pagedDocuments.map((d) => d.id))}
-                          aria-label="Seleziona tutti i documenti in questa pagina"
-                          className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
-                        />
-                      </th>
-                      <SortableColumnHeader label="Nome" sortKey="name" sort={sort} onSort={handleSort} />
-                      <SortableColumnHeader
-                        label="Categoria"
-                        sortKey="category"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @lg:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Bene"
-                        sortKey="asset"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @4xl:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Dimensione"
-                        sortKey="size"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @5xl:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Creato il"
-                        sortKey="createdAt"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @3xl:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Scadenza"
-                        sortKey="expiresAt"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @xl:table-cell"
-                      />
-                      <th className="p-3">Azioni</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                    {pagedDocuments.map((doc) => {
-                      const category = categoryFor(doc);
-                      const asset = assetFor(doc);
-                      const busy = busyDocId === doc.id;
-                      const status = expiryStatus(doc.expiresAt);
-                      const kind = contentKindFor(doc.mimeType);
-                      const isPlaying = playingId === doc.id;
-                      const isNoteOpen = openNoteId === doc.id;
-                      const isTranscribing = transcribingId === doc.id;
-                      const isExpanded = isPlaying || isNoteOpen || isTranscribing;
-
-                      return (
-                        <Fragment key={doc.id}>
-                          <tr>
-                            <td className="p-3">
-                              <input
-                                type="checkbox"
-                                checked={selectedIds.has(doc.id)}
-                                onChange={() => toggleSelected(doc.id)}
-                                aria-label={`Seleziona ${doc.filename}`}
-                                className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
-                              />
-                            </td>
-                            <td className="max-w-[16rem] p-3 font-medium text-zinc-900 dark:text-zinc-100">
-                              {/* Il nome porta alla scheda del contenuto. Niente sottolineatura: solo il colore Hinthial, coerente con il resto dell'app. */}
-                              <Link
-                                href={`/archive/${doc.id}`}
-                                className="flex min-w-0 items-center gap-1 transition-colors hover:text-brand dark:hover:text-blue-400"
-                              >
-                                <ContentTypeIcon kind={kind} inDossier={doc.dossierIds.length > 0} />
-                                <span className="truncate">{doc.filename}</span>
-                              </Link>
-                            </td>
-                            <td className="hidden p-3 text-zinc-600 @lg:table-cell dark:text-zinc-400">
-                              {category ? `${category.icon} ${category.name}` : "—"}
-                            </td>
-                            <td className="hidden p-3 text-zinc-600 @4xl:table-cell dark:text-zinc-400">
-                              {asset ? asset.name : "—"}
-                            </td>
-                            <td className="hidden p-3 text-zinc-600 @5xl:table-cell dark:text-zinc-400">
-                              {formatSize(doc.size)}
-                            </td>
-                            <td className="hidden p-3 text-zinc-600 @3xl:table-cell dark:text-zinc-400">
-                              {formatDate(doc.createdAt)}
-                            </td>
-                            <td className="hidden p-3 @xl:table-cell">
-                              {doc.expiresAt ? (
-                                <span
-                                  className={
-                                    status === "overdue"
-                                      ? "font-medium text-red-600 dark:text-red-400"
-                                      : status === "soon"
-                                        ? "font-medium text-orange-600 dark:text-orange-400"
-                                        : "text-zinc-600 dark:text-zinc-400"
-                                  }
-                                >
-                                  {formatDate(doc.expiresAt)}
-                                </span>
-                              ) : (
-                                <span className="text-zinc-600 dark:text-zinc-400">—</span>
-                              )}
-                            </td>
-                            <td className="p-3">
-                              {/* Niente più "Modifica" qui: la Scheda (v. ArchiveItemDetail.tsx), raggiunta dal
-                                  nome del contenuto sopra, è già dove i metadati si modificano --- non serve una
-                                  scorciatoia duplicata verso la stessa pagina. */}
-                              <RowActionsMenu label={`Azioni per ${doc.filename}`}>
-                                {kind === "note" ? (
-                                  <RowMenuItem disabled={busy} onClick={() => toggleNote(doc)}>
-                                    {isNoteOpen ? "Chiudi" : "Apri"}
-                                  </RowMenuItem>
-                                ) : hasInlinePlayer(kind) ? (
-                                  <>
-                                    <RowMenuItem disabled={busy} onClick={() => togglePlayer(doc)}>
-                                      {isPlaying ? "Nascondi" : "Riproduci"}
-                                    </RowMenuItem>
-                                    <RowMenuItem disabled={busy} onClick={() => handleOpen(doc)}>
-                                      Scarica
-                                    </RowMenuItem>
-                                  </>
-                                ) : (
-                                  <RowMenuItem disabled={busy} onClick={() => handleOpen(doc)}>
-                                    Scarica
-                                  </RowMenuItem>
-                                )}
-                                {isTranscribable(kind) ? (
-                                  <RowMenuItem disabled={busy} onClick={() => toggleTranscript(doc)}>
-                                    {isTranscribing ? "Chiudi trascrizione" : "📝 Trascrizione"}
-                                  </RowMenuItem>
-                                ) : null}
-                                <RowMenuItem disabled={busy} danger onClick={() => handleDelete(doc)}>
-                                  Elimina
-                                </RowMenuItem>
-                              </RowActionsMenu>
-                            </td>
-                          </tr>
-                          {isExpanded ? (
-                            <tr>
-                              <td colSpan={8} className="p-4">
-                                {isPlaying ? (
-                                  <div className="rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
-                                    {playerLoading || !playerUrl ? (
-                                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                        Caricamento…
-                                      </p>
-                                    ) : kind === "image" ? (
-                                      // eslint-disable-next-line @next/next/no-img-element -- object URL locale, decifrata sul dispositivo
-                                      <img
-                                        src={playerUrl}
-                                        alt={doc.filename}
-                                        className="max-h-96 max-w-full rounded-md"
-                                      />
-                                    ) : kind === "video" ? (
-                                      <video src={playerUrl} controls className="max-h-96 max-w-full rounded-md" />
-                                    ) : (
-                                      <audio src={playerUrl} controls className="w-full" />
-                                    )}
-                                  </div>
-                                ) : isNoteOpen ? (
-                                  <div className="flex flex-col gap-2 rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
-                                    {noteLoading ? (
-                                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Caricamento…</p>
-                                    ) : (
-                                      <>
-                                        <input
-                                          type="text"
-                                          value={noteDraft.title}
-                                          onChange={(e) =>
-                                            setNoteDraft((prev) => ({ ...prev, title: e.target.value }))
-                                          }
-                                          aria-label="Titolo della nota"
-                                          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                                        />
-                                        <textarea
-                                          rows={6}
-                                          value={noteDraft.body}
-                                          onChange={(e) =>
-                                            setNoteDraft((prev) => ({ ...prev, body: e.target.value }))
-                                          }
-                                          aria-label="Testo della nota"
-                                          className={INPUT_FIELD}
-                                        />
-                                        <div className="flex gap-3">
-                                          <button
-                                            type="button"
-                                            disabled={noteSaving}
-                                            onClick={() => saveNote(doc)}
-                                            className="self-start rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                                          >
-                                            {noteSaving ? "Salvataggio…" : "Salva nota"}
-                                          </button>
-                                        </div>
-                                      </>
-                                    )}
-                                  </div>
-                                ) : isTranscribing ? (
-                                  <div className="flex flex-col gap-2 rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
-                                    <div className="flex items-center justify-between gap-3">
-                                      <label
-                                        htmlFor={`transcript-${doc.id}`}
-                                        className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                                      >
-                                        Trascrizione
-                                      </label>
-                                      <button
-                                        type="button"
-                                        disabled={transcriptAutoBusy}
-                                        onClick={() => handleAutoTranscribe(doc)}
-                                        className="text-xs font-medium text-zinc-600 underline-offset-2 hover:underline disabled:opacity-50 dark:text-zinc-400"
-                                      >
-                                        {transcriptAutoBusy ? "Provo…" : "Trascrivi automaticamente"}
-                                      </button>
-                                    </div>
-                                    {transcriptAutoMessage ? (
-                                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                        {transcriptAutoMessage}
-                                      </p>
-                                    ) : null}
-                                    <textarea
-                                      id={`transcript-${doc.id}`}
-                                      rows={5}
-                                      value={transcriptDraft}
-                                      onChange={(e) => setTranscriptDraft(e.target.value)}
-                                      placeholder="Scrivi qui la trascrizione, o provaci con il tasto qui sopra…"
-                                      className={INPUT_FIELD}
-                                    />
-                                    <div className="flex gap-3">
-                                      <button
-                                        type="button"
-                                        disabled={transcriptSaving}
-                                        onClick={() => saveTranscript(doc)}
-                                        className="self-start rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                                      >
-                                        {transcriptSaving ? "Salvataggio…" : "Salva trascrizione"}
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : null}
-                              </td>
-                            </tr>
-                          ) : null}
-                        </Fragment>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
-            </div>
           ) : (
             <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
               {filteredDocuments.map((doc) => {

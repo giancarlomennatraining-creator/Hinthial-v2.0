@@ -6,7 +6,6 @@ import {
   parseOpenEffect,
   splitLetterLines,
 } from "@/domain/capsules/open-effects";
-import { CAPSULE_STYLE_OPTIONS, DEFAULT_CAPSULE_STYLE, parseCapsuleStyle } from "@/lib/capsule-style";
 import { capsuleProgress } from "@/domain/capsules/overview";
 import { capsuleArtState } from "@/components/capsules/CapsuleArt";
 
@@ -42,18 +41,6 @@ describe("splitLetterLines", () => {
     expect(splitLetterLines("  Uno  \n\n   \n Due ")).toEqual(["Uno", "Due"]);
     expect(splitLetterLines("")).toEqual([]);
     expect(splitLetterLines("  \n ")).toEqual([]);
-  });
-});
-
-describe("lo stile dell'elenco", () => {
-  it("ha tre stili e il default è quello di sempre", () => {
-    expect(CAPSULE_STYLE_OPTIONS.map((o) => o.value)).toEqual(["envelope", "flat", "porthole"]);
-    expect(DEFAULT_CAPSULE_STYLE).toBe("envelope");
-  });
-
-  it("legge un valore valido e ignora il resto", () => {
-    expect(parseCapsuleStyle("porthole")).toBe("porthole");
-    for (const raw of [undefined, null, "", "oblo", 1]) expect(parseCapsuleStyle(raw)).toBe("envelope");
   });
 });
 

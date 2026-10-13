@@ -113,9 +113,7 @@ export type Database = {
           last_name: string;
           avatar_path: string | null;
           birth_date: string | null;
-          list_view_preferences: Json;
           nav_orientation: NavOrientationColumn;
-          capsule_style: string;
           capsule_open_effect: string;
           bottom_nav_items: Json;
           main_nav_items: Json | null;
@@ -151,9 +149,7 @@ export type Database = {
           last_name: string;
           avatar_path?: string | null;
           birth_date?: string | null;
-          list_view_preferences?: Json;
           nav_orientation?: NavOrientationColumn;
-          capsule_style?: string;
           capsule_open_effect?: string;
           bottom_nav_items?: Json;
           main_nav_items?: Json | null;
@@ -189,9 +185,7 @@ export type Database = {
           last_name?: string;
           avatar_path?: string | null;
           birth_date?: string | null;
-          list_view_preferences?: Json;
           nav_orientation?: NavOrientationColumn;
-          capsule_style?: string;
           capsule_open_effect?: string;
           bottom_nav_items?: Json;
           main_nav_items?: Json | null;

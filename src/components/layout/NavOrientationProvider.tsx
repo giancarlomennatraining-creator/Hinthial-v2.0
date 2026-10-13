@@ -15,10 +15,9 @@ const NavOrientationContext = createContext<NavOrientationContextValue | null>(n
 /**
  * Disposizione del menu di navigazione (verticale a sinistra/destra, o
  * orizzontale in alto) --- sincronizzata sul server
- * (profiles.nav_orientation), come la visualizzazione delle liste (v.
- * ListViewPreferencesProvider), così resta la stessa su tutti i
- * dispositivi dell'utente. A differenza di quella, qui il valore
- * iniziale arriva già letto lato server (v. AppLayout/getCurrentUser):
+ * (profiles.nav_orientation), così resta la stessa su tutti i
+ * dispositivi dell'utente. Il valore iniziale arriva già letto lato
+ * server (v. AppLayout/getCurrentUser):
  * decide il layout dell'intera shell, quindi va noto prima del primo
  * render per evitare un lampo del layout sbagliato.
  */

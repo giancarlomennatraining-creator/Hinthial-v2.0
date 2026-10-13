@@ -8,13 +8,7 @@ import { deleteReminder, listReminders, setReminderCompleted } from "@/domain/re
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { PageHelp } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
-import { ListViewToggle } from "@/components/ui/ListViewToggle";
-import { Pagination } from "@/components/ui/Pagination";
 import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
-import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
-import { useListViewPreferences } from "@/components/layout/ListViewPreferencesProvider";
-import { TABLE_PAGE_SIZE } from "@/lib/list-view";
-import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import { buildIcsCalendar } from "@/lib/ics";
 import { saveBlobAsFile } from "@/lib/download";
 import { sanitizeFilename } from "@/lib/utils";
@@ -42,25 +36,6 @@ function dueStatus(dueAt: string, completed: boolean): "overdue" | "soon" | "ok"
   return "ok";
 }
 
-type SortColumn = "completed" | "title" | "dueAt" | "links";
-
-function linksFor(reminder: ReminderListItem): string {
-  return [reminder.relatedDocumentFilename, reminder.relatedAssetName].filter(Boolean).join(" · ");
-}
-
-function sortValueFor(reminder: ReminderListItem, column: SortColumn): string {
-  switch (column) {
-    case "completed":
-      return reminder.completed ? "Completata" : "Da completare";
-    case "title":
-      return reminder.title;
-    case "dueAt":
-      return formatDate(reminder.dueAt);
-    case "links":
-      return linksFor(reminder);
-  }
-}
-
 export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useSupabase();
   const router = useRouter();
@@ -72,11 +47,6 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "completed", direction: "asc" });
-
-  const { modeFor } = useListViewPreferences();
-  const viewMode = modeFor("reminders");
 
   // "?created=1" arriva da /reminders/new dopo un salvataggio riuscito ---
   // v. CapsulesPanel.tsx per il motivo dello stato pigro qui sotto.
@@ -154,21 +124,6 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
     saveBlobAsFile(new Blob([ics], { type: "text/calendar" }), "hinthial-scadenze.ics");
   }
 
-  function handleSort(column: SortColumn) {
-    setSort((prev) => toggleSort(prev, column));
-  }
-
-  // Solo la vista a tabella si ordina --- l'elenco resta cronologico.
-  const sortedReminders = applySort(filteredReminders, sort, sortValueFor);
-
-  // Si riclampa invece di resettare con un effect: se un filtro riduce i
-  // risultati, la pagina torna da sola entro il range valido.
-  const pageCount = Math.max(1, Math.ceil(filteredReminders.length / TABLE_PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount);
-  const pagedReminders = sortedReminders.slice(
-    (currentPage - 1) * TABLE_PAGE_SIZE,
-    currentPage * TABLE_PAGE_SIZE,
-  );
 
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
@@ -232,104 +187,12 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
             >
               📅 Esporta calendario (.ics)
             </button>
-            <ListViewToggle section="reminders" hideOnMobile />
           </div>
 
           {filteredReminders.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Nessuna scadenza corrisponde ai filtri.
             </p>
-          ) : viewMode === "table" ? (
-            <div className="flex flex-col gap-3">
-              {/* @container --- v. DocumentsPanel per il ragionamento. Qui
-                  restano sempre anche "Fatto" (la spunta è un'azione, non
-                  un dato) oltre a Titolo e Azioni. */}
-              <div className="@container overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                      <SortableColumnHeader
-                        label="Fatto"
-                        sortKey="completed"
-                        sort={sort}
-                        onSort={handleSort}
-                      />
-                      <SortableColumnHeader label="Titolo" sortKey="title" sort={sort} onSort={handleSort} />
-                      <SortableColumnHeader
-                        label="Scadenza"
-                        sortKey="dueAt"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @lg:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Collegamenti"
-                        sortKey="links"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @2xl:table-cell"
-                      />
-                      <th className="p-3">Azioni</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                    {pagedReminders.map((reminder) => {
-                      const status = dueStatus(reminder.dueAt, reminder.completed);
-                      const busy = busyId === reminder.id;
-                      return (
-                        <tr key={reminder.id}>
-                          <td className="p-3">
-                            <input
-                              type="checkbox"
-                              checked={reminder.completed}
-                              disabled={busy}
-                              onChange={() => handleToggleCompleted(reminder)}
-                              aria-label={`Segna "${reminder.title}" come completata`}
-                            />
-                          </td>
-                          <td
-                            className={
-                              reminder.completed
-                                ? "max-w-[16rem] truncate p-3 text-zinc-400 line-through dark:text-zinc-600"
-                                : "max-w-[16rem] truncate p-3 font-medium text-zinc-900 dark:text-zinc-100"
-                            }
-                          >
-                            {reminder.title}
-                          </td>
-                          <td className="hidden p-3 @lg:table-cell">
-                            <span
-                              className={
-                                status === "overdue"
-                                  ? "font-medium text-red-600 dark:text-red-400"
-                                  : status === "soon"
-                                    ? "font-medium text-orange-600 dark:text-orange-400"
-                                    : "text-zinc-600 dark:text-zinc-400"
-                              }
-                            >
-                              {formatDate(reminder.dueAt)}
-                            </span>
-                          </td>
-                          <td className="hidden max-w-[14rem] truncate p-3 text-zinc-600 @2xl:table-cell dark:text-zinc-400">
-                            {linksFor(reminder) || "—"}
-                          </td>
-                          <td className="p-3">
-                            <RowActionsMenu label={`Azioni per "${reminder.title}"`}>
-                              <RowMenuItem onClick={() => handleExportOne(reminder)}>
-                                📅 Aggiungi al calendario (.ics)
-                              </RowMenuItem>
-                              <RowMenuItem disabled={busy} danger onClick={() => handleDelete(reminder)}>
-                                Elimina
-                              </RowMenuItem>
-                            </RowActionsMenu>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
-            </div>
           ) : (
             <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
               {filteredReminders.map((reminder) => {
