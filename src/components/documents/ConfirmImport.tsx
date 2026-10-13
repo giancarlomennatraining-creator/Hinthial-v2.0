@@ -60,7 +60,6 @@ function metadataOf(doc: DocumentListItem): DocumentMetadataInput {
     dossierIds: doc.dossierIds,
     expiresAt: doc.expiresAt,
     notes: doc.notes,
-    tags: doc.tags,
     issuer: doc.issuer,
   };
 }

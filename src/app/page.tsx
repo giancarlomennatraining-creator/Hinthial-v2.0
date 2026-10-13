@@ -15,7 +15,7 @@ const STRENGTHS: { icon: string; title: string; description: string }[] = [
     icon: "🗂️",
     title: "Tutto in un posto solo",
     description:
-      "Documenti, foto, audio, video, note, asset, scadenze e contatti fiduciari — organizzati, con categorie e tag, e sempre ritrovabili con una ricerca.",
+      "Documenti, foto, audio, video, note, asset, scadenze e contatti fiduciari — organizzati, con categorie, e sempre ritrovabili con una ricerca.",
   },
   {
     icon: "🤖",

@@ -12,7 +12,6 @@ import {
   updateDocumentTranscript,
   updateTextNoteContent,
 } from "@/domain/documents/repository";
-import { listIncludesTag } from "@/domain/documents/tags";
 import { contentKindFor, hasInlinePlayer, isTranscribable } from "@/lib/content-kind";
 import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
 import type { DocumentSummary } from "@/domain/documents/types";
@@ -43,7 +42,7 @@ function expiryStatus(expiresAt: string | null): "none" | "overdue" | "soon" | "
 /** I consigli del tasto Aiuto di Archivio, uguali in tutte le viste. */
 const ARCHIVE_HELP_TIPS: HelpTip[] = [
   { icon: "➕", text: "Aggiungi un contenuto nuovo, o trascinalo qui sopra." },
-  { icon: "🔍", text: "Premi Ctrl+K per cercare in tutto Hinthial: per nome, tag, note — o dentro ai documenti stessi." },
+  { icon: "🔍", text: "Premi Ctrl+K per cercare in tutto Hinthial: per nome, note — o dentro ai documenti stessi." },
   { icon: "🏷️", text: "Filtra per categoria dal menu in alto." },
   { icon: "📂", text: "Passa a “Fascicolo” per raggruppare più contenuti insieme." },
 ];
@@ -72,20 +71,15 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     bulkBusy,
     bulkPopover,
     setBulkPopover,
-    bulkTagInput,
-    setBulkTagInput,
     handleOpen,
     handleDelete,
     handleBulkDelete,
     handleBulkCategory,
-    handleBulkTag,
     handleBulkDossier,
     categoryFor,
     assetFor,
   } = data;
   const [categoryFilter, setCategoryFilter] = useState("");
-  // Impostato cliccando un tag sul documento --- un solo tag alla volta, niente menu a tendina.
-  const [tagFilter, setTagFilter] = useState<string | null>(null);
   // Avanzamento della lettura dei documenti già archiviati; `fraction` è il progresso dentro il file corrente
   // (con l'OCR un singolo contenuto può occupare mezzo minuto, senza "3 di 7" resterebbe immobile).
   const [extractionProgress, setExtractionProgress] = useState<{
@@ -285,8 +279,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   const filteredDocuments = documents
-    .filter((doc) => !categoryFilter || doc.categoryId === categoryFilter)
-    .filter((doc) => !tagFilter || listIncludesTag(doc.tags, tagFilter));
+    .filter((doc) => !categoryFilter || doc.categoryId === categoryFilter);
 
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
@@ -370,16 +363,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 </option>
               ))}
             </select>
-            {tagFilter ? (
-              <button
-                type="button"
-                onClick={() => setTagFilter(null)}
-                className="flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-2 text-sm font-medium text-brand hover:bg-brand/20"
-              >
-                🏷️ {tagFilter}
-                <span aria-hidden="true">✕</span>
-              </button>
-            ) : null}
           </div>
 
           {/* Barra contestuale: compare solo con almeno un documento selezionato. */}
@@ -427,39 +410,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           {category.icon} {category.name}
                         </button>
                       ))}
-                    </div>
-                  ) : null}
-                </div>
-                <div className="relative">
-                  <button
-                    type="button"
-                    disabled={bulkBusy}
-                    onClick={() => setBulkPopover((prev) => (prev === "tag" ? null : "tag"))}
-                    className="rounded-md px-2 py-1 text-sm font-semibold text-brand hover:bg-brand/20 disabled:opacity-50"
-                  >
-                    🏷️ Tag
-                  </button>
-                  {bulkPopover === "tag" ? (
-                    <div className="absolute left-0 top-full z-20 mt-1 w-56 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
-                      <label className="mb-1.5 block text-xs text-zinc-500 dark:text-zinc-400">
-                        Aggiungi un tag a tutti i selezionati
-                      </label>
-                      <input
-                        type="text"
-                        value={bulkTagInput}
-                        onChange={(e) => setBulkTagInput(e.target.value)}
-                        placeholder="es. urgente"
-                        aria-label="Nuovo tag per i documenti selezionati"
-                        className="mb-2 w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-                      />
-                      <button
-                        type="button"
-                        disabled={!bulkTagInput.trim()}
-                        onClick={() => handleBulkTag(bulkTagInput)}
-                        className="w-full rounded-md bg-brand px-2 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                      >
-                        Aggiungi
-                      </button>
                     </div>
                   ) : null}
                 </div>
@@ -555,21 +505,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                             </>
                           ) : null}
                         </p>
-                        {doc.tags.length > 0 ? (
-                          <div className="mt-1.5 flex flex-wrap gap-1">
-                            {doc.tags.map((tag) => (
-                              <button
-                                key={tag}
-                                type="button"
-                                onClick={() => setTagFilter(tag)}
-                                title={`Filtra per il tag "${tag}"`}
-                                className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 hover:bg-brand/15 hover:text-brand dark:bg-zinc-900 dark:text-zinc-400"
-                              >
-                                {tag}
-                              </button>
-                            ))}
-                          </div>
-                        ) : null}
                       </div>
                       </div>
                       {/* Niente più "Modifica" qui: la Scheda (v. ArchiveItemDetail.tsx), raggiunta dal nome del

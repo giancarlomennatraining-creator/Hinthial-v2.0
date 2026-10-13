@@ -85,7 +85,7 @@ export function searchEverything(query: string, context: AIContext): SearchResul
 
   for (const doc of context.documents) {
     const category = doc.categoryId ? (categoryName.get(doc.categoryId) ?? "") : "";
-    const labels = [category, doc.issuer, ...doc.tags].join(" ");
+    const labels = [category, doc.issuer].join(" ");
     const content = [doc.notes, doc.transcript, doc.extractedText].join(" ");
     const rank = rankOf(terms, doc.filename, labels, content);
     if (rank === null) continue;

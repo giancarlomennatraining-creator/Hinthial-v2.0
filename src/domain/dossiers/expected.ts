@@ -58,12 +58,12 @@ function significantStems(text: string): string[] {
 
 function searchableText(doc: DocumentSummary): string {
   const fields = Object.values(doc.structuredFields ?? {});
-  return fold([doc.filename, doc.issuer, doc.notes, ...doc.tags, ...fields].filter(Boolean).join(" "));
+  return fold([doc.filename, doc.issuer, doc.notes, ...fields].filter(Boolean).join(" "));
 }
 
 /**
  * Per ogni voce, il primo documento (non già dato a una voce precedente) in cui compaiono tutte le sue parole
- * significative, nel nome, nell'emittente, nei tag, nelle note o nei campi letti. Una voce senza parole significative non
+ * significative, nel nome, nell'emittente, nelle note o nei campi letti. Una voce senza parole significative non
  * si abbina mai da sola: resta da spuntare a mano.
  */
 export function matchExpected(items: ExpectedItem[], documents: DocumentSummary[]): ExpectedSummary {

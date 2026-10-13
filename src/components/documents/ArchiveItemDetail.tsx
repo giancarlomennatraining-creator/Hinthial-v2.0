@@ -60,7 +60,6 @@ import { buildAnalysisOverview } from "@/domain/ai/analysis/overview";
 import {
   DocumentMetadataFields,
   documentToFields,
-  parseTagsInput,
   type DocumentMetadataFieldsValue,
 } from "@/components/documents/DocumentMetadataFields";
 import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
@@ -601,7 +600,6 @@ export function ArchiveItemDetail({
         dossierIds: fields.dossierIds,
         expiresAt: fields.expiresAt || null,
         notes: fields.notes,
-        tags: parseTagsInput(fields.tagsInput),
         issuer: fields.issuer,
         ...(structuredDirty && structuredValues ? { structuredFields: structuredValues } : {}),
         ...(titleDirty && titleValue !== null ? { title: titleValue } : {}),
@@ -1116,7 +1114,7 @@ function ReadingSection({
       ) : reading === "never" ? (
         <p className="text-sm text-zinc-700 dark:text-zinc-300">
           Non l&apos;ho ancora letto: è arrivato in archivio prima che sapessi leggerne il
-          contenuto. Finché non lo leggo, lo trovi solo per nome, tag e note.
+          contenuto. Finché non lo leggo, lo trovi solo per nome e note.
         </p>
       ) : reading === "nothing" ? (
         <p className="text-sm text-zinc-700 dark:text-zinc-300">

@@ -12,7 +12,6 @@ function doc(over: Partial<DocumentSummary> & { id: string; filename: string }):
     dossierIds: [],
     expiresAt: null,
     notes: "",
-    tags: [],
     issuer: "",
     structuredFields: {},
     analysisStatus: "none",
@@ -33,11 +32,11 @@ describe("matchExpected", () => {
     expect(summary.total).toBe(2);
   });
 
-  it("cerca anche in emittente, tag e campi letti, ignorando accenti e maiuscole", () => {
+  it("cerca anche in emittente e campi letti, ignorando accenti e maiuscole", () => {
     const summary = matchExpected(
       [item("a", "Ricevuta"), item("b", "Certificato")],
       [
-        doc({ id: "d1", filename: "scan0001.pdf", tags: ["RICEVUTA"] }),
+        doc({ id: "d1", filename: "scan0001.pdf", issuer: "RICEVUTA" }),
         doc({ id: "d2", filename: "scan0002.pdf", structuredFields: { tipo: "Certificàto medico" } }),
       ],
     );

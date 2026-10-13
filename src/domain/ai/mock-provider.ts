@@ -61,7 +61,7 @@ function search(query: string, context: AIContext): AISource[] {
   }
 
   for (const doc of context.documents) {
-    const haystack = [doc.filename, doc.notes, doc.transcript, doc.extractedText, ...doc.tags].join(" ");
+    const haystack = [doc.filename, doc.notes, doc.transcript, doc.extractedText].join(" ");
     if (textMatches(haystack, tokens)) {
       sources.push({ kind: "document", id: doc.id, label: doc.filename, href: documentHref(doc) });
     }

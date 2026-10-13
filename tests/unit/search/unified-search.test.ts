@@ -16,7 +16,6 @@ function doc(overrides: Partial<DocumentListItem>): DocumentListItem {
     wrappedDocumentKey: "",
     expiresAt: null,
     notes: "",
-    tags: [],
     transcript: "",
     extractedText: "",
     extractedAt: null,
@@ -49,7 +48,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         filename: "scan_0012.pdf",
         extractedText: "Referto di cardiologia\ncontrollo annuale presso l'ospedale",
       }),
-      doc({ id: "d3", filename: "bolletta.pdf", notes: "Pagata in ritardo", tags: ["Utenze"] }),
+      doc({ id: "d3", filename: "bolletta.pdf", notes: "Pagata in ritardo", issuer: "Utenze" }),
     ],
     reminders: [
       {
@@ -118,20 +117,20 @@ describe("searchEverything", () => {
     expect(result.snippet?.match.toLowerCase()).toBe("cardiologia");
   });
 
-  it("trova nelle note e nelle etichette", () => {
+  it("trova nelle note e nell'emittente", () => {
     const results = searchEverything("ritardo", buildContext());
     expect(results[0].snippetOrigin).toBe("notes");
-    const byTag = searchEverything("utenze", buildContext());
-    expect(byTag[0].id).toBe("d3");
-    expect(byTag[0].rank).toBe(1);
-    expect(byTag[0].snippet).toBeNull();
+    const byIssuer = searchEverything("utenze", buildContext());
+    expect(byIssuer[0].id).toBe("d3");
+    expect(byIssuer[0].rank).toBe(1);
+    expect(byIssuer[0].snippet).toBeNull();
   });
 
   it("mette prima chi ha le parole nel nome, poi etichette, poi contenuto", () => {
     const context = buildContext({
       documents: [
         doc({ id: "dentro", filename: "altro.pdf", extractedText: "contiene la parola ricevuta" }),
-        doc({ id: "etichetta", filename: "x.pdf", tags: ["ricevuta"] }),
+        doc({ id: "etichetta", filename: "x.pdf", issuer: "ricevuta" }),
         doc({ id: "nome", filename: "ricevuta.pdf" }),
       ],
     });

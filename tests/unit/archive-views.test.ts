@@ -17,7 +17,6 @@ function doc(over: Partial<DocumentSummary> & { id: string }): DocumentSummary {
     wrappedDocumentKey: "k",
     expiresAt: null,
     notes: "",
-    tags: [],
     extractedAt: null,
     hasThumbnail: false,
     dossierIds: [],
@@ -78,15 +77,14 @@ describe("expiryInfo", () => {
 describe("ricerca", () => {
   const docs = [
     doc({ id: "a", filename: "Polizza RCA Ford Focus.pdf", categoryId: "c-ass", structuredFields: { targa: "EY389YM" }, analysisStatus: "completed" }),
-    doc({ id: "b", filename: "Bolletta luce.pdf", categoryId: "c-casa", tags: ["urgente"], expiresAt: "2026-10-15" }),
+    doc({ id: "b", filename: "Bolletta luce.pdf", categoryId: "c-casa", expiresAt: "2026-10-15" }),
     doc({ id: "c", filename: "Scansione.pdf", createdAt: "2026-06-01T10:00:00.000Z" }),
     doc({ id: "d", filename: "Scansione.pdf", createdAt: "2026-06-02T10:00:00.000Z" }),
   ];
 
-  it("cerca in nome, targa, tag e categoria, con tutte le parole", () => {
+  it("cerca in nome, targa e categoria, con tutte le parole", () => {
     expect(matchesQuery(docs[0], "ey389ym", CATEGORIES, [])).toBe(true);
     expect(matchesQuery(docs[0], "focus assicurazioni", CATEGORIES, [])).toBe(true);
-    expect(matchesQuery(docs[1], "urgente", CATEGORIES, [])).toBe(true);
     expect(matchesQuery(docs[1], "ford", CATEGORIES, [])).toBe(false);
     expect(matchesQuery(docs[1], "   ", CATEGORIES, [])).toBe(true);
   });

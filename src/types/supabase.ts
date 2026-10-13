@@ -519,7 +519,6 @@ export type Database = {
           version: number;
           expires_at: string | null;
           encrypted_notes: string | null;
-          encrypted_tags: string | null;
           encrypted_issuer: string | null;
           encrypted_transcript: string | null;
           encrypted_extracted_text: string | null;
@@ -550,7 +549,6 @@ export type Database = {
           version?: number;
           expires_at?: string | null;
           encrypted_notes?: string | null;
-          encrypted_tags?: string | null;
           encrypted_issuer?: string | null;
           encrypted_transcript?: string | null;
           encrypted_extracted_text?: string | null;
@@ -581,7 +579,6 @@ export type Database = {
           version?: number;
           expires_at?: string | null;
           encrypted_notes?: string | null;
-          encrypted_tags?: string | null;
           encrypted_issuer?: string | null;
           encrypted_transcript?: string | null;
           encrypted_extracted_text?: string | null;

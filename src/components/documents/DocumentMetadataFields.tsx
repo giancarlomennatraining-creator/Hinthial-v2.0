@@ -17,8 +17,6 @@ export interface DocumentMetadataFieldsValue {
   /** yyyy-mm-dd, or "" for no expiry. */
   expiresAt: string;
   notes: string;
-  /** comma-separated, parsed via parseTagsInput. */
-  tagsInput: string;
   /** Chi ha emesso il documento --- "" se non impostato (v. FASE 18/19, campo proponibile). */
   issuer: string;
 }
@@ -29,7 +27,6 @@ export const EMPTY_METADATA_FIELDS: DocumentMetadataFieldsValue = {
   dossierIds: [],
   expiresAt: "",
   notes: "",
-  tagsInput: "",
   issuer: "",
 };
 
@@ -41,16 +38,8 @@ export function documentToFields(doc: DocumentListItem): DocumentMetadataFieldsV
     dossierIds: doc.dossierIds,
     expiresAt: doc.expiresAt ? doc.expiresAt.slice(0, 10) : "",
     notes: doc.notes,
-    tagsInput: doc.tags.join(", "),
     issuer: doc.issuer,
   };
-}
-
-export function parseTagsInput(input: string): string[] {
-  return input
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
 }
 
 export function DocumentMetadataFields({
@@ -267,23 +256,6 @@ export function DocumentMetadataFields({
           />
         </div>
       ) : null}
-
-      <div className="flex flex-col gap-1">
-        <label
-          htmlFor={`${idPrefix}-tags`}
-          className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-        >
-          Tag (separati da virgola)
-        </label>
-        <input
-          id={`${idPrefix}-tags`}
-          type="text"
-          value={value.tagsInput}
-          onChange={(e) => onChange({ ...value, tagsInput: e.target.value })}
-          placeholder="es. fattura, 2026, casa"
-          className={`w-full ${INPUT_FIELD}`}
-        />
-      </div>
 
       <div className="flex flex-col gap-1">
         <label

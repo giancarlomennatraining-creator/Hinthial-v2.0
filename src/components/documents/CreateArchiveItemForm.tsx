@@ -60,7 +60,6 @@ import { AudioVideoRecorder } from "@/components/media/AudioVideoRecorder";
 import {
   DocumentMetadataFields,
   EMPTY_METADATA_FIELDS,
-  parseTagsInput,
   type DocumentMetadataFieldsValue,
 } from "@/components/documents/DocumentMetadataFields";
 import type { Category } from "@/domain/categories/types";
@@ -525,7 +524,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       return [...next, ...added];
     });
     if (lot.length === 1 && title) setTitle("");
-    // Non si azzerano categoria/bene/fascicoli/tag/note: ciò che è già compilato non si tocca. Dalla cartella Drive nasce solo un suggerimento di categoria.
+    // Non si azzerano categoria/bene/fascicoli/note: ciò che è già compilato non si tocca. Dalla cartella Drive nasce solo un suggerimento di categoria.
     if (folderHint) {
       const match = categories.find((c) => c.name.toLowerCase() === folderHint.toLowerCase());
       if (match) setMetadata((prev) => (prev.categoryId ? prev : { ...prev, categoryId: match.id }));
@@ -692,7 +691,6 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         dossierIds: metadata.dossierIds,
         expiresAt: metadata.expiresAt || null,
         notes: metadata.notes,
-        tags: parseTagsInput(metadata.tagsInput),
         issuer: metadata.issuer,
       };
 
@@ -1339,7 +1337,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                       ) : readingState === "cannot" ? (
                         <p className="text-sm text-zinc-500 dark:text-zinc-400">
                           Non so ancora leggere questo tipo di contenuto: lo
-                          trovi per nome, tag e note.
+                          trovi per nome e note.
                         </p>
                       ) : readingState === "nothing" ? (
                         <p className="text-sm text-zinc-500 dark:text-zinc-400">

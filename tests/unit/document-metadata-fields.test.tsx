@@ -32,7 +32,7 @@ describe("DocumentMetadataFields", () => {
     expect(screen.queryByLabelText("Scadenza")).not.toBeInTheDocument();
   });
 
-  it("still shows category/asset/tags/notes fields when the Scadenza field is hidden", () => {
+  it("still shows category/asset/notes fields when the Scadenza field is hidden", () => {
     render(
       <DocumentMetadataFields
         idPrefix="upload"
@@ -45,7 +45,6 @@ describe("DocumentMetadataFields", () => {
     );
     expect(screen.getByLabelText("Categoria")).toBeInTheDocument();
     expect(screen.getByLabelText("Bene collegato")).toBeInTheDocument();
-    expect(screen.getByLabelText("Tag (separati da virgola)")).toBeInTheDocument();
     expect(screen.getByLabelText("Note")).toBeInTheDocument();
   });
 });

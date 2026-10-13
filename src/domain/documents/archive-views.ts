@@ -146,7 +146,7 @@ export function relativeDay(iso: string, now: Date): string {
 // Ricerca
 // ---------------------------------------------------------------------------------------------------------------
 
-export /** Il testo su cui si cerca: nome, emittente, note, tag, campi della Scheda (targa, numero polizza...), categoria e bene. */
+/** Il testo su cui si cerca: nome, emittente, note, campi della Scheda (targa, numero polizza...), categoria e bene. */
 function searchableText(
   doc: DocumentSummary,
   categories: Pick<Category, "id" | "name">[],
@@ -154,7 +154,7 @@ function searchableText(
 ): string {
   const category = categories.find((c) => c.id === doc.categoryId)?.name ?? "";
   const asset = assets.find((a) => a.id === doc.relatedAssetId)?.name ?? "";
-  return [doc.filename, doc.issuer, doc.notes, doc.tags.join(" "), Object.values(doc.structuredFields).join(" "), category, asset]
+  return [doc.filename, doc.issuer, doc.notes, Object.values(doc.structuredFields).join(" "), category, asset]
     .join(" ")
     .toLowerCase();
 }

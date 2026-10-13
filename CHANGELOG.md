@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-23 (94)
+
+### Ristrutturazione, passo 4: via i tag, restano le categorie
+
+**Cosa fa:**
+- I documenti si classificano solo per categoria: via il campo "Tag" dal modulo di caricamento e dalla Scheda, il filtro per tag e le etichette cliccabili nell'elenco, l'azione "Tag" in blocco e la sezione "Tag" nelle Impostazioni > Privacy e dati.
+- La ricerca, la lettura di Hinthia e l'abbinamento ai documenti attesi di un fascicolo non cercano più nei tag. Resta l'emittente (che la ricerca già usava).
+- L'esportazione dei dati non include più i tag.
+- La barra delle azioni dell'Archivio ha ora "Categoria" e "Fascicolo".
+
+**Note tecniche:**
+- Rimossi `domain/documents/tags.ts`, `TagsSettingsPanel`, `TagIcon`, `parseTagsInput`, `encryptTags`/`decryptTags`, `handleBulkTag`, `tags` da `DocumentSummary`/`DocumentListItem`/`DocumentMetadataInput` e dal formato di esportazione, con i loro test (unit ed e2e).
+- Migrazione `20261015000004_drop_document_tags.sql`: elimina `documents.encrypted_tags`. **Va applicata dopo aver aggiornato il codice**: con il codice vecchio il caricamento dei documenti si romperebbe. È irreversibile: i tag già salvati vanno persi.
+
+---
+
 ## 2026-10-22 (93)
 
 ### Ristrutturazione, passo 3: ogni sezione ha un solo modo di mostrarsi

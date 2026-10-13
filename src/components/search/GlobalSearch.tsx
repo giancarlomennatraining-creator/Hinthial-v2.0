@@ -20,7 +20,7 @@ import {
 } from "@/domain/search/unified-search";
 
 /**
- * Ricerca unificata (Ctrl/Cmd+K): l'unico punto di ricerca dell'app. Cerca per nome, etichette e anche dentro il
+ * Ricerca unificata (Ctrl/Cmd+K): l'unico punto di ricerca dell'app. Cerca per nome e anche dentro il
  * testo letto dei documenti, su tutto ciò che è già decifrato in memoria (v. domain/ai/context.ts): nessuna nuova
  * query, nessun dato lascia il dispositivo. Il filtro per area è un chip, non una pagina diversa.
  */
@@ -324,7 +324,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
                     </p>
                   ) : !hasQuery ? (
                     <p className="px-2 py-3 text-sm text-zinc-500 dark:text-zinc-400">
-                      Scrivi per cercare. Trova per nome, per etichetta e anche
+                      Scrivi per cercare. Trova per nome e anche
                       dentro il testo letto dei documenti.
                     </p>
                   ) : visible.length === 0 ? (

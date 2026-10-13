@@ -1,6 +1,6 @@
 import type { AnalysisStatus, PersistedContentAnalysis } from "@/domain/ai/analysis/persisted";
 
-/** `filename`/`notes`/`tags` già decifrati client-side; `wrappedDocumentKey`/`storagePath` restano opachi per evitare un secondo fetch. */
+/** `filename`/`notes` già decifrati client-side; `wrappedDocumentKey`/`storagePath` restano opachi per evitare un secondo fetch. */
 /**
  * Un documento senza le colonne pesanti (testo letto, trascrizione, sintesi, analisi di Hinthia): quanto basta per
  * elenchi, conteggi e selettori. Quel testo può pesare fino a 200.000 caratteri a documento, e scaricarlo e
@@ -27,7 +27,6 @@ export interface DocumentListItem {
   expiresAt: string | null;
   /** empty string when never set. */
   notes: string;
-  tags: string[];
   /** Audio/video only, empty string when never set --- v. domain/transcription. */
   transcript: string;
   /** FASE 17: testo ricavato dal contenuto per la ricerca dentro i file --- non mostrato/modificabile come `transcript`. */
@@ -67,7 +66,6 @@ export interface DocumentMetadataInput {
   dossierIds: string[];
   expiresAt: string | null;
   notes: string;
-  tags: string[];
   issuer: string;
   /** Voci libere della Scheda (v. domain/structured-fields): se presente sostituisce l'intero insieme, se omesso non lo tocca. */
   structuredFields?: Record<string, string>;

@@ -95,7 +95,6 @@ describe("tutti i passi fatti", () => {
             wrappedDocumentKey: "",
             expiresAt: null,
             notes: "",
-            tags: [],
             extractedAt: null,
             hasThumbnail: false,
             aiExtractionExcluded: false,
