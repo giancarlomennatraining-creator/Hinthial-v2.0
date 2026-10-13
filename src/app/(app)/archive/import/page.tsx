@@ -1,10 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
-import { BulkImportForm } from "@/components/documents/BulkImportForm";
-
-export default function BulkImportPage() {
-  return (
-    <RequireMasterKey>{(masterKey) => <BulkImportForm masterKey={masterKey} />}</RequireMasterKey>
-  );
+/** L'importazione di più file è ora lo stesso percorso del caricamento di un file (v. CreateArchiveItemForm): i vecchi collegamenti portano lì. */
+export default function BulkImportRedirectPage() {
+  redirect("/archive/new?mode=upload");
 }

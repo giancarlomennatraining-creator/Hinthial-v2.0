@@ -17,7 +17,7 @@ test("la zona di rilascio reagisce al trascinamento e al caricamento del file", 
 
   const zone = page.locator(".file-drop");
   await expect(zone).toHaveAttribute("data-state", "idle");
-  await expect(zone).toContainText("Trascina qui un documento, o clicca per sceglierlo");
+  await expect(zone).toContainText("Trascina qui uno o più documenti, o clicca per sceglierli");
 
   // Un file che ci passa sopra (si tiene premuto il tasto del mouse): il riquadro si accorge e cambia, e quando esce torna a riposo.
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());

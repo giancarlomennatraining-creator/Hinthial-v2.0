@@ -144,9 +144,6 @@ test("su smartphone il + dell'Archivio apre le stesse scelte del desktop e i cam
   await expect(
     menu.getByRole("menuitem", { name: "Scrivi una nota" }),
   ).toBeVisible();
-  await expect(
-    menu.getByRole("menuitem", { name: "Importa più file insieme" }),
-  ).toBeVisible();
 
   await menu.getByRole("menuitem", { name: "Scrivi una nota" }).click();
   await expect(page).toHaveURL(/\/archive\/new\?mode=note$/);

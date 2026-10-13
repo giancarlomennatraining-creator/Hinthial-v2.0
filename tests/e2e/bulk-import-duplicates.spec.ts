@@ -36,11 +36,11 @@ test("due file identici nello stesso lotto vengono segnalati come possibile dupl
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
-  await page.getByRole("menuitem", { name: "Importa più file insieme" }).click();
-  await expect(page.getByRole("heading", { name: "Importa più file insieme" })).toBeVisible();
+  await page.getByRole("menuitem", { name: "Carica un file" }).click();
+  await page.getByRole("radio", { name: /Carica un file/ }).click();
 
   const sameContent = Buffer.from("stesso contenuto, stesso nome, stessa dimensione");
-  await page.getByLabel("Scegli i file da importare").setInputFiles([
+  await page.setInputFiles('input[type="file"]', [
     { name: "ricevuta.txt", mimeType: "text/plain", buffer: sameContent },
     { name: "ricevuta.txt", mimeType: "text/plain", buffer: sameContent },
   ]);
@@ -57,9 +57,11 @@ test("due file identici nello stesso lotto vengono segnalati come possibile dupl
   await page.getByRole("button", { name: "Escludi dall'importazione" }).click();
   await expect(page.getByText(/possibile duplicato/)).not.toBeVisible();
   await expect(page.getByText("ricevuta.txt", { exact: true })).toHaveCount(1);
-  await expect(page.getByText("1 file pronto")).toBeVisible();
 
-  await page.getByRole("button", { name: "Importa tutto" }).click();
-  await expect(page).toHaveURL(/\/archive$/, { timeout: 60_000 });
+  // Rimasto un file solo, è lo stesso percorso del caricamento singolo: si salva e si vedono i passi di Hinthial.
+  await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
+  await expect(page.getByText("Documento salvato")).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("link", { name: "Torna all'archivio" }).click();
+  await expect(page).toHaveURL(/\/archive\?created=1$/, { timeout: 15_000 });
   await expect(page.getByText("ricevuta.txt")).toBeVisible({ timeout: 15_000 });
 });

@@ -14,14 +14,15 @@ export function FileDropZone({
   inputRef,
   state,
   progress,
-  onFile,
+  onFiles,
   onInputBlur,
 }: {
   inputRef: RefObject<HTMLInputElement | null>;
   state: "idle" | "loading" | "done";
   /** 0..1 durante la lettura; null se non si sa ancora quanto manca (la luce va e viene). */
   progress: number | null;
-  onFile: (file: File | null) => void;
+  /** Uno o più file scelti o rilasciati. */
+  onFiles: (files: File[]) => void;
   onInputBlur: (event: FocusEvent<HTMLInputElement>) => void;
 }) {
   const [dragging, setDragging] = useState(false);
@@ -50,16 +51,17 @@ export function FileDropZone({
       onDrop={(e) => {
         e.preventDefault();
         setDragging(false);
-        onFile(e.dataTransfer.files?.[0] ?? null);
+        onFiles(Array.from(e.dataTransfer.files ?? []));
       }}
     >
       <input
         id="file"
         ref={inputRef}
         type="file"
-        onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+        multiple
+        onChange={(e) => onFiles(Array.from(e.target.files ?? []))}
         onBlur={onInputBlur}
-        aria-label="Scegli un file"
+        aria-label="Scegli uno o più file"
         className="fd-input"
       />
       <span className="fd-grid" aria-hidden="true" />
@@ -80,7 +82,7 @@ export function FileDropZone({
           </span>
         </div>
         <p className="fd-msg" aria-live="polite">
-          <span className="fd-m-idle">Trascina qui un documento, o clicca per sceglierlo</span>
+          <span className="fd-m-idle">Trascina qui uno o più documenti, o clicca per sceglierli</span>
           <span className="fd-m-over">Inquadrato: rilascia</span>
           <span className="fd-m-load">Leggo il testo sul tuo dispositivo…{percent}</span>
           <span className="fd-m-done">Fatto</span>
