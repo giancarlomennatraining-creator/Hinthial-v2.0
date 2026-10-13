@@ -8,10 +8,8 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
  * 22) ha oggi una funzione reale dietro (v. ai-content-analysis.spec.ts per il bottone "Chiedi a Hinthia"); questo
  * test resta sulla cascata di consenso in Impostazioni, comune a tutte le funzioni, incluso l'elenco per categoria
  * che ha sostituito l'eccezione a parte "Includi anche Salute" (Salute è ora una categoria come le altre).
- * Trascrizione e avvisi proattivi non hanno ancora una funzione dietro, ma la cascata deve comportarsi bene fin da
- * ora, prima che ci sia una vera funzione a verificarla altrove.
  */
-test("cancello generale, estrazione avanzata per categoria, trascrizione e avvisi proattivi si spengono a cascata e sopravvivono a un refresh", async ({
+test("cancello generale ed estrazione avanzata per categoria si spengono a cascata e sopravvivono a un refresh", async ({
   page,
 }) => {
   test.slow();
@@ -33,16 +31,12 @@ test("cancello generale, estrazione avanzata per categoria, trascrizione e avvis
   const extractionCheckbox = page.getByRole("checkbox", { name: /^Estrazione avanzata/ });
   // "Salute" è una categoria predefinita come le altre --- non più un'eccezione a parte con un consenso proprio.
   const saluteCheckbox = page.getByRole("checkbox", { name: "❤️ Salute" });
-  const transcriptionCheckbox = page.getByRole("checkbox", { name: /^Trascrizione/ });
-  const alertsCheckbox = page.getByRole("checkbox", { name: /^Generazione di avvisi proattivi/ });
 
   await expect(saluteCheckbox).toBeVisible();
 
   // Senza il cancello generale, tutto è disabilitato.
   await expect(extractionCheckbox).toBeDisabled();
   await expect(saluteCheckbox).toBeDisabled();
-  await expect(transcriptionCheckbox).toBeDisabled();
-  await expect(alertsCheckbox).toBeDisabled();
 
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
@@ -50,19 +44,15 @@ test("cancello generale, estrazione avanzata per categoria, trascrizione e avvis
   ]);
   await expect(masterSwitch).toHaveAttribute("aria-checked", "true");
 
-  // Accendere il cancello sblocca tutto tranne le categorie e gli avvisi
-  // proattivi, che restano subordinati all'estrazione avanzata.
+  // Accendere il cancello sblocca l'estrazione avanzata, ma non le categorie, che restano subordinate ad essa.
   await expect(extractionCheckbox).toBeEnabled();
-  await expect(transcriptionCheckbox).toBeEnabled();
   await expect(saluteCheckbox).toBeDisabled();
-  await expect(alertsCheckbox).toBeDisabled();
 
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     extractionCheckbox.check(),
   ]);
   await expect(saluteCheckbox).toBeEnabled();
-  await expect(alertsCheckbox).toBeEnabled();
 
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/categories") && res.request().method() === "PATCH"),
@@ -70,55 +60,33 @@ test("cancello generale, estrazione avanzata per categoria, trascrizione e avvis
     saluteCheckbox.click(),
   ]);
   await expect(saluteCheckbox).toBeChecked();
-  await Promise.all([
-    page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
-    alertsCheckbox.check(),
-  ]);
-  await Promise.all([
-    page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
-    transcriptionCheckbox.check(),
-  ]);
   await expect(saluteCheckbox).toBeChecked();
-  await expect(alertsCheckbox).toBeChecked();
-  await expect(transcriptionCheckbox).toBeChecked();
 
-  // Spegnere l'estrazione avanzata disabilita l'elenco per categoria e
-  // spegne gli Avvisi proattivi --- ma non la Trascrizione, che è
-  // indipendente, e non il consenso della categoria stessa (resta
-  // acceso, semplicemente senza effetto finché l'estrazione è spenta).
+  // Spegnere l'estrazione avanzata disabilita l'elenco per categoria, ma non il consenso della categoria stessa
+  // (resta acceso, semplicemente senza effetto finché l'estrazione è spenta).
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     extractionCheckbox.uncheck(),
   ]);
   await expect(saluteCheckbox).toBeDisabled();
-  await expect(alertsCheckbox).not.toBeChecked();
-  await expect(alertsCheckbox).toBeDisabled();
-  await expect(transcriptionCheckbox).toBeChecked();
 
   // Resta impostato dopo un refresh vero.
   await page.reload();
   await page.getByRole("tab", { name: "Hinthia" }).click();
   await expect(page.getByRole("heading", { name: "Hinthia" })).toBeVisible();
   await expect(extractionCheckbox).not.toBeChecked();
-  await expect(transcriptionCheckbox).toBeChecked();
   await expect(saluteCheckbox).toBeDisabled();
-  await expect(alertsCheckbox).toBeDisabled();
 
-  // Riaccendere l'estrazione avanzata NON riaccende gli Avvisi da solo
-  // --- resta una scelta esplicita a sé, come per il cancello generale.
-  // Il consenso della categoria Salute, invece, era rimasto acceso
-  // (non dipendeva da extractionConsent per essere salvato) e torna
-  // subito visibile come tale.
+  // Riaccendere l'estrazione avanzata: il consenso della categoria Salute era rimasto acceso
+  // (non dipendeva da extractionConsent per essere salvato) e torna subito visibile come tale.
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     extractionCheckbox.check(),
   ]);
   await expect(saluteCheckbox).toBeEnabled();
   await expect(saluteCheckbox).toBeChecked();
-  await expect(alertsCheckbox).toBeEnabled();
-  await expect(alertsCheckbox).not.toBeChecked();
 
-  // Spegnere il cancello generale spegne e disabilita tutto, trascrizione compresa.
+  // Spegnere il cancello generale spegne e disabilita tutto.
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     masterSwitch.click(),
@@ -126,6 +94,4 @@ test("cancello generale, estrazione avanzata per categoria, trascrizione e avvis
   await expect(masterSwitch).toHaveAttribute("aria-checked", "false");
   await expect(extractionCheckbox).not.toBeChecked();
   await expect(extractionCheckbox).toBeDisabled();
-  await expect(transcriptionCheckbox).not.toBeChecked();
-  await expect(transcriptionCheckbox).toBeDisabled();
 });

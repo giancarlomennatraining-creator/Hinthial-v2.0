@@ -16,7 +16,6 @@ function doc(overrides: Partial<DocumentListItem>): DocumentListItem {
     wrappedDocumentKey: "",
     expiresAt: null,
     notes: "",
-    transcript: "",
     extractedText: "",
     extractedAt: null,
     hasThumbnail: false,

@@ -142,8 +142,6 @@ export async function updateAIMasterEnabled(
             ai_master_enabled: false,
             ai_chat_consent: false,
             ai_extraction_consent: false,
-            ai_transcription_consent: false,
-            ai_proactive_alerts_consent: false,
           },
     )
     .eq("id", userId);
@@ -169,7 +167,7 @@ export async function updateAIChatConsent(
   }
 }
 
-/** FASE 22: il "leggere contenuti" resta un consenso a due livelli --- questo generale, poi per categoria (v. domain/categories/repository.ts, setCategoryAIExtractionEnabled). Spegnerlo spegne anche proactive-alerts, che ne dipende. */
+/** FASE 22: il "leggere contenuti" resta un consenso a due livelli --- questo generale, poi per categoria (v. domain/categories/repository.ts, setCategoryAIExtractionEnabled). */
 export async function updateAIExtractionConsent(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -177,43 +175,7 @@ export async function updateAIExtractionConsent(
 ): Promise<void> {
   const { error } = await supabase
     .from("profiles")
-    .update(
-      consent
-        ? { ai_extraction_consent: true }
-        : { ai_extraction_consent: false, ai_proactive_alerts_consent: false },
-    )
-    .eq("id", userId);
-
-  if (error) {
-    throw new Error(`Impossibile salvare il consenso: ${error.message}`);
-  }
-}
-
-/** Consenso specifico alla trascrizione audio/video reale (FASE 22b, non ancora costruita). */
-export async function updateAITranscriptionConsent(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  consent: boolean,
-): Promise<void> {
-  const { error } = await supabase
-    .from("profiles")
-    .update({ ai_transcription_consent: consent })
-    .eq("id", userId);
-
-  if (error) {
-    throw new Error(`Impossibile salvare il consenso: ${error.message}`);
-  }
-}
-
-/** FASE 24, non ancora costruita --- effetto solo se ai_extraction_consent è anche true. */
-export async function updateAIProactiveAlertsConsent(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  consent: boolean,
-): Promise<void> {
-  const { error } = await supabase
-    .from("profiles")
-    .update({ ai_proactive_alerts_consent: consent })
+    .update({ ai_extraction_consent: consent })
     .eq("id", userId);
 
   if (error) {

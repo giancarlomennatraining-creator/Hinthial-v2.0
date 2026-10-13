@@ -43,8 +43,6 @@ export default async function AppLayout({
       initialAIMasterEnabled={user.aiMasterEnabled}
       initialAIChatConsent={user.aiChatConsent}
       initialAIExtractionConsent={user.aiExtractionConsent}
-      initialAITranscriptionConsent={user.aiTranscriptionConsent}
-      initialAIProactiveAlertsConsent={user.aiProactiveAlertsConsent}
     >
       {children}
     </AppShell>

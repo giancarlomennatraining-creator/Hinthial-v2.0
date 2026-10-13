@@ -8,12 +8,9 @@ import {
   documentsAwaitingExtraction,
   downloadDocument,
   extractTextForExistingDocument,
-  getDocumentById,
-  updateDocumentTranscript,
   updateTextNoteContent,
 } from "@/domain/documents/repository";
-import { contentKindFor, hasInlinePlayer, isTranscribable } from "@/lib/content-kind";
-import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
+import { contentKindFor, hasInlinePlayer } from "@/lib/content-kind";
 import type { DocumentSummary } from "@/domain/documents/types";
 import { formatDate, formatSize } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
@@ -98,13 +95,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [noteDraft, setNoteDraft] = useState({ title: "", body: "" });
   const [noteLoading, setNoteLoading] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
-
-  // Trascrizione di un audio/video (v. domain/transcription) --- una sola alla volta.
-  const [transcribingId, setTranscribingId] = useState<string | null>(null);
-  const [transcriptDraft, setTranscriptDraft] = useState("");
-  const [transcriptAutoMessage, setTranscriptAutoMessage] = useState<string | null>(null);
-  const [transcriptAutoBusy, setTranscriptAutoBusy] = useState(false);
-  const [transcriptSaving, setTranscriptSaving] = useState(false);
 
   // "?created=1" arriva da /archive/new dopo un salvataggio riuscito. Niente più "?updated=1": la Scheda
   // (v. ArchiveItemDetail.tsx) salva sul posto, senza tornare qui --- il suo "Modifiche salvate." è un toast lì.
@@ -192,59 +182,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
       setError(err instanceof Error ? err.message : "Impossibile aggiornare la nota.");
     } finally {
       setNoteSaving(false);
-    }
-  }
-
-  // La trascrizione non sta nell'elenco (pesa): si legge dal documento solo quando la si apre.
-  async function toggleTranscript(doc: DocumentSummary) {
-    if (transcribingId === doc.id) {
-      setTranscribingId(null);
-      return;
-    }
-    try {
-      const full = await getDocumentById(supabase, masterKey, doc.id);
-      setTranscriptDraft(full?.transcript ?? "");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aprire la trascrizione.");
-      return;
-    }
-    setTranscribingId(doc.id);
-    setTranscriptAutoMessage(null);
-  }
-
-  async function handleAutoTranscribe(doc: DocumentSummary) {
-    setTranscriptAutoMessage(null);
-    setTranscriptAutoBusy(true);
-    setError(null);
-    try {
-      const { mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
-      const result = await stubTranscriptionProvider.transcribe(bytes, mimeType);
-      if (result) {
-        setTranscriptDraft(result);
-      } else {
-        setTranscriptAutoMessage(
-          "La trascrizione automatica non è ancora disponibile in questa versione (arriverà con l'AI reale, in un motore che gira interamente sul dispositivo). Scrivila tu qui sotto, nel frattempo.",
-        );
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile leggere il contenuto da trascrivere.");
-    } finally {
-      setTranscriptAutoBusy(false);
-    }
-  }
-
-  async function saveTranscript(doc: DocumentSummary) {
-    setTranscriptSaving(true);
-    setError(null);
-    try {
-      await updateDocumentTranscript(supabase, masterKey, doc.id, transcriptDraft);
-      // refresh() prima di chiudere il pannello: se riaperto subito deve trovare il testo appena salvato.
-      await refresh();
-      setTranscribingId(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile salvare la trascrizione.");
-    } finally {
-      setTranscriptSaving(false);
     }
   }
 
@@ -463,7 +400,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 const kind = contentKindFor(doc.mimeType);
                 const isPlaying = playingId === doc.id;
                 const isNoteOpen = openNoteId === doc.id;
-                const isTranscribing = transcribingId === doc.id;
 
                 return (
                   <li key={doc.id} className="flex flex-col gap-3 p-4">
@@ -529,11 +465,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                             Scarica
                           </RowMenuItem>
                         )}
-                        {isTranscribable(kind) ? (
-                          <RowMenuItem disabled={busy} onClick={() => toggleTranscript(doc)}>
-                            {isTranscribing ? "Chiudi trascrizione" : "📝 Trascrizione"}
-                          </RowMenuItem>
-                        ) : null}
                         <RowMenuItem disabled={busy} danger onClick={() => handleDelete(doc)}>
                           Elimina
                         </RowMenuItem>
@@ -590,47 +521,6 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                       </div>
                     ) : null}
 
-                    {isTranscribing ? (
-                      <div className="flex flex-col gap-2 rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
-                        <div className="flex items-center justify-between gap-3">
-                          <label
-                            htmlFor={`transcript-${doc.id}`}
-                            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                          >
-                            Trascrizione
-                          </label>
-                          <button
-                            type="button"
-                            disabled={transcriptAutoBusy}
-                            onClick={() => handleAutoTranscribe(doc)}
-                            className="text-xs font-medium text-zinc-600 underline-offset-2 hover:underline disabled:opacity-50 dark:text-zinc-400"
-                          >
-                            {transcriptAutoBusy ? "Provo…" : "Trascrivi automaticamente"}
-                          </button>
-                        </div>
-                        {transcriptAutoMessage ? (
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">{transcriptAutoMessage}</p>
-                        ) : null}
-                        <textarea
-                          id={`transcript-${doc.id}`}
-                          rows={5}
-                          value={transcriptDraft}
-                          onChange={(e) => setTranscriptDraft(e.target.value)}
-                          placeholder="Scrivi qui la trascrizione, o provaci con il tasto qui sopra…"
-                          className={INPUT_FIELD}
-                        />
-                        <div className="flex gap-3">
-                          <button
-                            type="button"
-                            disabled={transcriptSaving}
-                            onClick={() => saveTranscript(doc)}
-                            className="self-start rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                          >
-                            {transcriptSaving ? "Salvataggio…" : "Salva trascrizione"}
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
                   </li>
                 );
               })}

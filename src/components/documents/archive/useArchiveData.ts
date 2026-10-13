@@ -26,7 +26,7 @@ export type BulkPopover = "category" | "dossier" | null;
 /**
  * I dati dell'Archivio e le azioni che valgono per ogni vista: caricamento, selezione, azioni su più documenti
  * (categoria, fascicolo, cestino), apertura e eliminazione di uno. Quello che serve solo a elenco e tabella
- * (player inline, note, trascrizione, ordinamento a colonne) resta in DocumentsPanel.
+ * (player inline e note) resta in DocumentsPanel.
  */
 export function useArchiveData(masterKey: CryptoKey) {
   const supabase = useSupabase();

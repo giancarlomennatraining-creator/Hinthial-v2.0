@@ -29,7 +29,6 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         wrappedDocumentKey: "",
         expiresAt: null,
         notes: "",
-        transcript: "",
         extractedText: "",
         extractedAt: null,
         hasThumbnail: false,
@@ -57,7 +56,6 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
         wrappedDocumentKey: "",
         expiresAt: null,
         notes: "",
-        transcript: "",
         extractedText: "",
         extractedAt: null,
         hasThumbnail: false,
@@ -111,43 +109,6 @@ describe("mockAIProvider.search", () => {
     expect(mockAIProvider.search("ok", context)).toEqual([]);
   });
 
-  it("finds a document by a word written only in its transcript, not its filename", () => {
-    const context = buildContext({
-      documents: [
-        {
-          id: "doc-video",
-          filename: "messaggio.webm",
-          mimeType: "video/webm",
-          size: 1000,
-          categoryId: null,
-          relatedAssetId: null,
-          createdAt: "2026-01-01",
-          storagePath: "",
-          wrappedDocumentKey: "",
-          expiresAt: null,
-          notes: "",
-          transcript: "la combinazione della cassaforte è 12-34-56",
-          extractedText: "",
-          extractedAt: null,
-          hasThumbnail: false,
-          aiExtractionExcluded: false,
-          structuredFields: {},
-          aiSynthesis: "",
-          aiSynthesisGeneratedAt: null,
-          contentAnalysis: null,
-          analysisStatus: null,
-          analysisUpdatedAt: null,
-          issuer: "",
-          deletedAt: null,
-          purgeAt: null,
-          dossierIds: [],
-        },
-      ],
-    });
-    const results = mockAIProvider.search("cassaforte", context);
-    expect(results.map((r) => r.id)).toContain("doc-video");
-  });
-
   it("finds a document by a word that appears only inside the file, not in its name (FASE 17)", () => {
     const context = buildContext({
       documents: [
@@ -163,7 +124,6 @@ describe("mockAIProvider.search", () => {
           wrappedDocumentKey: "",
           expiresAt: null,
           notes: "",
-          transcript: "",
           extractedText: "Polizza responsabilità civile autoveicoli --- scadenza 3 giugno 2027",
           extractedAt: "2026-01-01",
           hasThumbnail: false,
@@ -183,38 +143,6 @@ describe("mockAIProvider.search", () => {
     });
     const results = mockAIProvider.search("polizza", context);
     expect(results.map((r) => r.id)).toContain("doc-pdf");
-  });
-
-  it("finds a capsule by a word written only in one attachment's transcript", () => {
-    const context = buildContext({
-      capsules: [
-        {
-          id: "capsule-audio",
-          title: "Per Maria",
-          content: "un pensiero",
-          contentStyle: "simple",
-          openEffect: "discreet",
-          attachments: [
-            {
-              id: "att-1",
-              filename: "messaggio.webm",
-              mimeType: "audio/webm",
-              size: 1000,
-              wrappedDocumentKey: "",
-              transcript: "ti voglio bene, ricordati di innaffiare le piante",
-            },
-          ],
-          linkedDocuments: [],
-          relatedFriends: [],
-          status: "draft",
-          accessCondition: "manual",
-          openAt: null,
-          createdAt: "2026-01-01",
-        },
-      ],
-    });
-    const results = mockAIProvider.search("piante", context);
-    expect(results.map((r) => r.id)).toContain("capsule-audio");
   });
 });
 
@@ -261,7 +189,6 @@ describe("mockAIProvider.retrieve", () => {
               wrappedDocumentKey: "",
               expiresAt: null,
               notes: "",
-              transcript: "",
               extractedText: "",
               extractedAt: null,
               hasThumbnail: false,

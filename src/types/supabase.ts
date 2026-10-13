@@ -122,8 +122,6 @@ export type Database = {
           ai_master_enabled: boolean;
           ai_chat_consent: boolean;
           ai_extraction_consent: boolean;
-          ai_transcription_consent: boolean;
-          ai_proactive_alerts_consent: boolean;
           capsule_countdown_visible: boolean;
           trash_retention_days: number;
           digital_legacy_enabled: boolean;
@@ -158,8 +156,6 @@ export type Database = {
           ai_master_enabled?: boolean;
           ai_chat_consent?: boolean;
           ai_extraction_consent?: boolean;
-          ai_transcription_consent?: boolean;
-          ai_proactive_alerts_consent?: boolean;
           capsule_countdown_visible?: boolean;
           trash_retention_days?: number;
           digital_legacy_enabled?: boolean;
@@ -194,8 +190,6 @@ export type Database = {
           ai_master_enabled?: boolean;
           ai_chat_consent?: boolean;
           ai_extraction_consent?: boolean;
-          ai_transcription_consent?: boolean;
-          ai_proactive_alerts_consent?: boolean;
           capsule_countdown_visible?: boolean;
           trash_retention_days?: number;
           digital_legacy_enabled?: boolean;
@@ -520,7 +514,6 @@ export type Database = {
           expires_at: string | null;
           encrypted_notes: string | null;
           encrypted_issuer: string | null;
-          encrypted_transcript: string | null;
           encrypted_extracted_text: string | null;
           extracted_at: string | null;
           has_thumbnail: boolean;
@@ -550,7 +543,6 @@ export type Database = {
           expires_at?: string | null;
           encrypted_notes?: string | null;
           encrypted_issuer?: string | null;
-          encrypted_transcript?: string | null;
           encrypted_extracted_text?: string | null;
           extracted_at?: string | null;
           has_thumbnail?: boolean;
@@ -580,7 +572,6 @@ export type Database = {
           expires_at?: string | null;
           encrypted_notes?: string | null;
           encrypted_issuer?: string | null;
-          encrypted_transcript?: string | null;
           encrypted_extracted_text?: string | null;
           extracted_at?: string | null;
           has_thumbnail?: boolean;

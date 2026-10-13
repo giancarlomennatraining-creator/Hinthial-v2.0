@@ -406,7 +406,6 @@ async function buildRecipientPayload(
         mimeType: attachment.mimeType,
         size: attachment.size,
         documentKeyRaw: bytesToBase64(raw),
-        transcript: attachment.transcript,
       };
     }),
   );
@@ -643,44 +642,6 @@ export async function downloadSharedCapsuleAttachment(
   const bytes = await decryptBytes(documentKey, parseEnvelope(serializedPayload));
 
   return { filename: attachment.filename, mimeType: attachment.mimeType, bytes };
-}
-
-/** Ricifra l'intero payload come updateCapsule, ma tocca solo il transcript di un allegato --- permesso a prescindere dallo stato, non cambia cosa contiene la capsula. */
-export async function updateCapsuleAttachmentTranscript(
-  supabase: SupabaseClient<Database>,
-  masterKey: CryptoKey,
-  capsule: Pick<
-    CapsuleListItem,
-    "id" | "title" | "content" | "contentStyle" | "openEffect" | "attachments" | "linkedDocuments" | "relatedFriends" | "openAt"
-  >,
-  attachmentId: string,
-  transcript: string,
-): Promise<void> {
-  const trimmed = transcript.trim();
-  const attachments = capsule.attachments.map((a) =>
-    a.id === attachmentId ? { ...a, transcript: trimmed || undefined } : a,
-  );
-
-  const payload: CapsulePayload = {
-    title: capsule.title,
-    content: capsule.content,
-    contentStyle: capsule.contentStyle,
-    openEffect: capsule.openEffect,
-    attachments,
-    linkedDocumentIds: capsule.linkedDocuments.map((d) => d.id),
-    relatedFriendIds: capsule.relatedFriends.map((c) => c.id),
-    openAt: capsule.openAt,
-  };
-  const encryptedPayload = await encryptBytes(masterKey, utf8ToBytes(JSON.stringify(payload)));
-
-  const { error } = await supabase
-    .from("capsules")
-    .update({ encrypted_payload: serializeEnvelope(encryptedPayload) })
-    .eq("id", capsule.id);
-
-  if (error) {
-    throw new Error(`Impossibile salvare la trascrizione: ${error.message}`);
-  }
 }
 
 /** Downloads and decrypts one attachment's content client-side. */

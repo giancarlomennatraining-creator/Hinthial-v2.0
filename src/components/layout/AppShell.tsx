@@ -41,8 +41,6 @@ export function AppShell({
   initialAIMasterEnabled,
   initialAIChatConsent,
   initialAIExtractionConsent,
-  initialAITranscriptionConsent,
-  initialAIProactiveAlertsConsent,
   children,
 }: {
   userId: string;
@@ -58,8 +56,6 @@ export function AppShell({
   initialAIMasterEnabled: boolean;
   initialAIChatConsent: boolean;
   initialAIExtractionConsent: boolean;
-  initialAITranscriptionConsent: boolean;
-  initialAIProactiveAlertsConsent: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -77,8 +73,6 @@ export function AppShell({
               initialMasterEnabled={initialAIMasterEnabled}
               initialChatConsent={initialAIChatConsent}
               initialExtractionConsent={initialAIExtractionConsent}
-              initialTranscriptionConsent={initialAITranscriptionConsent}
-              initialProactiveAlertsConsent={initialAIProactiveAlertsConsent}
             >
               <AppChrome
                 userId={userId}

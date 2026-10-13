@@ -13,7 +13,7 @@ export type SearchArea = AISource["kind"];
 export const SEARCH_AREAS: readonly SearchArea[] = ["document", "reminder", "asset", "friend", "capsule"];
 
 /** Da dove viene il frammento mostrato sotto il risultato --- perché l'elemento è comparso se il nome non basta. */
-export type SnippetOrigin = "text" | "notes" | "transcript" | "content";
+export type SnippetOrigin = "text" | "notes" | "content";
 
 export interface SearchResult {
   kind: SearchArea;
@@ -86,7 +86,7 @@ export function searchEverything(query: string, context: AIContext): SearchResul
   for (const doc of context.documents) {
     const category = doc.categoryId ? (categoryName.get(doc.categoryId) ?? "") : "";
     const labels = [category, doc.issuer].join(" ");
-    const content = [doc.notes, doc.transcript, doc.extractedText].join(" ");
+    const content = [doc.notes, doc.extractedText].join(" ");
     const rank = rankOf(terms, doc.filename, labels, content);
     if (rank === null) continue;
 
@@ -96,7 +96,6 @@ export function searchEverything(query: string, context: AIContext): SearchResul
       const sources: Array<[SnippetOrigin, string]> = [
         ["text", doc.extractedText],
         ["notes", doc.notes],
-        ["transcript", doc.transcript],
       ];
       for (const [origin, text] of sources) {
         const found = findTextSnippet(text, query);
@@ -154,8 +153,7 @@ export function searchEverything(query: string, context: AIContext): SearchResul
   }
 
   for (const capsule of context.capsules) {
-    const transcripts = capsule.attachments.map((a) => a.transcript ?? "");
-    const content = [capsule.content, ...transcripts].join(" ");
+    const content = capsule.content;
     const rank = rankOf(terms, capsule.title, "", content);
     if (rank === null) continue;
 

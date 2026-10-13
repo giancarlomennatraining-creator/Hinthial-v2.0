@@ -11,7 +11,6 @@ import {
   listCapsules,
   listCapsulesSharedWithMe,
   shareCapsule,
-  updateCapsuleAttachmentTranscript,
 } from "@/domain/capsules/repository";
 import { deleteReply, listReceivedReplies, type CapsuleReply } from "@/domain/capsules/replies-repository";
 import { downloadDocument } from "@/domain/documents/repository";
@@ -19,8 +18,7 @@ import { lookupFriendAccount, setFriendLinkedUser } from "@/domain/friends/repos
 import { getCapsuleCountdownVisible } from "@/domain/profile/repository";
 import { cn } from "@/lib/utils";
 import { saveBytesAsFile } from "@/lib/download";
-import { contentKindFor, CONTENT_KIND_ICON, isTranscribable } from "@/lib/content-kind";
-import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
+import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { CapsulePortholeRow } from "@/components/capsules/CapsulePortholeRow";
 import { SharedCapsuleItem } from "@/components/capsules/SharedCapsuleItem";
 import type { OpenOrigin } from "@/components/capsules/opening/types";
@@ -41,7 +39,7 @@ import type {
 } from "@/domain/capsules/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import { useToast } from "@/components/ui/ToastProvider";
-import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY } from "@/components/ui/styles";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -88,13 +86,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   // Impostazioni > Aspetto (v. CapsuleCountdownSettings). Default true mentre si attende la risposta.
   const [showCountdown, setShowCountdown] = useState(true);
-
-  // Trascrizione di un allegato audio/video (v. domain/transcription) --- uno alla volta.
-  const [transcribingAttachmentId, setTranscribingAttachmentId] = useState<string | null>(null);
-  const [transcriptDraft, setTranscriptDraft] = useState("");
-  const [transcriptAutoMessage, setTranscriptAutoMessage] = useState<string | null>(null);
-  const [transcriptAutoBusy, setTranscriptAutoBusy] = useState(false);
-  const [transcriptSaving, setTranscriptSaving] = useState(false);
 
   // "?created=1"/"?updated=1": solo un flag, mai il titolo o contenuto (finirebbe in chiaro nell'URL). Stato pigro: il messaggio non deve sparire quando ripuliamo l'URL con router.replace.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
@@ -290,63 +281,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  function toggleAttachmentTranscript(attachment: CapsuleAttachment) {
-    if (transcribingAttachmentId === attachment.id) {
-      setTranscribingAttachmentId(null);
-      return;
-    }
-    setTranscribingAttachmentId(attachment.id);
-    setTranscriptDraft(attachment.transcript ?? "");
-    setTranscriptAutoMessage(null);
-  }
-
-  async function handleAutoTranscribeAttachment(capsule: CapsuleListItem, attachment: CapsuleAttachment) {
-    setTranscriptAutoMessage(null);
-    setTranscriptAutoBusy(true);
-    setError(null);
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Devi essere autenticato.");
-
-      const { mimeType, bytes } = await downloadCapsuleAttachment(
-        supabase,
-        masterKey,
-        user.id,
-        capsule.id,
-        attachment,
-      );
-      const result = await stubTranscriptionProvider.transcribe(bytes, mimeType);
-      if (result) {
-        setTranscriptDraft(result);
-      } else {
-        setTranscriptAutoMessage(
-          "La trascrizione automatica non è ancora disponibile in questa versione (arriverà con l'AI reale, in un motore che gira interamente sul dispositivo). Scrivila tu qui sotto, nel frattempo.",
-        );
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile leggere l'allegato da trascrivere.");
-    } finally {
-      setTranscriptAutoBusy(false);
-    }
-  }
-
-  async function saveAttachmentTranscript(capsule: CapsuleListItem, attachment: CapsuleAttachment) {
-    setTranscriptSaving(true);
-    setError(null);
-    try {
-      await updateCapsuleAttachmentTranscript(supabase, masterKey, capsule, attachment.id, transcriptDraft);
-      // refresh() prima di chiudere il pannello: se riaperto subito deve trovare il testo appena salvato.
-      await refresh();
-      setTranscribingAttachmentId(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile salvare la trascrizione.");
-    } finally {
-      setTranscriptSaving(false);
-    }
-  }
-
   /** Il menu delle azioni di una capsula. */
   function renderMenu(capsule: CapsuleListItem, busy: boolean) {
     return (
@@ -376,14 +310,13 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     );
   }
 
-  /** I contenuti di una capsula (allegati e documenti d'Archivio collegati), con le loro azioni: "Apri" e "Trascrizione". */
+  /** I contenuti di una capsula (allegati e documenti d'Archivio collegati), con la loro azione: "Apri". */
   function renderContents(capsule: CapsuleListItem) {
     if (capsule.attachments.length === 0 && capsule.linkedDocuments.length === 0) return null;
     return (
       <ul className="flex flex-col gap-1">
         {capsule.attachments.map((attachment) => {
           const kind = contentKindFor(attachment.mimeType);
-          const isTranscribingThis = transcribingAttachmentId === attachment.id;
           return (
             <li key={attachment.id} className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between gap-3 rounded-md bg-zinc-50 px-3 py-1.5 text-xs dark:bg-zinc-900">
@@ -391,15 +324,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                   {CONTENT_KIND_ICON[kind]} {attachment.filename} · {formatSize(attachment.size)}
                 </span>
                 <div className="flex shrink-0 gap-3">
-                  {isTranscribable(kind) ? (
-                    <button
-                      type="button"
-                      onClick={() => toggleAttachmentTranscript(attachment)}
-                      className="font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
-                    >
-                      📝 {isTranscribingThis ? "Chiudi" : "Trascrizione"}
-                    </button>
-                  ) : null}
                   <button
                     type="button"
                     disabled={busyAttachment === attachment.id}
@@ -410,49 +334,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
                   </button>
                 </div>
               </div>
-              {isTranscribingThis ? (
-                <div className="flex flex-col gap-2 rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
-                  <div className="flex items-center justify-between gap-3">
-                    <label
-                      htmlFor={`transcript-${attachment.id}`}
-                      className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                    >
-                      Trascrizione
-                    </label>
-                    <button
-                      type="button"
-                      disabled={transcriptAutoBusy}
-                      onClick={() => handleAutoTranscribeAttachment(capsule, attachment)}
-                      className="text-xs font-medium text-zinc-600 underline-offset-2 hover:underline disabled:opacity-50 dark:text-zinc-400"
-                    >
-                      {transcriptAutoBusy ? "Provo…" : "Trascrivi automaticamente"}
-                    </button>
-                  </div>
-                  {transcriptAutoMessage ? (
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {transcriptAutoMessage}
-                    </p>
-                  ) : null}
-                  <textarea
-                    id={`transcript-${attachment.id}`}
-                    rows={4}
-                    value={transcriptDraft}
-                    onChange={(e) => setTranscriptDraft(e.target.value)}
-                    placeholder="Scrivi qui la trascrizione, o provaci con il tasto qui sopra…"
-                    className={INPUT_FIELD}
-                  />
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      disabled={transcriptSaving}
-                      onClick={() => saveAttachmentTranscript(capsule, attachment)}
-                      className="self-start rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                    >
-                      {transcriptSaving ? "Salvataggio…" : "Salva trascrizione"}
-                    </button>
-                  </div>
-                </div>
-              ) : null}
             </li>
           );
         })}
