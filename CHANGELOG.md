@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-21 (92)
+
+### Ristrutturazione, passo 2: la dashboard ha un solo aspetto
+
+**Cosa fa:**
+- Via gli stili **Oggi**, **Bento**, **Storie** e **Lavagna** e la sezione "Dashboard" nelle Impostazioni > Aspetto: resta la dashboard classica, con i contatori, le prossime scadenze e gli aggiunti di recente.
+- Le richieste di amicizia in arrivo compaiono sempre nel popup, perché nessuno stile le mostra più da sé.
+
+**Note tecniche:**
+- Rimossi `DashboardToday/Bento/Stories/Board/Areas`, `domain/dashboard/{bento,board,stories}.ts`, `lib/dashboard-style.ts`, `DashboardStyleSettings`, `get/updateDashboardStyle`, le animazioni di Storie e Lavagna in `globals.css` e i loro test (unit ed e2e). `deadlines.ts` tiene solo `daysUntil`, `agoText` e `dayKey`; `useDashboardData` non espone più `patchReminder`.
+- Migrazione `20261015000001_drop_dashboard_style.sql`: elimina `profiles.dashboard_style`. Il codice non la legge più, quindi si può applicare in qualsiasi momento.
+
+---
+
 ## 2026-10-20 (91)
 
 ### Ristrutturazione, passo 1: lo sblocco sceglie da solo la sua pelle

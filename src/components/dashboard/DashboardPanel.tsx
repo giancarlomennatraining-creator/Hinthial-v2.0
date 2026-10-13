@@ -11,7 +11,6 @@ import { FriendRequestNotificationPopup } from "@/components/dashboard/FriendReq
 import { PageHelp } from "@/components/help/PageHelp";
 import { rememberUnlockDismissed, unlockWasDismissed, useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
-import type { DashboardStyle } from "@/lib/dashboard-style";
 import { BTN_PRIMARY } from "@/components/ui/styles";
 
 /**
@@ -26,7 +25,7 @@ import { BTN_PRIMARY } from "@/components/ui/styles";
  * (v. OnboardingStatus), che copre lo stesso scopo senza occupare corpo
  * della pagina.
  */
-export function DashboardPanel({ displayName, style }: { displayName: string; style: DashboardStyle }) {
+export function DashboardPanel({ displayName }: { displayName: string }) {
   const { status } = useMasterKey();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -89,9 +88,8 @@ export function DashboardPanel({ displayName, style }: { displayName: string; st
       {status.kind === "unlocked" && !settling ? (
         <>
           <SharedCapsuleNotificationPopup />
-          {/* Oggi e Bento mostrano le richieste di amicizia da sé, con accetta e rifiuta: il popup sarebbe un doppione. */}
-          {style === "today" || style === "bento" ? null : <FriendRequestNotificationPopup masterKey={status.masterKey} />}
-          <DashboardWidgets masterKey={status.masterKey} style={style} />
+          <FriendRequestNotificationPopup masterKey={status.masterKey} />
+          <DashboardWidgets masterKey={status.masterKey} />
         </>
       ) : status.kind === "checking" ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>

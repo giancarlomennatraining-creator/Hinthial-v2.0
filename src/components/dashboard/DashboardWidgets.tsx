@@ -1,23 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { DashboardBento } from "@/components/dashboard/DashboardBento";
-import { DashboardBoard } from "@/components/dashboard/DashboardBoard";
 import { DashboardClassic } from "@/components/dashboard/DashboardClassic";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
-import { DashboardStories } from "@/components/dashboard/DashboardStories";
-import { DashboardToday } from "@/components/dashboard/DashboardToday";
 import { useDashboardData } from "@/components/dashboard/useDashboardData";
-import type { DashboardStyle } from "@/lib/dashboard-style";
 
-/**
- * Il corpo della dashboard nello stile scelto in Impostazioni > Aspetto (v. lib/dashboard-style.ts). I dati sono gli
- * stessi per ogni stile (v. useDashboardData): cambia solo come si leggono.
- */
-export function DashboardWidgets({ masterKey, style }: { masterKey: CryptoKey; style: DashboardStyle }) {
-  const { supabase, context, loading, error, patchReminder } = useDashboardData(masterKey);
-  // Letto una volta al mount (lazy initializer), non chiamando l'impuro Date.now() direttamente durante il render.
-  const [now] = useState(() => new Date());
+/** Il corpo della dashboard: contatori, prossime scadenze, aggiunti di recente (v. DashboardClassic). */
+export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
+  const { context, loading, error } = useDashboardData(masterKey);
 
   if (error) {
     return (
@@ -31,17 +20,5 @@ export function DashboardWidgets({ masterKey, style }: { masterKey: CryptoKey; s
     return <DashboardSkeleton />;
   }
 
-  if (style === "today") {
-    return <DashboardToday supabase={supabase} masterKey={masterKey} context={context} now={now} patchReminder={patchReminder} />;
-  }
-  if (style === "board") {
-    return <DashboardBoard supabase={supabase} context={context} now={now} patchReminder={patchReminder} />;
-  }
-  if (style === "stories") {
-    return <DashboardStories supabase={supabase} masterKey={masterKey} context={context} now={now} />;
-  }
-  if (style === "bento") {
-    return <DashboardBento supabase={supabase} masterKey={masterKey} context={context} now={now} />;
-  }
   return <DashboardClassic context={context} />;
 }
