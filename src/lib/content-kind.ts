@@ -48,7 +48,3 @@ export function hasInlinePlayer(kind: ContentKind): boolean {
   return kind === "image" || kind === "audio" || kind === "video";
 }
 
-/** Solo audio/video hanno senso da trascrivere (v. domain/transcription) --- non un'immagine o un documento. */
-export function isTranscribable(kind: ContentKind): boolean {
-  return kind === "audio" || kind === "video";
-}

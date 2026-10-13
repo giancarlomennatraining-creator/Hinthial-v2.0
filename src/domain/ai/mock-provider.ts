@@ -61,7 +61,7 @@ function search(query: string, context: AIContext): AISource[] {
   }
 
   for (const doc of context.documents) {
-    const haystack = [doc.filename, doc.notes, doc.transcript, doc.extractedText].join(" ");
+    const haystack = [doc.filename, doc.notes, doc.extractedText].join(" ");
     if (textMatches(haystack, tokens)) {
       sources.push({ kind: "document", id: doc.id, label: doc.filename, href: documentHref(doc) });
     }
@@ -80,8 +80,7 @@ function search(query: string, context: AIContext): AISource[] {
   }
 
   for (const capsule of context.capsules) {
-    const attachmentTranscripts = capsule.attachments.map((a) => a.transcript ?? "");
-    const haystack = [capsule.title, capsule.content, ...attachmentTranscripts].join(" ");
+    const haystack = [capsule.title, capsule.content].join(" ");
     if (textMatches(haystack, tokens)) {
       sources.push({ kind: "capsule", id: capsule.id, label: capsule.title, href: "/capsules" });
     }

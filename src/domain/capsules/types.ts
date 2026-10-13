@@ -21,8 +21,6 @@ export interface CapsuleAttachment {
   size: number;
   /** Serialized EncryptedEnvelope --- wraps this attachment's own Document Key. */
   wrappedDocumentKey: string;
-  /** Audio/video only, scritta a mano (v. domain/transcription) --- assente se mai impostata. */
-  transcript?: string;
 }
 
 export interface CapsuleListItem {
@@ -95,7 +93,6 @@ export interface SharedCapsuleAttachment {
   size: number;
   /** Base64, bytes grezzi della Document Key di questo allegato. */
   documentKeyRaw: string;
-  transcript?: string;
 }
 
 /** FASE C1: contenuto decifrato via ECDH (v. openSharedCapsule) --- ottenibile solo dopo la data di apertura, prima il DB nega la lettura. */

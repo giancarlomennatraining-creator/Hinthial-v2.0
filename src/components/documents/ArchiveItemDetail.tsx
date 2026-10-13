@@ -1097,19 +1097,8 @@ function ReadingSection({
       {reading === "cannot" ? (
         <>
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
-            Non so ancora ascoltare gli audio e i video. Nel frattempo puoi scrivere tu una
-            trascrizione dall&apos;elenco dell&apos;Archivio, e la ricerca la userà.
+            Non so ancora ascoltare gli audio e i video.
           </p>
-          {doc.transcript ? (
-            <div className="rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
-              <p className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                Trascrizione, scritta da te
-              </p>
-              <p className="text-sm whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
-                {doc.transcript}
-              </p>
-            </div>
-          ) : null}
         </>
       ) : reading === "never" ? (
         <p className="text-sm text-zinc-700 dark:text-zinc-300">

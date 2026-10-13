@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-24 (95)
+
+### Ristrutturazione, passo 5: via Google Drive, trascrizione e consensi inutilizzati
+
+**Cosa fa:**
+- **Google Drive:** via il pulsante "Importa da Google Drive" dal caricamento dei file.
+- **Trascrizione scritta a mano:** via dal menu dei documenti audio/video, dagli allegati delle capsule e dalla Scheda; la ricerca non cerca più nelle trascrizioni. I file audio e video restano caricabili, ascoltabili e allegabili.
+- **Consensi:** nelle Impostazioni > Hinthia restano il cancello generale, la Chat e l'Estrazione avanzata con l'elenco delle categorie. Via "Trascrizione audio/video" e "Generazione di avvisi proattivi", che non hanno mai avuto una funzione dietro.
+
+**Note tecniche:**
+- Rimossi `GoogleDriveBrowser`, `domain/google-drive`, `domain/transcription` (provider fittizio), `updateDocumentTranscript`, `updateCapsuleAttachmentTranscript`, `isTranscribable`, il campo `transcript` di documenti e allegati di capsula, `updateAITranscriptionConsent`, `updateAIProactiveAlertsConsent` e i loro test. Il consenso all'estrazione avanzata (`ai_extraction_consent`) non si tocca: è quello che autorizza Hinthia a leggere i documenti. Nel registro delle attività restano le etichette dei vecchi salvataggi di trascrizione.
+- Migrazione `20261015000005_drop_frozen_features.sql`: elimina `documents.encrypted_transcript`, `profiles.ai_transcription_consent` e `profiles.ai_proactive_alerts_consent`. **Va applicata dopo aver aggiornato il codice** (le vecchie query leggono `encrypted_transcript`) ed è irreversibile: le trascrizioni già scritte vanno perse.
+- Le variabili `NEXT_PUBLIC_GOOGLE_DRIVE_*` in `.env.local` non servono più: si possono togliere.
+
+---
+
 ## 2026-10-23 (94)
 
 ### Ristrutturazione, passo 4: via i tag, restano le categorie

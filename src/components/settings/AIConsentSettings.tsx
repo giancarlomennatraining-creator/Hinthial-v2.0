@@ -11,10 +11,8 @@ import type { Category } from "@/domain/categories/types";
 /**
  * Impostazioni -> Intelligenza artificiale: il "cancello" generale per l'IA reale più le funzioni specifiche che ne
  * dipendono, riusato anche nel pannello ⚙ della pagina AI. Spegnere il cancello spegne anche le funzioni sotto;
- * riaccenderlo non le riaccende da solo. Chat ed Estrazione avanzata hanno oggi una funzione reale dietro
- * (rispettivamente FASE 11 e FASE 22); le altre due non sono ancora costruite, attivarle imposta solo già la
- * preferenza. "Avvisi proattivi" resta disabilitato finché "Estrazione avanzata" non è attiva: non esiste modo di
- * generare un avviso senza aver prima letto i contenuti.
+ * riaccenderlo non le riaccende da solo. Chat ed Estrazione avanzata hanno una funzione reale dietro
+ * (rispettivamente FASE 11 e FASE 22).
  *
  * FASE 22: il consenso all'estrazione avanzata è a due livelli --- questo generale, poi per categoria (elenco sotto,
  * Salute inclusa come una categoria come le altre, non più un'eccezione a parte).
@@ -27,10 +25,6 @@ export function AIConsentSettings() {
     setChatConsent,
     extractionConsent,
     setExtractionConsent,
-    transcriptionConsent,
-    setTranscriptionConsent,
-    proactiveAlertsConsent,
-    setProactiveAlertsConsent,
   } = useAIProcessingConsent();
 
   const supabase = useSupabase();
@@ -44,10 +38,6 @@ export function AIConsentSettings() {
   const [chatError, setChatError] = useState(false);
   const [extractionBusy, setExtractionBusy] = useState(false);
   const [extractionError, setExtractionError] = useState(false);
-  const [transcriptionBusy, setTranscriptionBusy] = useState(false);
-  const [transcriptionError, setTranscriptionError] = useState(false);
-  const [alertsBusy, setAlertsBusy] = useState(false);
-  const [alertsError, setAlertsError] = useState(false);
 
   const refreshCategories = useCallback(async () => {
     setCategoriesError(false);
@@ -112,30 +102,6 @@ export function AIConsentSettings() {
       setCategoriesError(true);
     } finally {
       setBusyCategoryId(null);
-    }
-  }
-
-  async function handleTranscriptionChange(next: boolean) {
-    setTranscriptionError(false);
-    setTranscriptionBusy(true);
-    try {
-      await setTranscriptionConsent(next);
-    } catch {
-      setTranscriptionError(true);
-    } finally {
-      setTranscriptionBusy(false);
-    }
-  }
-
-  async function handleAlertsChange(next: boolean) {
-    setAlertsError(false);
-    setAlertsBusy(true);
-    try {
-      await setProactiveAlertsConsent(next);
-    } catch {
-      setAlertsError(true);
-    } finally {
-      setAlertsBusy(false);
     }
   }
 
@@ -264,47 +230,8 @@ export function AIConsentSettings() {
             </ul>
           </li>
 
-          <li>
-            <label
-              className={cn(
-                "flex items-center gap-2 rounded px-3 py-1.5 text-sm font-medium",
-                masterEnabled
-                  ? "cursor-pointer text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
-                  : "cursor-not-allowed text-zinc-400 dark:text-zinc-600",
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={transcriptionConsent}
-                disabled={!masterEnabled || transcriptionBusy}
-                onChange={() => handleTranscriptionChange(!transcriptionConsent)}
-                className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
-              />
-              Trascrizione audio/video — non ancora disponibile, imposta già la preferenza
-            </label>
-          </li>
-
-          <li>
-            <label
-              className={cn(
-                "flex items-center gap-2 rounded px-3 py-1.5 text-sm font-medium",
-                masterEnabled && extractionConsent
-                  ? "cursor-pointer text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
-                  : "cursor-not-allowed text-zinc-400 dark:text-zinc-600",
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={proactiveAlertsConsent}
-                disabled={!masterEnabled || !extractionConsent || alertsBusy}
-                onChange={() => handleAlertsChange(!proactiveAlertsConsent)}
-                className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
-              />
-              Generazione di avvisi proattivi — richiede l&apos;estrazione avanzata attiva
-            </label>
-          </li>
         </ul>
-        {chatError || extractionError || transcriptionError || alertsError ? (
+        {chatError || extractionError ? (
           <p role="alert" className="text-xs text-red-600 dark:text-red-400">
             Preferenza non salvata.
           </p>

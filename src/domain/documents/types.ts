@@ -2,14 +2,14 @@ import type { AnalysisStatus, PersistedContentAnalysis } from "@/domain/ai/analy
 
 /** `filename`/`notes` già decifrati client-side; `wrappedDocumentKey`/`storagePath` restano opachi per evitare un secondo fetch. */
 /**
- * Un documento senza le colonne pesanti (testo letto, trascrizione, sintesi, analisi di Hinthia): quanto basta per
+ * Un documento senza le colonne pesanti (testo letto, sintesi, analisi di Hinthia): quanto basta per
  * elenchi, conteggi e selettori. Quel testo può pesare fino a 200.000 caratteri a documento, e scaricarlo e
  * decifrarlo per tutti i documenti a ogni apertura di una pagina costa tempo che cresce con l'archivio. Chi ha
  * bisogno del contenuto usa `DocumentListItem` (`listDocuments`, `getDocumentById`).
  */
 export type DocumentSummary = Omit<
   DocumentListItem,
-  "transcript" | "extractedText" | "aiSynthesis" | "contentAnalysis"
+  "extractedText" | "aiSynthesis" | "contentAnalysis"
 >;
 
 export interface DocumentListItem {
@@ -27,9 +27,7 @@ export interface DocumentListItem {
   expiresAt: string | null;
   /** empty string when never set. */
   notes: string;
-  /** Audio/video only, empty string when never set --- v. domain/transcription. */
-  transcript: string;
-  /** FASE 17: testo ricavato dal contenuto per la ricerca dentro i file --- non mostrato/modificabile come `transcript`. */
+  /** FASE 17: testo ricavato dal contenuto per la ricerca dentro i file --- non mostrato né modificabile a mano. */
   extractedText: string;
   /** FASE 17b: `null` = mai tentata (pre-FASE 17); distingue "da recuperare" da "guardato, senza testo" (una scansione). */
   extractedAt: string | null;

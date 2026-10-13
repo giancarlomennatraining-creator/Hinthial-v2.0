@@ -39,7 +39,6 @@ function Key({ children }: { children: React.ReactNode }) {
 const ORIGIN_LABELS: Record<SnippetOrigin, string> = {
   text: "Nel testo",
   notes: "Nelle note",
-  transcript: "Trascrizione",
   content: "Nel contenuto",
 };
 

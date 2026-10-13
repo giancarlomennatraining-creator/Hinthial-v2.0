@@ -9,7 +9,7 @@ import type { AccountVisibilitySummary } from "@/domain/privacy/types";
 const NEVER_VISIBLE = [
   "Il nome dei tuoi file",
   "Il contenuto dei tuoi documenti, foto, audio e video",
-  "Il testo delle tue note e delle trascrizioni",
+  "Il testo delle tue note",
   "Nome ed email dei tuoi contatti fiduciari",
   "Titolo e contenuto delle tue capsule",
   "La tua master password — non lascia mai il tuo dispositivo",

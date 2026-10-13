@@ -71,9 +71,9 @@ export interface UploadOptions {
 }
 
 const DOCUMENT_COLUMNS =
-  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_issuer, encrypted_transcript, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, encrypted_ai_synthesis, ai_synthesis_generated_at, encrypted_content_analysis, analysis_status, analysis_updated_at, created_at";
+  "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_issuer, encrypted_extracted_text, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, encrypted_ai_synthesis, ai_synthesis_generated_at, encrypted_content_analysis, analysis_status, analysis_updated_at, created_at";
 
-/** Come DOCUMENT_COLUMNS, senza testo letto, trascrizione, sintesi e analisi: v. DocumentSummary. */
+/** Come DOCUMENT_COLUMNS, senza testo letto, sintesi e analisi: v. DocumentSummary. */
 const DOCUMENT_SUMMARY_COLUMNS =
   "id, encrypted_filename, wrapped_document_key, storage_path, mime_type, size, category_id, related_asset_id, expires_at, encrypted_notes, encrypted_issuer, extracted_at, has_thumbnail, deleted_at, purge_at, ai_extraction_excluded, encrypted_structured_fields, ai_synthesis_generated_at, analysis_status, analysis_updated_at, created_at";
 
@@ -89,7 +89,6 @@ type DocumentRow = {
   expires_at: string | null;
   encrypted_notes: string | null;
   encrypted_issuer: string | null;
-  encrypted_transcript: string | null;
   encrypted_extracted_text: string | null;
   extracted_at: string | null;
   has_thumbnail: boolean;
@@ -152,7 +151,6 @@ async function toDocumentListItem(
     filenameBytes,
     notes,
     issuer,
-    transcript,
     extractedText,
     structuredFields,
     aiSynthesis,
@@ -162,7 +160,6 @@ async function toDocumentListItem(
       decryptBytes(masterKey, parseEnvelope(row.encrypted_filename)),
       decryptOptionalText(masterKey, row.encrypted_notes),
       decryptOptionalText(masterKey, row.encrypted_issuer),
-      decryptOptionalText(masterKey, row.encrypted_transcript),
       decryptOptionalText(masterKey, row.encrypted_extracted_text),
       decryptStructuredFields(masterKey, row.encrypted_structured_fields),
       decryptOptionalText(masterKey, row.encrypted_ai_synthesis),
@@ -183,7 +180,6 @@ async function toDocumentListItem(
     expiresAt: row.expires_at,
     notes,
     issuer,
-    transcript,
     extractedText,
     extractedAt: row.extracted_at,
     hasThumbnail: row.has_thumbnail,
@@ -201,7 +197,7 @@ async function toDocumentListItem(
 
 type DocumentSummaryRow = Omit<
   DocumentRow,
-  "encrypted_transcript" | "encrypted_extracted_text" | "encrypted_ai_synthesis" | "encrypted_content_analysis"
+  "encrypted_extracted_text" | "encrypted_ai_synthesis" | "encrypted_content_analysis"
 >;
 
 async function toDocumentSummary(
@@ -275,7 +271,7 @@ export async function listDocuments(
 }
 
 /**
- * Come `listDocuments`, ma senza scaricare né decifrare testo letto, trascrizione, sintesi e analisi di ogni
+ * Come `listDocuments`, ma senza scaricare né decifrare testo letto, sintesi e analisi di ogni
  * documento: per gli elenchi, i conteggi e i selettori che non li mostrano. Un documento nel Cestino non compare.
  */
 export async function listDocumentSummaries(
@@ -652,27 +648,6 @@ async function logDocumentChange(
 
 function documentRef(id: string, encryptedLabel?: string): AuditEntityRef {
   return { type: "document", id, encryptedLabel };
-}
-
-/** Scritto a mano oggi (v. domain/transcription); un motore reale in futuro cambierebbe solo cosa riempie il campo, non questa funzione. */
-export async function updateDocumentTranscript(
-  supabase: SupabaseClient<Database>,
-  masterKey: CryptoKey,
-  documentId: string,
-  transcript: string,
-): Promise<void> {
-  const encryptedTranscript = await encryptOptionalText(masterKey, transcript);
-
-  const { error } = await supabase
-    .from("documents")
-    .update({ encrypted_transcript: encryptedTranscript })
-    .eq("id", documentId);
-
-  if (error) {
-    throw new Error(`Impossibile salvare la trascrizione: ${error.message}`);
-  }
-
-  await logDocumentChange(supabase, documentId, { change: "transcript" });
 }
 
 /** Sostituisce sempre il valore precedente --- non è una proposta (nessun accetta/modifica/rifiuta), solo l'ultima lettura d'insieme di Claude, come extractedText/extractedAt per il testo locale. */

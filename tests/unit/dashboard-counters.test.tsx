@@ -58,7 +58,6 @@ describe("DashboardCounters", () => {
           wrappedDocumentKey: "",
           expiresAt: null,
           notes: "",
-          transcript: "",
           extractedText: "",
           extractedAt: null,
           hasThumbnail: false,

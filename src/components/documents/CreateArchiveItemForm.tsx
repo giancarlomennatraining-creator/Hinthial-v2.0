@@ -37,7 +37,6 @@ import { loadDocumentSegments } from "@/domain/documents/segments";
 import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
 import { readingStateFor } from "@/domain/extraction/reading-state";
 import { FileDropZone } from "@/components/documents/FileDropZone";
-import { GoogleDriveBrowser } from "@/components/documents/GoogleDriveBrowser";
 import { detectDuplicates } from "@/domain/bulk-import/duplicates";
 import { groupByFilename } from "@/domain/bulk-import/grouping";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -80,18 +79,14 @@ type ReadingState =
   | { status: "skipped" }
   | { status: "done"; text: string | null };
 
-/** Pubblica di natura (v. .env.local) --- undefined se Google Drive non è configurato in questo ambiente: in quel caso il bottone non compare. */
-const GOOGLE_DRIVE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID;
-
 /**
  * Un file scelto. Uno o molti, il percorso è lo stesso: ognuno ha il suo stato di lettura e, se i file sono più d'uno, il
- * suo titolo. `folderHint` è il nome della cartella Google Drive di provenienza, solo un suggerimento per la categoria.
+ * suo titolo.
  */
 interface LotFile {
   id: string;
   file: File;
   title: string;
-  folderHint: string | null;
   reading: ReadingState;
 }
 
@@ -404,7 +399,6 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   // Per gruppo (per nome): se collegarlo, e con che titolo se nuovo. Le proposte partono selezionate: sono raggruppamenti evidenti.
   const [groupChoices, setGroupChoices] = useState<Record<string, { link: boolean; title: string }>>({});
   const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null);
-  const [driveOpen, setDriveOpen] = useState(false);
 
   // Concept D: dopo il salvataggio, il documento appena creato e i passi su cosa farne --- invece del ritorno
   // diretto all'archivio. `null` = form ancora in corso.
@@ -507,7 +501,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   /** Aggiunge file al lotto (uno o molti) e ne avvia la lettura, dopo quelli già in coda. */
-  function addFiles(files: File[], folderHint: string | null = null) {
+  function addFiles(files: File[]) {
     if (files.length === 0) return;
     setError(null);
     setZoneSettled(false);
@@ -515,7 +509,6 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       id: crypto.randomUUID(),
       file,
       title: "",
-      folderHint,
       reading: { status: "idle" },
     }));
     // Passando da uno a più file il titolo scritto finora resta al primo, non si perde.
@@ -524,11 +517,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       return [...next, ...added];
     });
     if (lot.length === 1 && title) setTitle("");
-    // Non si azzerano categoria/bene/fascicoli/note: ciò che è già compilato non si tocca. Dalla cartella Drive nasce solo un suggerimento di categoria.
-    if (folderHint) {
-      const match = categories.find((c) => c.name.toLowerCase() === folderHint.toLowerCase());
-      if (match) setMetadata((prev) => (prev.categoryId ? prev : { ...prev, categoryId: match.id }));
-    }
+    // Non si azzerano categoria/bene/fascicoli/note: ciò che è già compilato non si tocca.
     for (const item of added) {
       const promise = readQueueRef.current.then(() => readLotFile(item));
       readQueueRef.current = promise;
@@ -589,12 +578,6 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   function handleFileInputBlur(event: React.FocusEvent<HTMLInputElement>) {
     event.target.removeAttribute("accept");
     event.target.removeAttribute("capture");
-  }
-
-  /** Import da Google Drive: il file browser (v. GoogleDriveBrowser.tsx) gira nel browser dell'utente, il server non vede token né file scelti. Restituisce File già scaricati, indistinguibili da qui in poi da uno scelto dal disco. */
-  function handleGoogleDriveImported(downloaded: { file: File; folderHint: string | null }[]) {
-    setDriveOpen(false);
-    for (const { file, folderHint } of downloaded) addFiles([file], folderHint);
   }
 
   /**
@@ -1093,15 +1076,6 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                                 }}
                               />
                             </label>
-                            {GOOGLE_DRIVE_CLIENT_ID ? (
-                              <button
-                                type="button"
-                                onClick={() => setDriveOpen(true)}
-                                className="text-sm font-medium text-brand hover:underline"
-                              >
-                                📁 Importa da Google Drive
-                              </button>
-                            ) : null}
                           </div>
                         </div>
                       ) : (
@@ -1124,15 +1098,6 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                           >
                             📷 Scatta foto
                           </button>
-                          {GOOGLE_DRIVE_CLIENT_ID && lot.length === 0 ? (
-                            <button
-                              type="button"
-                              onClick={() => setDriveOpen(true)}
-                              className="text-sm font-medium text-brand hover:underline"
-                            >
-                              📁 Importa da Google Drive
-                            </button>
-                          ) : null}
                         </div>
                       )}
 
@@ -1467,14 +1432,6 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
           )}
         </form>
       )}
-
-      {driveOpen && GOOGLE_DRIVE_CLIENT_ID ? (
-        <GoogleDriveBrowser
-          clientId={GOOGLE_DRIVE_CLIENT_ID}
-          onClose={() => setDriveOpen(false)}
-          onConfirm={handleGoogleDriveImported}
-        />
-      ) : null}
     </div>
   );
 }
