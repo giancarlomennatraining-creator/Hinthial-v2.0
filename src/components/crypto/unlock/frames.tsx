@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { UnlockPhase } from "@/components/crypto/unlock/useUnlockFlow";
 
 /**
- * Le tre "cornici" della finestra: l'immagine (il lucchetto, la porta della cassaforte, l'anello) con le sue animazioni
- * e un posto per il contenuto. Le usano sia lo sblocco (v. GlassSkin, VaultSkin, FingerprintSkin) sia la creazione
+ * Le due "cornici" della finestra: l'immagine (il lucchetto, l'anello) con le sue animazioni
+ * e un posto per il contenuto. Le usano sia lo sblocco (v. GlassSkin, FingerprintSkin) sia la creazione
  * della master password (v. SetupDialog): le animazioni di errore e di uscita sono quindi le stesse.
  */
 
@@ -42,82 +42,6 @@ export function GlassFrame({ phase, wide, children }: { phase: UnlockPhase; wide
     <div className={wide ? "unlock-glass unlock-wide" : "unlock-glass"} data-phase={phase}>
       <LockGlyph />
       {children}
-    </div>
-  );
-}
-
-/** Quanti gradi gira la ruota per ogni carattere scritto. */
-const DEGREES_PER_CHARACTER = 27;
-
-const TICKS = Array.from({ length: 40 }, (_, i) => {
-  const angle = (i * 9 * Math.PI) / 180;
-  const inner = i % 5 === 0 ? 38 : 42;
-  return {
-    x1: 100 + inner * Math.sin(angle),
-    y1: 100 - inner * Math.cos(angle),
-    x2: 100 + 47 * Math.sin(angle),
-    y2: 100 - 47 * Math.cos(angle),
-  };
-});
-
-/** I quattro chiavistelli sul bordo della porta: rientrano quando si sblocca. */
-const BOLTS = [0, 1, 2, 3].map((k) => {
-  const degrees = -90 + k * 60 - 30;
-  const radians = (degrees * Math.PI) / 180;
-  return { cx: 100 + 91 * Math.cos(radians), cy: 100 + 91 * Math.sin(radians), degrees };
-});
-
-/** La cassaforte: la porta con la ruota (`length` = quanti caratteri sono stati scritti) e, sotto, il pannello col contenuto. */
-export function VaultFrame({
-  phase,
-  length,
-  wide,
-  children,
-}: {
-  phase: UnlockPhase;
-  length: number;
-  wide?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <div className={wide ? "unlock-vault-wrap unlock-wide" : "unlock-vault-wrap"} data-phase={phase}>
-      <div className="unlock-vault">
-        <div className="unlock-vault-inside" />
-        <div className="unlock-door">
-          <svg viewBox="0 0 200 200" aria-hidden="true">
-            <circle className="u-ring" cx="100" cy="100" r="94" />
-            <circle className="u-ring" cx="100" cy="100" r="70" />
-            {BOLTS.map((bolt) => (
-              <rect
-                key={bolt.degrees}
-                className="unlock-bolt"
-                x={bolt.cx - 7}
-                y={bolt.cy - 7}
-                width="14"
-                height="14"
-                rx="3"
-                transform={`rotate(${bolt.degrees} ${bolt.cx} ${bolt.cy})`}
-              />
-            ))}
-            <g className="unlock-dial" style={{ "--dial": `${length * DEGREES_PER_CHARACTER}deg` } as CSSProperties}>
-              <circle className="u-face" cx="100" cy="100" r="50" />
-              {TICKS.map((tick, i) => (
-                <line key={i} className="u-tick" x1={tick.x1} y1={tick.y1} x2={tick.x2} y2={tick.y2} />
-              ))}
-              <circle className="u-mark" cx="100" cy="46" r="3.2" />
-            </g>
-            <g className="unlock-handle">
-              <line x1="100" y1="100" x2="100" y2="68" />
-              <line x1="100" y1="100" x2="132" y2="100" />
-              <line x1="100" y1="100" x2="68" y2="100" />
-              <line x1="100" y1="100" x2="100" y2="132" />
-              <circle cx="100" cy="100" r="9" />
-            </g>
-          </svg>
-          <span className="unlock-led" />
-        </div>
-      </div>
-      <div className="unlock-vault-panel">{children}</div>
     </div>
   );
 }

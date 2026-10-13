@@ -8,7 +8,6 @@ import {
 } from "@/lib/storage/avatars-bucket";
 import { parseListViewPreferences, type ListViewPreferences } from "@/lib/list-view";
 import { parseDashboardStyle, type DashboardStyle } from "@/lib/dashboard-style";
-import { type UnlockStyle } from "@/lib/unlock-style";
 import { parseCapsuleStyle, type CapsuleStyle } from "@/lib/capsule-style";
 import { parseOpenEffect, type CapsuleOpenEffect } from "@/domain/capsules/open-effects";
 import { type NavOrientation } from "@/lib/nav-orientation";
@@ -362,19 +361,6 @@ export async function updateDashboardStyle(
 
   if (error) {
     throw new Error(`Impossibile salvare lo stile della dashboard: ${error.message}`);
-  }
-}
-
-/** Come si presenta la finestra di sblocco --- letta dal server con il profilo (v. getCurrentUser), qui solo il salvataggio. */
-export async function updateUnlockStyle(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  style: UnlockStyle,
-): Promise<void> {
-  const { error } = await supabase.from("profiles").update({ unlock_style: style }).eq("id", userId);
-
-  if (error) {
-    throw new Error(`Impossibile salvare lo stile dello sblocco: ${error.message}`);
   }
 }
 

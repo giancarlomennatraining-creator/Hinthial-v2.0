@@ -5,9 +5,7 @@ import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { SetupDialog } from "@/components/crypto/SetupDialog";
 import { UnlockDialog } from "@/components/crypto/UnlockDialog";
 import { useToast } from "@/components/ui/ToastProvider";
-import { createClient } from "@/lib/db/supabase/client";
-import { updateUnlockStyle } from "@/domain/profile/repository";
-import type { UnlockStyle } from "@/lib/unlock-style";
+import { unlockStyleFor } from "@/lib/unlock-style";
 
 /** La finestra chiusa con "Più tardi" non si riapre da sola in questa sessione del browser (le pagine che servono la chiave la riaprono comunque). */
 const UNLOCK_DISMISSED_KEY = "hinthial.unlock-dismissed";
@@ -44,9 +42,6 @@ interface RequestOptions {
 }
 
 interface UnlockPromptContextValue {
-  /** Lo stile scelto in Impostazioni > Aspetto > Sblocco. */
-  style: UnlockStyle;
-  setStyle: (next: UnlockStyle) => Promise<void>;
   /** Apre la finestra di sblocco, se il vault è bloccato (altrimenti non fa nulla). Se è già aperta come chiudibile e chi chiede ora non la vuole chiudibile, diventa non chiudibile. */
   requestUnlock: (options?: RequestOptions) => void;
   /** Apre la finestra di creazione della master password, se non è ancora stata creata (altrimenti non fa nulla). Stesse regole di `requestUnlock`. */
@@ -61,8 +56,6 @@ interface UnlockPromptContextValue {
   closeUnlock: () => void;
   /** La finestra di creazione della master password è aperta: il popup di benvenuto non deve stare sopra o sotto di lei. */
   setupOpen: boolean;
-  /** Mostra una pelle in anteprima, senza sbloccare nulla (per le Impostazioni). */
-  preview: (style: UnlockStyle) => void;
 }
 
 const UnlockPromptContext = createContext<UnlockPromptContextValue | null>(null);
@@ -76,37 +69,14 @@ interface OpenPrompt {
 
 /**
  * Tiene la finestra di sblocco (v. UnlockDialog) in un unico posto, sopra tutta l'app: chi ne ha bisogno la chiede con
- * `requestUnlock`, e lei resta aperta durante l'animazione di uscita anche se il vault è già sbloccato. Conserva anche lo
- * stile scelto, sincronizzato sul server (profiles.unlock_style), noto già al primo render come la disposizione del menu.
+ * `requestUnlock`, e lei resta aperta durante l'animazione di uscita anche se il vault è già sbloccato. La pelle dipende dal
+ * dispositivo: impronta se è fidato, vetro altrimenti (v. lib/unlock-style.ts).
  */
-export function UnlockPromptProvider({
-  userId,
-  initialStyle,
-  children,
-}: {
-  userId: string;
-  initialStyle: UnlockStyle;
-  children: React.ReactNode;
-}) {
-  const { status, lock } = useMasterKey();
+export function UnlockPromptProvider({ children }: { children: React.ReactNode }) {
+  const { status, lock, deviceLockAvailable } = useMasterKey();
   const showToast = useToast();
-  const [style, setStyleState] = useState<UnlockStyle>(initialStyle);
+  const style = unlockStyleFor(deviceLockAvailable);
   const [prompt, setPrompt] = useState<OpenPrompt | null>(null);
-  const [previewStyle, setPreviewStyle] = useState<UnlockStyle | null>(null);
-
-  const setStyle = useCallback(
-    async (next: UnlockStyle) => {
-      const previous = style;
-      setStyleState(next); // ottimistico: la scheda risponde subito
-      try {
-        await updateUnlockStyle(createClient(), userId, next);
-      } catch (err) {
-        setStyleState(previous);
-        throw err;
-      }
-    },
-    [style, userId],
-  );
 
   // Dipende dallo stato: chi la chiama da un effetto (la Dashboard, RequireMasterKey) ne riceve una nuova non appena il vault risulta bloccato.
   const statusKind = status.kind;
@@ -148,25 +118,15 @@ export function UnlockPromptProvider({
 
   const releaseUnlock = useCallback(() => setPrompt((current) => (current?.dismissible ? null : current)), []);
 
-  const preview = useCallback((next: UnlockStyle) => setPreviewStyle(next), []);
-
   const value = useMemo<UnlockPromptContextValue>(
-    () => ({ style, setStyle, requestUnlock, requestSetup, releaseUnlock, closeUnlock, setupOpen, lockNow, settling, preview }),
-    [style, setStyle, requestUnlock, requestSetup, releaseUnlock, closeUnlock, setupOpen, lockNow, settling, preview],
+    () => ({ requestUnlock, requestSetup, releaseUnlock, closeUnlock, setupOpen, lockNow, settling }),
+    [requestUnlock, requestSetup, releaseUnlock, closeUnlock, setupOpen, lockNow, settling],
   );
 
   return (
     <UnlockPromptContext.Provider value={value}>
       {children}
-      {previewStyle ? (
-        <UnlockDialog
-          style={previewStyle}
-          demo
-          dismissible
-          onDismiss={() => setPreviewStyle(null)}
-          onDone={() => setPreviewStyle(null)}
-        />
-      ) : prompt?.kind === "setup" ? (
+      {prompt?.kind === "setup" ? (
         <SetupDialog
           style={style}
           dismissible={prompt.dismissible}
@@ -183,7 +143,6 @@ export function UnlockPromptProvider({
       ) : prompt ? (
         <UnlockDialog
           style={style}
-          demo={false}
           dismissible={prompt.dismissible}
           leaveHref={prompt.dismissible ? undefined : "/dashboard"}
           onDismiss={() => {

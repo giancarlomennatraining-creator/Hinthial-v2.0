@@ -1,6 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
 import { createConfirmedTestUser, fullName, uniqueTestUser, type TestUser } from "./test-users";
-import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -18,14 +17,6 @@ const test = base.extend({
     await use(page);
   },
 });
-
-/** Sceglie una pelle e aspetta che il salvataggio sul profilo sia finito: ricaricare subito dopo lo interromperebbe a metà. */
-async function chooseSkin(page: Page, name: RegExp) {
-  const saved = page.waitForResponse((r) => r.url().includes("/rest/v1/profiles") && r.request().method() === "PATCH");
-  await page.getByRole("radio", { name }).click();
-  await saved;
-  await expect(page.getByRole("radio", { name })).toHaveAttribute("aria-checked", "true");
-}
 
 const MASTER_PASSWORD = "una-master-password-solida";
 
@@ -91,71 +82,29 @@ test("lo sblocco è una finestra sopra la dashboard: compare subito, si chiude c
   await expect(page.getByRole("heading", { name: "Prossime scadenze" })).toBeVisible({ timeout: 15_000 });
 });
 
-test("in Impostazioni > Aspetto > Sblocco si sceglie la pelle e la si prova; le pagine che servono la chiave la usano e non si possono chiudere", async ({
+test("una pagina che serve la chiave apre lo sblocco da sola, nel vetro (dispositivo non fidato), non si può chiudere e la pagina si popola solo a fine animazione", async ({
   page,
 }) => {
   test.slow();
-  const user = await loginAndCreateVault(page);
+  await loginAndCreateVault(page);
 
-  await openSettings(page, user);
-  await page.getByRole("tab", { name: "Aspetto" }).click();
-  await page.getByRole("tab", { name: "Sblocco" }).click();
-  await expect(page.getByRole("heading", { name: "Finestra di sblocco" })).toBeVisible();
-  await expect(page.getByRole("radio", { name: /Vetro/ })).toHaveAttribute("aria-checked", "true");
-  const vault = page.getByRole("radio", { name: /Cassaforte/ });
-  await expect(vault).toContainText("porta di una cassaforte");
-
-  // L'anteprima non sblocca nulla e si chiude da sola con qualunque testo.
-  await page.getByRole("button", { name: "Prova lo stile Cassaforte" }).click();
-  const preview = page.getByRole("dialog");
-  await expect(preview).toBeVisible();
-  await expect(preview.getByText(/Anteprima/)).toBeVisible();
-  await preview.getByLabel("Master password", { exact: true }).fill("qualunque cosa");
-  await preview.getByRole("button", { name: "Sblocca", exact: true }).click();
-  await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText("Cassaforte sbloccata.")).not.toBeVisible();
-
-  // Si sceglie la Cassaforte.
-  await chooseSkin(page, /Cassaforte/);
-
-  // Un contenuto che serve la chiave (l'Archivio) la apre da solo, non si può chiudere, e sblocca nella pelle scelta.
   await page.goto("/archive");
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible({ timeout: 15_000 });
-  await expect(dialog.locator(".unlock-vault-wrap")).toBeVisible();
+  await expect(dialog.locator(".unlock-glass")).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Più tardi" })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(dialog).toBeVisible();
 
   await dialog.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
   await dialog.getByRole("button", { name: "Sblocca", exact: true }).click();
-  // La Cassaforte si apre piano: per tutto il tempo che la porta si apre la pagina resta uno scheletro, poi si popola.
-  await expect(dialog.locator('.unlock-vault-wrap[data-phase="success"]')).toBeVisible({ timeout: 20_000 });
+  await expect(dialog.locator('.unlock-glass[data-phase="success"]')).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole("heading", { name: "Archivio" })).not.toBeVisible();
   await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible({ timeout: 20_000 });
 });
 
-test("la pelle Impronta, senza impronta su questo dispositivo, mostra la password già a vista", async ({ page }) => {
-  test.slow();
-  const user = await loginAndCreateVault(page);
-
-  await openSettings(page, user);
-  await page.getByRole("tab", { name: "Aspetto" }).click();
-  await page.getByRole("tab", { name: "Sblocco" }).click();
-  await chooseSkin(page, /Impronta/);
-
-  await page.goto("/archive");
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.locator(".unlock-fp-wrap")).toBeVisible({ timeout: 15_000 });
-  // Nessuna impronta registrata nel browser dei test: l'anello non è un pulsante e il campo è già lì.
-  await expect(dialog.getByRole("button", { name: "Sblocca con impronta/Face ID" })).toHaveCount(0);
-  await dialog.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
-  await dialog.getByRole("button", { name: "Sblocca", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible({ timeout: 20_000 });
-});
-
-test("la creazione della master password è una finestra nella pelle scelta; poi la cassaforte si può bloccare dal menu e si riapre lo sblocco", async ({
+test("la creazione della master password è una finestra nel vetro; poi la cassaforte si può bloccare dal menu e si riapre lo sblocco", async ({
   page,
 }) => {
   test.slow();
@@ -168,17 +117,11 @@ test("la creazione della master password è una finestra nella pelle scelta; poi
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  // La pelle si sceglie già prima di creare la cassaforte (le Impostazioni non ne hanno bisogno).
-  await openSettings(page, user);
-  await page.getByRole("tab", { name: "Aspetto" }).click();
-  await page.getByRole("tab", { name: "Sblocco" }).click();
-  await chooseSkin(page, /Cassaforte/);
-
-  // Una pagina che serve la chiave apre la creazione, nella cornice scelta, e non si può chiudere.
+  // Una pagina che serve la chiave apre la creazione, nella cornice del vetro, e non si può chiudere.
   await page.goto("/archive");
   const dialog = page.getByRole("dialog", { name: "Crea la master password" });
   await expect(dialog).toBeVisible({ timeout: 15_000 });
-  await expect(dialog.locator(".unlock-vault-wrap")).toBeVisible();
+  await expect(dialog.locator(".unlock-glass")).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Più tardi" })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(dialog).toBeVisible();
@@ -195,19 +138,19 @@ test("la creazione della master password è una finestra nella pelle scelta; poi
   await dialog.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await dialog.getByRole("button", { name: "Continua" }).click();
 
-  // L'uscita è quella della cassaforte; la pagina si popola solo a fine animazione.
-  await expect(dialog.locator('.unlock-vault-wrap[data-phase="success"]')).toBeVisible({ timeout: 20_000 });
+  // L'uscita è quella del vetro; la pagina si popola solo a fine animazione.
+  await expect(dialog.locator('.unlock-glass[data-phase="success"]')).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText("Ancora nulla in archivio")).not.toBeVisible();
   await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 20_000 });
   await expect(page.getByText("Ancora nulla in archivio")).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText("Master password creata.")).toBeVisible();
 
-  // Dal menu utente si blocca la cassaforte a mano: la pagina torna da sbloccare, nella stessa pelle.
+  // Dal menu utente si blocca la cassaforte a mano: la pagina torna da sbloccare, nello stesso vetro.
   await page.getByRole("button", { name: fullName(user) }).click();
   await page.getByRole("button", { name: "Blocca Hinthial" }).click();
   const unlock = page.getByRole("dialog", { name: "Sblocca la cassaforte" });
   await expect(unlock).toBeVisible({ timeout: 15_000 });
-  await expect(unlock.locator(".unlock-vault-wrap")).toBeVisible();
+  await expect(unlock.locator(".unlock-glass")).toBeVisible();
   await expect(page.getByText("Ancora nulla in archivio")).not.toBeVisible();
 
   await unlock.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);

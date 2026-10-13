@@ -4,7 +4,7 @@ import { useState } from "react";
 import { DialogShell } from "@/components/crypto/DialogShell";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { SetupMasterKeyForm, type SetupFormState } from "@/components/crypto/SetupMasterKeyForm";
-import { FingerprintFrame, GlassFrame, VaultFrame } from "@/components/crypto/unlock/frames";
+import { FingerprintFrame, GlassFrame } from "@/components/crypto/unlock/frames";
 import type { UnlockPhase } from "@/components/crypto/unlock/useUnlockFlow";
 import type { UnlockStyle } from "@/lib/unlock-style";
 
@@ -55,11 +55,7 @@ export function SetupDialog({
       onDismiss={onDismiss}
       onDone={onDone}
     >
-      {style === "vault" ? (
-        <VaultFrame phase={phase} length={0} wide>
-          {content}
-        </VaultFrame>
-      ) : style === "fingerprint" ? (
+      {style === "fingerprint" ? (
         <FingerprintFrame phase={phase} wide>
           {content}
         </FingerprintFrame>
