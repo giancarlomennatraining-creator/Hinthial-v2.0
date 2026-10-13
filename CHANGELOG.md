@@ -56,6 +56,32 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-19 (90)
+
+### Anche un file solo porta alla conferma
+
+**Cosa fa:**
+- Dopo aver caricato **un file solo** si arriva alla stessa pagina di conferma del lotto ("1 documento da confermare"): lettura di Hinthia con una conferma, proposte con Sì / No, campi Categoria e Bene del documento. Non ci sono più, per i file, i passi "Lettura dal dispositivo" e "Analisi di Hinthia" dentro il modulo di caricamento; restano per le **note** e le **registrazioni**, che non passano dalla lettura di un file.
+- Dalla conferma si torna all'archivio col link **"Torna all'archivio"** (il link in alto è ora "← Archivio"). Se c'è ancora qualcosa da decidere (una lettura da fare o proposte aperte) la conferma resta in sospeso e la si ritrova in Archivio; se non c'è nulla, il promemoria non resta.
+
+**Note tecniche:**
+- `CreateArchiveItemForm` manda sempre alla conferma dopo un caricamento di file (uno o molti) e ricorda i documenti in `pending-confirmation`; il ramo "documento salvato" con i passi 4 e 5 vale ora solo per nota e registrazione. Test: `archive-title-and-mobile-add` e `bulk-import-duplicates` arrivano alla conferma; gli altri, che tornavano all'archivio col link "Torna all'archivio", non cambiano.
+
+---
+
+## 2026-10-18 (89)
+
+### Conferma dopo un lotto: categoria, bene e fascicolo per tutti, e per ogni documento
+
+**Cosa fa:**
+- Nella pagina **"N documenti da confermare"**, sopra le schede, c'è un riquadro **"Per tutti i N documenti"** con tre scelte: **categoria**, **bene** e **fascicolo** (voci vuote = "Non cambiare"). **"Applica a tutti"** le scrive su ogni documento con un solo gesto: categoria e bene sostituiscono quelli del documento, il fascicolo si **aggiunge** ai suoi. Compare "Applicato a N documenti" con **Annulla**, che riporta i dettagli com'erano.
+- Ogni scheda ha ora anche i suoi **campi Categoria e Bene**, che cambiano subito quel documento: si recupera così la categoria scelta file per file che l'importazione unificata aveva tolto, e una correzione su un documento si fa senza toccare gli altri.
+
+**Note tecniche:**
+- Scrive con `updateDocumentMetadata` (stesso percorso delle azioni in blocco di Archivio), un documento dopo l'altro; se un'applicazione si interrompe a metà i documenti si ricaricano e si vede cosa è stato scritto. `ConfirmImport` tiene ora un'unica azione annullabile (`undo`) per "Accetta le sicure" e "Applica a tutti". È il pezzo 3 del flusso 1; `bulk-import.spec` prova l'applicazione a tutti, l'annullamento e il cambio su un documento solo.
+
+---
+
 ## 2026-10-17 (88)
 
 ### Importazione: la conferma dopo un lotto, con una lettura di gruppo di Hinthia

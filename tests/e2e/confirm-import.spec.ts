@@ -85,6 +85,13 @@ test("dopo un lotto Hinthia legge i documenti con una sola conferma e le propost
   await expect(page.getByRole("heading", { name: "2 documenti da confermare" })).toBeVisible();
   await expect(page.getByText("Nessuna proposta, per ora").first()).toBeVisible();
 
+  // Con una lettura ancora da fare, tornare all'archivio lascia la conferma in sospeso: da lì si riapre.
+  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
+  await expect(page.getByText("Hai 2 documenti importati da confermare.")).toBeVisible({ timeout: 15_000 });
+  await page.getByRole("link", { name: "Rivedi" }).click();
+  await expect(page.getByRole("heading", { name: "2 documenti da confermare" })).toBeVisible();
+
   let confirmMessage = "";
   page.once("dialog", async (dialog) => {
     confirmMessage = dialog.message();
