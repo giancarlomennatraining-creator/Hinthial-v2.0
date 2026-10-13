@@ -36,7 +36,6 @@ export default async function AppLayout({
       displayName={user.displayName}
       avatarUrl={user.avatarUrl}
       initialNavOrientation={user.navOrientation}
-      initialUnlockStyle={user.unlockStyle}
       initialBottomNavItems={user.bottomNavItems}
       initialMainNavItems={user.mainNavItems}
       initialOnboardingWidgetHidden={user.onboardingWidgetHidden}

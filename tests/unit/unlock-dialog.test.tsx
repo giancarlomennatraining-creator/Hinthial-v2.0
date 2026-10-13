@@ -38,7 +38,7 @@ const noop = () => {};
 function open(props: Partial<React.ComponentProps<typeof UnlockDialog>> = {}) {
   const onDone = vi.fn();
   const onDismiss = vi.fn();
-  render(<UnlockDialog style="glass" dismissible={false} demo={false} onDismiss={onDismiss} onDone={onDone} {...props} />);
+  render(<UnlockDialog style="glass" dismissible={false} onDismiss={onDismiss} onDone={onDone} {...props} />);
   return { onDone, onDismiss };
 }
 
@@ -122,7 +122,7 @@ describe("UnlockDialog — password", () => {
 
   it("con 'meno movimento' si chiude quasi subito", async () => {
     reducedMotion = true;
-    const { onDone } = open({ style: "vault" });
+    const { onDone } = open({ style: "fingerprint" });
     await type("x");
     await submit();
 
@@ -132,12 +132,12 @@ describe("UnlockDialog — password", () => {
 
   it("se il vault si sblocca per un'altra strada (il QR) la finestra mostra il successo e si chiude", () => {
     const onDone = vi.fn();
-    const { rerender } = render(<UnlockDialog style="glass" dismissible={false} demo={false} onDismiss={noop} onDone={onDone} />);
+    const { rerender } = render(<UnlockDialog style="glass" dismissible={false} onDismiss={noop} onDone={onDone} />);
     expect(phase()).toBe("idle");
 
     // Il provider reale ri-renderizza quando lo stato del vault cambia: qui si fa lo stesso.
     masterKey.status = { kind: "unlocked" };
-    rerender(<UnlockDialog style="glass" dismissible={false} demo={false} onDismiss={noop} onDone={onDone} />);
+    rerender(<UnlockDialog style="glass" dismissible={false} onDismiss={noop} onDone={onDone} />);
     expect(phase()).toBe("success");
     act(() => vi.advanceTimersByTime(UNLOCK_EXIT_MS.glass + 50));
     expect(onDone).toHaveBeenCalled();
@@ -147,7 +147,7 @@ describe("UnlockDialog — password", () => {
 describe("UnlockDialog — impronta e chiusura", () => {
   it("il pulsante dell'impronta compare solo se il dispositivo la supporta, e sblocca", async () => {
     const { rerender } = render(
-      <UnlockDialog style="glass" dismissible={false} demo={false} onDismiss={noop} onDone={noop} />,
+      <UnlockDialog style="glass" dismissible={false} onDismiss={noop} onDone={noop} />,
     );
     expect(screen.queryByRole("button", { name: /Impronta/ })).not.toBeInTheDocument();
     rerender(<></>);
@@ -192,31 +192,6 @@ describe("UnlockDialog — impronta e chiusura", () => {
   });
 });
 
-describe("UnlockDialog — pelle Cassaforte", () => {
-  it("la ruota gira a ogni carattere scritto", async () => {
-    open({ style: "vault" });
-    expect(screen.getByRole("heading", { name: "Sblocca" })).toBeInTheDocument();
-    const dial = document.querySelector(".unlock-dial") as SVGElement;
-    expect(dial.getAttribute("style")).toContain("--dial: 0deg");
-
-    await type("abc");
-    expect(dial.getAttribute("style")).toContain("--dial: 81deg");
-  });
-
-  it("l'uscita è lenta e senza stacchi: la finestra si chiude solo dopo che la porta si è aperta", async () => {
-    expect(UNLOCK_EXIT_MS.vault).toBeGreaterThanOrEqual(2500);
-    const { onDone } = open({ style: "vault" });
-    await type("la-password");
-    await submit();
-
-    expect(phase()).toBe("success");
-    act(() => vi.advanceTimersByTime(1500));
-    expect(onDone).not.toHaveBeenCalled(); // a metà, la porta si sta ancora aprendo
-    act(() => vi.advanceTimersByTime(UNLOCK_EXIT_MS.vault));
-    expect(onDone).toHaveBeenCalledTimes(1);
-  });
-});
-
 describe("UnlockDialog — pelle Impronta", () => {
   it("senza impronta sul dispositivo l'anello non è un pulsante e la password è già a vista", () => {
     open({ style: "fingerprint" });
@@ -244,29 +219,5 @@ describe("UnlockDialog — pelle Impronta", () => {
     expect(masterKey.unlockWithDeviceLock).toHaveBeenCalled();
     act(() => vi.advanceTimersByTime(UNLOCK_EXIT_MS.fingerprint + 50));
     expect(onDone).toHaveBeenCalled();
-  });
-});
-
-describe("UnlockDialog — anteprima", () => {
-  it("dice che è un'anteprima, non sblocca nulla e riesce con qualunque testo", async () => {
-    const { onDone } = open({ demo: true, dismissible: true });
-
-    expect(screen.getByText(/Anteprima/)).toBeInTheDocument();
-    expect(screen.queryByTestId("pairing")).not.toBeInTheDocument();
-    await type("quello che voglio");
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Sblocca" }));
-      vi.advanceTimersByTime(800);
-    });
-
-    expect(masterKey.unlockWithPassword).not.toHaveBeenCalled();
-    expect(phase()).toBe("success");
-    act(() => vi.advanceTimersByTime(UNLOCK_EXIT_MS.glass + 50));
-    expect(onDone).toHaveBeenCalled();
-  });
-
-  it("in anteprima mostra anche l'impronta, per farla vedere", () => {
-    open({ demo: true, dismissible: true });
-    expect(screen.getByRole("button", { name: "Sblocca con impronta/Face ID" })).toBeInTheDocument();
   });
 });

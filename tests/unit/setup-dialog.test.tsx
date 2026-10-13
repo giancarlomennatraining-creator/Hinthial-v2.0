@@ -82,10 +82,10 @@ describe("SetupMasterKeyForm", () => {
 
 describe("SetupDialog", () => {
   it("è una finestra con la cornice della pelle scelta", () => {
-    render(<SetupDialog style="vault" dismissible={false} onDismiss={noop} onDone={noop} />);
+    render(<SetupDialog style="fingerprint" dismissible={false} onDismiss={noop} onDone={noop} />);
 
     expect(screen.getByRole("dialog", { name: "Crea la master password" })).toBeInTheDocument();
-    expect(document.querySelector(".unlock-vault-wrap")).not.toBeNull();
+    expect(document.querySelector(".unlock-fp-wrap")).not.toBeNull();
     expect(document.querySelector(".unlock-wide")).not.toBeNull();
   });
 

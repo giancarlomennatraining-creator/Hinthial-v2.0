@@ -18,7 +18,6 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import { AuditWriteFailedNotice } from "@/components/audit/AuditWriteFailedNotice";
 import { cn } from "@/lib/utils";
 import type { NavOrientation } from "@/lib/nav-orientation";
-import type { UnlockStyle } from "@/lib/unlock-style";
 import type { BottomNavItems } from "@/lib/bottom-nav";
 import type { MainNavItems } from "@/lib/main-nav";
 
@@ -36,7 +35,6 @@ export function AppShell({
   displayName,
   avatarUrl,
   initialNavOrientation,
-  initialUnlockStyle,
   initialBottomNavItems,
   initialMainNavItems,
   initialOnboardingWidgetHidden,
@@ -54,7 +52,6 @@ export function AppShell({
   displayName: string;
   avatarUrl: string | null;
   initialNavOrientation: NavOrientation;
-  initialUnlockStyle: UnlockStyle;
   initialBottomNavItems: BottomNavItems;
   initialMainNavItems: MainNavItems;
   initialOnboardingWidgetHidden: boolean;
@@ -69,7 +66,7 @@ export function AppShell({
   return (
     <ToastProvider>
     <MasterKeyProvider>
-    <UnlockPromptProvider userId={userId} initialStyle={initialUnlockStyle}>
+    <UnlockPromptProvider>
       <MasterKeyIntroModal userId={userId} initialSeen={initialMasterKeyIntroSeen} />
       <AuditWriteFailedNotice />
       <NavOrientationProvider userId={userId} initialOrientation={initialNavOrientation}>

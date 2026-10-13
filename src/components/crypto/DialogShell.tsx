@@ -8,10 +8,9 @@ import type { UnlockPhase } from "@/components/crypto/unlock/useUnlockFlow";
 import { UNLOCK_EXIT_MS, type UnlockStyle } from "@/lib/unlock-style";
 import { cn } from "@/lib/utils";
 
-/** Quando far partire la dissolvenza del velo dopo lo sblocco, e quanto dura: la cassaforte aspetta che la porta si apra. */
+/** Quando far partire la dissolvenza del velo dopo lo sblocco, e quanto dura: l'impronta parte prima, con l'onda. */
 const VEIL_FADE: Record<UnlockStyle, { delayMs: number; durationMs: number }> = {
   glass: { delayMs: 450, durationMs: 650 },
-  vault: { delayMs: 900, durationMs: 1600 },
   fingerprint: { delayMs: 150, durationMs: 900 },
 };
 

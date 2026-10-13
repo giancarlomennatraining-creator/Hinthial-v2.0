@@ -87,7 +87,6 @@ type RequestStatusColumn = "pending" | "accepted" | "rejected";
 
 type NavOrientationColumn = "sidebar-left" | "sidebar-right" | "topbar";
 type DashboardStyleColumn = "classic" | "today" | "bento" | "stories" | "board";
-type UnlockStyleColumn = "glass" | "vault" | "fingerprint";
 
 type CapsuleStatusColumn = "draft" | "ready" | "shared";
 type CapsuleAccessConditionColumn = "manual";
@@ -120,7 +119,6 @@ export type Database = {
           dashboard_style: DashboardStyleColumn;
           capsule_style: string;
           capsule_open_effect: string;
-          unlock_style: UnlockStyleColumn;
           bottom_nav_items: Json;
           main_nav_items: Json | null;
           onboarding_widget_hidden: boolean;
@@ -160,7 +158,6 @@ export type Database = {
           dashboard_style?: DashboardStyleColumn;
           capsule_style?: string;
           capsule_open_effect?: string;
-          unlock_style?: UnlockStyleColumn;
           bottom_nav_items?: Json;
           main_nav_items?: Json | null;
           onboarding_widget_hidden?: boolean;
@@ -200,7 +197,6 @@ export type Database = {
           dashboard_style?: DashboardStyleColumn;
           capsule_style?: string;
           capsule_open_effect?: string;
-          unlock_style?: UnlockStyleColumn;
           bottom_nav_items?: Json;
           main_nav_items?: Json | null;
           onboarding_widget_hidden?: boolean;

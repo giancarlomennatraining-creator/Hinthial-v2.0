@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-20 (91)
+
+### Ristrutturazione, passo 1: lo sblocco sceglie da solo la sua pelle
+
+**Cosa fa:**
+- La finestra di sblocco non si sceglie più: su un dispositivo fidato (con impronta o Face ID registrati) si vede l'anello **Impronta**, su tutti gli altri la lastra di **Vetro** con la password.
+- Via la **Cassaforte** e la sezione "Sblocco" nelle Impostazioni > Aspetto, compresa l'anteprima.
+- La creazione della master password usa la stessa pelle dello sblocco.
+
+**Note tecniche:**
+- `lib/unlock-style.ts` ora espone solo `unlockStyleFor(deviceLockAvailable)`; `UnlockPromptProvider` la ricava da `useMasterKey()` e non riceve più `userId` né stile iniziale. Rimossi `VaultSkin`, `VaultFrame`, `UnlockStyleSettings`, la modalità `demo` di `useUnlockFlow`/`UnlockDialog` e `updateUnlockStyle`.
+- Migrazione `20261015000000_drop_unlock_style.sql`: elimina `profiles.unlock_style`. Il codice non la legge più, quindi si può applicare in qualsiasi momento.
+
+---
+
 ## 2026-10-15 (79)
 
 ### Archivio: il titolo sta sopra le schede in tutte le viste
