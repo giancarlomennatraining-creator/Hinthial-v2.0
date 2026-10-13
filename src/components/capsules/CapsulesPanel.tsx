@@ -80,7 +80,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [prefsReady, setPrefsReady] = useState(false);
 
   // "Condivise con me" è una scheda qui dentro, non una voce di menu a parte. Caricata insieme alle proprie capsule, così passare da una vista all'altra è istantaneo.
-  const [activeTab, setActiveTab] = useState<"mine" | "shared">("mine");
+  const [activeTab, setActiveTab] = useState<"mine" | "shared">(() => (searchParams.get("tab") === "shared" ? "shared" : "mine"));
   const [sharedCapsules, setSharedCapsules] = useState<SharedCapsuleListItem[]>([]);
   const [sharedError, setSharedError] = useState<string | null>(null);
 

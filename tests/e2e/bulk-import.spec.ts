@@ -150,7 +150,7 @@ test("due file con lo stesso nome propongono un fascicolo, importati insieme a u
   await expect(page.getByRole("link", { name: /biglietto-treno\.txt/ })).toBeVisible();
 
   // Il fascicolo è nato, con dentro le due bollette --- non il biglietto.
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await expect(page).toHaveURL(/\/dossiers$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
   await page.getByRole("link", { name: /Bolletta luce/ }).click();

@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -76,7 +77,7 @@ test("scegliendo il file, Hinthial lo legge sul dispositivo ma non compila nessu
   await signInAndUnlock(page);
 
   // Un bene con la targa nel nome: prima era l'aggancio più forte per riconoscere il documento, ora non si abbina da solo.
-  await page.getByRole("link", { name: "Beni", exact: true }).click();
+  await openArchiveTab(page, "Beni");
   await page.getByRole("link", { name: "+ Crea bene" }).click();
   await page.getByLabel("Nome").fill("Fiat Panda AB123CD");
   await page.locator("#categoryId").selectOption({ label: "🛡️ Assicurazioni" });

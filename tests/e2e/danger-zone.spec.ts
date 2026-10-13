@@ -1,6 +1,7 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 import { openSettings } from "./settings-nav";
+import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -55,7 +56,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await expect(page.getByText("polizza.txt")).toBeVisible({ timeout: 15_000 });
 
   // Un bene.
-  await page.getByRole("link", { name: "Beni" }).click();
+  await openArchiveTab(page, "Beni");
   await page.getByRole("link", { name: "+ Crea bene" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo bene" })).toBeVisible();
   await page.getByLabel("Nome").fill("Appartamento");
@@ -64,7 +65,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await expect(page.getByText("Appartamento")).toBeVisible({ timeout: 10_000 });
 
   // Una scadenza --- non deve sparire, solo scollegarsi dal bene.
-  await page.getByRole("link", { name: "Scadenze" }).click();
+  await openArchiveTab(page, "Scadenze");
   await page.getByRole("link", { name: "+ Crea scadenza" }).click();
   await expect(page.getByRole("heading", { name: "Nuova scadenza" })).toBeVisible();
   const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -124,7 +125,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await expect(page.getByText("Ancora nulla in archivio.")).toBeVisible({ timeout: 10_000 });
 
-  await page.getByRole("link", { name: "Beni" }).click();
+  await openArchiveTab(page, "Beni");
   await expect(page.getByText("Nessun bene ancora")).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole("link", { name: "Amici" }).click();
@@ -141,7 +142,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await expect(page.locator("li > p", { hasText: "🎯 Hobby" })).not.toBeVisible();
 
   // La scadenza resta --- solo scollegata dal bene ormai cancellato.
-  await page.getByRole("link", { name: "Scadenze" }).click();
+  await openArchiveTab(page, "Scadenze");
   await expect(page.getByText("Pagamento IMU")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText("🔗 Appartamento")).not.toBeVisible();
 });

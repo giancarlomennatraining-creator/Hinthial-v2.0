@@ -1,10 +1,10 @@
 "use client";
 
-import { DashboardClassic } from "@/components/dashboard/DashboardClassic";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { TodayHome } from "@/components/dashboard/TodayHome";
 import { useDashboardData } from "@/components/dashboard/useDashboardData";
 
-/** Il corpo della dashboard: contatori, prossime scadenze, aggiunti di recente (v. DashboardClassic). */
+/** Il corpo di "Oggi" (v. TodayHome). */
 export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
   const { context, loading, error } = useDashboardData(masterKey);
 
@@ -20,5 +20,5 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
     return <DashboardSkeleton />;
   }
 
-  return <DashboardClassic context={context} />;
+  return <TodayHome context={context} masterKey={masterKey} />;
 }

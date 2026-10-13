@@ -76,10 +76,10 @@ test("lo sblocco è una finestra sopra la dashboard: compare subito, si chiude c
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   // Mentre la finestra si dissolve la dashboard non è ancora popolata: lo fa solo a fine animazione.
   await expect(page.locator('.unlock-glass[data-phase="success"]')).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByRole("heading", { name: "Prossime scadenze" })).not.toBeVisible();
+  await expect(page.getByRole("heading", { name: "Continuità" })).not.toBeVisible();
   await expect(page.getByText("Cassaforte sbloccata.")).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole("dialog")).not.toBeVisible();
-  await expect(page.getByRole("heading", { name: "Prossime scadenze" })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: "Continuità" })).toBeVisible({ timeout: 15_000 });
 });
 
 test("una pagina che serve la chiave apre lo sblocco da sola, nel vetro (dispositivo non fidato), non si può chiudere e la pagina si popola solo a fine animazione", async ({

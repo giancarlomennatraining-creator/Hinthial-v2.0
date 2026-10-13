@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, forceOwnFriendToGuardian, uniqueTestUser } from "./test-users";
+import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -69,8 +70,8 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("polizza.txt")).toBeVisible({ timeout: 15_000 });
 
-  await page.getByRole("link", { name: "Dashboard" }).click();
-  await expect(page.getByRole("heading", { name: "Aggiunti di recente" })).toBeVisible();
+  await page.getByRole("link", { name: "Oggi" }).click();
+  await expect(page.getByRole("heading", { name: "Continuità" })).toBeVisible();
   await openPanel();
   await expect(panel.getByText("4/8")).toBeVisible();
   // La voce completata resta elencata, non barrata.
@@ -80,13 +81,13 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await closePanel();
 
   // Un bene: 5/8.
-  await page.getByRole("link", { name: "Beni", exact: true }).click();
+  await openArchiveTab(page, "Beni");
   await page.getByRole("link", { name: "+ Crea bene" }).click();
   await page.getByLabel("Nome").fill("Barca");
   await page.getByRole("button", { name: "Aggiungi bene" }).click();
   await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
 
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Oggi" }).click();
   await openPanel();
   await expect(panel.getByRole("link", { name: "Aggiungi il primo bene" })).not.toBeVisible();
   await expect(panel.getByText("5/8")).toBeVisible();
@@ -109,7 +110,7 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await expect(friendRow.getByTitle("Guardiano")).toBeVisible({ timeout: 10_000 });
 
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Oggi" }).click();
   await openPanel();
   await expect(panel.getByText("6/8")).toBeVisible();
   await closePanel();
@@ -133,7 +134,7 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await expect(page.getByText("Capsula creata.")).toBeVisible();
 
   // 8/8: la checklist resta elencata, solo l'indicatore che la apre passa a mostrare una percentuale.
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Oggi" }).click();
   await openPanel();
   await expect(panel.getByText("8/8")).toBeVisible();
   await closePanel();

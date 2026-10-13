@@ -5,8 +5,6 @@ import { cn } from "@/lib/utils";
 import { useCrossfade } from "@/lib/use-crossfade";
 import { UserInfoPanel } from "@/components/settings/UserInfoPanel";
 import { OnboardingSettingsPanel } from "@/components/settings/OnboardingSettingsPanel";
-import { DigitalLegacySettingsPanel } from "@/components/settings/DigitalLegacySettingsPanel";
-import { EmergencyCardPanel } from "@/components/settings/EmergencyCardPanel";
 import { PrivacyPanel } from "@/components/settings/PrivacyPanel";
 import { MfaSettingsPanel } from "@/components/settings/MfaSettingsPanel";
 import { DeviceLockPanel } from "@/components/settings/DeviceLockPanel";
@@ -14,9 +12,6 @@ import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import type { AuditFilterParams } from "@/domain/audit/filters";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
-import { NavOrientationSettings } from "@/components/settings/NavOrientationSettings";
-import { BottomNavItemsSettings } from "@/components/settings/BottomNavItemsSettings";
-import { MainNavItemsSettings } from "@/components/settings/MainNavItemsSettings";
 import { CapsuleCountdownSettings } from "@/components/settings/CapsuleCountdownSettings";
 import { CapsuleOpenEffectSettings } from "@/components/settings/CapsuleOpenEffectSettings";
 import { TrashRetentionSettings } from "@/components/settings/TrashRetentionSettings";
@@ -31,18 +26,13 @@ import {
   AIIcon,
   AlertTriangleIcon,
   ArchiveIcon,
-  BottomBarIcon,
   CapsuleIcon,
   CategoryIcon,
   ChecklistIcon,
   EyeIcon,
   FingerprintIcon,
-  HeartIcon,
   ImportExportIcon,
-  MedicalCardIcon,
-  MenuListIcon,
   SecurityIcon,
-  SidebarLayoutIcon,
   SlidersIcon,
   SmartphoneIcon,
   ThemeIcon,
@@ -54,8 +44,6 @@ type Tab =
   | "onboarding"
   | "privacy"
   | "security"
-  | "digital-legacy"
-  | "emergency-card"
   | "categories"
   | "appearance"
   | "activity"
@@ -95,8 +83,6 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
           { id: "trusted-devices", label: "Dispositivi fidati", icon: FingerprintIcon },
         ],
       },
-      { id: "digital-legacy", label: "Eredità digitale", icon: HeartIcon },
-      { id: "emergency-card", label: "Scheda d'emergenza", icon: MedicalCardIcon },
       { id: "activity", label: "Attività", icon: ActivityIcon },
     ],
   },
@@ -118,9 +104,6 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
         icon: SlidersIcon,
         sections: [
           { id: "theme", label: "Tema", icon: ThemeIcon },
-          { id: "nav-layout", label: "Disposizione menu", icon: SidebarLayoutIcon },
-          { id: "nav-items", label: "Voci del menu", icon: MenuListIcon },
-          { id: "bottom-bar", label: "Barra in basso", icon: BottomBarIcon },
           { id: "capsules", label: "Capsule", icon: CapsuleIcon },
           { id: "archive", label: "Archivio", icon: ArchiveIcon },
         ],
@@ -217,20 +200,12 @@ const TAB_HELP: Record<Tab, HelpTip[]> = {
     { icon: "🔐", text: "Attiva l'autenticazione a due fattori per un accesso più sicuro." },
     { icon: "👆", text: "“Dispositivi fidati” sblocca il vault con l'impronta o Face ID, senza digitare la master password." },
   ],
-  "digital-legacy": [
-    { icon: "💌", text: "Cosa succede ai tuoi dati se resti inattivo a lungo: lo decidi tu qui." },
-    { icon: "🛡️", text: "I guardiani che hai scelto possono confermare la tua assenza." },
-  ],
-  "emergency-card": [
-    { icon: "🆘", text: "Una scheda stampabile con le informazioni utili in caso di emergenza." },
-    { icon: "🔒", text: "Cifrata come tutto il resto: richiede la master password sbloccata." },
-  ],
   categories: [
     { icon: "🏷️", text: "Le categorie predefinite coprono i casi più comuni; puoi aggiungerne altre." },
     { icon: "✏️", text: "Rinomina o elimina una categoria in ogni momento." },
   ],
   appearance: [
-    { icon: "🎨", text: "Tema, disposizione del menu e cosa mostrare dove: tutto qui." },
+    { icon: "🎨", text: "Il tema e le preferenze delle capsule e dell'Archivio: tutto qui." },
     { icon: "📱", text: "Le scelte restano le stesse su tutti i tuoi dispositivi." },
   ],
   activity: [
@@ -348,26 +323,6 @@ export function SettingsTabs({
       }
       return <MfaSettingsPanel userId={userId} />;
     }
-    if (activeTab === "digital-legacy") {
-      // Solo parametri, nessun dato cifrato coinvolto: non richiede la master key.
-      return <DigitalLegacySettingsPanel userId={userId} />;
-    }
-    if (activeTab === "emergency-card") {
-      // Tutto cifrato: richiede la master key, a differenza della scheda qui sopra.
-      return (
-        <RequireMasterKey inline>
-          {(masterKey) => (
-            <EmergencyCardPanel
-              masterKey={masterKey}
-              userId={userId}
-              firstName={firstName}
-              lastName={lastName}
-              birthDate={birthDate}
-            />
-          )}
-        </RequireMasterKey>
-      );
-    }
     if (activeTab === "ai") {
       // Non richiede la master key: il consenso riguarda solo dati già decifrati e mostrati altrove (v. AIPanel).
       return (
@@ -383,36 +338,6 @@ export function SettingsTabs({
       return <CategoriesPanel />;
     }
     if (activeTab === "appearance") {
-      if (activeSection === "nav-layout") {
-        return (
-          <FunctionBlock
-            title="Disposizione del menu"
-            description="Barra laterale a sinistra o a destra, oppure barra orizzontale in alto — la scelta resta la stessa su tutti i tuoi dispositivi."
-          >
-            <NavOrientationSettings />
-          </FunctionBlock>
-        );
-      }
-      if (activeSection === "nav-items") {
-        return (
-          <FunctionBlock
-            title="Voci del menu principale"
-            description="Scegli quali voci mostrare nel menu di navigazione, e in che ordine."
-          >
-            <MainNavItemsSettings />
-          </FunctionBlock>
-        );
-      }
-      if (activeSection === "bottom-bar") {
-        return (
-          <FunctionBlock
-            title="Barra di navigazione in basso (smartphone)"
-            description="Scegli quali voci mostrare sempre in basso su smartphone — le altre restano comunque raggiungibili dal menu con le 3 lineette."
-          >
-            <BottomNavItemsSettings />
-          </FunctionBlock>
-        );
-      }
       if (activeSection === "capsules") {
         return (
           <div className="flex flex-col gap-8">

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "./fixtures";
 import { buildPdf, POLIZZA, setUpWithDocument } from "./hinthia";
+import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -7,7 +8,7 @@ import { buildPdf, POLIZZA, setUpWithDocument } from "./hinthia";
 // documento dello stesso bene compare in "Forse appartengono qui" nel fascicolo, e si aggiunge con un clic.
 
 async function createAsset(page: Page, name: string, categoryLabel: string) {
-  await page.getByRole("link", { name: "Beni", exact: true }).click();
+  await openArchiveTab(page, "Beni");
   await page.getByRole("link", { name: "+ Crea bene" }).click();
   await page.getByLabel("Nome").fill(name);
   await page.locator("#categoryId").selectOption({ label: categoryLabel });
@@ -49,7 +50,7 @@ test("propone un fascicolo per tre documenti dello stesso bene, e suggerisce il 
 
   // Con uno e con due documenti Hinthial tace.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await expect(page.getByText(/Ancora nessun fascicolo/)).toBeVisible();
   await expect(page.getByRole("region", { name: "Fascicoli suggeriti" })).toHaveCount(0);
 
@@ -57,7 +58,7 @@ test("propone un fascicolo per tre documenti dello stesso bene, e suggerisce il 
   await uploadForAsset(page, "panda-3.pdf", "🏠 Casa", "Fiat Panda");
 
   // Con tre, propone il fascicolo: accettando nasce col nome del bene e dentro ci sono i tre documenti.
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   const suggestions = page.getByRole("region", { name: "Fascicoli suggeriti" });
   await expect(suggestions).toContainText("Hai 3 documenti di «Fiat Panda»", { timeout: 15_000 });
   await suggestions.getByRole("button", { name: "Crea il fascicolo" }).click();
@@ -71,7 +72,7 @@ test("propone un fascicolo per tre documenti dello stesso bene, e suggerisce il 
 
   // Un quarto documento dello stesso bene, caricato fuori dal fascicolo, è tra i suggeriti della scheda.
   await uploadForAsset(page, "panda-4.pdf", "🏠 Casa", "Fiat Panda");
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await page.getByRole("link", { name: /Fiat Panda/ }).click();
   const forse = page.getByRole("region", { name: "Forse appartengono qui" });
   await expect(forse).toContainText("panda-4.pdf", { timeout: 15_000 });

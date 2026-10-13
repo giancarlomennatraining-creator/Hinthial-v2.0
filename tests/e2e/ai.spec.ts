@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -29,7 +30,7 @@ test("l'assistente AI risponde su beni/documenti collegati per categoria e segna
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   // Un bene in categoria Assicurazioni.
-  await page.getByRole("link", { name: "Beni" }).click();
+  await openArchiveTab(page, "Beni");
   await page.getByRole("link", { name: "+ Crea bene" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo bene" })).toBeVisible();
   await page.getByLabel("Nome").fill("Auto Panda");
@@ -58,7 +59,7 @@ test("l'assistente AI risponde su beni/documenti collegati per categoria e segna
   await expect(page.getByText("polizza-auto.txt")).toBeVisible({ timeout: 15_000 });
 
   // Una scadenza già scaduta, collegata allo stesso bene.
-  await page.getByRole("link", { name: "Scadenze" }).click();
+  await openArchiveTab(page, "Scadenze");
   await page.getByRole("link", { name: "+ Crea scadenza" }).click();
   await expect(page.getByRole("heading", { name: "Nuova scadenza" })).toBeVisible();
   const past = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -70,7 +71,7 @@ test("l'assistente AI risponde su beni/documenti collegati per categoria e segna
 
   // Il suggerimento proattivo vive in Dashboard, non più anche in AI
   // (v. richiesta utente: niente "Cose da tenere d'occhio" sulla pagina AI).
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Oggi" }).click();
   await expect(page.getByText(/scaduta/).first()).toBeVisible();
   await expect(page.getByText("Rinnovo assicurazione auto").first()).toBeVisible();
 

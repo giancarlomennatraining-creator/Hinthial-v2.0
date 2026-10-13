@@ -69,7 +69,7 @@ const NUMERIC_FIELDS: {
  * strategia. Tre preset (Prudente/Normale/Rilassato) più "Personalizza i valori": toccarne anche uno solo passa
  * la scelta a "Personalizzato".
  */
-export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
+export function DigitalLegacyPanel({ userId }: { userId: string }) {
   const supabase = useSupabase();
   const showToast = useToast();
 
@@ -169,7 +169,7 @@ export function DigitalLegacySettingsPanel({ userId }: { userId: string }) {
     // testo discorsivo resta limitato con un max-w-2xl sul singolo elemento, non sul contenitore.
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Eredità digitale</h2>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Se resti inattivo</h2>
         <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
           Se un giorno non dovessi più poter accedere a Hinthial, questa è la strategia che
           decide quando le tue capsule arrivano davvero a chi le doveva ricevere — con più

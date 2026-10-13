@@ -75,10 +75,9 @@ test.describe("sotto md", () => {
     await page.getByRole("button", { name: "Continua" }).click();
     await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-    // "Amici" non è tra le voci della barra in basso di default: sotto md si raggiunge solo aprendo prima il cassetto col tasto ☰.
-    await page.getByRole("button", { name: "Apri il menu" }).click();
-    await page.getByRole("dialog", { name: "Menu di navigazione" }).getByRole("link", { name: "Amici" }).click();
-    await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
+    // "Amici" è una delle cinque voci della barra fissa in basso.
+    await page.getByRole("navigation", { name: "Navigazione rapida" }).getByRole("link", { name: "Amici" }).click();
+    await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible({ timeout: 15_000 });
 
     // Sotto sm il tasto normale d'intestazione è nascosto, sostituito dal FAB "+" con la stessa etichetta accessibile.
     for (let i = 0; i < 8; i++) {

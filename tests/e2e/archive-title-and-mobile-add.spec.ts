@@ -42,7 +42,7 @@ test("Fascicoli e Cestino non hanno più il testo descrittivo sotto i tab", asyn
   test.slow();
   await openArchive(page);
 
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await expect(page).toHaveURL(/\/dossiers$/);
   await expect(
     page.getByText("Vicende che attraversano più categorie"),

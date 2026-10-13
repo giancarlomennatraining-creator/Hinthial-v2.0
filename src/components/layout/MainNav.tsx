@@ -4,16 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
-import { NAV_ITEMS, type NavItem } from "@/components/layout/nav-items";
+import { isNavItemActive, NAV_ITEMS, type NavItem } from "@/components/layout/nav-items";
 
-/** `collapsed` (v. Sidebar): nasconde le etichette (lette dagli screen reader) e centra le icone. `horizontal` (v. TopNav): righe che vanno a capo invece di una colonna, etichette visibili come nella barra espansa. */
+/** `collapsed` (v. Sidebar): nasconde le etichette (lette dagli screen reader) e centra le icone. */
 export function MainNav({
   collapsed = false,
-  horizontal = false,
   items = NAV_ITEMS,
 }: {
   collapsed?: boolean;
-  horizontal?: boolean;
   /** Sottoinsieme di NAV_ITEMS da mostrare, usato dal cassetto mobile per escludere le voci già nella barra fissa in basso. */
   items?: NavItem[];
 }) {
@@ -29,11 +27,10 @@ export function MainNav({
   return (
     <nav
       aria-label="Navigazione principale"
-      className={horizontal ? "flex flex-wrap items-center gap-1" : "flex flex-col gap-1"}
+      className="flex flex-col gap-1"
     >
       {items.map((item) => {
-        const isActive =
-          pathname === item.href || pathname?.startsWith(`${item.href}/`);
+        const isActive = isNavItemActive(item, pathname);
         const showSetupHint = needsSetup && item.requiresEncryption;
         const hintId = `nav-setup-hint-${item.href}`;
         return (

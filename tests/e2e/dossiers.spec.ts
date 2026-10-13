@@ -68,10 +68,10 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
 
   await signInAndSetUpVault(page);
 
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
   // La scheda "Fascicolo" è quella attiva adesso, "Contenuti" no.
-  await expect(page.getByRole("link", { name: "Fascicolo", exact: true })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Fascicoli", exact: true })).toHaveAttribute(
     "aria-current",
     "page",
   );
@@ -85,7 +85,7 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   await page.getByRole("button", { name: "Chiudi" }).click();
   await page.getByRole("link", { name: "Cestino", exact: true }).click();
   await expect(page.getByRole("button", { name: "Aiuto" })).toBeVisible();
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await page.getByRole("link", { name: "+ Nuovo fascicolo" }).click();
   await page.getByLabel("Titolo").fill("Intervento al ginocchio");
   await page.getByLabel("Descrizione").fill("Visita, esami e intervento del 2026.");
@@ -176,7 +176,7 @@ test("un documento può stare in più di un fascicolo insieme (FASE 20c)", async
   await signInAndSetUpVault(page);
 
   // Due vicende distinte. Un'attesa esplicita dell'URL dopo ogni navigazione: cliccare due volte troppo in fretta dopo un redirect può far leggere/scrivere sulla pagina sbagliata.
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await expect(page).toHaveURL(/\/dossiers$/, { timeout: 15_000 });
   await page.getByRole("link", { name: "+ Nuovo fascicolo" }).click();
   await expect(page).toHaveURL(/\/dossiers\/new$/, { timeout: 15_000 });

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { MainNav } from "@/components/layout/MainNav";
-import { useOrderedNavItems } from "@/components/layout/MainNavItemsProvider";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { OnboardingStatus } from "@/components/layout/OnboardingStatus";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
@@ -12,7 +11,6 @@ import { cn } from "@/lib/utils";
 /**
  * La barra laterale, con stato di compressione persistito solo su questo dispositivo (v. lib/sidebar.ts). Compressa:
  * solo icone (nome ed etichette restano letti dagli screen reader, v. sr-only in MainNav/UserMenu), logo senza scritta.
- * `side`: solo per scegliere il bordo di confine col contenuto --- l'ordine visivo lo decide AppShell.
  */
 export function Sidebar({
   userId,
@@ -20,17 +18,14 @@ export function Sidebar({
   lastName,
   displayName,
   avatarUrl,
-  side = "left",
 }: {
   userId: string;
   firstName: string;
   lastName: string;
   displayName: string;
   avatarUrl: string | null;
-  side?: "left" | "right";
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const navItems = useOrderedNavItems();
 
   useEffect(() => {
     // Legge una preferenza già decisa altrove (localStorage), non deriva stato da props/state React.
@@ -50,7 +45,7 @@ export function Sidebar({
         // Sotto md la sostituisce MobileNavBar (v. AppShell): resta montata, solo nascosta, per non perdere lo stato di compressione attraversando la soglia md.
         // md:sticky md:top-0 md:h-screen: senza, <aside> seguiva l'altezza di <main> e l'avatar in fondo finiva irraggiungibile su pagine lunghe.
         "hidden flex-col gap-6 overflow-x-hidden overflow-y-auto border-b border-zinc-200 bg-white transition-[width,padding] duration-300 ease-in-out md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:border-b-0 dark:border-zinc-800 dark:bg-zinc-950",
-        side === "right" ? "md:order-2 md:border-l" : "md:border-r",
+        "md:border-r",
         // cn() non fonde classi in conflitto (v. lib/utils.ts): il padding va scritto per intero in ciascun ramo, mai base + override parziale.
         collapsed ? "p-3 md:w-20" : "p-4 md:w-56 md:p-6",
       )}
@@ -76,7 +71,7 @@ export function Sidebar({
       </div>
 
       <GlobalSearch collapsed={collapsed} />
-      <MainNav collapsed={collapsed} items={navItems} />
+      <MainNav collapsed={collapsed} />
 
       <div className="mt-auto flex flex-col gap-2">
         <OnboardingStatus collapsed={collapsed} />

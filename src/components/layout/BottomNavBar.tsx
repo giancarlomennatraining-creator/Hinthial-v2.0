@@ -3,29 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useBottomNavItems } from "@/components/layout/BottomNavItemsProvider";
-import { NAV_ITEMS } from "@/components/layout/nav-items";
+import { BOTTOM_NAV_HREFS, isNavItemActive, NAV_ITEMS } from "@/components/layout/nav-items";
 
 /**
- * Barra fissa in basso su smartphone, con le sole voci che l'utente ha
- * scelto in Impostazioni > Aspetto, nell'ordine scelto lì (v.
- * BottomNavItemsProvider, BottomNavItemsSettings) --- le altre restano
- * raggiungibili dal menu con le 3 lineette (v. MobileNavBar, che le
- * esclude da lì per non duplicarle). Se l'utente non ha scelto nulla,
- * la barra semplicemente non appare: tutto resta nel menu, come prima
- * di questa funzione.
+ * Barra fissa in basso su smartphone, con le cinque voci principali (v. BOTTOM_NAV_HREFS) --- le altre restano
+ * raggiungibili dal menu con le 3 lineette (v. MobileNavBar, che le esclude da lì per non duplicarle).
  */
 export function BottomNavBar() {
   const pathname = usePathname();
-  const { items } = useBottomNavItems();
-
-  // L'ordine è quello di `items` (scelto in Impostazioni), non quello
-  // fisso di NAV_ITEMS --- altrimenti riordinare in Impostazioni non
-  // avrebbe alcun effetto visibile qui.
-  const shownItems = items
-    .map((href) => NAV_ITEMS.find((item) => item.href === href))
-    .filter((item): item is (typeof NAV_ITEMS)[number] => item !== undefined);
-  if (shownItems.length === 0) return null;
+  const shownItems = BOTTOM_NAV_HREFS.map((href) => NAV_ITEMS.find((item) => item.href === href)).filter(
+    (item): item is (typeof NAV_ITEMS)[number] => item !== undefined,
+  );
 
   return (
     <nav
@@ -33,7 +21,7 @@ export function BottomNavBar() {
       className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden dark:border-zinc-800 dark:bg-zinc-950"
     >
       {shownItems.map((item) => {
-        const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+        const isActive = isNavItemActive(item, pathname);
         return (
           <Link
             key={item.href}

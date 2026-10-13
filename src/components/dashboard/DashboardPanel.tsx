@@ -57,10 +57,11 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
             Ciao, {displayName}
           </h1>
           <PageHelp
-            title="Dashboard"
+            title="Oggi"
             tips={[
-              { icon: "📊", text: "I riquadri in alto contano cosa hai in ogni sezione, aggiornati in tempo reale." },
-              { icon: "⏰", text: "Le scadenze più vicine e i documenti aggiunti di recente arrivano qui per primi." },
+              { icon: "💞", text: "La continuità dice quanto Hinthial è pronto a far arrivare ciò che sai e ciò che hai a chi ami, se un giorno non ci sei." },
+              { icon: "💌", text: "Qui vedi le capsule che ti aspettano, quelle che si aprono presto e le bozze da chiudere." },
+              { icon: "⏰", text: "Le scadenze più vicine, o già passate, arrivano qui per prime." },
               { icon: "🔒", text: "Serve la master password sbloccata per vedere i dettagli cifrati — il resto resta comunque visibile." },
             ]}
           />
