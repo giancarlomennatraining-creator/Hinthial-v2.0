@@ -56,6 +56,25 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-17 (88)
+
+### Importazione: la conferma dopo un lotto, con una lettura di gruppo di Hinthia
+
+**Cosa fa:**
+- Dopo aver caricato **più file** si arriva a una pagina **"N documenti da confermare"**, con una scheda per documento: nome (che apre la scheda), se Hinthia l'ha già letto o se il testo è solo letto sul dispositivo, e le proposte da decidere con **Sì / No** su ognuna (scadenza, emittente, categoria, campi, date da ricordare, collegamento a un bene).
+- In cima il gesto per tutti: **"Chiedi a Hinthia di leggere questi N documenti"**. Hinthia manda il testo a Claude **solo dopo una conferma** che elenca i documenti e dice che un contenuto uscito è uscito; legge uno dopo l'altro (con avanzamento e "Interrompi"), e un documento che non riesce non ferma gli altri. Valgono le regole di sempre: serve la lettura di Hinthia attiva in Impostazioni, restano fuori i documenti senza testo letto o esclusi dall'analisi, e per le categorie non abilitate vale "solo questa volta" (coperta dalla stessa conferma).
+- **"Accetta le N proposte sicure"**: una per tipo e per documento (scadenza, emittente, categoria, campi), con **Annulla**. Le date da ricordare e il collegamento a un bene si confermano una per una. Nulla si scrive senza un sì.
+- **"Ho finito"** chiude la conferma; **"Più tardi"** la lascia in sospeso: in **Archivio** compare "Hai N documenti importati da confermare" con **Rivedi** e **Non ora**. Il promemoria sta su questo dispositivo (solo gli identificativi) e cade dopo 30 giorni.
+
+**Nota importante:**
+- Le proposte nascono **solo dalla lettura di Hinthia** (dal 2026-09 il dispositivo estrae il testo ma non lo interpreta più): la specifica del flusso 1 le dava per calcolate sul dispositivo, ed era un errore. Per questo la conferma non può partire da sola: la lettura passa sempre da una conferma esplicita.
+
+**Note tecniche:**
+- `domain/proposals/for-document.ts` (`proposalsForDocument`, `onePerSlot`) è ora condiviso tra la scheda del documento e la conferma, che mostrano sempre le stesse proposte. `ConfirmImport` (`/archive/confirm?ids=`), `PendingConfirmationNotice` e `domain/documents/pending-confirmation.ts` (coperto da unit test). `confirm-import.spec` simula la risposta del modello sulla route `/api/ai/analyze`, quindi prova tutto il percorso (lettura di gruppo, proposte, accetta le sicure, annulla, Sì e No) senza una vera chiave.
+- Con **un file solo** restano i passi dopo il salvataggio nel modulo (lettura e analisi), non la conferma: unificarli è il passo successivo.
+
+---
+
 ## 2026-10-16 (87)
 
 ### Archivio: caricare uno o più file è lo stesso percorso

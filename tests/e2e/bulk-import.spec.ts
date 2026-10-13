@@ -112,7 +112,24 @@ test("due file con lo stesso nome propongono un fascicolo, importati insieme a u
   await expect(page.getByLabel("Titolo del fascicolo proposto")).toHaveValue("Bolletta luce");
 
   await page.getByRole("button", { name: "Aggiungi 3 file all'archivio" }).click();
-  await expect(page).toHaveURL(/\/archive$/, { timeout: 60_000 });
+
+  // Dopo un lotto si arriva alla conferma: una scheda per documento, i gesti per tutti in cima.
+  await expect(page).toHaveURL(/\/archive\/confirm\?ids=/, { timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: "3 documenti da confermare" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "bolletta-luce-01.pdf" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "biglietto-treno.txt" })).toBeVisible();
+  // Senza la lettura di Hinthia non ci sono proposte: lo dice, e non scrive nulla.
+  await expect(page.getByText("Nessuna proposta, per ora").first()).toBeVisible();
+
+  // "Più tardi" lascia la conferma in sospeso: da Archivio si riapre.
+  await page.getByRole("button", { name: "Più tardi" }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
+  await expect(page.getByText("Hai 3 documenti importati da confermare.")).toBeVisible({ timeout: 15_000 });
+  await page.getByRole("link", { name: "Rivedi" }).click();
+  await expect(page.getByRole("heading", { name: "3 documenti da confermare" })).toBeVisible();
+  await page.getByRole("button", { name: "Ho finito" }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
+  await expect(page.getByText("Hai 3 documenti importati da confermare.")).toHaveCount(0);
 
   // I documenti si chiamano come i file: il contenuto non decide più il titolo.
   await expect(page.getByRole("link", { name: /bolletta-luce-01\.pdf/ })).toBeVisible({ timeout: 15_000 });

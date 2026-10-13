@@ -41,6 +41,7 @@ import { GoogleDriveBrowser } from "@/components/documents/GoogleDriveBrowser";
 import { detectDuplicates } from "@/domain/bulk-import/duplicates";
 import { groupByFilename } from "@/domain/bulk-import/grouping";
 import { useToast } from "@/components/ui/ToastProvider";
+import { addPendingConfirmation } from "@/domain/documents/pending-confirmation";
 import {
   AnalysisAbortedError,
   analysisConfirmMessage,
@@ -714,7 +715,9 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
               ? `${result.ids.length} contenuti importati${result.dossiersCreated > 0 ? `, ${result.dossiersCreated} nuovo fascicolo` : ""}.`
               : `${result.ids.length} importati, ${result.failures} non riusciti.`,
           );
-          router.push("/archive");
+          // Si ricordano da confermare su questo dispositivo, per riaprire la conferma da Archivio se la si chiude a metà.
+          addPendingConfirmation(user.id, result.ids);
+          router.push(`/archive/confirm?ids=${result.ids.join(",")}`);
           return;
         }
         newId = result.ids[0];

@@ -49,7 +49,9 @@ test("selezione multipla applica categoria e tag in blocco, poi l'eliminazione i
   ]);
   await expect(page.getByText("documento-tre.txt")).toBeVisible({ timeout: 30_000 });
   await page.getByRole("button", { name: "Aggiungi 3 file all'archivio" }).click();
-  await expect(page).toHaveURL(/\/archive$/, { timeout: 60_000 });
+  await expect(page).toHaveURL(/\/archive\/confirm\?ids=/, { timeout: 60_000 });
+  await page.getByRole("button", { name: "Ho finito" }).click();
+  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText("documento-uno.txt")).toBeVisible({ timeout: 15_000 });
 
   // Seleziona i tre documenti (checkbox a inizio riga, vista elenco di default).

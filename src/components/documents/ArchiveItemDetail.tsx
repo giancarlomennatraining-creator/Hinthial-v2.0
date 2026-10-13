@@ -21,7 +21,7 @@ import {
 import { loadDocumentSegments } from "@/domain/documents/segments";
 import type { ContentSegment } from "@/domain/extraction/types";
 import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
-import { buildAssetProposal, buildNewAssetProposal, type LinkedDocumentFields } from "@/domain/assets/link-proposal";
+import type { LinkedDocumentFields } from "@/domain/assets/link-proposal";
 import { listAssets } from "@/domain/assets/repository";
 import { listCategories, grantCategoryAIExtractionTemporarily } from "@/domain/categories/repository";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
@@ -42,11 +42,9 @@ import {
   AnalysisAbortedError,
   analysisConfirmMessage,
   analyzeDocumentWithClaude,
-  extractedFieldsFrom,
   pastEventsOf,
   inspectSavedAnalysis,
   planAnalysis,
-  buildAIProposals,
   type AIAnalysisScope,
   type AnalysisProgress,
   type SavedAnalysisState,
@@ -66,6 +64,7 @@ import {
   type DocumentMetadataFieldsValue,
 } from "@/components/documents/DocumentMetadataFields";
 import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
+import { onePerSlot, proposalsForDocument } from "@/domain/proposals/for-document";
 import {
   contentKindFor,
   CONTENT_KIND_ICON,
@@ -659,21 +658,16 @@ export function ArchiveItemDetail({
   const reading = readingStateFor(doc);
   // Ricalcolate a ogni render: accettare o rifiutare una proposta la filtra automaticamente, senza stato a parte.
   // Vengono dalla lettura salvata, non da uno stato della pagina: sopravvivono al ricaricamento e a un'interruzione.
-  const aiFields = doc.contentAnalysis ? extractedFieldsFrom(doc.contentAnalysis, categories, typeCategories) : null;
-  const readIdentifiers = aiFields?.fields.map((f) => ({ key: f.key, value: f.value })) ?? [];
-  // Prima un bene che c'è già (lo stesso identificativo di un documento collegato), altrimenti uno da creare.
-  const assetProposal =
-    buildAssetProposal({ doc, readFields: readIdentifiers, linked: linkedFields, assets, rejections }) ??
-    buildNewAssetProposal({ doc, readFields: readIdentifiers, assets, rejections });
-  const aiProposals = [
-    ...(aiFields
-      ? buildAIProposals(doc, aiFields, rejections, {
-          today,
-          existingDates: reminderDates,
-        })
-      : []),
-    ...(assetProposal ? [assetProposal] : []),
-  ];
+  const { proposals: aiProposals, aiFields } = proposalsForDocument({
+    doc,
+    categories,
+    typeCategories,
+    assets,
+    linkedFields,
+    rejections,
+    reminderDates,
+    today,
+  });
   const pastEvents = aiFields ? pastEventsOf(aiFields, today) : [];
   const analysisOverview = doc.contentAnalysis
     ? buildAnalysisOverview(doc.contentAnalysis, doc, categories, reminderDates)
@@ -1054,20 +1048,6 @@ export function ArchiveItemDetail({
       </div>
     </div>
   );
-}
-
-/** Una sola proposta per tipo (per "campo": per chiave) --- con più candidati della stessa cosa vince la prima, non si sovrascrive in sequenza. */
-function onePerSlot(proposals: Proposal[]): Proposal[] {
-  const seen = new Set<string>();
-  return proposals.filter((proposal) => {
-    // Un evento non scrive nella Scheda: non entra in "Accetta tutto", che aggiunge solo informazioni alla Scheda.
-    // Il collegamento a un bene tocca un'altra cosa dell'utente: si conferma da solo, con "Collega".
-    if (proposal.kind === "event" || proposal.kind === "asset") return false;
-    const slot = proposal.kind === "field" ? `field:${proposal.fieldKey}` : proposal.kind;
-    if (seen.has(slot)) return false;
-    seen.add(slot);
-    return true;
-  });
 }
 
 /** Confronto per valore, senza voci vuote né ordine: una voce svuotata equivale a una rimossa. */

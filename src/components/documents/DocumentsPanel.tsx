@@ -28,6 +28,7 @@ import { ArchiveTabs } from "@/components/documents/ArchiveTabs";
 import { AlternativeArchiveView } from "@/components/documents/archive/AlternativeArchiveView";
 import { ArchiveViewSwitcher } from "@/components/documents/archive/ArchiveViewSwitcher";
 import { AddContentMenu, ADD_CONTENT_ITEMS } from "@/components/documents/archive/parts";
+import { PendingConfirmationNotice } from "@/components/documents/PendingConfirmationNotice";
 import { ThumbnailProvider } from "@/components/documents/archive/thumbnails";
 import { useArchiveData } from "@/components/documents/archive/useArchiveData";
 import { useArchiveView } from "@/components/documents/archive/useArchiveView";
@@ -345,6 +346,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
           <PageHelp title="Archivio" tips={ARCHIVE_HELP_TIPS} />
         </div>
         <ArchiveTabs />
+        <PendingConfirmationNotice existingIds={documents.map((d) => d.id)} />
         {error ? (
           <p role="alert" className="text-sm text-red-600 dark:text-red-400">
             {error}
@@ -387,6 +389,8 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
       <ArchiveTabs />
 
       <MobileAddFab href="/archive/new" label="Aggiungi contenuto" menu={ADD_CONTENT_ITEMS} />
+
+      <PendingConfirmationNotice existingIds={documents.map((d) => d.id)} />
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
