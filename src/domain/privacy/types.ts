@@ -1,6 +1,5 @@
 import type { CapsuleStatus } from "@/domain/capsules/types";
 import type { DossierStatus } from "@/domain/dossiers/types";
-import type { NavOrientation } from "@/lib/nav-orientation";
 
 /**
  * Tutto quello che questa interfaccia elenca è già visibile al server
@@ -26,7 +25,6 @@ export interface AccountVisibilitySummary {
   dossierStatusCounts: Record<DossierStatus, number>;
   /** Nomi delle categorie usate --- la tassonomia è in chiaro, non un dato del vault. */
   categoryNames: string[];
-  navOrientation: NavOrientation;
   /** Se il gadget "Onboarding" nella barra è nascosto --- v. OnboardingWidgetVisibilityProvider. */
   onboardingWidgetHidden: boolean;
 }

@@ -13,7 +13,7 @@ test("si condivide un fascicolo con un link protetto, lo si apre senza account, 
 
   // Il fascicolo, e il documento dentro.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await page.getByRole("link", { name: "+ Nuovo fascicolo" }).click();
   await page.getByLabel("Titolo").fill("Acquisto casa");
   await page.getByLabel("Descrizione").fill("Appartamento di Via Roma 12");
@@ -29,7 +29,7 @@ test("si condivide un fascicolo con un link protetto, lo si apre senza account, 
 
   // Si crea il link: solo lettura, 24 ore, per un notaio.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await page.getByRole("link", { name: /Acquisto casa/ }).click();
   await page.getByRole("link", { name: "Condividi" }).click();
   await expect(page.getByRole("heading", { name: "Condividi un fascicolo" })).toBeVisible();

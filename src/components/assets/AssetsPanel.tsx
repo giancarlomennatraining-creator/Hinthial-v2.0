@@ -12,6 +12,7 @@ import { listReminders } from "@/domain/reminders/repository";
 import { sortAlphabetically } from "@/lib/utils";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
+import { ArchiveTabs } from "@/components/documents/ArchiveTabs";
 import { PageHelp } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
@@ -120,7 +121,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="flex min-w-0 w-full items-start justify-between gap-3 sm:flex-1">
           <h1 className="text-2xl font-semibold tracking-tight text-brand">
-            Beni
+            Archivio
           </h1>
           <PageHelp
             title="Beni"
@@ -138,6 +139,8 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
           + Crea bene
         </Link>
       </div>
+
+      <ArchiveTabs />
 
       <MobileAddFab href="/assets/new" label="Aggiungi bene" />
 

@@ -2,6 +2,7 @@ import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 import { openRowMenu } from "./row-actions";
 import { closeGlobalSearch, searchGlobally } from "./search-helpers";
+import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -34,7 +35,7 @@ test("la ricerca globale e il filtro per categoria funzionano in Beni e Archivio
 
   await loginAndSetUpEncryption(page);
 
-  await page.getByRole("link", { name: "Beni" }).click();
+  await openArchiveTab(page, "Beni");
   await page.getByRole("link", { name: "+ Crea bene" }).click();
   await expect(page.getByRole("heading", { name: "Nuovo bene" })).toBeVisible();
   await page.getByLabel("Nome").fill("Appartamento");
@@ -118,7 +119,7 @@ test("la ricerca globale funziona in Scadenze, Amici e Capsule", async ({
   await loginAndSetUpEncryption(page);
 
   // Scadenze: una completata, una no.
-  await page.getByRole("link", { name: "Scadenze" }).click();
+  await openArchiveTab(page, "Scadenze");
   await page.getByRole("link", { name: "+ Crea scadenza" }).click();
   await expect(page.getByRole("heading", { name: "Nuova scadenza" })).toBeVisible();
   const future = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);

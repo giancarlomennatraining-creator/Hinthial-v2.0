@@ -7,15 +7,14 @@ import { MainNav } from "@/components/layout/MainNav";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { OnboardingStatus } from "@/components/layout/OnboardingStatus";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
-import { useBottomNavItems } from "@/components/layout/BottomNavItemsProvider";
-import { useOrderedNavItems } from "@/components/layout/MainNavItemsProvider";
+import { BOTTOM_NAV_HREFS, NAV_ITEMS } from "@/components/layout/nav-items";
 import { useMountedTransition } from "@/lib/use-mounted-transition";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 
 /**
- * Su schermi piccoli sostituisce sia Sidebar sia TopNav con solo logo + tasto menu, che apre lo stesso contenuto in
- * sovraimpressione. Sidebar/TopNav restano montate (nascoste con `hidden md:flex`, v. AppShell): così lo stato di
+ * Su schermi piccoli sostituisce Sidebar con solo logo + tasto menu, che apre lo stesso contenuto in
+ * sovraimpressione. Sidebar resta montata (nascoste con `hidden md:flex`, v. AppShell): così lo stato di
  * compressione della barra laterale non si perde passando sopra/sotto la soglia md.
  */
 export function MobileNavBar({
@@ -34,11 +33,9 @@ export function MobileNavBar({
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { mounted, entered } = useMountedTransition(open, 300);
-  const { items: bottomNavItems } = useBottomNavItems();
 
   // Le voci già raggiungibili dalla barra fissa in basso non vanno ripetute qui.
-  const navItems = useOrderedNavItems();
-  const drawerItems = navItems.filter((item) => !bottomNavItems.includes(item.href));
+  const drawerItems = NAV_ITEMS.filter((item) => !BOTTOM_NAV_HREFS.includes(item.href));
 
   // Una navigazione riuscita chiude il menu. `skipFirstRun`: il primo giro dell'effetto, asincrono dopo il commit
   // iniziale, potrebbe arrivare DOPO un tocco sul tasto capitato nel frattempo (pagine lente al primo montaggio) e

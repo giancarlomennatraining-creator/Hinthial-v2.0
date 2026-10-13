@@ -16,7 +16,7 @@ test("le voci di navigazione che richiedono la cifratura mostrano un pallino fin
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   const archiveLink = page.getByRole("link", { name: "Archivio", exact: true });
-  const dashboardLink = page.getByRole("link", { name: "Dashboard", exact: true });
+  const dashboardLink = page.getByRole("link", { name: "Oggi", exact: true });
 
   // Prima della configurazione: pallino sulle voci che la richiedono...
   await expect(archiveLink.locator(".bg-orange-500")).toBeVisible();

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 import { openRowMenu } from "./row-actions";
+import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -47,8 +48,8 @@ test("crea un bene e vi collega un documento e una scadenza", async ({ page }) =
 
   await loginAndSetUpEncryption(page);
 
-  await page.getByRole("link", { name: "Beni" }).click();
-  await expect(page.getByRole("heading", { name: "Beni" })).toBeVisible();
+  await openArchiveTab(page, "Beni");
+  await expect(page.getByRole("link", { name: "Beni", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByText("Nessun bene ancora")).toBeVisible();
 
   await createAsset(page, "Casa di Via Roma", "🏠 Casa");
@@ -85,7 +86,7 @@ test("crea un bene e vi collega un documento e una scadenza", async ({ page }) =
   await expect(page.getByText("🔗 Casa di Via Roma")).toBeVisible();
 
   // Crea una scadenza e collegala allo stesso bene.
-  await page.getByRole("link", { name: "Scadenze" }).click();
+  await openArchiveTab(page, "Scadenze");
   await page.getByRole("link", { name: "+ Crea scadenza" }).click();
   await expect(page.getByRole("heading", { name: "Nuova scadenza" })).toBeVisible();
   const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -99,7 +100,7 @@ test("crea un bene e vi collega un documento e una scadenza", async ({ page }) =
   await expect(page.getByText("🔗 Casa di Via Roma")).toBeVisible();
 
   // Il bene mostra entrambe le relazioni.
-  await page.getByRole("link", { name: "Beni" }).click();
+  await openArchiveTab(page, "Beni");
   await expect(page.getByText("📄 contratto-affitto.txt")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText(/⏰ Pagamento IMU/)).toBeVisible();
 
@@ -126,7 +127,7 @@ test("crea un bene e vi collega un documento e una scadenza", async ({ page }) =
 
   await page.getByRole("link", { name: "Archivio" }).click();
   await expect(page.getByText("contratto-affitto.txt")).toBeVisible();
-  await page.getByRole("link", { name: "Scadenze" }).click();
+  await openArchiveTab(page, "Scadenze");
   await expect(page.getByText("Pagamento IMU")).toBeVisible();
 });
 
@@ -138,7 +139,7 @@ test("la categoria filtra i beni nei documenti, il bene filtra i documenti nelle
   await loginAndSetUpEncryption(page);
 
   // Due beni di categorie diverse.
-  await page.getByRole("link", { name: "Beni" }).click();
+  await openArchiveTab(page, "Beni");
   await createAsset(page, "Appartamento", "🏠 Casa");
   await expect(page.getByText("Appartamento")).toBeVisible({ timeout: 10_000 });
 
@@ -191,7 +192,7 @@ test("la categoria filtra i beni nei documenti, il bene filtra i documenti nelle
   // Scadenze: senza bene selezionato, il menu documento è
   // vuoto/disabilitato --- selezionare il bene "Appartamento" lo
   // popola con il solo documento già legato a quel bene.
-  await page.getByRole("link", { name: "Scadenze" }).click();
+  await openArchiveTab(page, "Scadenze");
   await page.getByRole("link", { name: "+ Crea scadenza" }).click();
   await expect(page.getByRole("heading", { name: "Nuova scadenza" })).toBeVisible();
   await expect(page.locator("#relatedDocumentId")).toBeDisabled();

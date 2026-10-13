@@ -7,8 +7,6 @@ import {
   uploadAvatarBlob,
 } from "@/lib/storage/avatars-bucket";
 import { parseOpenEffect, type CapsuleOpenEffect } from "@/domain/capsules/open-effects";
-import { type NavOrientation } from "@/lib/nav-orientation";
-import { type BottomNavItems } from "@/lib/bottom-nav";
 import type { ProfileInput } from "@/domain/profile/types";
 
 /** Nome/cognome in chiaro, mai cifrati --- non sensibili come il contenuto di un documento. */
@@ -64,51 +62,6 @@ export async function removeAvatar(
   }
 
   await removeAvatarBlob(supabase, currentPath).catch(() => {});
-}
-
-/** Letta server-side alla prossima navigazione (v. getCurrentUser), nota prima del primo paint della shell. */
-export async function updateNavOrientation(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  orientation: NavOrientation,
-): Promise<void> {
-  const { error } = await supabase
-    .from("profiles")
-    .update({ nav_orientation: orientation })
-    .eq("id", userId);
-
-  if (error) {
-    throw new Error(`Impossibile salvare la disposizione del menu: ${error.message}`);
-  }
-}
-
-/** Come nav_orientation: letta al login per evitare un lampo delle icone sbagliate nella barra fissa mobile. */
-export async function updateBottomNavItems(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  items: BottomNavItems,
-): Promise<void> {
-  const { error } = await supabase
-    .from("profiles")
-    .update({ bottom_nav_items: items })
-    .eq("id", userId);
-
-  if (error) {
-    throw new Error(`Impossibile salvare la barra di navigazione in basso: ${error.message}`);
-  }
-}
-
-/** Voci e ordine della barra di navigazione principale --- stesso motivo di updateBottomNavItems. */
-export async function updateMainNavItems(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  items: string[],
-): Promise<void> {
-  const { error } = await supabase.from("profiles").update({ main_nav_items: items }).eq("id", userId);
-
-  if (error) {
-    throw new Error(`Impossibile salvare la barra di navigazione: ${error.message}`);
-  }
 }
 
 /** "Nascondi" il gadget onboarding vale su ogni dispositivo, non solo questo browser (v. OnboardingWidgetVisibilityProvider). */
@@ -198,7 +151,7 @@ export async function markMasterKeyIntroSeen(
   }
 }
 
-/** Letta lato client (non al login come nav_orientation) --- un breve caricamento qui non crea lampi percepibili. */
+/** Letta lato client --- un breve caricamento qui non crea lampi percepibili. */
 export async function getCapsuleCountdownVisible(
   supabase: SupabaseClient<Database>,
   userId: string,

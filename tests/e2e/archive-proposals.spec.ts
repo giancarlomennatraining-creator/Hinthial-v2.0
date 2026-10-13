@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { MASTER_PASSWORD, openAnalysedDocument } from "./hinthia";
+import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -58,7 +59,7 @@ test("accettare una proposta scrive davvero, e si può annullare", async ({ page
   await schedaTab.click();
   await expect(scadenza).toHaveValue("2027-06-03", { timeout: 20_000 });
 
-  await page.getByRole("link", { name: "Scadenze", exact: true }).click();
+  await openArchiveTab(page, "Scadenze");
   await expect(page.getByText("polizza.pdf").first()).toBeVisible({ timeout: 20_000 });
 });
 

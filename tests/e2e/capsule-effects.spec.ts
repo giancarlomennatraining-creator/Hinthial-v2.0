@@ -45,7 +45,7 @@ async function createMasterKey(page: Page, section: string, heading: string) {
   await expect(page.getByLabel("Ho salvato la recovery key in un posto sicuro.")).toBeVisible({ timeout: 45_000 });
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
-  await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+  await expect(page.getByRole("heading", { name: heading })).toBeVisible({ timeout: 15_000 });
 }
 
 async function logout(page: Page, name: string) {

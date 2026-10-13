@@ -68,7 +68,7 @@ test("Impostazioni > Onboarding mostra la percentuale, un messaggio e le attivit
     page.getByRole("button", { name: "Mostra di nuovo l'indicatore nella barra di navigazione" }),
   ).toBeVisible();
 
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Oggi" }).click();
   await expect(statusButton).not.toBeVisible();
 
   // Farlo ricomparire funziona allo stesso modo, in entrambe le direzioni.
@@ -77,6 +77,6 @@ test("Impostazioni > Onboarding mostra la percentuale, un messaggio e le attivit
   await page
     .getByRole("button", { name: "Mostra di nuovo l'indicatore nella barra di navigazione" })
     .click();
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Oggi" }).click();
   await expect(statusButton).toBeVisible({ timeout: 10_000 });
 });

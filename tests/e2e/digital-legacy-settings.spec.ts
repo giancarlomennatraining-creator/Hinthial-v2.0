@@ -1,10 +1,9 @@
 import { expect, test } from "./fixtures";
-import { openSettings } from "./settings-nav";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("Impostazioni > Eredità digitale mostra i preset, il riepilogo si aggiorna, e i valori personalizzati si salvano e sopravvivono a un refresh", async ({
+test("Eredità digitale mostra i preset, il riepilogo si aggiorna, e i valori personalizzati si salvano e sopravvivono a un refresh", async ({
   page,
 }) => {
   test.slow();
@@ -19,8 +18,7 @@ test("Impostazioni > Eredità digitale mostra i preset, il riepilogo si aggiorna
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   // Consultabile subito, prima di configurare la cifratura: nessun dato cifrato coinvolto.
-  await openSettings(page, user);
-  await page.getByRole("tab", { name: "Eredità digitale" }).click();
+  await page.getByRole("link", { name: "Eredità digitale", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Eredità digitale" })).toBeVisible();
 
@@ -61,7 +59,6 @@ test("Impostazioni > Eredità digitale mostra i preset, il riepilogo si aggiorna
   await expect(page.getByText("Impostazioni di Eredità digitale salvate.")).toBeVisible();
 
   await page.reload();
-  await page.getByRole("tab", { name: "Eredità digitale" }).click();
   await expect(page.getByText("Personalizzato — almeno un valore")).toBeVisible();
   // Anche l'interruttore acceso sopravvive al refresh: niente più conferma qui, solo l'ACCENSIONE la richiede.
   await expect(page.getByRole("checkbox", { name: "Attiva Eredità digitale" })).toBeChecked();
@@ -105,8 +102,7 @@ test("la prova generale mostra un calendario reale e si ferma onestamente senza 
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  await openSettings(page, user);
-  await page.getByRole("tab", { name: "Eredità digitale" }).click();
+  await page.getByRole("link", { name: "Eredità digitale", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Eredità digitale" })).toBeVisible();
 
   await expect(page.getByRole("heading", { name: "La prova generale" })).toBeVisible();

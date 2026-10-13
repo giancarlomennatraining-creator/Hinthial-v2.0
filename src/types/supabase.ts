@@ -85,7 +85,6 @@ type FriendStatusColumn = "active" | "revoked";
 
 type RequestStatusColumn = "pending" | "accepted" | "rejected";
 
-type NavOrientationColumn = "sidebar-left" | "sidebar-right" | "topbar";
 
 type CapsuleStatusColumn = "draft" | "ready" | "shared";
 type CapsuleAccessConditionColumn = "manual";
@@ -113,10 +112,7 @@ export type Database = {
           last_name: string;
           avatar_path: string | null;
           birth_date: string | null;
-          nav_orientation: NavOrientationColumn;
           capsule_open_effect: string;
-          bottom_nav_items: Json;
-          main_nav_items: Json | null;
           onboarding_widget_hidden: boolean;
           master_key_intro_seen: boolean;
           ai_master_enabled: boolean;
@@ -147,10 +143,7 @@ export type Database = {
           last_name: string;
           avatar_path?: string | null;
           birth_date?: string | null;
-          nav_orientation?: NavOrientationColumn;
           capsule_open_effect?: string;
-          bottom_nav_items?: Json;
-          main_nav_items?: Json | null;
           onboarding_widget_hidden?: boolean;
           master_key_intro_seen?: boolean;
           ai_master_enabled?: boolean;
@@ -181,10 +174,7 @@ export type Database = {
           last_name?: string;
           avatar_path?: string | null;
           birth_date?: string | null;
-          nav_orientation?: NavOrientationColumn;
           capsule_open_effect?: string;
-          bottom_nav_items?: Json;
-          main_nav_items?: Json | null;
           onboarding_widget_hidden?: boolean;
           master_key_intro_seen?: boolean;
           ai_master_enabled?: boolean;

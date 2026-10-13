@@ -11,7 +11,7 @@ test("un fascicolo ha fasi, prossimi passi e persone, che si vedono anche nell'e
   await setUpWithDocument(page, { filename: "compromesso.pdf" });
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await page.getByRole("link", { name: "+ Nuovo fascicolo" }).click();
   await page.getByLabel("Titolo").fill("Acquisto casa");
   await page.getByRole("button", { name: "Crea fascicolo" }).click();

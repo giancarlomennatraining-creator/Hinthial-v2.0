@@ -2,6 +2,7 @@ import { expect, test } from "./fixtures";
 import { readFileSync } from "node:fs";
 import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
 import { openRowMenu } from "./row-actions";
+import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -39,8 +40,8 @@ test("crea, completa ed elimina scadenze", async ({ page }) => {
 
   await loginAndSetUpEncryption(page);
 
-  await page.getByRole("link", { name: "Scadenze" }).click();
-  await expect(page.getByRole("heading", { name: "Scadenze" })).toBeVisible();
+  await openArchiveTab(page, "Scadenze");
+  await expect(page.getByRole("link", { name: "Scadenze", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByText("Nessuna scadenza ancora")).toBeVisible();
 
   await page.getByRole("link", { name: "+ Crea scadenza" }).click();
@@ -107,12 +108,13 @@ test("aggiunge scadenza e note a un documento e li vede in dashboard", async ({
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText(/scade \d/)).toBeVisible();
 
-  // La dashboard mostra il documento tra i recenti, e segnala la cifratura configurata.
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  // "Oggi" mostra il documento tra le scadenze vicine, e segnala la cifratura configurata.
+  await page.getByRole("link", { name: "Oggi" }).click();
   await expect(page.getByRole("heading", { name: `Ciao, ${fullName(user)}` })).toBeVisible();
   await expect(page.getByText("Master password creata · recovery key salvata")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Aggiunti di recente" })).toBeVisible();
-  await expect(page.getByText("documento-con-metadati.txt")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Scadenze vicine" }).getByText("documento-con-metadati.txt")).toBeVisible({
+    timeout: 15_000,
+  });
 });
 
 test("esporta le scadenze come file .ics per il calendario", async ({ page }) => {
@@ -120,7 +122,7 @@ test("esporta le scadenze come file .ics per il calendario", async ({ page }) =>
 
   await loginAndSetUpEncryption(page);
 
-  await page.getByRole("link", { name: "Scadenze" }).click();
+  await openArchiveTab(page, "Scadenze");
   await page.getByRole("link", { name: "+ Crea scadenza" }).click();
   const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   await page.getByLabel("Titolo").fill("Rinnovo passaporto");

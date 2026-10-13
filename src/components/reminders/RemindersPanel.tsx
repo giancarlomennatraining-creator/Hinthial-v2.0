@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { deleteReminder, listReminders, setReminderCompleted } from "@/domain/reminders/repository";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
+import { ArchiveTabs } from "@/components/documents/ArchiveTabs";
 import { PageHelp } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
@@ -130,7 +131,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="flex min-w-0 w-full items-start justify-between gap-3 sm:flex-1">
           <h1 className="text-2xl font-semibold tracking-tight text-brand">
-            Scadenze
+            Archivio
           </h1>
           <PageHelp
             title="Scadenze"
@@ -148,6 +149,8 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
           + Crea scadenza
         </Link>
       </div>
+
+      <ArchiveTabs />
 
       <MobileAddFab href="/reminders/new" label="Aggiungi scadenza" />
 

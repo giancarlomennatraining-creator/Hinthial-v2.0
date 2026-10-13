@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { fetchAccountVisibilitySummary } from "@/domain/privacy/repository";
-import { NAV_ORIENTATION_LABEL } from "@/lib/nav-orientation";
 import type { AccountVisibilitySummary } from "@/domain/privacy/types";
 
 const NEVER_VISIBLE = [
@@ -87,7 +86,6 @@ export function PrivacyPanel({
       ? `Le tue categorie: ${summary.categoryNames.join(", ")}`
       : "Nessuna categoria configurata",
     "Per ogni contenuto in archivio: a quale categoria, bene e fascicolo è collegato, e la sua scadenza — non il nome del file né cosa contiene",
-    `Disposizione del menu: ${NAV_ORIENTATION_LABEL[summary.navOrientation]}`,
     summary.onboardingWidgetHidden
       ? "Indicatore di onboarding nella barra: nascosto"
       : "Indicatore di onboarding nella barra: visibile",

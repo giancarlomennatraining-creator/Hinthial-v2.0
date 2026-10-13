@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -35,7 +36,7 @@ test("il consenso all'AI reale ha un cancello generale (Impostazioni > Hinthia) 
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   // Un bene in categoria Assicurazioni, perché il retrieval locale trovi qualcosa di pertinente e la domanda arrivi davvero alla route server-side.
-  await page.getByRole("link", { name: "Beni" }).click();
+  await openArchiveTab(page, "Beni");
   await page.getByRole("link", { name: "+ Crea bene" }).click();
   await page.getByLabel("Nome").fill("Auto Panda");
   await page.locator("#categoryId").selectOption({ label: "🛡️ Assicurazioni" });

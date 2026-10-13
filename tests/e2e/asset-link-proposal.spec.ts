@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "./fixtures";
 import { enableHinthia, askHinthia, mockHinthiaReading, buildPdf, POLIZZA, setUpWithDocument } from "./hinthia";
+import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -7,7 +8,7 @@ import { enableHinthia, askHinthia, mockHinthiaReading, buildPdf, POLIZZA, setUp
 // lo stesso numero, quindi Hinthial propone di collegarla alla Panda. La lettura di Hinthia è simulata (v. hinthia.ts).
 
 async function createAsset(page: Page, name: string, categoryLabel: string) {
-  await page.getByRole("link", { name: "Beni", exact: true }).click();
+  await openArchiveTab(page, "Beni");
   await page.getByRole("link", { name: "+ Crea bene" }).click();
   await page.getByLabel("Nome").fill(name);
   await page.locator("#categoryId").selectOption({ label: categoryLabel });
@@ -104,7 +105,7 @@ test("da una polizza propone di creare il bene, lo crea collegando il documento,
   await expect(page.getByLabel("Bene collegato").locator("option:checked")).toHaveText("Ford Focus 1.5 EcoBlue (EY389YM)");
 
   // Il bene mostra la scadenza del documento collegato.
-  await page.getByRole("link", { name: "Beni", exact: true }).click();
+  await openArchiveTab(page, "Beni");
   const asset = page.getByRole("listitem").filter({ hasText: "Ford Focus 1.5 EcoBlue (EY389YM)" });
   await expect(asset).toContainText("polizza-focus.pdf scade", { timeout: 15_000 });
 });

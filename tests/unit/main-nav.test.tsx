@@ -1,10 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MainNav } from "@/components/layout/MainNav";
 import type { MasterKeyStatus } from "@/components/crypto/MasterKeyProvider";
 
+const pathname = { current: "/archive" };
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/archive",
+  usePathname: () => pathname.current,
 }));
 
 // MainNav legge lo stato della Master Key solo per il pallino "richiede
@@ -22,17 +23,13 @@ describe("MainNav", () => {
   it("renders every navigation item", () => {
     render(<MainNav />);
 
-    for (const label of [
-      "Dashboard",
-      "Archivio",
-      "Scadenze",
-      "Beni",
-      "Amici",
-      "Capsule",
-      "Hinthia",
-    ]) {
+    for (const label of ["Oggi", "Amici", "Capsule", "Eredità digitale", "Archivio", "Hinthia"]) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     }
+
+    // Scadenze e Beni sono schede dell'Archivio, non voci di menu.
+    expect(screen.queryByRole("link", { name: "Scadenze" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Beni" })).not.toBeInTheDocument();
 
     // "Impostazioni" ora vive nel menu utente (UserMenu), non qui.
     expect(screen.queryByRole("link", { name: "Impostazioni" })).not.toBeInTheDocument();
@@ -57,9 +54,19 @@ describe("MainNav", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("link", { name: "Dashboard" })).not.toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Oggi" })).not.toHaveAttribute(
       "aria-current",
     );
+  });
+
+  it("tiene acceso l'Archivio anche dentro le sue schede (Beni, Scadenze, Fascicoli)", () => {
+    for (const path of ["/assets", "/reminders/new", "/dossiers"]) {
+      cleanup();
+      pathname.current = path;
+      render(<MainNav />);
+      expect(screen.getByRole("link", { name: "Archivio" })).toHaveAttribute("aria-current", "page");
+    }
+    pathname.current = "/archive";
   });
 
   describe("nav-setup-hint", () => {
@@ -73,8 +80,8 @@ describe("MainNav", () => {
       const archivioLink = screen.getByRole("link", { name: "Archivio" });
       expect(archivioLink).toHaveAccessibleDescription(/richiede di configurare la cifratura/i);
 
-      // Dashboard non è dietro la Master Key: nessun avviso.
-      const dashboardLink = screen.getByRole("link", { name: "Dashboard" });
+      // Oggi non è dietro la Master Key: nessun avviso.
+      const dashboardLink = screen.getByRole("link", { name: "Oggi" });
       expect(dashboardLink).toHaveAccessibleDescription("");
 
       mockStatus.current = { kind: "unlocked", masterKey: {} as CryptoKey };

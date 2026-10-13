@@ -1,6 +1,7 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 import { searchGlobally } from "./search-helpers";
+import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -27,7 +28,7 @@ test("la ricerca globale trova un bene per nome e ci porta alla sua pagina", asy
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Beni" }).click();
+  await openArchiveTab(page, "Beni");
   await page.getByRole("link", { name: "+ Crea bene" }).click();
   await page.getByLabel("Nome").fill("Auto Panda");
   await page.getByRole("button", { name: "Aggiungi bene" }).click();

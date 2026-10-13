@@ -1,24 +1,16 @@
 "use client";
 
 import { Sidebar } from "@/components/layout/Sidebar";
-import { TopNav } from "@/components/layout/TopNav";
 import { MobileNavBar } from "@/components/layout/MobileNavBar";
 import { BottomNavBar } from "@/components/layout/BottomNavBar";
 import { MasterKeyProvider } from "@/components/crypto/MasterKeyProvider";
 import { MasterKeyIntroModal } from "@/components/crypto/MasterKeyIntroModal";
 import { UnlockPromptProvider } from "@/components/crypto/UnlockPromptProvider";
-import { NavOrientationProvider, useNavOrientation } from "@/components/layout/NavOrientationProvider";
-import { BottomNavItemsProvider } from "@/components/layout/BottomNavItemsProvider";
-import { MainNavItemsProvider } from "@/components/layout/MainNavItemsProvider";
 import { OnboardingWidgetVisibilityProvider } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 import { AIChatProvider } from "@/components/ai/AIChatProvider";
 import { AIProcessingConsentProvider } from "@/components/ai/AIProcessingConsentProvider";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { AuditWriteFailedNotice } from "@/components/audit/AuditWriteFailedNotice";
-import { cn } from "@/lib/utils";
-import type { NavOrientation } from "@/lib/nav-orientation";
-import type { BottomNavItems } from "@/lib/bottom-nav";
-import type { MainNavItems } from "@/lib/main-nav";
 
 /**
  * Shared chrome for the authenticated app (nav + user menu).
@@ -33,9 +25,6 @@ export function AppShell({
   lastName,
   displayName,
   avatarUrl,
-  initialNavOrientation,
-  initialBottomNavItems,
-  initialMainNavItems,
   initialOnboardingWidgetHidden,
   initialMasterKeyIntroSeen,
   initialAIMasterEnabled,
@@ -48,9 +37,6 @@ export function AppShell({
   lastName: string;
   displayName: string;
   avatarUrl: string | null;
-  initialNavOrientation: NavOrientation;
-  initialBottomNavItems: BottomNavItems;
-  initialMainNavItems: MainNavItems;
   initialOnboardingWidgetHidden: boolean;
   initialMasterKeyIntroSeen: boolean;
   initialAIMasterEnabled: boolean;
@@ -64,42 +50,31 @@ export function AppShell({
     <UnlockPromptProvider>
       <MasterKeyIntroModal userId={userId} initialSeen={initialMasterKeyIntroSeen} />
       <AuditWriteFailedNotice />
-      <NavOrientationProvider userId={userId} initialOrientation={initialNavOrientation}>
-        <BottomNavItemsProvider userId={userId} initialItems={initialBottomNavItems}>
-        <MainNavItemsProvider userId={userId} initialItems={initialMainNavItems}>
-          <OnboardingWidgetVisibilityProvider userId={userId} initialHidden={initialOnboardingWidgetHidden}>
-            <AIProcessingConsentProvider
-              userId={userId}
-              initialMasterEnabled={initialAIMasterEnabled}
-              initialChatConsent={initialAIChatConsent}
-              initialExtractionConsent={initialAIExtractionConsent}
-            >
-              <AppChrome
-                userId={userId}
-                firstName={firstName}
-                lastName={lastName}
-                displayName={displayName}
-                avatarUrl={avatarUrl}
-              >
-                {children}
-              </AppChrome>
-            </AIProcessingConsentProvider>
-          </OnboardingWidgetVisibilityProvider>
-        </MainNavItemsProvider>
-        </BottomNavItemsProvider>
-      </NavOrientationProvider>
+      <OnboardingWidgetVisibilityProvider userId={userId} initialHidden={initialOnboardingWidgetHidden}>
+        <AIProcessingConsentProvider
+          userId={userId}
+          initialMasterEnabled={initialAIMasterEnabled}
+          initialChatConsent={initialAIChatConsent}
+          initialExtractionConsent={initialAIExtractionConsent}
+        >
+          <AppChrome
+            userId={userId}
+            firstName={firstName}
+            lastName={lastName}
+            displayName={displayName}
+            avatarUrl={avatarUrl}
+          >
+            {children}
+          </AppChrome>
+        </AIProcessingConsentProvider>
+      </OnboardingWidgetVisibilityProvider>
     </UnlockPromptProvider>
     </MasterKeyProvider>
     </ToastProvider>
   );
 }
 
-/**
- * Sceglie tra i tre layout in base alla disposizione scelta in
- * Impostazioni > Aspetto (v. NavOrientationProvider) --- separato da
- * AppShell solo perché un componente non può leggere il contesto che
- * lui stesso definisce un livello più in alto.
- */
+/** Il guscio dell'app: barra laterale (da md in su), barra in alto con il menu e barra in basso su smartphone. */
 function AppChrome({
   userId,
   firstName,
@@ -115,35 +90,6 @@ function AppChrome({
   avatarUrl: string | null;
   children: React.ReactNode;
 }) {
-  const { orientation } = useNavOrientation();
-
-  if (orientation === "topbar") {
-    return (
-      <div className="flex min-h-screen flex-1 flex-col">
-        <MobileNavBar
-          userId={userId}
-          firstName={firstName}
-          lastName={lastName}
-          displayName={displayName}
-          avatarUrl={avatarUrl}
-        />
-        <TopNav
-          userId={userId}
-          firstName={firstName}
-          lastName={lastName}
-          displayName={displayName}
-          avatarUrl={avatarUrl}
-        />
-        <main className="flex-1 px-6 pt-6 pb-24 md:px-10 md:pt-10 md:pb-10">
-          <AIChatProvider>{children}</AIChatProvider>
-        </main>
-        <BottomNavBar />
-      </div>
-    );
-  }
-
-  const side = orientation === "sidebar-right" ? "right" : "left";
-
   return (
     <div className="flex min-h-screen flex-1 flex-col md:flex-row">
       <MobileNavBar
@@ -154,19 +100,13 @@ function AppChrome({
         avatarUrl={avatarUrl}
       />
       <Sidebar
-        side={side}
         userId={userId}
         firstName={firstName}
         lastName={lastName}
         displayName={displayName}
         avatarUrl={avatarUrl}
       />
-      <main
-        className={cn(
-          "flex-1 px-6 pt-6 pb-24 md:px-10 md:pt-10 md:pb-10",
-          side === "right" ? "md:order-1" : undefined,
-        )}
-      >
+      <main className="flex-1 px-6 pt-6 pb-24 md:px-10 md:pt-10 md:pb-10">
         <AIChatProvider>{children}</AIChatProvider>
       </main>
       <BottomNavBar />

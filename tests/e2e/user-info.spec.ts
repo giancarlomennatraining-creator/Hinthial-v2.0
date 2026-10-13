@@ -66,7 +66,7 @@ test("modifica nome e cognome: salva e aggiorna il nome mostrato in sidebar", as
     timeout: 10_000,
   });
 
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Oggi" }).click();
   await expect(page.getByRole("heading", { name: "Ciao, Grace Hopper" })).toBeVisible();
 });
 

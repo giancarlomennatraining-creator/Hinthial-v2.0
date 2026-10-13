@@ -1,0 +1,32 @@
+import { describe, expect, it } from "vitest";
+import { continuityScore, continuitySteps } from "@/domain/continuity/steps";
+
+const NOTHING = { guardianCount: 0, legacyEnabled: false, emergencyCardFilled: false, capsulesForOthers: 0 };
+
+describe("continuitySteps", () => {
+  it("senza nulla di fatto, i quattro passi dicono cosa manca e dove farlo", () => {
+    const steps = continuitySteps(NOTHING);
+    expect(steps.map((s) => s.id)).toEqual(["guardians", "legacy", "emergency-card", "capsules"]);
+    expect(steps.every((s) => !s.done)).toBe(true);
+    expect(steps.map((s) => s.href)).toEqual(["/friends", "/legacy", "/legacy", "/capsules/new"]);
+    expect(continuityScore(steps)).toEqual({ done: 0, total: 4 });
+  });
+
+  it("ogni passo si completa da solo", () => {
+    expect(continuityScore(continuitySteps({ ...NOTHING, guardianCount: 2 }))).toEqual({ done: 1, total: 4 });
+    expect(continuityScore(continuitySteps({ ...NOTHING, legacyEnabled: true }))).toEqual({ done: 1, total: 4 });
+    expect(continuityScore(continuitySteps({ ...NOTHING, emergencyCardFilled: true }))).toEqual({ done: 1, total: 4 });
+    expect(continuityScore(continuitySteps({ ...NOTHING, capsulesForOthers: 1 }))).toEqual({ done: 1, total: 4 });
+  });
+
+  it("con tutto fatto il punteggio è pieno e le frasi parlano al singolare o al plurale", () => {
+    const one = continuitySteps({ guardianCount: 1, legacyEnabled: true, emergencyCardFilled: true, capsulesForOthers: 1 });
+    expect(continuityScore(one)).toEqual({ done: 4, total: 4 });
+    expect(one[0].label).toBe("Hai un guardiano che può confermare la tua assenza");
+    expect(one[3].label).toBe("Hai lasciato una capsula a qualcuno");
+
+    const many = continuitySteps({ guardianCount: 3, legacyEnabled: true, emergencyCardFilled: true, capsulesForOthers: 5 });
+    expect(many[0].label).toBe("Hai 3 guardiani che possono confermare la tua assenza");
+    expect(many[3].label).toBe("Hai lasciato 5 capsule a chi ami");
+  });
+});

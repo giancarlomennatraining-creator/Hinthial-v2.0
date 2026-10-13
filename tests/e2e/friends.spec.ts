@@ -28,7 +28,7 @@ test("aggiunge un amico, ne segue lo stato e lo elimina", async ({ page }) => {
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
 
-  await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amici" })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("Nessun amico ancora")).toBeVisible();
 
   // Aggiunta: nasce già "Attivo" --- nessun concetto di "In attesa" da sbloccare a mano.

@@ -10,6 +10,29 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-25 (96)
+
+### Ristrutturazione, fase 2: nuova navigazione, Eredità digitale, e la home "Oggi"
+
+**Cosa fa:**
+- **Menu uguale per tutti:** Oggi · Amici · Capsule · Eredità digitale · Archivio · Hinthia. Non si personalizza più: via la disposizione (sinistra, destra, in alto), le voci e la barra in basso. Su smartphone la barra in basso ha sempre le prime cinque voci (Oggi, Capsule, Archivio, Amici, Eredità digitale); Hinthia sta nel menu con le 3 lineette.
+- **Archivio con più schede:** Contenuti, Fascicoli, **Beni**, **Scadenze** e Cestino. Beni e Scadenze non sono più voci di menu a sé; il menu tiene acceso "Archivio" anche dentro di loro.
+- **Eredità digitale** è una pagina a sé (prima stava nelle Impostazioni): "Se resti inattivo" (parametri, guardiani, prova generale) e la scheda d'emergenza. Le Impostazioni tengono account, sicurezza, privacy e dati.
+- **"Oggi" al posto della dashboard:**
+  - **Continuità:** un punteggio su quattro passi (hai un guardiano, l'eredità digitale è attiva, la scheda d'emergenza è compilata, hai lasciato una capsula a qualcuno), ognuno con il link per farlo.
+  - **Per chi ami:** le capsule che ti aspettano, quelle che si aprono entro 30 giorni e le bozze da chiudere; se non ce n'è nessuna, invita a scriverne una.
+  - **Scadenze vicine:** promemoria aperti e documenti in scadenza o scaduti, i più urgenti per primi.
+  - Via i contatori per sezione e "Aggiunti di recente".
+
+**Note tecniche:**
+- `nav-items.ts` ha la mappa fissa, `BOTTOM_NAV_HREFS` e `isNavItemActive` (con `also` per le schede dell'Archivio). Rimossi `TopNav`, `NavOrientationProvider`, `MainNavItemsProvider`, `BottomNavItemsProvider`, i tre editor delle Impostazioni, `lib/nav-orientation.ts`, `lib/main-nav.ts`, `lib/bottom-nav.ts`. `DigitalLegacySettingsPanel` e `EmergencyCardPanel` si spostano in `components/legacy/` (il primo si chiama `DigitalLegacyPanel`).
+- `domain/continuity/steps.ts` (puro, con test), `TodayHome` e `useTodayExtras` (eredità, scheda d'emergenza e capsule condivise, ognuna con il suo fallback). Rimossi `DashboardClassic`, `DashboardCounters`, `DashboardRecentDocuments` e `archive/thumbnails.tsx`, che restavano senza chi li usasse.
+- La rotta della home resta `/dashboard`. `/capsules?tab=shared` apre direttamente "Condivise con me".
+- Migrazione `20261015000006_drop_nav_preferences.sql`: elimina `profiles.nav_orientation`, `bottom_nav_items` e `main_nav_items`. Il codice non le legge più.
+- Test e2e: nuovo `nav.ts` con `openArchiveTab`; nuovo `today-home.spec.ts` al posto di `dashboard-layout.spec.ts`; rimossi `bottom-nav.spec.ts` e `nav-orientation.spec.ts`.
+
+---
+
 ## 2026-10-24 (95)
 
 ### Ristrutturazione, passo 5: via Google Drive, trascrizione e consensi inutilizzati

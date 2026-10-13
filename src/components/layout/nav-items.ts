@@ -2,11 +2,10 @@ import type { ComponentType, SVGProps } from "react";
 import {
   AIIcon,
   ArchiveIcon,
-  AssetIcon,
   CapsuleIcon,
   DashboardIcon,
   FriendIcon,
-  ReminderIcon,
+  HeartIcon,
 } from "@/components/icons/nav-icons";
 
 export interface NavItem {
@@ -16,16 +15,37 @@ export interface NavItem {
   icon: ComponentType<SVGProps<SVGSVGElement>>;
   /** Se true, la pagina è dietro RequireMasterKey (v. i rispettivi page.tsx) --- usato da MainNav per il pallino "richiede setup" quando la cifratura non è ancora configurata. */
   requiresEncryption: boolean;
+  /** Altre sezioni che vivono dentro questa voce (le schede dell'Archivio): la tengono accesa nel menu. */
+  also?: string[];
 }
 
-/** Navigazione principale dell'app. "Impostazioni" non è qui: vive nel menu a comparsa sul nome utente (UserMenu.tsx), insieme a "Esci". */
+/**
+ * La navigazione di Hinthial, uguale per tutti e non personalizzabile: racconta cosa è Hinthial (ciò che sai e ciò che hai,
+ * per le persone che ami), non un elenco di strumenti. "Impostazioni" non è qui: vive nel menu a comparsa sul nome utente
+ * (UserMenu.tsx), insieme a "Esci".
+ *
+ * L'Archivio contiene Contenuti, Fascicoli, Beni e Scadenze come schede (v. ArchiveTabs). "Oggi" è la home (/dashboard).
+ */
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: DashboardIcon, requiresEncryption: false },
-  { label: "Archivio", href: "/archive", icon: ArchiveIcon, requiresEncryption: true },
-  { label: "Scadenze", href: "/reminders", icon: ReminderIcon, requiresEncryption: true },
-  { label: "Beni", href: "/assets", icon: AssetIcon, requiresEncryption: true },
-  // "Fascicoli" non è più qui: vive come seconda scheda dentro Archivio (v. ArchiveTabs.tsx). Le route /dossiers/... restano le stesse.
+  { label: "Oggi", href: "/dashboard", icon: DashboardIcon, requiresEncryption: false },
   { label: "Amici", href: "/friends", icon: FriendIcon, requiresEncryption: true },
   { label: "Capsule", href: "/capsules", icon: CapsuleIcon, requiresEncryption: true },
+  { label: "Eredità digitale", href: "/legacy", icon: HeartIcon, requiresEncryption: false },
+  {
+    label: "Archivio",
+    href: "/archive",
+    icon: ArchiveIcon,
+    requiresEncryption: true,
+    also: ["/dossiers", "/assets", "/reminders"],
+  },
   { label: "Hinthia", href: "/ai", icon: AIIcon, requiresEncryption: true },
 ];
+
+/** Le voci della barra fissa in basso su smartphone (al massimo cinque, per restare leggibili); le altre stanno nel menu con le 3 lineette. */
+export const BOTTOM_NAV_HREFS: string[] = ["/dashboard", "/capsules", "/archive", "/friends", "/legacy"];
+
+/** Se la voce è quella della pagina in cui ci si trova (o di una sezione che vive dentro di lei). */
+export function isNavItemActive(item: NavItem, pathname: string | null): boolean {
+  if (!pathname) return false;
+  return [item.href, ...(item.also ?? [])].some((href) => pathname === href || pathname.startsWith(`${href}/`));
+}

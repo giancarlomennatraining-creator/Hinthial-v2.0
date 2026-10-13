@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 import { listCategories } from "@/domain/categories/repository";
-import { parseNavOrientation } from "@/lib/nav-orientation";
 import type { CapsuleStatus } from "@/domain/capsules/types";
 import type { DossierStatus } from "@/domain/dossiers/types";
 import type { AccountVisibilitySummary } from "@/domain/privacy/types";
@@ -34,7 +33,7 @@ export async function fetchAccountVisibilitySummary(
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("created_at, nav_orientation, onboarding_widget_hidden")
+      .select("created_at, onboarding_widget_hidden")
       .eq("id", userId)
       .single(),
     supabase.from("documents").select("id", { count: "exact", head: true }),
@@ -97,7 +96,6 @@ export async function fetchAccountVisibilitySummary(
     dossierCount: dossiers.length,
     dossierStatusCounts,
     categoryNames: categories.map((c) => c.name),
-    navOrientation: parseNavOrientation(profileResult.data.nav_orientation),
     onboardingWidgetHidden: profileResult.data.onboarding_widget_hidden,
   };
 }

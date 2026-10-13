@@ -40,7 +40,7 @@ test("un fascicolo con un documento letto da Hinthia si può riassumere, e il ri
 
   // Il fascicolo, e il documento dentro.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await page.getByRole("link", { name: "+ Nuovo fascicolo" }).click();
   await page.getByLabel("Titolo").fill("Polizza auto");
   await page.getByRole("button", { name: "Crea fascicolo" }).click();
@@ -62,7 +62,7 @@ test("un fascicolo con un documento letto da Hinthia si può riassumere, e il ri
 
   // Il fascicolo offre il riassunto, e Hinthia lo scrive solo quando glielo si chiede.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await page.getByRole("link", { name: /Polizza auto/ }).click();
   const inBreve = page.getByRole("region", { name: "In breve" });
   await expect(inBreve).toContainText("1 letto", { timeout: 20_000 });

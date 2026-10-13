@@ -55,7 +55,7 @@ test("il popup \"Crea la tua master key\" compare una sola volta, subito dopo il
 
   // Configurata la cifratura, il popup non ha comunque più motivo di
   // comparire (a prescindere dal flag) --- verificato tornando in dashboard.
-  await page.getByRole("link", { name: "Dashboard" }).click();
+  await page.getByRole("link", { name: "Oggi" }).click();
   await expect(modal).not.toBeVisible();
 });
 

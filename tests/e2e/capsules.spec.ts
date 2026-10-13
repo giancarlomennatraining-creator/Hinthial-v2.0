@@ -350,7 +350,7 @@ test("allega un intero fascicolo a una capsula in un colpo solo", async ({ page 
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   // Un fascicolo con dentro due documenti.
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await page.getByRole("link", { name: "+ Nuovo fascicolo" }).click();
   await page.getByLabel("Titolo").fill("Trasloco");
   await page.getByRole("button", { name: "Crea fascicolo" }).click();

@@ -11,7 +11,7 @@ test("un fascicolo nato da un modello ha le fasi, i documenti attesi e i documen
   await setUpWithDocument(page, { filename: "visura-catastale.pdf" });
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("link", { name: "Fascicolo", exact: true }).click();
+  await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await page.getByRole("link", { name: "+ Nuovo fascicolo" }).click();
 
   // Parti da zero resta il percorso di default: titolo vuoto, nessuna sezione del modello.

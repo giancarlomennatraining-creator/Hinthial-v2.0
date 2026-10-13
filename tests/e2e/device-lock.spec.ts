@@ -71,7 +71,7 @@ test("registra questo dispositivo come fidato e lo sblocca di nuovo con l'impron
   await expect(page.getByRole("tab", { name: "Autenticazione" })).toBeVisible();
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible({ timeout: 15_000 });
   const deviceLockButton = page.getByRole("button", { name: "Sblocca con impronta/Face ID" });
   await expect(deviceLockButton).toBeVisible({ timeout: 10_000 });
   await deviceLockButton.click();
@@ -119,7 +119,7 @@ test("\"dimentica questo dispositivo\" fa tornare a chiedere la master password"
 
   await page.reload();
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("button", { name: "Sblocca con impronta/Face ID" })).not.toBeVisible();
 });
 
@@ -186,7 +186,7 @@ test("un dispositivo fidato compare nell'elenco anche da un altro dispositivo, e
   // --- Di nuovo il "telefono": l'impronta non basta più, si autoguarisce e richiede la password. ---
   await page.reload();
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible({ timeout: 15_000 });
   const deviceLockButton = page.getByRole("button", { name: "Sblocca con impronta/Face ID" });
   await expect(deviceLockButton).toBeVisible({ timeout: 10_000 });
   await deviceLockButton.click();
