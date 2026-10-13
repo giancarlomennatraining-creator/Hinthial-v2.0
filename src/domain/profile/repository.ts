@@ -7,7 +7,6 @@ import {
   uploadAvatarBlob,
 } from "@/lib/storage/avatars-bucket";
 import { parseListViewPreferences, type ListViewPreferences } from "@/lib/list-view";
-import { parseDashboardStyle, type DashboardStyle } from "@/lib/dashboard-style";
 import { parseCapsuleStyle, type CapsuleStyle } from "@/lib/capsule-style";
 import { parseOpenEffect, type CapsuleOpenEffect } from "@/domain/capsules/open-effects";
 import { type NavOrientation } from "@/lib/nav-orientation";
@@ -336,31 +335,6 @@ export async function updateTrashRetentionDays(
 
   if (error) {
     throw new Error(`Impossibile salvare il periodo di conservazione: ${error.message}`);
-  }
-}
-
-/** Lo stile della Dashboard --- letto lato client solo da Impostazioni (la Dashboard lo riceve già dal server, v. getCurrentUser). */
-export async function getDashboardStyle(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-): Promise<DashboardStyle> {
-  const { data, error } = await supabase.from("profiles").select("dashboard_style").eq("id", userId).single();
-
-  if (error) {
-    throw new Error(`Impossibile leggere lo stile della dashboard: ${error.message}`);
-  }
-  return parseDashboardStyle(data?.dashboard_style);
-}
-
-export async function updateDashboardStyle(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  style: DashboardStyle,
-): Promise<void> {
-  const { error } = await supabase.from("profiles").update({ dashboard_style: style }).eq("id", userId);
-
-  if (error) {
-    throw new Error(`Impossibile salvare lo stile della dashboard: ${error.message}`);
   }
 }
 
