@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import "@/components/capsules/opening/opening.css";
-import { CapsuleArt, type CapsuleArtState } from "@/components/capsules/CapsuleArt";
+import type { CapsuleArtState } from "@/components/capsules/CapsuleArt";
 import { formatDateTime } from "@/components/capsules/CapsuleCardParts";
 import { CapsuleCountdown } from "@/components/capsules/CapsuleCountdown";
 import { CapsulePorthole } from "@/components/capsules/CapsulePorthole";
@@ -10,7 +10,6 @@ import { originOf } from "@/components/capsules/opening/helpers";
 import type { OpenOrigin } from "@/components/capsules/opening/types";
 import { CAPSULE_STATUS_LABEL } from "@/domain/capsules/labels";
 import type { SharedCapsuleListItem } from "@/domain/capsules/types";
-import type { CapsuleStyle } from "@/lib/capsule-style";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -30,19 +29,17 @@ function sharedProgress(shared: SharedCapsuleListItem, now: Date): number {
 }
 
 /**
- * Una capsula condivisa con me (Capsule > Condivise con me), nello stile scelto per l'elenco: busta (riga di sempre), Flat
- * (scheda con la capsula illustrata) o Oblò (riga con l'oblò). "Apri" parte dall'elemento disegnato, così gli effetti che si
- * allargano o escono da lì (v. opening/) hanno un punto da cui cominciare.
+ * Una capsula condivisa con me (Capsule > Condivise con me): una riga con l'oblò, come nell'elenco delle proprie. "Apri"
+ * parte dall'elemento disegnato, così gli effetti che si allargano o escono da lì (v. opening/) hanno un punto da cui
+ * cominciare.
  */
 export function SharedCapsuleItem({
   shared,
-  style,
   showCountdown,
   now,
   onOpen,
 }: {
   shared: SharedCapsuleListItem;
-  style: CapsuleStyle;
   showCountdown: boolean;
   now: Date;
   onOpen: (origin: OpenOrigin | null) => void;
@@ -93,50 +90,15 @@ export function SharedCapsuleItem({
     </>
   );
 
-  if (style === "porthole") {
-    return (
-      <li className={cn("relative grid min-w-0 grid-cols-[76px_minmax(0,1fr)] items-start gap-4 rounded-[18px] border border-[#dfe3f0] bg-white p-3 pr-3 shadow-[0_2px_8px_rgba(18,26,53,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(18,26,53,0.12)] sm:grid-cols-[92px_minmax(0,1fr)] dark:border-zinc-800 dark:bg-zinc-950", canOpen && "capsule-ajar")}>
-        <CapsulePorthole
-          ref={artRef}
-          state={state}
-          progress={sharedProgress(shared, now)}
-          className={cn("h-[76px] w-[76px] sm:h-[92px] sm:w-[92px]", canOpen && "[filter:drop-shadow(0_0_8px_rgba(47,210,126,.55))]")}
-        />
-        <div className="flex min-w-0 flex-col gap-1.5 pt-0.5">{body}</div>
-      </li>
-    );
-  }
-
-  if (style === "flat") {
-    return (
-      <li className={cn("group relative flex min-w-0 flex-col rounded-[18px] border border-[#dfe3f0] bg-white shadow-[0_2px_8px_rgba(18,26,53,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_26px_rgba(18,26,53,0.12)] dark:border-zinc-800 dark:bg-zinc-950", canOpen && "capsule-ajar")}>
-        <div
-          className={cn(
-            "relative flex h-[92px] items-center overflow-hidden rounded-t-[17px] bg-gradient-to-b px-[18px]",
-            canOpen
-              ? "from-[#DDF6E8] to-[#C9EFD9] dark:from-[#0f2a1d] dark:to-[#0c2217]"
-              : "from-[#E8EEFC] to-[#DCE5FA] dark:from-[#18213d] dark:to-[#141b33]",
-          )}
-        >
-          <span aria-hidden="true" className="absolute -bottom-9 -right-5 h-[110px] w-[110px] rounded-full bg-white/45 dark:bg-white/5" />
-          <span ref={artRef} className="relative z-[1] block w-[150px] -rotate-[7deg]">
-            <CapsuleArt variant="flat" state={state} className={cn("w-full", canOpen && "[filter:drop-shadow(0_0_10px_rgba(47,210,126,.7))]")} />
-          </span>
-        </div>
-        <div className="flex flex-col gap-2 p-4">{body}</div>
-      </li>
-    );
-  }
-
-  // Buste: la riga di sempre; quando si può aprire ha la capsula illustrata con la capsula dal coperchio sollevato.
-  if (!canOpen) return <li className="flex flex-col gap-2 p-4">{body}</li>;
-
   return (
-    <li className="capsule-ajar flex items-center gap-4 p-4">
-      <div className="flex min-w-0 flex-1 flex-col gap-2">{body}</div>
-      <span ref={artRef} className="block w-[96px] shrink-0 -rotate-[7deg] sm:w-[130px]">
-        <CapsuleArt variant="flat" state="ready" className="w-full [filter:drop-shadow(0_0_10px_rgba(47,210,126,.7))]" />
-      </span>
+    <li className={cn("relative grid min-w-0 grid-cols-[76px_minmax(0,1fr)] items-start gap-4 rounded-[18px] border border-[#dfe3f0] bg-white p-3 pr-3 shadow-[0_2px_8px_rgba(18,26,53,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(18,26,53,0.12)] sm:grid-cols-[92px_minmax(0,1fr)] dark:border-zinc-800 dark:bg-zinc-950", canOpen && "capsule-ajar")}>
+      <CapsulePorthole
+        ref={artRef}
+        state={state}
+        progress={sharedProgress(shared, now)}
+        className={cn("h-[76px] w-[76px] sm:h-[92px] sm:w-[92px]", canOpen && "[filter:drop-shadow(0_0_8px_rgba(47,210,126,.55))]")}
+      />
+      <div className="flex min-w-0 flex-col gap-1.5 pt-0.5">{body}</div>
     </li>
   );
 }

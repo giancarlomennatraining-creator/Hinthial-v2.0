@@ -2,9 +2,8 @@
  * Disposizione del menu di navigazione principale --- verticale (barra
  * laterale a sinistra o a destra) oppure orizzontale (barra in alto).
  * Gestita da Impostazioni > Aspetto, sincronizzata sul server
- * (profiles.nav_orientation) --- come la visualizzazione delle liste
- * (v. lib/list-view.ts), a differenza del tema chiaro/scuro che resta
- * solo locale: la scelta segue l'utente su tutti i suoi dispositivi.
+ * (profiles.nav_orientation), a differenza del tema chiaro/scuro che
+ * resta solo locale: la scelta segue l'utente su tutti i suoi dispositivi.
  */
 
 export type NavOrientation = "sidebar-left" | "sidebar-right" | "topbar";

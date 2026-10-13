@@ -16,16 +16,14 @@ import {
 import { deleteReply, listReceivedReplies, type CapsuleReply } from "@/domain/capsules/replies-repository";
 import { downloadDocument } from "@/domain/documents/repository";
 import { lookupFriendAccount, setFriendLinkedUser } from "@/domain/friends/repository";
-import { getCapsuleAppearance, getCapsuleCountdownVisible } from "@/domain/profile/repository";
-import { cn, sortAlphabetically } from "@/lib/utils";
+import { getCapsuleCountdownVisible } from "@/domain/profile/repository";
+import { cn } from "@/lib/utils";
 import { saveBytesAsFile } from "@/lib/download";
 import { contentKindFor, CONTENT_KIND_ICON, isTranscribable } from "@/lib/content-kind";
 import { stubTranscriptionProvider } from "@/domain/transcription/stub-provider";
-import { CapsuleCard } from "@/components/capsules/CapsuleCard";
-import { CapsuleFlatCard, CapsulePortholeRow } from "@/components/capsules/CapsuleStyledCards";
+import { CapsulePortholeRow } from "@/components/capsules/CapsulePortholeRow";
 import { SharedCapsuleItem } from "@/components/capsules/SharedCapsuleItem";
 import type { OpenOrigin } from "@/components/capsules/opening/types";
-import { DEFAULT_CAPSULE_STYLE, type CapsuleStyle } from "@/lib/capsule-style";
 import { CapsuleCountdown } from "@/components/capsules/CapsuleCountdown";
 import { CapsuleRepliesDialog } from "@/components/capsules/CapsuleRepliesDialog";
 import { CloseCapsuleDialog } from "@/components/capsules/CloseCapsuleDialog";
@@ -34,39 +32,16 @@ import { SharedCapsuleViewer } from "@/components/capsules/SharedCapsuleViewer";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { PageHelp } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
-import { ListViewToggle } from "@/components/ui/ListViewToggle";
-import { Pagination } from "@/components/ui/Pagination";
 import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
-import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
-import { useListViewPreferences } from "@/components/layout/ListViewPreferencesProvider";
-import { TABLE_PAGE_SIZE } from "@/lib/list-view";
-import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
-import { CAPSULE_STATUS_LABEL } from "@/domain/capsules/labels";
 import { sortByOpening } from "@/domain/capsules/overview";
 import type {
   CapsuleAttachment,
   CapsuleListItem,
-  CapsuleStatus,
   SharedCapsuleListItem,
 } from "@/domain/capsules/types";
 import type { DocumentListItem } from "@/domain/documents/types";
 import { useToast } from "@/components/ui/ToastProvider";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("it-IT", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-/** Come formatDate, ma con l'orario --- solo per l'apertura di una capsula, l'unica data dell'app che ora ne porta uno significativo. */
-function formatDateTime(iso: string): string {
-  const date = new Date(iso);
-  const time = date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
-  return `${formatDate(iso)}, ${time}`;
-}
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -74,16 +49,6 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-
-const STATUS_LABEL = CAPSULE_STATUS_LABEL;
-
-const STATUS_BADGE_CLASS: Record<CapsuleStatus, string> = {
-  draft: "bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400",
-  ready: "bg-lime-100 text-lime-700 dark:bg-lime-950 dark:text-lime-400",
-  shared: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
-};
-
-type SortColumn = "title" | "status" | "recipients" | "openAt" | "contents";
 
 /**
  * Capsule digitali: titolo, contenuto, allegati, data di apertura (in chiaro, unica eccezione allo zero-knowledge in
@@ -103,8 +68,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [busyAttachment, setBusyAttachment] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "title", direction: "asc" });
   const [previewCapsule, setPreviewCapsule] = useState<CapsuleListItem | null>(null);
   // La bozza di cui si sta per decidere la chiusura (v. CloseCapsuleDialog): chiudere è irreversibile, si fa prima il punto.
   const [closingCapsule, setClosingCapsule] = useState<CapsuleListItem | null>(null);
@@ -115,9 +78,8 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [openingShared, setOpeningShared] = useState<SharedCapsuleListItem | null>(null);
   // Da dove parte l'apertura (l'oblò o la capsula toccati), per gli effetti che si allargano o escono da lì.
   const [openingOrigin, setOpeningOrigin] = useState<OpenOrigin | null>(null);
-  // Lo stile dell'elenco (Impostazioni > Aspetto > Capsule). L'elenco aspetta di saperlo, per non lampeggiare nello stile sbagliato.
-  const [capsuleStyle, setCapsuleStyle] = useState<CapsuleStyle>(DEFAULT_CAPSULE_STYLE);
-  const [styleReady, setStyleReady] = useState(false);
+  // L'elenco aspetta di sapere se mostrare il conto alla rovescia, per non lampeggiare.
+  const [prefsReady, setPrefsReady] = useState(false);
 
   // "Condivise con me" è una scheda qui dentro, non una voce di menu a parte. Caricata insieme alle proprie capsule, così passare da una vista all'altra è istantaneo.
   const [activeTab, setActiveTab] = useState<"mine" | "shared">("mine");
@@ -133,9 +95,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [transcriptAutoMessage, setTranscriptAutoMessage] = useState<string | null>(null);
   const [transcriptAutoBusy, setTranscriptAutoBusy] = useState(false);
   const [transcriptSaving, setTranscriptSaving] = useState(false);
-
-  const { modeFor } = useListViewPreferences();
-  const viewMode = modeFor("capsules");
 
   // "?created=1"/"?updated=1": solo un flag, mai il titolo o contenuto (finirebbe in chiaro nell'URL). Stato pigro: il messaggio non deve sparire quando ripuliamo l'URL con router.replace.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
@@ -179,23 +138,16 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         // Nessun pensiero mostrato.
       });
 
-    // Best-effort: se fallisce si resta sui default (countdown visibile, stile "Buste").
+    // Best-effort: se fallisce si resta sul default (conto alla rovescia visibile).
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (user) {
-        const [visible, appearance] = await Promise.all([
-          getCapsuleCountdownVisible(supabase, user.id).catch(() => true),
-          getCapsuleAppearance(supabase, user.id),
-        ]);
-        setShowCountdown(visible);
-        setCapsuleStyle(appearance.style);
-      }
+      if (user) setShowCountdown(await getCapsuleCountdownVisible(supabase, user.id).catch(() => true));
     } catch {
       // Restano i default.
     } finally {
-      setStyleReady(true);
+      setPrefsReady(true);
     }
   }, [supabase, masterKey]);
 
@@ -395,29 +347,8 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
-  function sortValueFor(capsule: CapsuleListItem, column: SortColumn): string {
-    switch (column) {
-      case "title":
-        return capsule.title;
-      case "status":
-        return STATUS_LABEL[capsule.status];
-      case "recipients":
-        return sortAlphabetically(capsule.relatedFriends, (c) => c.name)
-          .map((c) => c.name)
-          .join(", ");
-      case "openAt":
-        return capsule.openAt ? formatDateTime(capsule.openAt) : "";
-      case "contents":
-        return String(capsule.attachments.length + capsule.linkedDocuments.length);
-    }
-  }
-
-  function handleSort(column: SortColumn) {
-    setSort((prev) => toggleSort(prev, column));
-  }
-
-  /** Il menu delle azioni di una capsula, uguale nella vista a tabella e in quella a buste (cambia solo l'etichetta di "Chiudi"). */
-  function renderMenu(capsule: CapsuleListItem, busy: boolean, closeLabel: string) {
+  /** Il menu delle azioni di una capsula. */
+  function renderMenu(capsule: CapsuleListItem, busy: boolean) {
     return (
       <RowActionsMenu label={`Azioni per "${capsule.title}"`}>
         <RowMenuItem disabled={busy} onClick={() => setPreviewCapsule(capsule)}>
@@ -430,7 +361,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         ) : null}
         {capsule.status === "draft" ? (
           <RowMenuItem disabled={busy} onClick={() => setClosingCapsule(capsule)}>
-            {closeLabel}
+            Chiudi la capsula
           </RowMenuItem>
         ) : null}
         {capsule.status === "ready" ? (
@@ -547,16 +478,6 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     );
   }
 
-  // La tabella si ordina a mano; le buste vanno dalla prossima ad aprirsi alla più lontana (v. sortByOpening).
-  const sortedCapsules = applySort(capsules, sort, sortValueFor);
-
-  // Si riclampa invece di resettare con un effect: un filtro che riduce i risultati torna da solo nel range.
-  const pageCount = Math.max(1, Math.ceil(capsules.length / TABLE_PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount);
-  const pagedCapsules = sortedCapsules.slice(
-    (currentPage - 1) * TABLE_PAGE_SIZE,
-    currentPage * TABLE_PAGE_SIZE,
-  );
 
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
@@ -637,21 +558,11 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
             </p>
           </div>
         ) : (
-          <ul
-            data-capsule-style={capsuleStyle}
-            className={
-              capsuleStyle === "envelope"
-                ? "flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950"
-                : capsuleStyle === "porthole"
-                  ? "flex flex-col gap-3"
-                  : "grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3"
-            }
-          >
+          <ul className="flex flex-col gap-3">
             {sharedCapsules.map((shared) => (
               <SharedCapsuleItem
                 key={shared.id}
                 shared={shared}
-                style={capsuleStyle}
                 showCountdown={showCountdown}
                 now={now}
                 onOpen={(origin) => {
@@ -662,7 +573,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
             ))}
           </ul>
         )
-      ) : loading || !styleReady ? (
+      ) : loading || !prefsReady ? (
         <ListSkeleton />
       ) : capsules.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
@@ -672,142 +583,25 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         </div>
       ) : (
         <>
-          <div className="hidden gap-3 md:flex">
-            <ListViewToggle section="capsules" hideOnMobile />
-          </div>
-
-          {viewMode === "table" ? (
-            <div className="flex flex-col gap-3">
-              {/* @container: le colonne secondarie si nascondono in base allo spazio vero del riquadro, Titolo e Azioni mai. */}
-              <div className="@container overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                      <SortableColumnHeader label="Titolo" sortKey="title" sort={sort} onSort={handleSort} />
-                      <SortableColumnHeader
-                        label="Stato"
-                        sortKey="status"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @lg:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Destinatari"
-                        sortKey="recipients"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @4xl:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Apertura"
-                        sortKey="openAt"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @xl:table-cell"
-                      />
-                      {showCountdown ? (
-                        // Non ordinabile: stesso ordine di "Apertura", da cui deriva.
-                        <th className="hidden p-3 @3xl:table-cell">
-                          Tra quanto
-                          <span className="mt-0.5 block text-[9px] font-semibold tracking-wide text-zinc-400 normal-case dark:text-zinc-500">
-                            gg&nbsp;&nbsp;hh&nbsp;&nbsp;mm&nbsp;&nbsp;ss
-                          </span>
-                        </th>
-                      ) : null}
-                      <SortableColumnHeader
-                        label="Contenuti"
-                        sortKey="contents"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @5xl:table-cell"
-                      />
-                      <th className="p-3">Azioni</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                    {pagedCapsules.map((capsule) => {
-                      const busy = busyId === capsule.id;
-                      const contentCount = capsule.attachments.length + capsule.linkedDocuments.length;
-
-                      return (
-                        <tr key={capsule.id}>
-                          <td className="max-w-[14rem] truncate p-3 font-medium text-zinc-900 dark:text-zinc-100">
-                            {capsule.title}
-                          </td>
-                          <td className="hidden p-3 @lg:table-cell">
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[capsule.status]}`}
-                            >
-                              {STATUS_LABEL[capsule.status]}
-                            </span>
-                          </td>
-                          <td className="hidden max-w-[12rem] truncate p-3 text-zinc-600 @4xl:table-cell dark:text-zinc-400">
-                            {capsule.relatedFriends.length > 0
-                              ? sortAlphabetically(capsule.relatedFriends, (c) => c.name)
-                                  .map((c) => c.name)
-                                  .join(", ")
-                              : "—"}
-                          </td>
-                          <td className="hidden p-3 text-zinc-600 @xl:table-cell dark:text-zinc-400">
-                            {capsule.openAt ? formatDateTime(capsule.openAt) : "—"}
-                          </td>
-                          {showCountdown ? (
-                            <td className="hidden p-3 @3xl:table-cell">
-                              {capsule.openAt && capsule.status !== "draft" ? (
-                                <CapsuleCountdown createdAt={capsule.createdAt} openAt={capsule.openAt} size="xs" />
-                              ) : (
-                                <span className="text-zinc-400 dark:text-zinc-600">—</span>
-                              )}
-                            </td>
-                          ) : null}
-                          <td className="hidden p-3 text-zinc-600 @5xl:table-cell dark:text-zinc-400">
-                            {contentCount}
-                          </td>
-                          <td className="p-3">
-                            {renderMenu(capsule, busy, "Chiudi")}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Passa alla vista a elenco per aprire i singoli contenuti di una capsula.
-              </p>
-              <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
-            </div>
-          ) : (
-            <ul
-              data-capsule-style={capsuleStyle}
-              className={
-                capsuleStyle === "porthole"
-                  ? "flex flex-col gap-3"
-                  : "grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3"
-              }
-            >
-              {sortByOpening(capsules, now).map((capsule) => {
-                const Card = capsuleStyle === "flat" ? CapsuleFlatCard : capsuleStyle === "porthole" ? CapsulePortholeRow : CapsuleCard;
-                return (
-                  <Card
-                    key={capsule.id}
-                    capsule={capsule}
-                    now={now}
-                    menu={renderMenu(capsule, busyId === capsule.id, "Chiudi la capsula")}
-                    repliesCount={replies.filter((r) => r.capsuleId === capsule.id).length}
-                    onOpenReplies={() => setReadingRepliesFor(capsule)}
-                    countdown={
-                      capsule.openAt && capsule.status !== "draft" && showCountdown ? (
-                        <CapsuleCountdown createdAt={capsule.createdAt} openAt={capsule.openAt} size="sm" showProgress />
-                      ) : null
-                    }
-                  >
-                    {renderContents(capsule)}
-                  </Card>
-                );
-              })}
-            </ul>
-          )}
+          <ul className="flex flex-col gap-3">
+            {sortByOpening(capsules, now).map((capsule) => (
+              <CapsulePortholeRow
+                key={capsule.id}
+                capsule={capsule}
+                now={now}
+                menu={renderMenu(capsule, busyId === capsule.id)}
+                repliesCount={replies.filter((r) => r.capsuleId === capsule.id).length}
+                onOpenReplies={() => setReadingRepliesFor(capsule)}
+                countdown={
+                  capsule.openAt && capsule.status !== "draft" && showCountdown ? (
+                    <CapsuleCountdown createdAt={capsule.createdAt} openAt={capsule.openAt} size="sm" showProgress />
+                  ) : null
+                }
+              >
+                {renderContents(capsule)}
+              </CapsulePortholeRow>
+            ))}
+          </ul>
         </>
       )}
 

@@ -4,21 +4,21 @@ import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// Stile dell'elenco ed effetto di apertura delle capsule, da Impostazioni > Aspetto > Capsule. Le due preferenze stanno in
-// colonne di `profiles` aggiunte dalla migrazione 20261014000000: qui le richieste verso quella tabella sono simulate
+// Effetto di apertura delle capsule, da Impostazioni > Aspetto > Capsule. La preferenza sta in una
+// colonna di `profiles` aggiunta dalla migrazione 20261014000000: qui le richieste verso quella tabella sono simulate
 // (`page.route`), così il test verifica l'interfaccia (cosa si propone, cosa si salva, come si presenta) a prescindere dal
 // fatto che la migrazione sia stata applicata sul database di prova.
 
-test("lo stile e l'effetto delle capsule si scelgono in Impostazioni > Aspetto > Capsule, si provano, e cambiano elenco e modulo", async ({
+test("l'effetto delle capsule si sceglie in Impostazioni > Aspetto > Capsule, si prova, e cambia il modulo", async ({
   page,
 }) => {
   test.slow();
 
-  let stored: Record<string, string> = { capsule_style: "envelope", capsule_open_effect: "discreet" };
+  let stored: Record<string, string> = { capsule_open_effect: "discreet" };
   const patches: Record<string, string>[] = [];
   await page.route("**/rest/v1/profiles?*", async (route) => {
     const request = route.request();
-    if (request.method() === "GET" && request.url().includes("capsule_style")) {
+    if (request.method() === "GET" && request.url().includes("capsule_open_effect")) {
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(stored) });
     }
     if (request.method() === "PATCH" && (request.postData() ?? "").includes("capsule_")) {
@@ -35,15 +35,6 @@ test("lo stile e l'effetto delle capsule si scelgono in Impostazioni > Aspetto >
   await openSettings(page, user);
   await page.getByRole("tab", { name: "Aspetto" }).click();
   await page.getByRole("tab", { name: "Capsule" }).click();
-
-  // Lo stile dell'elenco: tre scelte, "Buste" quella di partenza.
-  await expect(page.getByRole("heading", { name: "Stile delle capsule" })).toBeVisible();
-  const stile = page.getByRole("radiogroup", { name: "Stile delle capsule" });
-  await expect(stile.getByRole("radio")).toHaveCount(3);
-  await expect(stile.getByRole("radio", { name: /^Buste/ })).toHaveAttribute("aria-checked", "true");
-  await stile.getByRole("radio", { name: /^Flat/ }).click();
-  await expect(stile.getByRole("radio", { name: /^Flat/ })).toHaveAttribute("aria-checked", "true");
-  await expect.poll(() => patches.some((p) => p.capsule_style === "flat")).toBe(true);
 
   // L'effetto predefinito: cinque scelte, ognuna con "Provalo".
   const effetti = page.getByRole("radiogroup", { name: "Effetto di apertura predefinito" });
@@ -89,15 +80,8 @@ test("lo stile e l'effetto delle capsule si scelgono in Impostazioni > Aspetto >
   await page.getByRole("button", { name: "Crea capsula" }).click();
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
 
-  // L'elenco è nello stile scelto (Flat), e cambia cambiando la preferenza.
-  await expect(page.locator('[data-capsule-style="flat"]')).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByRole("listitem").filter({ hasText: "Con un effetto" })).toBeVisible();
-  stored = { ...stored, capsule_style: "porthole" };
-  await page.getByRole("link", { name: "Dashboard", exact: true }).click();
-  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
-  await page.getByRole("link", { name: "Capsule", exact: true }).click();
-  await expect(page.locator('[data-capsule-style="porthole"]')).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByRole("listitem").filter({ hasText: "Con un effetto" })).toBeVisible();
+  // L'elenco è fatto di oblò.
+  await expect(page.getByRole("listitem").filter({ hasText: "Con un effetto" })).toBeVisible({ timeout: 15_000 });
   // L'anello dell'oblò dice a parole a che punto è (una bozza non è ancora partita).
   await expect(page.getByRole("img", { name: /Bozza: il tempo non è ancora partito/ })).toBeVisible();
 });

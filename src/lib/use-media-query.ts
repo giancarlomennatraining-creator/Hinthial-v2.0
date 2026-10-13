@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
  * meccanismo di ThemeToggle per "prefers-color-scheme", qui generalizzato
  * a qualunque query. Restituisce `false` al primo render (prima che
  * l'effetto legga il valore vero): va bene per una preferenza che ha già
- * un proprio breve stato di caricamento (v. ListViewPreferencesProvider),
+ * un proprio breve stato di caricamento,
  * non per una che deciderebbe da sola il layout della shell al primo
  * paint (v. invece NavOrientationProvider, valore letto lato server).
  */

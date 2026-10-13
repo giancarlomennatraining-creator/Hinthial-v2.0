@@ -26,56 +26,17 @@ import {
   revokeGuardianRole,
 } from "@/domain/friends/guardian-requests";
 import { sendFriendRequestEmail, sendGuardianRoleRequestEmail } from "@/lib/friends/actions";
-import { Avatar } from "@/components/ui/Avatar";
 import { listCapsules, syncCapsuleSharesForLinkedFriend } from "@/domain/capsules/repository";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { PageHelp } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
-import { ListViewToggle } from "@/components/ui/ListViewToggle";
-import { Pagination } from "@/components/ui/Pagination";
 import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
-import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
-import { useListViewPreferences } from "@/components/layout/ListViewPreferencesProvider";
-import { TABLE_PAGE_SIZE } from "@/lib/list-view";
-import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import type { FriendListItem, FriendStatus } from "@/domain/friends/types";
 import type { CapsuleListItem } from "@/domain/capsules/types";
 import { AddressBook } from "@/components/friends/AddressBook";
 import { useToast } from "@/components/ui/ToastProvider";
 import { AlertTriangleIcon } from "@/components/icons/nav-icons";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
-
-const STATUS_LABEL: Record<FriendStatus, string> = {
-  active: "Attivo",
-  revoked: "Revocato",
-};
-
-const STATUS_BADGE_CLASS: Record<FriendStatus, string> = {
-  active: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
-  revoked: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400",
-};
-
-type SortColumn = "name" | "email" | "role" | "status" | "capsules";
-
-/** Badge "🤝 Amico" (amicizia reciproca confermata) --- v. FriendListItem.isFriend. Niente badge per una PERSONA: è lo stato di partenza, non serve segnalarlo. */
-function FriendBadge({ isFriend }: { isFriend: boolean }) {
-  if (!isFriend) return null;
-  return (
-    <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
-      🤝 Amico
-    </span>
-  );
-}
-
-/** Badge "🛡️ Guardiano" --- ora possibile solo per un AMICO che ha già accettato (v. domain/friends/guardian-requests), mai un flag senza consenso. */
-function GuardianBadge({ isGuardian }: { isGuardian: boolean }) {
-  if (!isGuardian) return null;
-  return (
-    <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-400">
-      🛡️ Guardiano
-    </span>
-  );
-}
 
 /** Richieste di amicizia in arrivo --- v. richiesta utente: email + un punto ben visibile in app per accettare/rifiutare, non solo l'email. */
 function IncomingRequestsBanner({
@@ -146,8 +107,6 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<FriendStatus | "all">("all");
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "name", direction: "asc" });
   // Foto reale di un account collegato, quando l'amico non ne ha una caricata a mano --- risolta a parte (v. resolveLinkedAvatar).
   const [linkedAvatarUrls, setLinkedAvatarUrls] = useState<Record<string, string>>({});
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string } | null>(null);
@@ -155,9 +114,6 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   // id con una richiesta già inviata e in sospeso: mostra "in attesa" invece del tasto, evita doppie richieste.
   const [pendingFriendRequestTo, setPendingFriendRequestTo] = useState<Set<string>>(new Set());
   const [pendingGuardianRequestTo, setPendingGuardianRequestTo] = useState<Set<string>>(new Set());
-
-  const { modeFor } = useListViewPreferences();
-  const viewMode = modeFor("friends");
 
   // "?created=1"/"?updated=1" arrivano da /friends/new e /friends/[id]/edit dopo un salvataggio riuscito.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
@@ -373,37 +329,8 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
     return friend.linkedUserId !== null && pendingGuardianRequestTo.has(friend.linkedUserId);
   }
 
-  function sortValueFor(friend: FriendListItem, column: SortColumn): string {
-    switch (column) {
-      case "name":
-        return friend.name;
-      case "email":
-        return friend.email;
-      case "role":
-        return friend.role;
-      case "status":
-        return STATUS_LABEL[friend.status];
-      case "capsules":
-        return String(capsulesFor(friend).length);
-    }
-  }
-
-  function handleSort(column: SortColumn) {
-    setSort((prev) => toggleSort(prev, column));
-  }
-
   const filteredFriends = friends.filter((friend) => statusFilter === "all" || friend.status === statusFilter);
 
-  // Solo la vista a tabella si ordina --- l'elenco resta cronologico.
-  const sortedFriends = applySort(filteredFriends, sort, sortValueFor);
-
-  // Si riclampa invece di resettare con un effect: un filtro che riduce i risultati torna da solo nel range.
-  const pageCount = Math.max(1, Math.ceil(filteredFriends.length / TABLE_PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount);
-  const pagedFriends = sortedFriends.slice(
-    (currentPage - 1) * TABLE_PAGE_SIZE,
-    currentPage * TABLE_PAGE_SIZE,
-  );
 
   async function handleDelete(friend: FriendListItem) {
     if (!window.confirm(`Eliminare l'amico "${friend.name}"?`)) return;
@@ -535,107 +462,12 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
               <option value="active">Attivi</option>
               <option value="revoked">Revocati</option>
             </select>
-            <ListViewToggle section="friends" hideOnMobile />
           </div>
 
           {filteredFriends.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Nessun amico corrisponde ai filtri.
             </p>
-          ) : viewMode === "table" ? (
-            <div className="flex flex-col gap-3">
-              {/* @container --- v. DocumentsPanel per il ragionamento: le
-                  colonne secondarie si nascondono in base allo spazio
-                  vero del riquadro, Nome e Azioni mai. */}
-              <div className="@container overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                      <SortableColumnHeader label="Nome" sortKey="name" sort={sort} onSort={handleSort} />
-                      <SortableColumnHeader
-                        label="Email"
-                        sortKey="email"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @3xl:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Ruolo"
-                        sortKey="role"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @2xl:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Stato"
-                        sortKey="status"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @lg:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Capsule"
-                        sortKey="capsules"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @4xl:table-cell"
-                      />
-                      <th className="p-3">Azioni</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                    {pagedFriends.map((friend) => {
-                      return (
-                        <tr key={friend.id}>
-                          <td className="max-w-[12rem] p-3 font-medium text-zinc-900 dark:text-zinc-100">
-                            <div className="flex items-center gap-2">
-                              <Avatar
-                                firstName={friend.firstName}
-                                lastName={friend.lastName}
-                                avatarUrl={avatarUrlFor(friend)}
-                                seed={friend.id}
-                                size="sm"
-                                linked={friend.linkedUserId !== null}
-                              />
-                              <span className="truncate">{friend.name}</span>
-                            </div>
-                          </td>
-                          <td className="hidden max-w-[14rem] truncate p-3 text-zinc-600 @3xl:table-cell dark:text-zinc-400">
-                            {friend.email}
-                          </td>
-                          <td className="hidden max-w-[10rem] truncate p-3 text-zinc-600 @2xl:table-cell dark:text-zinc-400">
-                            {friend.role}
-                          </td>
-                          <td className="hidden p-3 @lg:table-cell">
-                            <div className="flex flex-wrap items-center gap-1">
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[friend.status]}`}
-                              >
-                                {STATUS_LABEL[friend.status]}
-                              </span>
-                              <FriendBadge isFriend={friend.isFriend} />
-                              <GuardianBadge isGuardian={friend.isGuardian} />
-                              {isFriendRequestPending(friend) ? (
-                                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
-                                  Amicizia in attesa
-                                </span>
-                              ) : null}
-                            </div>
-                          </td>
-                          <td className="hidden p-3 text-zinc-600 @4xl:table-cell dark:text-zinc-400">
-                            {capsulesFor(friend).length}
-                          </td>
-                          <td className="p-3">
-                            {rowMenu(friend)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
-            </div>
           ) : (
             <AddressBook
               friends={filteredFriends}

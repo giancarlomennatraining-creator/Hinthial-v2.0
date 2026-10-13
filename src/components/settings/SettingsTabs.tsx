@@ -18,10 +18,8 @@ import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { NavOrientationSettings } from "@/components/settings/NavOrientationSettings";
 import { BottomNavItemsSettings } from "@/components/settings/BottomNavItemsSettings";
 import { MainNavItemsSettings } from "@/components/settings/MainNavItemsSettings";
-import { ListViewSettings } from "@/components/settings/ListViewSettings";
 import { CapsuleCountdownSettings } from "@/components/settings/CapsuleCountdownSettings";
 import { CapsuleOpenEffectSettings } from "@/components/settings/CapsuleOpenEffectSettings";
-import { CapsuleStyleSettings } from "@/components/settings/CapsuleStyleSettings";
 import { TrashRetentionSettings } from "@/components/settings/TrashRetentionSettings";
 import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
@@ -42,7 +40,6 @@ import {
   FingerprintIcon,
   HeartIcon,
   ImportExportIcon,
-  ListViewIcon,
   MedicalCardIcon,
   MenuListIcon,
   SecurityIcon,
@@ -128,7 +125,6 @@ const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
           { id: "nav-layout", label: "Disposizione menu", icon: SidebarLayoutIcon },
           { id: "nav-items", label: "Voci del menu", icon: MenuListIcon },
           { id: "bottom-bar", label: "Barra in basso", icon: BottomBarIcon },
-          { id: "lists", label: "Liste", icon: ListViewIcon },
           { id: "capsules", label: "Capsule", icon: CapsuleIcon },
           { id: "archive", label: "Archivio", icon: ArchiveIcon },
         ],
@@ -429,25 +425,9 @@ export function SettingsTabs({
           </FunctionBlock>
         );
       }
-      if (activeSection === "lists") {
-        return (
-          <FunctionBlock
-            title="Visualizzazione delle liste"
-            description="Elenco o tabella impaginata, per ogni sezione — la scelta resta la stessa su tutti i tuoi dispositivi, e puoi cambiarla anche direttamente da ogni sezione. Su schermi stretti si mostra comunque sempre l'elenco, dove la tabella non avrebbe spazio per restare leggibile."
-          >
-            <ListViewSettings />
-          </FunctionBlock>
-        );
-      }
       if (activeSection === "capsules") {
         return (
           <div className="flex flex-col gap-8">
-            <FunctionBlock
-              title="Stile delle capsule"
-              description="Scegli come si presenta l'elenco delle capsule: gli stessi dati, con un involucro diverso. La scelta resta la stessa su tutti i tuoi dispositivi."
-            >
-              <CapsuleStyleSettings />
-            </FunctionBlock>
             <FunctionBlock
               title="Come si aprono"
               description="L'effetto con cui chi riceve una capsula la vede aprirsi, una volta disponibile. Qui scegli quello che ti propongo quando ne crei una; per ognuna puoi sceglierne un altro."

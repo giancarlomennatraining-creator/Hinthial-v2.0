@@ -7,7 +7,6 @@ import { BottomNavBar } from "@/components/layout/BottomNavBar";
 import { MasterKeyProvider } from "@/components/crypto/MasterKeyProvider";
 import { MasterKeyIntroModal } from "@/components/crypto/MasterKeyIntroModal";
 import { UnlockPromptProvider } from "@/components/crypto/UnlockPromptProvider";
-import { ListViewPreferencesProvider } from "@/components/layout/ListViewPreferencesProvider";
 import { NavOrientationProvider, useNavOrientation } from "@/components/layout/NavOrientationProvider";
 import { BottomNavItemsProvider } from "@/components/layout/BottomNavItemsProvider";
 import { MainNavItemsProvider } from "@/components/layout/MainNavItemsProvider";
@@ -72,28 +71,26 @@ export function AppShell({
       <NavOrientationProvider userId={userId} initialOrientation={initialNavOrientation}>
         <BottomNavItemsProvider userId={userId} initialItems={initialBottomNavItems}>
         <MainNavItemsProvider userId={userId} initialItems={initialMainNavItems}>
-          <ListViewPreferencesProvider userId={userId}>
-            <OnboardingWidgetVisibilityProvider userId={userId} initialHidden={initialOnboardingWidgetHidden}>
-              <AIProcessingConsentProvider
+          <OnboardingWidgetVisibilityProvider userId={userId} initialHidden={initialOnboardingWidgetHidden}>
+            <AIProcessingConsentProvider
+              userId={userId}
+              initialMasterEnabled={initialAIMasterEnabled}
+              initialChatConsent={initialAIChatConsent}
+              initialExtractionConsent={initialAIExtractionConsent}
+              initialTranscriptionConsent={initialAITranscriptionConsent}
+              initialProactiveAlertsConsent={initialAIProactiveAlertsConsent}
+            >
+              <AppChrome
                 userId={userId}
-                initialMasterEnabled={initialAIMasterEnabled}
-                initialChatConsent={initialAIChatConsent}
-                initialExtractionConsent={initialAIExtractionConsent}
-                initialTranscriptionConsent={initialAITranscriptionConsent}
-                initialProactiveAlertsConsent={initialAIProactiveAlertsConsent}
+                firstName={firstName}
+                lastName={lastName}
+                displayName={displayName}
+                avatarUrl={avatarUrl}
               >
-                <AppChrome
-                  userId={userId}
-                  firstName={firstName}
-                  lastName={lastName}
-                  displayName={displayName}
-                  avatarUrl={avatarUrl}
-                >
-                  {children}
-                </AppChrome>
-              </AIProcessingConsentProvider>
-            </OnboardingWidgetVisibilityProvider>
-          </ListViewPreferencesProvider>
+                {children}
+              </AppChrome>
+            </AIProcessingConsentProvider>
+          </OnboardingWidgetVisibilityProvider>
         </MainNavItemsProvider>
         </BottomNavItemsProvider>
       </NavOrientationProvider>

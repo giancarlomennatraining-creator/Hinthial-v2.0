@@ -14,13 +14,7 @@ import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { PageHelp } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
-import { ListViewToggle } from "@/components/ui/ListViewToggle";
-import { Pagination } from "@/components/ui/Pagination";
 import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
-import { SortableColumnHeader } from "@/components/ui/SortableColumnHeader";
-import { useListViewPreferences } from "@/components/layout/ListViewPreferencesProvider";
-import { TABLE_PAGE_SIZE } from "@/lib/list-view";
-import { applySort, toggleSort, type SortState } from "@/lib/table-sort";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { DocumentSummary } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
@@ -36,8 +30,6 @@ function formatDate(iso: string): string {
   });
 }
 
-type SortColumn = "name" | "category" | "documents" | "reminders" | "createdAt";
-
 export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useSupabase();
   const router = useRouter();
@@ -52,11 +44,6 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<SortState<SortColumn> | null>({ key: "name", direction: "asc" });
-
-  const { modeFor } = useListViewPreferences();
-  const viewMode = modeFor("assets");
 
   // "?created=1"/"?updated=1" arrivano da /assets/new e da
   // /assets/[id]/edit dopo un salvataggio riuscito --- v.
@@ -125,38 +112,8 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
     return categories.find((c) => c.id === asset.categoryId);
   }
 
-  function sortValueFor(asset: AssetListItem, column: SortColumn): string {
-    switch (column) {
-      case "name":
-        return asset.name;
-      case "category":
-        return categoryFor(asset)?.name ?? "";
-      case "documents":
-        return String(documents.filter((d) => d.relatedAssetId === asset.id).length);
-      case "reminders":
-        return String(assetDeadlines(asset.id, documents, reminders).length);
-      case "createdAt":
-        return formatDate(asset.createdAt);
-    }
-  }
-
-  function handleSort(column: SortColumn) {
-    setSort((prev) => toggleSort(prev, column));
-  }
-
   const filteredAssets = assets.filter((asset) => !categoryFilter || asset.categoryId === categoryFilter);
 
-  // Solo la vista a tabella si ordina --- l'elenco resta cronologico.
-  const sortedAssets = applySort(filteredAssets, sort, sortValueFor);
-
-  // Si riclampa invece di resettare con un effect: se un filtro riduce i
-  // risultati, la pagina torna da sola entro il range valido.
-  const pageCount = Math.max(1, Math.ceil(filteredAssets.length / TABLE_PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount);
-  const pagedAssets = sortedAssets.slice(
-    (currentPage - 1) * TABLE_PAGE_SIZE,
-    currentPage * TABLE_PAGE_SIZE,
-  );
 
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
@@ -214,96 +171,12 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 </option>
               ))}
             </select>
-            <ListViewToggle section="assets" hideOnMobile />
           </div>
 
           {filteredAssets.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Nessun bene corrisponde ai filtri.
             </p>
-          ) : viewMode === "table" ? (
-            <div className="flex flex-col gap-3">
-              {/* @container --- v. DocumentsPanel per il ragionamento: le
-                  colonne secondarie si nascondono in base allo spazio
-                  vero del riquadro, Nome e Azioni mai. */}
-              <div className="@container overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-200 text-left text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                      <SortableColumnHeader label="Nome" sortKey="name" sort={sort} onSort={handleSort} />
-                      <SortableColumnHeader
-                        label="Categoria"
-                        sortKey="category"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @lg:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Contenuti"
-                        sortKey="documents"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @2xl:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Scadenze"
-                        sortKey="reminders"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @3xl:table-cell"
-                      />
-                      <SortableColumnHeader
-                        label="Creato il"
-                        sortKey="createdAt"
-                        sort={sort}
-                        onSort={handleSort}
-                        className="hidden @4xl:table-cell"
-                      />
-                      <th className="p-3">Azioni</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                    {pagedAssets.map((asset) => {
-                      const category = categoryFor(asset);
-                      const busy = busyId === asset.id;
-                      const linkedDocuments = documents.filter((d) => d.relatedAssetId === asset.id);
-                      const deadlines = assetDeadlines(asset.id, documents, reminders);
-
-                      return (
-                        <tr key={asset.id}>
-                          <td className="max-w-[16rem] truncate p-3 font-medium text-zinc-900 dark:text-zinc-100">
-                            {asset.name}
-                          </td>
-                          <td className="hidden p-3 text-zinc-600 @lg:table-cell dark:text-zinc-400">
-                            {category ? `${category.icon} ${category.name}` : "—"}
-                          </td>
-                          <td className="hidden p-3 text-zinc-600 @2xl:table-cell dark:text-zinc-400">
-                            {linkedDocuments.length}
-                          </td>
-                          <td className="hidden p-3 text-zinc-600 @3xl:table-cell dark:text-zinc-400">
-                            {deadlines.length}
-                          </td>
-                          <td className="hidden p-3 text-zinc-600 @4xl:table-cell dark:text-zinc-400">
-                            {formatDate(asset.createdAt)}
-                          </td>
-                          <td className="p-3">
-                            <RowActionsMenu label={`Azioni per ${asset.name}`}>
-                              <RowMenuItem disabled={busy} onClick={() => router.push(`/assets/${asset.id}/edit`)}>
-                                Modifica
-                              </RowMenuItem>
-                              <RowMenuItem disabled={busy} danger onClick={() => handleDelete(asset)}>
-                                Elimina
-                              </RowMenuItem>
-                            </RowActionsMenu>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
-            </div>
           ) : (
             <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
               {filteredAssets.map((asset) => {
