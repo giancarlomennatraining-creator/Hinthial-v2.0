@@ -119,7 +119,7 @@ export function clampDigitalLegacyField(field: NumericFieldKey, value: number): 
   return Math.min(max, Math.max(min, Math.round(value)));
 }
 
-function formatDays(days: number): string {
+export function formatDays(days: number): string {
   if (days >= 30 && days % 30 === 0) {
     const months = days / 30;
     return months === 1 ? "1 mese" : `${months} mesi`;

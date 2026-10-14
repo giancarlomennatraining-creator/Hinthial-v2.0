@@ -64,4 +64,11 @@ test("ogni capsula sceglie se aprirsi anche prima, se l'eredità consegna: lo si
   await openRowMenu(marco);
   await expect(page.getByRole("menuitem", { name: "Aprila anche prima, se non ci sono più" })).toHaveCount(0); // ancora bozza: si sceglie dal modulo
   await page.keyboard.press("Escape");
+
+  // La stessa regola, per tutte le capsule insieme, nella pagina Eredità digitale ("Cosa arriverà").
+  await page.getByRole("link", { name: "Eredità digitale", exact: true }).click();
+  const cosa = page.getByRole("region", { name: "Cosa arriverà" });
+  await expect(cosa.getByText("Nessuna capsula si aprirà prima della sua data.")).toBeVisible({ timeout: 15_000 });
+  await cosa.getByRole("checkbox", { name: /Apri anche prima, se non ci sono più: Per i miei figli/ }).click();
+  await expect(cosa.getByText("1 capsula si aprirà anche prima, alla consegna.")).toBeVisible({ timeout: 15_000 });
 });
