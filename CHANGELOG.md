@@ -10,6 +10,28 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-31 (102)
+
+### Fase 6: "Raccontami", Hinthia che intervista
+
+**Cosa fa:**
+- **Una voce nuova nel menu, "Raccontami", al posto di "Hinthia".** La pagina chat "Parla con Hinthia" non c'è più; il pannello "Aiuto" di ogni pagina, con le sue risposte, resta.
+- **Una domanda alla volta** su ciò che sai e che non sta in nessun documento: quattro temi (La mia storia, Per chi amo, La mia famiglia, Come funzionano le cose), sedici domande scritte a mano. Si salta la domanda ("Un'altra domanda": passa alla successiva, mai alla stessa) o si sceglie il tema dai pulsanti.
+- **Ogni risposta diventa un racconto:** una nota cifrata in Archivio, nella categoria "Racconti" (creata la prima volta). Si rilegge dalla pagina, si cerca come ogni nota e si modifica dall'Archivio.
+- **"Fallo arrivare a…"** su ogni racconto apre la capsula già avviata (v. fase 4).
+- **Domanda di approfondimento (con il consenso a Hinthia):** dopo la risposta, Hinthia ne fa un'altra, breve, per ricordare un dettaglio che altrimenti andrebbe perso. La risposta in più si aggiunge in fondo al racconto. Se la domanda non arriva, il racconto è comunque salvato e si prosegue.
+- **Senza il consenso** restano le domande scritte e nessun testo lascia il dispositivo: la pagina lo dice prima di salvare.
+- **Consenso:** in Impostazioni > Hinthia la casella ora si chiama "Hinthia che risponde" e dice cosa autorizza: Raccontami (domanda in più) e il pannello Aiuto.
+- Le domande non chiedono mai password: il tema delle istruzioni lo dice apertamente.
+
+**Note tecniche:**
+- `domain/stories/questions.ts` (raccolta e logica pura, con test), `domain/stories/repository.ts` (racconti come note nella categoria "Racconti": `ensureStoriesCategory`, `listStories`, `saveStory`, `appendFollowUp`), `domain/stories/follow-up.ts`, `components/stories/RaccontamiPage.tsx` e la rotta `/raccontami`. Una domanda risulta fatta quando esiste una nota con quel titolo.
+- Nuova rotta `POST /api/ai/follow-up`: riverifica sul server il cancello (`ai_master_enabled`) e il consenso (`ai_chat_consent`), poi chiede a Claude (Haiku) **una** domanda breve. La risposta della persona è trattata come racconto, non come istruzioni; non si chiedono password, codici né dati bancari. Registra l'uso in Attività come la chat.
+- Rimossi `AIPage`, `AIPanel`, `AIChatProvider`, `SourceList`, la rotta `/ai` e i loro test. La rotta `/api/ai/chat` e i provider restano perché li usa il pannello "Aiuto".
+- Nessuna migrazione. Test: `stories-questions.test.ts`, `raccontami.spec.ts` (la chiamata a Anthropic è sempre simulata); `ai-processing-consent.spec.ts` e `ai.spec.ts` sostituiti.
+
+---
+
 ## 2026-10-30 (101)
 
 ### Fase 5: la scheda di ogni persona in Amici
