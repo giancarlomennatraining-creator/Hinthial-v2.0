@@ -105,8 +105,12 @@ test("ogni capsula si apre per chi la riceve con l'effetto scelto da chi l'ha sc
     // Si aspetta che la pagina si assesti (conto alla rovescia e avviso): il menu si chiude se la pagina scorre mentre è aperto.
     await expect(row.getByText("Disponibile da adesso")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Capsula chiusa.")).toBeHidden({ timeout: 15_000 });
-    await openMenuOf(row, page);
-    await page.getByRole("menuitem", { name: "Condividi" }).click();
+    // Il menu si chiude se la pagina si ridisegna proprio mentre si apre: si riapre finché la voce non è lì.
+    const condividi = page.getByRole("menuitem", { name: "Condividi" });
+    await expect(async () => {
+      if (!(await condividi.isVisible())) await openMenuOf(row, page);
+      await condividi.click({ timeout: 3_000 });
+    }).toPass({ timeout: 30_000 });
     await expect(row.getByText("Condivisa")).toBeVisible({ timeout: 15_000 });
   }
   await logout(page, fullName(owner));

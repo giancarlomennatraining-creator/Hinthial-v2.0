@@ -94,6 +94,7 @@ export async function buildExport(
         status: capsule.status,
         accessCondition: capsule.accessCondition,
         openAt: capsule.openAt,
+        openOnLegacy: capsule.openOnLegacy,
         relatedFriendIds: capsule.relatedFriends.map((c) => c.id),
         linkedDocumentIds: capsule.linkedDocuments.map((d) => d.id),
         createdAt: capsule.createdAt,

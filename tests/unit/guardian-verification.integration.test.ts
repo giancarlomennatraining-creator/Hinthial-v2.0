@@ -187,6 +187,7 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
 
   // Fasi 5-7 da qui in poi: `now` iniettato in runDigitalLegacyCheck per avanzare i giorni senza aspettare per davvero, senza toccare last_sign_in_at/state_entered_at reali.
   let capsuleId = "";
+  let dateOnlyCapsuleId = "";
 
   it("shares a capsule whose open_at is far in the future --- not readable by the recipient yet", async () => {
     const { data: capsule, error: capsuleError } = await admin
@@ -196,6 +197,7 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
         encrypted_payload: "test-encrypted-payload",
         status: "shared",
         open_at: new Date(Date.now() + 1000 * 86_400_000).toISOString(), // 1000 giorni nel futuro
+        open_on_legacy: true, // chiesto da chi l'ha scritta: si apre anche prima, alla consegna dell'eredità
       })
       .select("id")
       .single();
@@ -225,6 +227,37 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
       .eq("capsule_id", capsuleId)
       .maybeSingle();
     expect(readBefore).toBeNull();
+  });
+
+  it("shares a second far-future capsule that did NOT ask to open early", async () => {
+    const { data: capsule, error: capsuleError } = await admin
+      .from("capsules")
+      .insert({
+        owner_id: ownerId,
+        encrypted_payload: "test-encrypted-payload-date-only",
+        status: "shared",
+        open_at: new Date(Date.now() + 1000 * 86_400_000).toISOString(),
+        open_on_legacy: false,
+      })
+      .select("id")
+      .single();
+    expect(capsuleError).toBeNull();
+    dateOnlyCapsuleId = capsule!.id;
+
+    const { error: shareError } = await admin.from("capsule_shares").insert({
+      capsule_id: dateOnlyCapsuleId,
+      owner_id: ownerId,
+      recipient_user_id: guardianId,
+    });
+    expect(shareError).toBeNull();
+    const { error: keyError } = await admin.from("capsule_share_keys").insert({
+      capsule_id: dateOnlyCapsuleId,
+      owner_id: ownerId,
+      recipient_user_id: guardianId,
+      ephemeral_public_key: "test-ephemeral-key",
+      encrypted_payload_for_recipient: "test-encrypted-for-recipient",
+    });
+    expect(keyError).toBeNull();
   });
 
   it("advances guardians_confirmed -> formal_verification immediately, with no waiting period of its own", async () => {
@@ -295,6 +328,14 @@ describe.runIf(canRun)("guardian verification (FASE 12)", () => {
       .single();
     expect(readAfterError).toBeNull();
     expect(readAfter?.encrypted_payload_for_recipient).toBe("test-encrypted-for-recipient");
+
+    // La capsula che non l'aveva chiesto resta chiusa fino alla sua data, anche a eredità consegnata.
+    const { data: dateOnlyRead } = await guardianClient
+      .from("capsule_share_keys")
+      .select("id")
+      .eq("capsule_id", dateOnlyCapsuleId)
+      .maybeSingle();
+    expect(dateOnlyRead).toBeNull();
   });
 
   it("still resets to normal on a genuine later login, without undoing the already-granted capsule access", async () => {

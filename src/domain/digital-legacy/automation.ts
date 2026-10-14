@@ -294,7 +294,8 @@ async function releaseCapsulesToRecipients(admin: SupabaseClient<Database>, owne
     .from("capsules")
     .select("id")
     .eq("owner_id", ownerId)
-    .eq("status", "shared");
+    .eq("status", "shared")
+    .eq("open_on_legacy", true);
   if (capsulesError) {
     console.error("[digital-legacy] failed to list shared capsules:", capsulesError.message);
     return;

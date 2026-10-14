@@ -41,6 +41,8 @@ export interface CapsuleListItem {
   accessCondition: CapsuleAccessCondition;
   /** Obbligatoria, in chiaro lato server (colonna `open_at`) --- il server deve saperlo senza decifrare nulla. Null solo per capsule pre-migrazione, non ancora sanate (v. listCapsules). */
   openAt: string | null;
+  /** Se, quando l'Eredità digitale arriva alla consegna, la capsula si apre anche prima di `openAt`. In chiaro, come `openAt` (v. migrazione 20261016000000). */
+  openOnLegacy: boolean;
   createdAt: string;
 }
 
@@ -54,6 +56,7 @@ export interface CapsuleInput {
   files: File[];
   linkedDocumentIds: string[];
   openAt: string;
+  openOnLegacy: boolean;
 }
 
 /** Editabile solo da "draft". Quali allegati tenere/rimuovere è passato a parte a updateCapsule, non qui. */
@@ -66,6 +69,7 @@ export interface CapsuleEditInput {
   linkedDocumentIds: string[];
   newFiles: File[];
   openAt: string;
+  openOnLegacy: boolean;
 }
 
 /** FASE B: capsula condivisa da altri ("Condivise con me") --- solo metadati in chiaro, titolo/contenuto restano cifrati (v. SharedCapsuleOpenedContent). */
@@ -83,6 +87,8 @@ export interface SharedCapsuleListItem {
   openAt: string | null;
   /** Quando il destinatario ha chiuso il popup di notifica in Dashboard --- null finché non lo fa (v. dismissCapsuleShareNotification). */
   dismissedAt: string | null;
+  /** L'Eredità digitale del mittente è arrivata alla consegna e questa capsula l'aveva chiesto: si apre anche prima di `openAt`. */
+  released: boolean;
 }
 
 /** A differenza di CapsuleAttachment, porta la Document Key già in chiaro (`documentKeyRaw`) --- il destinatario non ha la Master Key del proprietario. */

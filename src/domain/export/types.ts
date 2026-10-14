@@ -67,6 +67,7 @@ export interface ExportManifest {
     status: string;
     accessCondition: string;
     openAt: string | null;
+    openOnLegacy: boolean;
     relatedFriendIds: string[];
     linkedDocumentIds: string[];
     createdAt: string;

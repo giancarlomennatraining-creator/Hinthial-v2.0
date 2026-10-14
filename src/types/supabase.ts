@@ -992,6 +992,7 @@ export type Database = {
           access_condition: CapsuleAccessConditionColumn;
           /** Data E ora, in chiaro apposta --- v. migrazioni 20260905000000 e 20260913010000. Null per le capsule create prima di questa colonna, finché non vengono riviste (v. domain/capsules/repository.ts, listCapsules). */
           open_at: string | null;
+          open_on_legacy: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -1002,6 +1003,7 @@ export type Database = {
           status?: CapsuleStatusColumn;
           access_condition?: CapsuleAccessConditionColumn;
           open_at?: string | null;
+          open_on_legacy?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -1012,6 +1014,7 @@ export type Database = {
           status?: CapsuleStatusColumn;
           access_condition?: CapsuleAccessConditionColumn;
           open_at?: string | null;
+          open_on_legacy?: boolean;
           created_at?: string;
           updated_at?: string;
         };

@@ -22,7 +22,12 @@ export function formatDateTime(iso: string): string {
   return `${formatDate(iso)}, ${time}`;
 }
 
-/** Stato, "Si apre presto", cosa manca a una bozza e i pensieri ricevuti. */
+/** La data di apertura è già passata. */
+export function isOpened(capsule: Pick<CapsuleListItem, "openAt">, now: Date): boolean {
+  return capsule.openAt !== null && new Date(capsule.openAt).getTime() <= now.getTime();
+}
+
+/** Stato, "Si apre presto", la regola dell'eredità, cosa manca a una bozza e i pensieri ricevuti. */
 export function CapsuleChips({
   capsule,
   now,
@@ -43,6 +48,14 @@ export function CapsuleChips({
         {CAPSULE_STATUS_LABEL[capsule.status]}
       </span>
       {isOpeningSoon(capsule, now) ? <span className={WARN_CHIP}>Si apre presto</span> : null}
+      {capsule.openOnLegacy && !isOpened(capsule, now) ? (
+        <span
+          title="Si apre alla data scelta o, se arriva prima, quando l'Eredità digitale consegna le capsule"
+          className="rounded-full bg-[#e8edfc] px-2 py-0.5 text-xs font-bold text-brand dark:bg-brand/20 dark:text-[#9db6ff]"
+        >
+          Anche prima, se non ci sono più
+        </span>
+      ) : null}
       {repliesCount > 0 && onOpenReplies ? (
         <button
           type="button"

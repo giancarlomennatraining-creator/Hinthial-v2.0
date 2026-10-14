@@ -49,6 +49,7 @@ function capsule(over: Partial<CapsuleListItem> = {}): CapsuleListItem {
     status: "draft",
     accessCondition: "manual",
     openAt: null,
+    openOnLegacy: false,
     createdAt: "2026-01-01T00:00:00.000Z",
     ...over,
   };

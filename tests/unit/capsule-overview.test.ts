@@ -14,8 +14,15 @@ function inDays(days: number): string {
 
 describe("capsuleChecks", () => {
   const friend = (name: string, linked: boolean) => ({ name, linkedUserId: linked ? "u1" : null }) as never;
-  const base = { content: "", attachments: [], linkedDocuments: [], relatedFriends: [], openAt: inDays(400) };
+  const base = { content: "", attachments: [], linkedDocuments: [], relatedFriends: [], openAt: inDays(400), openOnLegacy: false };
   const stateOf = (checks: ReturnType<typeof capsuleChecks>, id: string) => checks.find((c) => c.id === id)?.state;
+
+  it("dice se la capsula si apre solo alla data o anche prima, se l'eredità consegna", () => {
+    const only = capsuleChecks({ ...base, content: "x" }, NOW).find((c) => c.id === "date");
+    expect(only?.detail).toContain("solo in quella data");
+    const also = capsuleChecks({ ...base, content: "x", openOnLegacy: true }, NOW).find((c) => c.id === "date");
+    expect(also?.detail).toContain("o prima se non ci sarai più");
+  });
 
   it("senza lettera né allegato blocca, senza destinatario avvisa soltanto", () => {
     const checks = capsuleChecks(base, NOW);
