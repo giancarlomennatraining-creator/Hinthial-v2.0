@@ -4,7 +4,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode }
 import Link from "next/link";
 import { Avatar } from "@/components/ui/Avatar";
 import type { FriendListItem, FriendStatus } from "@/domain/friends/types";
-import type { CapsuleListItem } from "@/domain/capsules/types";
+import type { CapsuleListItem, SharedCapsuleListItem } from "@/domain/capsules/types";
+import { starterHref } from "@/domain/capsules/starter";
+import { describeCapsulesForPerson, groupCapsulesForPerson, isReadyToOpen } from "@/domain/friends/person-capsules";
 
 const STATUS_LABEL: Record<FriendStatus, string> = { active: "Attivo", revoked: "Revocato" };
 const STATUS_BADGE_CLASS: Record<FriendStatus, string> = {
@@ -68,6 +70,7 @@ function matchesQuery(friend: FriendListItem, query: string): boolean {
 export function AddressBook({
   friends,
   capsulesFor,
+  sharedFrom,
   avatarUrlFor,
   isFriendRequestPending,
   isGuardianRequestPending,
@@ -79,6 +82,8 @@ export function AddressBook({
 }: {
   friends: FriendListItem[];
   capsulesFor: (friend: FriendListItem) => CapsuleListItem[];
+  /** Le capsule che questa persona ha condiviso con me (facoltativo: senza, la scheda non mostra "Da lei per te"). */
+  sharedFrom?: (friend: FriendListItem) => SharedCapsuleListItem[];
   avatarUrlFor: (friend: FriendListItem) => string | null;
   isFriendRequestPending: (friend: FriendListItem) => boolean;
   isGuardianRequestPending: (friend: FriendListItem) => boolean;
@@ -318,35 +323,33 @@ export function AddressBook({
             </div>
           </dl>
 
-          <div className="flex flex-col gap-2">
-            <h3 className="text-xs font-extrabold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">Capsule per {nameParts(shown).firstName || shown.name}</h3>
-            {capsulesFor(shown).length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessuna capsula affidata a {nameParts(shown).firstName || shown.name}.</p>
-            ) : (
-              <ul className="flex flex-col gap-1.5">
-                {capsulesFor(shown).map((capsule) => (
-                  <li key={capsule.id} className="flex items-center gap-2.5 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <span aria-hidden="true">📦</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-medium text-zinc-900 dark:text-zinc-100">{capsule.title}</span>
-                      <span className="block text-xs text-zinc-500 dark:text-zinc-400">
-                        creata il {formatDate(capsule.createdAt)}
-                        {capsule.openAt ? ` · apertura prevista ${formatDateTime(capsule.openAt)}` : ""}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {shown.isGuardian ? (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              {shown.linkedUserId !== null
+                ? `Se un giorno non accedi più, chiederò a ${firstNameOf(shown)} se riesce a raggiungerti, prima di consegnare le capsule.`
+                : `${firstNameOf(shown)} è un tuo guardiano ma non ha un account Hinthial: non potrà essere interpellato. Invitalo a iscriversi.`}
+            </p>
+          ) : null}
+
+          <PersonCapsulesSection friend={shown} capsules={capsulesFor(shown)} />
+
+          {sharedFrom ? <SharedFromSection friend={shown} shared={sharedFrom(shown)} /> : null}
 
           <div className="flex flex-wrap gap-2">
+            {shown.status === "active" ? (
+              <Link
+                href={starterHref("persona", shown.id)}
+                className="rounded-xl bg-brand px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-hover"
+              >
+                Scrivi una capsula per {firstNameOf(shown)}
+              </Link>
+            ) : null}
             {canRequestFriendship(shown) ? (
               <button
                 type="button"
                 disabled={busyId === shown.id}
                 onClick={() => onRequestFriendship(shown)}
-                className="rounded-xl bg-brand px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-50"
+                className="rounded-xl border border-zinc-300 px-3.5 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
               >
                 Richiedi amicizia
               </button>
@@ -374,6 +377,80 @@ export function AddressBook({
           </div>
         </section>
       ) : null}
+    </div>
+  );
+}
+
+/** Il nome con cui parlare della persona: quello di battesimo se c'è, altrimenti il nome visualizzato. */
+function firstNameOf(friend: FriendListItem): string {
+  return nameParts(friend).firstName || friend.name;
+}
+
+/** Cosa riceverà questa persona, dal più importante per "se non ci sono più": le capsule che arrivano alla consegna, poi quelle a data, poi le bozze. */
+function PersonCapsulesSection({ friend, capsules }: { friend: FriendListItem; capsules: CapsuleListItem[] }) {
+  const groups = groupCapsulesForPerson(capsules);
+  const rows: { capsule: CapsuleListItem; tag: string; tone: "delivery" | "date" | "draft" }[] = [
+    ...groups.onDelivery.map((capsule) => ({ capsule, tag: "Anche prima, se non ci sei più", tone: "delivery" as const })),
+    ...groups.onDate.map((capsule) => ({ capsule, tag: "Alla sua data", tone: "date" as const })),
+    ...groups.drafts.map((capsule) => ({ capsule, tag: "Bozza", tone: "draft" as const })),
+  ];
+
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="text-xs font-extrabold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">Capsule per {firstNameOf(friend)}</h3>
+      {rows.length === 0 ? (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessuna capsula affidata a {firstNameOf(friend)}.</p>
+      ) : (
+        <>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">{describeCapsulesForPerson(groups)}</p>
+          <ul className="flex flex-col gap-1.5">
+            {rows.map(({ capsule, tag, tone }) => (
+              <li key={capsule.id} className="flex items-center gap-2.5 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <span aria-hidden="true">📦</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium text-zinc-900 dark:text-zinc-100">{capsule.title}</span>
+                  <span className="block text-xs text-zinc-500 dark:text-zinc-400">
+                    creata il {formatDate(capsule.createdAt)}
+                    {capsule.openAt ? ` · apertura prevista ${formatDateTime(capsule.openAt)}` : ""}
+                  </span>
+                </span>
+                <span
+                  className={
+                    tone === "delivery"
+                      ? "shrink-0 rounded-full bg-[#e8edfc] px-2 py-0.5 text-xs font-bold text-brand dark:bg-brand/20 dark:text-[#9db6ff]"
+                      : "shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                  }
+                >
+                  {tag}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Le capsule che questa persona ha lasciato a me: quelle pronte da aprire per prime. */
+function SharedFromSection({ friend, shared }: { friend: FriendListItem; shared: SharedCapsuleListItem[] }) {
+  // Letto una volta al mount, non chiamando l'impuro Date.now() durante il render.
+  const [now] = useState(() => new Date());
+  if (shared.length === 0) return null;
+
+  const ready = shared.filter((s) => isReadyToOpen(s, now));
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="text-xs font-extrabold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">Da {firstNameOf(friend)} per te</h3>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        {shared.length === 1 ? "1 capsula" : `${shared.length} capsule`}
+        {ready.length > 0
+          ? `: ${ready.length === 1 ? "1 è pronta da aprire" : `${ready.length} sono pronte da aprire`}.`
+          : ": nessuna è ancora pronta da aprire."}
+      </p>
+      <Link href="/capsules?tab=shared" className="w-fit text-sm font-semibold text-brand hover:underline">
+        {ready.length > 0 ? "Apri le capsule →" : "Vai alle capsule condivise con te →"}
+      </Link>
     </div>
   );
 }

@@ -10,6 +10,24 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-30 (101)
+
+### Fase 5: la scheda di ogni persona in Amici
+
+**Cosa fa:**
+- **Azione principale: "Scrivi una capsula per Marta".** Dalla scheda di una persona (non revocata) si apre il modulo di nuova capsula con lei già destinataria e il titolo "Per Marta". Scrivere a una persona non accende da sola la regola "anche prima, se non ci sono più": la scegli tu.
+- **Cosa riceverà:** le capsule per quella persona sono divise in tre gruppi, con una frase che le riassume ("3 capsule: 1 arriverà anche se non ci sei, 1 si apre alla propria data, 1 è ancora una bozza") e un'etichetta su ogni riga: "Anche prima, se non ci sei più", "Alla sua data" o "Bozza".
+- **Da lei per te:** se la persona ha un account Hinthial, la scheda mostra le capsule che ti ha lasciato e quante sono pronte da aprire, con il link a "Condivise con te".
+- **Guardiano:** per chi lo è, la scheda dice cosa succede ("Se un giorno non accedi più, chiederò a Giulia se riesce a raggiungerti") e avverte se non ha un account Hinthial, perché allora non può essere interpellato.
+- La scheda esisteva già in rubrica: ora racconta la relazione, non solo i dati.
+
+**Note tecniche:**
+- `domain/friends/person-capsules.ts` (puro, con test): `groupCapsulesForPerson`, `describeCapsulesForPerson`, `sharedFromPerson`, `isReadyToOpen`.
+- `domain/capsules/starter.ts` impara la fonte `persona` (`/capsules/new?da=persona:<id>`): destinatario già scelto, regola spenta; il titolo usa il nome di battesimo o, come in rubrica, la prima parola del nome visualizzato. Solo un amico attivo può essere un punto di partenza.
+- `FriendsPanel` carica anche le capsule condivise con me e le passa a `AddressBook` (`sharedFrom`, facoltativo). Nessuna migrazione.
+
+---
+
 ## 2026-10-29 (100)
 
 ### Fase 4: "Fallo arrivare a…" da un documento, un fascicolo o un bene

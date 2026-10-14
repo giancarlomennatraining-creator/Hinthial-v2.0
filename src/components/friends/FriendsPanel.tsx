@@ -26,13 +26,14 @@ import {
   revokeGuardianRole,
 } from "@/domain/friends/guardian-requests";
 import { sendFriendRequestEmail, sendGuardianRoleRequestEmail } from "@/lib/friends/actions";
-import { listCapsules, syncCapsuleSharesForLinkedFriend } from "@/domain/capsules/repository";
+import { listCapsules, listCapsulesSharedWithMe, syncCapsuleSharesForLinkedFriend } from "@/domain/capsules/repository";
+import { sharedFromPerson } from "@/domain/friends/person-capsules";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { PageHelp } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
 import type { FriendListItem, FriendStatus } from "@/domain/friends/types";
-import type { CapsuleListItem } from "@/domain/capsules/types";
+import type { CapsuleListItem, SharedCapsuleListItem } from "@/domain/capsules/types";
 import { AddressBook } from "@/components/friends/AddressBook";
 import { useToast } from "@/components/ui/ToastProvider";
 import { AlertTriangleIcon } from "@/components/icons/nav-icons";
@@ -103,6 +104,8 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   const [friends, setFriends] = useState<FriendListItem[]>([]);
   const [capsules, setCapsules] = useState<CapsuleListItem[]>([]);
+  // Le capsule che altri hanno condiviso con me, per mostrare nella scheda di ognuno quelle che mi ha lasciato.
+  const [sharedWithMe, setSharedWithMe] = useState<SharedCapsuleListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -186,15 +189,17 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       if (!user?.email) throw new Error("Sessione non valida.");
       setCurrentUser({ id: user.id, email: user.email });
 
-      const [friendsResult, capsulesResult, incoming, outgoingFriend, outgoingGuardian] = await Promise.all([
+      const [friendsResult, capsulesResult, sharedResult, incoming, outgoingFriend, outgoingGuardian] = await Promise.all([
         listFriends(supabase, masterKey),
         listCapsules(supabase, masterKey),
+        listCapsulesSharedWithMe(supabase).catch((): SharedCapsuleListItem[] => []),
         listIncomingFriendRequests(supabase, user.id),
         listOutgoingPendingFriendRequests(supabase, user.id),
         listOutgoingPendingGuardianRoleRequests(supabase, user.id),
       ]);
       setFriends(friendsResult);
       setCapsules(capsulesResult);
+      setSharedWithMe(sharedResult);
       setIncomingRequests(incoming);
       setPendingFriendRequestTo(new Set(outgoingFriend.map((r) => r.recipientId)));
       setPendingGuardianRequestTo(new Set(outgoingGuardian));
@@ -472,6 +477,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
             <AddressBook
               friends={filteredFriends}
               capsulesFor={capsulesFor}
+              sharedFrom={(friend) => sharedFromPerson(sharedWithMe, friend.linkedUserId)}
               avatarUrlFor={avatarUrlFor}
               isFriendRequestPending={isFriendRequestPending}
               isGuardianRequestPending={isGuardianRequestPending}

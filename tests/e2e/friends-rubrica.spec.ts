@@ -115,3 +115,33 @@ test("su smartphone si vede la rubrica, toccando una persona la sua scheda, e \"
   await page.goBack();
   await expect(page).not.toHaveURL(/\/friends$/);
 });
+test("dalla scheda di una persona si scrive una capsula per lei, con lei già destinataria, e la scheda mostra cosa riceverà", async ({ page }) => {
+  test.slow();
+  await signInAndAddFriends(page, PEOPLE);
+
+  // Dalla scheda di Marta: la capsula parte con lei già scelta e il titolo col suo nome.
+  await page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /Marta Rossi/ }).click();
+  const scheda = page.getByRole("region", { name: "Scheda di Marta Rossi" });
+  await scheda.getByRole("link", { name: "Scrivi una capsula per Marta" }).click();
+  await expect(page).toHaveURL(/\/capsules\/new\?da=persona:[0-9a-f-]+$/, { timeout: 15_000 });
+  await expect(page.getByRole("status").filter({ hasText: "Stai scrivendo una capsula per Marta Rossi" })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByLabel("Titolo")).toHaveValue("Per Marta");
+  await expect(page.getByText("Marta Rossi").first()).toBeVisible();
+  // Scrivere a una persona non accende da sola la regola dell'eredità.
+  await expect(page.getByRole("checkbox", { name: /Aprila anche prima, se non ci sono più/ })).not.toBeChecked();
+
+  await page.getByLabel("Data e ora di apertura", { exact: true }).fill("2038-03-12T10:00");
+  await page.getByRole("checkbox", { name: /Aprila anche prima, se non ci sono più/ }).check();
+  await page.getByRole("button", { name: "Avanti" }).click();
+  await page.getByRole("button", { name: "Avanti" }).click();
+  await page.getByLabel("Il tuo messaggio").fill("Cara Marta, ti voglio bene.");
+  await page.getByRole("button", { name: "Crea capsula" }).click();
+  await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
+
+  // Tornando in Amici, la scheda di Marta dice cosa le arriverà.
+  await page.getByRole("link", { name: "Amici", exact: true }).click();
+  await page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /Marta Rossi/ }).click();
+  const dopo = page.getByRole("region", { name: "Scheda di Marta Rossi" });
+  await expect(dopo.getByText("1 capsula: 1 è ancora una bozza.")).toBeVisible({ timeout: 15_000 });
+  await expect(dopo.getByText("Per Marta", { exact: true })).toBeVisible();
+});

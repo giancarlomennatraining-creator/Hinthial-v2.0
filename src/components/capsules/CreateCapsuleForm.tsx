@@ -49,7 +49,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const searchParams = useSearchParams();
   // "Fallo arrivare a…": tipo e id di ciò da cui si parte (v. domain/capsules/starter.ts), mai testo nell'indirizzo.
   const starterParam = searchParams.get("da");
-  const [starterOrigin, setStarterOrigin] = useState<string | null>(null);
+  const [starterNotice, setStarterNotice] = useState<string | null>(null);
 
   const [friends, setFriends] = useState<FriendListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -97,15 +97,25 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
       // Una capsula già avviata da un documento, un fascicolo o un bene: titolo, lettera e allegati arrivano da lì.
       const source = parseStarter(starterParam);
       const starter = source
-        ? buildCapsuleStarter(source, { documents: documentsResult, dossiers: dossiersResult, assets: assetsResult })
+        ? buildCapsuleStarter(source, {
+            documents: documentsResult,
+            dossiers: dossiersResult,
+            assets: assetsResult,
+            friends: friendsResult,
+          })
         : null;
       if (starter) {
         setTitle(starter.title);
         setTitleTouched(true);
         setContent(starter.content);
         setPendingLinkedDocuments(starter.documents);
+        setPendingRelatedFriends(starter.recipients);
         setOpenOnLegacy(starter.openOnLegacy);
-        setStarterOrigin(starter.origin);
+        setStarterNotice(
+          starter.recipients.length > 0
+            ? `Stai scrivendo una capsula per ${starter.origin}. Scegli quando si aprirà.`
+            : `Stai preparando una capsula da ${starter.origin}. Scegli a chi farla arrivare e quando: la regola «anche prima, se non ci sono più» è già accesa.`,
+        );
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare i dati necessari.");
@@ -213,10 +223,9 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
         <CapsuleFormCard onSubmit={handleCreate}>
           {step === 1 ? (
             <>
-              {starterOrigin ? (
+              {starterNotice ? (
                 <p role="status" className="rounded-xl bg-brand/10 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
-                  Stai preparando una capsula da <b>{starterOrigin}</b>. Scegli a chi farla arrivare e quando: la regola
-                  &ldquo;anche prima, se non ci sono più&rdquo; è già accesa.
+                  {starterNotice}
                 </p>
               ) : null}
 
