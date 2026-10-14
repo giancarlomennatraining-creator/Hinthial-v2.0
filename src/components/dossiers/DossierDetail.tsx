@@ -22,6 +22,7 @@ import {
   setExpectedItemDone,
   type DossierItems,
 } from "@/domain/dossiers/repository";
+import { starterHref } from "@/domain/capsules/starter";
 import { matchExpected, type ExpectedItem } from "@/domain/dossiers/expected";
 import { normalizePhases } from "@/domain/dossiers/phases";
 import {
@@ -409,6 +410,12 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
               <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
             </svg>
             Condividi
+          </Link>
+          <Link
+            href={starterHref("fascicolo", dossierId)}
+            className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-[#c9d0e6] bg-white px-4 py-2 text-sm font-semibold text-brand hover:border-brand dark:border-zinc-700 dark:bg-zinc-950"
+          >
+            Fallo arrivare a…
           </Link>
           <Link
             href={`/dossiers/${dossierId}/edit`}

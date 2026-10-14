@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
+import { starterHref } from "@/domain/capsules/starter";
 import { listAssets, setAssetLegacyNote } from "@/domain/assets/repository";
 import type { AssetListItem } from "@/domain/assets/types";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -116,14 +117,23 @@ export function LegacyAssets({ masterKey }: { masterKey: CryptoKey }) {
                     ) : null}
                   </span>
                   {editingId !== asset.id ? (
+                    <span className="flex shrink-0 items-center gap-3">
+                    <Link
+                      href={starterHref("bene", asset.id)}
+                      aria-label={`Fai arrivare ${asset.name} a qualcuno`}
+                      className="text-xs font-semibold text-brand hover:underline"
+                    >
+                      Fallo arrivare a…
+                    </Link>
                     <button
                       type="button"
                       onClick={() => startEditing(asset)}
                       aria-label={`${asset.legacyNote ? "Cambia" : "Scrivi"} cosa succede a ${asset.name}`}
-                      className="shrink-0 text-xs font-semibold text-brand hover:underline"
+                      className="text-xs font-semibold text-brand hover:underline"
                     >
                       {asset.legacyNote ? "Cambia" : "Scrivi"}
                     </button>
+                    </span>
                   ) : null}
                 </div>
                 {editingId === asset.id ? (

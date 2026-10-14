@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { createCapsule } from "@/domain/capsules/repository";
+import { listAssets } from "@/domain/assets/repository";
 import { listFriends } from "@/domain/friends/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
@@ -32,6 +33,7 @@ import type { DocumentSummary } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import type { CapsuleContentStyle } from "@/domain/capsules/types";
+import { buildCapsuleStarter, parseStarter } from "@/domain/capsules/starter";
 import { promptsFor, suggestedOpenAt, type CapsuleTemplate } from "@/domain/capsules/templates";
 import { BTN_PRIMARY } from "@/components/ui/styles";
 
@@ -44,6 +46,10 @@ import { BTN_PRIMARY } from "@/components/ui/styles";
 export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useSupabase();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // "Fallo arrivare a…": tipo e id di ciò da cui si parte (v. domain/capsules/starter.ts), mai testo nell'indirizzo.
+  const starterParam = searchParams.get("da");
+  const [starterOrigin, setStarterOrigin] = useState<string | null>(null);
 
   const [friends, setFriends] = useState<FriendListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -75,23 +81,38 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [friendsResult, categoriesResult, documentsResult, dossiersResult] =
+      const [friendsResult, categoriesResult, documentsResult, dossiersResult, assetsResult] =
         await Promise.all([
           listFriends(supabase, masterKey),
           listCategories(supabase),
           listDocumentSummaries(supabase, masterKey),
           listDossiers(supabase, masterKey),
+          listAssets(supabase, masterKey),
         ]);
       setFriends(friendsResult);
       setCategories(categoriesResult);
       setDocuments(documentsResult);
       setDossiers(dossiersResult);
+
+      // Una capsula già avviata da un documento, un fascicolo o un bene: titolo, lettera e allegati arrivano da lì.
+      const source = parseStarter(starterParam);
+      const starter = source
+        ? buildCapsuleStarter(source, { documents: documentsResult, dossiers: dossiersResult, assets: assetsResult })
+        : null;
+      if (starter) {
+        setTitle(starter.title);
+        setTitleTouched(true);
+        setContent(starter.content);
+        setPendingLinkedDocuments(starter.documents);
+        setOpenOnLegacy(starter.openOnLegacy);
+        setStarterOrigin(starter.origin);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare i dati necessari.");
     } finally {
       setLoading(false);
     }
-  }, [supabase, masterKey]);
+  }, [supabase, masterKey, starterParam]);
 
   useEffect(() => {
     // See DocumentsPanel.tsx for why fetch-on-mount is legitimate here.
@@ -192,6 +213,13 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
         <CapsuleFormCard onSubmit={handleCreate}>
           {step === 1 ? (
             <>
+              {starterOrigin ? (
+                <p role="status" className="rounded-xl bg-brand/10 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+                  Stai preparando una capsula da <b>{starterOrigin}</b>. Scegli a chi farla arrivare e quando: la regola
+                  &ldquo;anche prima, se non ci sono più&rdquo; è già accesa.
+                </p>
+              ) : null}
+
               <CapsuleTitleField
                 value={title}
                 onChange={(value) => {
