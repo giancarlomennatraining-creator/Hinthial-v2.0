@@ -10,6 +10,27 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-27 (98)
+
+### Eredità digitale, passo 2: una pagina in quattro blocchi e una sola scelta
+
+**Cosa fa:**
+- **La pagina racconta la promessa per intero**, dall'alto: **Chi conferma la tua assenza** (i guardiani), **Quanto aspettare**, **Cosa arriverà** (le capsule) e **la scheda d'emergenza**.
+- **Una sola scelta, il livello di prudenza:** Prudente (circa un anno nel caso peggiore), Normale (circa 7 mesi) o Rilassato (circa 3 mesi), più l'interruttore per accendere. Via "Personalizza i valori" e il quorum a parte: li decide il livello.
+- **Le quattro fasi** (Silenzio, Guardiani, Attesa, Consegna) sono scritte sotto la scelta, con i giorni veri del livello selezionato. Cambiando livello si aggiornano subito.
+- **Chi aveva valori personalizzati** vede un avviso e li conserva finché non sceglie uno dei tre livelli.
+- **Guardiani in elenco:** si vede chi sono e se sono raggiungibili (un guardiano senza account Hinthial non può essere interpellato); si aggiungono e si tolgono da Amici, dove c'è la richiesta di consenso.
+- **Cosa arriverà:** tutte le capsule con la loro regola ("Anche prima, se non ci sono più"), da cambiare qui finché non si sono aperte, e quante si apriranno prima della data.
+- **La prova generale** sta dietro un link ("Vedi cosa succederebbe se cominciasse oggi") e non occupa più la pagina.
+- **Cassaforte bloccata:** "Quanto aspettare" si legge subito, gli altri blocchi cifrati chiedono la master password con un solo riquadro.
+
+**Note tecniche:**
+- `domain/digital-legacy/phases.ts` (puro, con test) traduce le sette durate nelle quattro fasi: Silenzio = inattività + promemoria + grazia, Attesa = verifica formale + attesa finale. Il motore dei sei stati interni, le email e la regola di consegna non cambiano.
+- Nuovi: `LegacyGuardians`, `LegacyWaiting` (al posto di `DigitalLegacyPanel`), `LegacyCapsules`. `LegacyPage` compone i blocchi e decide cosa mostrare a cassaforte bloccata.
+- Nessuna migrazione.
+
+---
+
 ## 2026-10-26 (97)
 
 ### Eredità digitale, passo 1: ogni capsula decide se aprirsi anche prima
