@@ -18,6 +18,7 @@ import {
   updateDocumentAIExtractionExclusion,
   updateDocumentMetadata,
 } from "@/domain/documents/repository";
+import { starterHref } from "@/domain/capsules/starter";
 import { loadDocumentSegments } from "@/domain/documents/segments";
 import type { ContentSegment } from "@/domain/extraction/types";
 import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
@@ -735,6 +736,12 @@ export function ArchiveItemDetail({
             Scarica
           </button>
         )}
+        <Link
+          href={starterHref("documento", doc.id)}
+          className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+        >
+          Fallo arrivare a…
+        </Link>
         <button
           type="button"
           disabled={busy}

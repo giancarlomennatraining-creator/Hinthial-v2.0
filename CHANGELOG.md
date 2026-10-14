@@ -10,6 +10,26 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-29 (100)
+
+### Fase 4: "Fallo arrivare a…" da un documento, un fascicolo o un bene
+
+**Cosa fa:**
+- Dalla scheda di un **documento**, dalla pagina di un **fascicolo**, dal menu di un **bene** e dal blocco "I tuoi beni" dell'Eredità digitale c'è **"Fallo arrivare a…"**. Apre il modulo di nuova capsula già avviato: devi solo scegliere a chi e quando.
+- Cosa arriva già compilato:
+  - **documento:** titolo = nome del file, il documento come allegato;
+  - **fascicolo:** titolo del fascicolo, tutti i suoi documenti come allegati;
+  - **bene:** titolo "Cosa succede a {bene}", la nota "cosa succede a questo bene" come lettera, i documenti collegati al bene come allegati.
+- La regola **"Aprila anche prima, se non ci sono più"** parte accesa (farlo arrivare vuol dire farlo arrivare anche senza di te), e in cima al modulo un avviso dice da cosa nasce la capsula. Resta tutto modificabile prima di crearla.
+- Se la fonte non esiste più (eliminata nel frattempo), il modulo si apre vuoto, senza errori.
+
+**Note tecniche:**
+- Il punto di partenza viaggia nell'indirizzo solo come tipo e id (`/capsules/new?da=bene:<id>`): titoli e note sono cifrati e non finiscono nella cronologia del browser, li ricostruisce il modulo una volta sbloccato. Logica pura in `domain/capsules/starter.ts` (`parseStarter`, `buildCapsuleStarter`, `starterHref`), con test.
+- `CreateCapsuleForm` legge anche i beni (`listAssets`) per costruire la capsula. Nessuna migrazione.
+- Nuovo e2e `reach-someone.spec.ts`.
+
+---
+
 ## 2026-10-28 (99)
 
 ### Eredità digitale, passi 3 e 4: la continuità segue, e "cosa succede a questo bene"

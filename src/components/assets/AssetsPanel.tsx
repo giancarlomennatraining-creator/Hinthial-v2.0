@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
+import { starterHref } from "@/domain/capsules/starter";
 import { assetDeadlines } from "@/domain/assets/deadlines";
 import { deleteAsset, listAssets } from "@/domain/assets/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
@@ -203,6 +204,9 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                       <RowActionsMenu label={`Azioni per ${asset.name}`}>
                         <RowMenuItem disabled={busy} onClick={() => router.push(`/assets/${asset.id}/edit`)}>
                           Modifica
+                        </RowMenuItem>
+                        <RowMenuItem disabled={busy} onClick={() => router.push(starterHref("bene", asset.id))}>
+                          Fallo arrivare a…
                         </RowMenuItem>
                         <RowMenuItem disabled={busy} danger onClick={() => handleDelete(asset)}>
                           Elimina
