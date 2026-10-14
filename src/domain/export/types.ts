@@ -26,6 +26,7 @@ export interface ExportManifest {
   assets: {
     id: string;
     name: string;
+    legacyNote: string;
     categoryId: string | null;
     createdAt: string;
   }[];

@@ -363,6 +363,7 @@ export type Database = {
           id: string;
           owner_id: string;
           encrypted_name: string;
+          encrypted_legacy_note: string | null;
           category_id: string | null;
           created_at: string;
           updated_at: string;
@@ -371,6 +372,7 @@ export type Database = {
           id?: string;
           owner_id: string;
           encrypted_name: string;
+          encrypted_legacy_note?: string | null;
           category_id?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -379,6 +381,7 @@ export type Database = {
           id?: string;
           owner_id?: string;
           encrypted_name?: string;
+          encrypted_legacy_note?: string | null;
           category_id?: string | null;
           created_at?: string;
           updated_at?: string;

@@ -13,8 +13,8 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
       { id: "cat-casa", name: "Casa", icon: "🏠", aiExtractionEnabled: false, aiExtractionEnabledUntil: null },
     ],
     assets: [
-      { id: "asset-auto", name: "Auto Panda", categoryId: "cat-assicurazioni", createdAt: "2026-01-01" },
-      { id: "asset-casa", name: "Appartamento", categoryId: "cat-casa", createdAt: "2026-01-01" },
+      { id: "asset-auto", name: "Auto Panda", legacyNote: "", categoryId: "cat-assicurazioni", createdAt: "2026-01-01" },
+      { id: "asset-casa", name: "Appartamento", legacyNote: "", categoryId: "cat-casa", createdAt: "2026-01-01" },
     ],
     documents: [
       {

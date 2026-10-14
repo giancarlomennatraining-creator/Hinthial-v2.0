@@ -11,21 +11,33 @@ import {
 import { logAuditEvent, logAuditEventForCurrentUser } from "@/lib/audit/log-event";
 import type { AssetInput, AssetListItem } from "@/domain/assets/types";
 
-const ASSET_COLUMNS = "id, encrypted_name, category_id, created_at";
+const ASSET_COLUMNS = "id, encrypted_name, encrypted_legacy_note, category_id, created_at";
 
 type AssetRow = {
   id: string;
   encrypted_name: string;
+  encrypted_legacy_note: string | null;
   category_id: string | null;
   created_at: string;
 };
 
+/** Una nota facoltativa: vuota diventa null (nessun inviluppo cifrato inutile), e null torna "". */
+async function encryptLegacyNote(masterKey: CryptoKey, note: string): Promise<string | null> {
+  const trimmed = note.trim();
+  if (!trimmed) return null;
+  return serializeEnvelope(await encryptBytes(masterKey, utf8ToBytes(trimmed)));
+}
+
 async function toAssetListItem(masterKey: CryptoKey, row: AssetRow): Promise<AssetListItem> {
   const nameBytes = await decryptBytes(masterKey, parseEnvelope(row.encrypted_name));
+  const noteBytes = row.encrypted_legacy_note
+    ? await decryptBytes(masterKey, parseEnvelope(row.encrypted_legacy_note))
+    : null;
 
   return {
     id: row.id,
     name: bytesToUtf8(nameBytes),
+    legacyNote: noteBytes ? bytesToUtf8(noteBytes) : "",
     categoryId: row.category_id,
     createdAt: row.created_at,
   };
@@ -65,6 +77,7 @@ export async function createAsset(
     id,
     owner_id: ownerId,
     encrypted_name: serializeEnvelope(encryptedName),
+    encrypted_legacy_note: await encryptLegacyNote(masterKey, input.legacyNote ?? ""),
     category_id: input.categoryId,
   });
 
@@ -90,11 +103,34 @@ export async function updateAsset(
     .update({
       encrypted_name: serializeEnvelope(encryptedName),
       category_id: input.categoryId,
+      // Assente = non si tocca: chi aggiorna solo nome e categoria non cancella la nota.
+      ...(input.legacyNote === undefined
+        ? {}
+        : { encrypted_legacy_note: await encryptLegacyNote(masterKey, input.legacyNote) }),
     })
     .eq("id", assetId);
 
   if (error) {
     throw new Error(`Impossibile aggiornare il bene: ${error.message}`);
+  }
+
+  await logAuditEventForCurrentUser(supabase, "asset_updated", undefined, { type: "asset", id: assetId });
+}
+
+/** Scrive (o toglie, se vuota) la nota "cosa succede a questo bene": solo quella colonna, nome e categoria restano come sono. */
+export async function setAssetLegacyNote(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+  assetId: string,
+  note: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("assets")
+    .update({ encrypted_legacy_note: await encryptLegacyNote(masterKey, note) })
+    .eq("id", assetId);
+
+  if (error) {
+    throw new Error(`Impossibile salvare la nota del bene: ${error.message}`);
   }
 
   await logAuditEventForCurrentUser(supabase, "asset_updated", undefined, { type: "asset", id: assetId });
