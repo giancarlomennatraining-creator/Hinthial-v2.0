@@ -11,8 +11,10 @@ export interface ContinuityInput {
   legacyEnabled: boolean;
   /** La scheda d'emergenza ha almeno un dato. */
   emergencyCardFilled: boolean;
-  /** Capsule già chiuse con almeno un destinatario: qualcosa che arriverà a qualcuno. */
+  /** Capsule già chiuse con almeno un destinatario: qualcosa che arriverà a qualcuno, alla sua data. */
   capsulesForOthers: number;
+  /** Di quelle, le capsule che si aprono anche prima della data se l'eredità consegna (v. Capsule.openOnLegacy). */
+  capsulesForDelivery: number;
 }
 
 export interface ContinuityStep {
@@ -27,7 +29,7 @@ export interface ContinuityStep {
 }
 
 export function continuitySteps(input: ContinuityInput): ContinuityStep[] {
-  const { guardianCount, legacyEnabled, emergencyCardFilled, capsulesForOthers } = input;
+  const { guardianCount, legacyEnabled, emergencyCardFilled, capsulesForOthers, capsulesForDelivery } = input;
   return [
     {
       id: "guardians",
@@ -57,15 +59,18 @@ export function continuitySteps(input: ContinuityInput): ContinuityStep[] {
     },
     {
       id: "capsules",
-      done: capsulesForOthers > 0,
+      done: capsulesForDelivery > 0,
       label:
-        capsulesForOthers > 0
-          ? capsulesForOthers === 1
-            ? "Hai lasciato una capsula a qualcuno"
-            : `Hai lasciato ${capsulesForOthers} capsule a chi ami`
-          : "Nessuna capsula per chi ami: scrivine una",
-      href: "/capsules/new",
-      action: "Scrivi",
+        capsulesForDelivery > 0
+          ? capsulesForDelivery === 1
+            ? "Una capsula arriverà a chi ami anche se non ci sei"
+            : `${capsulesForDelivery} capsule arriveranno a chi ami anche se non ci sei`
+          : capsulesForOthers > 0
+            ? "Nessuna capsula si apre prima della sua data: scegli quali"
+            : "Nessuna capsula per chi ami: scrivine una",
+      // Con capsule già chiuse manca solo la scelta di quali consegnare; senza, manca la capsula stessa.
+      href: capsulesForOthers > 0 ? "/legacy" : "/capsules/new",
+      action: capsulesForOthers > 0 ? "Scegli" : "Scrivi",
     },
   ];
 }

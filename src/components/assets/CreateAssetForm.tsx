@@ -51,6 +51,7 @@ export function CreateAssetForm({ masterKey }: { masterKey: CryptoKey }) {
     const formData = new FormData(form);
     const name = String(formData.get("name") ?? "").trim();
     const categoryId = String(formData.get("categoryId") ?? "") || null;
+    const legacyNote = String(formData.get("legacyNote") ?? "");
 
     if (!name) {
       setError("Inserisci un nome per il bene.");
@@ -64,7 +65,7 @@ export function CreateAssetForm({ masterKey }: { masterKey: CryptoKey }) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Devi essere autenticato.");
 
-      await createAsset(supabase, masterKey, user.id, { name, categoryId });
+      await createAsset(supabase, masterKey, user.id, { name, categoryId, legacyNote });
       router.push("/assets?created=1");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile creare il bene.");
@@ -129,6 +130,23 @@ export function CreateAssetForm({ masterKey }: { masterKey: CryptoKey }) {
                 </option>
               ))}
             </select>
+          </div>
+
+
+          <div className="flex w-full flex-col gap-1">
+            <label htmlFor="legacyNote" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              Cosa succede a questo bene <span className="font-normal">(facoltativo)</span>
+            </label>
+            <textarea
+              id="legacyNote"
+              name="legacyNote"
+              rows={2}
+              placeholder="es. Va a Luca. Le chiavi sono dal vicino del secondo piano."
+              className={INPUT_FIELD}
+            />
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Resta cifrata e la vedi solo tu. Per farla arrivare a qualcuno, scrivila anche in una capsula.
+            </p>
           </div>
 
           {error ? (

@@ -39,7 +39,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
     categories: [
       { id: "cat-ass", name: "Assicurazioni", icon: "🛡️", aiExtractionEnabled: false, aiExtractionEnabledUntil: null },
     ],
-    assets: [{ id: "asset-auto", name: "Auto Panda", categoryId: null, createdAt: "2026-01-01" }],
+    assets: [{ id: "asset-auto", name: "Auto Panda", legacyNote: "", categoryId: null, createdAt: "2026-01-01" }],
     documents: [
       doc({ id: "d1", filename: "polizza-auto.pdf", categoryId: "cat-ass" }),
       doc({

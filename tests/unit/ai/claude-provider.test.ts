@@ -8,7 +8,7 @@ function buildContext(overrides: Partial<AIContext> = {}): AIContext {
       { id: "cat-assicurazioni", name: "Assicurazioni", icon: "🛡️", aiExtractionEnabled: false, aiExtractionEnabledUntil: null },
     ],
     assets: [
-      { id: "asset-auto", name: "Auto Panda", categoryId: "cat-assicurazioni", createdAt: "2026-01-01" },
+      { id: "asset-auto", name: "Auto Panda", legacyNote: "", categoryId: "cat-assicurazioni", createdAt: "2026-01-01" },
     ],
     documents: [],
     reminders: [

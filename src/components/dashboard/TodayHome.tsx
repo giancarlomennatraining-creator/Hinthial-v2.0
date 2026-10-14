@@ -39,6 +39,9 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
         legacyEnabled: extras.legacyEnabled,
         emergencyCardFilled: extras.emergencyCardFilled,
         capsulesForOthers: context.capsules.filter((c) => c.status !== "draft" && c.relatedFriends.length > 0).length,
+        capsulesForDelivery: context.capsules.filter(
+          (c) => c.status !== "draft" && c.relatedFriends.length > 0 && c.openOnLegacy,
+        ).length,
       })
     : null;
   const score = steps ? continuityScore(steps) : null;

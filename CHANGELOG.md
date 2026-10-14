@@ -10,6 +10,23 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-28 (99)
+
+### Eredità digitale, passi 3 e 4: la continuità segue, e "cosa succede a questo bene"
+
+**Cosa fa:**
+- **Continuità più giusta:** il quarto passo non conta più una capsula qualsiasi, ma una che arriva a chi ami **anche se non ci sei**, cioè che si apre prima della sua data se l'eredità consegna. Con capsule già chiuse ma solo con la data, dice "Nessuna capsula si apre prima della sua data: scegli quali" e porta alla pagina Eredità digitale. Senza nessuna capsula, invita a scriverne una.
+- **Cosa succede a questo bene:** ogni bene ha una nota facoltativa, per dire a chi va, dove sono le chiavi, chi chiamare. Si scrive nel modulo del bene (nuovo e modifica) e nel nuovo blocco **"I tuoi beni"** della pagina Eredità digitale, dove si vede a colpo d'occhio a quali beni manca ("Hai detto cosa succede a 1 bene su 2") e si scrive o cambia sul posto.
+- La nota è **cifrata e la vedi solo tu**: da sola non arriva a nessuno. La pagina lo dice e rimanda a "Scrivi una capsula" per farla arrivare a qualcuno.
+- L'esportazione dei dati include la nota di ogni bene.
+
+**Note tecniche:**
+- Migrazione `20261016000001_asset_legacy_note.sql`: colonna `assets.encrypted_legacy_note` (testo cifrato con la Master Key, null se non scritta). **Va applicata prima del codice nuovo**: le query dei beni leggono la colonna.
+- `AssetInput.legacyNote` è facoltativo: se assente, `updateAsset` non tocca la nota (l'importazione dei beni non la cancella). `setAssetLegacyNote` scrive solo quella colonna.
+- `continuitySteps` riceve anche `capsulesForDelivery`; `TodayHome` lo ricava dalle capsule chiuse con destinatari e `openOnLegacy`. Nuovo e2e `asset-legacy-note.spec.ts`.
+
+---
+
 ## 2026-10-27 (98)
 
 ### Eredità digitale, passo 2: una pagina in quattro blocchi e una sola scelta

@@ -121,7 +121,7 @@ describe("tutti i passi fatti", () => {
             createdAt: "2026-01-01",
           },
         ],
-        assets: [{ id: "a1", name: "Barca", categoryId: null, createdAt: "2026-01-01" }],
+        assets: [{ id: "a1", name: "Barca", legacyNote: "", categoryId: null, createdAt: "2026-01-01" }],
         capsules: [
           {
             id: "cap1",

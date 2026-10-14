@@ -164,8 +164,8 @@ describe("ReadingRegister", () => {
   it("il collegamento a un bene che c'è già dice Collega, e Modifica fa scegliere un altro bene", () => {
     const link: Proposal = { kind: "asset", value: "a-panda", source: 'Stessa targa (AB123CD) di "Polizza.pdf", già collegato a Fiat Panda.' };
     const assets = [
-      { id: "a-panda", name: "Fiat Panda", categoryId: null, createdAt: "2026-01-01" },
-      { id: "a-casa", name: "Casa di Roma", categoryId: null, createdAt: "2026-01-02" },
+      { id: "a-panda", name: "Fiat Panda", legacyNote: "", categoryId: null, createdAt: "2026-01-01" },
+      { id: "a-casa", name: "Casa di Roma", legacyNote: "", categoryId: null, createdAt: "2026-01-02" },
     ];
     const { onAccept } = setup({ proposals: [link], assets, overview: null, acceptAllCount: 0 });
     expect(screen.getByText("Fiat Panda")).toBeInTheDocument();

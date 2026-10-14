@@ -111,6 +111,7 @@ export async function buildExport(
     assets: assets.map((asset) => ({
       id: asset.id,
       name: asset.name,
+      legacyNote: asset.legacyNote,
       categoryId: asset.categoryId,
       createdAt: asset.createdAt,
     })),
