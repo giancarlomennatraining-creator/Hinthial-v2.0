@@ -38,7 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
     requiresEncryption: true,
     also: ["/dossiers", "/assets", "/reminders"],
   },
-  { label: "Hinthia", href: "/ai", icon: AIIcon, requiresEncryption: true },
+  { label: "Raccontami", href: "/raccontami", icon: AIIcon, requiresEncryption: true },
 ];
 
 /** Le voci della barra fissa in basso su smartphone (al massimo cinque, per restare leggibili); le altre stanno nel menu con le 3 lineette. */

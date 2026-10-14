@@ -7,7 +7,6 @@ import { MasterKeyProvider } from "@/components/crypto/MasterKeyProvider";
 import { MasterKeyIntroModal } from "@/components/crypto/MasterKeyIntroModal";
 import { UnlockPromptProvider } from "@/components/crypto/UnlockPromptProvider";
 import { OnboardingWidgetVisibilityProvider } from "@/components/layout/OnboardingWidgetVisibilityProvider";
-import { AIChatProvider } from "@/components/ai/AIChatProvider";
 import { AIProcessingConsentProvider } from "@/components/ai/AIProcessingConsentProvider";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { AuditWriteFailedNotice } from "@/components/audit/AuditWriteFailedNotice";
@@ -107,7 +106,7 @@ function AppChrome({
         avatarUrl={avatarUrl}
       />
       <main className="flex-1 px-6 pt-6 pb-24 md:px-10 md:pt-10 md:pb-10">
-        <AIChatProvider>{children}</AIChatProvider>
+        {children}
       </main>
       <BottomNavBar />
     </div>

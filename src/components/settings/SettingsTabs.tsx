@@ -324,7 +324,7 @@ export function SettingsTabs({
       return <MfaSettingsPanel userId={userId} />;
     }
     if (activeTab === "ai") {
-      // Non richiede la master key: il consenso riguarda solo dati già decifrati e mostrati altrove (v. AIPanel).
+      // Non richiede la master key: il consenso riguarda solo dati già decifrati e mostrati altrove (v. RaccontamiPage e PageHelp).
       return (
         <div className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">

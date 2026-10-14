@@ -11,7 +11,7 @@ import type { Category } from "@/domain/categories/types";
 /**
  * Impostazioni -> Intelligenza artificiale: il "cancello" generale per l'IA reale più le funzioni specifiche che ne
  * dipendono, riusato anche nel pannello ⚙ della pagina AI. Spegnere il cancello spegne anche le funzioni sotto;
- * riaccenderlo non le riaccende da solo. Chat ed Estrazione avanzata hanno una funzione reale dietro
+ * riaccenderlo non le riaccende da solo. Hinthia che risponde (Raccontami e il pannello Aiuto) ed Estrazione avanzata hanno una funzione reale dietro
  * (rispettivamente FASE 11 e FASE 22).
  *
  * FASE 22: il consenso all'estrazione avanzata è a due livelli --- questo generale, poi per categoria (elenco sotto,
@@ -161,7 +161,7 @@ export function AIConsentSettings() {
                 onChange={() => handleChatChange(!chatConsent)}
                 className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
               />
-              Chat — risposte reali alle tue domande (v. pagina Hinthia)
+              Hinthia che risponde — Raccontami ti fa una domanda in più e il pannello Aiuto risponde alle tue domande
             </label>
           </li>
 

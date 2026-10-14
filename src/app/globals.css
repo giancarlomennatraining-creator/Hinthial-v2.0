@@ -162,7 +162,7 @@ h6 {
 }
 
 /*
- * "Hinthia sta scrivendo" (v. AIPanel): tre puntini mentre si aspetta
+ * "Hinthia sta scrivendo" (v. PageHelp): tre puntini mentre si aspetta
  * la risposta, invece di un'attesa muta --- segnala che la domanda è
  * partita davvero. Stesso motivo di sopra per una regola CSS invece di
  * un'utility Tailwind: un keyframe non ha un equivalente pratico qui.

@@ -23,7 +23,7 @@ describe("MainNav", () => {
   it("renders every navigation item", () => {
     render(<MainNav />);
 
-    for (const label of ["Oggi", "Amici", "Capsule", "Eredità digitale", "Archivio", "Hinthia"]) {
+    for (const label of ["Oggi", "Amici", "Capsule", "Eredità digitale", "Archivio", "Raccontami"]) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     }
 
