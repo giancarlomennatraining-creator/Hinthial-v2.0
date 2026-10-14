@@ -211,6 +211,7 @@ describe("mockAIProvider.retrieve", () => {
           status: "draft",
           accessCondition: "manual",
           openAt: null,
+          openOnLegacy: false,
           createdAt: "2026-01-01",
         },
       ],

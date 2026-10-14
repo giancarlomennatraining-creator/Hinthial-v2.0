@@ -11,6 +11,7 @@ import { listDossiers } from "@/domain/dossiers/repository";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { FriendPicker } from "@/components/capsules/FriendPicker";
 import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachmentPicker";
+import { CapsuleLegacyField } from "@/components/capsules/CapsuleLegacyField";
 import { CapsuleOpenAtField } from "@/components/capsules/CapsuleOpenAtField";
 import { CapsuleLetterEditor } from "@/components/capsules/CapsuleLetterEditor";
 import { CapsuleOpenEffectPicker, previewAttachments } from "@/components/capsules/CapsuleOpenEffectPicker";
@@ -64,6 +65,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
   const [contentStyle, setContentStyle] = useState<CapsuleContentStyle>("simple");
   const [openEffect, setOpenEffect] = useState<CapsuleOpenEffect>(DEFAULT_OPEN_EFFECT);
   const [openAt, setOpenAt] = useState("");
+  const [openOnLegacy, setOpenOnLegacy] = useState(false);
   const [showAttachmentTools, setShowAttachmentTools] = useState(false);
   const [relatedFriends, setRelatedFriends] = useState<FriendListItem[]>([]);
   const [linkedDocuments, setLinkedDocuments] = useState<DocumentSummary[]>([]);
@@ -101,6 +103,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
         setContentStyle(found.contentStyle);
         setOpenEffect(found.openEffect);
         setOpenAt(found.openAt ?? "");
+        setOpenOnLegacy(found.openOnLegacy);
         setRelatedFriends(found.relatedFriends);
         setLinkedDocuments(found.linkedDocuments);
         setKeptAttachments(found.attachments);
@@ -169,6 +172,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
         linkedDocumentIds: linkedDocuments.map((d) => d.id),
         newFiles,
         openAt,
+        openOnLegacy,
       });
       router.push("/capsules?updated=1");
     } catch (err) {
@@ -208,6 +212,8 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
               />
 
               <CapsuleOpenAtField id="openAt" value={openAt} onChange={setOpenAt} />
+
+              <CapsuleLegacyField id="openOnLegacy" checked={openOnLegacy} onChange={setOpenOnLegacy} />
 
               <StepError error={error} />
 

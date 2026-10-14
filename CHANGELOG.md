@@ -10,6 +10,25 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-26 (97)
+
+### Eredità digitale, passo 1: ogni capsula decide se aprirsi anche prima
+
+**Cosa fa:**
+- Accanto alla data di apertura c'è una scelta nuova: **"Aprila anche prima, se non ci sono più"**. Spenta (è così per le capsule nuove), la capsula si apre solo alla data scelta, qualunque cosa succeda. Accesa, si apre alla data oppure, se arriva prima, quando l'Eredità digitale consegna le capsule.
+- Prima la consegna rendeva leggibili **tutte** le capsule già condivise, anche quelle per una data lontana. Ora si aprono solo quelle che l'hanno chiesto.
+- L'elenco mostra la pillola "Anche prima, se non ci sono più", e la verifica prima di chiudere dice a parole se la capsula si apre solo alla data o anche prima.
+- La regola si cambia anche dopo aver chiuso la capsula, dal menu ("Aprila solo alla data" / "Aprila anche prima, se non ci sono più"), finché la capsula non si è aperta.
+- Le capsule già chiuse o condivise restano accese, come si comportavano prima.
+- **Correzione:** chi riceveva una capsula consegnata in anticipo non vedeva il pulsante "Apri" fino alla data. Ora la capsula risulta "aperta in anticipo, come aveva chiesto" e si apre subito. Anche "Oggi" la mostra tra quelle che aspettano.
+
+**Note tecniche:**
+- Migrazione `20261016000000_capsule_open_on_legacy.sql`: colonna `capsules.open_on_legacy` (boolean, in chiaro come `open_at`; il server sa solo un sì o un no, il contenuto resta cifrato) e riscrittura delle policy di lettura su `capsule_share_keys` e `storage.objects`: alla data, oppure alla consegna **se** la capsula l'ha chiesto. **Va applicata prima del codice nuovo**: le query leggono la colonna.
+- `releaseCapsulesToRecipients` avvisa solo i destinatari delle capsule con la regola accesa. `SharedCapsuleListItem.released` unisce la regola della capsula e `profiles.digital_legacy_triggered_at` del mittente.
+- Il test d'integrazione dei guardiani verifica entrambe le strade: la capsula che l'ha chiesto si apre alla consegna, quella che non l'ha chiesto resta chiusa. Nuovo e2e `capsule-legacy-rule.spec.ts`.
+
+---
+
 ## 2026-10-25 (96)
 
 ### Ristrutturazione, fase 2: nuova navigazione, Eredità digitale, e la home "Oggi"

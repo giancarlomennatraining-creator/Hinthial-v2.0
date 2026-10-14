@@ -10,6 +10,7 @@ import {
   downloadCapsuleAttachment,
   listCapsules,
   listCapsulesSharedWithMe,
+  setCapsuleOpenOnLegacy,
   shareCapsule,
 } from "@/domain/capsules/repository";
 import { deleteReply, listReceivedReplies, type CapsuleReply } from "@/domain/capsules/replies-repository";
@@ -19,6 +20,7 @@ import { getCapsuleCountdownVisible } from "@/domain/profile/repository";
 import { cn } from "@/lib/utils";
 import { saveBytesAsFile } from "@/lib/download";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
+import { isOpened } from "@/components/capsules/CapsuleCardParts";
 import { CapsulePortholeRow } from "@/components/capsules/CapsulePortholeRow";
 import { SharedCapsuleItem } from "@/components/capsules/SharedCapsuleItem";
 import type { OpenOrigin } from "@/components/capsules/opening/types";
@@ -222,6 +224,22 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
+  /** Accende o spegne "aprila anche prima, se non ci sono più" per una capsula già chiusa: vale finché non si è aperta. */
+  async function handleToggleOpenOnLegacy(capsule: CapsuleListItem) {
+    const next = !capsule.openOnLegacy;
+    setBusyId(capsule.id);
+    setError(null);
+    try {
+      await setCapsuleOpenOnLegacy(supabase, capsule.id, next);
+      setCapsules((prev) => prev.map((c) => (c.id === capsule.id ? { ...c, openOnLegacy: next } : c)));
+      showToast(next ? "Si aprirà anche prima, se non ci sei più." : "Si aprirà solo alla data scelta.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile cambiare la regola della capsula.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function handleDelete(capsule: CapsuleListItem) {
     if (!window.confirm(`Eliminare la capsula "${capsule.title}"? L'operazione non è reversibile.`))
       return;
@@ -301,6 +319,11 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
         {capsule.status === "ready" ? (
           <RowMenuItem disabled={busy} onClick={() => handleShare(capsule)}>
             Condividi
+          </RowMenuItem>
+        ) : null}
+        {capsule.status !== "draft" && !isOpened(capsule, now) ? (
+          <RowMenuItem disabled={busy} onClick={() => handleToggleOpenOnLegacy(capsule)}>
+            {capsule.openOnLegacy ? "Aprila solo alla data" : "Aprila anche prima, se non ci sono più"}
           </RowMenuItem>
         ) : null}
         <RowMenuItem disabled={busy} danger onClick={() => handleDelete(capsule)}>

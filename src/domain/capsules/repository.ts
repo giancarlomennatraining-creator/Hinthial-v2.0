@@ -45,7 +45,7 @@ import type {
   SharedCapsuleOpenedContent,
 } from "@/domain/capsules/types";
 
-const CAPSULE_COLUMNS = "id, encrypted_payload, status, access_condition, open_at, created_at";
+const CAPSULE_COLUMNS = "id, encrypted_payload, status, access_condition, open_at, open_on_legacy, created_at";
 
 type CapsuleRow = {
   id: string;
@@ -54,6 +54,8 @@ type CapsuleRow = {
   access_condition: CapsuleAccessCondition;
   /** In chiaro apposta --- v. migrazione 20260905000000 e CapsuleListItem.openAt. */
   open_at: string | null;
+  /** In chiaro apposta, come open_at --- v. migrazione 20261016000000. */
+  open_on_legacy: boolean;
   created_at: string;
 };
 
@@ -155,6 +157,7 @@ export async function listCapsules(
       status: row.status,
       accessCondition: row.access_condition,
       openAt,
+      openOnLegacy: row.open_on_legacy,
       createdAt: row.created_at,
     };
   });
@@ -236,6 +239,7 @@ export async function createCapsule(
     owner_id: ownerId,
     encrypted_payload: serializeEnvelope(encryptedPayload),
     open_at: input.openAt,
+    open_on_legacy: input.openOnLegacy,
   });
 
   if (error) {
@@ -288,7 +292,7 @@ export async function updateCapsule(
 
   const { error } = await supabase
     .from("capsules")
-    .update({ encrypted_payload: serializeEnvelope(encryptedPayload), open_at: input.openAt })
+    .update({ encrypted_payload: serializeEnvelope(encryptedPayload), open_at: input.openAt, open_on_legacy: input.openOnLegacy })
     .eq("id", capsuleId);
 
   if (error) {
@@ -308,6 +312,22 @@ export async function updateCapsule(
   }
 
   await logAuditEvent(supabase, ownerId, "capsule_updated", undefined, { type: "capsule", id: capsuleId });
+}
+
+/**
+ * Cambia la regola "aprila anche prima, se non ci sono più" di una capsula, anche dopo averla chiusa o condivisa: non tocca
+ * né la lettera né la data, e vale finché la capsula non si è aperta. È solo una colonna in chiaro, il payload cifrato resta com'è.
+ */
+export async function setCapsuleOpenOnLegacy(
+  supabase: SupabaseClient<Database>,
+  capsuleId: string,
+  openOnLegacy: boolean,
+): Promise<void> {
+  const { error } = await supabase.from("capsules").update({ open_on_legacy: openOnLegacy }).eq("id", capsuleId);
+
+  if (error) {
+    throw new Error(`Impossibile cambiare la regola della capsula: ${error.message}`);
+  }
 }
 
 /** Chiude una capsula (draft -> ready, irreversibile): ogni Archivio collegato viene copiato con una Document Key propria, così la capsula non dipende più dagli originali. Tutto o niente: un fallimento a metà rimuove le copie e lascia la capsula com'era. */
@@ -543,8 +563,8 @@ export async function listCapsulesSharedWithMe(
   const ownerIds = [...new Set(shares.map((s) => s.owner_id))];
 
   const [capsulesResult, profilesResult] = await Promise.all([
-    supabase.from("capsules").select("id, status, open_at").in("id", capsuleIds),
-    supabase.from("profiles").select("id, first_name, last_name").in("id", ownerIds),
+    supabase.from("capsules").select("id, status, open_at, open_on_legacy").in("id", capsuleIds),
+    supabase.from("profiles").select("id, first_name, last_name, digital_legacy_triggered_at").in("id", ownerIds),
   ]);
 
   if (capsulesResult.error) {
@@ -571,6 +591,7 @@ export async function listCapsulesSharedWithMe(
         status: capsule.status,
         openAt: capsule.open_at,
         dismissedAt: share.dismissed_at,
+        released: capsule.open_on_legacy && profile.digital_legacy_triggered_at !== null,
       };
     })
     .filter((item): item is SharedCapsuleListItem => item !== null);

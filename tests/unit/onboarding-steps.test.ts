@@ -147,6 +147,7 @@ describe("tutti i passi fatti", () => {
             status: "draft",
             accessCondition: "manual",
             openAt: "2027-01-01",
+            openOnLegacy: false,
             createdAt: "2026-01-01",
           },
         ],

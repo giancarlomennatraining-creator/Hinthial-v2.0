@@ -10,6 +10,7 @@ import { listCategories } from "@/domain/categories/repository";
 import { listDossiers } from "@/domain/dossiers/repository";
 import { DocumentAttachmentPicker } from "@/components/capsules/DocumentAttachmentPicker";
 import { FriendPicker } from "@/components/capsules/FriendPicker";
+import { CapsuleLegacyField } from "@/components/capsules/CapsuleLegacyField";
 import { CapsuleOpenAtField } from "@/components/capsules/CapsuleOpenAtField";
 import { CapsuleLetterEditor } from "@/components/capsules/CapsuleLetterEditor";
 import { CapsuleTemplatePicker } from "@/components/capsules/CapsuleTemplatePicker";
@@ -55,6 +56,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
   const [step, setStep] = useState<CapsuleFormStep>(1);
   const [title, setTitle] = useState("");
   const [openAt, setOpenAt] = useState("");
+  const [openOnLegacy, setOpenOnLegacy] = useState(false);
   // Un modello compila titolo e data solo finché non li ha toccati chi scrive: mai sovrascrivere una scelta fatta a mano.
   const [template, setTemplate] = useState<CapsuleTemplate | null>(null);
   const [titleTouched, setTitleTouched] = useState(false);
@@ -162,6 +164,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
         files: recordedFiles,
         linkedDocumentIds: pendingLinkedDocuments.map((d) => d.id),
         openAt,
+        openOnLegacy,
       });
       router.push("/capsules?created=1");
     } catch (err) {
@@ -213,6 +216,8 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
                   setOpenAtTouched(true);
                 }}
               />
+
+              <CapsuleLegacyField id="openOnLegacy" checked={openOnLegacy} onChange={setOpenOnLegacy} />
 
               <StepError error={error} />
 

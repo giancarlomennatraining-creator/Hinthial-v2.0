@@ -44,7 +44,9 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
   const score = steps ? continuityScore(steps) : null;
 
   // Le capsule: prima quelle che aspettano me, poi quelle che si aprono presto, poi le bozze da chiudere.
-  const readyForMe = (extras?.sharedWithMe ?? []).filter((s) => s.openAt !== null && new Date(s.openAt) <= now);
+  const readyForMe = (extras?.sharedWithMe ?? []).filter(
+    (s) => s.released || (s.openAt !== null && new Date(s.openAt) <= now),
+  );
   const openingSoon = sortByOpening(
     context.capsules.filter((c) => isOpeningSoon(c, now)),
     now,

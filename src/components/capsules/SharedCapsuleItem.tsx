@@ -47,7 +47,8 @@ export function SharedCapsuleItem({
   const artRef = useRef<HTMLSpanElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   // Il vero sblocco è lato database (nega la lettura prima della data): qui si decide solo se mostrare "Apri" o il countdown.
-  const canOpen = shared.openAt !== null && new Date(shared.openAt) <= now;
+  // Alla data, oppure prima se l'Eredità digitale del mittente è arrivata alla consegna e la capsula l'aveva chiesto.
+  const canOpen = shared.released || (shared.openAt !== null && new Date(shared.openAt) <= now);
   const state: CapsuleArtState = canOpen ? "ready" : "sealed";
 
   const body = (
@@ -66,7 +67,11 @@ export function SharedCapsuleItem({
       </div>
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
         Condivisa il {formatDate(shared.sharedAt)}
-        {shared.openAt ? ` · apertura prevista ${formatDateTime(shared.openAt)}` : ""}
+        {shared.released
+          ? " · aperta in anticipo, come aveva chiesto"
+          : shared.openAt
+            ? ` · apertura prevista ${formatDateTime(shared.openAt)}`
+            : ""}
       </p>
 
       {shared.openAt && showCountdown ? (

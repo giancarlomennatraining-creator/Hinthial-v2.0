@@ -38,7 +38,7 @@ function listNames(names: string[]): string {
  * una lettera a se stessi; un destinatario senza account Hinthial non potrà aprirla; una data già passata la apre subito).
  */
 export function capsuleChecks(
-  capsule: Pick<CapsuleListItem, "content" | "attachments" | "linkedDocuments" | "relatedFriends" | "openAt">,
+  capsule: Pick<CapsuleListItem, "content" | "attachments" | "linkedDocuments" | "relatedFriends" | "openAt" | "openOnLegacy">,
   now: Date,
 ): CapsuleCheck[] {
   const checks: CapsuleCheck[] = [];
@@ -57,7 +57,9 @@ export function capsuleChecks(
       id: "date",
       state: "ok",
       label: "Data di apertura",
-      detail: `Si aprirà il ${dateTimeFormat.format(new Date(capsule.openAt))}.`,
+      detail: capsule.openOnLegacy
+        ? `Si aprirà il ${dateTimeFormat.format(new Date(capsule.openAt))}, o prima se non ci sarai più.`
+        : `Si aprirà il ${dateTimeFormat.format(new Date(capsule.openAt))}, solo in quella data.`,
     });
   }
 
