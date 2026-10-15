@@ -1,10 +1,9 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, forceOwnFriendToGuardian, uniqueTestUser } from "./test-users";
-import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra laterale, mostra il progresso su tutti gli 8 passi (nessuno opzionale)", async ({
+test("la checklist \"Onboarding\" segue i pilastri: racconto, persona, capsula per lei, guardiano, Eredità digitale (7 passi)", async ({
   page,
 }) => {
   test.slow();
@@ -22,78 +21,46 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
   await page.getByRole("button", { name: "Crea" }).click();
-  await expect(
-    page.getByLabel("Ho salvato la recovery key in un posto sicuro."),
-  ).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByLabel("Ho salvato la recovery key in un posto sicuro.")).toBeVisible({ timeout: 45_000 });
   await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  // La checklist non vive nel corpo della Dashboard: si verifica lo stesso avanzamento dal pannello dell'indicatore persistente in barra laterale.
+  // La checklist vive nel pannello dell'indicatore persistente in barra laterale.
   const statusButton = page.getByRole("button", { name: /Onboarding/ });
   const panel = page.getByRole("dialog", { name: "Onboarding" });
 
-  async function openPanel() {
+  async function expectProgress(count: string) {
     await statusButton.click();
     await expect(panel).toBeVisible();
+    await expect(panel.getByText(count)).toBeVisible({ timeout: 10_000 });
   }
   async function closePanel() {
     await panel.getByRole("button", { name: "Chiudi" }).click();
     await expect(panel).not.toBeVisible();
   }
 
-  // Account e cifratura già fatti, nient'altro: 2/8. Nessuna voce marcata "(opzionale)": non esiste questa distinzione.
-  await openPanel();
-  await expect(panel.getByText("2/8")).toBeVisible();
+  // Account e chiave già fatti, nient'altro: 2/7, nessuna voce "(opzionale)".
+  await expectProgress("2/7");
   await expect(panel.getByText("(opzionale)")).toHaveCount(0);
-  await expect(
-    panel.getByRole("link", { name: "Aggiungi il primo contenuto all'archivio" }),
-  ).toBeVisible();
+  await expect(panel.getByRole("link", { name: "Racconta un primo ricordo" })).toBeVisible();
   await closePanel();
 
-  // Un documento con una categoria assegnata completa due passi in un colpo solo. 4/8.
-  await page.getByRole("link", { name: "Archivio", exact: true }).click();
-  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
-  await page.getByRole("menuitem", { name: "Carica un file" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
-  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
-  await page.getByRole("radio", { name: /Carica un file/ }).click();
-  await page.setInputFiles('input[type="file"]', {
-    name: "polizza.txt",
-    mimeType: "text/plain",
-    buffer: Buffer.from("polizza di prova"),
-  });
-  await page.getByRole("button", { name: "Dettagli" }).click();
-  await page.locator("#upload-category").selectOption({ label: "🛡️ Assicurazioni" });
-  await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
-  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
-  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
-  await expect(page.getByText("polizza.txt")).toBeVisible({ timeout: 15_000 });
-
-  await page.getByRole("link", { name: "Oggi" }).click();
-  await expect(page.getByRole("heading", { name: "Continuità" })).toBeVisible();
-  await openPanel();
-  await expect(panel.getByText("4/8")).toBeVisible();
+  // Raccontami: una risposta diventa il primo racconto. 3/7.
+  await page.getByRole("link", { name: "Raccontami", exact: true }).click();
+  const domanda = page.getByRole("region", { name: "Domanda" });
+  await expect(domanda.getByLabel("La tua risposta")).toBeVisible({ timeout: 15_000 });
+  await domanda.getByLabel("La tua risposta").fill("A Sassoferrato, in una casa con il pozzo in cortile.");
+  await domanda.getByRole("button", { name: "Salva il racconto" }).click();
+  await expect(domanda.getByText("Racconto salvato")).toBeVisible({ timeout: 20_000 });
+  await expectProgress("3/7");
   // La voce completata resta elencata, non barrata.
-  const doneDocumentStep = panel.getByText("Aggiungi il primo contenuto all'archivio");
-  await expect(doneDocumentStep).toBeVisible();
-  await expect(doneDocumentStep).not.toHaveClass(/line-through/);
+  const doneStory = panel.getByText("Racconta un primo ricordo");
+  await expect(doneStory).toBeVisible();
+  await expect(doneStory).not.toHaveClass(/line-through/);
   await closePanel();
 
-  // Un bene: 5/8.
-  await openArchiveTab(page, "Beni");
-  await page.getByRole("link", { name: "+ Crea bene" }).click();
-  await page.getByLabel("Nome").fill("Barca");
-  await page.getByRole("button", { name: "Aggiungi bene" }).click();
-  await expect(page).toHaveURL(/\/assets$/, { timeout: 15_000 });
-
-  await page.getByRole("link", { name: "Oggi" }).click();
-  await openPanel();
-  await expect(panel.getByRole("link", { name: "Aggiungi il primo bene" })).not.toBeVisible();
-  await expect(panel.getByText("5/8")).toBeVisible();
-  await closePanel();
-
-  // Un amico, attivo e guardiano (completa il passo "guardian"): 6/8.
+  // Una persona in Amici: 4/7. Come guardiano (forzato via admin, v. friends.spec.ts per il flusso vero): 5/7.
   await page.getByRole("link", { name: "Amici", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await page.getByLabel("Nome visualizzato").fill("Maria Rossi");
@@ -103,19 +70,18 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
   const friendRow = page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /Maria Rossi/ });
   await expect(friendRow).toBeVisible({ timeout: 10_000 });
-  // Amico + guardiano richiederebbe una doppia richiesta reale tra due account (v. friends.spec.ts): qui serve solo come dato di partenza, si forza via il client admin.
+  await expectProgress("4/7");
+  await closePanel();
+
   await forceOwnFriendToGuardian(user.email);
   await page.reload();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await expect(friendRow.getByTitle("Guardiano")).toBeVisible({ timeout: 10_000 });
-
-  await page.getByRole("link", { name: "Oggi" }).click();
-  await openPanel();
-  await expect(panel.getByText("6/8")).toBeVisible();
+  await expectProgress("5/7");
   await closePanel();
 
-  // Una capsula con quell'amico come destinatario completa insieme "capsula" e "collegamento capsula-amico": 8/8.
+  // Una capsula per Maria: 6/7.
   await page.getByRole("link", { name: "Capsule", exact: true }).click();
   await page.getByRole("link", { name: "+ Crea capsula" }).click();
   await expect(page.getByRole("heading", { name: "Nuova capsula" })).toBeVisible();
@@ -132,20 +98,27 @@ test("la checklist \"Onboarding\", nel pannello dell'indicatore in barra lateral
   await page.getByRole("button", { name: "Crea capsula" }).click();
   await expect(page).toHaveURL(/\/capsules$/, { timeout: 15_000 });
   await expect(page.getByText("Capsula creata.")).toBeVisible();
-
-  // 8/8: la checklist resta elencata, solo l'indicatore che la apre passa a mostrare una percentuale.
-  await page.getByRole("link", { name: "Oggi" }).click();
-  await openPanel();
-  await expect(panel.getByText("8/8")).toBeVisible();
+  await expectProgress("6/7");
   await closePanel();
 
-  // L'indicatore si ricarica solo all'apertura del pannello: un click lo forza ad aggiornarsi al nuovo 100%.
-  await statusButton.click();
-  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 100% completato", {
-    timeout: 10_000,
-  });
+  // L'Eredità digitale attivata e salvata: 7/7.
+  await page.getByRole("link", { name: "Eredità digitale", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Eredità digitale", level: 1 })).toBeVisible();
+  const enableToggle = page.getByRole("checkbox", { name: "Attiva Eredità digitale" });
+  page.once("dialog", (dialog) => dialog.accept());
+  await enableToggle.click();
+  await expect(enableToggle).toBeChecked();
+  await Promise.all([
+    page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
+    page.getByRole("button", { name: "Salva", exact: true }).click(),
+  ]);
+  await expect(page.getByText("Impostazioni di Eredità digitale salvate.")).toBeVisible();
+  await expectProgress("7/7");
+  await closePanel();
 
-  // A 100% l'anello diventa verde: è un conic-gradient (background-image), non un colore pieno.
+  // L'indicatore si ricarica all'apertura del pannello: a 100% l'anello diventa verde (un conic-gradient).
+  await statusButton.click();
+  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 100% completato", { timeout: 10_000 });
   const ring = statusButton.locator("span").first();
   await expect(ring).toHaveCSS("background-image", /34, 197, 94/);
 });

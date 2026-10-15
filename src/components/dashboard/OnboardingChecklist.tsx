@@ -11,8 +11,8 @@ export interface OnboardingStep {
 }
 
 /**
- * "Prima esperienza" (v. domain/onboarding/steps.ts): crea account -> configura sicurezza -> primo documento ->
- * categoria -> bene -> capsula -> amico -> collegamento capsula-contatto. Nessun passo è opzionale: tutti contano
+ * "Prima esperienza" (v. domain/onboarding/steps.ts): account -> chiave -> primo racconto -> una persona -> una
+ * capsula per lei -> guardiano -> Eredità digitale. Nessun passo è opzionale: tutti contano
  * nel conteggio. Calcolata dal vivo dai dati già caricati dal chiamante, nessuno stato persistito da nessuna parte:
  * le voci già fatte restano elencate qui, senza barrato, come promemoria di percorso. La descrizione compare solo
  * sotto i passi non ancora fatti. Nessun riquadro attorno alla lista: chi la mostra fornisce già il proprio

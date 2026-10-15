@@ -10,6 +10,30 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (104)
+
+### Onboarding sui quattro pilastri
+
+**Cosa fa:**
+- **La checklist "Onboarding" segue ora la stessa strada della pagina pubblica**, sette passi invece di otto:
+  1. Crea un account
+  2. Crea la tua chiave (prima "Configura la cifratura")
+  3. Racconta un primo ricordo (Raccontami)
+  4. Aggiungi una persona a cui tieni
+  5. Prepara una capsula per qualcuno
+  6. Scegli un guardiano
+  7. Attiva l'Eredità digitale
+- **Escono** "Aggiungi il primo contenuto all'archivio", "Assegna una categoria" e "Aggiungi il primo bene": l'Archivio resta, ma non è più il punto di partenza. "Crea la tua prima capsula" e "Collega una capsula a un amico" diventano un passo solo: conta una capsula che ha almeno un destinatario.
+- Ogni passo porta dove si completa: Raccontami, Amici, la nuova capsula, Eredità digitale. Le descrizioni dicono a cosa serve il passo (per esempio: "Una persona di fiducia: se un giorno non rispondi, Hinthial chiede a lei se riesce a raggiungerti").
+- Vale sia per l'indicatore nella barra laterale sia per Impostazioni > Onboarding. Prima dello sblocco restano visibili i primi due passi, come prima.
+
+**Note tecniche:**
+- `domain/onboarding/steps.ts`: nuovi dati di partenza (`documents`, `categories`, `friends`, `capsules`, `legacyEnabled`). Il racconto si riconosce come nota (`NOTE_MIME_TYPE`) nella categoria "Racconti".
+- Nuovo `loadOnboardingSteps`, usato sia da `OnboardingStatus` sia da `OnboardingSettingsPanel` (che ora usa il contesto leggero, non più quello completo con il testo dei documenti). L'Eredità digitale si legge da `getDigitalLegacySettings`; se la lettura fallisce, il passo risulta da fare.
+- Nessuna migrazione. Test: `onboarding-steps.test.ts` riscritto; `onboarding-checklist.spec.ts` (percorso completo fino a 7/7), `onboarding-status.spec.ts` e `onboarding-settings.spec.ts` aggiornati.
+
+---
+
 ## 2026-10-15 (103)
 
 ### Pagina pubblica nuova: il seme, la costellazione e il libro con la chiave

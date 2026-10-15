@@ -5,181 +5,144 @@ import {
   onboardingCompletionPercent,
   type OnboardingSourceData,
 } from "@/domain/onboarding/steps";
+import type { DocumentSummary } from "@/domain/documents/types";
+import type { FriendListItem } from "@/domain/friends/types";
+import type { CapsuleListItem } from "@/domain/capsules/types";
+import type { Category } from "@/domain/categories/types";
+import { NOTE_MIME_TYPE } from "@/lib/content-kind";
 
 function buildData(overrides: Partial<OnboardingSourceData> = {}): OnboardingSourceData {
+  return { documents: [], categories: [], friends: [], capsules: [], legacyEnabled: false, ...overrides };
+}
+
+const RACCONTI = { id: "cat-racconti", name: "Racconti", icon: "📖" } as Category;
+
+function doc(overrides: Partial<DocumentSummary> = {}): DocumentSummary {
   return {
-    documents: [],
-    assets: [],
-    friends: [],
-    capsules: [],
+    id: "d1",
+    filename: "Dove sei nato?",
+    mimeType: NOTE_MIME_TYPE,
+    size: 100,
+    categoryId: RACCONTI.id,
+    relatedAssetId: null,
+    createdAt: "2026-01-01",
+    storagePath: "",
+    wrappedDocumentKey: "",
+    expiresAt: null,
+    notes: "",
+    extractedAt: null,
+    hasThumbnail: false,
+    aiExtractionExcluded: false,
+    structuredFields: {},
+    aiSynthesisGeneratedAt: null,
+    analysisStatus: null,
+    analysisUpdatedAt: null,
+    issuer: "",
+    deletedAt: null,
+    purgeAt: null,
+    dossierIds: [],
     ...overrides,
   };
 }
 
+function friend(overrides: Partial<FriendListItem> = {}): FriendListItem {
+  return {
+    id: "c1",
+    name: "Maria",
+    email: "maria@esempio.it",
+    firstName: "",
+    lastName: "",
+    avatarPath: null,
+    avatarUrl: null,
+    role: "Coniuge",
+    status: "active",
+    isFriend: false,
+    isGuardian: false,
+    linkedUserId: null,
+    createdAt: "2026-01-01",
+    ...overrides,
+  };
+}
+
+function capsule(relatedFriends: FriendListItem[]): CapsuleListItem {
+  return {
+    id: "cap1",
+    title: "Per Maria",
+    content: "",
+    contentStyle: "simple",
+    openEffect: "discreet",
+    attachments: [],
+    linkedDocuments: [],
+    relatedFriends,
+    status: "draft",
+    accessCondition: "manual",
+    openAt: "2027-01-01",
+    openOnLegacy: false,
+    createdAt: "2026-01-01",
+  };
+}
+
+const done = (data: OnboardingSourceData, key: string) => computeOnboardingSteps(data).find((s) => s.key === key)?.done;
+
 describe("computeOnboardingSteps", () => {
-  it("lists 8 steps, none of them optional --- concrete steps before the ones that introduce a new concept (guardian/Dead Man's Switch)", () => {
+  it("un passo per pilastro, nell'ordine della pagina pubblica, nessuno opzionale", () => {
     const steps = computeOnboardingSteps(buildData());
-    expect(steps.map((s) => s.key)).toEqual([
-      "account",
-      "security",
-      "document",
-      "category",
-      "asset",
-      "capsule",
-      "guardian",
-      "capsule-friend",
-    ]);
+    expect(steps.map((s) => s.key)).toEqual(["account", "security", "story", "friend", "capsule", "guardian", "legacy"]);
+    expect(steps.map((s) => s.href)).toEqual(["/dashboard", "/archive", "/raccontami", "/friends", "/capsules/new", "/friends", "/legacy"]);
     expect(steps.every((s) => !("optional" in s))).toBe(true);
   });
 
-  it("marks 'guardian' done only when at least one friend has isGuardian", () => {
-    const withoutGuardian = computeOnboardingSteps(
-      buildData({
-        friends: [
-          {
-            id: "c1",
-            name: "Maria",
-            email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null,
-            role: "Coniuge",
-            status: "active",
-            isFriend: false,
-            isGuardian: false,
-            linkedUserId: null,
-            createdAt: "2026-01-01",
-          },
-        ],
-      }),
-    );
-    expect(withoutGuardian.find((s) => s.key === "guardian")?.done).toBe(false);
-
-    const withGuardian = computeOnboardingSteps(
-      buildData({
-        friends: [
-          {
-            id: "c1",
-            name: "Maria",
-            email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null,
-            role: "Coniuge",
-            status: "active",
-            isFriend: false,
-            isGuardian: true,
-            linkedUserId: null,
-            createdAt: "2026-01-01",
-          },
-        ],
-      }),
-    );
-    expect(withGuardian.find((s) => s.key === "guardian")?.done).toBe(true);
-  });
-});
-
-describe("tutti i passi fatti", () => {
-  it("is false until every single step is done", () => {
-    const steps = computeOnboardingSteps(buildData());
-    expect(steps.every((s) => s.done)).toBe(false);
+  it("il primo racconto conta solo se è una nota nella categoria Racconti", () => {
+    expect(done(buildData({ documents: [doc()] }), "story")).toBe(false); // categoria mai creata
+    expect(done(buildData({ documents: [doc()], categories: [RACCONTI] }), "story")).toBe(true);
+    expect(done(buildData({ documents: [doc({ mimeType: "application/pdf" })], categories: [RACCONTI] }), "story")).toBe(false);
+    expect(done(buildData({ documents: [doc({ categoryId: "altra" })], categories: [RACCONTI] }), "story")).toBe(false);
   });
 
-  it("is true once every step is done", () => {
-    const steps = computeOnboardingSteps(
-      buildData({
-        documents: [
-          {
-            id: "d1",
-            filename: "polizza.pdf",
-            mimeType: "application/pdf",
-            size: 100,
-            categoryId: "cat-1",
-            relatedAssetId: null,
-            createdAt: "2026-01-01",
-            storagePath: "",
-            wrappedDocumentKey: "",
-            expiresAt: null,
-            notes: "",
-            extractedAt: null,
-            hasThumbnail: false,
-            aiExtractionExcluded: false,
-            structuredFields: {},
-            aiSynthesisGeneratedAt: null,
-            analysisStatus: null,
-            analysisUpdatedAt: null,
-            issuer: "",
-            deletedAt: null,
-            purgeAt: null,
-            dossierIds: [],
-          },
-        ],
-        friends: [
-          {
-            id: "c1",
-            name: "Maria",
-            email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null,
-            role: "Coniuge",
-            status: "active",
-            isFriend: false,
-            isGuardian: true,
-            linkedUserId: null,
-            createdAt: "2026-01-01",
-          },
-        ],
-        assets: [{ id: "a1", name: "Barca", legacyNote: "", categoryId: null, createdAt: "2026-01-01" }],
-        capsules: [
-          {
-            id: "cap1",
-            title: "Per Maria",
-            content: "",
-            contentStyle: "simple",
-            openEffect: "discreet",
-            attachments: [],
-            linkedDocuments: [],
-            relatedFriends: [
-              {
-                id: "c1",
-                name: "Maria",
-                email: "maria@esempio.it", firstName: "", lastName: "", avatarPath: null, avatarUrl: null,
-                role: "Coniuge",
-                status: "active",
-                isFriend: false,
-                isGuardian: true,
-                linkedUserId: null,
-                createdAt: "2026-01-01",
-              },
-            ],
-            status: "draft",
-            accessCondition: "manual",
-            openAt: "2027-01-01",
-            openOnLegacy: false,
-            createdAt: "2026-01-01",
-          },
-        ],
-      }),
+  it("la capsula conta solo se è per qualcuno", () => {
+    expect(done(buildData({ capsules: [capsule([])] }), "capsule")).toBe(false);
+    expect(done(buildData({ capsules: [capsule([friend()])] }), "capsule")).toBe(true);
+  });
+
+  it("amico, guardiano ed Eredità digitale", () => {
+    expect(done(buildData({ friends: [friend()] }), "friend")).toBe(true);
+    expect(done(buildData({ friends: [friend()] }), "guardian")).toBe(false);
+    expect(done(buildData({ friends: [friend({ isGuardian: true })] }), "guardian")).toBe(true);
+    expect(done(buildData(), "legacy")).toBe(false);
+    expect(done(buildData({ legacyEnabled: true }), "legacy")).toBe(true);
+  });
+
+  it("tutti fatti solo quando lo è ciascun passo", () => {
+    expect(computeOnboardingSteps(buildData()).every((s) => s.done)).toBe(false);
+    const guardian = friend({ isGuardian: true });
+    const all = computeOnboardingSteps(
+      buildData({ documents: [doc()], categories: [RACCONTI], friends: [guardian], capsules: [capsule([guardian])], legacyEnabled: true }),
     );
-    expect(steps.every((s) => s.done)).toBe(true);
+    expect(all.every((s) => s.done)).toBe(true);
   });
 });
 
 describe("onboardingCompletionPercent", () => {
-  it("rounds the ratio of done steps over every step (account + security done out of 8 -> 25%)", () => {
-    const steps = computeOnboardingSteps(buildData());
-    expect(onboardingCompletionPercent(steps)).toBe(25);
+  it("account e chiave fatti su 7 passi -> 29%", () => {
+    expect(onboardingCompletionPercent(computeOnboardingSteps(buildData()))).toBe(29);
   });
 });
 
 describe("computeBasicOnboardingSteps", () => {
-  it("lists just account + security, showable before the Master Key is unlocked", () => {
+  it("solo account e chiave, mostrabili prima dello sblocco", () => {
     const steps = computeBasicOnboardingSteps(false);
     expect(steps.map((s) => s.key)).toEqual(["account", "security"]);
-    expect(steps.find((s) => s.key === "account")?.done).toBe(true);
     expect(steps.find((s) => s.key === "security")?.done).toBe(false);
     expect(onboardingCompletionPercent(steps)).toBe(50);
   });
 
-  it("marks 'security' done once encryption is configured (even if currently locked)", () => {
+  it("la chiave risulta fatta appena la cifratura è configurata, anche a schermo bloccato", () => {
     const steps = computeBasicOnboardingSteps(true);
     expect(steps.find((s) => s.key === "security")?.done).toBe(true);
     expect(onboardingCompletionPercent(steps)).toBe(100);
   });
 
-  it("matches the label/description/href of the same two steps in the full checklist", () => {
+  it("gli stessi due passi della checklist completa", () => {
     const full = computeOnboardingSteps(buildData());
     const basic = computeBasicOnboardingSteps(true);
     expect(basic[0]).toEqual(full[0]);
