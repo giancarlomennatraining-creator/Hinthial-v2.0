@@ -9,6 +9,7 @@ import { LoginSplash } from "@/components/dashboard/LoginSplash";
 import { SharedCapsuleNotificationPopup } from "@/components/dashboard/SharedCapsuleNotificationPopup";
 import { FriendRequestNotificationPopup } from "@/components/dashboard/FriendRequestNotificationPopup";
 import { PageHelp } from "@/components/help/PageHelp";
+import { PendingGuardianChecks } from "@/components/digital-legacy/PendingGuardianChecks";
 import { rememberUnlockDismissed, unlockWasDismissed, useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { BTN_PRIMARY } from "@/components/ui/styles";
@@ -85,6 +86,9 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
           </span>
         ) : null}
       </div>
+
+      {/* Chi ti ha scelto come guardiano e aspetta una risposta: prima di tutto, e senza bisogno della master password. */}
+      <PendingGuardianChecks />
 
       {status.kind === "unlocked" && !settling ? (
         <>

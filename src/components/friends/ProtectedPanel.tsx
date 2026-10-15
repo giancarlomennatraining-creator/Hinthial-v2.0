@@ -14,6 +14,7 @@ import {
 } from "@/domain/friends/guardian-requests";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/ToastProvider";
+import { PendingGuardianChecks } from "@/components/digital-legacy/PendingGuardianChecks";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" });
@@ -122,6 +123,8 @@ export function ProtectedPanel() {
           .
         </p>
       </div>
+
+      <PendingGuardianChecks />
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
