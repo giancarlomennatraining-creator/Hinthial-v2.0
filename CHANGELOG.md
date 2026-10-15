@@ -10,6 +10,24 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (113)
+
+### Email di benvenuto
+
+**Cosa fa:**
+- Appena confermi l'account arriva un'email, "Il tuo account Hinthial è pronto", con tre passi per cominciare:
+  1. crea la tua chiave;
+  2. conserva la recovery key, che non va mai messa in un'email;
+  3. pensa a una persona e prepara per lei la prima capsula.
+- Dice chiaramente che la master password non la conosciamo e non possiamo recuperarla.
+
+**Note tecniche:**
+- `welcomeEmail(firstName)` in `lib/email/templates.ts`, con un nuovo `escapeHtml` per il nome, che scrive l'utente.
+- Parte da `app/auth/confirm/route.ts` solo per `type === "signup"` e solo se la conferma riesce. Se Resend non risponde, la conferma prosegue e l'errore finisce nel log.
+- Unit: `welcome-email.test.ts`, 4 test.
+
+---
+
 ## 2026-10-15 (112)
 
 ### Pagine di errore

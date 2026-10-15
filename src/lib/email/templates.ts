@@ -17,8 +17,37 @@ function appUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 }
 
+/** Per i testi scritti dall'utente (il suo nome) dentro l'HTML di un'email. */
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 function formattedToday(): string {
   return new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+}
+
+/**
+ * Il benvenuto, appena confermato l'account (v. app/auth/confirm/route.ts). Tre passi e una cosa sola da non sbagliare: la
+ * master password non la conosce nessuno, e senza la recovery key non si recupera. La recovery key non va mai in un'email.
+ */
+export function welcomeEmail(firstName: string | null): { subject: string; html: string } {
+  const dashboardUrl = `${appUrl()}/dashboard`;
+  const greeting = firstName?.trim() ? `Ciao ${escapeHtml(firstName.trim())},` : "Ciao,";
+
+  return {
+    subject: "Il tuo account Hinthial è pronto",
+    html: emailShell(`
+      <p>${greeting} il tuo account è attivo.</p>
+      <p>Hinthial custodisce ciò che sai e ciò che hai, e lo fa arrivare alla persona giusta al momento giusto. Per cominciare bastano tre passi:</p>
+      <ol style="padding-left:20px;">
+        <li><strong>Crea la tua chiave.</strong> La master password cifra tutto sul tuo dispositivo, prima che arrivi a noi. Non la conosciamo e non possiamo recuperarla.</li>
+        <li><strong>Conserva la recovery key.</strong> Te la mostriamo subito dopo: è l'unico modo per rientrare se dimentichi la master password. Stampala o tienila in un posto sicuro, mai in un'email.</li>
+        <li><strong>Pensa a una persona.</strong> Aggiungila tra gli Amici e prepara per lei la prima capsula: una lettera, un ricordo, le istruzioni che solo tu conosci.</li>
+      </ol>
+      ${primaryButton(dashboardUrl, "Apri Hinthial")}
+      <p style="font-size:12px; color:#71717a;">Ricevi questa email perché hai appena confermato un account su Hinthial con questo indirizzo.</p>
+    `),
+  };
 }
 
 /** Invito a registrarsi, inviato da chi aggiunge un amico e spunta "Invita su Hinthial". Il nome dell'amico non compare mai qui: è cifrato. */
