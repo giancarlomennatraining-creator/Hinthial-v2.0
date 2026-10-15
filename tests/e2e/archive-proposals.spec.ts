@@ -1,6 +1,5 @@
 import { expect, test } from "./fixtures";
 import { MASTER_PASSWORD, openAnalysedDocument } from "./hinthia";
-import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -54,13 +53,18 @@ test("accettare una proposta scrive davvero, e si può annullare", async ({ page
   await expect(scadenza).toHaveValue("", { timeout: 20_000 });
   await hinthiaTab.click();
 
-  // Si riaccetta, e stavolta si va a vedere l'effetto fuori dall'Archivio.
+  // Si riaccetta, e stavolta si verifica che sia scritto davvero: dopo un ricaricamento la data viene dal database.
+  // (Scadenze elenca solo le scadenze create come tali, non la data di scadenza di un documento: prima qui si guardava
+  // lì, e il test passava solo leggendo "polizza.pdf" nel titolo della pagina prima che cambiasse.)
   await accettaScadenza(page).click();
   await schedaTab.click();
   await expect(scadenza).toHaveValue("2027-06-03", { timeout: 20_000 });
 
-  await openArchiveTab(page, "Scadenze");
-  await expect(page.getByText("polizza.pdf").first()).toBeVisible({ timeout: 20_000 });
+  await page.reload();
+  await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
+  await page.getByRole("button", { name: "Sblocca", exact: true }).click();
+  await page.getByRole("tab", { name: "Scheda" }).click({ timeout: 30_000 });
+  await expect(page.getByLabel("Scadenza")).toHaveValue("2027-06-03", { timeout: 20_000 });
 });
 
 test("un rifiuto viene ricordato e sopravvive al ricaricamento", async ({ page }) => {

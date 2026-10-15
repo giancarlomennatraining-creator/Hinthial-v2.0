@@ -16,6 +16,7 @@ import { sanitizeFilename } from "@/lib/utils";
 import type { ReminderListItem } from "@/domain/reminders/types";
 import { useToast } from "@/components/ui/ToastProvider";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { EmptyListCard } from "@/components/ui/EmptyListCard";
 
 type StatusFilter = "all" | "pending" | "completed";
 
@@ -163,11 +164,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
       {loading ? (
         <ListSkeleton />
       ) : reminders.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Nessuna scadenza ancora. Aggiungine una col tasto qui sopra.
-          </p>
-        </div>
+        <EmptyListCard text="Nessuna scadenza ancora." actionHref="/reminders/new" actionLabel="Crea la prima scadenza" />
       ) : (
         <>
           <div className="flex flex-wrap gap-3">

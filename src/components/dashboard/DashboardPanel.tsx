@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AlertTriangleIcon, CheckCircleIcon } from "@/components/icons/nav-icons";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
@@ -40,11 +40,22 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
   }, [showSplash, router]);
 
   // Con la cassaforte bloccata la finestra di sblocco compare subito sopra la dashboard sfocata; si può chiudere.
+  // Chiusa con "Più tardi", sotto non resta lo scheletro: sembrerebbe un caricamento che non finisce mai.
+  const [unlockDismissed, setUnlockDismissed] = useState(false);
+  const dismissUnlock = useCallback(() => {
+    rememberUnlockDismissed();
+    setUnlockDismissed(true);
+  }, []);
   useEffect(() => {
-    if (status.kind === "locked" && !unlockWasDismissed()) {
-      requestUnlock({ dismissible: true, onDismiss: rememberUnlockDismissed });
+    if (status.kind !== "locked") return;
+    if (unlockWasDismissed()) {
+      // sessionStorage si legge solo nel browser: qui, non nello stato iniziale (eviterebbe l'idratazione).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUnlockDismissed(true);
+    } else {
+      requestUnlock({ dismissible: true, onDismiss: dismissUnlock });
     }
-  }, [status.kind, requestUnlock]);
+  }, [status.kind, requestUnlock, dismissUnlock]);
 
   // Lasciando la dashboard con la finestra ancora aperta, questa non resta sopra un'altra pagina.
   useEffect(() => () => releaseUnlock(), [releaseUnlock]);
@@ -108,7 +119,10 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
               </p>
               <button
                 type="button"
-                onClick={() => requestUnlock({ dismissible: true, onDismiss: rememberUnlockDismissed })}
+                onClick={() => {
+                  setUnlockDismissed(false);
+                  requestUnlock({ dismissible: true, onDismiss: dismissUnlock });
+                }}
                 className={BTN_PRIMARY}
               >
                 Sblocca ora
@@ -116,9 +130,11 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
             </div>
           ) : null}
           {/* Lo scheletro dà alla finestra di sblocco qualcosa da sfocare dietro: è la forma della dashboard che arriverà. */}
-          <div aria-hidden="true">
-            <DashboardSkeleton />
-          </div>
+          {status.kind === "locked" && unlockDismissed ? null : (
+            <div aria-hidden="true">
+              <DashboardSkeleton />
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">

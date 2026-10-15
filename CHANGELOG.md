@@ -10,6 +10,26 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (109)
+
+### Controllo generale: test completi, telefono e piccole correzioni
+
+**Cosa fa:**
+- **Elenchi vuoti con il primo passo dentro.** Amici, Capsule, Archivio, Fascicoli, Beni e Scadenze, quando sono vuoti, non dicono più "col tasto qui sopra", che su telefono era sbagliato: lì il tasto è il "+" in basso. Ora il riquadro ha un link diretto: "Aggiungi la prima persona →", "Scrivi la prima capsula →" e così via.
+- **Eredità digitale:** il riepilogo dice "poi un altro mese" invece di "poi altri 1 mese".
+- **Barra in basso su telefono:** la voce "Eredità digitale" si legge "Eredità" e non viene più tagliata sul bordo. Chi usa un lettore di schermo sente ancora "Eredità digitale".
+- **Oggi a cassaforte bloccata:** dopo "Più tardi" non restano i riquadri grigi di caricamento, che sembravano non finire mai. Restano solo mentre la finestra di sblocco è aperta, come sfondo da sfocare.
+
+**Note tecniche:**
+- Corsa completa su master: unit 985/986 (1 saltato), e2e 132 passati su 134 (escluso `ai-content-analysis`, che userebbe la chiave vera), più 1 instabile e 1 fallito:
+  - `archive-proposals` (fallito): l'ultima verifica cercava la scadenza accettata in Archivio > Scadenze, che elenca solo le scadenze create come tali, non la data di scadenza di un documento. Il test passava leggendo "polizza.pdf" nel titolo della pagina prima che cambiasse. Ora ricarica la pagina e verifica che la data venga dal database.
+  - `capsule-effects` (instabile): l'attesa dopo "Esci" passa da 5 a 15 secondi.
+- Passata su telefono (390 px) di Oggi, Amici, Capsule, Nuova capsula, Eredità digitale, Archivio, Fascicoli, Beni, Scadenze, Raccontami e Impostazioni: nessuna pagina scorre di lato. Solo le schede dell'Archivio scorrono dentro la loro barra, come previsto.
+- Nuovo componente `ui/EmptyListCard`. `NavItem.shortLabel`, usato da `BottomNavBar` con `aria-label` = nome intero. `describeDigitalLegacySettings` usa `anotherSpan`, con un test unitario. `DashboardPanel` ricorda "Più tardi" in uno stato locale.
+- Nessuna migrazione. Dopo le correzioni: e2e delle aree toccate 40/40, unit 986/987.
+
+---
+
 ## 2026-10-15 (108)
 
 ### L'esperienza del guardiano

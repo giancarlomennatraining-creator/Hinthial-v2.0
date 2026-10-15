@@ -127,6 +127,14 @@ export function formatDays(days: number): string {
   return days === 1 ? "1 giorno" : `${days} giorni`;
 }
 
+/** "poi altri 2 mesi", ma "poi un altro mese": mai "altri 1 mese". */
+function anotherSpan(days: number): string {
+  const formatted = formatDays(days);
+  if (formatted === "1 mese") return "un altro mese";
+  if (formatted === "1 giorno") return "un altro giorno";
+  return `altri ${formatted}`;
+}
+
 /** Somma delle fasi nel caso peggiore (nessuna risposta a nessun promemoria) --- v. describeDigitalLegacySettings. */
 export function totalWorstCaseDays(settings: DigitalLegacyPresetValues): number {
   return (
@@ -155,10 +163,10 @@ export function describeDigitalLegacySettings(settings: DigitalLegacyPresetValue
 
   return (
     `Aspettiamo ${formatDays(settings.inactivityDays)} di silenzio, poi ti scriviamo ogni ` +
-    `${formatDays(settings.reminderIntervalDays)} per ${reminderTimes}, poi altri ` +
-    `${formatDays(settings.gracePeriodDays)} prima di coinvolgere i tuoi guardiani ` +
-    `(${GUARDIAN_QUORUM_SUMMARY_FRAGMENT[settings.guardianQuorum]}), poi altri ` +
-    `${formatDays(settings.formalVerificationDays + settings.finalWaitDays)} di verifica. ` +
+    `${formatDays(settings.reminderIntervalDays)} per ${reminderTimes}, poi ` +
+    `${anotherSpan(settings.gracePeriodDays)} prima di coinvolgere i tuoi guardiani ` +
+    `(${GUARDIAN_QUORUM_SUMMARY_FRAGMENT[settings.guardianQuorum]}), poi ` +
+    `${anotherSpan(settings.formalVerificationDays + settings.finalWaitDays)} di verifica. ` +
     `In totale, nel caso peggiore, ${formatApprox(total)} prima che le capsule si aprano.`
   );
 }

@@ -25,6 +25,7 @@ import { useArchiveData } from "@/components/documents/archive/useArchiveData";
 import { ContentTypeIcon } from "@/components/documents/ContentTypeIcon";
 import { useToast } from "@/components/ui/ToastProvider";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { EmptyListCard } from "@/components/ui/EmptyListCard";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -247,11 +248,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
       {loading ? (
         <ListSkeleton />
       ) : documents.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Ancora nulla in archivio. Aggiungi il tuo primo contenuto col tasto qui sopra.
-          </p>
-        </div>
+        <EmptyListCard text="Ancora nulla in archivio." actionHref="/archive/new" actionLabel="Aggiungi il primo contenuto" />
       ) : (
         <>
           {/* Contenuti caricati prima che l'estrazione esistesse: non cercabili finché non letti. Compare solo se ce ne sono. */}

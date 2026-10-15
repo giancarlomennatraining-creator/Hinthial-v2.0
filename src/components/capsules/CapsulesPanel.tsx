@@ -42,6 +42,7 @@ import type {
 import type { DocumentListItem } from "@/domain/documents/types";
 import { useToast } from "@/components/ui/ToastProvider";
 import { BTN_PRIMARY } from "@/components/ui/styles";
+import { EmptyListCard } from "@/components/ui/EmptyListCard";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -480,11 +481,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       ) : loading || !prefsReady ? (
         <ListSkeleton />
       ) : capsules.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Nessuna capsula ancora. Creane una col tasto qui sopra.
-          </p>
-        </div>
+        <EmptyListCard text="Nessuna capsula ancora." actionHref="/capsules/new" actionLabel="Scrivi la prima capsula" />
       ) : (
         <>
           <ul className="flex flex-col gap-3">
