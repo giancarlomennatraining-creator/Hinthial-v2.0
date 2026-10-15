@@ -28,7 +28,7 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await statusButton.click();
   await expect(panel).toBeVisible();
   await expect(panel.getByText("1/2")).toBeVisible();
-  await expect(panel.getByRole("link", { name: "Configura la cifratura" })).toHaveAttribute(
+  await expect(panel.getByRole("link", { name: "Crea la tua chiave" })).toHaveAttribute(
     "href",
     "/archive",
   );
@@ -46,15 +46,16 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  // Account e cifratura fatti, nient'altro ancora: 2 su 8 -> 25%.
+  // Account e chiave fatti, nient'altro ancora: 2 su 7 -> 29%.
   await expect(statusButton).toBeVisible({ timeout: 10_000 });
-  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 25% completato");
+  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 29% completato");
 
   await statusButton.click();
   await expect(panel).toBeVisible();
-  await expect(panel.getByText("2/8")).toBeVisible();
-  await expect(panel.getByRole("link", { name: "Aggiungi il primo contenuto all'archivio" })).toBeVisible();
-  await expect(panel.getByRole("link", { name: "Aggiungi un guardiano" })).toBeVisible();
+  await expect(panel.getByText("2/7")).toBeVisible();
+  await expect(panel.getByRole("link", { name: "Racconta un primo ricordo" })).toHaveAttribute("href", "/raccontami");
+  await expect(panel.getByRole("link", { name: "Scegli un guardiano" })).toBeVisible();
+  await expect(panel.getByRole("link", { name: "Attiva l'Eredità digitale" })).toHaveAttribute("href", "/legacy");
   await expect(panel.getByText("(opzionale)")).toHaveCount(0);
 
   // Il pulsante "Chiudi" (o un click sullo sfondo) lo richiude --- un
@@ -63,33 +64,7 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await page.getByRole("button", { name: "Chiudi" }).click();
   await expect(panel).not.toBeVisible();
 
-  // Un documento con categoria completa due passi in un colpo solo.
-  await page.getByRole("button", { name: "+ Aggiungi contenuto" }).click();
-  await page.getByRole("menuitem", { name: "Carica un file" }).click();
-  await expect(page.getByRole("heading", { name: "Nuovo contenuto" })).toBeVisible();
-  // Il passo 1 non parte più su una modalità già scelta (v. feedback utente): va scelta esplicitamente.
-  await page.getByRole("radio", { name: /Carica un file/ }).click();
-  await page.setInputFiles('input[type="file"]', {
-    name: "polizza.txt",
-    mimeType: "text/plain",
-    buffer: Buffer.from("polizza di prova"),
-  });
-  await page.getByRole("button", { name: "Dettagli" }).click();
-  await page.locator("#upload-category").selectOption({ label: "🛡️ Assicurazioni" });
-  await page.getByRole("button", { name: "Aggiungi all'archivio" }).click();
-  await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
-  await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
-  await expect(page.getByText("polizza.txt")).toBeVisible({ timeout: 15_000 });
-
-  // Riaprendolo si aggiorna: 4 su 8 -> 50%.
-  await statusButton.click();
-  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 50% completato", {
-    timeout: 10_000,
-  });
-  await expect(panel.getByText("4/8")).toBeVisible();
-  await page.getByRole("button", { name: "Chiudi" }).click();
-
-  // Un guardiano completa un altro passo: 5 su 8 -> 63%.
+  // Una persona in Amici completa un passo: 3 su 7 -> 43%.
   await page.getByRole("link", { name: "Amici", exact: true }).click();
   await page.getByRole("link", { name: "+ Aggiungi amico" }).click();
   await page.getByLabel("Nome visualizzato").fill("Maria Rossi");
@@ -99,10 +74,19 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
   const friendRow = page.getByRole("region", { name: "Rubrica" }).getByRole("button", { name: /Maria Rossi/ });
   await expect(friendRow).toBeVisible({ timeout: 10_000 });
-  // Amico + guardiano richiederebbe ora una doppia richiesta di consenso
+
+  // Riaprendolo si aggiorna.
+  await statusButton.click();
+  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 43% completato", {
+    timeout: 10_000,
+  });
+  await expect(panel.getByText("3/7")).toBeVisible();
+  await page.getByRole("button", { name: "Chiudi" }).click();
+
+  // Amico + guardiano richiederebbe una doppia richiesta di consenso
   // reale tra due account (v. friends.spec.ts per quel flusso) --- qui
   // serve solo come dato di partenza per il passo "guardian", quindi si
-  // forza direttamente via il client admin (v. test-users.ts).
+  // forza direttamente via il client admin (v. test-users.ts). 4 su 7 -> 57%.
   await forceOwnFriendToGuardian(user.email);
   await page.reload();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
@@ -110,10 +94,10 @@ test("l'indicatore \"Onboarding\" nella barra laterale mostra la percentuale e a
   await expect(friendRow.getByTitle("Guardiano")).toBeVisible({ timeout: 10_000 });
 
   await statusButton.click();
-  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 63% completato", {
+  await expect(statusButton).toHaveAttribute("aria-label", "Onboarding: 57% completato", {
     timeout: 10_000,
   });
-  await expect(panel.getByText("5/8")).toBeVisible();
+  await expect(panel.getByText("4/7")).toBeVisible();
 
   // "Nascondi" fa sparire il gadget subito, e la scelta resta anche dopo
   // un refresh --- sincronizzata sul server (come nav_orientation), quindi

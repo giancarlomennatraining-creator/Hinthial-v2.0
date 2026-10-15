@@ -3,13 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { SidePanel } from "@/components/ui/SidePanel";
-import { buildSummaryContext } from "@/domain/ai/context";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 import { OnboardingChecklist, type OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
 import {
   computeBasicOnboardingSteps,
-  computeOnboardingSteps,
+  loadOnboardingSteps,
   onboardingCompletionPercent,
 } from "@/domain/onboarding/steps";
 import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWidgetVisibilityProvider";
@@ -18,7 +17,7 @@ import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWid
  * Indicatore persistente di avanzamento "Onboarding" nella barra laterale: una torta col colore del brand per la
  * quota completata, che al click apre la stessa checklist di dashboard (v. domain/onboarding/steps.ts, condivisa per
  * non avere due liste disallineate). Visibile anche prima dello sblocco con solo i primi due passi (v.
- * computeBasicOnboardingSteps), noti senza decifrare nulla; la checklist completa (8 passi) prende il posto una volta
+ * computeBasicOnboardingSteps), noti senza decifrare nulla; la checklist completa (7 passi) prende il posto una volta
  * sbloccata la Master Key. Il pannello è a tutto schermo (non un riquadro ancorato) perché ogni passo mostra anche
  * una breve descrizione. Nascondibile dal pannello stesso, una preferenza sincronizzata sul server (v.
  * OnboardingWidgetVisibilityProvider): l'avanzamento resta comunque consultabile da Impostazioni > Onboarding.
@@ -43,15 +42,7 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
   const refresh = useCallback(async () => {
     if (!masterKey) return;
     try {
-      const context = await buildSummaryContext(supabase, masterKey);
-      setSteps(
-        computeOnboardingSteps({
-          documents: context.documents,
-          assets: context.assets,
-          friends: context.friends,
-          capsules: context.capsules,
-        }),
-      );
+      setSteps(await loadOnboardingSteps(supabase, masterKey));
     } catch {
       // Indicatore secondario: se il caricamento fallisce, resta semplicemente non mostrato.
     }

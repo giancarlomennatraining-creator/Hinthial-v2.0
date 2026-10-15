@@ -35,23 +35,25 @@ test("Impostazioni > Onboarding mostra la percentuale, un messaggio e le attivit
   await openSettings(page, user);
   await page.getByRole("tab", { name: "Onboarding" }).click();
 
-  // Percentuale in grande (2/8 -> 25%) e messaggio di incoraggiamento accanto.
-  await expect(page.getByText("25%")).toBeVisible();
+  // Percentuale in grande (2/7 -> 29%) e messaggio di incoraggiamento accanto.
+  await expect(page.getByText("29%")).toBeVisible();
   await expect(
     page.getByText("Un buon inizio: completa i prossimi passi per iniziare a vedere il valore di Hinthial."),
   ).toBeVisible();
 
   // Sotto, la lista delle attività con una breve descrizione e lo stato.
-  const documentRow = page.getByRole("listitem").filter({ hasText: "Aggiungi il primo contenuto all'archivio" });
-  await expect(documentRow.getByText("Carica un documento, una foto, un audio, un video o scrivi una nota.")).toBeVisible();
-  await expect(documentRow.getByRole("button", { name: "Da fare" })).toBeVisible();
+  const storyRow = page.getByRole("listitem").filter({ hasText: "Racconta un primo ricordo" });
+  await expect(
+    storyRow.getByText("Rispondi a una domanda di Raccontami: diventa un racconto cifrato, da far arrivare a chi vuoi."),
+  ).toBeVisible();
+  await expect(storyRow.getByRole("button", { name: "Da fare" })).toBeVisible();
 
   const accountRow = page.getByRole("listitem").filter({ hasText: "Crea un account" });
   await expect(accountRow.getByText("Fatto")).toBeVisible();
 
   // Un click su "Da fare" porta alla sezione dove completare il passo.
-  await documentRow.getByRole("button", { name: "Da fare" }).click();
-  await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
+  await storyRow.getByRole("button", { name: "Da fare" }).click();
+  await expect(page.getByRole("heading", { name: "Raccontami", level: 1 })).toBeVisible({ timeout: 15_000 });
 
   // Il gadget è visibile di default nella barra laterale...
   const statusButton = page.getByRole("button", { name: /Onboarding/ });

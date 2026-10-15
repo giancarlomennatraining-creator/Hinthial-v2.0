@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/db/supabase/client";
-import { buildAIContext } from "@/domain/ai/context";
-import { computeOnboardingSteps, onboardingCompletionPercent } from "@/domain/onboarding/steps";
+import { loadOnboardingSteps, onboardingCompletionPercent } from "@/domain/onboarding/steps";
 import type { OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
 import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 import { CheckCircleIcon } from "@/components/icons/nav-icons";
@@ -38,15 +37,7 @@ export function OnboardingSettingsPanel({ masterKey }: { masterKey: CryptoKey })
   const load = useCallback(async () => {
     try {
       const supabase = createClient();
-      const context = await buildAIContext(supabase, masterKey);
-      setSteps(
-        computeOnboardingSteps({
-          documents: context.documents,
-          assets: context.assets,
-          friends: context.friends,
-          capsules: context.capsules,
-        }),
-      );
+      setSteps(await loadOnboardingSteps(supabase, masterKey));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare l'avanzamento.");
     }
