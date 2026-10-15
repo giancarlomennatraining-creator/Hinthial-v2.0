@@ -10,6 +10,26 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (103)
+
+### Pagina pubblica nuova: il seme, la costellazione e il libro con la chiave
+
+**Cosa fa:**
+- **La pagina d'ingresso racconta la frase di Hinthial:** "Ciò che sai e ciò che hai, alla persona giusta, al momento giusto." Accanto c'è Hinthia, che galleggia tra piccole scintille. Il vecchio carosello ("Un archivio per tutto", "Beni e scadenze", "Un assistente che resta sul tuo dispositivo") e le sezioni "Perché Hinthial" e "Come funziona" non ci sono più.
+- **Il seme:** scorrendo, il seme (Hinthia) germoglia e diventa l'albero del logo. Le foglie sono racconti e documenti ("Ricetta del ragù", "Lettera per Giulia"). Poi compaiono le persone, e alcune foglie volano da chi deve riceverle, ciascuna con la sua data o con "eredità". Sono quattro passi, uno per pilastro: Raccontami, Archivio, Amici, Capsule ed Eredità digitale.
+- **La costellazione:** un cielo con Hinthia al centro e sei persone d'esempio intorno (la pagina dice che sono inventate). Con il cursore degli anni, o con "Fai scorrere il tempo", ogni capsula parte come un impulso di luce quando arriva la sua data. "Se un giorno non rispondo più" mostra cosa consegna l'Eredità digitale. L'elenco sotto il cielo dice le stesse cose in testo; passando sopra una stella se ne leggono i dettagli.
+- **Il libro e la chiave:** il libro si apre tenendo premuto, come lo sblocco con l'impronta (da tastiera bastano Invio o spazio), e le pagine si decifrano lettera per lettera: un racconto, una capsula, un'istruzione, l'eredità. "Come lo vediamo noi" mostra cosa arriva ai server: testo illeggibile.
+- In fondo, "Il primo seme è già nella tua testa." con "Inizia adesso". Chi è già entrato non vede gli inviti a registrarsi.
+- Tutte le animazioni si fermano se il sistema chiede di ridurre il movimento: la pagina resta completa, con l'albero e il cielo fermi.
+- Aggiornata anche la descrizione della pagina per motori di ricerca e anteprime dei link.
+
+**Note tecniche:**
+- `components/landing/`: `SeedStory` (SVG e transizioni CSS, lo stato è solo il passo attivo), `Constellation` (canvas, gira solo quando la sezione è visibile, con `ResizeObserver` e `IntersectionObserver`), `KeyBook` (CSS 3D, "tieni premuto" sul modello di `EffectHold`), `landing.css` (animazioni, tinte dal logo, sezioni notturne in entrambi i temi), `landing-content.ts` (testi e logica pura: `activeSeedStep`, `isDelivered`, `deliveryStatus`, `pseudoCipher`, `hexLine`). Rimosso `LandingCarousel`.
+- Il testo cifrato del libro è finto (`pseudoCipher`): serve solo a far vedere l'idea, la cifratura vera resta AES-GCM in `lib/crypto`. Il testo che si decifra è nascosto agli screen reader, che leggono una copia definitiva.
+- Nessuna libreria nuova, nessuna migrazione. Test: `landing-content.test.ts` (unit), `home.spec.ts` riscritto (seme, costellazione con anno ed eredità, libro aperto da tastiera, vista "Come lo vediamo noi").
+
+---
+
 ## 2026-10-31 (102)
 
 ### Fase 6: "Raccontami", Hinthia che intervista

@@ -58,7 +58,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "HINTHIAL",
   description:
-    "Metti ordine nella tua vita digitale, proteggi ciò che conta e rendi le informazioni importanti accessibili alle persone giuste quando serve.",
+    "Ciò che sai e ciò che hai, alla persona giusta, al momento giusto. Ricordi, documenti e istruzioni cifrati sul tuo dispositivo, consegnati a chi scegli tu.",
 };
 
 /** Colore della barra di stato/degli strumenti del browser quando Hinthial è installata (v. manifest.ts, stesso blu). */

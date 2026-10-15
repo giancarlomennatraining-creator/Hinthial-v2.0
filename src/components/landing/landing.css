@@ -1,0 +1,570 @@
+/*
+ * Pagina pubblica: il seme (albero che cresce scorrendo), la costellazione e il libro con la chiave. Qui solo ciò che Tailwind
+ * non dice bene: animazioni, SVG e il libro in 3D. Colori dal logo: blu profondo, blu, ciano, verde foglia. Con il movimento
+ * ridotto ogni animazione si ferma e la pagina resta completa (v. fondo del file).
+ */
+.lp {
+  --lp-deep: #0b2f9e;
+  --lp-blue: #1b5fe3;
+  --lp-cyan: #15b3d4;
+  --lp-green: #47c25b;
+  --lp-leaf: #8bdc4f;
+  --lp-fg: #0d1b4a;
+  --lp-muted: #50608a;
+  --lp-line: #d6e2ee;
+  --lp-card: #ffffff;
+  --lp-soil: #d3e0ec;
+  --lp-bg: #f3f8fb;
+  background: var(--lp-bg);
+  color: var(--lp-fg);
+}
+.dark .lp {
+  --lp-fg: #e7f0ff;
+  --lp-muted: #9fb0d6;
+  --lp-line: #1f2f62;
+  --lp-card: #0e1b45;
+  --lp-soil: #1a2a5c;
+  --lp-bg: #07112e;
+}
+.lp-title {
+  font-family: var(--font-baloo), system-ui, sans-serif;
+  font-weight: 800;
+  text-wrap: balance;
+}
+.lp-hand {
+  font-family: var(--font-caveat), cursive;
+  font-weight: 600;
+}
+.lp-mono {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+}
+.lp-muted {
+  color: var(--lp-muted);
+}
+.lp-gradient-text {
+  background: linear-gradient(90deg, var(--lp-blue), var(--lp-cyan), var(--lp-green));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 1rem;
+  padding: 0.8rem 1.4rem 0.7rem;
+  font-family: var(--font-baloo), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 1.0625rem;
+  color: #fff;
+  background: linear-gradient(90deg, var(--lp-deep), var(--lp-blue));
+  box-shadow: 0 10px 24px rgba(27, 95, 227, 0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.lp-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(27, 95, 227, 0.38);
+}
+.lp-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 1rem;
+  padding: 0.8rem 1.4rem 0.7rem;
+  font-family: var(--font-baloo), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.0625rem;
+  box-shadow: inset 0 0 0 2px currentColor;
+  opacity: 0.85;
+}
+
+/* ---------- Hero ---------- */
+.lp-word {
+  display: inline-block;
+  animation: lp-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 55ms);
+}
+@keyframes lp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.5em) rotate(2deg);
+  }
+}
+.lp-orb {
+  position: relative;
+  width: min(300px, 64vw);
+  aspect-ratio: 1;
+}
+.lp-orb::before {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(21, 179, 212, 0.45), transparent 70%);
+  animation: lp-glow 4.5s ease-in-out infinite;
+}
+.lp-orb img {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  animation: lp-bob 4.5s ease-in-out infinite;
+  filter: drop-shadow(0 24px 30px rgba(11, 47, 158, 0.35));
+}
+.lp-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lp-leaf);
+  box-shadow: 0 0 12px var(--lp-leaf);
+  animation: lp-orbit var(--t) linear infinite;
+  animation-delay: var(--d);
+}
+@keyframes lp-bob {
+  50% {
+    transform: translateY(-14px) rotate(-3deg);
+  }
+}
+@keyframes lp-glow {
+  50% {
+    transform: scale(1.12);
+    opacity: 0.6;
+  }
+}
+@keyframes lp-orbit {
+  from {
+    transform: rotate(0) translateX(var(--r)) scale(0.6);
+  }
+  50% {
+    opacity: 0.4;
+  }
+  to {
+    transform: rotate(360deg) translateX(var(--r)) scale(1);
+  }
+}
+
+/* ---------- Il seme ---------- */
+.lp-stage {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  height: min(560px, 86vh);
+  background: var(--lp-bg);
+}
+.lp-stage svg {
+  width: 100%;
+  height: 100%;
+  max-height: 540px;
+  overflow: visible;
+}
+.lp-hint {
+  position: absolute;
+  bottom: 0.9rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8125rem;
+  color: var(--lp-muted);
+  transition: opacity 0.4s;
+  animation: lp-nudge 1.6s ease-in-out infinite;
+}
+@keyframes lp-nudge {
+  50% {
+    transform: translate(-50%, 6px);
+  }
+}
+.lp-stage.s1 .lp-hint {
+  opacity: 0;
+}
+.lp-trunk,
+.lp-branch {
+  fill: none;
+  stroke: url(#lp-g-trunk);
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.lp-trunk {
+  stroke-width: 11;
+  transition: stroke-dashoffset 1.3s cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+.lp-branch {
+  stroke-width: 6;
+  transition: stroke-dashoffset 0.9s cubic-bezier(0.3, 0.7, 0.2, 1) 0.5s;
+}
+.s1 .lp-trunk {
+  stroke-dashoffset: 0.74;
+}
+.s2 .lp-trunk,
+.s2 .lp-branch {
+  stroke-dashoffset: 0;
+}
+.lp-sprout path {
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+  transform: scale(0);
+  transition: transform 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) 0.7s;
+}
+.s1 .lp-sprout path {
+  transform: scale(1);
+}
+.s2 .lp-sprout path {
+  transform: scale(0);
+  transition-delay: 0s;
+}
+.lp-leaf {
+  fill: url(#lp-g-leaf);
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+  transform: scale(0);
+  transition: transform 0.7s cubic-bezier(0.3, 1.6, 0.5, 1);
+  transition-delay: calc(1.1s + var(--d, 0s));
+}
+.s2 .lp-leaf {
+  transform: scale(1);
+}
+.lp-fly {
+  transition: transform 1.4s cubic-bezier(0.5, 0, 0.2, 1);
+}
+.s4 .lp-fly {
+  transform: translate(var(--dx), var(--dy));
+}
+.lp-tag {
+  opacity: 0;
+  transition: opacity 0.5s 1.7s;
+}
+.lp-tag rect {
+  fill: var(--lp-card);
+  stroke: var(--lp-line);
+}
+.lp-tag text {
+  font: 500 11px var(--font-work-sans), system-ui, sans-serif;
+  fill: var(--lp-fg);
+}
+.s2 .lp-tag {
+  opacity: 1;
+}
+/* L'etichetta delle foglie che volano via sparisce con loro. */
+.s4 .lp-tag.lp-goes {
+  opacity: 0;
+  transition-delay: 0s;
+}
+.lp-person {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.4);
+  transition:
+    opacity 0.5s,
+    transform 0.6s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.s3 .lp-person {
+  opacity: 1;
+  transform: scale(1);
+}
+.lp-person .lp-face {
+  fill: var(--lp-card);
+  stroke: var(--lp-line);
+  stroke-width: 2;
+  transition: stroke 0.5s 1.2s;
+}
+.lp-person text {
+  font-family: var(--font-baloo), system-ui, sans-serif;
+  font-weight: 700;
+  fill: var(--lp-fg);
+  text-anchor: middle;
+}
+.lp-person .lp-ring {
+  fill: none;
+  stroke: var(--lp-green);
+  stroke-width: 3;
+  opacity: 0;
+}
+.lp-person .lp-when {
+  font: 500 11px var(--font-geist-mono), ui-monospace, monospace;
+  fill: var(--lp-green);
+  opacity: 0;
+  transition: opacity 0.5s 1.4s;
+}
+.s4 .lp-person .lp-face {
+  stroke: var(--lp-green);
+}
+.s4 .lp-person .lp-when {
+  opacity: 1;
+}
+.s4 .lp-person .lp-ring {
+  animation: lp-ring 1.6s ease-out 1.3s 2;
+}
+@keyframes lp-ring {
+  from {
+    opacity: 0.9;
+    r: 22;
+  }
+  to {
+    opacity: 0;
+    r: 44;
+  }
+}
+.lp-soil {
+  fill: var(--lp-soil);
+}
+.lp-step {
+  opacity: 0.35;
+  transition: opacity 0.5s;
+}
+.lp-step.on {
+  opacity: 1;
+}
+
+/* ---------- Costellazione e libro: notturni in entrambi i temi ---------- */
+.lp-night {
+  color: #e9efff;
+  color-scheme: dark;
+  background:
+    radial-gradient(900px 500px at 70% 40%, #0d2370 0%, transparent 70%),
+    radial-gradient(700px 400px at 10% 90%, rgba(71, 194, 91, 0.14), transparent 70%),
+    #050b24;
+}
+.lp-night .lp-muted {
+  color: #9aa8d8;
+}
+.lp-night .lp-gradient-text {
+  background-image: linear-gradient(90deg, #7aa2ff, var(--lp-cyan), var(--lp-leaf));
+}
+.lp-sky {
+  position: relative;
+  height: clamp(380px, 52vw, 540px);
+  min-width: 0;
+}
+.lp-sky canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.lp-year {
+  font-family: var(--font-baloo), system-ui, sans-serif;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, #fff, #9fb6ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.lp-year.tick {
+  animation: lp-tick 0.35s ease-out;
+}
+@keyframes lp-tick {
+  from {
+    transform: translateY(-8px);
+    opacity: 0.3;
+  }
+}
+.lp-pill {
+  border: 1px solid #2c3d86;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+  padding: 0.5rem 1rem 0.4rem;
+  font-family: var(--font-baloo), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+.lp-pill[aria-pressed="true"] {
+  background: var(--lp-leaf);
+  border-color: var(--lp-leaf);
+  color: #06200d;
+}
+.lp-roster li {
+  border: 1px solid #1e2b63;
+  background: rgba(13, 22, 64, 0.6);
+  transition:
+    border-color 0.4s,
+    background 0.4s;
+}
+.lp-roster li.open {
+  border-color: var(--lp-leaf);
+  background: rgba(71, 194, 91, 0.1);
+}
+.lp-roster li.open .lp-status {
+  color: var(--lp-leaf);
+}
+.lp-tip {
+  position: absolute;
+  pointer-events: none;
+  min-width: 190px;
+  max-width: 240px;
+  border: 1px solid #2c3d86;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  background: rgba(13, 22, 64, 0.92);
+  transform: translate(-50%, calc(-100% - 18px));
+  backdrop-filter: blur(6px);
+}
+.lp-book-section {
+  background: linear-gradient(180deg, #06143f, #071a52 40%, #0a2a74);
+}
+.lp-seg button[aria-pressed="true"] {
+  background: #eaf1ff;
+  color: #071a52;
+}
+.lp-stream {
+  height: 92px;
+  overflow: hidden;
+  border: 1px solid #22397f;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent);
+}
+.lp-stream > div {
+  animation: lp-up 14s linear infinite;
+}
+@keyframes lp-up {
+  to {
+    transform: translateY(-50%);
+  }
+}
+.lp-book {
+  position: relative;
+  width: min(600px, 100%);
+  aspect-ratio: 1.5;
+  perspective: 2000px;
+}
+.lp-spread {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 1.2s cubic-bezier(0.5, 0, 0.2, 1);
+}
+.lp-book.closed .lp-spread {
+  transform: translateX(-25%);
+}
+.lp-page {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: hidden;
+  padding: clamp(12px, 3vw, 28px);
+  color: #10245e;
+  background: #f5f9ff;
+}
+.lp-page.left {
+  left: 0;
+  border-radius: 10px 2px 2px 10px;
+  box-shadow: inset -18px 0 30px -18px rgba(16, 36, 94, 0.35);
+  transition: opacity 0.5s 0.6s;
+}
+.lp-page.right {
+  right: 0;
+  border-radius: 2px 10px 10px 2px;
+  box-shadow: inset 18px 0 30px -18px rgba(16, 36, 94, 0.35);
+}
+.lp-book.closed .lp-page.left {
+  opacity: 0;
+  transition-delay: 0s;
+}
+.lp-page .lp-page-tag {
+  color: var(--lp-blue);
+}
+.lp-page .lp-page-body {
+  font-family: var(--font-caveat), cursive;
+  font-weight: 600;
+  font-size: clamp(16px, 2.3vw, 24px);
+  line-height: 1.2;
+}
+.lp-book.cipher .lp-page-body,
+.lp-book.cipher .lp-page-title {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-weight: 400;
+  font-size: clamp(10px, 1.4vw, 14px);
+  line-height: 1.5;
+  color: #5a6b9c;
+  word-break: break-all;
+}
+.lp-cover {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 50%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  border-radius: 4px 12px 12px 4px;
+  background: radial-gradient(circle at 50% 38%, #2a64e8, #0b2f9e 60%, #071f6e);
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.45),
+    inset 6px 0 10px rgba(0, 0, 0, 0.3);
+  transform-origin: left center;
+  backface-visibility: hidden;
+  transition: transform 1.3s cubic-bezier(0.5, 0, 0.2, 1);
+}
+.lp-book.open .lp-cover {
+  transform: rotateY(-178deg);
+}
+.lp-cover svg {
+  width: 38%;
+  height: auto;
+  filter: drop-shadow(0 0 18px rgba(21, 179, 212, 0.55));
+}
+.lp-sheet {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 50%;
+  border-radius: 2px 10px 10px 2px;
+  background: #f5f9ff;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.25);
+  transform-origin: left center;
+  pointer-events: none;
+  animation: lp-turn 0.8s cubic-bezier(0.5, 0, 0.3, 1) forwards;
+}
+@keyframes lp-turn {
+  to {
+    transform: rotateY(-178deg);
+    filter: brightness(0.7);
+  }
+}
+.lp-hold {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.lp-hold .lp-hold-progress {
+  fill: none;
+  stroke: var(--lp-leaf);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+}
+
+/* Sul telefono l'albero resta in alto, in un riquadro fisso, e i passi gli scorrono sotto: il disegno non deve uscirne. */
+@media (max-width: 767px) {
+  .lp-stage {
+    height: 320px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--lp-line);
+  }
+  .lp-stage svg {
+    width: 290px;
+    height: 290px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp *,
+  .lp *::before,
+  .lp *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
