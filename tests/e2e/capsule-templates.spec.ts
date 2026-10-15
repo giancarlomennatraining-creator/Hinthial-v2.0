@@ -55,6 +55,8 @@ test("una capsula nata da un modello ha titolo, data e spunti, e non scavalca ci
   const lettera = page.getByLabel("Il tuo messaggio");
   await expect(lettera).toHaveValue("Cosa spero per te: ");
   await expect(spunti.getByRole("button", { name: "Cosa spero per te" })).toBeDisabled();
+  // Il cursore entra nella lettera al fotogramma dopo lo spunto: si scrive solo quando c'è, o la prima lettera va persa.
+  await expect(lettera).toBeFocused();
   await page.keyboard.type("che tu sia felice.");
   await expect(lettera).toHaveValue("Cosa spero per te: che tu sia felice.");
 

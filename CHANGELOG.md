@@ -10,6 +10,25 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (105)
+
+### Test e2e più stabili
+
+**Cosa fa:**
+- Nessun cambiamento per chi usa Hinthial: solo la suite di test.
+- **Corsa completa su master:** 133 test. Risultato: 129 passati al primo colpo, 3 passati al secondo tentativo, 1 fallito (`unlock-dialog`). Dopo le correzioni sotto, i quattro test coinvolti sono passati due volte di fila senza secondi tentativi.
+
+**Note tecniche:**
+- `playwright.config.ts`:
+  - il server ha 6 minuti per partire invece di 2: il build da solo può superare i due minuti, e Playwright si arrendeva;
+  - in locale lavorano 2 worker invece di 4: già con 3-4 i fallimenti erano solo di carico.
+- `unlock-dialog.spec.ts`: il gestore privato del popup "Crea la tua master key" clicca con un limite di 3 secondi, come quello di `fixtures.ts`. Se la pagina apre da sola la creazione mentre lo si clicca, il popup sparisce, e il clic restava ad aspettarlo fino alla fine del test.
+- `user-info.spec.ts`: "👤 Personale" compare anche come opzione nei menu "tipo di documento → categoria"; il test ora cerca la riga dell'elenco.
+- `capsule-templates.spec.ts`: dopo il tocco su uno spunto il cursore entra nella lettera al fotogramma successivo; il test aspetta che ci sia prima di scrivere, altrimenti la prima lettera andava persa.
+- `sticky-nav.spec.ts`: più tempo per l'Archivio dopo la creazione della chiave (si popola a fine animazione).
+
+---
+
 ## 2026-10-15 (104)
 
 ### Onboarding sui quattro pilastri

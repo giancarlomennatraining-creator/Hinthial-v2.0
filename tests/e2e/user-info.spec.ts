@@ -34,7 +34,9 @@ test("Impostazioni è organizzata a schede: Informazioni utente e Categorie", as
   await categoriesTab.click();
   await expect(categoriesTab).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("heading", { name: "Categorie" })).toBeVisible();
-  await expect(page.getByText("👤 Personale")).toBeVisible();
+  // Il nome della categoria compare anche come opzione nei menu "tipo di documento → categoria" della stessa scheda: si
+  // cerca la riga dell'elenco (un paragrafo), non una qualunque occorrenza del testo.
+  await expect(page.getByRole("paragraph").filter({ hasText: "👤 Personale" })).toBeVisible();
 
   await userInfoTab.click();
   await expect(userInfoTab).toHaveAttribute("aria-selected", "true");
