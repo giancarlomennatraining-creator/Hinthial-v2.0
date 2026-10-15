@@ -82,6 +82,12 @@ describe("describeDigitalLegacySettings", () => {
     expect(text).not.toContain("majority");
   });
 
+  it("says \"un altro mese\", never \"altri 1 mese\"", () => {
+    const text = describeDigitalLegacySettings({ ...DIGITAL_LEGACY_PRESET_VALUES.balanced, gracePeriodDays: 30 });
+    expect(text).toContain("poi un altro mese prima di coinvolgere");
+    expect(text).not.toMatch(/altri 1 /);
+  });
+
   it("never lists the six numbers as a bare enumeration --- always inside a sentence", () => {
     const text = describeDigitalLegacySettings(DIGITAL_LEGACY_PRESET_VALUES.cautious);
     expect(text).toMatch(/^Aspettiamo/);

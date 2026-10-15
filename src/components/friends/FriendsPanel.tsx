@@ -38,6 +38,7 @@ import { AddressBook } from "@/components/friends/AddressBook";
 import { useToast } from "@/components/ui/ToastProvider";
 import { AlertTriangleIcon } from "@/components/icons/nav-icons";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { EmptyListCard } from "@/components/ui/EmptyListCard";
 
 /** Richieste di amicizia in arrivo --- v. richiesta utente: email + un punto ben visibile in app per accettare/rifiutare, non solo l'email. */
 function IncomingRequestsBanner({
@@ -449,11 +450,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       {loading ? (
         <ListSkeleton />
       ) : friends.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Nessun amico ancora. Aggiungine uno col tasto qui sopra.
-          </p>
-        </div>
+        <EmptyListCard text="Nessun amico ancora." actionHref="/friends/new" actionLabel="Aggiungi la prima persona" />
       ) : (
         <>
           <div className="flex flex-wrap gap-3">

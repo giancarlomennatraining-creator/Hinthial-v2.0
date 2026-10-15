@@ -23,6 +23,7 @@ import type { Category } from "@/domain/categories/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
 import { useToast } from "@/components/ui/ToastProvider";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { EmptyListCard } from "@/components/ui/EmptyListCard";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -154,11 +155,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
       {loading ? (
         <ListSkeleton />
       ) : assets.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Nessun bene ancora. Aggiungine uno col tasto qui sopra.
-          </p>
-        </div>
+        <EmptyListCard text="Nessun bene ancora." actionHref="/assets/new" actionLabel="Aggiungi il primo bene" />
       ) : (
         <>
           <div className="flex flex-wrap gap-3">

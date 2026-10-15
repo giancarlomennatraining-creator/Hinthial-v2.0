@@ -15,6 +15,8 @@ export interface NavItem {
   icon: ComponentType<SVGProps<SVGSVGElement>>;
   /** Se true, la pagina è dietro RequireMasterKey (v. i rispettivi page.tsx) --- usato da MainNav per il pallino "richiede setup" quando la cifratura non è ancora configurata. */
   requiresEncryption: boolean;
+  /** Il nome nella barra in basso su smartphone, quando quello intero non ci sta (il nome accessibile resta `label`). */
+  shortLabel?: string;
   /** Altre sezioni che vivono dentro questa voce (le schede dell'Archivio): la tengono accesa nel menu. */
   also?: string[];
 }
@@ -30,7 +32,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Oggi", href: "/dashboard", icon: DashboardIcon, requiresEncryption: false },
   { label: "Amici", href: "/friends", icon: FriendIcon, requiresEncryption: true },
   { label: "Capsule", href: "/capsules", icon: CapsuleIcon, requiresEncryption: true },
-  { label: "Eredità digitale", href: "/legacy", icon: HeartIcon, requiresEncryption: false },
+  { label: "Eredità digitale", shortLabel: "Eredità", href: "/legacy", icon: HeartIcon, requiresEncryption: false },
   {
     label: "Archivio",
     href: "/archive",

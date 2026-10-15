@@ -40,6 +40,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import type { DossierListItem, DossierStatus } from "@/domain/dossiers/types";
 import type { DocumentSummary } from "@/domain/documents/types";
 import { BTN_PRIMARY } from "@/components/ui/styles";
+import { EmptyListCard } from "@/components/ui/EmptyListCard";
 
 /**
  * FASE 20 --- l'elenco dei fascicoli. I documenti si collegano dal loro
@@ -252,11 +253,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
       {loading ? (
         <ListSkeleton />
       ) : dossiers.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Ancora nessun fascicolo. Creane uno col tasto qui sopra.
-          </p>
-        </div>
+        <EmptyListCard text="Ancora nessun fascicolo." actionHref="/dossiers/new" actionLabel="Crea il primo fascicolo" />
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-3">

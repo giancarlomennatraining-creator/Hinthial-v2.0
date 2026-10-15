@@ -51,7 +51,8 @@ async function createMasterKey(page: Page, section: string, heading: string) {
 async function logout(page: Page, name: string) {
   await page.getByRole("button", { name }).click();
   await page.getByRole("button", { name: "Esci" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  // L'uscita passa dal server: con la macchina carica 5 secondi non sempre bastano.
+  await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
 }
 
 test("ogni capsula si apre per chi la riceve con l'effetto scelto da chi l'ha scritta", async ({ page }) => {

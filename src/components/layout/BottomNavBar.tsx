@@ -27,13 +27,14 @@ export function BottomNavBar() {
             key={item.href}
             href={item.href}
             aria-current={isActive ? "page" : undefined}
+            aria-label={item.shortLabel ? item.label : undefined}
             className={cn(
               "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium",
               isActive ? "text-brand" : "text-zinc-500 dark:text-zinc-400",
             )}
           >
             <item.icon width={20} height={20} aria-hidden="true" className="text-brand" />
-            <span className="truncate">{item.label}</span>
+            <span className="truncate">{item.shortLabel ?? item.label}</span>
           </Link>
         );
       })}
