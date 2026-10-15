@@ -10,6 +10,38 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (108)
+
+### L'esperienza del guardiano
+
+**Cosa fa:**
+- **La richiesta si trova anche dentro l'app, non solo nell'email.** In cima a Oggi e in Protetti compare "Marta Rossi ha bisogno di te", con la data e "Rispondi". Si vede anche a cassaforte bloccata, e anche per chi non ha mai creato la master password. Una richiesta finita nello spam non si perde più.
+- **La pagina di risposta spiega prima di chiedere.** Il titolo è "Hai notizie di Marta?". Sotto c'è il motivo della richiesta (da molto tempo non accede e non ha risposto ai promemoria) e un riquadro "Prima di rispondere": prova a sentirla, non c'è fretta, puoi cambiare risposta.
+- **Ogni risposta dice cosa provoca, prima di sceglierla:**
+  - "Sì, ho notizie di Marta": tutto si ferma subito;
+  - "Non lo so ancora": non sposta niente;
+  - "Non riesco a raggiungere Marta": conta come conferma della sua assenza.
+- **"Non riesco a raggiungere…" chiede una conferma**, con le conseguenze scritte. Quando abbastanza guardiani lo confermano, la persona riceve un ultimo avviso; se non accede nemmeno allora, le sue capsule si aprono per chi le deve ricevere; un suo accesso ferma tutto. Si può tornare indietro.
+- **Dopo la risposta**, "Grazie" e cosa succederà ora, con "Cambia risposta". Quando la risposta è data, la richiesta sparisce da Oggi.
+- Una frase in fondo rassicura: il guardiano non vede nulla dei contenuti della persona.
+- Se il link non è più attivo, la pagina spiega perché: di solito la persona è tornata ad accedere, oppure un altro guardiano ha detto che sta bene.
+- **Le email:**
+  - quella al guardiano ha l'oggetto "Hai notizie di Marta Rossi?" e spiega in tre punti cosa provoca ogni risposta;
+  - dice "molti mesi" invece di "diverse settimane";
+  - ricorda che la richiesta è anche in Oggi.
+  - Spariti i "lo/la" in questa email e in quella di consegna delle capsule. Il piè di pagina di tutte le email riporta la nuova frase di Hinthial.
+
+**Note tecniche:**
+- `domain/digital-legacy/guardian-answers.ts` (puro, con test): `guardianAnswers`, `unreachableConsequence`, `afterAnswerText`, `firstNameOf`. Le frasi seguono il motore: `ok` azzera, `unreachable` conta verso il quorum, `unknown` non sposta nulla.
+- `listPendingGuardianChecks` in `domain/digital-legacy/guardians.ts`: le righe con `response` nullo in cui sei il guardiano, più i nomi con una sola lettura di `profiles`. Le regole di accesso esistenti bastano già.
+- Nuovo componente `PendingGuardianChecks`, mostrato in `DashboardPanel`, fuori dal blocco che richiede lo sblocco, e in `ProtectedPanel`. `GuardianVerificationPanel` è stato riscritto.
+- `templates.ts`: `digitalLegacyGuardianRequestEmail`, `digitalLegacyCapsuleReleasedEmail` ed `emailShell`.
+- Nessuna migrazione. Test:
+  - unit: `guardian-answers.test.ts`;
+  - e2e: nuovo percorso completo in `guardian-verification.spec.ts`, con una richiesta creata via admin da `createGuardianCheck` in `test-users.ts`: Oggi, domanda, conferma e ritorno, "non lo so", cambio in "non riesco", e la richiesta che sparisce da Oggi.
+
+---
+
 ## 2026-10-15 (107)
 
 ### Raccontami a voce

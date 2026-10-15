@@ -201,3 +201,32 @@ export async function createBackupCodesForTestUser(user: TestUser): Promise<stri
 export function totpCode(secret: string): string {
   return new TOTP({ secret }).generate();
 }
+
+async function userIdByEmail(email: string): Promise<string> {
+  const admin = adminClient();
+  const perPage = 200;
+  for (let page = 1; ; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error || !data) throw new Error(`Impossibile trovare l'utente: ${error?.message}`);
+    const match = data.users.find((u) => u.email === email);
+    if (match) return match.id;
+    if (data.users.length < perPage) throw new Error(`Nessun account con email ${email}.`);
+  }
+}
+
+/**
+ * Crea via il client admin una richiesta "hai notizie di …?" da `ownerEmail` a `guardianEmail`, come farebbe il cron
+ * dell'Eredità digitale entrando in "awaiting_guardians": SOLO per provare il lato del guardiano senza aspettare mesi.
+ * Restituisce l'id della richiesta.
+ */
+export async function createGuardianCheck(ownerEmail: string, guardianEmail: string): Promise<string> {
+  const admin = adminClient();
+  const [ownerId, guardianId] = await Promise.all([userIdByEmail(ownerEmail), userIdByEmail(guardianEmail)]);
+  const { data, error } = await admin
+    .from("guardian_verification_requests")
+    .insert({ owner_id: ownerId, guardian_user_id: guardianId })
+    .select("id")
+    .single();
+  if (error || !data) throw new Error(`Impossibile creare la richiesta al guardiano: ${error?.message}`);
+  return data.id as string;
+}

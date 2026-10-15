@@ -4,7 +4,7 @@ function emailShell(bodyHtml: string): string {
 <html>
   <body style="margin:0; padding:24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#18181b; line-height:1.6;">
     ${bodyHtml}
-    <p style="margin-top:32px; font-size:12px; color:#71717a;">Hinthial --- il tuo sistema operativo per la vita digitale.</p>
+    <p style="margin-top:32px; font-size:12px; color:#71717a;">Hinthial --- ciò che sai e ciò che hai, alla persona giusta, al momento giusto.</p>
   </body>
 </html>`;
 }
@@ -92,12 +92,17 @@ export function digitalLegacyGuardianRequestEmail(
   respondUrl: string,
 ): { subject: string; html: string } {
   return {
-    subject: `${ownerName} ti ha indicato come guardiano su Hinthial --- riesci a raggiungerlo/la?`,
+    subject: `Hai notizie di ${ownerName}?`,
     html: emailShell(`
-      <p><strong>${ownerName}</strong> ti ha indicato come guardiano su Hinthial --- una persona di fiducia da contattare se non risponde più da un po' di tempo.</p>
-      <p>Non riusciamo a raggiungerlo/la da diverse settimane, nonostante diversi promemoria. Puoi dirci se hai sue notizie?</p>
+      <p><strong>${ownerName}</strong> ti ha scelto come guardiano su Hinthial: la persona di fiducia a cui chiedere, prima di fare qualsiasi cosa, se un giorno non risponde più.</p>
+      <p>Da molti mesi ${ownerName} non accede a Hinthial e non ha risposto ai nostri promemoria. Prima di rispondere, prova a sentire ${ownerName}: una telefonata, un messaggio. Poi dicci se hai sue notizie.</p>
+      <ul style="padding-left:20px;">
+        <li><strong>Se hai sue notizie</strong>, tutto si ferma subito.</li>
+        <li><strong>Se non lo sai ancora</strong>, la tua risposta non sposta niente: puoi cambiarla in seguito.</li>
+        <li><strong>Se confermi di non riuscire a raggiungere ${ownerName}</strong> e abbastanza guardiani lo confermano (a volte basta uno solo), riceverà un ultimo avviso. Le capsule che ha preparato si apriranno per le persone a cui le ha destinate solo se non accede nemmeno allora.</li>
+      </ul>
       ${primaryButton(respondUrl, "Rispondi")}
-      <p style="font-size:12px; color:#71717a;">Dovrai accedere al tuo account Hinthial per rispondere --- la tua risposta conta solo se arriva da lì, mai da un semplice click su questa email.</p>
+      <p style="font-size:12px; color:#71717a;">Per rispondere entri nel tuo account Hinthial: la risposta conta solo se arriva da lì, mai da un clic su questa email. La richiesta la trovi anche in Hinthial, nella pagina Oggi. Non vedrai nulla dei contenuti di ${ownerName}.</p>
     `),
   };
 }
@@ -137,7 +142,7 @@ export function digitalLegacyCapsuleReleasedEmail(ownerName: string): { subject:
   return {
     subject: `Una capsula di ${ownerName} è ora disponibile su Hinthial`,
     html: emailShell(`
-      <p>Una capsula che <strong>${ownerName}</strong> aveva condiviso con te è ora disponibile --- non siamo riusciti a raggiungerlo/la per un periodo prolungato, e i guardiani che aveva indicato hanno confermato la stessa cosa.</p>
+      <p>Una capsula che <strong>${ownerName}</strong> aveva preparato per te è ora disponibile. Per molto tempo ${ownerName} non ha più risposto, e le persone di fiducia che aveva scelto lo hanno confermato.</p>
       <p>La trovi nella scheda "Condivise con me" di Capsule.</p>
       ${primaryButton(dashboardUrl, "Vai a Hinthial")}
     `),
