@@ -10,6 +10,22 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (112)
+
+### Pagine di errore
+
+**Cosa fa:**
+- **Un indirizzo che non esiste** mostra "Questa pagina non c'è", nello stile di Hinthial, con "Vai a Oggi" e "Pagina iniziale", invece della pagina grezza di Next.js. La risposta resta un vero 404.
+- **Un errore imprevisto in una pagina** mostra "Questa pagina non si è aperta". Prima rassicura (i contenuti sono cifrati e salvati, un errore di visualizzazione non li tocca), poi offre "Riprova" e "Vai a Oggi", più un codice da indicare se lo si segnala.
+- **Se si rompe perfino il layout dell'app**, compare una pagina minima con gli stessi messaggi e i colori di Hinthial.
+
+**Note tecniche:**
+- `app/not-found.tsx` e `app/error.tsx`, entrambe su `components/layout/StatusScreen.tsx`. In questa versione di Next la prop di recupero di error.js si chiama `retry`, non `reset`.
+- `app/global-error.tsx` ha `<html>` e `<body>` propri e stili inline, perché lì i fogli di stile globali non arrivano.
+- e2e: la 404 in `launch-basics.spec`.
+
+---
+
 ## 2026-10-15 (111)
 
 ### Header di sicurezza e Content-Security-Policy
