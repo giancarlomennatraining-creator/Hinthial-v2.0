@@ -17,6 +17,8 @@ import type { ReminderListItem } from "@/domain/reminders/types";
 import { useToast } from "@/components/ui/ToastProvider";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
+import { DocumentExpiryList } from "@/components/reminders/DocumentExpiryList";
+import { listDocumentExpiries, type DocumentExpiry } from "@/domain/documents/repository";
 
 type StatusFilter = "all" | "pending" | "completed";
 
@@ -45,6 +47,8 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const showToast = useToast();
 
   const [reminders, setReminders] = useState<ReminderListItem[]>([]);
+  // Le date di scadenza scritte nella scheda dei documenti: si vedono qui accanto alle scadenze create come tali.
+  const [documentExpiries, setDocumentExpiries] = useState<DocumentExpiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -61,7 +65,12 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      setReminders(await listReminders(supabase, masterKey));
+      const [remindersResult, expiriesResult] = await Promise.all([
+        listReminders(supabase, masterKey),
+        listDocumentExpiries(supabase, masterKey),
+      ]);
+      setReminders(remindersResult);
+      setDocumentExpiries(expiriesResult);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossibile caricare le scadenze.");
     } finally {
@@ -140,6 +149,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
               { icon: "➕", text: "Crea una scadenza e collegala, se vuoi, a un bene o a un documento." },
               { icon: "✅", text: "Segnala una scadenza come completata quando l'hai gestita." },
               { icon: "🔗", text: "Le scadenze collegate a un bene compaiono anche nella sua scheda." },
+              { icon: "📄", text: "Qui trovi anche i documenti con una data di scadenza: la data si cambia dalla loro scheda." },
             ]}
           />
         </div>
@@ -163,91 +173,104 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       {loading ? (
         <ListSkeleton />
-      ) : reminders.length === 0 ? (
+      ) : reminders.length === 0 && documentExpiries.length === 0 ? (
         <EmptyListCard text="Nessuna scadenza ancora." actionHref="/reminders/new" actionLabel="Crea la prima scadenza" />
       ) : (
         <>
-          <div className="flex flex-wrap gap-3">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              aria-label="Filtra per stato"
-              className={INPUT_FIELD}
-            >
-              <option value="all">Tutte</option>
-              <option value="pending">Da completare</option>
-              <option value="completed">Completate</option>
-            </select>
-            <button
-              type="button"
-              onClick={handleExportAll}
-              disabled={filteredReminders.length === 0}
-              title="Scarica un file .ics da importare nel calendario del telefono o del computer."
-              className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              📅 Esporta calendario (.ics)
-            </button>
-          </div>
-
-          {filteredReminders.length === 0 ? (
+          {reminders.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Nessuna scadenza corrisponde ai filtri.
+              Nessuna scadenza creata da te.{" "}
+              <Link href="/reminders/new" className="font-medium text-brand hover:underline">
+                Crea la prima scadenza →
+              </Link>
             </p>
           ) : (
-            <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
-              {filteredReminders.map((reminder) => {
-                const status = dueStatus(reminder.dueAt, reminder.completed);
-                const busy = busyId === reminder.id;
-                return (
-                  <li key={reminder.id} className="flex items-center justify-between gap-4 p-4">
-                    <label className="flex min-w-0 items-start gap-3">
-                      <input
-                        type="checkbox"
-                        checked={reminder.completed}
-                        disabled={busy}
-                        onChange={() => handleToggleCompleted(reminder)}
-                        className="mt-1"
-                      />
-                      <span className="min-w-0">
-                        <p
-                          className={
-                            reminder.completed
-                              ? "truncate text-sm text-zinc-400 line-through dark:text-zinc-600"
-                              : "truncate text-sm font-medium text-zinc-900 dark:text-zinc-100"
-                          }
-                        >
-                          {reminder.title}
-                        </p>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                          <span
-                            className={
-                              status === "overdue"
-                                ? "font-medium text-red-600 dark:text-red-400"
-                                : status === "soon"
-                                  ? "font-medium text-orange-600 dark:text-orange-400"
-                                  : ""
-                            }
-                          >
-                            {formatDate(reminder.dueAt)}
+            <>
+              <div className="flex flex-wrap gap-3">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                  aria-label="Filtra per stato"
+                  className={INPUT_FIELD}
+                >
+                  <option value="all">Tutte</option>
+                  <option value="pending">Da completare</option>
+                  <option value="completed">Completate</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={handleExportAll}
+                  disabled={filteredReminders.length === 0}
+                  title="Scarica un file .ics da importare nel calendario del telefono o del computer."
+                  className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                >
+                  📅 Esporta calendario (.ics)
+                </button>
+              </div>
+
+              {filteredReminders.length === 0 ? (
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Nessuna scadenza corrisponde ai filtri.
+                </p>
+              ) : (
+                <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+                  {filteredReminders.map((reminder) => {
+                    const status = dueStatus(reminder.dueAt, reminder.completed);
+                    const busy = busyId === reminder.id;
+                    return (
+                      <li key={reminder.id} className="flex items-center justify-between gap-4 p-4">
+                        <label className="flex min-w-0 items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={reminder.completed}
+                            disabled={busy}
+                            onChange={() => handleToggleCompleted(reminder)}
+                            className="mt-1"
+                          />
+                          <span className="min-w-0">
+                            <p
+                              className={
+                                reminder.completed
+                                  ? "truncate text-sm text-zinc-400 line-through dark:text-zinc-600"
+                                  : "truncate text-sm font-medium text-zinc-900 dark:text-zinc-100"
+                              }
+                            >
+                              {reminder.title}
+                            </p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                              <span
+                                className={
+                                  status === "overdue"
+                                    ? "font-medium text-red-600 dark:text-red-400"
+                                    : status === "soon"
+                                      ? "font-medium text-orange-600 dark:text-orange-400"
+                                      : ""
+                                }
+                              >
+                                {formatDate(reminder.dueAt)}
+                              </span>
+                              {reminder.relatedDocumentFilename ? ` · ${reminder.relatedDocumentFilename}` : ""}
+                              {reminder.relatedAssetName ? ` · 🔗 ${reminder.relatedAssetName}` : ""}
+                            </p>
                           </span>
-                          {reminder.relatedDocumentFilename ? ` · ${reminder.relatedDocumentFilename}` : ""}
-                          {reminder.relatedAssetName ? ` · 🔗 ${reminder.relatedAssetName}` : ""}
-                        </p>
-                      </span>
-                    </label>
-                    <RowActionsMenu label={`Azioni per "${reminder.title}"`}>
-                      <RowMenuItem onClick={() => handleExportOne(reminder)}>
-                        📅 Aggiungi al calendario (.ics)
-                      </RowMenuItem>
-                      <RowMenuItem disabled={busy} danger onClick={() => handleDelete(reminder)}>
-                        Elimina
-                      </RowMenuItem>
-                    </RowActionsMenu>
-                  </li>
-                );
-              })}
-            </ul>
+                        </label>
+                        <RowActionsMenu label={`Azioni per "${reminder.title}"`}>
+                          <RowMenuItem onClick={() => handleExportOne(reminder)}>
+                            📅 Aggiungi al calendario (.ics)
+                          </RowMenuItem>
+                          <RowMenuItem disabled={busy} danger onClick={() => handleDelete(reminder)}>
+                            Elimina
+                          </RowMenuItem>
+                        </RowActionsMenu>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </>
           )}
+
+          {documentExpiries.length > 0 ? <DocumentExpiryList items={documentExpiries} now={new Date()} /> : null}
         </>
       )}
     </div>

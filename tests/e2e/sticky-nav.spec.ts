@@ -63,8 +63,10 @@ test.describe("sotto md", () => {
     await page.getByRole("button", { name: "Accedi" }).click();
     await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-    // Master key configurata subito via "Archivio": aprire prima il cassetto darebbe tempo al popup "Crea la tua master key" di comparire e venire chiuso dall'handler automatico prima del click su "Amici".
-    await page.getByRole("link", { name: "Archivio", exact: true }).click();
+    // Master key configurata subito sull'Archivio (su telefono è nel menu dell'avatar, quindi ci si va diretti): aprire prima
+    // il cassetto darebbe tempo al popup "Crea la tua master key" di comparire e venire chiuso dall'handler automatico
+    // prima del click su "Amici".
+    await page.goto("/archive");
     await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
     await page.getByLabel("Conferma master password").fill("una-master-password-solida");
     await page.getByRole("button", { name: "Crea" }).click();

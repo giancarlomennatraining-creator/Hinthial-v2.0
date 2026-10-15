@@ -43,8 +43,11 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Raccontami", href: "/raccontami", icon: AIIcon, requiresEncryption: true },
 ];
 
-/** Le voci della barra fissa in basso su smartphone (al massimo cinque, per restare leggibili); le altre stanno nel menu con le 3 lineette. */
-export const BOTTOM_NAV_HREFS: string[] = ["/dashboard", "/capsules", "/archive", "/friends", "/legacy"];
+/**
+ * Le voci della barra fissa in basso su smartphone (al massimo cinque, per restare leggibili); le altre stanno nel menu
+ * che si apre dall'avatar. Ci sono "Oggi" e i quattro pilastri: l'Archivio, che li alimenta, sta nel menu.
+ */
+export const BOTTOM_NAV_HREFS: string[] = ["/dashboard", "/capsules", "/raccontami", "/friends", "/legacy"];
 
 /** Se la voce è quella della pagina in cui ci si trova (o di una sezione che vive dentro di lei). */
 export function isNavItemActive(item: NavItem, pathname: string | null): boolean {
