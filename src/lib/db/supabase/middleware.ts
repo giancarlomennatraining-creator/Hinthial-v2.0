@@ -12,8 +12,15 @@ import type { Database } from "@/types/supabase";
  * happens per-layout (see src/app/(app)/layout.tsx), which redirects to
  * /login when there is no user.
  */
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+export async function updateSession(request: NextRequest, extraRequestHeaders: Record<string, string> = {}) {
+  // Gli header in più (il nonce e la CSP, v. proxy.ts) devono arrivare al render: si riapplicano a ogni NextResponse.next,
+  // anche dopo che il rinnovo della sessione ha cambiato i cookie della richiesta.
+  const forward = () => {
+    const headers = new Headers(request.headers);
+    for (const [key, value] of Object.entries(extraRequestHeaders)) headers.set(key, value);
+    return NextResponse.next({ request: { headers } });
+  };
+  let supabaseResponse = forward();
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,7 +34,7 @@ export async function updateSession(request: NextRequest) {
           for (const { name, value } of cookiesToSet) {
             request.cookies.set(name, value);
           }
-          supabaseResponse = NextResponse.next({ request });
+          supabaseResponse = forward();
           for (const { name, value, options } of cookiesToSet) {
             supabaseResponse.cookies.set(name, value, options);
           }

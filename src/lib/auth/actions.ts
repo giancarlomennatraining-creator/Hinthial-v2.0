@@ -8,6 +8,7 @@ import { getRequestContext } from "@/lib/http/request-context";
 import { verifyAndConsumeBackupCode } from "@/domain/mfa/repository";
 import { clearMfaVerifiedViaBackupCode, markMfaVerifiedViaBackupCode } from "@/lib/auth/mfa-bypass";
 import type { AuthActionState } from "@/lib/auth/action-state";
+import { LEGAL } from "@/content/legal";
 
 // Il benvenuto (v. LoginSplash) dura ~3,5 s e copre la pagina: i test e2e, che fanno decine di login, lo spengono con DISABLE_LOGIN_SPLASH=1 (v. playwright.config.ts).
 function dashboardAfterLogin(): string {
@@ -63,6 +64,7 @@ export async function signUp(
   const birthDate = String(formData.get("birthDate") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
+  const acceptedTerms = formData.get("acceptTerms") === "on";
 
   if (!firstName || !lastName || !email || !password) {
     return { error: "Compila tutti i campi." };
@@ -73,13 +75,26 @@ export async function signUp(
   if (password !== confirmPassword) {
     return { error: "Le password non coincidono." };
   }
+  // La casella è obbligatoria anche nel browser: qui per chi invia il modulo senza passare dalla pagina.
+  if (!acceptedTerms) {
+    return { error: "Per creare l'account accetta i termini d'uso e l'informativa privacy." };
+  }
 
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { first_name: firstName, last_name: lastName, birth_date: birthDate || null } },
+    options: {
+      data: {
+        first_name: firstName,
+        last_name: lastName,
+        birth_date: birthDate || null,
+        // Quale versione di privacy e termini ha accettato, e quando (v. content/legal.ts).
+        terms_version: LEGAL.version,
+        terms_accepted_at: new Date().toISOString(),
+      },
+    },
   });
 
   if (error) {

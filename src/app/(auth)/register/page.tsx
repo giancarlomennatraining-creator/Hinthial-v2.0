@@ -91,6 +91,21 @@ export default function RegisterPage() {
           required
         />
 
+        <label className="flex items-start gap-2.5 text-sm text-zinc-600 dark:text-zinc-400">
+          <input type="checkbox" name="acceptTerms" required className="mt-0.5 h-4 w-4 shrink-0 accent-brand" />
+          <span>
+            Ho letto l&apos;
+            <Link href="/privacy" target="_blank" className="font-medium text-brand hover:underline">
+              informativa privacy
+            </Link>{" "}
+            e accetto i{" "}
+            <Link href="/termini" target="_blank" className="font-medium text-brand hover:underline">
+              termini d&apos;uso
+            </Link>
+            .
+          </span>
+        </label>
+
         {state.error ? (
           <p role="alert" className="text-sm text-red-600 dark:text-red-400">
             {state.error}

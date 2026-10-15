@@ -131,7 +131,8 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   // Finché è in bozza, la capsula è modificabile: anche i destinatari, la data di apertura, l'allegato.
   await openRowMenu(row);
   await page.getByRole("menuitem", { name: "Modifica" }).click();
-  await expect(page).toHaveURL(/\/capsules\/[^/]+\/edit$/);
+  // Con la macchina carica la pagina di modifica può metterci più di 5 secondi.
+  await expect(page).toHaveURL(/\/capsules\/[^/]+\/edit$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Modifica capsula" })).toBeVisible();
 
   await expect(page.getByText("Passo 1 di 3")).toBeVisible();

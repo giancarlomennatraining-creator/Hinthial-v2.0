@@ -10,6 +10,84 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (114)
+
+### Informativa privacy e termini d'uso
+
+**Cosa fa:**
+- **Due pagine nuove, leggibili senza accesso:** `/privacy` e `/termini`.
+  - L'informativa dice prima cosa Hinthial non può vedere, perché è cifrato, e poi cosa vede e perché: dati dell'account, date e collegamenti, sicurezza degli accessi, e il testo mandato ad Anthropic solo se attivi Hinthia.
+  - Dice anche con chi si condividono i dati (Supabase, Vercel, Resend, Anthropic), per quanto tempo, quali sono i diritti e dove esercitarli dentro l'app, e che i cookie sono solo tecnici.
+  - I termini mettono in primo piano due cose: la master password è solo tua, e senza recovery key i contenuti non si recuperano; l'Eredità digitale non è un testamento e non può garantire la consegna in ogni circostanza.
+- **La registrazione chiede di accettarli**, con una casella obbligatoria e i link alle due pagine. Il server registra quale versione è stata accettata e quando.
+- I link alle due pagine sono in fondo alla pagina iniziale e in Impostazioni > Privacy.
+- **Da completare prima del lancio:** nome del titolare, indirizzo ed email di contatto, in `src/content/legal.ts`. Finché mancano, le pagine li mostrano evidenziati in giallo. Il testo è una bozza da far rivedere a un legale: tocca dati delicati e il caso di morte.
+
+**Note tecniche:**
+- `content/legal.ts`: `LEGAL` con titolare, contatto, data e `version`, più `isPlaceholder`. `components/legal/LegalPage.tsx`: `LegalPage`, `LegalSection` e `LegalValue`, che evidenzia ciò che va ancora compilato.
+- `signUp` rifiuta la registrazione senza `acceptTerms`. In `user_metadata` salva `terms_version` e `terms_accepted_at`, senza migrazione.
+- e2e: `launch-basics.spec` (pagine raggiungibili e casella obbligatoria); `auth-shell.spec` spunta la casella.
+
+---
+
+## 2026-10-15 (113)
+
+### Email di benvenuto
+
+**Cosa fa:**
+- Appena confermi l'account arriva un'email, "Il tuo account Hinthial è pronto", con tre passi per cominciare:
+  1. crea la tua chiave;
+  2. conserva la recovery key, che non va mai messa in un'email;
+  3. pensa a una persona e prepara per lei la prima capsula.
+- Dice chiaramente che la master password non la conosciamo e non possiamo recuperarla.
+
+**Note tecniche:**
+- `welcomeEmail(firstName)` in `lib/email/templates.ts`, con un nuovo `escapeHtml` per il nome, che scrive l'utente.
+- Parte da `app/auth/confirm/route.ts` solo per `type === "signup"` e solo se la conferma riesce. Se Resend non risponde, la conferma prosegue e l'errore finisce nel log.
+- Unit: `welcome-email.test.ts`, 4 test.
+
+---
+
+## 2026-10-15 (112)
+
+### Pagine di errore
+
+**Cosa fa:**
+- **Un indirizzo che non esiste** mostra "Questa pagina non c'è", nello stile di Hinthial, con "Vai a Oggi" e "Pagina iniziale", invece della pagina grezza di Next.js. La risposta resta un vero 404.
+- **Un errore imprevisto in una pagina** mostra "Questa pagina non si è aperta". Prima rassicura (i contenuti sono cifrati e salvati, un errore di visualizzazione non li tocca), poi offre "Riprova" e "Vai a Oggi", più un codice da indicare se lo si segnala.
+- **Se si rompe perfino il layout dell'app**, compare una pagina minima con gli stessi messaggi e i colori di Hinthial.
+
+**Note tecniche:**
+- `app/not-found.tsx` e `app/error.tsx`, entrambe su `components/layout/StatusScreen.tsx`. In questa versione di Next la prop di recupero di error.js si chiama `retry`, non `reset`.
+- `app/global-error.tsx` ha `<html>` e `<body>` propri e stili inline, perché lì i fogli di stile globali non arrivano.
+- e2e: la 404 in `launch-basics.spec`.
+
+---
+
+## 2026-10-15 (111)
+
+### Header di sicurezza e Content-Security-Policy
+
+**Cosa fa:**
+- Hinthial decifra tutto nel browser, quindi uno script estraneo nella pagina potrebbe leggere la master key. Ora il browser esegue solo gli script che Hinthial stessa ha inviato con quella pagina: tutto il resto viene bloccato.
+- Nessun sito può mostrare Hinthial dentro un proprio riquadro, per ingannare l'utente nel cliccare.
+- Fotocamera e microfono restano permessi solo a Hinthial, per registrare capsule e racconti. Posizione, pagamenti, USB e cattura dello schermo sono spenti.
+- Per chi usa l'app non cambia nulla di visibile.
+
+**Note tecniche:**
+- `lib/security/csp.ts`: `buildContentSecurityPolicy` e `createNonce`.
+  - `script-src` usa il nonce della richiesta, `'strict-dynamic'` e `'wasm-unsafe-eval'` (l'OCR è WebAssembly); `'unsafe-eval'` solo in sviluppo.
+  - `connect-src`, `img-src` e `media-src` sono limitati a `'self'` più l'origine di Supabase. `blob:` serve per i file decifrati, `frame-ancestors 'none'` vieta i riquadri e `object-src 'none'` i plugin.
+  - `upgrade-insecure-requests` solo quando la pagina arriva in HTTPS.
+- `proxy.ts` genera il nonce. `updateSession` lo passa al render anche quando il rinnovo della sessione riscrive i cookie.
+- Il layout radice legge `x-nonce` e lo dà ai due script inline (tema e service worker). Leggere gli header rende dinamiche tutte le pagine, ed è voluto: un nonce vale per una sola richiesta.
+- `next.config.ts`: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` e `Permissions-Policy`. HSTS solo in produzione su Vercel.
+- L'OCR carica il worker da `/ocr/worker.min.js` (`workerBlobURL: false`) invece che da un `blob:`, che avrebbe ereditato la CSP della pagina. `/ocr` e `sw.js` sono esclusi dal proxy.
+- **Tutti gli e2e sono anche un controllo della CSP:** la fixture comune fa fallire il test se il browser segnala un blocco. Verificato anche al contrario: un'immagine esterna inserita di proposito fa fallire il test.
+- Unit: `csp.test.ts`, 7 test. e2e: header e nonce diverso a ogni richiesta in `launch-basics.spec`.
+
+---
+
 ## 2026-10-15 (110)
 
 ### Le scadenze dei documenti in Scadenze, e Raccontami nella barra in basso
