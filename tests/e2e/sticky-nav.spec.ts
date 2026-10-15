@@ -73,7 +73,8 @@ test.describe("sotto md", () => {
     ).toBeVisible({ timeout: 45_000 });
     await page.getByLabel("Ho salvato la recovery key in un posto sicuro.").check();
     await page.getByRole("button", { name: "Continua" }).click();
-    await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
+    // La pagina si popola dopo l'animazione d'uscita della finestra: su una macchina carica ci vuole più del solito.
+    await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible({ timeout: 15_000 });
 
     // "Amici" è una delle cinque voci della barra fissa in basso.
     await page.getByRole("navigation", { name: "Navigazione rapida" }).getByRole("link", { name: "Amici" }).click();

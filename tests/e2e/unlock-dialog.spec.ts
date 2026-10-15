@@ -10,8 +10,10 @@ import { createConfirmedTestUser, fullName, uniqueTestUser, type TestUser } from
 const test = base.extend({
   page: async ({ page }, use) => {
     const intro = page.getByRole("dialog", { name: "Crea la tua master key" }).getByRole("button", { name: "Più tardi" });
+    // Con un limite di tempo, come in fixtures.ts: se la pagina apre da sola la finestra di creazione mentre lo si clicca,
+    // il popup sparisce e il clic altrimenti resterebbe ad aspettarlo fino alla fine del test.
     await page.addLocatorHandler(intro, async () => {
-      await intro.click();
+      await intro.click({ timeout: 3_000 }).catch(() => {});
     });
     // eslint-disable-next-line react-hooks/rules-of-hooks -- Playwright's fixture callback param, not React's use() hook.
     await use(page);
