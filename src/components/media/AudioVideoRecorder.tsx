@@ -34,11 +34,14 @@ export function AudioVideoRecorder({
   title = "Messaggio audio o video",
   description = "Registrato dal tuo dispositivo, cifrato come qualsiasi altro contenuto — nulla lascia il browser finché non salvi.",
   confirmLabel = "Aggiungi",
+  kinds = ["audio", "video"],
 }: {
   onRecorded: (file: File) => void;
   title?: string;
   description?: string;
   confirmLabel?: string;
+  /** Cosa si può registrare: di default audio e video, solo audio dove serve la voce (v. Raccontami). */
+  kinds?: Kind[];
 }) {
   const [kind, setKind] = useState<Kind | null>(null);
   const [recording, setRecording] = useState(false);
@@ -189,20 +192,24 @@ export function AudioVideoRecorder({
         </div>
       ) : (
         <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => startRecording("audio")}
-            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-          >
-            🎤 Registra audio
-          </button>
-          <button
-            type="button"
-            onClick={() => startRecording("video")}
-            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-          >
-            🎥 Registra video
-          </button>
+          {kinds.includes("audio") ? (
+            <button
+              type="button"
+              onClick={() => startRecording("audio")}
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            >
+              🎤 Registra audio
+            </button>
+          ) : null}
+          {kinds.includes("video") ? (
+            <button
+              type="button"
+              onClick={() => startRecording("video")}
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            >
+              🎥 Registra video
+            </button>
+          ) : null}
         </div>
       )}
     </div>

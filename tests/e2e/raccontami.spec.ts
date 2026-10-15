@@ -122,3 +122,45 @@ test("con il consenso a Hinthia arriva una domanda di approfondimento, e se non 
   await expect(seconda.getByText("Lo trovi in Archivio, nella categoria Racconti.")).toBeVisible({ timeout: 20_000 });
   await expect(seconda.getByText("Hinthia chiede")).toHaveCount(0);
 });
+
+test("si può rispondere a voce: la registrazione diventa un racconto audio cifrato, che si riascolta e si fa arrivare a qualcuno", async ({
+  page,
+}) => {
+  test.slow();
+
+  // Microfono finto con permesso già dato (v. launchOptions in playwright.config.ts): niente dispositivo vero.
+  await setUpWithDocument(page);
+  await page.getByRole("link", { name: "Raccontami", exact: true }).click();
+  const domanda = page.getByRole("region", { name: "Domanda" });
+  await expect(domanda.getByRole("heading", { name: FIRST_QUESTION })).toBeVisible({ timeout: 15_000 });
+
+  // Si sceglie la voce: c'è solo la registrazione audio, niente video.
+  const modi = domanda.getByRole("group", { name: "Come vuoi rispondere" });
+  await expect(modi.getByRole("button", { name: "✍️ Scrivi" })).toHaveAttribute("aria-pressed", "true");
+  await modi.getByRole("button", { name: "🎙️ Racconta a voce" }).click();
+  await expect(modi.getByRole("button", { name: "🎙️ Racconta a voce" })).toHaveAttribute("aria-pressed", "true");
+  await expect(domanda.getByRole("button", { name: "🎥 Registra video" })).toHaveCount(0);
+
+  await domanda.getByRole("button", { name: "🎤 Registra audio" }).click();
+  await expect(domanda.getByText(/Registrazione · /)).toBeVisible();
+  await page.waitForTimeout(1500);
+  await domanda.getByRole("button", { name: "Ferma registrazione" }).click();
+  await domanda.getByRole("button", { name: "Salva il racconto" }).click();
+
+  await expect(domanda.getByText("Racconto a voce salvato")).toBeVisible({ timeout: 20_000 });
+  await expect(domanda.getByText("Lo trovi in Archivio, nella categoria Racconti.")).toBeVisible();
+  await expect(domanda.getByRole("link", { name: "Fallo arrivare a…" })).toHaveAttribute("href", /\/capsules\/new\?da=documento:/);
+
+  // Nell'elenco è segnato "a voce" e conta come domanda raccontata; "Ascolta" lo decifra e lo fa suonare.
+  const racconti = page.getByRole("region", { name: "I tuoi racconti" });
+  const riga = racconti.getByRole("listitem").filter({ hasText: FIRST_QUESTION });
+  await expect(riga.getByText(/a voce · raccontato il/)).toBeVisible();
+  await expect(racconti.getByText("1 domanda raccontata su 16.")).toBeVisible();
+  await riga.getByRole("button", { name: "▶ Ascolta" }).click();
+  await expect(riga.getByLabel(`Racconto a voce: ${FIRST_QUESTION}`)).toBeVisible({ timeout: 15_000 });
+
+  // La scelta della voce resta per la domanda dopo.
+  await domanda.getByRole("button", { name: "Prossima domanda" }).click();
+  await expect(domanda.getByRole("heading", { name: SECOND_QUESTION })).toBeVisible();
+  await expect(domanda.getByRole("button", { name: "🎤 Registra audio" })).toBeVisible();
+});

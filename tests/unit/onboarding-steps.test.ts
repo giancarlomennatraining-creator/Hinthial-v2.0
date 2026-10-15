@@ -95,6 +95,7 @@ describe("computeOnboardingSteps", () => {
   it("il primo racconto conta solo se è una nota nella categoria Racconti", () => {
     expect(done(buildData({ documents: [doc()] }), "story")).toBe(false); // categoria mai creata
     expect(done(buildData({ documents: [doc()], categories: [RACCONTI] }), "story")).toBe(true);
+    expect(done(buildData({ documents: [doc({ mimeType: "audio/webm" })], categories: [RACCONTI] }), "story")).toBe(true); // a voce
     expect(done(buildData({ documents: [doc({ mimeType: "application/pdf" })], categories: [RACCONTI] }), "story")).toBe(false);
     expect(done(buildData({ documents: [doc({ categoryId: "altra" })], categories: [RACCONTI] }), "story")).toBe(false);
   });
