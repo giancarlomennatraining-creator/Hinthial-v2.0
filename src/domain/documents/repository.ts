@@ -297,6 +297,41 @@ export async function listDocumentSummaries(
   );
 }
 
+export interface DocumentExpiry {
+  id: string;
+  filename: string;
+  /** `YYYY-MM-DD`, come `documents.expires_at`. */
+  expiresAt: string;
+}
+
+/**
+ * I documenti con una data di scadenza (passaporto, polizza...), dalla più vicina: per Archivio > Scadenze, accanto alle
+ * scadenze create come tali. Si decifra solo il nome del file. Un documento nel Cestino non compare.
+ */
+export async function listDocumentExpiries(
+  supabase: SupabaseClient<Database>,
+  masterKey: CryptoKey,
+): Promise<DocumentExpiry[]> {
+  const { data, error } = await supabase
+    .from("documents")
+    .select("id, encrypted_filename, expires_at")
+    .is("deleted_at", null)
+    .not("expires_at", "is", null)
+    .order("expires_at", { ascending: true });
+
+  if (error) {
+    throw new Error(`Impossibile caricare le scadenze dei documenti: ${error.message}`);
+  }
+
+  return Promise.all(
+    (data ?? []).map(async (row) => ({
+      id: row.id,
+      filename: bytesToUtf8(await decryptBytes(masterKey, parseEnvelope(row.encrypted_filename))),
+      expiresAt: row.expires_at as string,
+    })),
+  );
+}
+
 /** Un solo documento, per la sua scheda: non serve scaricare e decifrare tutti gli altri. `null` se non esiste, è nel Cestino o non è dell'utente. */
 export async function getDocumentById(
   supabase: SupabaseClient<Database>,

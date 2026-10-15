@@ -26,10 +26,13 @@ test("sotto md la barra laterale è sostituita da un tasto menu che apre la navi
   await menuButton.click();
   const menu = page.getByRole("dialog", { name: "Menu di navigazione" });
   await expect(menu).toBeVisible();
-  // "Raccontami" non è tra le cinque voci della barra fissa in basso: resta nel menu, a differenza di "Archivio".
-  await expect(menu.getByRole("link", { name: "Raccontami" })).toBeVisible();
-  await expect(menu.getByRole("link", { name: "Archivio", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("navigation", { name: "Navigazione rapida" }).getByRole("link")).toHaveCount(5);
+  // "Archivio" non è tra le cinque voci della barra fissa in basso (Oggi e i quattro pilastri): resta nel menu, a
+  // differenza di "Raccontami".
+  const quickNav = page.getByRole("navigation", { name: "Navigazione rapida" });
+  await expect(menu.getByRole("link", { name: "Archivio", exact: true })).toBeVisible();
+  await expect(menu.getByRole("link", { name: "Raccontami" })).toHaveCount(0);
+  await expect(quickNav.getByRole("link")).toHaveCount(5);
+  await expect(quickNav.getByRole("link", { name: "Raccontami" })).toBeVisible();
 
   // Esc lo richiude.
   await page.keyboard.press("Escape");
@@ -37,7 +40,7 @@ test("sotto md la barra laterale è sostituita da un tasto menu che apre la navi
 
   // Un click su una voce naviga e richiude il menu.
   await menuButton.click();
-  await menu.getByRole("link", { name: "Raccontami" }).click();
-  await expect(page).toHaveURL(/\/raccontami$/);
+  await menu.getByRole("link", { name: "Archivio", exact: true }).click();
+  await expect(page).toHaveURL(/\/archive$/);
   await expect(menu).not.toBeVisible();
 });

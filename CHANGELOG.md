@@ -10,6 +10,25 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (110)
+
+### Le scadenze dei documenti in Scadenze, e Raccontami nella barra in basso
+
+**Cosa fa:**
+- **Archivio > Scadenze mostra anche i documenti con una data di scadenza**, come passaporto, polizza o carta d'identità. Sono in una sezione "Documenti in scadenza", dalla più vicina, con la data e quanto manca: in rosso se è già passata o mancano meno di due settimane, in arancione entro due mesi. Ogni riga apre la scheda del documento, dove la data si cambia. Prima queste date si vedevano solo in Oggi, e solo quando erano vicine.
+- Se ci sono documenti con una scadenza ma nessuna scadenza creata a mano, sopra compare "Nessuna scadenza creata da te. Crea la prima scadenza →" invece del riquadro vuoto.
+- **Su telefono Raccontami è nella barra in basso**, al posto dell'Archivio. La barra ora ha "Oggi" e i quattro pilastri: Capsule, Raccontami, Amici, Eredità. L'Archivio si apre dal menu dell'avatar.
+
+**Note tecniche:**
+- `listDocumentExpiries` in `domain/documents/repository.ts`: una sola query su `documents` con `expires_at` non nullo, fuori dal Cestino, ordinata per data. Decifra solo il nome del file.
+- Nuovo `components/reminders/DocumentExpiryList.tsx`, con `expiryInfo` e `formatDayMonthYear` presi da `archive-views`. `RemindersPanel` carica scadenze e documenti in parallelo.
+- `BOTTOM_NAV_HREFS`: `/archive` diventa `/raccontami`.
+- Nessuna migrazione. Test:
+  - e2e: `reminders.spec` verifica la sezione nuova e il link alla scheda; `mobile-nav.spec` e `sticky-nav.spec` sono aggiornati alla barra nuova;
+  - 27 e2e su 27 nelle aree toccate, unit 986/987.
+
+---
+
 ## 2026-10-15 (109)
 
 ### Controllo generale: test completi, telefono e piccole correzioni
