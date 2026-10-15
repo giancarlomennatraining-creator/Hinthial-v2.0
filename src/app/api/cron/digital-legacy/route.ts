@@ -21,6 +21,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     const summary = await runDigitalLegacyCheck(createAdminClient());
+    // Una riga a ogni giro riuscito, solo conteggi: nei log di Vercel si vede ogni mattina che il controllo è girato.
+    console.info(`[cron/digital-legacy] ok: ${summary.usersChecked} account controllati, ${summary.transitions} cambi di fase`);
     return NextResponse.json({ ok: true, ...summary });
   } catch (err) {
     console.error("[cron/digital-legacy] failed:", err);

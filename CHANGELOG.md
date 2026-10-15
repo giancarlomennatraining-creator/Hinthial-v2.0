@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (106)
+
+### I controlli giornalieri lasciano traccia nei log
+
+**Cosa fa:**
+- Nessun cambiamento per chi usa Hinthial.
+- Il controllo giornaliero dell'Eredità digitale e la pulizia del Cestino ora scrivono una riga nei log di Vercel ogni volta che finiscono bene. Così basta aprire **Logs** per sapere che sono girati, senza dover chiamare il cron a mano.
+- Esempio: `[cron/digital-legacy] ok: 3 account controllati, 0 cambi di fase`.
+
+**Note tecniche:**
+- `console.info` in `app/api/cron/digital-legacy/route.ts` e `app/api/cron/trash-purge/route.ts`, con i soli conteggi (`usersChecked`, `transitions`; `purged`, `failures`, `shares`). Nessun identificativo né dato personale. Gli errori restavano già in `console.error`.
+
+---
+
 ## 2026-10-15 (105)
 
 ### Test e2e più stabili
