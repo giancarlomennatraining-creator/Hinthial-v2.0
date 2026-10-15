@@ -37,10 +37,13 @@ function securityStep(done: boolean): OnboardingStep {
   };
 }
 
-/** Un racconto è una nota nella categoria "Racconti" (v. domain/stories/repository.ts). */
+/** Un racconto è una nota, o un audio se raccontato a voce, nella categoria "Racconti" (v. domain/stories/repository.ts). */
 function hasStory(documents: DocumentSummary[], categories: Category[]): boolean {
   const stories = categories.find((c) => c.name.trim().toLowerCase() === STORIES_CATEGORY.name.toLowerCase());
-  return stories !== undefined && documents.some((d) => d.categoryId === stories.id && d.mimeType === NOTE_MIME_TYPE);
+  return (
+    stories !== undefined &&
+    documents.some((d) => d.categoryId === stories.id && (d.mimeType === NOTE_MIME_TYPE || d.mimeType.startsWith("audio/")))
+  );
 }
 
 /**

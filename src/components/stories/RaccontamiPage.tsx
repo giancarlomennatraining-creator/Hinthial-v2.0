@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { AudioVideoRecorder } from "@/components/media/AudioVideoRecorder";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { PageHelp } from "@/components/help/PageHelp";
@@ -14,7 +15,14 @@ import {
   storyProgress,
   type StoryTheme,
 } from "@/domain/stories/questions";
-import { appendFollowUp, listStories, saveStory, type Story } from "@/domain/stories/repository";
+import {
+  appendFollowUp,
+  listStories,
+  loadVoiceStory,
+  saveStory,
+  saveVoiceStory,
+  type Story,
+} from "@/domain/stories/repository";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
@@ -25,7 +33,8 @@ type Current = { theme: StoryTheme; question: string };
  * "Raccontami": Hinthia ti fa una domanda alla volta su ciò che sai e che non sta in nessun documento. Ogni risposta
  * diventa una nota cifrata in Archivio (categoria "Racconti") che puoi far arrivare a chi vuoi con "Fallo arrivare a…".
  * Con il consenso a Hinthia, dopo la risposta arriva anche una domanda di approfondimento (v. app/api/ai/follow-up):
- * senza, restano le domande scritte e nulla lascia il dispositivo.
+ * senza, restano le domande scritte e nulla lascia il dispositivo. Si può anche rispondere a voce: la registrazione diventa
+ * un racconto audio cifrato, senza trascrizione e quindi senza domanda di approfondimento.
  */
 export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useSupabase();
@@ -35,6 +44,8 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
   const [stories, setStories] = useState<Story[] | null>(null);
   const [current, setCurrent] = useState<Current | null>(null);
   const [answer, setAnswer] = useState("");
+  // Scrivere o parlare: la scelta resta per le domande successive.
+  const [mode, setMode] = useState<"write" | "voice">("write");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,6 +123,26 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
     }
   }
 
+  async function handleSaveVoice(recording: File) {
+    if (!current) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Devi essere autenticato.");
+
+      const id = await saveVoiceStory(supabase, masterKey, user.id, { question: current.question, recording });
+      const loaded = await refresh();
+      setSaved(loaded.find((s) => s.id === id) ?? null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossibile salvare il racconto a voce.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleAddFollowUp() {
     if (!saved || !followUp || followUp.status !== "ready" || !followUpAnswer.trim()) return;
     setSaving(true);
@@ -156,6 +187,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
           title="Raccontami"
           tips={[
             { icon: "📖", text: "Ogni risposta diventa una nota nella categoria Racconti dell'Archivio." },
+            { icon: "🎙️", text: "Puoi anche rispondere a voce: la registrazione resta cifrata e la ascolti solo tu, finché non la fai arrivare a qualcuno." },
             { icon: "💌", text: "Da ogni racconto puoi aprire una capsula per farlo arrivare a una persona." },
             { icon: "🤖", text: "Con Hinthia attiva, dopo la risposta ti faccio una domanda in più per ricordare un dettaglio. Senza, le domande sono quelle scritte." },
             { icon: "🔑", text: "Non scrivere password: per quelle servono altri posti." },
@@ -211,28 +243,74 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
                 <h2 className="mt-1 font-heading text-xl leading-snug font-extrabold text-zinc-900 dark:text-zinc-100">{current.question}</h2>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{current.theme.intro}</p>
               </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="story-answer" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                  La tua risposta
-                </label>
-                <textarea
-                  id="story-answer"
-                  rows={7}
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Scrivi come parleresti: non serve che sia bello."
-                  className={INPUT_FIELD}
-                />
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {canFollowUp
-                    ? "Salvandola, Hinthia la legge per farti una domanda in più. Il racconto resta cifrato."
-                    : "Resta cifrata e la vedi solo tu. Per ricevere anche una domanda di approfondimento, attiva Hinthia in Impostazioni."}
-                </p>
+              <div role="group" aria-label="Come vuoi rispondere" className="flex w-fit gap-1 rounded-full border border-zinc-200 p-1 dark:border-zinc-800">
+                {(
+                  [
+                    ["write", "✍️ Scrivi"],
+                    ["voice", "🎙️ Racconta a voce"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={mode === value}
+                    disabled={saving}
+                    onClick={() => setMode(value)}
+                    className={cn(
+                      "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-50",
+                      mode === value ? "bg-brand text-white" : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
+              {mode === "voice" ? (
+                <div className="flex flex-col gap-2">
+                  <AudioVideoRecorder
+                    kinds={["audio"]}
+                    onRecorded={handleSaveVoice}
+                    title="Racconta a voce"
+                    description="Parla come se avessi davanti chi lo ascolterà. La registrazione resta sul tuo dispositivo finché non la salvi, poi è cifrata come le note."
+                    confirmLabel="Salva il racconto"
+                  />
+                  {saving ? (
+                    <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Salvataggio…
+                    </p>
+                  ) : null}
+                  {canFollowUp ? (
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Hinthia non ascolta le registrazioni: la domanda in più arriva solo con le risposte scritte.
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="story-answer" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                    La tua risposta
+                  </label>
+                  <textarea
+                    id="story-answer"
+                    rows={7}
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    placeholder="Scrivi come parleresti: non serve che sia bello."
+                    className={INPUT_FIELD}
+                  />
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {canFollowUp
+                      ? "Salvandola, Hinthia la legge per farti una domanda in più. Il racconto resta cifrato."
+                      : "Resta cifrata e la vedi solo tu. Per ricevere anche una domanda di approfondimento, attiva Hinthia in Impostazioni."}
+                  </p>
+                </div>
+              )}
               <div className="flex flex-wrap gap-3">
-                <button type="button" onClick={handleSave} disabled={saving || !answer.trim()} className={`${BTN_PRIMARY} disabled:opacity-50`}>
-                  {saving ? "Salvataggio…" : "Salva il racconto"}
-                </button>
+                {mode === "write" ? (
+                  <button type="button" onClick={handleSave} disabled={saving || !answer.trim()} className={`${BTN_PRIMARY} disabled:opacity-50`}>
+                    {saving ? "Salvataggio…" : "Salva il racconto"}
+                  </button>
+                ) : null}
                 <button type="button" onClick={() => goNext(undefined, true)} disabled={saving} className={`${BTN_SECONDARY} disabled:opacity-50`}>
                   Un&apos;altra domanda
                 </button>
@@ -241,7 +319,9 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
           ) : saved ? (
             <>
               <div>
-                <p className="text-xs font-bold tracking-wider text-green-700 uppercase dark:text-green-400">Racconto salvato</p>
+                <p className="text-xs font-bold tracking-wider text-green-700 uppercase dark:text-green-400">
+                  {saved.voice ? "Racconto a voce salvato" : "Racconto salvato"}
+                </p>
                 <h2 className="mt-1 font-heading text-xl leading-snug font-extrabold text-zinc-900 dark:text-zinc-100">{saved.question}</h2>
               </div>
 
@@ -310,16 +390,54 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
                   <Link href={`/archive/${story.id}`} className="truncate text-sm font-medium text-zinc-900 hover:text-brand dark:text-zinc-100">
                     {story.question}
                   </Link>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">raccontato il {formatDate(story.createdAt)}</span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {story.voice ? "🎙️ a voce · " : ""}raccontato il {formatDate(story.createdAt)}
+                  </span>
                 </span>
-                <Link href={starterHref("documento", story.id)} className="shrink-0 text-xs font-semibold text-brand hover:underline">
-                  Fallo arrivare a…
-                </Link>
+                <span className="flex shrink-0 flex-wrap items-center gap-3">
+                  {story.voice ? <VoicePlayer story={story} masterKey={masterKey} /> : null}
+                  <Link href={starterHref("documento", story.id)} className="text-xs font-semibold text-brand hover:underline">
+                    Fallo arrivare a…
+                  </Link>
+                </span>
               </li>
             ))}
           </ul>
         </section>
       ) : null}
     </div>
+  );
+}
+
+/** "Ascolta": il racconto a voce si decifra solo quando lo si chiede, poi suona qui. */
+function VoicePlayer({ story, masterKey }: { story: Story; masterKey: CryptoKey }) {
+  const supabase = useSupabase();
+  const [url, setUrl] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "loading" | "failed">("idle");
+
+  useEffect(
+    () => () => {
+      if (url) URL.revokeObjectURL(url);
+    },
+    [url],
+  );
+
+  async function load() {
+    setStatus("loading");
+    try {
+      setUrl(URL.createObjectURL(await loadVoiceStory(supabase, masterKey, story)));
+      setStatus("idle");
+    } catch {
+      setStatus("failed");
+    }
+  }
+
+  if (url) {
+    return <audio src={url} controls autoPlay aria-label={`Racconto a voce: ${story.question}`} className="h-9 w-56 max-w-full" />;
+  }
+  return (
+    <button type="button" onClick={load} disabled={status === "loading"} className="text-xs font-semibold text-brand hover:underline disabled:opacity-50">
+      {status === "loading" ? "Apro…" : status === "failed" ? "Non riesco ad aprirlo: riprova" : "▶ Ascolta"}
+    </button>
   );
 }

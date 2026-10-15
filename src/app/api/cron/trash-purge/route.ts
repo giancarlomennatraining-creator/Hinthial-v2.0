@@ -16,6 +16,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const summary = await runTrashPurge(admin);
     // Le copie cifrate dei link di condivisione scaduti o revocati (v. lib/shares/purge.ts): stesso passaggio giornaliero.
     const shares = await runSharesPurge(admin).catch(() => ({ purged: 0, failed: -1 }));
+    // Come per Eredità digitale: una riga di soli conteggi a ogni giro riuscito.
+    console.info(`[cron/trash-purge] ok: ${JSON.stringify({ ...summary, shares })}`);
     return NextResponse.json({ ok: true, ...summary, shares });
   } catch (err) {
     console.error("[cron/trash-purge] failed:", err);

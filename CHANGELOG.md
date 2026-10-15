@@ -10,6 +10,45 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (107)
+
+### Raccontami a voce
+
+**Cosa fa:**
+- **Si può rispondere parlando.** Sopra la risposta c'è la scelta "✍️ Scrivi" o "🎙️ Racconta a voce". A voce si registra con il microfono, si riascolta e poi "Salva il racconto"; se non va bene, "Scarta e rifai".
+- **La registrazione diventa un racconto audio cifrato** nella categoria "Racconti" dell'Archivio, con la domanda come titolo. Resta sul dispositivo finché non la salvi, poi è cifrata come le note: la ascolti solo tu, finché non la fai arrivare a qualcuno con "Fallo arrivare a…".
+- **Nell'elenco "I tuoi racconti"** quelli a voce sono segnati "🎙️ a voce". "▶ Ascolta" li decifra al momento e li fa suonare lì.
+- Contano come domande raccontate, anche per il passo "Racconta un primo ricordo" dell'Onboarding.
+- **Niente trascrizione,** per scelta: la voce non lascia mai il dispositivo in chiaro. Per questo Hinthia non fa la domanda di approfondimento sulle risposte a voce, e la pagina lo dice a chi ha il consenso attivo.
+- La scelta tra scrivere e parlare resta per le domande successive.
+
+**Note tecniche:**
+- `domain/stories/repository.ts`:
+  - `saveVoiceStory` usa `uploadDocument` senza lettura del contenuto (`extraction: { text: null, attempted: false }`);
+  - `loadVoiceStory` restituisce un `Blob` decifrato;
+  - `listStories` include gli `audio/*` della categoria, con il nuovo campo `Story.voice`.
+- `AudioVideoRecorder` ha una nuova prop `kinds` (di default audio e video); Raccontami la usa con il solo audio.
+- `domain/onboarding/steps.ts`: il passo "story" conta anche gli audio in "Racconti".
+- Nessuna migrazione. Test:
+  - unit: `onboarding-steps.test.ts` (un audio conta come racconto);
+  - e2e: nuovo caso in `raccontami.spec.ts`, che registra con il microfono finto di Playwright, salva, verifica il segno "a voce", il conteggio e "Ascolta", e che la voce resta scelta per la domanda dopo.
+
+---
+
+## 2026-10-15 (106)
+
+### I controlli giornalieri lasciano traccia nei log
+
+**Cosa fa:**
+- Nessun cambiamento per chi usa Hinthial.
+- Il controllo giornaliero dell'Eredità digitale e la pulizia del Cestino ora scrivono una riga nei log di Vercel ogni volta che finiscono bene. Così basta aprire **Logs** per sapere che sono girati, senza dover chiamare il cron a mano.
+- Esempio: `[cron/digital-legacy] ok: 3 account controllati, 0 cambi di fase`.
+
+**Note tecniche:**
+- `console.info` in `app/api/cron/digital-legacy/route.ts` e `app/api/cron/trash-purge/route.ts`, con i soli conteggi (`usersChecked`, `transitions`; `purged`, `failures`, `shares`). Nessun identificativo né dato personale. Gli errori restavano già in `console.error`.
+
+---
+
 ## 2026-10-15 (105)
 
 ### Test e2e più stabili
