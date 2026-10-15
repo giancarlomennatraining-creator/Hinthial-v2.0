@@ -115,6 +115,15 @@ export default async function Home() {
           </section>
         )}
       </main>
+      <footer className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 pb-10 text-sm text-[var(--lp-muted)] sm:px-10">
+        <span>Hinthial</span>
+        <Link href="/privacy" className="hover:text-[var(--lp-fg)] hover:underline">
+          Informativa privacy
+        </Link>
+        <Link href="/termini" className="hover:text-[var(--lp-fg)] hover:underline">
+          Termini d&apos;uso
+        </Link>
+      </footer>
     </div>
   );
 }

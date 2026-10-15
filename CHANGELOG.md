@@ -10,6 +10,26 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (114)
+
+### Informativa privacy e termini d'uso
+
+**Cosa fa:**
+- **Due pagine nuove, leggibili senza accesso:** `/privacy` e `/termini`.
+  - L'informativa dice prima cosa Hinthial non può vedere, perché è cifrato, e poi cosa vede e perché: dati dell'account, date e collegamenti, sicurezza degli accessi, e il testo mandato ad Anthropic solo se attivi Hinthia.
+  - Dice anche con chi si condividono i dati (Supabase, Vercel, Resend, Anthropic), per quanto tempo, quali sono i diritti e dove esercitarli dentro l'app, e che i cookie sono solo tecnici.
+  - I termini mettono in primo piano due cose: la master password è solo tua, e senza recovery key i contenuti non si recuperano; l'Eredità digitale non è un testamento e non può garantire la consegna in ogni circostanza.
+- **La registrazione chiede di accettarli**, con una casella obbligatoria e i link alle due pagine. Il server registra quale versione è stata accettata e quando.
+- I link alle due pagine sono in fondo alla pagina iniziale e in Impostazioni > Privacy.
+- **Da completare prima del lancio:** nome del titolare, indirizzo ed email di contatto, in `src/content/legal.ts`. Finché mancano, le pagine li mostrano evidenziati in giallo. Il testo è una bozza da far rivedere a un legale: tocca dati delicati e il caso di morte.
+
+**Note tecniche:**
+- `content/legal.ts`: `LEGAL` con titolare, contatto, data e `version`, più `isPlaceholder`. `components/legal/LegalPage.tsx`: `LegalPage`, `LegalSection` e `LegalValue`, che evidenzia ciò che va ancora compilato.
+- `signUp` rifiuta la registrazione senza `acceptTerms`. In `user_metadata` salva `terms_version` e `terms_accepted_at`, senza migrazione.
+- e2e: `launch-basics.spec` (pagine raggiungibili e casella obbligatoria); `auth-shell.spec` spunta la casella.
+
+---
+
 ## 2026-10-15 (113)
 
 ### Email di benvenuto

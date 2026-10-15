@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { fetchAccountVisibilitySummary } from "@/domain/privacy/repository";
@@ -102,6 +103,11 @@ export function PrivacyPanel({
           Non una dichiarazione generica: questi sono i dati reali e attuali del tuo account. Il
           resto — il contenuto vero e proprio di ciò che ci affidi — resta cifrato sul tuo
           dispositivo prima ancora di lasciarlo.
+        </p>
+        <p className="mt-2 text-sm">
+          <Link href="/privacy" target="_blank" className="font-medium text-brand hover:underline">
+            Leggi l&apos;informativa privacy completa
+          </Link>
         </p>
       </div>
 

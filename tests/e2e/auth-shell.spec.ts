@@ -45,6 +45,7 @@ test("la registrazione crea un account", async ({ page }) => {
   await page.getByLabel("Email").fill(user.email);
   await page.getByLabel("Password", { exact: true }).fill(user.password);
   await page.getByLabel("Conferma password").fill(user.password);
+  await page.getByRole("checkbox", { name: /accetto i termini d'uso/ }).check();
   await page.getByRole("button", { name: "Crea account" }).click();
 
   // Two valid outcomes depending on whether "Confirm email" is enabled: an immediate session or a redirect to the dedicated "check your email" page.
