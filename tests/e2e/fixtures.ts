@@ -40,8 +40,21 @@ export const test = base.extend({
     await page.addLocatorHandler(dismissDashboardUnlock, async () => {
       if (/\/dashboard(\?|$)/.test(page.url())) await dismissDashboardUnlock.click({ timeout: 3_000 }).catch(() => {});
     }, { noWaitAfter: true }); // altrove il gestore non fa nulla e il pulsante resta: non va atteso che sparisca
+
+    // Ogni test è anche un controllo della Content-Security-Policy (v. src/lib/security/csp.ts): se il browser blocca uno
+    // script, un worker, un'immagine o una connessione, il test fallisce anche se la pagina sembrava funzionare.
+    const cspViolations: string[] = [];
+    page.on("console", (message) => {
+      const text = message.text();
+      if (/Content Security Policy|Refused to (load|execute|connect|create|frame|apply|evaluate|compile)/i.test(text)) {
+        cspViolations.push(text);
+      }
+    });
+
     // eslint-disable-next-line react-hooks/rules-of-hooks -- Playwright's fixture callback param, not React's use() hook.
     await use(page);
+
+    expect(cspViolations, "Il browser ha bloccato qualcosa per la Content-Security-Policy").toEqual([]);
   },
 });
 

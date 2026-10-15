@@ -25,8 +25,13 @@ const OCR_LANGUAGES = "ita";
 /** Registrata con ogni risultato: va cambiata quando cambiano motore o lingua, perché lo stesso file potrebbe leggersi diversamente. */
 const OCR_ENGINE_VERSION = "tesseract.js-7-ita-lstm";
 
-/** Serviti da noi, non dalla CDN di default di tesseract.js --- copiati in `public/ocr/` prima di dev/build/e2e. */
+/**
+ * Serviti da noi, non dalla CDN di default di tesseract.js --- copiati in `public/ocr/` prima di dev/build/e2e.
+ * `workerBlobURL: false`: il worker parte direttamente da /ocr/worker.min.js invece che da un blob:, che erediterebbe la
+ * CSP della pagina e non potrebbe caricare il motore (v. lib/security/csp.ts).
+ */
 const OCR_PATHS = {
+  workerBlobURL: false,
   workerPath: "/ocr/worker.min.js",
   corePath: "/ocr/tesseract-core-simd-lstm.wasm.js",
   langPath: "/ocr/lang",

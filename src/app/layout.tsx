@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Baloo_2, Caveat, Geist_Mono, Manrope, Work_Sans } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -66,7 +67,11 @@ export const viewport: Viewport = {
   themeColor: "#2b4fc4",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Il nonce della CSP (v. proxy.ts): senza, i due script inline qui sotto sarebbero bloccati. Leggere gli header rende
+  // ogni pagina dinamica, ed è voluto: un nonce vale per una sola richiesta.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html
       lang="it"
@@ -74,11 +79,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${manrope.variable} ${workSans.variable} ${geistMono.variable} ${baloo2.variable} ${caveat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Script id="theme-init" strategy="beforeInteractive">
+        <Script id="theme-init" strategy="beforeInteractive" nonce={nonce}>
           {THEME_INIT_SCRIPT}
         </Script>
         {children}
-        <Script id="sw-register" strategy="afterInteractive">
+        <Script id="sw-register" strategy="afterInteractive" nonce={nonce}>
           {SW_REGISTER_SCRIPT}
         </Script>
       </body>

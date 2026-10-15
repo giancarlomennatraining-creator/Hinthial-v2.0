@@ -10,6 +10,30 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (111)
+
+### Header di sicurezza e Content-Security-Policy
+
+**Cosa fa:**
+- Hinthial decifra tutto nel browser, quindi uno script estraneo nella pagina potrebbe leggere la master key. Ora il browser esegue solo gli script che Hinthial stessa ha inviato con quella pagina: tutto il resto viene bloccato.
+- Nessun sito può mostrare Hinthial dentro un proprio riquadro, per ingannare l'utente nel cliccare.
+- Fotocamera e microfono restano permessi solo a Hinthial, per registrare capsule e racconti. Posizione, pagamenti, USB e cattura dello schermo sono spenti.
+- Per chi usa l'app non cambia nulla di visibile.
+
+**Note tecniche:**
+- `lib/security/csp.ts`: `buildContentSecurityPolicy` e `createNonce`.
+  - `script-src` usa il nonce della richiesta, `'strict-dynamic'` e `'wasm-unsafe-eval'` (l'OCR è WebAssembly); `'unsafe-eval'` solo in sviluppo.
+  - `connect-src`, `img-src` e `media-src` sono limitati a `'self'` più l'origine di Supabase. `blob:` serve per i file decifrati, `frame-ancestors 'none'` vieta i riquadri e `object-src 'none'` i plugin.
+  - `upgrade-insecure-requests` solo quando la pagina arriva in HTTPS.
+- `proxy.ts` genera il nonce. `updateSession` lo passa al render anche quando il rinnovo della sessione riscrive i cookie.
+- Il layout radice legge `x-nonce` e lo dà ai due script inline (tema e service worker). Leggere gli header rende dinamiche tutte le pagine, ed è voluto: un nonce vale per una sola richiesta.
+- `next.config.ts`: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` e `Permissions-Policy`. HSTS solo in produzione su Vercel.
+- L'OCR carica il worker da `/ocr/worker.min.js` (`workerBlobURL: false`) invece che da un `blob:`, che avrebbe ereditato la CSP della pagina. `/ocr` e `sw.js` sono esclusi dal proxy.
+- **Tutti gli e2e sono anche un controllo della CSP:** la fixture comune fa fallire il test se il browser segnala un blocco. Verificato anche al contrario: un'immagine esterna inserita di proposito fa fallire il test.
+- Unit: `csp.test.ts`, 7 test. e2e: header e nonce diverso a ogni richiesta in `launch-basics.spec`.
+
+---
+
 ## 2026-10-15 (110)
 
 ### Le scadenze dei documenti in Scadenze, e Raccontami nella barra in basso
