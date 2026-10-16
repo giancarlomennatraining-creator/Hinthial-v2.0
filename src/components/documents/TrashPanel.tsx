@@ -6,6 +6,7 @@ import { deleteDocument, listTrashedDocuments, restoreDocuments } from "@/domain
 import { daysRemaining } from "@/domain/documents/trash";
 import { formatDate } from "@/lib/format";
 import { ArchiveTabs } from "@/components/documents/ArchiveTabs";
+import { StorageUsageMeter } from "@/components/ui/StorageUsageMeter";
 import { PageHelp } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -207,6 +208,9 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
       </div>
 
       <ArchiveTabs />
+
+      {/* Qui lo spazio si libera: la barra si aggiorna a ogni eliminazione definitiva. */}
+      <StorageUsageMeter refreshKey={documents.length} />
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
+import { assertStorageRoom, quotaErrorOrNull } from "@/lib/storage/quota";
 
 /**
  * Private Storage bucket holding encrypted capsule attachment payloads
@@ -27,6 +28,8 @@ export async function uploadEncryptedCapsulePayload(
   path: string,
   serializedEnvelope: string,
 ): Promise<void> {
+  // Lo spazio per utente (v. lib/storage/quota.ts).
+  await assertStorageRoom(supabase, serializedEnvelope.length);
   const { error } = await supabase.storage
     .from(ENCRYPTED_CAPSULES_BUCKET)
     .upload(path, new Blob([serializedEnvelope], { type: "application/json" }), {
@@ -34,7 +37,7 @@ export async function uploadEncryptedCapsulePayload(
     });
 
   if (error) {
-    throw new Error(`Impossibile caricare l'allegato cifrato: ${error.message}`);
+    throw (await quotaErrorOrNull(supabase, error)) ?? new Error(`Impossibile caricare l'allegato cifrato: ${error.message}`);
   }
 }
 

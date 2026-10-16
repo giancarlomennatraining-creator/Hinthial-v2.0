@@ -7,6 +7,7 @@ import { updateProfile } from "@/domain/profile/repository";
 import { TextField } from "@/components/ui/TextField";
 import { AvatarUploadForm } from "@/components/settings/AvatarUploadForm";
 import { BTN_PRIMARY } from "@/components/ui/styles";
+import { StorageUsageMeter } from "@/components/ui/StorageUsageMeter";
 
 function translateEmailChangeError(message: string): string {
   const normalized = message.toLowerCase();
@@ -193,6 +194,11 @@ export function UserInfoPanel({
             {nameSaving ? "Salvataggio…" : "Salva"}
           </button>
         </form>
+      </section>
+
+      <section className="flex flex-col gap-4 border-t border-zinc-200 pt-8 dark:border-zinc-800">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Spazio</h2>
+        <StorageUsageMeter />
       </section>
 
       <section className="flex flex-col gap-4 border-t border-zinc-200 pt-8 dark:border-zinc-800">
