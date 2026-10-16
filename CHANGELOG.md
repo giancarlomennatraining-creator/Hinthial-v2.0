@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-16 (118)
+
+### Cornice del caricamento intera
+
+**Cosa fa:**
+- In "Aggiungi il contenuto", la cornice blu che compare attorno al riquadro di caricamento quando è attivo ora è intera. Prima il lato superiore era tagliato.
+
+**Note tecniche:**
+- I passi del modulo si aprono con un'animazione: `.step-inner` ha `overflow: hidden`, e il contenuto partiva attaccato al bordo superiore. Il contorno di focus del riquadro (`outline` 2.5px, a 2px di distanza) usciva in alto e veniva tagliato; ai lati e in basso c'era già il margine.
+- `AccordionStep` aggiunge `pt-1.5` (6px) al contenuto di ogni passo, così vale anche per qualunque campo che si trovi in cima a un passo.
+- e2e del caricamento: 5/5.
+
+---
+
 ## 2026-10-16 (117)
 
 ### Schede dell'Archivio senza la doppia freccia
