@@ -209,6 +209,24 @@ export type Database = {
           },
         ];
       };
+      ai_daily_usage: {
+        Row: {
+          user_id: string;
+          day: string;
+          calls: number;
+        };
+        Insert: {
+          user_id: string;
+          day: string;
+          calls?: number;
+        };
+        Update: {
+          user_id?: string;
+          day?: string;
+          calls?: number;
+        };
+        Relationships: [];
+      };
       audit_events: {
         Row: {
           id: string;
@@ -1459,6 +1477,10 @@ export type Database = {
       log_failed_login_attempt: {
         Args: { target_email: string };
         Returns: undefined;
+      };
+      consume_ai_call: {
+        Args: { daily_limit: number };
+        Returns: number;
       };
       respond_to_guardian_verification_request: {
         Args: { request_id: string; response_value: GuardianVerificationResponseColumn };

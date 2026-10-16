@@ -6,6 +6,7 @@ import { createClaudeAnalysisProvider } from "@/lib/ai/claude-analysis-provider"
 import { MAX_BLOCK_CHARS, MAX_BLOCKS_PER_DOCUMENT } from "@/domain/ai/analysis/blocks";
 import { isAnalysisDocumentType } from "@/domain/ai/analysis/schemas";
 import { AnalysisOutputError } from "@/domain/ai/analysis/types";
+import { consumeAiCall } from "@/lib/ai/daily-quota";
 
 /**
  * FASE 22: unico punto di contatto tra Hinthial e Anthropic per l'analisi vera di un documento (non solo la Chat,
@@ -147,6 +148,10 @@ export async function POST(request: NextRequest) {
       { status: 503 },
     );
   }
+
+  // Il tetto giornaliero (v. lib/ai/daily-quota.ts): dopo ogni altro controllo, subito prima di chiamare Claude.
+  const quotaResponse = await consumeAiCall(supabase);
+  if (quotaResponse) return quotaResponse;
 
   const provider = createClaudeAnalysisProvider(apiKey);
   const auditMetadata = { category: categoryName, scope: scope as "category" | "temporary" | "once", reread: reread === true };

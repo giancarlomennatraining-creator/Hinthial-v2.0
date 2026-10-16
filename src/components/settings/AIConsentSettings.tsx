@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { cn } from "@/lib/utils";
+import { AIDailyUsage } from "@/components/settings/AIDailyUsage";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { listCategories, setCategoryAIExtractionEnabled } from "@/domain/categories/repository";
 import { sortAlphabetically } from "@/lib/utils";
@@ -139,6 +140,8 @@ export function AIConsentSettings() {
           {masterEnabled ? "Disattiva" : "Attiva"}
         </button>
       </div>
+
+      {masterEnabled ? <AIDailyUsage /> : null}
 
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">

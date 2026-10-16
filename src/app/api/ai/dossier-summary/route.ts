@@ -4,6 +4,7 @@ import { logAuditEvent } from "@/lib/audit/log-event";
 import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
 import { parseSummaryRequest } from "@/domain/ai/dossier-summary";
 import { summarizeDossierWithClaude } from "@/lib/ai/claude-dossier-summary";
+import { consumeAiCall } from "@/lib/ai/daily-quota";
 
 /**
  * Il riassunto di un fascicolo: Hinthia riassume le sintesi che ha già scritto sui documenti, non rilegge i file. Come
@@ -77,6 +78,10 @@ export async function POST(request: NextRequest) {
   if (!apiKey) {
     return NextResponse.json({ error: "Hinthia non è ancora configurata su questo server." }, { status: 503 });
   }
+
+  // Il tetto giornaliero (v. lib/ai/daily-quota.ts): dopo ogni altro controllo, subito prima di chiamare Claude.
+  const quotaResponse = await consumeAiCall(supabase);
+  if (quotaResponse) return quotaResponse;
 
   try {
     const summary = await summarizeDossierWithClaude(apiKey, { title: parsed.title, documents });

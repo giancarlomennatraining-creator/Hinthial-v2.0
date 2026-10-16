@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { authenticate, readJsonBody } from "@/lib/http/api-guards";
 import { logAuditEvent } from "@/lib/audit/log-event";
+import { consumeAiCall } from "@/lib/ai/daily-quota";
 
 /**
  * "Raccontami": dopo una risposta, Hinthia fa UNA domanda di approfondimento. È uno dei pochi punti in cui il testo di
@@ -48,6 +49,10 @@ export async function POST(request: NextRequest) {
   if (!apiKey) {
     return NextResponse.json({ error: "Hinthia non è ancora configurata su questo server." }, { status: 503 });
   }
+
+  // Il tetto giornaliero (v. lib/ai/daily-quota.ts): dopo ogni altro controllo, subito prima di chiamare Claude.
+  const quotaResponse = await consumeAiCall(supabase);
+  if (quotaResponse) return quotaResponse;
 
   try {
     const client = new Anthropic({ apiKey });

@@ -115,6 +115,8 @@ vi.mock("@/lib/db/supabase/server", () => ({
       };
       return builder;
     },
+    // Il tetto giornaliero (v. lib/ai/daily-quota.ts): qui sempre sotto il tetto, il caso del tetto ha i suoi test.
+    rpc: async () => ({ data: 1, error: null }),
   }),
 }));
 

@@ -10,6 +10,32 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-15 (115)
+
+### Tetto giornaliero alle richieste a Hinthia
+
+**Cosa fa:**
+- Ogni persona può fare al massimo **300 richieste a Hinthia al giorno**: domande di Raccontami, letture di documenti, riassunti di fascicoli, chat dell'Aiuto. La chiave di Claude è una sola e la paga chi gestisce Hinthial: senza tetto, un solo utente poteva far crescere la spesa senza limite.
+- Leggere un documento lungo usa più richieste, una per parte più la sintesi finale. Una richiesta rifiutata per altri motivi (consenso spento, testo troppo lungo) non conta.
+- Al tetto, Hinthia lo dice ("Hai usato tutte le 300 richieste a Hinthia di oggi. Riprende domani: quello che hai già salvato resta com'è.") e non chiama Claude. Il conteggio si azzera a mezzanotte, ora italiana.
+- In Impostazioni > Hinthia, con Hinthia attiva, compare "Oggi: 12 richieste a Hinthia su 300 al giorno".
+- Il tetto si cambia con la variabile d'ambiente `AI_DAILY_CALL_LIMIT`, senza toccare il codice.
+
+**Note tecniche:**
+- Migrazione **additiva** `20261017000000_ai_daily_usage.sql`:
+  - tabella `ai_daily_usage (user_id, day, calls)`, che l'utente può solo leggere, e solo la propria riga;
+  - funzione `consume_ai_call(daily_limit)` (security definer), che conta e si ferma al tetto in un solo `insert … on conflict … where`, così due richieste contemporanee non lo superano insieme. Restituisce le chiamate usate, oppure -1.
+- `lib/ai/daily-quota.ts`: `consumeAiCall` è chiamato dalle quattro rotte di `/api/ai`, dopo consenso, validazione e chiave, subito prima di Claude.
+  - Se la funzione non esiste ancora (migrazione non applicata), Hinthia continua e lo scrive nel log.
+  - Per ogni altro errore del database risponde 503: senza contatore non si chiama Claude.
+- Nuova rotta `GET /api/ai/usage` (usate e tetto) per il pannello, componente `AIDailyUsage`.
+- Test:
+  - unit `ai-daily-quota.test.ts` (7);
+  - integrazione `ai-daily-usage.integration.test.ts` sul database vero: conteggio fino al tetto, 12 richieste contemporanee con tetto 5 ne fanno passare esattamente 5, la riga non si vede e non si scrive da altri;
+  - e2e `ai-daily-quota.spec.ts`: a tetto raggiunto 429 senza chiamare Claude, e la riga nelle Impostazioni.
+
+---
+
 ## 2026-10-15 (114)
 
 ### Informativa privacy e termini d'uso
