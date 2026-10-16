@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Baloo_2, Caveat, Geist_Mono, Manrope, Work_Sans } from "next/font/google";
 import Script from "next/script";
+import { ErrorReporter } from "@/components/errors/ErrorReporter";
 import "./globals.css";
 
 /** Applica il tema chiaro/scuro/sistema (v. lib/theme.ts) prima del primo paint: deve restare uno script inline autonomo, gira prima che qualunque modulo dell'app sia caricato. */
@@ -82,6 +83,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <Script id="theme-init" strategy="beforeInteractive" nonce={nonce}>
           {THEME_INIT_SCRIPT}
         </Script>
+        <ErrorReporter />
         {children}
         <Script id="sw-register" strategy="afterInteractive" nonce={nonce}>
           {SW_REGISTER_SCRIPT}

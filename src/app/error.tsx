@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { StatusScreen } from "@/components/layout/StatusScreen";
 import { BTN_PRIMARY } from "@/components/ui/styles";
+import { reportUnknownError } from "@/lib/errors/report-client";
 
 /**
  * Un errore imprevisto in una pagina. Prima di tutto rassicura: i contenuti sono cifrati e salvati, un errore di
@@ -13,6 +14,8 @@ import { BTN_PRIMARY } from "@/components/ui/styles";
 export default function Error({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   useEffect(() => {
     console.error(error);
+    // Un errore preso da questa pagina non arriva all'ascoltatore globale: lo si segnala qui (v. lib/errors/).
+    reportUnknownError(error, error.digest);
   }, [error]);
 
   return (

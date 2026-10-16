@@ -26,6 +26,53 @@ function formattedToday(): string {
   return new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 }
 
+export interface ErrorDigestRow {
+  source: "server" | "client" | "csp";
+  kind: string;
+  message: string;
+  path: string | null;
+  digest: string | null;
+  count: number;
+  first_seen: string;
+  last_seen: string;
+}
+
+const ERROR_SOURCE_LABEL: Record<ErrorDigestRow["source"], string> = {
+  server: "Server",
+  client: "Browser",
+  csp: "Bloccato dalla CSP",
+};
+
+/**
+ * Il riepilogo giornaliero degli errori nuovi, per chi gestisce Hinthial (v. lib/errors/digest.ts). Tutto ciò che
+ * arriva dagli errori si passa da escapeHtml: un messaggio d'errore può contenere qualunque cosa.
+ */
+export function errorDigestEmail(rows: ErrorDigestRow[]): { subject: string; html: string } {
+  const total = rows.reduce((sum, r) => sum + r.count, 0);
+  const time = (iso: string) =>
+    new Date(iso).toLocaleString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Rome" });
+  const items = rows
+    .map(
+      (r) => `
+        <li style="margin-bottom:14px;">
+          <strong>${escapeHtml(ERROR_SOURCE_LABEL[r.source])} · ${escapeHtml(r.kind)}</strong> — ${r.count === 1 ? "1 volta" : `${r.count} volte`}<br />
+          <span>${escapeHtml(r.message)}</span><br />
+          <span style="font-size:12px; color:#71717a;">${r.path ? `${escapeHtml(r.path)} · ` : ""}dalle ${time(r.first_seen)} alle ${time(r.last_seen)}${r.digest ? ` · codice ${escapeHtml(r.digest)}` : ""}</span>
+        </li>`,
+    )
+    .join("");
+
+  return {
+    subject:
+      rows.length === 1 ? "Hinthial: 1 errore nuovo in produzione" : `Hinthial: ${rows.length} errori nuovi in produzione`,
+    html: emailShell(`
+      <p>Da ieri ${rows.length === 1 ? "è comparso un errore nuovo" : `sono comparsi ${rows.length} errori diversi`}, ${total === 1 ? "una volta" : `${total} volte in tutto`}:</p>
+      <ul style="padding-left:20px;">${items}</ul>
+      <p style="font-size:12px; color:#71717a;">Nessun dato delle persone: solo tipo, messaggio ripulito e pagina. Il codice è quello che si ritrova nei log di Vercel.</p>
+    `),
+  };
+}
+
 /**
  * Il benvenuto, appena confermato l'account (v. app/auth/confirm/route.ts). Tre passi e una cosa sola da non sbagliare: la
  * master password non la conosce nessuno, e senza la recovery key non si recupera. La recovery key non va mai in un'email.
