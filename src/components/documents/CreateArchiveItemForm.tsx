@@ -261,7 +261,9 @@ function AccordionStep({
         <div className="step-body" data-open={active ? "true" : "false"}>
           <div className="step-inner" inert={!active}>
             {mounted ? (
-              <div className="flex flex-col gap-4 px-5 pb-5 sm:pl-[3.75rem]">
+              // pt-1.5: .step-inner nasconde ciò che esce dai bordi (serve all'animazione di apertura), e senza un margine in
+              // alto il contorno di "elemento attivo" del primo campo (es. il riquadro di caricamento) veniva tagliato.
+              <div className="flex flex-col gap-4 px-5 pt-1.5 pb-5 sm:pl-[3.75rem]">
                 {children}
               </div>
             ) : null}

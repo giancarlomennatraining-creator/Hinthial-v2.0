@@ -209,6 +209,27 @@ export type Database = {
           },
         ];
       };
+      storage_quota_overrides: {
+        Row: {
+          user_id: string;
+          quota_bytes: number;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          quota_bytes: number;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          quota_bytes?: number;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       ai_daily_usage: {
         Row: {
           user_id: string;
@@ -1477,6 +1498,18 @@ export type Database = {
       log_failed_login_attempt: {
         Args: { target_email: string };
         Returns: undefined;
+      };
+      my_storage_usage: {
+        Args: Record<string, never>;
+        Returns: { used_bytes: number; quota_bytes: number }[];
+      };
+      storage_used_bytes: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      storage_quota_bytes: {
+        Args: Record<string, never>;
+        Returns: number;
       };
       consume_ai_call: {
         Args: { daily_limit: number };

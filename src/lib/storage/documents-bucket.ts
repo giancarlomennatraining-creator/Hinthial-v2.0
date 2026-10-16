@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
+import { assertStorageRoom, quotaErrorOrNull } from "@/lib/storage/quota";
 
 /** Private Storage bucket holding encrypted document payloads. The server only ever sees ciphertext: every object here is a serialized EncryptedEnvelope, produced client-side before upload. */
 export const ENCRYPTED_DOCUMENTS_BUCKET = "encrypted-documents";
@@ -24,6 +25,8 @@ export async function uploadEncryptedPayload(
   path: string,
   serializedEnvelope: string,
 ): Promise<void> {
+  // Lo spazio per utente (v. lib/storage/quota.ts): prima di caricare, così il rifiuto arriva con parole chiare.
+  await assertStorageRoom(supabase, serializedEnvelope.length);
   const { error } = await supabase.storage
     .from(ENCRYPTED_DOCUMENTS_BUCKET)
     .upload(path, new Blob([serializedEnvelope], { type: "application/json" }), {
@@ -31,7 +34,7 @@ export async function uploadEncryptedPayload(
     });
 
   if (error) {
-    throw new Error(`Impossibile caricare il file cifrato: ${error.message}`);
+    throw (await quotaErrorOrNull(supabase, error)) ?? new Error(`Impossibile caricare il file cifrato: ${error.message}`);
   }
 }
 

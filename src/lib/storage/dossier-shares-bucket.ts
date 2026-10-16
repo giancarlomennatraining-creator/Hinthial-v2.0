@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
+import { assertStorageRoom, quotaErrorOrNull } from "@/lib/storage/quota";
 
 /**
  * Bucket privato con le copie dei documenti condivisi, cifrate con la chiave di condivisione (quella che sta solo nel
@@ -17,12 +18,14 @@ export async function uploadShareFile(
   path: string,
   serializedEnvelope: string,
 ): Promise<void> {
+  // Lo spazio per utente (v. lib/storage/quota.ts): anche le copie condivise occupano spazio.
+  await assertStorageRoom(supabase, serializedEnvelope.length);
   const { error } = await supabase.storage
     .from(DOSSIER_SHARES_BUCKET)
     .upload(path, new Blob([serializedEnvelope], { type: "application/json" }), { upsert: false });
 
   if (error) {
-    throw new Error(`Impossibile caricare la copia condivisa: ${error.message}`);
+    throw (await quotaErrorOrNull(supabase, error)) ?? new Error(`Impossibile caricare la copia condivisa: ${error.message}`);
   }
 }
 

@@ -10,6 +10,67 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-16 (118)
+
+### Cornice del caricamento intera
+
+**Cosa fa:**
+- In "Aggiungi il contenuto", la cornice blu che compare attorno al riquadro di caricamento quando è attivo ora è intera. Prima il lato superiore era tagliato.
+
+**Note tecniche:**
+- I passi del modulo si aprono con un'animazione: `.step-inner` ha `overflow: hidden`, e il contenuto partiva attaccato al bordo superiore. Il contorno di focus del riquadro (`outline` 2.5px, a 2px di distanza) usciva in alto e veniva tagliato; ai lati e in basso c'era già il margine.
+- `AccordionStep` aggiunge `pt-1.5` (6px) al contenuto di ogni passo, così vale anche per qualunque campo che si trovi in cima a un passo.
+- e2e del caricamento: 5/5.
+
+---
+
+## 2026-10-16 (117)
+
+### Schede dell'Archivio senza la doppia freccia
+
+**Cosa fa:**
+- Nella barra Contenuti · Fascicoli · Beni · Scadenze · Cestino non compare più, a destra, la barra di scorrimento verticale con le due frecce. La riga è identica a quella delle schede delle Capsule.
+- Sul telefono, dove le cinque schede non ci stanno, la barra si scorre ancora di lato col dito, senza barra visibile.
+
+**Note tecniche:**
+- `ArchiveTabs`: la riga di fondo era un `border-b` e ogni scheda sporgeva di 1px (`-mb-px`) per coprirla con la propria sottolineatura. Dentro un contenitore `overflow-x-auto`, quel pixel faceva comparire anche lo scorrimento verticale. Ora la riga è un'ombra interna (`shadow-[inset_0_-1px_0_…]`), le schede non sporgono più, e il contenitore ha `overflow-y-hidden` e la barra di scorrimento nascosta.
+- e2e delle pagine con le schede: 12/12.
+
+---
+
+## 2026-10-16 (116)
+
+### Spazio per utente
+
+**Cosa fa:**
+- Ogni persona ha **2 GB** per i propri file cifrati: documenti, allegati delle capsule, copie dei fascicoli condivisi, foto del profilo. Un file cifrato occupa circa un terzo in più dell'originale. Lo storage lo paga chi gestisce Hinthial, e senza tetto un solo utente poteva riempirlo.
+- A spazio finito, caricare si ferma prima di partire con un messaggio che dice cosa fare: "Hai finito lo spazio a disposizione (2.0 GB). Per fare posto svuota il Cestino o elimina i contenuti che non ti servono più."
+- **Spazio usato**, con una barra:
+  - in Impostazioni > Informazioni utente;
+  - nel Cestino, dove si aggiorna a ogni eliminazione definitiva.
+  - La barra diventa arancione oltre il 90% e rossa quando lo spazio è finito.
+- I documenti già caricati continuano a funzionare anche a spazio finito: miniature e pagine lette si rigenerano lo stesso.
+- **Più spazio a una persona** senza toccare il codice: una riga in `storage_quota_overrides`, dal pannello di Supabase.
+
+**Note tecniche:**
+- Migrazione **additiva** `20261017000001_storage_quota.sql`:
+  - `storage_quota_overrides`: il service role la scrive, l'utente legge solo la propria riga;
+  - `storage_quota_bytes()`: l'eccezione dell'utente, oppure 2 GiB;
+  - `storage_used_bytes()`: somma `metadata.size` in `storage.objects` sotto la cartella dell'utente, nei quattro bucket;
+  - `my_storage_usage()`;
+  - una policy **restrittiva** `storage_quota_insert` su `storage.objects`. Le policy esistenti non cambiano: quella nuova si aggiunge, e oltre il tetto rifiuta i caricamenti anche fatti scavalcando l'app. Restano permessi miniature (`-thumb.json`), pagine lette (`-segments.json`) e foto del profilo. Si può sforare al massimo di un file, perché il controllo guarda lo spazio usato prima del caricamento.
+- `lib/storage/quota.ts`:
+  - `assertStorageRoom` controlla prima di caricare il contenuto di un documento, un allegato di capsula o una copia condivisa;
+  - `quotaErrorOrNull` traduce l'eventuale rifiuto del database in parole;
+  - se la migrazione non è applicata, l'app carica come prima.
+- `formatSize` ora arriva ai GB. Nuovo componente `ui/StorageUsageMeter`.
+- Test:
+  - unit `storage-quota.test.ts` (9);
+  - integrazione `storage-quota.integration.test.ts` su database e storage veri: conteggio dei soli propri file; oltre il tetto lo storage rifiuta un file nuovo ma accetta la miniatura; nessuno si dà più spazio da solo;
+  - e2e `storage-quota.spec.ts`: messaggio al caricamento e barra in Impostazioni.
+
+---
+
 ## 2026-10-15 (115)
 
 ### Tetto giornaliero alle richieste a Hinthia

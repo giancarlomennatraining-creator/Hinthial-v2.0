@@ -250,3 +250,16 @@ export async function setTodayAiUsage(email: string, calls: number): Promise<voi
   const { error } = await admin.from("ai_daily_usage").upsert({ user_id: userId, day, calls });
   if (error) throw new Error(`Impossibile impostare l'uso di oggi (migrazione applicata?): ${error.message}`);
 }
+
+/**
+ * Dà a un utente un tetto di spazio su misura (v. migrazione 20261017000001_storage_quota.sql, storage_quota_overrides):
+ * SOLO per provare lo spazio finito senza caricare gigabyte.
+ */
+export async function setStorageQuota(email: string, quotaBytes: number): Promise<void> {
+  const admin = adminClient();
+  const userId = await userIdByEmail(email);
+  const { error } = await admin
+    .from("storage_quota_overrides")
+    .upsert({ user_id: userId, quota_bytes: quotaBytes, note: "e2e" });
+  if (error) throw new Error(`Impossibile impostare il tetto di spazio (migrazione applicata?): ${error.message}`);
+}

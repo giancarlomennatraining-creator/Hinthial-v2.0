@@ -30,7 +30,13 @@ export function ArchiveTabs() {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Sezioni dell'Archivio" className="flex gap-1 overflow-x-auto border-b border-zinc-200 dark:border-zinc-800">
+    // Scorre in orizzontale (sul telefono le cinque schede non ci stanno), ma senza barra di scorrimento visibile. La riga
+    // di fondo è un'ombra interna, non un bordo: con il bordo ogni scheda doveva sporgere di 1px (-mb-px) per coprirlo, e
+    // quel pixel faceva comparire anche una barra di scorrimento verticale con le sue frecce.
+    <nav
+      aria-label="Sezioni dell'Archivio"
+      className="flex gap-1 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_var(--color-zinc-200)] [scrollbar-width:none] dark:shadow-[inset_0_-1px_0_var(--color-zinc-800)] [&::-webkit-scrollbar]:hidden"
+    >
       {TABS.map((tab) => {
         const active = isActive(tab, pathname);
         return (
@@ -39,7 +45,7 @@ export function ArchiveTabs() {
             href={tab.paths[0]}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "-mb-px shrink-0 rounded-t-lg border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              "shrink-0 rounded-t-lg border-b-2 px-3 py-2 text-sm font-medium transition-colors",
               active
                 ? "border-brand text-brand"
                 : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
