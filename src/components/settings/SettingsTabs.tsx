@@ -355,7 +355,7 @@ export function SettingsTabs({
       }
       if (activeSection === "archive") {
         return (
-          <FunctionBlock title="Archivio" description="Elementi visivi propri di questa sezione.">
+          <FunctionBlock title="Archivio" description="Quanto restano i documenti nel Cestino prima di sparire per sempre.">
             <TrashRetentionSettings />
           </FunctionBlock>
         );
