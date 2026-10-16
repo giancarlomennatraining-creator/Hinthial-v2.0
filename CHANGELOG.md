@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-16 (117)
+
+### Schede dell'Archivio senza la doppia freccia
+
+**Cosa fa:**
+- Nella barra Contenuti · Fascicoli · Beni · Scadenze · Cestino non compare più, a destra, la barra di scorrimento verticale con le due frecce. La riga è identica a quella delle schede delle Capsule.
+- Sul telefono, dove le cinque schede non ci stanno, la barra si scorre ancora di lato col dito, senza barra visibile.
+
+**Note tecniche:**
+- `ArchiveTabs`: la riga di fondo era un `border-b` e ogni scheda sporgeva di 1px (`-mb-px`) per coprirla con la propria sottolineatura. Dentro un contenitore `overflow-x-auto`, quel pixel faceva comparire anche lo scorrimento verticale. Ora la riga è un'ombra interna (`shadow-[inset_0_-1px_0_…]`), le schede non sporgono più, e il contenitore ha `overflow-y-hidden` e la barra di scorrimento nascosta.
+- e2e delle pagine con le schede: 12/12.
+
+---
+
 ## 2026-10-16 (116)
 
 ### Spazio per utente
