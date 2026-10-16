@@ -10,6 +10,17 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-17 (121)
+
+### Impostazioni: la descrizione giusta per il Cestino
+
+**Cosa fa:**
+- In Impostazioni → Aspetto → Archivio, sopra la durata del Cestino, la descrizione era "Elementi visivi propri di questa sezione", ma la durata del Cestino non è un elemento visivo. Ora la descrizione è "Quanto restano i documenti nel Cestino prima di sparire per sempre".
+
+**Note tecniche:** solo il testo di `FunctionBlock` in `SettingsTabs.tsx`.
+
+---
+
 ## 2026-10-16 (120)
 
 ### Le variabili mancanti in .env.example
