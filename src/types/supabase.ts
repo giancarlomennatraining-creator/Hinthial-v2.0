@@ -209,6 +209,54 @@ export type Database = {
           },
         ];
       };
+      error_reports: {
+        Row: {
+          id: string;
+          fingerprint: string;
+          day: string;
+          source: "server" | "client" | "csp";
+          kind: string;
+          message: string;
+          path: string | null;
+          digest: string | null;
+          user_agent: string | null;
+          count: number;
+          first_seen: string;
+          last_seen: string;
+          notified_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          fingerprint: string;
+          day: string;
+          source: "server" | "client" | "csp";
+          kind: string;
+          message: string;
+          path?: string | null;
+          digest?: string | null;
+          user_agent?: string | null;
+          count?: number;
+          first_seen?: string;
+          last_seen?: string;
+          notified_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          fingerprint?: string;
+          day?: string;
+          source?: "server" | "client" | "csp";
+          kind?: string;
+          message?: string;
+          path?: string | null;
+          digest?: string | null;
+          user_agent?: string | null;
+          count?: number;
+          first_seen?: string;
+          last_seen?: string;
+          notified_at?: string | null;
+        };
+        Relationships: [];
+      };
       storage_quota_overrides: {
         Row: {
           user_id: string;
@@ -1497,6 +1545,18 @@ export type Database = {
     Functions: {
       log_failed_login_attempt: {
         Args: { target_email: string };
+        Returns: undefined;
+      };
+      record_error_report: {
+        Args: {
+          p_fingerprint: string;
+          p_source: string;
+          p_kind: string;
+          p_message: string;
+          p_path: string | null;
+          p_digest: string | null;
+          p_user_agent: string | null;
+        };
         Returns: undefined;
       };
       my_storage_usage: {

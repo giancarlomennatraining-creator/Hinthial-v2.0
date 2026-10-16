@@ -1,11 +1,18 @@
 "use client";
 
+import { useEffect } from "react";
+import { reportUnknownError } from "@/lib/errors/report-client";
+
 /**
  * L'ultima rete: un errore nel layout radice, quando nemmeno error.tsx può comparire. Sostituisce tutto il documento,
  * senza i fogli di stile globali (v. la guida di error.js), quindi gli stili sono qui, scritti a mano e nei colori di
  * Hinthial; il tema scuro segue quello del sistema.
  */
 export default function GlobalError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
+  useEffect(() => {
+    reportUnknownError(error, error.digest);
+  }, [error]);
+
   return (
     <html lang="it">
       <body

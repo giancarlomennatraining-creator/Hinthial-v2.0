@@ -10,6 +10,43 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-16 (119)
+
+### Avvisi sugli errori
+
+**Cosa fa:**
+- Se qualcosa si rompe in produzione ora lo sai senza aspettare che un utente te lo dica. Ogni mattina, se dal giorno prima sono comparsi errori nuovi, arriva un'email ("Hinthial: 3 errori nuovi in produzione"). Ogni errore è raggruppato con quelli uguali e mostra:
+  - dove è successo (Server, Browser o "Bloccato dalla CSP");
+  - quante volte, e su quale pagina;
+  - tra quali ore;
+  - un codice da cercare nei log di Vercel.
+- Se non ci sono errori nuovi, nessuna email.
+- Si raccolgono:
+  - gli errori del server (pagine, rotte, Server Actions, proxy);
+  - gli errori del browser che nessuno ha gestito;
+  - gli errori mostrati dalle pagine di errore;
+  - **i blocchi della Content-Security-Policy**, così un caso sfuggito ai test emerge subito.
+- **Nessun dato delle persone:** dai messaggi si tolgono email, id, numeri lunghi e testi tra virgolette (spesso nomi di file). Dei percorsi resta solo la pagina, senza parametri né frammento: dopo il # c'è la chiave dei link condivisi. Non si salva chi era collegato.
+- Si registra solo in produzione su Vercel: gli e2e e lo sviluppo usano lo stesso database e riempirebbero l'email.
+
+**Note tecniche:**
+- Migrazione **additiva** `20261017000002_error_reports.sql`:
+  - tabella `error_reports`, una riga per impronta e per giorno con `count`, `first_seen`, `last_seen` e `notified_at`. RLS attiva senza policy: gli utenti non leggono e non scrivono;
+  - `record_error_report(...)`, eseguibile solo dal service role: conta lo stesso errore, inserisce quelli nuovi fino a 1000 errori diversi al giorno.
+- `lib/errors/`:
+  - `sanitize.ts`: pulizia, impronta SHA-256 che ignora i numeri, filtro del rumore (estensioni, "Script error.", ResizeObserver) e validazione di ciò che arriva dal browser;
+  - `record.ts`: `recordError`, mai un'eccezione, attivo con `VERCEL_ENV=production` o `ERROR_REPORTS_FORCE=1`;
+  - `report-client.ts`: `sendBeacon`, al massimo 10 segnalazioni per pagina, senza doppioni;
+  - `digest.ts`: `sendErrorDigest`, che invia e segna le segnalazioni, e cancella le righe più vecchie di 90 giorni.
+- `src/instrumentation.ts`: `onRequestError`. `POST /api/errors` (aperta, corpo al massimo 4000 caratteri, risponde sempre 204). `components/errors/ErrorReporter.tsx` nel layout radice; `error.tsx` e `global-error.tsx` segnalano il proprio errore.
+- L'email parte dal cron del Cestino (alle 8:00 UTC), perché il piano di Vercel ammette due cron. Se l'invio fallisce, lo svuotamento resta fatto. Destinatario: `ERROR_ALERT_EMAIL`; senza, gli errori restano da segnalare e arrivano appena l'indirizzo c'è.
+- Test:
+  - unit `error-reports.test.ts` (10) e `error-digest.test.ts` (4, con database finto: sul database vero segnerebbe anche gli errori veri);
+  - integrazione `error-reports.integration.test.ts`: stesso errore come riga unica con conteggio, nessuna registrazione fuori produzione, nessun accesso per gli utenti;
+  - e2e `error-reporting.spec.ts`: cosa parte dal browser, e la rotta che risponde sempre 204.
+
+---
+
 ## 2026-10-16 (118)
 
 ### Cornice del caricamento intera
