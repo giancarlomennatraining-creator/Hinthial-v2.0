@@ -230,3 +230,23 @@ export async function createGuardianCheck(ownerEmail: string, guardianEmail: str
   if (error || !data) throw new Error(`Impossibile creare la richiesta al guardiano: ${error?.message}`);
   return data.id as string;
 }
+
+/**
+ * Accende Hinthia (cancello generale + consenso) e porta il contatore di oggi a `calls` (v. migrazione
+ * 20261017000000_ai_daily_usage.sql): SOLO per provare il tetto giornaliero senza fare davvero centinaia di chiamate a
+ * Claude. Il giorno è quello di Roma, come nella funzione SQL.
+ */
+export async function setTodayAiUsage(email: string, calls: number): Promise<void> {
+  const admin = adminClient();
+  const userId = await userIdByEmail(email);
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome", year: "numeric", month: "2-digit", day: "2-digit" }).format(
+    new Date(),
+  );
+  const { error: profileError } = await admin
+    .from("profiles")
+    .update({ ai_master_enabled: true, ai_chat_consent: true })
+    .eq("id", userId);
+  if (profileError) throw new Error(`Impossibile accendere Hinthia: ${profileError.message}`);
+  const { error } = await admin.from("ai_daily_usage").upsert({ user_id: userId, day, calls });
+  if (error) throw new Error(`Impossibile impostare l'uso di oggi (migrazione applicata?): ${error.message}`);
+}
