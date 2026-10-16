@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-16 (120)
+
+### Le variabili mancanti in .env.example
+
+**Cosa fa:**
+- `.env.example` ora elenca anche le tre variabili aggiunte di recente, con una riga di spiegazione ciascuna e nessun valore:
+  - `AI_DAILY_CALL_LIMIT`, facoltativa, commentata: il tetto giornaliero a Hinthia, 300 se manca;
+  - `CRON_SECRET`: protegge i due lavori giornalieri di `vercel.json`;
+  - `ERROR_ALERT_EMAIL`: dove arriva l'email con gli errori nuovi, serve solo in produzione.
+
+**Note tecniche:** solo documentazione, nessun cambiamento al codice dell'app.
+
+---
+
 ## 2026-10-16 (119)
 
 ### Avvisi sugli errori
