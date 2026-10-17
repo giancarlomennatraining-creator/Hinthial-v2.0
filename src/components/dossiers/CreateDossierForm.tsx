@@ -227,7 +227,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
                   <h3 className="text-xs font-extrabold text-zinc-500 dark:text-zinc-400">Documenti che servono di solito</h3>
                   <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{template.expected.join(" · ")}</p>
                 </div>
-                <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                <p className="text-xs text-zinc-500 dark:text-zinc-500">
                   Cercherò tra i tuoi documenti quelli che sembrano già appartenere a questa vicenda. Fasi e documenti si cambiano più sotto.
                 </p>
               </>
@@ -322,7 +322,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
                   </li>
                 ))}
               </ul>
-              <p className="text-[11.5px] leading-snug text-zinc-400 dark:text-zinc-500">
+              <p className="text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-500">
                 Una voce si spunta da sola quando nel fascicolo c&apos;è un documento che la nomina.
               </p>
             </section>
@@ -358,7 +358,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
                     </li>
                   ))}
                 </ul>
-                <p className="text-[11.5px] leading-snug text-zinc-400 dark:text-zinc-500">
+                <p className="text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-500">
                   Solo documenti che non stanno già in un fascicolo. Togli la spunta a quelli che non c&apos;entrano.
                 </p>
               </section>

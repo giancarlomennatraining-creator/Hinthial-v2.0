@@ -231,7 +231,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
                             <p
                               className={
                                 reminder.completed
-                                  ? "truncate text-sm text-zinc-400 line-through dark:text-zinc-600"
+                                  ? "truncate text-sm text-zinc-500 line-through dark:text-zinc-500"
                                   : "truncate text-sm font-medium text-zinc-900 dark:text-zinc-100"
                               }
                             >

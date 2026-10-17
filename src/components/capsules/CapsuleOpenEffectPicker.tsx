@@ -83,7 +83,7 @@ export function CapsuleOpenEffectPicker({
                 selected ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900",
               )}
             >
-              <EffectIcon effect={option.value} className={cn("mt-0.5 h-7 w-7 shrink-0", selected ? "text-accent" : "text-zinc-400")} />
+              <EffectIcon effect={option.value} className={cn("mt-0.5 h-7 w-7 shrink-0", selected ? "text-accent" : "text-zinc-500")} />
               <span>
                 <span className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{option.label}</span>
                 <span className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">{option.description}</span>

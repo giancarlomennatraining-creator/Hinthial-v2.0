@@ -23,7 +23,7 @@ export default async function CheckEmailPage({
         )}{" "}
         Apri il link al suo interno per verificare l&apos;account e poter accedere.
       </p>
-      <p className="text-xs text-zinc-400 dark:text-zinc-600">
+      <p className="text-xs text-zinc-500 dark:text-zinc-500">
         Non la trovi? Controlla anche nello spam.
       </p>
       <Link

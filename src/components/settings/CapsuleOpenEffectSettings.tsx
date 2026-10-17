@@ -81,7 +81,7 @@ export function CapsuleOpenEffectSettings() {
                 onClick={() => void handleChange(option.value)}
                 className="flex items-start gap-3 text-left disabled:opacity-60"
               >
-                <EffectIcon effect={option.value} className={cn("mt-0.5 h-8 w-8 shrink-0", selected ? "text-accent" : "text-zinc-400")} />
+                <EffectIcon effect={option.value} className={cn("mt-0.5 h-8 w-8 shrink-0", selected ? "text-accent" : "text-zinc-500")} />
                 <span>
                   <span className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{option.label}</span>
                   <span className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">{option.description}</span>

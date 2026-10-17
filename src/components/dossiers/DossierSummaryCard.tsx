@@ -60,7 +60,7 @@ export function DossierSummaryCard({
                 {busy ? "Scrivo…" : "Aggiorna"}
               </button>
             ) : null}
-            <button type="button" disabled={busy} onClick={onRemove} className="text-xs font-bold text-zinc-400 hover:text-red-600 disabled:opacity-50">
+            <button type="button" disabled={busy} onClick={onRemove} className="text-xs font-bold text-zinc-500 hover:text-red-600 disabled:opacity-50">
               Elimina il riassunto
             </button>
           </div>

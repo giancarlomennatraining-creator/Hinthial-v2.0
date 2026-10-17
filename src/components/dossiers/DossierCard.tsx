@@ -136,7 +136,7 @@ export function DossierCard({
       <div className="flex items-center justify-between gap-2.5 border-t border-zinc-100 pt-3 dark:border-zinc-900">
         <div className="flex min-w-0 flex-col gap-px">
           <span className="text-[12.5px] font-semibold text-zinc-700 dark:text-zinc-300">{stats}</span>
-          <span className="text-[11.5px] text-zinc-400 dark:text-zinc-500">
+          <span className="text-[11.5px] text-zinc-500 dark:text-zinc-500">
             {overview.lastUpdate ? `ultimo documento ${relativeDay(overview.lastUpdate, now)}` : "ancora nessun documento"}
           </span>
         </div>

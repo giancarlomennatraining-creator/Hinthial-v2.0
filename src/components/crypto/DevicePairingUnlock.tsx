@@ -97,7 +97,7 @@ export function DevicePairingUnlock() {
           </p>
           {/* eslint-disable-next-line @next/next/no-img-element -- data URI generato al volo, non un asset statico */}
           <img src={qrDataUrl} alt="Codice per sbloccare da un dispositivo fidato" className="h-56 w-56 self-center" />
-          <p className="text-center text-xs text-zinc-400 dark:text-zinc-500">In attesa di conferma…</p>
+          <p className="text-center text-xs text-zinc-500 dark:text-zinc-500">In attesa di conferma…</p>
         </>
       ) : null}
 

@@ -65,18 +65,18 @@ export function LegacyWaiting({ userId }: { userId: string }) {
   }
 
   function toggleEnabled() {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      if (
-        !prev.enabled &&
-        !window.confirm(
-          "Attivare Eredità digitale? Da questo momento, se non accedi a Hinthial per il periodo previsto dal livello scelto qui sotto, inizierai a ricevere email di verifica.",
-        )
-      ) {
-        return prev;
-      }
-      return { ...prev, enabled: !prev.enabled };
-    });
+    if (!settings) return;
+    // La conferma sta fuori da `setSettings`: una funzione di aggiornamento deve essere pura, e in sviluppo React la esegue due
+    // volte, quindi la finestra si apriva due volte e la seconda risposta (rifiutata) annullava l'attivazione.
+    if (
+      !settings.enabled &&
+      !window.confirm(
+        "Attivare Eredità digitale? Da questo momento, se non accedi a Hinthial per il periodo previsto dal livello scelto qui sotto, inizierai a ricevere email di verifica.",
+      )
+    ) {
+      return;
+    }
+    setSettings((prev) => (prev ? { ...prev, enabled: !prev.enabled } : prev));
   }
 
   async function handleSave() {
@@ -161,7 +161,7 @@ export function LegacyWaiting({ userId }: { userId: string }) {
                 )}
               >
                 <span className="text-sm font-semibold">{DIGITAL_LEGACY_PRESET_LABEL[preset]}</span>
-                <span className="text-xs opacity-80">{totalLabel(preset)}</span>
+                <span className="text-xs">{totalLabel(preset)}</span>
               </button>
             );
           })}

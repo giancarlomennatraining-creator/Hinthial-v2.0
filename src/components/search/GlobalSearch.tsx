@@ -247,7 +247,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
         ) : (
           <>
             <span>🔍 Cerca…</span>
-            <kbd className="rounded border border-zinc-300 px-1.5 py-0.5 text-[0.65rem] font-medium text-zinc-400 dark:border-zinc-700">
+            <kbd className="rounded border border-zinc-300 px-1.5 py-0.5 text-[0.65rem] font-medium text-zinc-500 dark:border-zinc-700">
               Ctrl+K
             </kbd>
           </>
@@ -338,7 +338,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
                       {groups.map((group) => (
                         <li key={group.area}>
                           <div className="flex items-baseline justify-between px-2 pb-1">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
                               {AI_SOURCE_KIND_LABELS[group.area]}
                             </p>
                             {area === "all" &&

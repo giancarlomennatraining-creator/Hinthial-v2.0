@@ -44,7 +44,7 @@ export function CapsuleOpenAtField({
         strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="shrink-0 text-zinc-400 dark:text-zinc-500"
+        className="shrink-0 text-zinc-500 dark:text-zinc-500"
       >
         <rect x="3" y="5" width="18" height="16" rx="2" />
         <line x1="8" y1="3" x2="8" y2="7" />

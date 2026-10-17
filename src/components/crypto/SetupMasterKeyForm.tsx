@@ -13,7 +13,7 @@ type PendingSetup = { setup: MasterKeySetup; masterKey: CryptoKey };
 /** "Passo X di 2": crea la password, salva la recovery key. */
 function StepStepper({ step }: { step: 1 | 2 }) {
   return (
-    <div className="flex items-center justify-center gap-2 text-xs font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+    <div className="flex items-center justify-center gap-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-500">
       Passo {step} di 2
       <span className="flex gap-1">
         <span
@@ -213,7 +213,7 @@ export function SetupMasterKeyForm({ onStateChange }: { onStateChange?: (state: 
                 </p>
               </>
             ) : null}
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-zinc-500">
               Generato il{" "}
               {new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}
             </p>
@@ -280,7 +280,7 @@ export function SetupMasterKeyForm({ onStateChange }: { onStateChange?: (state: 
         </div>
       </div>
 
-      <p className="text-center text-xs text-zinc-400 dark:text-zinc-500">
+      <p className="text-center text-xs text-zinc-500 dark:text-zinc-500">
         Ci vuole un minuto: crei una password, salvi una chiave di recupero, poi sei dentro.
       </p>
 

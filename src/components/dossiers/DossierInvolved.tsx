@@ -74,7 +74,7 @@ export function DossierInvolved({
               disabled={busy}
               onClick={() => onDeletePerson(person)}
               aria-label={`Togli ${person.name}`}
-              className="shrink-0 rounded-md px-1.5 text-base leading-none text-zinc-400 hover:text-red-600 disabled:opacity-50"
+              className="shrink-0 rounded-md px-1.5 text-base leading-none text-zinc-500 hover:text-red-600 disabled:opacity-50"
             >
               ×
             </button>

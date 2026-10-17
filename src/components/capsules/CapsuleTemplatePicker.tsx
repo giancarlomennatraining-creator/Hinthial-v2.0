@@ -39,7 +39,7 @@ export function CapsuleTemplatePicker({
               </span>
               <span className="font-heading text-[15px] leading-tight font-extrabold text-zinc-900 dark:text-zinc-100">{item.name}</span>
               <span className="text-xs leading-snug text-zinc-500 dark:text-zinc-400">{item.description}</span>
-              <span className="text-[11.5px] font-bold text-zinc-400 dark:text-zinc-500">{templateMeta(item)}</span>
+              <span className="text-[11.5px] font-bold text-zinc-500 dark:text-zinc-500">{templateMeta(item)}</span>
             </button>
           );
         })}

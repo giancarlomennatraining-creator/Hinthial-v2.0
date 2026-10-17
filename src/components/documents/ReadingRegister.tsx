@@ -363,7 +363,7 @@ export function ReadingRegister({
     if (row.state === "rejected") {
       return (
         <>
-          <span className="text-[12.5px] text-zinc-400 dark:text-zinc-500">Scartata</span>
+          <span className="text-[12.5px] text-zinc-500 dark:text-zinc-500">Scartata</span>
           {row.rejection ? (
             <button type="button" disabled={busy} onClick={() => onRestore(row.rejection as ProposalRejection)} className={LINK_BUTTON}>
               Ripristina
@@ -373,7 +373,7 @@ export function ReadingRegister({
       );
     }
 
-    return <span className="text-[12.5px] text-zinc-400 dark:text-zinc-500">{row.note}</span>;
+    return <span className="text-[12.5px] text-zinc-500 dark:text-zinc-500">{row.note}</span>;
   }
 
   function valueCell(row: RegisterRow) {
@@ -386,7 +386,7 @@ export function ReadingRegister({
       <div className="flex min-w-0 flex-col gap-0.5">
         <div
           className={`reading-value truncate text-[15px] font-bold ${
-            row.state === "rejected" ? "text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-50"
+            row.state === "rejected" ? "text-zinc-500 line-through" : "text-zinc-900 dark:text-zinc-50"
           }`}
         >
           {row.value}

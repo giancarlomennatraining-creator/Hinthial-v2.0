@@ -46,12 +46,29 @@ describe("colori scritti a mano nelle classi", () => {
     const offenders: string[] = [];
     for (const file of sourceFiles(join(process.cwd(), "src"))) {
       readFileSync(file, "utf8")
-        .split("\n")
+        .split(/\r?\n/)
         .forEach((line, i) => {
           const match = CLASS_HEX.exec(line);
           if (match) offenders.push(`${relative(process.cwd(), file).split("\\").join("/")}:${i + 1} ${match[0]}`);
         });
     }
     expect(offenders, "Usa i gettoni (zinc-*, brand, accent, title) al posto di un esadecimale: v. globals.css").toEqual([]);
+  });
+
+  it("nessun testo è scritto in zinc-400 (chiaro) o zinc-600 (scuro): sotto il contrasto minimo di 4,5 a 1", () => {
+    // Nei tre stili `zinc-400` in chiaro e `zinc-600` in scuro sono grigi da bordo o da icona, non da testo. Per il testo
+    // meno importante c'è `zinc-500`. Le icone decorative (aria-hidden) e i bordi possono usarli: v. le eccezioni.
+    const FAINT = /(?<![\w:-])text-zinc-400(?![\w-])|dark:text-zinc-600(?![\w-])/;
+    const offenders: string[] = [];
+    for (const file of sourceFiles(join(process.cwd(), "src"))) {
+      readFileSync(file, "utf8")
+        .split(/\r?\n/)
+        .forEach((line, i) => {
+          if (FAINT.test(line) && !line.includes("aria-hidden")) {
+            offenders.push(`${relative(process.cwd(), file).split("\\").join("/")}:${i + 1}`);
+          }
+        });
+    }
+    expect(offenders, "Per il testo usa text-zinc-500 (in scuro dark:text-zinc-400)").toEqual([]);
   });
 });

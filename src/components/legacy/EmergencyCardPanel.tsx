@@ -283,7 +283,7 @@ export function EmergencyCardPanel({
             🖨️ Stampa scheda (formato tessera)
           </button>
           {empty ? (
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+            <p className="text-xs text-zinc-500 dark:text-zinc-500">
               Compila almeno un campo per poter stampare la scheda.
             </p>
           ) : null}
@@ -321,7 +321,7 @@ function EmergencyCardPreview({
     <div className="flex w-[340px] flex-col gap-2.5 surface-card rounded-card border border-zinc-200 bg-white p-5 shadow-[0_8px_20px_rgba(16,24,40,0.06)] dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold text-accent">🌿 Hinthial</span>
-        <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+        <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
           Scheda d&apos;emergenza
         </span>
       </div>
@@ -345,7 +345,7 @@ function EmergencyCardPreview({
         <div className="grid grid-cols-2 gap-2 text-xs">
           {card.allergies.trim() ? (
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
                 Allergie
               </span>
               <p className="text-zinc-800 dark:text-zinc-200">{card.allergies}</p>
@@ -353,7 +353,7 @@ function EmergencyCardPreview({
           ) : null}
           {card.conditions.trim() ? (
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
                 Condizioni
               </span>
               <p className="text-zinc-800 dark:text-zinc-200">{card.conditions}</p>
@@ -364,7 +364,7 @@ function EmergencyCardPreview({
 
       {card.medications.trim() ? (
         <div className="text-xs">
-          <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+          <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
             Farmaci
           </span>
           <p className="text-zinc-800 dark:text-zinc-200">{card.medications}</p>

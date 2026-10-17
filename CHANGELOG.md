@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-20 (130)
+
+### Controllo pagina per pagina: i testi chiari tornano leggibili
+
+**Cosa fa:**
+- Ho controllato 37 pagine (quelle dell'app e le pubbliche) nelle sei combinazioni di stile e tema, a 1440 e a 390 px: 444 viste, con un controllo automatico del contrasto di ogni testo e dello scorrimento orizzontale, più le foto. Nessuna pagina scorre di lato.
+- Il controllo ha trovato 595 testi sotto il contrasto minimo (4,5 a 1), quasi tutti scritti in un grigio troppo chiaro: i titoli dei gruppi in Impostazioni ("Sicurezza"…), la scorciatoia "Ctrl+K" nella ricerca, le righe "Nessuno.", "ancora nessun documento", "4 spunti per scrivere" nei modelli di capsula, i numeri di riga dell'importazione, in chiaro; e alcuni testi ancora più scuri in scuro. Ora sono tutti leggibili: dopo la correzione i problemi di contrasto sono zero in tutte le combinazioni.
+- In Eredità digitale la durata sotto "Prudente/Normale/Rilassato" non è più attenuata.
+- **Eredità digitale, interruttore:** attivarlo chiedeva la conferma dentro la funzione che aggiorna lo stato, che in sviluppo React esegue due volte: la finestra compariva due volte e la seconda risposta (rifiutata) annullava l'attivazione, a volte. Ora la conferma è fuori, una sola volta. Trovato perché un test falliva a intermittenza anche prima di queste modifiche.
+- Nella home pubblica le frasi a mano in verde ("per chi verrà dopo, e per chi c'è adesso", "come cresce") hanno un verde più scuro sullo sfondo chiaro.
+
+**Note tecniche:** `text-zinc-400` (63 usi) è diventato `text-zinc-500`, `dark:text-zinc-600` (17 usi) `dark:text-zinc-500` e la coppia `text-zinc-400 dark:text-zinc-600` (13) è `text-zinc-500 dark:text-zinc-500`; in `landing.css` `:root:not(.dark) .lp .lp-hand` ha il verde `#2a7d38`. Il test `no-hardcoded-palette.test.ts` ora fa fallire anche i testi scritti in `text-zinc-400` o `dark:text-zinc-600` (esclusi quelli `aria-hidden`: icone decorative). Il controllo automatico usato (contrasto di ogni testo con lo sfondo effettivo, composto sopra i livelli traslucidi; esclusi i controlli disattivati e le scene illustrate della home) non è nel repository: è uno script di lavoro. **Non coperto dal controllo:** testi su sfondi a immagine o sfumati (le scene della home pubblica, le copertine delle capsule), da giudicare a occhio.
+
+---
+
 ## 2026-10-19 (129)
 
 ### Foglia: le note a mano

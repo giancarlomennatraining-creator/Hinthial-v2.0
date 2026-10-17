@@ -174,7 +174,7 @@ function MobileRow({
           className={cn("shrink-0", danger ? "text-red-600 dark:text-red-400" : "text-accent")}
         />
         <span className={cn("flex-1", danger ? "text-red-600 dark:text-red-400" : undefined)}>{label}</span>
-        <span aria-hidden="true" className="text-zinc-400 dark:text-zinc-600">
+        <span aria-hidden="true" className="text-zinc-500 dark:text-zinc-500">
           ›
         </span>
       </button>
@@ -413,7 +413,7 @@ export function SettingsTabs({
               {TAB_GROUPS.map((group, groupIndex) => (
                 <div key={group.label ?? `group-${groupIndex}`} className="flex flex-col gap-2">
                   {group.label ? (
-                    <p className="px-1 text-sm font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+                    <p className="px-1 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-500">
                       {group.label}
                     </p>
                   ) : null}
@@ -480,7 +480,7 @@ export function SettingsTabs({
               {group.label ? (
                 <p
                   className={cn(
-                    "px-3 text-sm font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500",
+                    "px-3 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-500",
                     groupIndex === 0 ? undefined : "mt-3",
                   )}
                 >
@@ -518,7 +518,7 @@ export function SettingsTabs({
                       <span
                         aria-hidden="true"
                         className={cn(
-                          "text-zinc-400 transition-transform dark:text-zinc-600",
+                          "text-zinc-500 transition-transform dark:text-zinc-500",
                           tab === t.id ? "rotate-90" : undefined,
                         )}
                       >

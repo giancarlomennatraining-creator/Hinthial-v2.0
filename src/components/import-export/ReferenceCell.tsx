@@ -26,7 +26,7 @@ export function ReferenceCell({
   entityLabel: string;
 }) {
   if (resolution.kind === "empty") {
-    return <span className="text-zinc-400 dark:text-zinc-600">—</span>;
+    return <span className="text-zinc-500 dark:text-zinc-500">—</span>;
   }
 
   if (resolution.kind === "matched") {

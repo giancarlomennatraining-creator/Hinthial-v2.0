@@ -81,7 +81,7 @@ export function FriendPicker({
                   type="button"
                   onClick={() => handleRemove(friend.id)}
                   aria-label={`Rimuovi ${friend.name}`}
-                  className="rounded-full px-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
+                  className="rounded-full px-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
                 >
                   ×
                 </button>
