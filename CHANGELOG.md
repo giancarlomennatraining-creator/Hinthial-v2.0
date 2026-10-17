@@ -10,6 +10,19 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-20 (132)
+
+### Scheda del contenuto su telefono: prima i campi
+
+**Cosa fa:**
+- Su telefono, nella scheda di un documento i campi (titolo, categoria, scadenza, emittente, note) compaiono prima dell'anteprima, che sta sotto: prima si compila, poi si guarda il file. Prima l'anteprima, alta quasi quanto lo schermo, spingeva i campi oltre la prima schermata.
+- Le tre schede interne ("Scheda", "Letto dal dispositivo", "Chiedi a Hinthia") stanno su una sola riga che scorre di lato, invece di andare su due righe.
+- Su schermo largo non cambia nulla: l'anteprima resta a sinistra, i campi a destra.
+
+**Note tecniche:** in `ArchiveItemDetail.tsx` le due colonne hanno `order-1`/`order-2` sotto la soglia del container query `@3xl` e l'ordine inverso sopra; la riga delle schede è `overflow-x-auto` senza barra visibile e ogni scheda `shrink-0 whitespace-nowrap`. Nuovo e2e `archive-doc-mobile.spec.ts` (i campi sopra l'anteprima e le tre schede alla stessa altezza a 390 px, l'anteprima a sinistra a 1440 px); si prepara da computer e poi si stringe lo schermo, perché i passi di accesso e di caricamento usano la barra laterale.
+
+---
+
 ## 2026-10-20 (131)
 
 ### Rifiniture: scadenze, documenti, fascicolo e piccole incoerenze
