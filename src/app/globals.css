@@ -282,6 +282,20 @@
   }
 }
 
+/*
+ * Le note a mano di Foglia: i testi che accompagnano uno stato vuoto o una frase d'aiuto (classe `hand-note`) si scrivono in
+ * Caveat, più grandi perché il carattere è piccolo. Solo lì: mai nei testi di lavoro, nei moduli o nei messaggi d'errore. In
+ * Notte e Luce restano nel carattere normale. Il testo non cambia, solo come appare.
+ */
+:root:not([data-stile]) .hand-note,
+:root[data-stile="foglia"] .hand-note {
+  font-family: var(--font-caveat), cursive;
+  font-weight: 600;
+  font-size: 1.3em;
+  line-height: 1.2;
+  color: var(--accent);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

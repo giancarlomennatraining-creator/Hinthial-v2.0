@@ -400,7 +400,7 @@ function PersonCapsulesSection({ friend, capsules }: { friend: FriendListItem; c
     <div className="flex flex-col gap-2">
       <h3 className="text-xs font-extrabold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">Capsule per {firstNameOf(friend)}</h3>
       {rows.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessuna capsula affidata a {firstNameOf(friend)}.</p>
+        <p className="hand-note text-sm text-zinc-500 dark:text-zinc-400">Nessuna capsula affidata a {firstNameOf(friend)}.</p>
       ) : (
         <>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">{describeCapsulesForPerson(groups)}</p>

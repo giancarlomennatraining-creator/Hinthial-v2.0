@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-19 (129)
+
+### Foglia: le note a mano
+
+**Cosa fa:**
+- Con lo stile **Foglia**, le frasi che accompagnano uno stato vuoto si scrivono "a mano" (Caveat), un po' più grandi e nel verde dell'accento: "Nessun amico ancora.", "Nessuna capsula ancora.", "Nessuna scadenza ancora.", "Nessun bene ancora.", "Il cestino è vuoto.", "Nessuna capsula affidata a Luca." e la frase di Oggi su cosa è una capsula. Dà un tono umano dove l'app parla di persone e di cose che mancano.
+- I testi sono gli stessi di prima. In **Notte** e **Luce** restano nel carattere normale. Mai usato nei testi di lavoro, nei moduli o nei messaggi d'errore.
+
+**Note tecniche:** classe `hand-note` in `globals.css`, con selettori `:root:not([data-stile]) .hand-note` e `:root[data-stile="foglia"] .hand-note` (carattere `--font-caveat` peso 600, `font-size: 1.3em`, colore `--accent`); applicata a `EmptyListCard`, al Cestino, alla scheda persona in `AddressBook` e al testo vuoto di `TodayHome`. Test unitari in `hand-note.test.tsx`: la classe è sul testo e la regola vale solo per Foglia. Con questo il passo 3 (forme e segni distintivi per stile) è chiuso; restano il controllo pagina per pagina e i colori semantici.
+
+---
+
 ## 2026-10-19 (128)
 
 ### Notte di vetro
