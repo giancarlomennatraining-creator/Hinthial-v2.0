@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { applyTheme, getStoredThemePreference, storeThemePreference } from "@/lib/theme";
+import {
+  applyStyle,
+  applyTheme,
+  getStoredStylePreference,
+  getStoredThemePreference,
+  storeStylePreference,
+  storeThemePreference,
+} from "@/lib/theme";
 
 function mockMatchMedia(prefersDark: boolean) {
   window.matchMedia = vi.fn().mockReturnValue({
@@ -53,5 +60,38 @@ describe("theme", () => {
     mockMatchMedia(false);
     applyTheme("system");
     expect(document.documentElement.classList.contains("dark")).toBe(false);
+  });
+});
+
+describe("stile", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    document.documentElement.removeAttribute("data-stile");
+  });
+
+  it("parte da Foglia quando non c'è nulla di salvato", () => {
+    expect(getStoredStylePreference()).toBe("foglia");
+  });
+
+  it("salva e rilegge uno stile", () => {
+    storeStylePreference("notte");
+    expect(getStoredStylePreference()).toBe("notte");
+    storeStylePreference("luce");
+    expect(getStoredStylePreference()).toBe("luce");
+  });
+
+  it("ignora un valore salvato che non è uno stile e torna a Foglia", () => {
+    window.localStorage.setItem("hinthial-stile", "arcobaleno");
+    expect(getStoredStylePreference()).toBe("foglia");
+  });
+
+  it("applica lo stile come attributo data-stile su <html>, senza toccare il tema", () => {
+    document.documentElement.classList.add("dark");
+    applyStyle("notte");
+    expect(document.documentElement.getAttribute("data-stile")).toBe("notte");
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    applyStyle("foglia");
+    expect(document.documentElement.getAttribute("data-stile")).toBe("foglia");
+    document.documentElement.classList.remove("dark");
   });
 });

@@ -70,6 +70,102 @@
   --n-950: #12251f;
 }
 
+/*
+ * Gli altri due stili (v. lib/theme.ts: attributo `data-stile` su <html>, scelto in Impostazioni → Aspetto → Tema). Ridefiniscono
+ * solo i gettoni: Foglia, sopra, è il predefinito e vale quando l'attributo manca. Ogni stile ha il suo chiaro e il suo
+ * scuro (`.dark`); il selettore a due classi/attributi batte quello di `:root` e di `.dark` sopra. Per ora cambiano solo i
+ * colori: forme e segni distintivi stile per stile sono il passo successivo.
+ * Notte: blu notte come la home, accenti azzurri. Luce: bianco, blu sobrio, il più neutro.
+ */
+:root[data-stile="notte"] {
+  --background: #eaf2fb;
+  --foreground: #0d1b4a;
+  --brand: #1b4fd0;
+  --brand-hover: #123a9e;
+  --accent: #1b4fd0;
+  --accent-hover: #0f3a9a;
+  --title: #0d1b4a;
+  --side: #dfeaf7;
+  --wordmark: #0b2f9e;
+  --n-50: #f3f7fc;
+  --n-100: #e6eef8;
+  --n-200: #d0def0;
+  --n-300: #b4c8e3;
+  --n-400: #7487b0;
+  --n-500: #4d5d86;
+  --n-600: #3b4a70;
+  --n-700: #2a3858;
+  --n-800: #1b2745;
+  --n-900: #0d1b4a;
+  --n-950: #081235;
+}
+:root[data-stile="notte"].dark {
+  --background: #07112e;
+  --foreground: #e8f0ff;
+  --brand: #2f62dc;
+  --brand-hover: #2551bd;
+  --accent: #8fb0ff;
+  --accent-hover: #b8cdff;
+  --title: #e8f0ff;
+  --side: #0a1738;
+  --wordmark: #e8f0ff;
+  --n-50: #f3f7ff;
+  --n-100: #e8f0ff;
+  --n-200: #d3ddf1;
+  --n-300: #bccae6;
+  --n-400: #9fb0d6;
+  --n-500: #7388bd;
+  --n-600: #4d62a0;
+  --n-700: #31447f;
+  --n-800: #1f2f62;
+  --n-900: #162659;
+  --n-950: #0e1b45;
+}
+:root[data-stile="luce"] {
+  --background: #fbfbfd;
+  --foreground: #14192b;
+  --brand: #1f46c8;
+  --brand-hover: #17359a;
+  --accent: #1f46c8;
+  --accent-hover: #14338f;
+  --title: #14192b;
+  --side: #f4f5f9;
+  --wordmark: #0b2f9e;
+  --n-50: #f6f7fa;
+  --n-100: #eceef4;
+  --n-200: #dde1ea;
+  --n-300: #c3c9d6;
+  --n-400: #7e889c;
+  --n-500: #5b6477;
+  --n-600: #464e60;
+  --n-700: #333a4b;
+  --n-800: #232937;
+  --n-900: #14192b;
+  --n-950: #0c101c;
+}
+:root[data-stile="luce"].dark {
+  --background: #101426;
+  --foreground: #eceff8;
+  --brand: #3d5fd6;
+  --brand-hover: #2f4ab8;
+  --accent: #9bb2ff;
+  --accent-hover: #c1cfff;
+  --title: #eceff8;
+  --side: #0d1124;
+  --wordmark: #eceff8;
+  --n-50: #f5f7fb;
+  --n-100: #eceff8;
+  --n-200: #d3d8e6;
+  --n-300: #b9c1d6;
+  --n-400: #9ca6bf;
+  --n-500: #8590b0;
+  --n-600: #566087;
+  --n-700: #3a4466;
+  --n-800: #262e48;
+  --n-900: #1b2240;
+  --n-950: #151a30;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
