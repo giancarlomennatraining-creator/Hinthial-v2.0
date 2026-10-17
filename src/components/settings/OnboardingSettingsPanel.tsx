@@ -68,7 +68,7 @@ export function OnboardingSettingsPanel({ masterKey }: { masterKey: CryptoKey })
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col items-center gap-4 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-6 text-center sm:flex-row sm:items-center sm:text-left dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="flex flex-col items-center gap-4 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-6 text-center sm:flex-row sm:items-center sm:text-left dark:border-zinc-800 dark:bg-zinc-950">
         <span
           aria-hidden="true"
           className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700"
@@ -97,7 +97,7 @@ export function OnboardingSettingsPanel({ masterKey }: { masterKey: CryptoKey })
           </button>
         </div>
 
-        <ul className="flex flex-col divide-y divide-zinc-200 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+        <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
           {steps.map((step) => (
             <li key={step.key} className="flex items-center justify-between gap-4 p-3">
               <div className="flex min-w-0 flex-col gap-0.5">

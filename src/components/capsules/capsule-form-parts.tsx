@@ -48,7 +48,7 @@ export function CapsuleFormHeader({
 }
 
 const CARD_CLASS =
-  "flex flex-col gap-4 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950";
+  "flex flex-col gap-4 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950";
 
 /** La cornice dei passi: un `<form>` se serve l'invio (creazione), altrimenti un semplice contenitore. */
 export function CapsuleFormCard({

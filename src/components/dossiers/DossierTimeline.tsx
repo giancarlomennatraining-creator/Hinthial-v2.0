@@ -69,7 +69,7 @@ export function DossierTimeline({
   return (
     <section
       aria-label="Cronologia"
-      className="flex min-w-0 flex-col gap-3.5 rounded-[18px] border border-zinc-200 bg-white px-5 py-[18px] dark:border-zinc-800 dark:bg-zinc-950"
+      className="flex min-w-0 flex-col gap-3.5 surface-card rounded-card border border-zinc-200 bg-white px-5 py-[18px] dark:border-zinc-800 dark:bg-zinc-950"
     >
       <h2 className={CARD_TITLE}>Cronologia</h2>
 

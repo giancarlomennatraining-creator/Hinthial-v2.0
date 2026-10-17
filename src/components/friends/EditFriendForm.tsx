@@ -148,7 +148,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
         </p>
       ) : (
         <>
-          <div className="rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
             <p className="mb-3 text-xs font-medium text-zinc-600 dark:text-zinc-400">Foto</p>
             <AvatarPickerCrop
               currentAvatarUrl={avatarUrl}
@@ -163,7 +163,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
 
           <form
             onSubmit={handleSave}
-            className="flex flex-wrap items-end gap-3 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
+            className="flex flex-wrap items-end gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
           >
             <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
               <label htmlFor="firstName" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">

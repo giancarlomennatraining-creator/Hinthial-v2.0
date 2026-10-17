@@ -135,7 +135,7 @@ function StepCheck() {
 /** La scheda unica che contiene tutti i passi: le linee tra i cerchi la attraversano da un passo al successivo. */
 function AccordionCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="overflow-hidden surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
       {children}
     </div>
   );

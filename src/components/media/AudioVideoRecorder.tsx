@@ -135,7 +135,7 @@ export function AudioVideoRecorder({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <div>
         <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{title}</p>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{description}</p>

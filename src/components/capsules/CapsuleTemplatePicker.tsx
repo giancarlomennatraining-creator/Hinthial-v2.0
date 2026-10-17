@@ -59,7 +59,7 @@ export function CapsuleTemplatePicker({
       {selected ? (
         <section
           aria-label="Cosa propone il modello"
-          className="grid grid-cols-1 gap-4 rounded-card border border-zinc-200 bg-white p-4 text-sm sm:grid-cols-3 dark:border-zinc-800 dark:bg-zinc-950"
+          className="grid grid-cols-1 gap-4 surface-card rounded-card border border-zinc-200 bg-white p-4 text-sm sm:grid-cols-3 dark:border-zinc-800 dark:bg-zinc-950"
         >
           <div className="flex flex-col gap-1">
             <h2 className={DETAIL_TITLE}>Si apre</h2>

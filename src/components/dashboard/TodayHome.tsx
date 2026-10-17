@@ -13,7 +13,7 @@ import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const CARD =
-  "min-w-0 rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950";
+  "min-w-0 surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950";
 
 /** Quante righe al massimo per ogni elenco: "Oggi" è un colpo d'occhio, non una pagina da scorrere. */
 const MAX_ROWS = 4;

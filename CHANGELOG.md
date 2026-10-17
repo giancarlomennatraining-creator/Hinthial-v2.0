@@ -10,6 +10,19 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-19 (127)
+
+### Luce senza riquadri
+
+**Cosa fa:**
+- Con lo stile **Luce**, i riquadri dell'app (schede, pannelli, elenchi con righe: in Oggi, Archivio, Amici, Capsule, fascicoli, Impostazioni…) perdono sfondo, ombra e angoli, e restano due linee sottili, sopra e sotto. Le pagine si leggono come un foglio, con le righe separate da una linea.
+- I titoli di pagina sono più grandi (fino a 2,5 rem su schermi larghi).
+- Foglia e Notte non cambiano. Le finestre (sblocco, dialoghi) e la scheda di accesso restano riquadri in ogni stile, perché devono staccarsi dal resto.
+
+**Note tecniche:** i riquadri e gli elenchi sono marcati con la classe `surface-card` (66 punti: 63 con `rounded-2xl`→`rounded-card` e 7 con `rounded-[18px]`, ora anch'essi `rounded-card`, quindi con la forma "a foglia" di Foglia); in `globals.css` `:root[data-stile="luce"] .surface-card` azzera sfondo, bordi laterali, raggio e ombra e lascia `border-width: 1px 0` (chiaro `--n-200`, scuro `--n-800`). Il padding resta, così il testo è rientrato rispetto alle linee. Titoli: `:root[data-stile="luce"] main h1`. Nuove classi da usare per un riquadro nuovo: `surface-card` insieme a `rounded-card border border-zinc-200 bg-white`. Test e2e in `theme.spec.ts`: in Luce un riquadro ha raggio e bordi laterali a zero e sfondo trasparente, in Foglia torna un riquadro. **Resta di Luce:** le righe di elenco potrebbero avere più respiro tra una e l'altra, da giudicare sulle pagine vere.
+
+---
+
 ## 2026-10-18 (126)
 
 ### I colori fissi lasciano il posto ai gettoni

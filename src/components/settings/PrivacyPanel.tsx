@@ -112,7 +112,7 @@ export function PrivacyPanel({
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="flex flex-col gap-3 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             👁️ Quello che vediamo
           </h3>
