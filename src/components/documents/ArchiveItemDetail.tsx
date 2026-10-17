@@ -760,7 +760,8 @@ export function ArchiveItemDetail({
         {/* items-start: senza, il flex allungherebbe la colonna fissa fino all'altezza del pannello attivo. */}
         <div className="flex flex-col items-stretch gap-6 @3xl:flex-row @3xl:items-start">
           {/* Colonna fissa: solo l'anteprima, sempre visibile, mai dietro una tab. */}
-          <div className="flex flex-col gap-6 @3xl:w-[380px] @3xl:shrink-0">
+          {/* Su telefono l'anteprima viene dopo i campi (order-2): prima si deve poter compilare, non scorrere una schermata di pagina. */}
+          <div className="order-2 flex flex-col gap-6 @3xl:order-1 @3xl:w-[380px] @3xl:shrink-0">
           <section aria-label="Anteprima" className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Anteprima</h2>
             {previewLoading ? (
@@ -829,9 +830,9 @@ export function ArchiveItemDetail({
               (v. feedback utente): quello che c'è da accettare vive già dentro una delle due letture, secondo
               la fonte. Scheda è la prima tab, non più fissa a sinistra (v. feedback utente). Tab e pannelli
               dentro un unico riquadro bianco con contorno (v. feedback utente), come Anteprima a fianco. */}
-          <div className="flex min-w-0 flex-1 flex-col gap-4">
+          <div className="order-1 flex min-w-0 flex-1 flex-col gap-4 @3xl:order-2">
           <div className="flex flex-col gap-4 surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
-            <div role="tablist" className="flex flex-wrap gap-1 border-b border-zinc-200 dark:border-zinc-800">
+            <div role="tablist" className="flex gap-1 overflow-x-auto border-b border-zinc-200 [scrollbar-width:none] dark:border-zinc-800 [&::-webkit-scrollbar]:hidden">
               <button
                 type="button"
                 role="tab"
@@ -839,7 +840,7 @@ export function ArchiveItemDetail({
                 aria-selected={activeTab === "scheda"}
                 aria-controls="tabpanel-scheda"
                 onClick={() => setActiveTab("scheda")}
-                className={`rounded-t-md px-3 py-2 text-sm font-medium ${
+                className={`shrink-0 rounded-t-md px-3 py-2 text-sm font-medium whitespace-nowrap ${
                   activeTab === "scheda"
                     ? "border-b-2 border-brand text-accent"
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -854,7 +855,7 @@ export function ArchiveItemDetail({
                 aria-selected={activeTab === "reading"}
                 aria-controls="tabpanel-reading"
                 onClick={() => setActiveTab("reading")}
-                className={`rounded-t-md px-3 py-2 text-sm font-medium ${
+                className={`shrink-0 rounded-t-md px-3 py-2 text-sm font-medium whitespace-nowrap ${
                   activeTab === "reading"
                     ? "border-b-2 border-brand text-accent"
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -869,7 +870,7 @@ export function ArchiveItemDetail({
                 aria-selected={activeTab === "analysis"}
                 aria-controls="tabpanel-analysis"
                 onClick={() => setActiveTab("analysis")}
-                className={`rounded-t-md px-3 py-2 text-sm font-medium ${
+                className={`shrink-0 rounded-t-md px-3 py-2 text-sm font-medium whitespace-nowrap ${
                   activeTab === "analysis"
                     ? "border-b-2 border-brand text-accent"
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
