@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLockup } from "@/components/layout/BrandLockup";
 
 /**
  * Shell condivisa da login/registrazione/verifica account/password
@@ -19,8 +20,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       />
 
       <Link href="/" className="relative mb-8 w-full max-w-sm">
-        {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
-        <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-auto w-full" />
+        <BrandLockup className="h-auto w-full" darkSize="lg" />
       </Link>
       <div className="relative w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
         {children}

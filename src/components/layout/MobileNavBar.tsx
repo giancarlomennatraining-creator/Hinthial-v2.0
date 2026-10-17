@@ -11,6 +11,7 @@ import { BOTTOM_NAV_HREFS, NAV_ITEMS } from "@/components/layout/nav-items";
 import { useMountedTransition } from "@/lib/use-mounted-transition";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
+import { BrandLockup } from "@/components/layout/BrandLockup";
 
 /**
  * Su schermi piccoli sostituisce Sidebar con solo logo + tasto menu, che apre lo stesso contenuto in
@@ -62,10 +63,9 @@ export function MobileNavBar({
     <>
       {/* Un <div>, non <header>: TopNav ha già il vero landmark "banner" della pagina, un secondo lo duplicherebbe. */}
       {/* sticky top-0: senza, il tasto ☰ scorreva via con la pagina, irraggiungibile su pagine lunghe. z-30, sotto i z-40/z-50 di barra in basso e finestre di sovraimpressione. */}
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-zinc-200 bg-white p-3 md:hidden dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-zinc-200 bg-side p-3 md:hidden dark:border-zinc-800">
         <Link href="/dashboard" className="shrink-0">
-          {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
-          <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-8 w-auto" />
+          <BrandLockup className="h-8 w-auto" darkSize="sm" />
         </Link>
         <button
           type="button"
@@ -92,13 +92,12 @@ export function MobileNavBar({
             aria-modal="true"
             aria-label="Menu di navigazione"
             className={cn(
-              "relative flex h-full w-72 max-w-[85vw] flex-col gap-6 overflow-y-auto bg-white p-4 shadow-xl transition-transform duration-300 ease-out dark:bg-zinc-950",
+              "relative flex h-full w-72 max-w-[85vw] flex-col gap-6 overflow-y-auto bg-side p-4 shadow-xl transition-transform duration-300 ease-out",
               entered ? "translate-x-0" : "-translate-x-full",
             )}
           >
             <div className="flex items-center justify-between">
-              {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
-              <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-8 w-auto" />
+              <BrandLockup className="h-8 w-auto" darkSize="sm" />
               <button
                 type="button"
                 onClick={() => setOpen(false)}

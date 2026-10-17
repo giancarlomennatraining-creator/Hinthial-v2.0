@@ -140,7 +140,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="flex min-w-0 w-full items-start justify-between gap-3 sm:flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-brand">
+          <h1 className="text-2xl font-semibold tracking-tight text-title">
             Archivio
           </h1>
           <PageHelp
@@ -180,7 +180,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
           {reminders.length === 0 ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Nessuna scadenza creata da te.{" "}
-              <Link href="/reminders/new" className="font-medium text-brand hover:underline">
+              <Link href="/reminders/new" className="font-medium text-accent hover:underline">
                 Crea la prima scadenza →
               </Link>
             </p>

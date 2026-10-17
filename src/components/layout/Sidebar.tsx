@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BrandLockup } from "@/components/layout/BrandLockup";
 import { MainNav } from "@/components/layout/MainNav";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { OnboardingStatus } from "@/components/layout/OnboardingStatus";
@@ -49,7 +50,7 @@ export function Sidebar({
       className={cn(
         // Sotto md la sostituisce MobileNavBar (v. AppShell): resta montata, solo nascosta, per non perdere lo stato di compressione attraversando la soglia md.
         // md:sticky md:top-0 md:h-screen: senza, <aside> seguiva l'altezza di <main> e l'avatar in fondo finiva irraggiungibile su pagine lunghe.
-        "hidden flex-col gap-6 overflow-x-hidden overflow-y-auto border-b border-zinc-200 bg-white transition-[width,padding] duration-300 ease-in-out md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:border-b-0 dark:border-zinc-800 dark:bg-zinc-950",
+        "hidden flex-col gap-6 overflow-x-hidden overflow-y-auto border-b border-zinc-200 bg-side transition-[width,padding] duration-300 ease-in-out md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:border-b-0 dark:border-zinc-800",
         "md:border-r",
         // cn() non fonde classi in conflitto (v. lib/utils.ts): il padding va scritto per intero in ciascun ramo, mai base + override parziale.
         compact ? "p-3 md:w-20" : "p-4 md:w-56 md:p-6",
@@ -57,12 +58,12 @@ export function Sidebar({
     >
       <div className={cn("flex items-center gap-2", compact ? "flex-col" : "justify-between px-3")}>
         <span className={compact ? "" : "min-w-0"}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
-          <img
-            src={compact ? "/brand/logo.svg" : "/brand/logo-lockup.svg"}
-            alt="HINTHIAL"
-            className={compact ? "h-8 w-8" : "h-auto w-full"}
-          />
+          {compact ? (
+            // eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content
+            <img src="/brand/logo.svg" alt="HINTHIAL" className="h-8 w-8" />
+          ) : (
+            <BrandLockup className="h-auto w-full" darkSize="sm" />
+          )}
         </span>
         <button
           type="button"

@@ -36,7 +36,7 @@ export function LegacyPage({
   return (
     <div className="flex flex-col gap-10 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex items-start justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-brand">Eredità digitale</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-title">Eredità digitale</h1>
         <PageHelp
           title="Eredità digitale"
           tips={[

@@ -74,12 +74,12 @@ export function GuardianVerificationPanel({ requestId }: { requestId: string }) 
   if (!request) {
     return (
       <div className="flex max-w-lg flex-col gap-2">
-        <h1 className="text-xl font-semibold text-brand">Richiesta non trovata</h1>
+        <h1 className="text-xl font-semibold text-title">Richiesta non trovata</h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Questa richiesta non è più attiva. Di solito vuol dire che la persona che ti aveva scelto è tornata ad accedere, oppure
           che un altro guardiano ha confermato di avere sue notizie. Non devi fare altro.
         </p>
-        <Link href="/dashboard" className="mt-2 w-fit text-sm font-medium text-brand hover:underline">
+        <Link href="/dashboard" className="mt-2 w-fit text-sm font-medium text-accent hover:underline">
           Vai a Oggi
         </Link>
       </div>
@@ -103,7 +103,7 @@ export function GuardianVerificationPanel({ requestId }: { requestId: string }) 
           <button type="button" onClick={() => setRequest({ ...request, response: null })} className={BTN_SECONDARY}>
             Cambia risposta
           </button>
-          <Link href="/dashboard" className="self-center text-sm font-medium text-brand hover:underline">
+          <Link href="/dashboard" className="self-center text-sm font-medium text-accent hover:underline">
             Vai a Oggi
           </Link>
         </div>
@@ -146,7 +146,7 @@ export function GuardianVerificationPanel({ requestId }: { requestId: string }) 
   return (
     <div className="flex max-w-lg flex-col gap-5">
       <div>
-        <p className="text-xs font-bold tracking-wider text-brand uppercase">Sei la persona di fiducia di {name}</p>
+        <p className="text-xs font-bold tracking-wider text-accent uppercase">Sei la persona di fiducia di {name}</p>
         <h1 className="mt-1 font-heading text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">Hai notizie di {name}?</h1>
         <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
           {request.ownerName} ti ha scelto come guardiano su Hinthial. Da molto tempo non accede e non ha risposto ai nostri

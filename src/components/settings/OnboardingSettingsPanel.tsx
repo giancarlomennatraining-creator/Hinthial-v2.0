@@ -89,7 +89,7 @@ export function OnboardingSettingsPanel({ masterKey }: { masterKey: CryptoKey })
           <button
             type="button"
             onClick={toggleWidget}
-            className="shrink-0 text-xs font-medium text-brand hover:underline"
+            className="shrink-0 text-xs font-medium text-accent hover:underline"
           >
             {widgetHidden
               ? "Mostra di nuovo l'indicatore nella barra di navigazione"

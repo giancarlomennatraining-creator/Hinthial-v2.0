@@ -20,7 +20,7 @@ export function PasswordInput({ style, ...inputProps }: Omit<InputHTMLAttributes
         aria-label={visible ? "Nascondi caratteri" : "Mostra caratteri"}
         aria-pressed={visible}
         title={visible ? "Nascondi caratteri" : "Mostra caratteri"}
-        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-2xl text-zinc-500 hover:text-zinc-900 focus-visible:text-brand focus-visible:outline-none dark:text-zinc-400 dark:hover:text-zinc-100"
+        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-2xl text-zinc-500 hover:text-zinc-900 focus-visible:text-accent focus-visible:outline-none dark:text-zinc-400 dark:hover:text-zinc-100"
       >
         <svg
           width="18"

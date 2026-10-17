@@ -52,7 +52,7 @@ function EventRow({ event, isLast }: { event: RehearsalEvent; isLast: boolean })
         <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           {event.title}
           {event.isExample ? (
-            <span className="ml-1.5 rounded bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand">
+            <span className="ml-1.5 rounded bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
               Esempio
             </span>
           ) : null}
@@ -168,7 +168,7 @@ export function DigitalLegacyRehearsal({
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <h3 className="text-lg font-semibold text-brand">Se si attivasse oggi</h3>
+                <h3 className="text-lg font-semibold text-accent">Se si attivasse oggi</h3>
                 <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
                   Una simulazione del percorso completo, con lo stato attuale del tuo account.
                 </p>
@@ -215,7 +215,7 @@ export function DigitalLegacyRehearsal({
                         {guardians.map((guardian) => (
                           <GuardianRow key={guardian.id} guardian={guardian} />
                         ))}
-                        <p className="rounded-lg bg-brand/5 px-3 py-2 text-xs font-medium text-brand">
+                        <p className="rounded-lg bg-brand/5 px-3 py-2 text-xs font-medium text-accent">
                           {GUARDIAN_QUORUM_LABEL[settings.guardianQuorum]}.
                         </p>
                       </>

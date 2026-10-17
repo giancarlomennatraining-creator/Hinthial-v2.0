@@ -16,8 +16,8 @@ export default function manifest(): MetadataRoute.Manifest {
       "Metti ordine nella tua vita digitale, proteggi ciò che conta e rendi le informazioni importanti accessibili alle persone giuste quando serve.",
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#f7fafb",
-    theme_color: "#2b4fc4",
+    background_color: "#edf4ee",
+    theme_color: "#1d7a4a",
     lang: "it",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

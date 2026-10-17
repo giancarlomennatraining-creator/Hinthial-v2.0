@@ -17,7 +17,7 @@ export default function RegisterPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-brand">
+        <h1 className="text-xl font-semibold tracking-tight text-title">
           Crea account
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -95,11 +95,11 @@ export default function RegisterPage() {
           <input type="checkbox" name="acceptTerms" required className="mt-0.5 h-4 w-4 shrink-0 accent-brand" />
           <span>
             Ho letto l&apos;
-            <Link href="/privacy" target="_blank" className="font-medium text-brand hover:underline">
+            <Link href="/privacy" target="_blank" className="font-medium text-accent hover:underline">
               informativa privacy
             </Link>{" "}
             e accetto i{" "}
-            <Link href="/termini" target="_blank" className="font-medium text-brand hover:underline">
+            <Link href="/termini" target="_blank" className="font-medium text-accent hover:underline">
               termini d&apos;uso
             </Link>
             .

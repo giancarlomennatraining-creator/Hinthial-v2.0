@@ -151,7 +151,7 @@ export function LegacyWaiting({ userId }: { userId: string }) {
                 className={cn(
                   "flex flex-col items-start gap-0.5 rounded-xl border px-4 py-3 text-left transition-colors",
                   selected
-                    ? "border-brand bg-brand/10 text-brand"
+                    ? "border-brand bg-brand/10 text-accent"
                     : "border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900",
                 )}
               >
@@ -208,7 +208,7 @@ export function LegacyWaiting({ userId }: { userId: string }) {
           type="button"
           onClick={() => setRehearsalOpen((v) => !v)}
           aria-expanded={rehearsalOpen}
-          className="text-sm font-medium text-brand hover:underline"
+          className="text-sm font-medium text-accent hover:underline"
         >
           {rehearsalOpen ? "Nascondi la prova generale" : "Vedi cosa succederebbe se cominciasse oggi"}
         </button>

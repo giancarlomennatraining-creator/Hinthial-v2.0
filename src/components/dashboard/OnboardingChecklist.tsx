@@ -48,7 +48,7 @@ export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
               {step.done ? (
                 <span className="text-zinc-700 dark:text-zinc-300">{step.label}</span>
               ) : (
-                <Link href={step.href} className="font-medium text-brand hover:underline">
+                <Link href={step.href} className="font-medium text-accent hover:underline">
                   {step.label}
                 </Link>
               )}

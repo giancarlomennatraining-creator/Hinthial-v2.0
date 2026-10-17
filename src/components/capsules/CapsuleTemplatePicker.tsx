@@ -50,7 +50,7 @@ export function CapsuleTemplatePicker({
         aria-pressed={selected === null}
         onClick={() => onPick(null)}
         className={`self-start rounded-xl border-[1.5px] px-3.5 py-2 text-[13px] font-bold ${
-          selected === null ? "border-brand bg-[#f3f6ff] text-brand dark:bg-brand/10" : "border-dashed border-[#c9d0e6] text-brand dark:border-zinc-700"
+          selected === null ? "border-brand bg-[#f3f6ff] text-accent dark:bg-brand/10" : "border-dashed border-[#c9d0e6] text-accent dark:border-zinc-700"
         }`}
       >
         Parti da zero

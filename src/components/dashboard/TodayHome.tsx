@@ -74,7 +74,7 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-heading text-lg font-extrabold text-zinc-900 dark:text-zinc-100">Continuità</h2>
           {score ? (
-            <p className="text-sm font-semibold text-brand">
+            <p className="text-sm font-semibold text-accent">
               {score.done} su {score.total}
             </p>
           ) : null}
@@ -114,7 +114,7 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
                     </span>
                   </span>
                   {step.done ? null : (
-                    <Link href={step.href} className="shrink-0 text-xs font-semibold text-brand hover:underline">
+                    <Link href={step.href} className="shrink-0 text-xs font-semibold text-accent hover:underline">
                       {step.action} →
                     </Link>
                   )}
@@ -139,7 +139,7 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 Una capsula arriva a qualcuno al momento giusto: una lettera, un ricordo, un messaggio per una data che conta.
               </p>
-              <Link href="/capsules/new" className="text-xs font-semibold text-brand hover:underline">
+              <Link href="/capsules/new" className="text-xs font-semibold text-accent hover:underline">
                 Scrivi una capsula →
               </Link>
             </div>
@@ -171,7 +171,7 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
               ))}
             </ul>
           )}
-          <Link href="/capsules" className="mt-3 inline-block text-xs font-medium text-brand hover:underline">
+          <Link href="/capsules" className="mt-3 inline-block text-xs font-medium text-accent hover:underline">
             Vai alle capsule
           </Link>
         </section>
@@ -198,7 +198,7 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
               })}
             </ul>
           )}
-          <Link href="/reminders" className="mt-3 inline-block text-xs font-medium text-brand hover:underline">
+          <Link href="/reminders" className="mt-3 inline-block text-xs font-medium text-accent hover:underline">
             Vai alle scadenze
           </Link>
         </section>

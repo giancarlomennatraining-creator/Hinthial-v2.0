@@ -19,7 +19,7 @@ function TimelineRow({ entry }: { entry: LivingTimelineEntry }) {
   const style = ENTRY_STYLE[entry.kind];
   const title =
     entry.documentId !== null ? (
-      <Link href={`/archive/${entry.documentId}`} className="text-[14.5px] font-bold break-words text-[#121a35] hover:text-brand dark:text-zinc-100">
+      <Link href={`/archive/${entry.documentId}`} className="text-[14.5px] font-bold break-words text-[#121a35] hover:text-accent dark:text-zinc-100">
         {entry.title}
       </Link>
     ) : (

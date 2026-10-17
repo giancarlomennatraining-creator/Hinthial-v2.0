@@ -99,7 +99,7 @@ export function AIAnalysisTrigger({
         type="checkbox"
         checked={excluded}
         onChange={() => onToggleExcluded(!excluded)}
-        className="h-3.5 w-3.5 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+        className="h-3.5 w-3.5 rounded border-zinc-300 text-accent focus:ring-brand dark:border-zinc-700"
       />
       Escludi questo documento dall&apos;analisi di Hinthia, anche con la categoria abilitata
     </label>
@@ -145,7 +145,7 @@ export function AIAnalysisTrigger({
       ) : !consentActive ? (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Attiva &quot;Estrazione avanzata dei contenuti&quot; in{" "}
-          <Link href="/settings" className="underline underline-offset-2 hover:text-brand">
+          <Link href="/settings" className="underline underline-offset-2 hover:text-accent">
             Impostazioni → Hinthia
           </Link>{" "}
           per usare questa funzione.
@@ -191,7 +191,7 @@ export function AIAnalysisTrigger({
           ) : null}
           <Link
             href="/settings"
-            className="text-xs text-zinc-500 underline underline-offset-2 hover:text-brand dark:text-zinc-400"
+            className="text-xs text-zinc-500 underline underline-offset-2 hover:text-accent dark:text-zinc-400"
           >
             Vai alle Impostazioni
           </Link>

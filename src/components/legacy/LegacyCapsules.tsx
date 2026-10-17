@@ -80,7 +80,7 @@ export function LegacyCapsules({ masterKey }: { masterKey: CryptoKey }) {
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Non hai ancora scritto nessuna capsula. Una capsula è una lettera, un ricordo o un messaggio per qualcuno.
           </p>
-          <Link href="/capsules/new" className="text-sm font-semibold text-brand hover:underline">
+          <Link href="/capsules/new" className="text-sm font-semibold text-accent hover:underline">
             Scrivi una capsula →
           </Link>
         </div>
@@ -119,7 +119,7 @@ export function LegacyCapsules({ masterKey }: { masterKey: CryptoKey }) {
                         disabled={busyId === capsule.id}
                         onChange={() => toggle(capsule)}
                         aria-label={`Apri anche prima, se non ci sono più: ${capsule.title}`}
-                        className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+                        className="h-4 w-4 rounded border-zinc-300 text-accent focus:ring-brand dark:border-zinc-700"
                       />
                       Anche prima, se non ci sono più
                     </label>

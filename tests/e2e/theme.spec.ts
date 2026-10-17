@@ -27,6 +27,11 @@ test("il toggle del tema in Impostazioni applica la classe dark e persiste al re
   await expect(html).toHaveClass(/dark/);
   await expect(darkRadio).toHaveAttribute("aria-checked", "true");
 
+  // Nel tema scuro la scritta blu del logo non si legge: al suo posto c'è "Hinthial" in testo chiaro (v. BrandLockup).
+  const aside = page.locator("aside");
+  await expect(aside.getByText("Hinthial", { exact: true })).toBeVisible();
+  await expect(aside.locator('img[src="/brand/logo-lockup.svg"]')).toBeHidden();
+
   // Persiste a un refresh vero (localStorage, letto dallo script inline prima del primo paint).
   await page.reload();
   await expect(html).toHaveClass(/dark/);
@@ -36,4 +41,6 @@ test("il toggle del tema in Impostazioni applica la classe dark e persiste al re
   await lightRadio.click();
   await expect(html).not.toHaveClass(/dark/);
   await expect(lightRadio).toHaveAttribute("aria-checked", "true");
+  await expect(aside.locator('img[src="/brand/logo-lockup.svg"]')).toBeVisible();
+  await expect(aside.getByText("Hinthial", { exact: true })).toBeHidden();
 });

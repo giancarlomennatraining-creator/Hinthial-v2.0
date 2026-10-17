@@ -65,7 +65,7 @@ export const metadata: Metadata = {
 
 /** Colore della barra di stato/degli strumenti del browser quando Hinthial è installata (v. manifest.ts, stesso blu). */
 export const viewport: Viewport = {
-  themeColor: "#2b4fc4",
+  themeColor: "#1d7a4a",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

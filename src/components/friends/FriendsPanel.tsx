@@ -400,7 +400,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="min-w-0 w-full sm:flex-1">
           <div className="flex items-start justify-between gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight text-brand">
+            <h1 className="text-2xl font-semibold tracking-tight text-title">
               Amici
             </h1>
             <PageHelp
@@ -412,7 +412,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
               ]}
             />
           </div>
-          <Link href="/friends/protected" className="mt-1 text-sm font-medium text-brand hover:underline">
+          <Link href="/friends/protected" className="mt-1 text-sm font-medium text-accent hover:underline">
             Vedi chi proteggi
           </Link>
         </div>

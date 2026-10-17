@@ -99,7 +99,7 @@ export function FriendRequestNotificationPopup({ masterKey }: { masterKey: Crypt
         className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
       >
         <div>
-          <h2 className="text-lg font-semibold text-brand">🤝 Una richiesta di amicizia</h2>
+          <h2 className="text-lg font-semibold text-accent">🤝 Una richiesta di amicizia</h2>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             <strong>{currentRequest.senderName}</strong> vorrebbe diventare tuo amico su Hinthial. Se
             accetti, comparirete entrambi nella rispettiva lista amici.

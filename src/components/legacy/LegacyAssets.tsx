@@ -72,7 +72,7 @@ export function LegacyAssets({ masterKey }: { masterKey: CryptoKey }) {
         <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
           Per ogni bene, scrivi cosa succede se non ci sei più: a chi va, dove sono le chiavi, chi chiamare. La nota resta
           cifrata e la vedi solo tu. Per farla arrivare a qualcuno, scrivila anche in una capsula.{" "}
-          <Link href="/capsules/new" className="font-medium text-brand hover:underline">
+          <Link href="/capsules/new" className="font-medium text-accent hover:underline">
             Scrivi una capsula →
           </Link>
         </p>
@@ -91,7 +91,7 @@ export function LegacyAssets({ masterKey }: { masterKey: CryptoKey }) {
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Non hai ancora censito nessun bene (casa, veicoli, assicurazioni...).
           </p>
-          <Link href="/assets/new" className="text-sm font-semibold text-brand hover:underline">
+          <Link href="/assets/new" className="text-sm font-semibold text-accent hover:underline">
             Aggiungi un bene →
           </Link>
         </div>
@@ -121,7 +121,7 @@ export function LegacyAssets({ masterKey }: { masterKey: CryptoKey }) {
                     <Link
                       href={starterHref("bene", asset.id)}
                       aria-label={`Fai arrivare ${asset.name} a qualcuno`}
-                      className="text-xs font-semibold text-brand hover:underline"
+                      className="text-xs font-semibold text-accent hover:underline"
                     >
                       Fallo arrivare a…
                     </Link>
@@ -129,7 +129,7 @@ export function LegacyAssets({ masterKey }: { masterKey: CryptoKey }) {
                       type="button"
                       onClick={() => startEditing(asset)}
                       aria-label={`${asset.legacyNote ? "Cambia" : "Scrivi"} cosa succede a ${asset.name}`}
-                      className="text-xs font-semibold text-brand hover:underline"
+                      className="text-xs font-semibold text-accent hover:underline"
                     >
                       {asset.legacyNote ? "Cambia" : "Scrivi"}
                     </button>

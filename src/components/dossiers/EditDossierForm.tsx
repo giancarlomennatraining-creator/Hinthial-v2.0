@@ -73,7 +73,7 @@ export function EditDossierForm({ masterKey, dossierId }: { masterKey: CryptoKey
         >
           ← Torna al fascicolo
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">
           Modifica fascicolo
         </h1>
       </div>

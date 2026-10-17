@@ -224,7 +224,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="min-w-0 w-full sm:flex-1">
           <div className="flex items-start justify-between gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight text-brand">
+            <h1 className="text-2xl font-semibold tracking-tight text-title">
               Archivio
             </h1>
             <PageHelp title="Archivio" tips={ARCHIVE_HELP_TIPS} />
@@ -302,7 +302,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
           {/* Barra contestuale: compare solo con almeno un documento selezionato. */}
           {selectedIds.size > 0 ? (
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-brand/10 px-3 py-1.5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-brand">
+              <div className="flex items-center gap-2 text-sm font-semibold text-accent">
                 <button
                   type="button"
                   onClick={clearSelection}
@@ -328,7 +328,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                     type="button"
                     disabled={bulkBusy}
                     onClick={() => setBulkPopover((prev) => (prev === "category" ? null : "category"))}
-                    className="rounded-md px-2 py-1 text-sm font-semibold text-brand hover:bg-brand/20 disabled:opacity-50"
+                    className="rounded-md px-2 py-1 text-sm font-semibold text-accent hover:bg-brand/20 disabled:opacity-50"
                   >
                     🏷️ Categoria
                   </button>
@@ -352,7 +352,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                     type="button"
                     disabled={bulkBusy || dossiers.length === 0}
                     onClick={() => setBulkPopover((prev) => (prev === "dossier" ? null : "dossier"))}
-                    className="rounded-md px-2 py-1 text-sm font-semibold text-brand hover:bg-brand/20 disabled:opacity-50"
+                    className="rounded-md px-2 py-1 text-sm font-semibold text-accent hover:bg-brand/20 disabled:opacity-50"
                   >
                     📁 Fascicolo
                   </button>
@@ -407,12 +407,12 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           checked={selectedIds.has(doc.id)}
                           onChange={() => toggleSelected(doc.id)}
                           aria-label={`Seleziona ${doc.filename}`}
-                          className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+                          className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-accent focus:ring-brand dark:border-zinc-700"
                         />
                         <div className="min-w-0">
                         <Link
                           href={`/archive/${doc.id}`}
-                          className="flex min-w-0 items-center gap-1 text-sm font-medium text-zinc-900 transition-colors hover:text-brand dark:text-zinc-100 dark:hover:text-blue-400"
+                          className="flex min-w-0 items-center gap-1 text-sm font-medium text-zinc-900 transition-colors hover:text-accent dark:text-zinc-100 dark:hover:text-blue-400"
                         >
                           <ContentTypeIcon kind={kind} inDossier={doc.dossierIds.length > 0} />
                           <span className="truncate">{doc.filename}</span>

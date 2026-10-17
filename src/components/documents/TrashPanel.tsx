@@ -196,7 +196,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-brand">Archivio</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-title">Archivio</h1>
         <PageHelp
           title="Cestino"
           tips={[
@@ -233,7 +233,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
                 checked={documents.length > 0 && documents.every((d) => selectedIds.has(d.id))}
                 onChange={toggleSelectAll}
                 aria-label="Seleziona tutti i documenti nel cestino"
-                className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+                className="h-4 w-4 rounded border-zinc-300 text-accent focus:ring-brand dark:border-zinc-700"
               />
               {documents.length} {documents.length === 1 ? "documento" : "documenti"}
             </label>
@@ -249,7 +249,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
 
           {selectedIds.size > 0 ? (
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-brand/10 px-3 py-1.5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-brand">
+              <div className="flex items-center gap-2 text-sm font-semibold text-accent">
                 <button
                   type="button"
                   onClick={clearSelection}
@@ -265,7 +265,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
                   type="button"
                   disabled={bulkBusy}
                   onClick={handleBulkRestore}
-                  className="rounded-md px-2 py-1 text-sm font-semibold text-brand hover:bg-brand/20 disabled:opacity-50"
+                  className="rounded-md px-2 py-1 text-sm font-semibold text-accent hover:bg-brand/20 disabled:opacity-50"
                 >
                   ↩️ Ripristina selezionati
                 </button>
@@ -292,7 +292,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
                     checked={selectedIds.has(doc.id)}
                     onChange={() => toggleSelected(doc.id)}
                     aria-label={`Seleziona ${doc.filename}`}
-                    className="h-4 w-4 shrink-0 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+                    className="h-4 w-4 shrink-0 rounded border-zinc-300 text-accent focus:ring-brand dark:border-zinc-700"
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
@@ -320,7 +320,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
                       type="button"
                       disabled={busy}
                       onClick={() => handleRestore(doc)}
-                      className="rounded-md px-2 py-1 text-sm font-medium text-brand hover:bg-brand/10 disabled:opacity-50"
+                      className="rounded-md px-2 py-1 text-sm font-medium text-accent hover:bg-brand/10 disabled:opacity-50"
                     >
                       ↩️ Ripristina
                     </button>

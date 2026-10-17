@@ -58,7 +58,8 @@ describe("SetupMasterKeyForm", () => {
     expect(masterKey.setup).toHaveBeenCalledWith("una-master-password");
     expect(screen.getAllByText("ABCD-EFGH-IJKL")).toHaveLength(2); // a schermo e nel kit stampabile
     expect(screen.getByText("Passo 2 di 2")).toBeInTheDocument();
-    expect(states.some((s) => s.step === 2)).toBe(true);
+    // Il passaggio arriva dall'effetto di notifica, non dallo stesso render della pagina: va atteso, non letto subito (a volte non c'era ancora).
+    await waitFor(() => expect(states.some((s) => s.step === 2)).toBe(true));
 
     const next = screen.getByRole("button", { name: "Continua" });
     expect(next).toBeDisabled();

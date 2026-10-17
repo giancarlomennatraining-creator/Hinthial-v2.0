@@ -48,7 +48,7 @@ export function DossierInvolved({
               </svg>
             </span>
             <span className="flex min-w-0 flex-col">
-              <Link href="/assets" className="truncate text-[13.5px] font-bold hover:text-brand">
+              <Link href="/assets" className="truncate text-[13.5px] font-bold hover:text-accent">
                 {asset.name}
               </Link>
               <span className="text-xs text-[#5b6483] dark:text-zinc-400">
@@ -111,7 +111,7 @@ export function DossierInvolved({
           </div>
         </div>
       ) : (
-        <button type="button" onClick={() => setFormOpen(true)} className="self-start text-[13px] font-bold text-brand hover:underline">
+        <button type="button" onClick={() => setFormOpen(true)} className="self-start text-[13px] font-bold text-accent hover:underline">
           + Aggiungi una persona
         </button>
       )}

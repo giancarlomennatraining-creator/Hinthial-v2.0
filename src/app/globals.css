@@ -10,17 +10,64 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* "Fresh Clarity": sfondo leggermente grigio-azzurro, non bianco puro
-     --- così le superfici bianche esplicite (sidebar, header, card) si
-     staccano visivamente dallo sfondo della pagina invece di sparirci
-     dentro (v. Sidebar/TopNav/MobileNavBar, che dichiarano bg-white). */
-  --background: #f7fafb;
-  --foreground: #171717;
-  /* Direzione visiva "Fresh Clarity" (v. mockup condiviso con l'utente):
-     blu più acceso del precedente campionamento dal logo, per un accento
-     più vivo sui bottoni/link primari. */
-  --brand: #2b4fc4;
-  --brand-hover: #16307f;
+  /* Stile "Foglia" (v. revisione grafica 2026-10): verde foglia per le azioni, blu inchiostro per il testo, neutri
+     appena tinti di verde. Tutti i colori dell'app passano da qui: i componenti usano le scale `zinc-*` e `brand`, che
+     in @theme (sotto) sono variabili, non più i valori standard di Tailwind --- così cambiare stile o tema vuol dire
+     cambiare queste variabili, non 147 file. Per i colori nuovi: mai esadecimali nei componenti, solo questi gettoni.
+     Le superfici bianche esplicite (card, finestre) si staccano dallo sfondo verde chiaro. */
+  color-scheme: light;
+  --background: #edf4ee;
+  --foreground: #14263f;
+  /* Colore d'azione: riempimenti con testo bianco sopra (bottoni). Per testo e link su una superficie c'è --accent,
+     più scuro in chiaro e più chiaro in scuro, perché un solo verde non regge il contrasto su entrambi. */
+  --brand: #1d7a4a;
+  --brand-hover: #14593a;
+  --accent: #1b7048;
+  --accent-hover: #124f33;
+  /* Titolo di pagina: inchiostro, non colore d'azione. */
+  --title: #14263f;
+  /* Barra laterale, barra in alto e barra in basso su smartphone: un velo di verde sopra lo sfondo. */
+  --side: #e3eee5;
+  /* La scritta "Hinthial" accanto al simbolo, dove il logo completo (blu) non si legge: v. BrandLockup. */
+  --wordmark: #0b2f9e;
+  /* Scala dei neutri: 50 il più chiaro, 950 il più scuro. */
+  --n-50: #f4f8f4;
+  --n-100: #e9f1ea;
+  --n-200: #d3e2d5;
+  --n-300: #b9cdbd;
+  --n-400: #7d9484;
+  --n-500: #556676;
+  --n-600: #425263;
+  --n-700: #2f3f52;
+  --n-800: #1f3048;
+  --n-900: #14263f;
+  --n-950: #0d1c30;
+}
+
+.dark {
+  /* Foglia scuro: verde profondo, mai nero puro. Un solo scuro per home e app. */
+  color-scheme: dark;
+  --background: #0c1a18;
+  --foreground: #e8f2ec;
+  --brand: #1f8450;
+  --brand-hover: #1a6d43;
+  --accent: #6fd79a;
+  --accent-hover: #9ae6b8;
+  --title: #e8f2ec;
+  --side: #0f201c;
+  --wordmark: #e8f2ec;
+  /* Scala scura: stessi gradini, valori propri. Le card stanno su 950 (più chiaro dello sfondo), i bordi su 800. */
+  --n-50: #f1f7f3;
+  --n-100: #e8f2ec;
+  --n-200: #cfe0d6;
+  --n-300: #b4cbbd;
+  --n-400: #9db5a8;
+  --n-500: #7f9a8d;
+  --n-600: #5f7d70;
+  --n-700: #3f6054;
+  --n-800: #23423a;
+  --n-900: #1a3a30;
+  --n-950: #12251f;
 }
 
 @theme inline {
@@ -28,16 +75,27 @@
   --color-foreground: var(--foreground);
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-title: var(--title);
+  --color-side: var(--side);
+  --color-wordmark: var(--wordmark);
+  --color-zinc-50: var(--n-50);
+  --color-zinc-100: var(--n-100);
+  --color-zinc-200: var(--n-200);
+  --color-zinc-300: var(--n-300);
+  --color-zinc-400: var(--n-400);
+  --color-zinc-500: var(--n-500);
+  --color-zinc-600: var(--n-600);
+  --color-zinc-700: var(--n-700);
+  --color-zinc-800: var(--n-800);
+  --color-zinc-900: var(--n-900);
+  --color-zinc-950: var(--n-950);
   --font-sans: var(--font-work-sans);
   --font-heading: var(--font-manrope);
   --font-mono: var(--font-geist-mono);
   /* Stile "a mano" opzionale per il testo di una capsula --- v. layout.tsx. */
   --font-caveat: var(--font-caveat);
-}
-
-.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
 }
 
 /*

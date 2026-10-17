@@ -81,7 +81,7 @@ export function CapsuleOpenEffectSettings() {
                 onClick={() => void handleChange(option.value)}
                 className="flex items-start gap-3 text-left disabled:opacity-60"
               >
-                <EffectIcon effect={option.value} className={cn("mt-0.5 h-8 w-8 shrink-0", selected ? "text-brand" : "text-zinc-400")} />
+                <EffectIcon effect={option.value} className={cn("mt-0.5 h-8 w-8 shrink-0", selected ? "text-accent" : "text-zinc-400")} />
                 <span>
                   <span className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{option.label}</span>
                   <span className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">{option.description}</span>
@@ -97,7 +97,7 @@ export function CapsuleOpenEffectSettings() {
                   setPreviewing(option.value);
                 }}
                 aria-label={`Provalo: ${option.label}`}
-                className="w-fit self-start rounded-lg border border-zinc-200 px-3 py-1 text-xs font-semibold text-brand hover:bg-brand/5 dark:border-zinc-800"
+                className="w-fit self-start rounded-lg border border-zinc-200 px-3 py-1 text-xs font-semibold text-accent hover:bg-brand/5 dark:border-zinc-800"
               >
                 Provalo
               </button>

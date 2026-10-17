@@ -113,7 +113,7 @@ export function PairingApprovalPanel({ requestId }: { requestId: string }) {
   if (!request) {
     return (
       <div className="flex max-w-sm flex-col gap-2">
-        <h1 className="text-xl font-semibold text-brand">Richiesta non trovata</h1>
+        <h1 className="text-xl font-semibold text-title">Richiesta non trovata</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Questo codice non esiste più, o è scaduto (dura solo pochi minuti) — torna al
           dispositivo che vuoi sbloccare e genera un nuovo codice.
@@ -125,7 +125,7 @@ export function PairingApprovalPanel({ requestId }: { requestId: string }) {
   if (approved) {
     return (
       <div className="flex max-w-sm flex-col gap-2">
-        <h1 className="text-xl font-semibold text-brand">✓ Accesso autorizzato</h1>
+        <h1 className="text-xl font-semibold text-title">✓ Accesso autorizzato</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           L&apos;altro dispositivo si sbloccherà da solo entro pochi secondi. Puoi chiudere questa
           pagina.
@@ -137,7 +137,7 @@ export function PairingApprovalPanel({ requestId }: { requestId: string }) {
   return (
     <form onSubmit={handleApprove} className="flex max-w-sm flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-brand">Autorizzare l&apos;accesso?</h1>
+        <h1 className="text-xl font-semibold text-title">Autorizzare l&apos;accesso?</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Un altro dispositivo sta chiedendo di sbloccare il tuo vault. Confermando con la master
           password, gli darai accesso — senza che debba digitarla lui stesso.

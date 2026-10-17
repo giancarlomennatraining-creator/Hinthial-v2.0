@@ -214,7 +214,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
         className={cn(
           "inline-flex flex-none items-center gap-1.5 rounded-full px-3 py-1 text-xs",
           pressed
-            ? "bg-brand/10 font-semibold text-brand"
+            ? "bg-brand/10 font-semibold text-accent"
             : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
           count === 0 && !pressed && "opacity-50",
         )}
@@ -350,7 +350,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
                                   setArea(group.area);
                                   inputRef.current?.focus();
                                 }}
-                                className="text-xs font-semibold text-brand hover:underline"
+                                className="text-xs font-semibold text-accent hover:underline"
                               >
                                 Mostra tutti ({group.items.length})
                               </button>
@@ -390,7 +390,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
                                     ) : null}
                                     {result.snippet && result.snippetOrigin ? (
                                       <span className="mt-1 flex items-baseline gap-2 text-xs text-zinc-600 dark:text-zinc-400">
-                                        <span className="flex-none rounded border border-brand px-1.5 text-[0.65rem] font-semibold text-brand">
+                                        <span className="flex-none rounded border border-brand px-1.5 text-[0.65rem] font-semibold text-accent">
                                           {ORIGIN_LABELS[result.snippetOrigin]}
                                         </span>
                                         <span className="min-w-0 truncate">

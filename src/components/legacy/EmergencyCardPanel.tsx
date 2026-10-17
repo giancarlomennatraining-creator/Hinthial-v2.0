@@ -245,7 +245,7 @@ export function EmergencyCardPanel({
             <button
               type="button"
               onClick={addContact}
-              className="w-fit text-sm font-medium text-brand hover:underline"
+              className="w-fit text-sm font-medium text-accent hover:underline"
             >
               + Aggiungi un contatto
             </button>
@@ -320,7 +320,7 @@ function EmergencyCardPreview({
   return (
     <div className="flex w-[340px] flex-col gap-2.5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_8px_20px_rgba(16,24,40,0.06)] dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-bold text-brand">🌿 Hinthial</span>
+        <span className="text-sm font-bold text-accent">🌿 Hinthial</span>
         <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
           Scheda d&apos;emergenza
         </span>
@@ -336,7 +336,7 @@ function EmergencyCardPreview({
       </div>
 
       {card.bloodType ? (
-        <span className="w-fit rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-bold text-brand">
+        <span className="w-fit rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-bold text-accent">
           🩸 Gruppo {card.bloodType}
         </span>
       ) : null}

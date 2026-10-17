@@ -146,7 +146,7 @@ export default function PrivacyPage() {
       <LegalSection title="9. Modifiche">
         <p>
           Se questa informativa cambia in modo sostanziale te lo diremo nell&apos;app o per email prima che le modifiche si
-          applichino. Trovi anche i <Link href="/termini" className="font-medium text-brand hover:underline">termini d&apos;uso</Link>.
+          applichino. Trovi anche i <Link href="/termini" className="font-medium text-accent hover:underline">termini d&apos;uso</Link>.
         </p>
       </LegalSection>
     </LegalPage>

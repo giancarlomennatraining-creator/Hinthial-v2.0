@@ -372,7 +372,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
         <div className="flex min-w-0 flex-col gap-1.5">
           <Link
             href="/dossiers"
-            className="self-start text-[13.5px] font-bold text-brand underline-offset-2 hover:underline"
+            className="self-start text-[13.5px] font-bold text-accent underline-offset-2 hover:underline"
           >
             ← Torna ai fascicoli
           </Link>
@@ -382,10 +382,10 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
                 <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
               </svg>
             </span>
-            <h1 className="min-w-0 font-heading text-[30px] leading-tight font-extrabold tracking-[-0.02em] break-words text-brand">{dossier.title}</h1>
+            <h1 className="min-w-0 font-heading text-[30px] leading-tight font-extrabold tracking-[-0.02em] break-words text-title">{dossier.title}</h1>
             <span
               className={`rounded-full px-[11px] py-1 text-[12.5px] font-bold ${
-                isClosed ? "bg-[#eceff4] text-[#5b6483] dark:bg-zinc-800 dark:text-zinc-300" : "bg-[#e8edfc] text-brand dark:bg-brand/20 dark:text-[#9db6ff]"
+                isClosed ? "bg-[#eceff4] text-[#5b6483] dark:bg-zinc-800 dark:text-zinc-300" : "bg-[#e8edfc] text-accent dark:bg-brand/20 dark:text-[#9db6ff]"
               }`}
             >
               {isClosed ? "Chiuso" : "Aperto"}
@@ -403,7 +403,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
         <div className="flex flex-wrap gap-2.5">
           <Link
             href={`/dossiers/${dossierId}/share`}
-            className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-[#c9d0e6] bg-white px-4 py-2 text-sm font-semibold text-brand hover:border-brand dark:border-zinc-700 dark:bg-zinc-950"
+            className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-[#c9d0e6] bg-white px-4 py-2 text-sm font-semibold text-accent hover:border-brand dark:border-zinc-700 dark:bg-zinc-950"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
@@ -413,7 +413,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
           </Link>
           <Link
             href={starterHref("fascicolo", dossierId)}
-            className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-[#c9d0e6] bg-white px-4 py-2 text-sm font-semibold text-brand hover:border-brand dark:border-zinc-700 dark:bg-zinc-950"
+            className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-[#c9d0e6] bg-white px-4 py-2 text-sm font-semibold text-accent hover:border-brand dark:border-zinc-700 dark:bg-zinc-950"
           >
             Fallo arrivare a…
           </Link>

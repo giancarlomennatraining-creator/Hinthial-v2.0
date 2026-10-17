@@ -30,7 +30,7 @@ export function PhasesBar({
         </h2>
         <span className="flex items-center gap-3 text-xs text-[#5b6483] dark:text-zinc-400">
           Clicca una fase per spostarti: la scelta è tua.
-          <button type="button" onClick={onEdit} className="font-bold text-brand hover:underline">
+          <button type="button" onClick={onEdit} className="font-bold text-accent hover:underline">
             Modifica le fasi
           </button>
         </span>

@@ -259,7 +259,7 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
                   <span className="font-medium text-zinc-900 dark:text-zinc-100">
                     {device.label}
                     {device.id === thisDeviceId ? (
-                      <span className="ml-2 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
+                      <span className="ml-2 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-accent">
                         questo dispositivo
                       </span>
                     ) : null}

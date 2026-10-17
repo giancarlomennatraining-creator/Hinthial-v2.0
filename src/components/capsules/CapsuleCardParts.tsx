@@ -51,7 +51,7 @@ export function CapsuleChips({
       {capsule.openOnLegacy && !isOpened(capsule, now) ? (
         <span
           title="Si apre alla data scelta o, se arriva prima, quando l'Eredità digitale consegna le capsule"
-          className="rounded-full bg-[#e8edfc] px-2 py-0.5 text-xs font-bold text-brand dark:bg-brand/20 dark:text-[#9db6ff]"
+          className="rounded-full bg-[#e8edfc] px-2 py-0.5 text-xs font-bold text-accent dark:bg-brand/20 dark:text-[#9db6ff]"
         >
           Anche prima, se non ci sono più
         </span>
@@ -61,7 +61,7 @@ export function CapsuleChips({
           type="button"
           onClick={onOpenReplies}
           aria-label={`Leggi ${repliesLabel(repliesCount)} su ${capsule.title}`}
-          className="rounded-full bg-[#e8edfc] px-2 py-0.5 text-xs font-bold text-brand hover:bg-[#d9e2fb] dark:bg-brand/20 dark:text-[#9db6ff]"
+          className="rounded-full bg-[#e8edfc] px-2 py-0.5 text-xs font-bold text-accent hover:bg-[#d9e2fb] dark:bg-brand/20 dark:text-[#9db6ff]"
         >
           {repliesLabel(repliesCount)}
         </button>

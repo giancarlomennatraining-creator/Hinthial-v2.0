@@ -402,7 +402,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
         <Link href="/archive" className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400">
           ← Archivio
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">
           {items.length === 1 ? "1 documento da confermare" : `${items.length} documenti da confermare`}
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -451,7 +451,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
           ) : !consentActive ? (
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
               La lettura con Hinthia non è attiva: attivala in{" "}
-              <Link href="/settings" className="underline underline-offset-2 hover:text-brand">
+              <Link href="/settings" className="underline underline-offset-2 hover:text-accent">
                 Impostazioni → Hinthia
               </Link>{" "}
               per avere le proposte. Intanto puoi aprire ogni documento e sistemarlo a mano.

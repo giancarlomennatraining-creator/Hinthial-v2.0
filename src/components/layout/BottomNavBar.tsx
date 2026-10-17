@@ -18,7 +18,7 @@ export function BottomNavBar() {
   return (
     <nav
       aria-label="Navigazione rapida"
-      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden dark:border-zinc-800 dark:bg-zinc-950"
+      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-zinc-200 bg-side pb-[env(safe-area-inset-bottom)] md:hidden dark:border-zinc-800"
     >
       {shownItems.map((item) => {
         const isActive = isNavItemActive(item, pathname);
@@ -30,10 +30,13 @@ export function BottomNavBar() {
             aria-label={item.shortLabel ? item.label : undefined}
             className={cn(
               "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium",
-              isActive ? "text-brand" : "text-zinc-500 dark:text-zinc-400",
+              isActive ? "font-bold text-accent" : "text-zinc-500 dark:text-zinc-400",
             )}
           >
-            <item.icon width={20} height={20} aria-hidden="true" className="text-brand" />
+            {/* La voce attiva ha una pillola dietro l'icona (stile Foglia), non solo il colore: si vede anche senza distinguere i verdi. */}
+            <span className={cn("flex rounded-full px-4 py-0.5 transition-colors", isActive ? "bg-brand/15" : undefined)}>
+              <item.icon width={20} height={20} aria-hidden="true" className="text-accent" />
+            </span>
             <span className="truncate">{item.shortLabel ?? item.label}</span>
           </Link>
         );

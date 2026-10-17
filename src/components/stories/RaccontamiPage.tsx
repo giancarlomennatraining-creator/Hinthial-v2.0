@@ -177,7 +177,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
     <div className="flex flex-col gap-8 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-brand">Raccontami</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-title">Raccontami</h1>
           <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
             Ci sono cose che sai solo tu e che non stanno in nessun documento. Ti faccio una domanda alla volta: le risposte
             restano tue, cifrate, e puoi farle arrivare a chi vuoi.
@@ -239,7 +239,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
           {writing && current ? (
             <>
               <div>
-                <p className="text-xs font-bold tracking-wider text-brand uppercase">{current.theme.name}</p>
+                <p className="text-xs font-bold tracking-wider text-accent uppercase">{current.theme.name}</p>
                 <h2 className="mt-1 font-heading text-xl leading-snug font-extrabold text-zinc-900 dark:text-zinc-100">{current.question}</h2>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{current.theme.intro}</p>
               </div>
@@ -331,7 +331,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
                 </p>
               ) : followUp?.status === "ready" && !followUpDone ? (
                 <div className="flex flex-col gap-2 rounded-xl bg-brand/10 p-4">
-                  <p className="text-xs font-bold tracking-wider text-brand uppercase">Hinthia chiede</p>
+                  <p className="text-xs font-bold tracking-wider text-accent uppercase">Hinthia chiede</p>
                   <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{followUp.question}</p>
                   <label htmlFor="story-follow-up" className="sr-only">
                     La tua risposta alla domanda di Hinthia
@@ -387,7 +387,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
             {stories.map((story) => (
               <li key={story.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <span className="flex min-w-0 flex-col gap-0.5">
-                  <Link href={`/archive/${story.id}`} className="truncate text-sm font-medium text-zinc-900 hover:text-brand dark:text-zinc-100">
+                  <Link href={`/archive/${story.id}`} className="truncate text-sm font-medium text-zinc-900 hover:text-accent dark:text-zinc-100">
                     {story.question}
                   </Link>
                   <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -396,7 +396,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
                 </span>
                 <span className="flex shrink-0 flex-wrap items-center gap-3">
                   {story.voice ? <VoicePlayer story={story} masterKey={masterKey} /> : null}
-                  <Link href={starterHref("documento", story.id)} className="text-xs font-semibold text-brand hover:underline">
+                  <Link href={starterHref("documento", story.id)} className="text-xs font-semibold text-accent hover:underline">
                     Fallo arrivare a…
                   </Link>
                 </span>
@@ -436,7 +436,7 @@ function VoicePlayer({ story, masterKey }: { story: Story; masterKey: CryptoKey 
     return <audio src={url} controls autoPlay aria-label={`Racconto a voce: ${story.question}`} className="h-9 w-56 max-w-full" />;
   }
   return (
-    <button type="button" onClick={load} disabled={status === "loading"} className="text-xs font-semibold text-brand hover:underline disabled:opacity-50">
+    <button type="button" onClick={load} disabled={status === "loading"} className="text-xs font-semibold text-accent hover:underline disabled:opacity-50">
       {status === "loading" ? "Apro…" : status === "failed" ? "Non riesco ad aprirlo: riprova" : "▶ Ascolta"}
     </button>
   );

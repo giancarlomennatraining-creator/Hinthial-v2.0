@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { isPlaceholder, LEGAL } from "@/content/legal";
+import { BrandLockup } from "@/components/layout/BrandLockup";
 
 /**
  * L'impaginazione comune di Privacy e Termini: pubbliche, leggibili senza accesso, testo a colonna stretta. Fuori da
@@ -11,8 +12,7 @@ export function LegalPage({ title, intro, children }: { title: string; intro: Re
     <div className="flex min-h-screen flex-1 flex-col items-center bg-background px-4 py-10 sm:px-6">
       <article className="flex w-full max-w-2xl flex-col gap-8">
         <Link href="/" className="w-fit">
-          {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
-          <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-auto w-40" />
+          <BrandLockup className="h-auto w-40" darkSize="md" />
         </Link>
         <header className="flex flex-col gap-2">
           <h1 className="font-heading text-3xl font-extrabold text-balance text-zinc-900 dark:text-zinc-100">{title}</h1>
@@ -21,13 +21,13 @@ export function LegalPage({ title, intro, children }: { title: string; intro: Re
         </header>
         <div className="flex flex-col gap-8 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{children}</div>
         <footer className="flex flex-wrap gap-4 border-t border-zinc-200 pt-6 text-sm dark:border-zinc-800">
-          <Link href="/privacy" className="font-medium text-brand hover:underline">
+          <Link href="/privacy" className="font-medium text-accent hover:underline">
             Informativa privacy
           </Link>
-          <Link href="/termini" className="font-medium text-brand hover:underline">
+          <Link href="/termini" className="font-medium text-accent hover:underline">
             Termini d&apos;uso
           </Link>
-          <Link href="/" className="font-medium text-brand hover:underline">
+          <Link href="/" className="font-medium text-accent hover:underline">
             Pagina iniziale
           </Link>
         </footer>

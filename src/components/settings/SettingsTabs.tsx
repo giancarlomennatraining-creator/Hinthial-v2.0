@@ -170,7 +170,7 @@ function MobileRow({
         <Icon
           width={20}
           height={20}
-          className={cn("shrink-0", danger ? "text-red-600 dark:text-red-400" : "text-brand")}
+          className={cn("shrink-0", danger ? "text-red-600 dark:text-red-400" : "text-accent")}
         />
         <span className={cn("flex-1", danger ? "text-red-600 dark:text-red-400" : undefined)}>{label}</span>
         <span aria-hidden="true" className="text-zinc-400 dark:text-zinc-600">
@@ -491,7 +491,7 @@ export function SettingsTabs({
                       tab === t.id
                         ? t.id === "danger-zone"
                           ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                          : "bg-brand/10 text-brand"
+                          : "bg-brand/10 text-accent"
                         : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
                     )}
                   >
@@ -501,7 +501,7 @@ export function SettingsTabs({
                       height={20}
                       className={cn(
                         "shrink-0",
-                        t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-brand",
+                        t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-accent",
                       )}
                     />
                     <span className="flex-1">{t.label}</span>
@@ -529,11 +529,11 @@ export function SettingsTabs({
                           className={cn(
                             "flex items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
                             section === sec.id
-                              ? "bg-brand/10 text-brand"
+                              ? "bg-brand/10 text-accent"
                               : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
                           )}
                         >
-                          <sec.icon width={16} height={16} className="shrink-0 text-brand" />
+                          <sec.icon width={16} height={16} className="shrink-0 text-accent" />
                           {sec.label}
                         </button>
                       ))}

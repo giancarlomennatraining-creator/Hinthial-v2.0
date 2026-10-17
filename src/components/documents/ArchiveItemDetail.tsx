@@ -699,7 +699,7 @@ export function ArchiveItemDetail({
         >
           ← Torna all&apos;archivio
         </Link>
-        <h1 className="mt-2 flex min-w-0 items-start gap-2 text-2xl font-semibold tracking-tight text-brand">
+        <h1 className="mt-2 flex min-w-0 items-start gap-2 text-2xl font-semibold tracking-tight text-title">
           <span aria-hidden="true">{CONTENT_KIND_ICON[kind]}</span>
           <span className="min-w-0 break-words">{doc.filename}</span>
         </h1>
@@ -841,7 +841,7 @@ export function ArchiveItemDetail({
                 onClick={() => setActiveTab("scheda")}
                 className={`rounded-t-md px-3 py-2 text-sm font-medium ${
                   activeTab === "scheda"
-                    ? "border-b-2 border-brand text-brand"
+                    ? "border-b-2 border-brand text-accent"
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
                 }`}
               >
@@ -856,7 +856,7 @@ export function ArchiveItemDetail({
                 onClick={() => setActiveTab("reading")}
                 className={`rounded-t-md px-3 py-2 text-sm font-medium ${
                   activeTab === "reading"
-                    ? "border-b-2 border-brand text-brand"
+                    ? "border-b-2 border-brand text-accent"
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
                 }`}
               >
@@ -871,7 +871,7 @@ export function ArchiveItemDetail({
                 onClick={() => setActiveTab("analysis")}
                 className={`rounded-t-md px-3 py-2 text-sm font-medium ${
                   activeTab === "analysis"
-                    ? "border-b-2 border-brand text-brand"
+                    ? "border-b-2 border-brand text-accent"
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
                 }`}
               >
@@ -890,7 +890,7 @@ export function ArchiveItemDetail({
                 <button
                   type="button"
                   onClick={undoable.onUndo}
-                  className="font-medium text-brand underline-offset-2 hover:underline"
+                  className="font-medium text-accent underline-offset-2 hover:underline"
                 >
                   Annulla
                 </button>
@@ -1135,7 +1135,7 @@ function ReadingSection({
             <button
               type="button"
               onClick={onToggleFullText}
-              className="self-start text-sm font-medium text-brand underline-offset-2 hover:underline"
+              className="self-start text-sm font-medium text-accent underline-offset-2 hover:underline"
             >
               {fullText ? "Mostra meno" : "Mostra tutto"}
             </button>

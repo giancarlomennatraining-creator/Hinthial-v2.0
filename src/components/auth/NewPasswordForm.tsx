@@ -17,7 +17,7 @@ export function NewPasswordForm({ requiresMfa }: { requiresMfa: boolean }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-brand">Imposta una nuova password</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-title">Imposta una nuova password</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Codice verificato. Scegli una nuova password per il tuo account.
         </p>

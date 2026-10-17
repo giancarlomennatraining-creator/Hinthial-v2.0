@@ -37,7 +37,7 @@ export function ImportExportTabs({
             className={cn(
               "-mb-px border-b-2 px-1 pb-3 text-sm font-medium transition-colors",
               tab === t.id
-                ? "border-brand text-brand"
+                ? "border-brand text-accent"
                 : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
             )}
           >

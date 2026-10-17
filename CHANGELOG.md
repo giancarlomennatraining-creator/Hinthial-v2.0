@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-18 (123)
+
+### Stile "Foglia": i colori diventano gettoni (passo 1 della revisione grafica)
+
+**Cosa fa:**
+- L'app cambia aspetto in un colpo solo, in chiaro e in scuro: verde foglia per le azioni (bottoni, link, voce di menu attiva), blu inchiostro per i titoli di pagina, neutri appena tinti di verde al posto dei grigi. Lo scuro è un verde profondo (non più nero) e le card stanno su un tono più chiaro dello sfondo.
+- **Tema scuro leggibile:** il blu del marchio non reggeva il contrasto sul fondo scuro (2,9 a 1); ora link e titoli usano un verde chiaro con contrasto sopra 7 a 1, e i testi grigi restano sopra 4,5 a 1. Caselle, campi data e scelte seguono il tema scuro invece di restare bianchi.
+- **Logo nel tema scuro:** la scritta blu notte si perdeva sul fondo. Nel tema scuro si vede il simbolo con "Hinthial" in testo chiaro, nel carattere del logo (la foglia sulla "i" manca finché non c'è una variante ufficiale per fondi scuri). In chiaro resta il logo ufficiale.
+- **Barra laterale, barra in alto e barra in basso su telefono:** un velo di verde sopra lo sfondo; la voce attiva è una pillola. Sul telefono la voce attiva della barra in basso ha la pillola anche dietro l'icona, così si vede dove si è senza dipendere dal colore.
+- Il colore della barra del browser e dello sfondo di avvio dell'app installata seguono il nuovo verde.
+
+**Note tecniche:** `globals.css` ora ha due livelli: le variabili (`--brand`, `--accent`, `--title`, `--side`, `--wordmark`, scala `--n-50`…`--n-950`, definite in `:root` e in `.dark`) e `@theme inline` che mappa su di esse le utility di Tailwind, comprese le scale `zinc-*`: i ~2.800 usi di `zinc-*` esistenti seguono le variabili senza toccare i componenti (a sostituirli coi gettoni si arriverà sezione per sezione). `brand` è il colore d'azione con testo bianco sopra; per testo e link su una superficie c'è `accent` (`text-brand` → `text-accent` in 85 file; i 42 `<h1>` che erano `text-brand` ora usano `text-title`), perché un solo verde non regge il contrasto in entrambi i temi. `color-scheme` è impostato in `:root` e `.dark`. Nuovo `BrandLockup.tsx` (versione chiara = file ufficiale, scura = simbolo + testo; entrambe `loading="lazy"` così la nascosta non si scarica) usato da barra laterale, barra del telefono, accesso, pagine legali, capsula condivisa, schermate di stato e home; il kit di recovery stampato resta com'era. `MainNav` ha la voce attiva a pillola. Aggiornati `sidebar-collapse.spec.ts` (il logo visibile) e `theme.spec.ts` (il logo scuro); in `setup-dialog.test.tsx` un'asserzione che a volte leggeva troppo presto ora attende l'effetto. **Ancora da fare, sezione per sezione:** i circa 450 colori esadecimali nei componenti (icone blu del fascicolo, pallino di lettura, grafici, copertina capsula), la home pubblica (ha una palette propria e il suo bottone resta blu), la finestra di sblocco (`unlock.css`), la scelta del ritmo in Eredità digitale (I4) e le schede a forma di foglia; poi un controllo automatico che impedisca colori scritti a mano nei componenti nuovi. Il selettore Foglia/Notte/Luce arriva col passo 2.
+
+---
+
 ## 2026-10-17 (122)
 
 ### Tablet e telefono: le correzioni della revisione fotografica
