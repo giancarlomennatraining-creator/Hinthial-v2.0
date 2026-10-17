@@ -222,7 +222,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
         <ListSkeleton />
       ) : documents.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Il cestino è vuoto.</p>
+          <p className="hand-note text-sm text-zinc-500 dark:text-zinc-400">Il cestino è vuoto.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">

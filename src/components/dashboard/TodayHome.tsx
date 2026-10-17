@@ -140,7 +140,7 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
           <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Per chi ami</h2>
           {capsuleRows === 0 ? (
             <div className="mt-2 flex flex-col items-start gap-2">
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="hand-note text-xs text-zinc-500 dark:text-zinc-400">
                 Una capsula arriva a qualcuno al momento giusto: una lettera, un ricordo, un messaggio per una data che conta.
               </p>
               <Link href="/capsules/new" className="text-xs font-semibold text-accent hover:underline">

@@ -7,7 +7,7 @@ import Link from "next/link";
 export function EmptyListCard({ text, actionHref, actionLabel }: { text: string; actionHref: string; actionLabel: string }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{text}</p>
+      <p className="hand-note text-sm text-zinc-500 dark:text-zinc-400">{text}</p>
       <Link href={actionHref} className="text-sm font-medium text-accent hover:underline">
         {actionLabel} →
       </Link>
