@@ -268,7 +268,7 @@ export function SettingsTabs({
     setSection(def.sections?.[0]?.id ?? null);
   }
 
-  // Mobile: elenco delle voci -> (per le voci a due livelli, elenco delle funzioni ->) dettaglio, indipendente dal layout desktop (`md:hidden`/`hidden md:flex`). `null` = mostra l'elenco.
+  // Mobile: elenco delle voci -> (per le voci a due livelli, elenco delle funzioni ->) dettaglio, indipendente dal layout desktop (`lg:hidden`/`hidden lg:flex`). `null` = mostra l'elenco.
   const [mobileSection, setMobileSection] = useState<Tab | null>(startTab);
   const [mobileSub, setMobileSub] = useState<string | null>(startSection);
   const mobileKey = mobileSection === null ? "list" : viewKey(mobileSection, mobileSub);
@@ -391,7 +391,7 @@ export function SettingsTabs({
   return (
     <>
       {/* Mobile: elenco delle voci -> (elenco delle funzioni ->) dettaglio, con un tasto per tornare indietro. */}
-      <div className="md:hidden">
+      <div className="lg:hidden">
         <div
           className={cn(
             "transition-opacity duration-150",
@@ -460,11 +460,11 @@ export function SettingsTabs({
       </div>
 
       {/* Desktop: schede laterali (con le funzioni sotto la voce aperta) + contenuto, sempre visibili insieme. */}
-      <div className="hidden md:flex md:gap-10">
+      <div className="hidden lg:flex lg:gap-10">
         <div
           role="tablist"
           aria-orientation="vertical"
-          className="flex shrink-0 flex-col gap-1 md:w-60 md:border-r md:border-zinc-200 md:pr-4 dark:md:border-zinc-800"
+          className="flex shrink-0 flex-col gap-1 lg:w-60 lg:border-r lg:border-zinc-200 lg:pr-4 dark:lg:border-zinc-800"
         >
           {TAB_GROUPS.map((group, groupIndex) => (
             <div key={group.label ?? `group-${groupIndex}`} className="flex flex-col gap-1">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -28,14 +29,50 @@ function isActive(tab: (typeof TABS)[number], pathname: string | null): boolean 
  */
 export function ArchiveTabs() {
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
+  // Da quale lato ci sono schede fuori vista: lì il bordo sfuma, così si capisce che la riga continua.
+  const [more, setMore] = useState({ left: false, right: false });
+
+  // Sul telefono la scheda attiva può stare fuori vista (il Cestino, l'ultima): la riga ci scorre da sola, centrandola.
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const active = nav.querySelector<HTMLElement>('[aria-current="page"]');
+    if (active) nav.scrollLeft = Math.max(0, active.offsetLeft - (nav.clientWidth - active.offsetWidth) / 2);
+    function update() {
+      if (!nav) return;
+      setMore({ left: nav.scrollLeft > 2, right: nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 2 });
+    }
+    update();
+    nav.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      nav.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [pathname]);
+
+  // cn() non fonde classi in conflitto (v. lib/utils.ts): una maschera intera per ciascun caso.
+  const fade =
+    more.left && more.right
+      ? "[mask-image:linear-gradient(to_right,transparent,black_28px,black_calc(100%_-_28px),transparent)]"
+      : more.right
+        ? "[mask-image:linear-gradient(to_right,black_calc(100%_-_28px),transparent)]"
+        : more.left
+          ? "[mask-image:linear-gradient(to_right,transparent,black_28px)]"
+          : undefined;
 
   return (
     // Scorre in orizzontale (sul telefono le cinque schede non ci stanno), ma senza barra di scorrimento visibile. La riga
     // di fondo è un'ombra interna, non un bordo: con il bordo ogni scheda doveva sporgere di 1px (-mb-px) per coprirlo, e
     // quel pixel faceva comparire anche una barra di scorrimento verticale con le sue frecce.
     <nav
+      ref={navRef}
       aria-label="Sezioni dell'Archivio"
-      className="flex gap-1 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_var(--color-zinc-200)] [scrollbar-width:none] dark:shadow-[inset_0_-1px_0_var(--color-zinc-800)] [&::-webkit-scrollbar]:hidden"
+      className={cn(
+        "relative flex gap-1 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_var(--color-zinc-200)] [scrollbar-width:none] dark:shadow-[inset_0_-1px_0_var(--color-zinc-800)] [&::-webkit-scrollbar]:hidden",
+        fade,
+      )}
     >
       {TABS.map((tab) => {
         const active = isActive(tab, pathname);

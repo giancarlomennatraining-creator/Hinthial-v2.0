@@ -14,7 +14,8 @@ import { PageHelp } from "@/components/help/PageHelp";
  * "Eredità digitale": la promessa per intero, in cinque blocchi. Chi conferma la tua assenza (i guardiani), quanto
  * aspettare (l'unica scelta: il livello di prudenza), cosa arriverà (le capsule che si aprono anche prima della loro
  * data), cosa succede a ogni bene e cosa fare in un'emergenza, adesso (la scheda). "Quanto aspettare" non cifra nulla e si legge subito; gli altri
- * mostrano nomi e titoli cifrati e chiedono la master key: con la cassaforte bloccata c'è un solo riquadro per sbloccarla.
+ * mostrano nomi e titoli cifrati e chiedono la master key: con la cassaforte bloccata c'è un solo riquadro per sbloccarla, in
+ * cima (dove poi compaiono i guardiani) --- in fondo, sotto "Salva", non lo si vedeva prima di aver già toccato il resto.
  */
 export function LegacyPage({
   userId,
@@ -48,7 +49,7 @@ export function LegacyPage({
         />
       </div>
 
-      {masterKey ? <LegacyGuardians masterKey={masterKey} /> : null}
+      {masterKey ? <LegacyGuardians masterKey={masterKey} /> : <RequireMasterKey inline>{() => null}</RequireMasterKey>}
 
       <LegacyWaiting userId={userId} />
 
@@ -64,9 +65,7 @@ export function LegacyPage({
             birthDate={birthDate}
           />
         </>
-      ) : (
-        <RequireMasterKey inline>{() => null}</RequireMasterKey>
-      )}
+      ) : null}
     </div>
   );
 }

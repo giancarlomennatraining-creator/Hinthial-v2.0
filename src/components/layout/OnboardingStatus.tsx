@@ -12,20 +12,22 @@ import {
   onboardingCompletionPercent,
 } from "@/domain/onboarding/steps";
 import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWidgetVisibilityProvider";
+import { SecurityIcon } from "@/components/icons/nav-icons";
 
 /**
  * Indicatore persistente di avanzamento "Onboarding" nella barra laterale: una torta col colore del brand per la
  * quota completata, che al click apre la stessa checklist di dashboard (v. domain/onboarding/steps.ts, condivisa per
- * non avere due liste disallineate). Visibile anche prima dello sblocco con solo i primi due passi (v.
- * computeBasicOnboardingSteps), noti senza decifrare nulla; la checklist completa (7 passi) prende il posto una volta
- * sbloccata la Master Key. Il pannello è a tutto schermo (non un riquadro ancorato) perché ogni passo mostra anche
+ * non avere due liste disallineate). Prima di creare la master password mostra i primi due passi (v.
+ * computeBasicOnboardingSteps), noti senza decifrare nulla. A cassaforte bloccata non mostra nessuna percentuale: con
+ * i soli due passi base diceva "100% completato" in verde, che poi scendeva sbloccando --- ora dice "Da sbloccare"
+ * e il click apre lo sblocco. Sbloccata, la checklist completa (7 passi). Il pannello è a tutto schermo (non un riquadro ancorato) perché ogni passo mostra anche
  * una breve descrizione. Nascondibile dal pannello stesso, una preferenza sincronizzata sul server (v.
  * OnboardingWidgetVisibilityProvider): l'avanzamento resta comunque consultabile da Impostazioni > Onboarding.
  */
 export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean }) {
   const supabase = useSupabase();
   const { status } = useMasterKey();
-  const { settling } = useUnlockPrompt();
+  const { settling, requestUnlock } = useUnlockPrompt();
 
   const [steps, setSteps] = useState<OnboardingStep[] | null>(null);
   const [open, setOpen] = useState(false);
@@ -58,14 +60,39 @@ export function OnboardingStatus({ collapsed = false }: { collapsed?: boolean })
     setOpen((v) => !v);
   }
 
-  // Prima dello sblocco, solo i primi due passi; "checking" resta senza indicatore.
-  const displaySteps = masterKey
-    ? steps
-    : status.kind === "checking"
-      ? null
-      : computeBasicOnboardingSteps(status.kind === "locked");
+  // Senza master password, solo i primi due passi; "checking" e il caricamento dopo lo sblocco restano senza indicatore.
+  const displaySteps = masterKey ? steps : status.kind === "not-set-up" ? computeBasicOnboardingSteps(false) : null;
+  // Mentre la finestra di sblocco si dissolve il vault è già aperto, ma la pagina non si è ancora popolata.
+  const locked = status.kind === "locked" || (status.kind === "unlocked" && settling);
 
-  if (!displaySteps || hidden) return null;
+  if (hidden) return null;
+
+  if (locked) {
+    return (
+      <button
+        type="button"
+        onClick={() => requestUnlock({ dismissible: true })}
+        aria-label="Onboarding: sblocca la cassaforte per vedere l'avanzamento"
+        title="Sblocca la cassaforte per vedere l'avanzamento"
+        className="flex items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-900"
+      >
+        <span
+          aria-hidden="true"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 ring-1 ring-inset ring-zinc-300 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-700"
+        >
+          <SecurityIcon width={14} height={14} />
+        </span>
+        {collapsed ? null : (
+          <span className="min-w-0 text-xs text-zinc-600 dark:text-zinc-400">
+            <span className="block font-medium text-zinc-900 dark:text-zinc-100">Onboarding</span>
+            <span className="block">Da sbloccare</span>
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  if (!displaySteps) return null;
 
   const percent = onboardingCompletionPercent(displaySteps);
 

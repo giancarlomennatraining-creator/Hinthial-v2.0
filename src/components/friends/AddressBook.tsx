@@ -62,8 +62,9 @@ function matchesQuery(friend: FriendListItem, query: string): boolean {
 }
 
 /**
- * La rubrica: un indice a lettere, l'elenco a sinistra e la scheda della persona a destra. Su smartphone si vede una cosa
- * alla volta: la rubrica, e toccando una persona la sua scheda, con "← Rubrica" per tornare all'elenco (v. concept
+ * La rubrica: un indice a lettere, l'elenco a sinistra e la scheda della persona a destra. Sotto lg (smartphone e tablet)
+ * si vede una cosa alla volta --- a 768-1023 px, accanto alla barra laterale, la scheda restava larga pochi pixel e il nome
+ * andava a capo lettera per lettera: la rubrica, e toccando una persona la sua scheda, con "← Rubrica" per tornare all'elenco (v. concept
  * "Rubrica", scelto dall'utente). Le azioni vere (amicizia, guardiano, revoca, elimina) restano quelle di prima:
  * le decide FriendsPanel, qui si mostrano soltanto.
  */
@@ -139,7 +140,7 @@ export function AddressBook({
     savedScroll.current = listRef.current?.scrollTop ?? 0;
     setSelectedId(friend.id);
     setMobileOpen(true);
-    if (window.matchMedia("(max-width: 767px)").matches) {
+    if (window.matchMedia("(max-width: 1023px)").matches) {
       window.history.pushState({ rubricaPerson: friend.id }, "");
       pushedHistory.current = true;
     }
@@ -164,9 +165,9 @@ export function AddressBook({
   const letters = new Set(groups.map((g) => g.letter));
 
   return (
-    <div className="flex flex-col gap-3 md:grid md:grid-cols-[minmax(260px,340px)_minmax(0,1fr)] md:gap-5">
+    <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(260px,340px)_minmax(0,1fr)] lg:gap-5">
       {/* La rubrica: su smartphone sparisce quando si guarda la scheda di una persona. */}
-      <section aria-label="Rubrica" className={`${detailOnMobile ? "hidden md:flex" : "flex"} min-w-0 flex-col gap-3`}>
+      <section aria-label="Rubrica" className={`${detailOnMobile ? "hidden lg:flex" : "flex"} min-w-0 flex-col gap-3`}>
         <label className="flex items-center gap-2 rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-500 focus-within:border-brand dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="7" />
@@ -185,7 +186,7 @@ export function AddressBook({
         <div className="flex gap-1.5">
           <div
             ref={listRef}
-            className="max-h-[calc(100dvh-17rem)] min-h-[200px] min-w-0 flex-1 overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] md:max-h-[640px] dark:border-zinc-800 dark:bg-zinc-950"
+            className="max-h-[calc(100dvh-17rem)] min-h-[200px] min-w-0 flex-1 overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] lg:max-h-[640px] dark:border-zinc-800 dark:bg-zinc-950"
           >
             {ordered.length === 0 ? (
               <p className="p-4 text-sm text-zinc-500 dark:text-zinc-400">Nessuno corrisponde alla ricerca.</p>
@@ -209,7 +210,7 @@ export function AddressBook({
                               onClick={() => open(friend)}
                               aria-current={active ? "true" : undefined}
                               className={`relative flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900 ${
-                                active ? "bg-brand/10 md:before:absolute md:before:inset-y-2 md:before:left-0 md:before:w-1 md:before:rounded-r md:before:bg-brand" : ""
+                                active ? "bg-brand/10 lg:before:absolute lg:before:inset-y-2 lg:before:left-0 lg:before:w-1 lg:before:rounded-r lg:before:bg-brand" : ""
                               }`}
                             >
                               <Avatar
@@ -227,7 +228,7 @@ export function AddressBook({
                                 {friend.isFriend ? <span title="Amico">🤝</span> : null}
                                 {friend.status === "revoked" ? <span title="Revocato">⛔</span> : null}
                               </span>
-                              <span className="text-zinc-300 md:hidden dark:text-zinc-600" aria-hidden="true">
+                              <span className="text-zinc-300 lg:hidden dark:text-zinc-600" aria-hidden="true">
                                 ›
                               </span>
                             </button>
@@ -242,7 +243,7 @@ export function AddressBook({
           </div>
 
           {/* L'indice a lettere: salta alla lettera; le lettere senza nessuno sono spente. */}
-          <nav aria-label="Indice a lettere" className="flex w-5 shrink-0 flex-col items-center justify-between py-1 md:w-6">
+          <nav aria-label="Indice a lettere" className="flex w-5 shrink-0 flex-col items-center justify-between py-1 lg:w-6">
             {ALPHABET.map((letter) => {
               const on = letters.has(letter);
               return (
@@ -269,12 +270,12 @@ export function AddressBook({
         <section
           key={shown.id}
           aria-label={`Scheda di ${shown.name}`}
-          className={`${detailOnMobile ? "flex" : "hidden md:flex"} min-w-0 animate-[rubrica-in_0.3s_ease_both] flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950`}
+          className={`${detailOnMobile ? "flex" : "hidden lg:flex"} min-w-0 animate-[rubrica-in_0.3s_ease_both] flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950`}
         >
           <button
             type="button"
             onClick={backToList}
-            className="-mb-1 flex items-center gap-1 self-start text-sm font-semibold text-brand hover:underline md:hidden"
+            className="-mb-1 flex items-center gap-1 self-start text-sm font-semibold text-brand hover:underline lg:hidden"
           >
             ← Rubrica
           </button>
