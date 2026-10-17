@@ -7,7 +7,7 @@ import { useTodayExtras } from "@/components/dashboard/useTodayExtras";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { isOpeningSoon, sortByOpening } from "@/domain/capsules/overview";
 import { continuityScore, continuitySteps } from "@/domain/continuity/steps";
-import { expiryInfo, needsAttention } from "@/domain/documents/archive-views";
+import { dueIn, expiryInfo, needsAttention } from "@/domain/documents/archive-views";
 import type { SummaryContext } from "@/domain/ai/types";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -188,6 +188,7 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
             <ul className="mt-2 flex flex-col gap-2">
               {deadlines.map((d) => {
                 const late = new Date(d.date) < now;
+                const due = dueIn(d.date, now);
                 return (
                   <li key={d.key} className="min-w-0 text-xs">
                     <p className={cn("truncate font-medium", late ? "text-red-700 dark:text-red-400" : "text-zinc-800 dark:text-zinc-200")}>
@@ -196,6 +197,7 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
                     <p className="text-zinc-500 dark:text-zinc-400">
                       {late ? "scaduta il " : ""}
                       {formatDate(d.date)}
+                      <span className={cn("font-medium", due.level === "overdue" ? "text-red-700 dark:text-red-400" : due.level === "danger" ? "text-orange-700 dark:text-orange-400" : due.level === "warn" ? "text-amber-700 dark:text-amber-400" : "")}> · {due.text}</span>
                     </p>
                   </li>
                 );

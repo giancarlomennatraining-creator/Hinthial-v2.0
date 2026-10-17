@@ -8,11 +8,14 @@ import { buildAIContext } from "@/domain/ai/context";
 import { answerWithClaude } from "@/domain/ai/claude-provider";
 import { mockAIProvider } from "@/domain/ai/mock-provider";
 import { SidePanel } from "@/components/ui/SidePanel";
+import { cn } from "@/lib/utils";
 
 export interface HelpTip {
   /** Emoji, coerente con le liste puntate già in uso altrove (v. ReadingRegister). */
   icon: string;
   text: string;
+  /** Un consiglio che vale solo con mouse e tastiera (una scorciatoia, il trascinamento): su telefono e tablet a tocco non si mostra. */
+  desktopOnly?: boolean;
 }
 
 interface HelpMessage {
@@ -110,7 +113,10 @@ export function PageHelp({
           {tips.map((tip, i) => (
             <div
               key={i}
-              className="flex items-center gap-2.5 rounded-xl bg-zinc-50 px-3 py-2.5 dark:bg-zinc-900"
+              className={cn(
+                "flex items-center gap-2.5 rounded-xl bg-zinc-50 px-3 py-2.5 dark:bg-zinc-900",
+                tip.desktopOnly ? "[@media(hover:none)]:hidden" : undefined,
+              )}
             >
               <span aria-hidden="true">{tip.icon}</span>
               <span className="text-sm text-zinc-700 dark:text-zinc-300">{tip.text}</span>

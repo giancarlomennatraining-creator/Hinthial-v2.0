@@ -19,7 +19,7 @@ export default function LoginPage() {
           Accedi
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Bentornato su HINTHIAL.
+          Bentornato su Hinthial.
         </p>
       </div>
 

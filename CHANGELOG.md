@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-20 (131)
+
+### Rifiniture: scadenze, documenti, fascicolo e piccole incoerenze
+
+**Cosa fa:**
+- **Scadenze:** accanto alla data si legge quanto manca, con un colore che dice l'urgenza: "oggi", "domani", "fra 19 giorni", "fra 5 mesi", "scaduta da 3 giorni". Rosso se passata, arancio entro 14 giorni, ambra entro due mesi, grigio se lontana. Lo stesso nell'elenco Scadenze, in Oggi (Scadenze vicine) e nella riga di un documento che scade.
+- **Elenco dei documenti:** sotto il nome compare anche l'emittente (accanto a categoria, bene, peso e data), e una scadenza dice anche quanto manca.
+- **Fascicolo:** in testa restano tre pulsanti (Condividi, Fallo arrivare a…, Modifica); "Chiudi/Riapri fascicolo" ed "Elimina", che si usano di rado, stanno nel menu "Altre azioni".
+- **Piccole incoerenze:** il nome è "Hinthial" anche nell'accesso (era "HINTHIAL"); la scorciatoia "Ctrl+K" non si mostra su telefono e tablet a tocco; nell'aiuto di Archivio i consigli "trascinalo qui sopra" e "premi Ctrl+K" compaiono solo da computer, con un consiglio per il telefono al loro posto; la pagina "Questa pagina non c'è" propone "Accedi" a chi non ha fatto l'accesso, invece di un "Vai a Oggi" che lo avrebbe portato al login senza dirlo.
+
+**Note tecniche:** nuova `dueIn(iso, now)` in `archive-views.ts`, con le stesse soglie di `expiryInfo` (test unitari, compreso che il livello coincide). `HelpTip` ha `desktopOnly`, che applica `[@media(hover:none)]:hidden`. `not-found.tsx` è ora asincrona (legge l'utente). Test e2e aggiornati: `dossiers.spec.ts` (menu "Altre azioni"), `launch-basics.spec.ts` (404 da disconnessi), `reminders.spec.ts` (il "fra N giorni" sulle scadenze e sui documenti).
+
+---
+
 ## 2026-10-20 (130)
 
 ### Controllo pagina per pagina: i testi chiari tornano leggibili
