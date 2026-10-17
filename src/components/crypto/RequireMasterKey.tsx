@@ -63,7 +63,7 @@ export function RequireMasterKey({
 
 function InlineNotice({ text, action, onAction }: { text: string; action: string; onAction: () => void }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex flex-wrap items-center gap-3 rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <p className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-zinc-400">{text}</p>
       <button
         type="button"

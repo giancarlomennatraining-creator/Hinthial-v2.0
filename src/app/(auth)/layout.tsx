@@ -22,7 +22,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <Link href="/" className="relative mb-8 w-full max-w-sm">
         <BrandLockup className="h-auto w-full" darkSize="lg" />
       </Link>
-      <div className="relative w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="relative w-full max-w-sm rounded-card border border-zinc-200 bg-white p-8 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
         {children}
       </div>
     </div>

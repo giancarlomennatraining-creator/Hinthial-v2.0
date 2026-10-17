@@ -228,14 +228,14 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
       {stories === null ? (
         error ? null : <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
       ) : current === null && saved === null ? (
-        <section aria-label="Domanda" className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+        <section aria-label="Domanda" className="rounded-card border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
           <h2 className="font-heading text-lg font-extrabold text-zinc-900 dark:text-zinc-100">Hai risposto a tutte le domande</h2>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {progress.total} racconti: complimenti. Puoi rileggerli e farli arrivare a chi vuoi.
           </p>
         </section>
       ) : (
-        <section aria-label="Domanda" className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+        <section aria-label="Domanda" className="flex flex-col gap-4 rounded-card border border-zinc-200 bg-white p-5 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
           {writing && current ? (
             <>
               <div>
@@ -383,7 +383,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             {progress.done} {progress.done === 1 ? "domanda raccontata" : "domande raccontate"} su {progress.total}.
           </p>
-          <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+          <ul className="flex flex-col divide-y divide-zinc-200 rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
             {stories.map((story) => (
               <li key={story.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <span className="flex min-w-0 flex-col gap-0.5">

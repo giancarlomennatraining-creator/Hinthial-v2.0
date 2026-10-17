@@ -113,7 +113,7 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
         <div className="flex flex-col gap-4">
           {/* Con la finestra che si sta dissolvendo dopo lo sblocco la dashboard resta uno scheletro: si popola a fine animazione. */}
           {status.kind === "locked" ? (
-            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="flex flex-wrap items-center gap-3 rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
               <p className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
                 La cassaforte è bloccata: sblocca per vedere le tue scadenze e il tuo archivio recente.
               </p>
@@ -137,7 +137,7 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
           )}
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
           <p className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
             Crea la tua master password per iniziare a usare Hinthial: è un minuto.
           </p>

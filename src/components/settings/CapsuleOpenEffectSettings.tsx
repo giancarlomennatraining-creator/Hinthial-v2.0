@@ -69,7 +69,7 @@ export function CapsuleOpenEffectSettings() {
             <div
               key={option.value}
               className={cn(
-                "flex flex-col gap-2 rounded-2xl border p-4 transition-colors",
+                "flex flex-col gap-2 rounded-card border p-4 transition-colors",
                 selected ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950",
               )}
             >

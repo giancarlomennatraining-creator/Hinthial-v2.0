@@ -275,7 +275,7 @@ export function AuditLogPanel({ initialParams = {} }: { initialParams?: AuditFil
       <form
         onSubmit={(e) => e.preventDefault()}
         aria-label="Filtri attività"
-        className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950"
+        className="flex flex-col gap-4 rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950"
       >
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">
@@ -442,7 +442,7 @@ export function AuditLogPanel({ initialParams = {} }: { initialParams?: AuditFil
         </div>
       ) : result ? (
         <div className={loading ? "opacity-60 transition-opacity" : "transition-opacity"}>
-          <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="overflow-x-auto rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
                 <tr>

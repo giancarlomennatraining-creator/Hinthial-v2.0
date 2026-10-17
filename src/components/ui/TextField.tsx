@@ -32,7 +32,7 @@ export function TextField({ label, id, variant = "default", type, ...inputProps 
         className={cn(
           "w-full text-sm text-zinc-950 outline-none dark:bg-zinc-950 dark:text-zinc-50",
           variant === "halo"
-            ? "rounded-2xl border border-zinc-300 bg-white px-4 py-2.5 focus:border-brand focus:ring-1 focus:ring-brand dark:border-zinc-700"
+            ? "rounded-card border border-zinc-300 bg-white px-4 py-2.5 focus:border-brand focus:ring-1 focus:ring-brand dark:border-zinc-700"
             : "rounded-md border border-zinc-300 bg-white px-3 py-2 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700",
         )}
         {...inputProps}

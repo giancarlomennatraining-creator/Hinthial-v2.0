@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ContinuitySign } from "@/components/dashboard/ContinuitySign";
 import { useTodayExtras } from "@/components/dashboard/useTodayExtras";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { isOpeningSoon, sortByOpening } from "@/domain/capsules/overview";
@@ -12,7 +13,7 @@ import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const CARD =
-  "min-w-0 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950";
+  "min-w-0 rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950";
 
 /** Quante righe al massimo per ogni elenco: "Oggi" è un colpo d'occhio, non una pagina da scorrere. */
 const MAX_ROWS = 4;
@@ -70,65 +71,68 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      <section aria-label="Continuità" className={CARD}>
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-heading text-lg font-extrabold text-zinc-900 dark:text-zinc-100">Continuità</h2>
-          {score ? (
-            <p className="text-sm font-semibold text-accent">
-              {score.done} su {score.total}
-            </p>
-          ) : null}
-        </div>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Quanto Hinthial è pronto a far arrivare ciò che sai e ciò che hai alle persone a cui tieni, se un giorno non ci sei.
-        </p>
-        {steps && score ? (
-          <>
-            <div
-              role="progressbar"
-              aria-label="Continuità"
-              aria-valuemin={0}
-              aria-valuemax={score.total}
-              aria-valuenow={score.done}
-              className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900"
-            >
-              <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${(score.done / score.total) * 100}%` }} />
-            </div>
-            <ul className="mt-3 flex flex-col gap-2">
-              {steps.map((step) => (
-                <li key={step.id} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span
-                      aria-hidden="true"
-                      className={cn(
-                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                        step.done
-                          ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"
-                          : "border border-dashed border-zinc-300 text-zinc-400 dark:border-zinc-700",
-                      )}
-                    >
-                      {step.done ? "✓" : ""}
-                    </span>
-                    <span className={cn("min-w-0", step.done ? "text-zinc-600 dark:text-zinc-400" : "font-medium text-zinc-900 dark:text-zinc-100")}>
-                      {step.label}
-                    </span>
-                  </span>
-                  {step.done ? null : (
-                    <Link href={step.href} className="shrink-0 text-xs font-semibold text-accent hover:underline">
-                      {step.action} →
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <div role="status" aria-label="Caricamento…" className="mt-3 flex flex-col gap-2">
-            <Skeleton className="h-2 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-2/3" />
+      <section aria-label="Continuità" className={cn(CARD, "flex items-center gap-6")}>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-heading text-lg font-extrabold text-zinc-900 dark:text-zinc-100">Continuità</h2>
+            {score ? (
+              <p className="text-sm font-semibold text-accent">
+                {score.done} su {score.total}
+              </p>
+            ) : null}
           </div>
-        )}
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Quanto Hinthial è pronto a far arrivare ciò che sai e ciò che hai alle persone a cui tieni, se un giorno non ci sei.
+          </p>
+          {steps && score ? (
+            <>
+              <div
+                role="progressbar"
+                aria-label="Continuità"
+                aria-valuemin={0}
+                aria-valuemax={score.total}
+                aria-valuenow={score.done}
+                className="sig-bar mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900"
+              >
+                <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${(score.done / score.total) * 100}%` }} />
+              </div>
+              <ul className="mt-3 flex flex-col gap-2">
+                {steps.map((step) => (
+                  <li key={step.id} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                          step.done
+                            ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"
+                            : "border border-dashed border-zinc-300 text-zinc-400 dark:border-zinc-700",
+                        )}
+                      >
+                        {step.done ? "✓" : ""}
+                      </span>
+                      <span className={cn("min-w-0", step.done ? "text-zinc-600 dark:text-zinc-400" : "font-medium text-zinc-900 dark:text-zinc-100")}>
+                        {step.label}
+                      </span>
+                    </span>
+                    {step.done ? null : (
+                      <Link href={step.href} className="shrink-0 text-xs font-semibold text-accent hover:underline">
+                        {step.action} →
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <div role="status" aria-label="Caricamento…" className="mt-3 flex flex-col gap-2">
+              <Skeleton className="h-2 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          )}
+        </div>
+        {steps ? <ContinuitySign done={steps.map((step) => step.done)} /> : null}
       </section>
 
       <div className="grid min-w-0 gap-6 lg:grid-cols-2">

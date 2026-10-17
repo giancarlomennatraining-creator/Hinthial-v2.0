@@ -359,7 +359,7 @@ export function Constellation() {
         {CONSTELLATION_PEOPLE.map((person) => {
           const open = isDelivered(person, year, legacy);
           return (
-            <li key={person.name} className={cn("flex flex-col gap-0.5 rounded-2xl px-3.5 py-2.5", open && "open")}>
+            <li key={person.name} className={cn("flex flex-col gap-0.5 rounded-card px-3.5 py-2.5", open && "open")}>
               <b className="lp-title text-base font-bold">{person.name}</b>
               <span className="text-[13px] text-[#9aa8d8]">
                 {person.relation} · {person.gift}

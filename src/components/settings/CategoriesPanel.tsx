@@ -180,7 +180,7 @@ export function CategoriesPanel() {
 
       <form
         onSubmit={handleCreate}
-        className="flex flex-wrap items-end gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
+        className="flex flex-wrap items-end gap-3 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
       >
         <div className="flex w-20 flex-col gap-1">
           <label htmlFor="icon" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -229,7 +229,7 @@ export function CategoriesPanel() {
       ) : categories.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessuna categoria ancora.</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+        <ul className="flex flex-col divide-y divide-zinc-200 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
           {categories.map((category) => {
             const busy = busyId === category.id;
             const isEditing = editingId === category.id;

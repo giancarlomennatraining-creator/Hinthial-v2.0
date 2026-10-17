@@ -50,7 +50,7 @@ export function CapsuleLetterEditor({
   }
 
   return (
-    <div className="flex flex-1 min-h-[220px] flex-col overflow-hidden rounded-2xl border border-[#EDE1C4] bg-[#FBF6EA] shadow-[0_10px_26px_rgba(139,111,45,0.10)]">
+    <div className="flex flex-1 min-h-[220px] flex-col overflow-hidden rounded-card border border-[#EDE1C4] bg-[#FBF6EA] shadow-[0_10px_26px_rgba(139,111,45,0.10)]">
       <div className="flex items-center justify-between px-8 pt-5">
         <label
           htmlFor={id}

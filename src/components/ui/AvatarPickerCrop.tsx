@@ -293,7 +293,7 @@ export function AvatarPickerCrop({
             autoPlay
             playsInline
             muted
-            className="rounded-2xl border border-zinc-300 dark:border-zinc-700"
+            className="rounded-card border border-zinc-300 dark:border-zinc-700"
             style={{ width: CONTAINER_SIZE, height: CONTAINER_SIZE, objectFit: "cover" }}
           />
           <div className="flex gap-3">

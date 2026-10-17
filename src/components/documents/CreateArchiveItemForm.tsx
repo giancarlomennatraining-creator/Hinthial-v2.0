@@ -135,7 +135,7 @@ function StepCheck() {
 /** La scheda unica che contiene tutti i passi: le linee tra i cerchi la attraversano da un passo al successivo. */
 function AccordionCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="overflow-hidden rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
       {children}
     </div>
   );
@@ -966,8 +966,8 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                     }}
                     className={
                       mode === option
-                        ? "flex flex-col items-center gap-1.5 rounded-2xl border-2 border-brand bg-brand/5 px-4 py-5 text-center"
-                        : "flex flex-col items-center gap-1.5 rounded-2xl border border-zinc-200 px-4 py-5 text-center hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700"
+                        ? "flex flex-col items-center gap-1.5 rounded-card border-2 border-brand bg-brand/5 px-4 py-5 text-center"
+                        : "flex flex-col items-center gap-1.5 rounded-card border border-zinc-200 px-4 py-5 text-center hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700"
                     }
                   >
                     <span className="text-2xl" aria-hidden="true">
@@ -1250,7 +1250,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                         return (
                           <label
                             key={key}
-                            className="flex items-start gap-2 rounded-2xl border border-brand/30 bg-brand/5 p-4 text-sm"
+                            className="flex items-start gap-2 rounded-card border border-brand/30 bg-brand/5 p-4 text-sm"
                           >
                             <input
                               type="checkbox"

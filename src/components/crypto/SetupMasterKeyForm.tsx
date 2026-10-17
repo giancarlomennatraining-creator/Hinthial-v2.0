@@ -160,7 +160,7 @@ export function SetupMasterKeyForm({ onStateChange }: { onStateChange?: (state: 
           </p>
         </div>
 
-        <code className="break-all rounded-2xl bg-zinc-100 p-4 text-center text-sm font-mono text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
+        <code className="break-all rounded-card bg-zinc-100 p-4 text-center text-sm font-mono text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
           {pending.setup.recoveryKey.formatted}
         </code>
 
@@ -221,7 +221,7 @@ export function SetupMasterKeyForm({ onStateChange }: { onStateChange?: (state: 
           document.body,
         )}
 
-        <label className="flex items-start gap-2.5 rounded-2xl border border-zinc-200 bg-zinc-50 p-3.5 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+        <label className="flex items-start gap-2.5 rounded-card border border-zinc-200 bg-zinc-50 p-3.5 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
           <input
             type="checkbox"
             className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-brand"
@@ -262,7 +262,7 @@ export function SetupMasterKeyForm({ onStateChange }: { onStateChange?: (state: 
       </div>
 
       {/* Stessa nota di PasswordComparisonNote (condivisa con MasterKeyIntroModal), riscritta in locale per non toccare quel componente. */}
-      <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-3.5 text-xs dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex flex-col gap-2 rounded-card border border-zinc-200 bg-zinc-50 p-3.5 text-xs dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-start gap-2 text-zinc-600 dark:text-zinc-400">
           <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-300 dark:bg-zinc-700" />
           <span>

@@ -281,7 +281,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
             </div>
           ) : null}
 
-          <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+          <ul className="flex flex-col divide-y divide-zinc-200 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
             {documents.map((doc) => {
               const busy = busyId === doc.id;
               const remaining = doc.purgeAt ? daysRemaining(new Date(doc.purgeAt)) : null;

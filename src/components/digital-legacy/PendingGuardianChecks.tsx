@@ -45,7 +45,7 @@ export function PendingGuardianChecks() {
         return (
           <div
             key={check.id}
-            className="flex flex-wrap items-center gap-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/40"
+            className="flex flex-wrap items-center gap-4 rounded-card border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/40"
           >
             <div className="min-w-0 flex-1">
               <p className="font-heading text-base font-extrabold text-zinc-900 dark:text-zinc-100">
