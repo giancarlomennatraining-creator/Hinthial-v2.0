@@ -247,7 +247,7 @@ export function GlobalSearch({ collapsed = false }: { collapsed?: boolean }) {
         ) : (
           <>
             <span>🔍 Cerca…</span>
-            <kbd className="rounded border border-zinc-300 px-1.5 py-0.5 text-[0.65rem] font-medium text-zinc-500 dark:border-zinc-700">
+            <kbd className="rounded border border-zinc-300 px-1.5 py-0.5 text-[0.65rem] font-medium text-zinc-500 dark:border-zinc-700 [@media(hover:none)]:hidden">
               Ctrl+K
             </kbd>
           </>

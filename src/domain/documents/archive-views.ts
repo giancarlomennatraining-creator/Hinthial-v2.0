@@ -118,6 +118,23 @@ export function expiryInfo(expiresAt: string | null, now: Date): ExpiryInfo {
   return { level: "soft", days, text: `scade tra ${Math.round(months / 12)} anni` };
 }
 
+/**
+ * Quanto manca a una scadenza, come si dice a voce: "oggi", "domani", "fra 19 giorni", "fra 5 mesi", "da 3 giorni" se è passata.
+ * Il livello segue le stesse soglie di `expiryInfo` (urgente entro 14 giorni, da tenere d'occhio entro 60), così una scadenza
+ * ha lo stesso colore in Oggi, in Scadenze e nei documenti.
+ */
+export function dueIn(iso: string, now: Date): { level: ExpiryLevel; days: number; text: string } {
+  const days = daysBetween(now, parseIsoDate(iso));
+  if (days < 0) return { level: "overdue", days, text: `scaduta da ${pluralize(-days, "giorno", "giorni")}` };
+  if (days === 0) return { level: "danger", days, text: "oggi" };
+  if (days === 1) return { level: "danger", days, text: "domani" };
+  if (days <= 14) return { level: "danger", days, text: `fra ${days} giorni` };
+  if (days <= 60) return { level: "warn", days, text: `fra ${days} giorni` };
+  const months = Math.round(days / 30);
+  if (months < 24) return { level: "soft", days, text: `fra ${months} mesi` };
+  return { level: "soft", days, text: `fra ${Math.round(months / 12)} anni` };
+}
+
 /** Chiede attenzione: già scaduta, o in scadenza entro due mesi. */
 export function needsAttention(info: ExpiryInfo): boolean {
   return info.level === "overdue" || info.level === "danger" || info.level === "warn";

@@ -36,7 +36,8 @@ test("un indirizzo che non esiste mostra la pagina 404 di Hinthial, con la strad
   const response = await page.goto("/questa-pagina-non-esiste");
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "Questa pagina non c'è" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Vai a Oggi" })).toHaveAttribute("href", "/dashboard");
+  // Senza accesso non c'è un "Oggi" a cui tornare: il pulsante porta ad Accedi e lo dice.
+  await expect(page.getByRole("link", { name: "Accedi", exact: true })).toHaveAttribute("href", "/login");
 });
 
 test("la registrazione chiede di accettare privacy e termini, con i link per leggerli", async ({ page }) => {

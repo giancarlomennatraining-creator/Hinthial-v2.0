@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { dueIn } from "@/domain/documents/archive-views";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { deleteReminder, listReminders, setReminderCompleted } from "@/domain/reminders/repository";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
@@ -31,6 +32,15 @@ function formatDate(iso: string): string {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Il colore del "fra 19 giorni": rosso se passata, arancio se urgente, ambra da tenere d'occhio, grigio se lontana. */
+const DUE_COLOR = {
+  overdue: "font-medium text-red-600 dark:text-red-400",
+  danger: "font-medium text-orange-600 dark:text-orange-400",
+  warn: "text-amber-700 dark:text-amber-400",
+  soft: "",
+  none: "",
+} as const;
 
 function dueStatus(dueAt: string, completed: boolean): "overdue" | "soon" | "ok" {
   if (completed) return "ok";
@@ -216,6 +226,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
                 <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
                   {filteredReminders.map((reminder) => {
                     const status = dueStatus(reminder.dueAt, reminder.completed);
+                    const due = dueIn(reminder.dueAt, new Date());
                     const busy = busyId === reminder.id;
                     return (
                       <li key={reminder.id} className="flex items-center justify-between gap-4 p-4">
@@ -249,6 +260,9 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
                               >
                                 {formatDate(reminder.dueAt)}
                               </span>
+                              {reminder.completed ? null : (
+                                <span className={DUE_COLOR[due.level]}> · {due.text}</span>
+                              )}
                               {reminder.relatedDocumentFilename ? ` · ${reminder.relatedDocumentFilename}` : ""}
                               {reminder.relatedAssetName ? ` · 🔗 ${reminder.relatedAssetName}` : ""}
                             </p>

@@ -54,6 +54,8 @@ test("crea, completa ed elimina scadenze", async ({ page }) => {
   await expect(page).toHaveURL(/\/reminders$/, { timeout: 15_000 });
   await expect(page.getByText("Scadenza creata.")).toBeVisible();
   await expect(page.getByText("Rinnovo assicurazione auto")).toBeVisible({ timeout: 10_000 });
+  // Accanto alla data, quanto manca (la data è fra 30 giorni: 29 o 30 a seconda del fuso).
+  await expect(page.getByText(/fra (29|30) giorni/)).toBeVisible();
 
   // Completa (checkbox) --- il titolo diventa barrato.
   await page.getByRole("checkbox").click();
@@ -107,6 +109,7 @@ test("aggiunge scadenza e note a un documento e li vede in dashboard", async ({
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText(/scade \d/)).toBeVisible();
+  await expect(page.getByText(/fra (9|10) giorni/)).toBeVisible();
 
   // "Oggi" mostra il documento tra le scadenze vicine, e segnala la cifratura configurata.
   await page.getByRole("link", { name: "Oggi" }).click();

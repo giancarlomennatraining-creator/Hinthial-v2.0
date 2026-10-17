@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryColor, expiryInfo, matchesQuery, mixColor, relativeDay } from "@/domain/documents/archive-views";
+import { categoryColor, dueIn, expiryInfo, matchesQuery, mixColor, relativeDay } from "@/domain/documents/archive-views";
 import type { Category } from "@/domain/categories/types";
 import type { DocumentSummary } from "@/domain/documents/types";
 
@@ -73,6 +73,26 @@ describe("expiryInfo", () => {
 
   it("una data senza orario è un giorno del calendario, non la mezzanotte UTC", () => {
     expect(expiryInfo("2026-10-07", NOW).days).toBe(1);
+  });
+});
+
+describe("dueIn", () => {
+  it("dice quanto manca come a voce, con lo stesso livello di urgenza di expiryInfo", () => {
+    expect(dueIn("2026-10-03", NOW)).toMatchObject({ level: "overdue", text: "scaduta da 3 giorni" });
+    expect(dueIn("2026-10-05", NOW)).toMatchObject({ level: "overdue", text: "scaduta da 1 giorno" });
+    expect(dueIn("2026-10-06", NOW)).toMatchObject({ level: "danger", text: "oggi" });
+    expect(dueIn("2026-10-07", NOW)).toMatchObject({ level: "danger", text: "domani" });
+    expect(dueIn("2026-10-20", NOW)).toMatchObject({ level: "danger", days: 14, text: "fra 14 giorni" });
+    expect(dueIn("2026-10-25", NOW)).toMatchObject({ level: "warn", days: 19, text: "fra 19 giorni" });
+    expect(dueIn("2026-11-26", NOW)).toMatchObject({ level: "warn", days: 51, text: "fra 51 giorni" });
+    expect(dueIn("2027-03-15", NOW)).toMatchObject({ level: "soft", text: "fra 5 mesi" });
+    expect(dueIn("2029-10-06", NOW)).toMatchObject({ level: "soft", text: "fra 3 anni" });
+  });
+
+  it("il livello coincide con quello di expiryInfo per la stessa data", () => {
+    for (const iso of ["2026-10-05", "2026-10-06", "2026-10-15", "2026-11-26", "2027-03-15"]) {
+      expect(dueIn(iso, NOW).level).toBe(expiryInfo(iso, NOW).level);
+    }
   });
 });
 

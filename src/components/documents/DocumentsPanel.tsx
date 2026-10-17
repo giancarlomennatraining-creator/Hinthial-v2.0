@@ -12,6 +12,7 @@ import {
 } from "@/domain/documents/repository";
 import { contentKindFor, hasInlinePlayer } from "@/lib/content-kind";
 import type { DocumentSummary } from "@/domain/documents/types";
+import { dueIn } from "@/domain/documents/archive-views";
 import { formatDate, formatSize } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
@@ -39,8 +40,10 @@ function expiryStatus(expiresAt: string | null): "none" | "overdue" | "soon" | "
 
 /** I consigli del tasto Aiuto di Archivio, uguali in tutte le viste. */
 const ARCHIVE_HELP_TIPS: HelpTip[] = [
-  { icon: "➕", text: "Aggiungi un contenuto nuovo, o trascinalo qui sopra." },
-  { icon: "🔍", text: "Premi Ctrl+K per cercare in tutto Hinthial: per nome, note — o dentro ai documenti stessi." },
+  { icon: "➕", text: "Aggiungi un contenuto nuovo con il pulsante in alto." },
+  { icon: "🖱️", text: "Da computer puoi anche trascinarlo qui sopra.", desktopOnly: true },
+  { icon: "🔍", text: "Per cercare in tutto Hinthial, per nome, note o dentro ai documenti, usa la ricerca nel menu." },
+  { icon: "⌨️", text: "Da computer: premi Ctrl+K per cercare ovunque.", desktopOnly: true },
   { icon: "🏷️", text: "Filtra per categoria dal menu in alto." },
   { icon: "📂", text: "Passa a “Fascicolo” per raggruppare più contenuti insieme." },
 ];
@@ -419,6 +422,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                         </Link>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
                           {category ? `${category.icon} ${category.name} · ` : ""}
+                          {doc.issuer ? `${doc.issuer} · ` : ""}
                           {asset ? `🔗 ${asset.name} · ` : ""}
                           {formatSize(doc.size)} · {formatDate(doc.createdAt)}
                           {doc.expiresAt ? (
@@ -434,6 +438,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                                 }
                               >
                                 scade {formatDate(doc.expiresAt)}
+                                {` · ${dueIn(doc.expiresAt, new Date()).text}`}
                               </span>
                             </>
                           ) : null}

@@ -149,19 +149,19 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   await attesi.getByLabel("Fattura: fatto").check();
   await expect(attesi).toContainText("2 di 2", { timeout: 15_000 });
 
-  // Chiudere e riaprire: un clic, non un form.
-  await page.getByRole("button", { name: "Chiudi fascicolo" }).click();
-  await expect(page.getByRole("button", { name: "Riapri fascicolo" })).toBeVisible({
-    timeout: 10_000,
-  });
-  await page.getByRole("button", { name: "Riapri fascicolo" }).click();
-  await expect(page.getByRole("button", { name: "Chiudi fascicolo" })).toBeVisible({
-    timeout: 10_000,
-  });
+  // Chiudere e riaprire: due azioni di rado, nel menu "Altre azioni" dell'intestazione, un clic ciascuna.
+  const altreAzioni = page.getByRole("button", { name: "Altre azioni" });
+  await altreAzioni.click();
+  await page.getByRole("menuitem", { name: "Chiudi fascicolo" }).click();
+  await altreAzioni.click();
+  await expect(page.getByRole("menuitem", { name: "Riapri fascicolo" })).toBeVisible({ timeout: 10_000 });
+  await page.getByRole("menuitem", { name: "Riapri fascicolo" }).click();
+  await altreAzioni.click();
+  await expect(page.getByRole("menuitem", { name: "Chiudi fascicolo" })).toBeVisible({ timeout: 10_000 });
 
-  // Eliminare il fascicolo non elimina il documento: solo lo scollega.
+  // Eliminare il fascicolo non elimina il documento: solo lo scollega (il menu è ancora aperto).
   page.once("dialog", (dialog) => dialog.accept());
-  await page.getByRole("button", { name: "Elimina" }).click();
+  await page.getByRole("menuitem", { name: "Elimina" }).click();
   await expect(page).toHaveURL(/\/dossiers$/, { timeout: 15_000 });
   await expect(page.getByText("Fascicolo eliminato.")).toBeVisible();
   await expect(page.getByText(/Ancora nessun fascicolo/)).toBeVisible();
