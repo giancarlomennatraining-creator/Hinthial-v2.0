@@ -417,7 +417,7 @@ export function SettingsTabs({
                       {group.label}
                     </p>
                   ) : null}
-                  <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+                  <ul className="flex flex-col divide-y divide-zinc-200 rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
                     {group.tabs.map((t) => (
                       <MobileRow
                         key={t.id}
@@ -455,7 +455,7 @@ export function SettingsTabs({
                 </div>
               )}
               {mobileIsFunctionList ? (
-                <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+                <ul className="flex flex-col divide-y divide-zinc-200 rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
                   {displayedMobileTab.sections?.map((sec) => (
                     <MobileRow key={sec.id} icon={sec.icon} label={sec.label} onClick={() => setMobileSub(sec.id)} />
                   ))}

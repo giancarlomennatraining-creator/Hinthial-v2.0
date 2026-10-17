@@ -15,7 +15,7 @@ type Tone = "light" | "dark";
 /** La lettera, su carta calda: a mano se chi l'ha scritta ha scelto così (v. CapsuleContentStyle). */
 export function OpenedLetter({ view, from = true, large = false }: { view: OpenedCapsuleView; from?: boolean; large?: boolean }) {
   return (
-    <div className="rounded-2xl border border-[#EDE1C4] bg-[#FBF6EA] px-6 py-5 text-[#3B331F]">
+    <div className="rounded-card border border-[#EDE1C4] bg-[#FBF6EA] px-6 py-5 text-[#3B331F]">
       {from ? <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#6B5730]">Da {view.ownerName}, per te</p> : null}
       {view.letter.trim() ? (
         <p
@@ -188,7 +188,7 @@ export function StaticAttachment({ attachment, tone }: { attachment: OpenedAttac
 /** Il segnaposto di "Lascia un pensiero" nelle anteprime: stesso aspetto, nessun invio. */
 export function StaticReply({ ownerName }: { ownerName: string }) {
   return (
-    <section aria-label="Lascia un pensiero" className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <section aria-label="Lascia un pensiero" className="flex flex-col gap-2 rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <h3 className="font-heading text-base font-extrabold text-[#121a35] dark:text-zinc-100">Lascia un pensiero a {ownerName}</h3>
       <p className="min-h-14 rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-400 dark:border-zinc-800">Cosa ti ha fatto pensare?</p>
       <p className="text-xs text-zinc-500 dark:text-zinc-400">Nell&apos;anteprima non si invia nulla.</p>
@@ -208,7 +208,7 @@ export function OpenedBadge({ children = "Aperta ora" }: { children?: ReactNode 
 /** La storia di una capsula: un filo con i suoi momenti (condivisa, data prevista, aperta). */
 export function StoryTimeline({ view }: { view: OpenedCapsuleView }) {
   return (
-    <section aria-label="La storia di questa capsula" className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <section aria-label="La storia di questa capsula" className="flex flex-col rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <h3 className="mb-3 font-heading text-base font-extrabold text-[#121a35] dark:text-zinc-100">La storia di questa capsula</h3>
       <ol className="flex flex-col">
         {view.story.map((event, i) => (

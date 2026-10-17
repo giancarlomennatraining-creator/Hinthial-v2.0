@@ -31,7 +31,7 @@ function FactorList({
   onRemove: (factor: MfaFactor) => void;
 }) {
   return (
-    <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+    <ul className="flex flex-col divide-y divide-zinc-200 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
       {factors.map((factor) => (
         <li key={factor.id} className="flex items-center justify-between gap-4 p-3 text-sm">
           <div className="flex flex-col gap-0.5">
@@ -224,7 +224,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
         </div>
 
         {enrollment ? (
-          <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="flex flex-col gap-3 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
               Inquadra questo codice con l&apos;app authenticator, poi conferma con il codice a 6
               cifre che ti mostra.
@@ -346,7 +346,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
           </div>
 
           {revealedCodes ? (
-            <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="flex flex-col gap-3 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
               <p className="text-sm text-zinc-700 dark:text-zinc-300">
                 Salvane una copia adesso: non verranno mostrati di nuovo.
               </p>

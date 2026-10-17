@@ -53,7 +53,7 @@ export function MasterKeyIntroModal({
         aria-modal="true"
         aria-label="Crea la tua master key"
         onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
+        className="flex w-full max-w-md flex-col gap-4 rounded-card border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
       >
         <div className="flex items-start justify-between gap-4">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">

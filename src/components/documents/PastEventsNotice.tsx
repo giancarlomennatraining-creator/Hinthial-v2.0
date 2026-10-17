@@ -10,7 +10,7 @@ export function PastEventsNotice({ events }: { events: { date: string; title: st
   return (
     <aside
       aria-label="Date già passate"
-      className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
+      className="flex flex-col gap-2 rounded-card border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
     >
       <p>
         {events.length === 1

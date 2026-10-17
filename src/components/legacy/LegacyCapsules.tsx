@@ -93,7 +93,7 @@ export function LegacyCapsules({ masterKey }: { masterKey: CryptoKey }) {
                 ? "1 capsula si aprirà anche prima, alla consegna."
                 : `${early} capsule si apriranno anche prima, alla consegna.`}
           </p>
-          <ul className="flex flex-col divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+          <ul className="flex flex-col divide-y divide-zinc-200 rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
             {sortAlphabetically(capsules, (c) => c.title).map((capsule) => {
               const opened = capsule.openAt !== null && new Date(capsule.openAt) <= now;
               const recipients = sortAlphabetically(capsule.relatedFriends, (f) => f.name)

@@ -121,7 +121,7 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
       ) : (
         <form
           onSubmit={handleCreate}
-          className="flex flex-wrap items-end gap-3 rounded-2xl border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
+          className="flex flex-wrap items-end gap-3 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
         >
           <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
             <label htmlFor="title" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">

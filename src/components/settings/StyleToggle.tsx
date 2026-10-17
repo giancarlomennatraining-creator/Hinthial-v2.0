@@ -62,7 +62,7 @@ export function StyleToggle() {
             aria-checked={selected}
             onClick={() => handleChange(option.value)}
             className={cn(
-              "flex flex-col gap-3 rounded-2xl border p-3 text-left transition-colors",
+              "flex flex-col gap-3 rounded-card border p-3 text-left transition-colors",
               selected
                 ? "border-brand bg-brand/10 ring-1 ring-brand"
                 : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700",

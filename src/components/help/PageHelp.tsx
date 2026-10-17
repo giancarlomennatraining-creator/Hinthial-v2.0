@@ -127,8 +127,8 @@ export function PageHelp({
                     <p
                       className={
                         m.role === "user"
-                          ? "max-w-[85%] rounded-2xl rounded-br-md bg-brand px-3.5 py-2 text-sm whitespace-pre-wrap text-white"
-                          : "max-w-[85%] rounded-2xl rounded-bl-md bg-zinc-100 px-3.5 py-2 text-sm whitespace-pre-wrap text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100"
+                          ? "max-w-[85%] rounded-card rounded-br-md bg-brand px-3.5 py-2 text-sm whitespace-pre-wrap text-white"
+                          : "max-w-[85%] rounded-card rounded-bl-md bg-zinc-100 px-3.5 py-2 text-sm whitespace-pre-wrap text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100"
                       }
                     >
                       {m.text}

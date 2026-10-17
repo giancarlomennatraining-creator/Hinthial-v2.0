@@ -76,7 +76,7 @@ export function CapsuleReplyBox({
   }
 
   return (
-    <section aria-label="Lascia un pensiero" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <section aria-label="Lascia un pensiero" className="flex flex-col gap-3 rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <h3 className="font-heading text-base font-extrabold text-[#121a35] dark:text-zinc-100">Lascia un pensiero a {ownerName}</h3>
 
       {sent ? (

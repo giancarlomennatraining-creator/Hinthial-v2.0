@@ -132,7 +132,7 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
 
   if (state.status === "error") {
     return (
-      <div role="alert" className="mx-auto flex max-w-md flex-col gap-2 rounded-2xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900 dark:bg-red-950">
+      <div role="alert" className="mx-auto flex max-w-md flex-col gap-2 rounded-card border border-red-200 bg-red-50 p-6 text-center dark:border-red-900 dark:bg-red-950">
         <h1 className="font-heading text-lg font-extrabold text-red-700 dark:text-red-300">Non posso aprire questo fascicolo</h1>
         <p className="text-sm text-red-700 dark:text-red-300">{state.message}</p>
       </div>

@@ -107,7 +107,7 @@ export function EmergencyCardPanel({
 
       {/* items-start: senza, il pannello destro si estende all'altezza della colonna sinistra e intercetta i click sugli elementi che finiscono alla stessa altezza. */}
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,28rem)_1fr]">
-        <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="flex flex-col gap-4 rounded-card border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
           <div className="flex gap-3">
             <div className="flex flex-1 flex-col gap-1">
               <label htmlFor="blood-type" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -318,7 +318,7 @@ function EmergencyCardPreview({
   const hasDoctor = Boolean(card.doctorName.trim());
 
   return (
-    <div className="flex w-[340px] flex-col gap-2.5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_8px_20px_rgba(16,24,40,0.06)] dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex w-[340px] flex-col gap-2.5 rounded-card border border-zinc-200 bg-white p-5 shadow-[0_8px_20px_rgba(16,24,40,0.06)] dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold text-accent">🌿 Hinthial</span>
         <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">

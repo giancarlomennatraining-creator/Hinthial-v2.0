@@ -433,7 +433,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
       ) : null}
 
       {items.length > 0 ? (
-        <section aria-label="Cosa può fare Hinthia" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+        <section aria-label="Cosa può fare Hinthia" className="flex flex-col gap-3 rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
           {reading ? (
             <div role="status" aria-live="polite" className="flex flex-col gap-2">
               <p className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
@@ -483,7 +483,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
       ) : null}
 
       {items.length > 1 ? (
-        <section aria-label="Per tutti" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+        <section aria-label="Per tutti" className="flex flex-col gap-3 rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
           <h2 className="font-heading text-base font-extrabold text-zinc-900 dark:text-zinc-100">Per tutti i {items.length} documenti</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <label className="flex flex-col gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -545,7 +545,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
           const sureKeys = new Set(onePerSlot(proposals).map(proposalKey));
           const rowBusy = busyId === doc.id || busyId === "all";
           return (
-            <li key={doc.id} className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_2px_8px_rgba(18,26,53,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+            <li key={doc.id} className="flex flex-col gap-3 rounded-card border border-zinc-200 bg-white p-4 shadow-[0_2px_8px_rgba(18,26,53,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
               <div className="flex flex-wrap items-center gap-2">
                 <span aria-hidden="true">{CONTENT_KIND_ICON[kind]}</span>
                 <Link href={`/archive/${doc.id}`} className="min-w-0 break-words text-sm font-semibold text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-100">

@@ -75,7 +75,7 @@ export function SharedCapsuleNotificationPopup() {
         aria-modal="true"
         aria-label="Nuova capsula condivisa"
         onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
+        className="flex w-full max-w-sm flex-col gap-4 rounded-card border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
       >
         <div>
           <h2 className="text-lg font-semibold text-accent">📦 Una nuova capsula per te</h2>

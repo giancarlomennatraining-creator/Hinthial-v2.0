@@ -81,7 +81,7 @@ export function CloseCapsuleDialog({
         aria-modal="true"
         aria-label="Prima di chiudere la capsula"
         onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-xl flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
+        className="flex w-full max-w-xl flex-col gap-4 rounded-card border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
       >
         <div className="flex flex-col gap-1">
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Prima di chiudere</p>

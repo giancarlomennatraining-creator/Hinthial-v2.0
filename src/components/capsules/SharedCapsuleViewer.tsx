@@ -102,7 +102,7 @@ export function SharedCapsuleViewer({
           aria-modal="true"
           aria-label="Capsula condivisa"
           onClick={(e) => e.stopPropagation()}
-          className="flex w-full max-w-sm flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
+          className="flex w-full max-w-sm flex-col gap-3 rounded-card border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
         >
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Da {shared.ownerName}</p>
           <p role="alert" className="text-sm text-red-600 dark:text-red-400">

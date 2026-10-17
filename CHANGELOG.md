@@ -10,6 +10,19 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-18 (125)
+
+### Gli stili cambiano anche forma e carattere (passo 3, prima parte)
+
+**Cosa fa:**
+- Ogni stile ha la sua forma: **Foglia** angoli morbidi, riquadri "a foglia" (tre angoli larghi e uno stretto) e bottoni a pillola; **Notte** angoli ampi e regolari; **Luce** angoli piccoli e bottoni quasi squadrati. Vale per tutta l'app, riquadri e bottoni compresi.
+- Ogni stile ha i suoi titoli: Baloo 2 in Foglia (il carattere del logo), Manrope in grassetto in Notte, Work Sans più leggero e stretto in Luce.
+- **Continuità** in Oggi ha il suo segno distintivo: in Foglia un alberello che apre una foglia per ogni passo fatto, in Notte una piccola costellazione dove si accende una stella per ogni passo, in Luce solo la barra. Si anima una volta all'apertura (si ferma con "riduci movimento") e resta leggibile senza vederlo: la barra di avanzamento rimane per gli screen reader.
+
+**Note tecniche:** in `globals.css` i raggi di Tailwind (`--radius-md`…`3xl`) sono mappati su `--r-*`, definiti per stile, più due raggi nuovi, `rounded-card` (`--r-card`, un valore composto: la foglia) e `rounded-btn` (`--r-btn`); i 93 `rounded-2xl` sono diventati `rounded-card` e `BTN_PRIMARY`/`BTN_SECONDARY` usano `rounded-btn`. Titoli: `--f-h1`, `--f-h2`, `--w-h1`, `--ls-h1` per stile (h1 e h2; h3 e seguenti restano in Manrope). Nuovo `ContinuitySign.tsx`: due SVG decorativi nello stesso posto, scelti dal CSS (`.sig-foglia`, `.sig-notte`, `:root[data-stile]`) e non da uno stato React, per non avere differenze al primo paint; `TodayHome.tsx` lo mette accanto all'elenco dei passi (solo da `sm` in su). Test unitario di `ContinuitySign`. **Resta del passo 3:** le righe senza riquadro di Luce, il vetro di Notte, le note a mano (Caveat) di Foglia, i circa 450 colori esadecimali nei componenti, la home pubblica e la finestra di sblocco.
+
+---
+
 ## 2026-10-18 (124)
 
 ### Tre stili: Foglia, Notte e Luce, da scegliere in Impostazioni
