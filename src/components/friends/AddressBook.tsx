@@ -228,7 +228,7 @@ export function AddressBook({
                                 {friend.isFriend ? <span title="Amico">🤝</span> : null}
                                 {friend.status === "revoked" ? <span title="Revocato">⛔</span> : null}
                               </span>
-                              <span className="text-zinc-300 lg:hidden dark:text-zinc-600" aria-hidden="true">
+                              <span className="text-zinc-300 lg:hidden dark:text-zinc-500" aria-hidden="true">
                                 ›
                               </span>
                             </button>

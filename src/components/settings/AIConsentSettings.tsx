@@ -154,7 +154,7 @@ export function AIConsentSettings() {
                 "flex items-center gap-2 rounded px-3 py-1.5 text-sm font-medium",
                 masterEnabled
                   ? "cursor-pointer text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
-                  : "cursor-not-allowed text-zinc-400 dark:text-zinc-600",
+                  : "cursor-not-allowed text-zinc-500 dark:text-zinc-500",
               )}
             >
               <input
@@ -174,7 +174,7 @@ export function AIConsentSettings() {
                 "flex items-center gap-2 rounded px-3 py-1.5 text-sm font-medium",
                 masterEnabled
                   ? "cursor-pointer text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
-                  : "cursor-not-allowed text-zinc-400 dark:text-zinc-600",
+                  : "cursor-not-allowed text-zinc-500 dark:text-zinc-500",
               )}
             >
               <input
@@ -197,7 +197,7 @@ export function AIConsentSettings() {
                 "text-xs",
                 masterEnabled && extractionConsent
                   ? "text-zinc-500 dark:text-zinc-400"
-                  : "text-zinc-400 dark:text-zinc-600",
+                  : "text-zinc-500 dark:text-zinc-500",
               )}
             >
               Categorie abilitate all&apos;estrazione avanzata — spento di default per ognuna,
@@ -216,7 +216,7 @@ export function AIConsentSettings() {
                       "flex items-center gap-2 rounded px-3 py-1 text-sm",
                       masterEnabled && extractionConsent
                         ? "cursor-pointer text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900"
-                        : "cursor-not-allowed text-zinc-400 dark:text-zinc-600",
+                        : "cursor-not-allowed text-zinc-500 dark:text-zinc-500",
                     )}
                   >
                     <input

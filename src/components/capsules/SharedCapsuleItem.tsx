@@ -90,7 +90,7 @@ export function SharedCapsuleItem({
           🔓 Apri
         </button>
       ) : (
-        <p className="text-xs text-zinc-400 dark:text-zinc-500">Potrai aprirla quando arriverà la data di apertura.</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-500">Potrai aprirla quando arriverà la data di apertura.</p>
       )}
     </>
   );

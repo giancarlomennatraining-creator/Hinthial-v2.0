@@ -106,7 +106,7 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
                           "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold",
                           step.done
                             ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"
-                            : "border border-dashed border-zinc-300 text-zinc-400 dark:border-zinc-700",
+                            : "border border-dashed border-zinc-300 text-zinc-500 dark:border-zinc-700",
                         )}
                       >
                         {step.done ? "✓" : ""}

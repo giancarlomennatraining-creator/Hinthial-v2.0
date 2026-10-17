@@ -237,7 +237,7 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
         </ul>
       </section>
 
-      <p className="text-center text-xs text-zinc-400 dark:text-zinc-500">
+      <p className="text-center text-xs text-zinc-500 dark:text-zinc-500">
         I documenti sono cifrati con la chiave contenuta nel link: Hinthial non può leggerli, e questa pagina li apre solo sul tuo dispositivo.
       </p>
 

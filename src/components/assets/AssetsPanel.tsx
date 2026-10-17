@@ -217,7 +217,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           Contenuti collegati
                         </p>
                         {linkedDocuments.length === 0 ? (
-                          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-600">Nessuno.</p>
+                          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">Nessuno.</p>
                         ) : (
                           <ul className="mt-1 flex flex-col gap-0.5">
                             {linkedDocuments.map((doc) => (
@@ -233,7 +233,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
                           Scadenze collegate
                         </p>
                         {deadlines.length === 0 ? (
-                          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-600">Nessuna.</p>
+                          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">Nessuna.</p>
                         ) : (
                           <ul className="mt-1 flex flex-col gap-0.5">
                             {deadlines.map((deadline) => (

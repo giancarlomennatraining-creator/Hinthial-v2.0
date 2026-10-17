@@ -51,7 +51,7 @@ export function CandidatesCard({
               disabled={busy}
               onClick={() => onDismiss(candidate.documentId)}
               aria-label={`Non aggiungere ${candidate.filename}`}
-              className="shrink-0 rounded-md px-1.5 text-base leading-none text-zinc-400 hover:text-red-600 disabled:opacity-50"
+              className="shrink-0 rounded-md px-1.5 text-base leading-none text-zinc-500 hover:text-red-600 disabled:opacity-50"
             >
               ×
             </button>
@@ -109,7 +109,7 @@ export function ExpensesCard({ expenses }: { expenses: DossierExpenses }) {
           </li>
         ))}
       </ul>
-      <p className="text-[11.5px] leading-snug text-zinc-400 dark:text-zinc-500">Le cifre vengono dagli importi letti nei documenti del fascicolo.</p>
+      <p className="text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-500">Le cifre vengono dagli importi letti nei documenti del fascicolo.</p>
     </section>
   );
 }

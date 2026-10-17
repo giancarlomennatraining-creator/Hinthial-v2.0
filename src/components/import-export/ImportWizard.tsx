@@ -384,7 +384,7 @@ function FriendsPreviewTable({ rows }: { rows: FriendRow[] }) {
       <tbody>
         {rows.map((row) => (
           <tr key={row.rowNumber} className="border-b border-zinc-100 last:border-0 dark:border-zinc-900">
-            <td className="px-3 py-2 text-zinc-400 dark:text-zinc-600">{row.rowNumber}</td>
+            <td className="px-3 py-2 text-zinc-500 dark:text-zinc-500">{row.rowNumber}</td>
             <td className="px-3 py-2">
               {row.name || <span className="text-red-600 dark:text-red-400">{row.fieldErrors.name}</span>}
             </td>
@@ -433,7 +433,7 @@ function AssetsPreviewTable({
       <tbody>
         {rows.map((row) => (
           <tr key={row.rowNumber} className="border-b border-zinc-100 last:border-0 dark:border-zinc-900">
-            <td className="px-3 py-2 text-zinc-400 dark:text-zinc-600">{row.rowNumber}</td>
+            <td className="px-3 py-2 text-zinc-500 dark:text-zinc-500">{row.rowNumber}</td>
             <td className="px-3 py-2">
               {row.name || <span className="text-red-600 dark:text-red-400">{row.fieldErrors.name}</span>}
             </td>
@@ -478,7 +478,7 @@ function RemindersPreviewTable({
       <tbody>
         {rows.map((row) => (
           <tr key={row.rowNumber} className="border-b border-zinc-100 last:border-0 dark:border-zinc-900">
-            <td className="px-3 py-2 text-zinc-400 dark:text-zinc-600">{row.rowNumber}</td>
+            <td className="px-3 py-2 text-zinc-500 dark:text-zinc-500">{row.rowNumber}</td>
             <td className="px-3 py-2">
               {row.title || <span className="text-red-600 dark:text-red-400">{row.fieldErrors.title}</span>}
             </td>

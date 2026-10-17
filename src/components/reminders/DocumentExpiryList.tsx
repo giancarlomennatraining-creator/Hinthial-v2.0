@@ -42,7 +42,7 @@ export function DocumentExpiryList({ items, now }: { items: DocumentExpiry[]; no
                     {formatDayMonthYear(item.expiresAt)} · <span className={cn(LEVEL_CLASS[info.level])}>{info.text}</span>
                   </span>
                 </span>
-                <span aria-hidden="true" className="shrink-0 text-zinc-400">
+                <span aria-hidden="true" className="shrink-0 text-zinc-500">
                   ›
                 </span>
               </Link>

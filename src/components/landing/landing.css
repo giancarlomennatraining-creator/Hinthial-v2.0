@@ -35,6 +35,10 @@
   font-family: var(--font-caveat), cursive;
   font-weight: 600;
 }
+/* Il verde foglia chiaro non regge il contrasto sul fondo chiaro (2,1 a 1): lì si usa uno più scuro. */
+:root:not(.dark) .lp .lp-hand {
+  color: #2a7d38;
+}
 .lp-mono {
   font-family: var(--font-geist-mono), ui-monospace, monospace;
 }

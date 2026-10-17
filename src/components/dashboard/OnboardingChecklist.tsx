@@ -43,7 +43,7 @@ export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
               {step.done ? (
                 <CheckCircleIcon width={16} height={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
               ) : (
-                <CircleIcon width={16} height={16} className="shrink-0 text-zinc-300 dark:text-zinc-600" />
+                <CircleIcon width={16} height={16} className="shrink-0 text-zinc-300 dark:text-zinc-500" />
               )}
               {step.done ? (
                 <span className="text-zinc-700 dark:text-zinc-300">{step.label}</span>

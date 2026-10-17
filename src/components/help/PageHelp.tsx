@@ -106,7 +106,7 @@ export function PageHelp({
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">In breve</p>
+          <p className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">In breve</p>
           {tips.map((tip, i) => (
             <div
               key={i}

@@ -77,7 +77,7 @@ export function ExpectedItemsCard({
               disabled={busy}
               onClick={() => onDelete(status)}
               aria-label={`Togli ${status.item.label}`}
-              className="shrink-0 rounded-md px-1.5 text-base leading-none text-zinc-400 hover:text-red-600 disabled:opacity-50"
+              className="shrink-0 rounded-md px-1.5 text-base leading-none text-zinc-500 hover:text-red-600 disabled:opacity-50"
             >
               ×
             </button>
@@ -100,7 +100,7 @@ export function ExpectedItemsCard({
           Aggiungi
         </button>
       </div>
-      <p className="text-[11.5px] leading-snug text-zinc-400 dark:text-zinc-500">
+      <p className="text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-500">
         Una voce si spunta da sola quando nel fascicolo c&apos;è un documento che la nomina.
       </p>
     </section>

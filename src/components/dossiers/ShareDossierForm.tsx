@@ -255,7 +255,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
                   Includi le fasi della vicenda
                 </label>
               ) : null}
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">Persone coinvolte, passi e note personali non vengono mai condivisi.</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-500">Persone coinvolte, passi e note personali non vengono mai condivisi.</p>
             </section>
           ) : null}
 
@@ -282,7 +282,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
               aria-label="Per chi è il link"
               className={TEXT_INPUT}
             />
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">Serve solo a riconoscere il link nell&apos;elenco: chi lo riceve non ne ha bisogno.</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-500">Serve solo a riconoscere il link nell&apos;elenco: chi lo riceve non ne ha bisogno.</p>
           </section>
 
           <section aria-label="Per quanto tempo" className={CARD}>
@@ -385,7 +385,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
                   {CONTENT_KIND_ICON[contentKindFor(doc.mimeType)]} {doc.filename}
                 </li>
               ))}
-              {chosen.length > 6 ? <li className="text-xs text-zinc-400">e altri {chosen.length - 6}</li> : null}
+              {chosen.length > 6 ? <li className="text-xs text-zinc-500">e altri {chosen.length - 6}</li> : null}
             </ul>
           </div>
         </aside>

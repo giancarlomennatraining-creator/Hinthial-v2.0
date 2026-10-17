@@ -63,7 +63,7 @@ export function MasterKeyIntroModal({
             type="button"
             onClick={dismiss}
             aria-label="Chiudi"
-            className="shrink-0 rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300"
+            className="shrink-0 rounded-md p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300"
           >
             ✕
           </button>

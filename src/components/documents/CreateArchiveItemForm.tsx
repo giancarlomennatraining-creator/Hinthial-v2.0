@@ -238,7 +238,7 @@ function AccordionStep({
                   ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white"
                   : state === "done"
                     ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"
-                    : "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-zinc-300 text-sm font-bold text-zinc-400 dark:border-zinc-700 dark:text-zinc-500"
+                    : "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-zinc-300 text-sm font-bold text-zinc-500 dark:border-zinc-700 dark:text-zinc-500"
               }
             >
               {state === "done" ? <StepCheck /> : step}
@@ -1019,7 +1019,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                                     type="button"
                                     onClick={() => removeFile(item.id)}
                                     aria-label={lot.length === 1 ? "Rimuovi file" : `Rimuovi ${item.file.name}`}
-                                    className="shrink-0 rounded-full p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                                    className="shrink-0 rounded-full p-1 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                                   >
                                     ×
                                   </button>

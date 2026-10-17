@@ -376,7 +376,7 @@ export function AuditLogPanel({ initialParams = {} }: { initialParams?: AuditFil
               {filters.types.length > 0 ? (
                 <span className="rounded-full bg-brand px-2 text-xs font-medium text-white">{filters.types.length}</span>
               ) : null}
-              <span aria-hidden="true" className="text-zinc-400">
+              <span aria-hidden="true" className="text-zinc-500">
                 ▾
               </span>
             </summary>
@@ -477,7 +477,7 @@ export function AuditLogPanel({ initialParams = {} }: { initialParams?: AuditFil
                       <EventLabel event={event} fieldLabels={fieldLabels} />
                     </td>
                     <td className="max-w-64 truncate p-3 text-zinc-700 dark:text-zinc-300">
-                      {elementLabel(event) ?? <span className="text-zinc-400 dark:text-zinc-600">—</span>}
+                      {elementLabel(event) ?? <span className="text-zinc-500 dark:text-zinc-500">—</span>}
                     </td>
                     <td className="p-3 whitespace-nowrap text-zinc-500 dark:text-zinc-400">
                       {formatDateTime(event.createdAt)}
@@ -530,7 +530,7 @@ export function AuditLogPanel({ initialParams = {} }: { initialParams?: AuditFil
                 type="button"
                 onClick={() => setPanelOpen(false)}
                 aria-label="Chiudi"
-                className="shrink-0 rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300"
+                className="shrink-0 rounded-md p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300"
               >
                 ✕
               </button>
