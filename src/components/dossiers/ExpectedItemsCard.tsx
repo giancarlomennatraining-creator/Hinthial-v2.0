@@ -40,19 +40,19 @@ export function ExpectedItemsCard({
       <div className="flex items-baseline justify-between">
         <h2 className={CARD_TITLE}>Documenti attesi</h2>
         {expected.total > 0 ? (
-          <span className="text-xs font-bold text-[#5b6483] dark:text-zinc-400">
+          <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">
             {expected.done} di {expected.total}
           </span>
         ) : null}
       </div>
       {expected.total > 0 ? (
-        <div className="h-1.5 overflow-hidden rounded-full bg-[#eef0f8] dark:bg-zinc-900" aria-hidden="true">
+        <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900" aria-hidden="true">
           <span className="block h-full rounded-full bg-[#1c7c5a]" style={{ width: `${(expected.done / expected.total) * 100}%` }} />
         </div>
       ) : null}
       <ul className="flex flex-col">
         {expected.statuses.map((status) => (
-          <li key={status.item.id} className="flex items-start gap-2.5 border-t border-[#eef0f8] py-2 first:border-t-0 first:pt-0 dark:border-zinc-900">
+          <li key={status.item.id} className="flex items-start gap-2.5 border-t border-zinc-100 py-2 first:border-t-0 first:pt-0 dark:border-zinc-900">
             <input
               type="checkbox"
               checked={status.satisfied}
@@ -63,7 +63,7 @@ export function ExpectedItemsCard({
               className="mt-0.5 h-4 w-4 shrink-0 accent-[#1c7c5a]"
             />
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className={`text-sm leading-snug font-semibold ${status.satisfied ? "text-[#5b6483] line-through dark:text-zinc-500" : ""}`}>
+              <span className={`text-sm leading-snug font-semibold ${status.satisfied ? "text-zinc-500 line-through dark:text-zinc-500" : ""}`}>
                 {status.item.label}
               </span>
               {status.documentId ? (
@@ -77,7 +77,7 @@ export function ExpectedItemsCard({
               disabled={busy}
               onClick={() => onDelete(status)}
               aria-label={`Togli ${status.item.label}`}
-              className="shrink-0 rounded-md px-1.5 text-base leading-none text-[#8a91ad] hover:text-red-600 disabled:opacity-50"
+              className="shrink-0 rounded-md px-1.5 text-base leading-none text-zinc-400 hover:text-red-600 disabled:opacity-50"
             >
               ×
             </button>
@@ -100,7 +100,7 @@ export function ExpectedItemsCard({
           Aggiungi
         </button>
       </div>
-      <p className="text-[11.5px] leading-snug text-[#8a91ad] dark:text-zinc-500">
+      <p className="text-[11.5px] leading-snug text-zinc-400 dark:text-zinc-500">
         Una voce si spunta da sola quando nel fascicolo c&apos;è un documento che la nomina.
       </p>
     </section>

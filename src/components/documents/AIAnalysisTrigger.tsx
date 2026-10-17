@@ -114,13 +114,13 @@ export function AIAnalysisTrigger({
           {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
           <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-11 w-11 shrink-0 rounded-full shadow-[0_6px_16px_rgba(43,79,196,0.35)]" />
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <p className="font-heading text-xl font-extrabold tracking-tight text-[#121a35] dark:text-zinc-50">Lettura di Hinthia</p>
-            <p className="truncate text-[13px] text-[#5b6483] dark:text-zinc-400">{subtitle}</p>
+            <p className="font-heading text-xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">Lettura di Hinthia</p>
+            <p className="truncate text-[13px] text-zinc-500 dark:text-zinc-400">{subtitle}</p>
           </div>
           <button
             type="button"
             onClick={() => onAnalyze(rereadScope, { force: true })}
-            className="reading-btn shrink-0 rounded-[10px] border border-[#c9d0e6] bg-white px-3.5 py-2 text-[13px] font-semibold text-[#121a35] hover:border-brand hover:bg-[#f1f5ff] dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
+            className="reading-btn shrink-0 rounded-[10px] border border-zinc-300 bg-white px-3.5 py-2 text-[13px] font-semibold text-zinc-900 hover:border-brand hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
           >
             Rileggi da capo
           </button>

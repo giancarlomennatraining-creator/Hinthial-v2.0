@@ -32,7 +32,7 @@ export function EffectDiscreet({ view, slots, onClose }: OpenEffectProps) {
       effect="discreet"
       onClose={onClose}
       className={cn(
-        "overflow-auto bg-[#F7FAFB] transition-transform duration-[450ms] ease-[cubic-bezier(.3,.9,.3,1)] dark:bg-zinc-950",
+        "overflow-auto bg-zinc-50 transition-transform duration-[450ms] ease-[cubic-bezier(.3,.9,.3,1)] dark:bg-zinc-950",
         entered ? "translate-x-0" : "translate-x-full",
       )}
     >

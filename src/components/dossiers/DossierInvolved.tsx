@@ -51,7 +51,7 @@ export function DossierInvolved({
               <Link href="/assets" className="truncate text-[13.5px] font-bold hover:text-accent">
                 {asset.name}
               </Link>
-              <span className="text-xs text-[#5b6483] dark:text-zinc-400">
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
                 Bene · {asset.count} {asset.count === 1 ? "documento" : "documenti"} in questo fascicolo
               </span>
             </span>
@@ -60,21 +60,21 @@ export function DossierInvolved({
         {people.map((person) => (
           <li key={person.id} className="flex items-center gap-2.5">
             <span
-              className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#e8edfc] text-xs font-extrabold text-[#2b4fc4]"
+              className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-extrabold text-accent"
               aria-hidden="true"
             >
               {initialsOf(person.name)}
             </span>
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate text-[13.5px] font-bold">{person.name}</span>
-              {person.role ? <span className="text-xs break-words text-[#5b6483] dark:text-zinc-400">{person.role}</span> : null}
+              {person.role ? <span className="text-xs break-words text-zinc-500 dark:text-zinc-400">{person.role}</span> : null}
             </span>
             <button
               type="button"
               disabled={busy}
               onClick={() => onDeletePerson(person)}
               aria-label={`Togli ${person.name}`}
-              className="shrink-0 rounded-md px-1.5 text-base leading-none text-[#8a91ad] hover:text-red-600 disabled:opacity-50"
+              className="shrink-0 rounded-md px-1.5 text-base leading-none text-zinc-400 hover:text-red-600 disabled:opacity-50"
             >
               ×
             </button>

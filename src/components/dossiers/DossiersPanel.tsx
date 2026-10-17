@@ -191,7 +191,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
     { value: "soon", label: "Con scadenze vicine", count: dossiers.filter(isSoon).length },
   ];
 
-  /** Il colore del fascicolo: quello della categoria più presente nei suoi documenti, o il blu di Hinthial. */
+  /** Il colore del fascicolo: quello della categoria più presente nei suoi documenti, o il colore di Hinthial. */
   function colorOf(dossier: DossierListItem): string {
     const counts = new Map<string, number>();
     for (const doc of documentsFor(dossier)) {
@@ -199,7 +199,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
       if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
     }
     const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
-    return top ? categoryColor(top[0]) : "#2b4fc4";
+    return top ? categoryColor(top[0]) : "var(--brand)";
   }
   function pageColorsOf(dossier: DossierListItem): string[] {
     return [...documentsFor(dossier)]
@@ -275,11 +275,11 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
                     "flex items-center gap-2 rounded-full border px-3.5 py-[7px] text-[13.5px] font-semibold transition-colors",
                     active
                       ? "border-brand bg-brand text-white"
-                      : "border-[#dfe3f0] bg-white text-[#121a35] hover:bg-[#e8edfc] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900",
+                      : "border-zinc-200 bg-white text-zinc-900 hover:bg-brand/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900",
                   )}
                 >
                   <span>{chip.label}</span>
-                  <span className={cn("text-xs font-bold", active ? "text-[#cfdaff]" : "text-[#5b6483] dark:text-zinc-400")}>{chip.count}</span>
+                  <span className={cn("text-xs font-bold", active ? "text-[#cfdaff]" : "text-zinc-500 dark:text-zinc-400")}>{chip.count}</span>
                 </button>
               );
             })}

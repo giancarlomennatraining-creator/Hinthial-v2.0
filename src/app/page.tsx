@@ -6,7 +6,6 @@ import { KeyBook } from "@/components/landing/KeyBook";
 import { SeedStory } from "@/components/landing/SeedStory";
 import { HERO_HIGHLIGHT, HERO_TITLE } from "@/components/landing/landing-content";
 import { SecurityIcon } from "@/components/icons/nav-icons";
-import { BTN_PRIMARY } from "@/components/ui/styles";
 import "@/components/landing/landing.css";
 import { BrandLockup } from "@/components/layout/BrandLockup";
 
@@ -33,7 +32,7 @@ export default async function Home() {
         </Link>
 
         {user ? (
-          <Link href="/dashboard" className={`shrink-0 ${BTN_PRIMARY}`}>
+          <Link href="/dashboard" className="lp-btn lp-btn-sm shrink-0">
             Vai alla dashboard
           </Link>
         ) : (
@@ -44,7 +43,7 @@ export default async function Home() {
             >
               Accedi
             </Link>
-            <Link href="/register" className={BTN_PRIMARY}>
+            <Link href="/register" className="lp-btn lp-btn-sm">
               Registrati
             </Link>
           </div>

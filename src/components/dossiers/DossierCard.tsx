@@ -45,7 +45,7 @@ export function DossierCard({
 
   return (
     <div
-      className={`group relative flex flex-col gap-3.5 rounded-[18px] border border-[#dfe3f0] bg-white p-4 pb-3.5 shadow-[0_2px_8px_rgba(18,26,53,0.05)] transition-all duration-[180ms] hover:-translate-y-[3px] hover:shadow-[0_16px_32px_rgba(18,26,53,0.12)] dark:border-zinc-800 dark:bg-zinc-950 ${
+      className={`group relative flex flex-col gap-3.5 rounded-[18px] border border-zinc-200 bg-white p-4 pb-3.5 shadow-[0_2px_8px_rgba(18,26,53,0.05)] transition-all duration-[180ms] hover:-translate-y-[3px] hover:shadow-[0_16px_32px_rgba(18,26,53,0.12)] dark:border-zinc-800 dark:bg-zinc-950 ${
         closed ? "opacity-90" : ""
       }`}
     >
@@ -58,7 +58,7 @@ export function DossierCard({
         <div className="relative z-10 flex items-center gap-1.5">
           <span
             className={`rounded-full px-2.5 py-[3px] text-xs font-bold ${
-              closed ? "bg-[#eceff4] text-[#5b6483] dark:bg-zinc-800 dark:text-zinc-300" : "bg-[#e8edfc] text-accent dark:bg-brand/20 dark:text-[#9db6ff]"
+              closed ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300" : "bg-brand/10 text-accent dark:bg-brand/20 dark:text-accent"
             }`}
           >
             {closed ? "Chiuso" : "Aperto"}
@@ -81,11 +81,11 @@ export function DossierCard({
         {/* Il titolo è un vero link, e il suo ::after copre tutta la scheda: si apre da ovunque, tranne dal menu. */}
         <Link
           href={`/dossiers/${dossier.id}`}
-          className="font-heading text-lg leading-tight font-extrabold tracking-[-0.01em] text-[#121a35] after:absolute after:inset-0 after:content-[''] hover:text-accent dark:text-zinc-100"
+          className="font-heading text-lg leading-tight font-extrabold tracking-[-0.01em] text-zinc-900 after:absolute after:inset-0 after:content-[''] hover:text-accent dark:text-zinc-100"
         >
           {dossier.title}
         </Link>
-        <p className="line-clamp-2 text-[13px] text-[#5b6483] dark:text-zinc-400">
+        <p className="line-clamp-2 text-[13px] text-zinc-500 dark:text-zinc-400">
           {dossier.description ||
             (closed && dossier.closedAt ? `Chiuso il ${formatDate(dossier.closedAt)}` : `Creato il ${formatDate(dossier.createdAt)}`)}
         </p>
@@ -102,7 +102,7 @@ export function DossierCard({
               />
             ))}
           </div>
-          <span className="text-xs font-bold text-[#3d4670] dark:text-zinc-300">
+          <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
             Fase {dossier.phases.current + 1} di {dossier.phases.names.length} · {dossier.phases.names[dossier.phases.current]}
           </span>
         </div>
@@ -133,10 +133,10 @@ export function DossierCard({
         </div>
       ) : null}
 
-      <div className="flex items-center justify-between gap-2.5 border-t border-[#eef0f8] pt-3 dark:border-zinc-900">
+      <div className="flex items-center justify-between gap-2.5 border-t border-zinc-100 pt-3 dark:border-zinc-900">
         <div className="flex min-w-0 flex-col gap-px">
-          <span className="text-[12.5px] font-semibold text-[#3d4670] dark:text-zinc-300">{stats}</span>
-          <span className="text-[11.5px] text-[#8a91ad] dark:text-zinc-500">
+          <span className="text-[12.5px] font-semibold text-zinc-700 dark:text-zinc-300">{stats}</span>
+          <span className="text-[11.5px] text-zinc-400 dark:text-zinc-500">
             {overview.lastUpdate ? `ultimo documento ${relativeDay(overview.lastUpdate, now)}` : "ancora nessun documento"}
           </span>
         </div>
@@ -147,8 +147,8 @@ export function DossierCard({
               className="-ml-2 block h-[34px] w-[26px] overflow-hidden rounded-[3px] bg-white shadow-[0_1px_4px_rgba(18,26,53,0.25)]"
             >
               <span className="block h-[7px]" style={{ background: c }} />
-              <span className="mx-1 mt-[5px] block h-0.5 bg-[#dfe3f0]" />
-              <span className="mx-1 mt-[3px] block h-0.5 w-3/5 bg-[#dfe3f0]" />
+              <span className="mx-1 mt-[5px] block h-0.5 bg-zinc-200" />
+              <span className="mx-1 mt-[3px] block h-0.5 w-3/5 bg-zinc-200" />
             </span>
           ))}
         </div>

@@ -22,13 +22,13 @@ export function PhasesBar({
   return (
     <section
       aria-label="Fasi"
-      className="flex flex-col gap-3 rounded-[18px] border border-[#dfe3f0] bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950"
+      className="flex flex-col gap-3 rounded-[18px] border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="font-heading text-base font-extrabold text-[#121a35] dark:text-zinc-100">
+        <h2 className="font-heading text-base font-extrabold text-zinc-900 dark:text-zinc-100">
           Fase: {phases.names[phases.current]}
         </h2>
-        <span className="flex items-center gap-3 text-xs text-[#5b6483] dark:text-zinc-400">
+        <span className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
           Clicca una fase per spostarti: la scelta è tua.
           <button type="button" onClick={onEdit} className="font-bold text-accent hover:underline">
             Modifica le fasi
@@ -50,12 +50,12 @@ export function PhasesBar({
                     ? "border-brand bg-brand text-white"
                     : state === "done"
                       ? "border-[#bfe3d2] bg-[#e3f4ec] text-[#1c7c5a] hover:border-[#1c7c5a]"
-                      : "border-[#dfe3f0] bg-white text-[#5b6483] hover:border-brand dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400"
+                      : "border-zinc-200 bg-white text-zinc-500 hover:border-brand dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400"
                 }`}
               >
                 <span
                   className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${
-                    state === "current" ? "bg-white/25" : state === "done" ? "bg-[#1c7c5a] text-white" : "bg-[#eef0f8] dark:bg-zinc-900"
+                    state === "current" ? "bg-white/25" : state === "done" ? "bg-[#1c7c5a] text-white" : "bg-zinc-100 dark:bg-zinc-900"
                   }`}
                   aria-hidden="true"
                 >
@@ -89,17 +89,17 @@ export function PhasesEditor({
   return (
     <section
       aria-label="Modifica le fasi"
-      className="flex flex-col gap-3 rounded-[18px] border border-[#dfe3f0] bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950"
+      className="flex flex-col gap-3 rounded-[18px] border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950"
     >
-      <h2 className="font-heading text-base font-extrabold text-[#121a35] dark:text-zinc-100">Le fasi di questo fascicolo</h2>
+      <h2 className="font-heading text-base font-extrabold text-zinc-900 dark:text-zinc-100">Le fasi di questo fascicolo</h2>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-[#5b6483] dark:text-zinc-400">Parti da un modello:</span>
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">Parti da un modello:</span>
         {PHASE_PRESETS.map((preset) => (
           <button
             key={preset.label}
             type="button"
             onClick={() => setText(preset.names.join(", "))}
-            className="rounded-full border border-[#dfe3f0] bg-white px-3 py-1 text-xs font-bold text-[#3d4670] hover:border-brand dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+            className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-bold text-zinc-700 hover:border-brand dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
           >
             {preset.label}
           </button>
@@ -116,7 +116,7 @@ export function PhasesEditor({
         aria-label="Nomi delle fasi"
         className={TEXT_INPUT}
       />
-      <p className="text-xs text-[#5b6483] dark:text-zinc-400">
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
         Separale con una virgola, in ordine. Al massimo {MAX_PHASES} fasi di {MAX_PHASE_NAME_LENGTH} lettere.
         {names.length > 0 ? ` Ne hai scritte ${names.length}.` : ""}
       </p>

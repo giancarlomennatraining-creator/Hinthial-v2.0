@@ -65,6 +65,13 @@
   transform: translateY(-1px);
   box-shadow: 0 14px 28px rgba(27, 95, 227, 0.38);
 }
+/* Versione piccola, per l'intestazione della home: stesso blu del resto della pagina, non il colore d'azione dell'app. */
+.lp-btn-sm {
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem 0.4rem;
+  font-size: 0.9375rem;
+  box-shadow: 0 6px 16px rgba(27, 95, 227, 0.25);
+}
 .lp-btn-ghost {
   display: inline-flex;
   align-items: center;

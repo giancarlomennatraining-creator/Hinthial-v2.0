@@ -63,7 +63,7 @@ export function CapsuleRepliesDialog({
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               {repliesLabel(replies.length)} su
             </p>
-            <h2 className="mt-0.5 truncate font-heading text-xl font-extrabold text-[#121a35] dark:text-zinc-50">{displayTitle}</h2>
+            <h2 className="mt-0.5 truncate font-heading text-xl font-extrabold text-zinc-900 dark:text-zinc-50">{displayTitle}</h2>
           </div>
           <button
             type="button"

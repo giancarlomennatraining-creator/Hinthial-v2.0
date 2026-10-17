@@ -65,6 +65,9 @@ function rgbToHex(r: number, g: number, b: number): string {
 
 /** Mescola un colore con un altro: `amount` 0 = il colore, 1 = l'altro. */
 export function mixColor(hex: string, other: string, amount: number): string {
+  // Un colore che non è un esadecimale (es. `var(--brand)`, il colore di un fascicolo senza categoria) non si può
+  // calcolare qui: lo mescola il browser.
+  if (!hex.startsWith("#")) return `color-mix(in srgb, ${hex} ${Math.round((1 - amount) * 100)}%, ${other})`;
   const [r1, g1, b1] = hexToRgb(hex);
   const [r2, g2, b2] = hexToRgb(other);
   return rgbToHex(r1 + (r2 - r1) * amount, g1 + (g2 - g1) * amount, b1 + (b2 - b1) * amount);

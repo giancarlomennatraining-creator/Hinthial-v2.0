@@ -179,13 +179,13 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
   }
 
   return (
-    <div className="flex flex-col gap-6 text-[#121a35] dark:text-zinc-100">
+    <div className="flex flex-col gap-6 text-zinc-900 dark:text-zinc-100">
       <div className="flex flex-col gap-1.5">
         <Link href={`/dossiers/${dossierId}`} className="self-start text-[13.5px] font-bold text-accent underline-offset-2 hover:underline">
           ← {dossier.title}
         </Link>
         <h1 className="font-heading text-[28px] leading-tight font-extrabold tracking-[-0.02em] text-title">Condividi un fascicolo</h1>
-        <p className="max-w-2xl text-sm text-[#5b6483] dark:text-zinc-400">
+        <p className="max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
           Scegli cosa mostrare, a chi e per quanto tempo. Il link si chiude da solo, e lo puoi revocare quando vuoi.
         </p>
       </div>
@@ -201,7 +201,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
           <section aria-label="Cosa condividi" className={CARD}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className={CARD_TITLE}>Cosa condividi</h2>
-              <span className="flex items-center gap-3 text-xs text-[#5b6483] dark:text-zinc-400">
+              <span className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
                 {chosen.length} di {documents.length} documenti
                 <button type="button" onClick={() => setSelected(new Set(documents.slice(0, MAX_SHARE_DOCUMENTS).map((d) => d.id)))} className="font-bold text-accent hover:underline">
                   Tutti
@@ -216,7 +216,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
             ) : (
               <ul className="flex flex-col">
                 {documents.map((doc) => (
-                  <li key={doc.id} className="border-t border-[#eef0f8] first:border-t-0 dark:border-zinc-900">
+                  <li key={doc.id} className="border-t border-zinc-100 first:border-t-0 dark:border-zinc-900">
                     <label className="flex cursor-pointer items-center gap-3 py-2.5">
                       <input
                         type="checkbox"
@@ -228,7 +228,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
                       <span aria-hidden="true">{CONTENT_KIND_ICON[contentKindFor(doc.mimeType)]}</span>
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="text-sm font-semibold break-words">{doc.filename}</span>
-                        <span className="text-xs text-[#5b6483] dark:text-zinc-400">
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
                           {formatSize(doc.size)} · {formatDate(doc.createdAt)}
                         </span>
                       </span>
@@ -255,7 +255,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
                   Includi le fasi della vicenda
                 </label>
               ) : null}
-              <p className="text-xs text-[#8a91ad] dark:text-zinc-500">Persone coinvolte, passi e note personali non vengono mai condivisi.</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500">Persone coinvolte, passi e note personali non vengono mai condivisi.</p>
             </section>
           ) : null}
 
@@ -267,7 +267,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
                   key={name}
                   type="button"
                   onClick={() => setLabel(name)}
-                  className="rounded-full border border-[#dfe3f0] bg-white px-3 py-1 text-xs font-bold text-[#3d4670] hover:border-brand dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+                  className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-bold text-zinc-700 hover:border-brand dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
                 >
                   {name}
                 </button>
@@ -282,7 +282,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
               aria-label="Per chi è il link"
               className={TEXT_INPUT}
             />
-            <p className="text-xs text-[#8a91ad] dark:text-zinc-500">Serve solo a riconoscere il link nell&apos;elenco: chi lo riceve non ne ha bisogno.</p>
+            <p className="text-xs text-zinc-400 dark:text-zinc-500">Serve solo a riconoscere il link nell&apos;elenco: chi lo riceve non ne ha bisogno.</p>
           </section>
 
           <section aria-label="Per quanto tempo" className={CARD}>
@@ -291,7 +291,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
               {SHARE_EXPIRY_OPTIONS.map((option) => (
                 <label
                   key={option.id}
-                  className={`${OPTION_BASE} ${expiryId === option.id ? "border-brand bg-[#f3f6ff] dark:bg-brand/10" : "border-[#dfe3f0] dark:border-zinc-800"}`}
+                  className={`${OPTION_BASE} ${expiryId === option.id ? "border-brand bg-zinc-50 dark:bg-brand/10" : "border-zinc-200 dark:border-zinc-800"}`}
                 >
                   <input type="radio" name="expiry" checked={expiryId === option.id} onChange={() => setExpiryId(option.id)} className="mt-0.5 accent-brand" />
                   {option.label}
@@ -303,20 +303,20 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
           <section aria-label="Cosa può fare" className={CARD}>
             <h2 className={CARD_TITLE}>Cosa può fare</h2>
             <div className="flex flex-col gap-2" role="radiogroup" aria-label="Permessi">
-              <label className={`${OPTION_BASE} ${!allowDownload ? "border-brand bg-[#f3f6ff] dark:bg-brand/10" : "border-[#dfe3f0] dark:border-zinc-800"}`}>
+              <label className={`${OPTION_BASE} ${!allowDownload ? "border-brand bg-zinc-50 dark:bg-brand/10" : "border-zinc-200 dark:border-zinc-800"}`}>
                 <input type="radio" name="permission" checked={!allowDownload} onChange={() => setAllowDownload(false)} className="mt-0.5 accent-brand" />
                 <span>
                   <span className="font-bold">Solo vedere</span>
-                  <span className="block text-xs text-[#5b6483] dark:text-zinc-400">
+                  <span className="block text-xs text-zinc-500 dark:text-zinc-400">
                     Apre i documenti nel browser, senza il pulsante per scaricarli. Non può impedire a chi li vede di salvarli in altri modi.
                   </span>
                 </span>
               </label>
-              <label className={`${OPTION_BASE} ${allowDownload ? "border-brand bg-[#f3f6ff] dark:bg-brand/10" : "border-[#dfe3f0] dark:border-zinc-800"}`}>
+              <label className={`${OPTION_BASE} ${allowDownload ? "border-brand bg-zinc-50 dark:bg-brand/10" : "border-zinc-200 dark:border-zinc-800"}`}>
                 <input type="radio" name="permission" checked={allowDownload} onChange={() => setAllowDownload(true)} className="mt-0.5 accent-brand" />
                 <span>
                   <span className="font-bold">Vedere e scaricare</span>
-                  <span className="block text-xs text-[#5b6483] dark:text-zinc-400">Può anche scaricare una copia di ogni documento.</span>
+                  <span className="block text-xs text-zinc-500 dark:text-zinc-400">Può anche scaricare una copia di ogni documento.</span>
                 </span>
               </label>
             </div>
@@ -333,10 +333,10 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
             </button>
             {progress ? (
               <div className="flex flex-col gap-1" role="status" aria-label="Avanzamento">
-                <div className="h-1.5 max-w-sm overflow-hidden rounded-full bg-[#eef0f8] dark:bg-zinc-900">
+                <div className="h-1.5 max-w-sm overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900">
                   <span className="block h-full rounded-full bg-brand transition-all" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
                 </div>
-                <p className="text-xs text-[#5b6483] dark:text-zinc-400">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   Cifro i documenti sul tuo dispositivo: {Math.min(progress.done, progress.total - 1)} di {progress.total - 1}
                 </p>
               </div>
@@ -375,17 +375,17 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
           <div className={CARD}>
             <h2 className={CARD_TITLE}>Cosa vedrà {audience}</h2>
             <p className="text-sm font-bold break-words">{dossier.title}</p>
-            <p className="text-xs text-[#5b6483] dark:text-zinc-400">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               {chosen.length} {chosen.length === 1 ? "documento" : "documenti"} · {allowDownload ? "può scaricare" : "solo lettura"} · valido{" "}
               {SHARE_EXPIRY_OPTIONS.find((o) => o.id === expiryId)?.label}
             </p>
-            <ul className="flex flex-col gap-1 text-[13px] text-[#3d4670] dark:text-zinc-300">
+            <ul className="flex flex-col gap-1 text-[13px] text-zinc-700 dark:text-zinc-300">
               {chosen.slice(0, 6).map((doc) => (
                 <li key={doc.id} className="truncate">
                   {CONTENT_KIND_ICON[contentKindFor(doc.mimeType)]} {doc.filename}
                 </li>
               ))}
-              {chosen.length > 6 ? <li className="text-xs text-[#8a91ad]">e altri {chosen.length - 6}</li> : null}
+              {chosen.length > 6 ? <li className="text-xs text-zinc-400">e altri {chosen.length - 6}</li> : null}
             </ul>
           </div>
         </aside>
@@ -401,22 +401,22 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
               const status = shareStatus(share, now);
               const summary = summarizeAccesses(share.accesses);
               return (
-                <li key={share.id} className="flex flex-col gap-2 border-t border-[#eef0f8] py-3 first:border-t-0 first:pt-0 dark:border-zinc-900">
+                <li key={share.id} className="flex flex-col gap-2 border-t border-zinc-100 py-3 first:border-t-0 first:pt-0 dark:border-zinc-900">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="text-sm font-bold">{share.label || "Link senza nome"}</span>
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                        status === "active" ? "bg-[#e3f4ec] text-[#1c7c5a]" : "bg-[#eceff4] text-[#5b6483] dark:bg-zinc-800 dark:text-zinc-300"
+                        status === "active" ? "bg-[#e3f4ec] text-[#1c7c5a]" : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300"
                       }`}
                     >
                       {status === "active" ? "Attivo" : status === "revoked" ? "Revocato" : "Scaduto"}
                     </span>
-                    <span className="text-xs text-[#5b6483] dark:text-zinc-400">
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
                       {share.documentCount} {share.documentCount === 1 ? "documento" : "documenti"} · {share.allowDownload ? "vede e scarica" : "solo lettura"} ·
                       creato il {formatDate(share.createdAt)} · {status === "active" ? `scade il ${formatDate(share.expiresAt)}` : ""}
                     </span>
                   </div>
-                  <p className="text-xs text-[#5b6483] dark:text-zinc-400">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     {summary.opens === 0
                       ? "Nessuno ha ancora aperto il link."
                       : `Aperto ${summary.opens} ${summary.opens === 1 ? "volta" : "volte"} · ${summary.documentsSeen} ${

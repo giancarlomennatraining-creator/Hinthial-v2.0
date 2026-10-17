@@ -367,7 +367,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
       ];
 
   return (
-    <div className="flex flex-col gap-6 text-[#121a35] dark:text-zinc-100">
+    <div className="flex flex-col gap-6 text-zinc-900 dark:text-zinc-100">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1.5">
           <Link
@@ -377,21 +377,21 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
             ← Torna ai fascicoli
           </Link>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] bg-[#e8edfc] dark:bg-brand/20">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2b4fc4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] bg-brand/10 dark:bg-brand/20">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
               </svg>
             </span>
             <h1 className="min-w-0 font-heading text-[30px] leading-tight font-extrabold tracking-[-0.02em] break-words text-title">{dossier.title}</h1>
             <span
               className={`rounded-full px-[11px] py-1 text-[12.5px] font-bold ${
-                isClosed ? "bg-[#eceff4] text-[#5b6483] dark:bg-zinc-800 dark:text-zinc-300" : "bg-[#e8edfc] text-accent dark:bg-brand/20 dark:text-[#9db6ff]"
+                isClosed ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300" : "bg-brand/10 text-accent dark:bg-brand/20 dark:text-accent"
               }`}
             >
               {isClosed ? "Chiuso" : "Aperto"}
             </span>
           </div>
-          <p className="text-[13.5px] text-[#5b6483] dark:text-zinc-400">
+          <p className="text-[13.5px] text-zinc-500 dark:text-zinc-400">
             {isClosed ? `Chiuso il ${formatDate(dossier.closedAt!)}` : "Aperto"} · creato il {formatDate(dossier.createdAt)} ·{" "}
             {overview.documentCount} {overview.documentCount === 1 ? "documento" : "documenti"}
             {overview.lastUpdate ? ` · ultimo ${relativeDay(overview.lastUpdate, now)}` : ""}
@@ -403,7 +403,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
         <div className="flex flex-wrap gap-2.5">
           <Link
             href={`/dossiers/${dossierId}/share`}
-            className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-[#c9d0e6] bg-white px-4 py-2 text-sm font-semibold text-accent hover:border-brand dark:border-zinc-700 dark:bg-zinc-950"
+            className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-accent hover:border-brand dark:border-zinc-700 dark:bg-zinc-950"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
@@ -413,7 +413,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
           </Link>
           <Link
             href={starterHref("fascicolo", dossierId)}
-            className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-[#c9d0e6] bg-white px-4 py-2 text-sm font-semibold text-accent hover:border-brand dark:border-zinc-700 dark:bg-zinc-950"
+            className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-accent hover:border-brand dark:border-zinc-700 dark:bg-zinc-950"
           >
             Fallo arrivare a…
           </Link>
@@ -427,7 +427,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
             type="button"
             disabled={busy}
             onClick={handleToggleStatus}
-            className="rounded-xl border-[1.5px] border-[#c9d0e6] bg-white px-4 py-2 text-sm font-semibold text-[#121a35] hover:border-brand disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+            className="rounded-xl border-[1.5px] border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:border-brand disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           >
             {isClosed ? "Riapri fascicolo" : "Chiudi fascicolo"}
           </button>
