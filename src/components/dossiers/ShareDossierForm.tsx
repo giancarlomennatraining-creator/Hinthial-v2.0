@@ -181,10 +181,10 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
   return (
     <div className="flex flex-col gap-6 text-[#121a35] dark:text-zinc-100">
       <div className="flex flex-col gap-1.5">
-        <Link href={`/dossiers/${dossierId}`} className="self-start text-[13.5px] font-bold text-brand underline-offset-2 hover:underline">
+        <Link href={`/dossiers/${dossierId}`} className="self-start text-[13.5px] font-bold text-accent underline-offset-2 hover:underline">
           ← {dossier.title}
         </Link>
-        <h1 className="font-heading text-[28px] leading-tight font-extrabold tracking-[-0.02em] text-brand">Condividi un fascicolo</h1>
+        <h1 className="font-heading text-[28px] leading-tight font-extrabold tracking-[-0.02em] text-title">Condividi un fascicolo</h1>
         <p className="max-w-2xl text-sm text-[#5b6483] dark:text-zinc-400">
           Scegli cosa mostrare, a chi e per quanto tempo. Il link si chiude da solo, e lo puoi revocare quando vuoi.
         </p>
@@ -203,10 +203,10 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
               <h2 className={CARD_TITLE}>Cosa condividi</h2>
               <span className="flex items-center gap-3 text-xs text-[#5b6483] dark:text-zinc-400">
                 {chosen.length} di {documents.length} documenti
-                <button type="button" onClick={() => setSelected(new Set(documents.slice(0, MAX_SHARE_DOCUMENTS).map((d) => d.id)))} className="font-bold text-brand hover:underline">
+                <button type="button" onClick={() => setSelected(new Set(documents.slice(0, MAX_SHARE_DOCUMENTS).map((d) => d.id)))} className="font-bold text-accent hover:underline">
                   Tutti
                 </button>
-                <button type="button" onClick={() => setSelected(new Set())} className="font-bold text-brand hover:underline">
+                <button type="button" onClick={() => setSelected(new Set())} className="font-bold text-accent hover:underline">
                   Nessuno
                 </button>
               </span>

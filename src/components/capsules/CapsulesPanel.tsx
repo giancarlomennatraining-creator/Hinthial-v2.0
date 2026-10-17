@@ -388,7 +388,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
         <div className="flex min-w-0 w-full items-start justify-between gap-3 sm:flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-brand">
+          <h1 className="text-2xl font-semibold tracking-tight text-title">
             Capsule
           </h1>
           {/* Il dettaglio sull'irreversibilità del chiudere è ripetuto al momento di farlo (v. CloseCapsuleDialog):
@@ -423,7 +423,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
           className={cn(
             "-mb-px rounded-t-lg border-b-2 px-3 py-2 text-sm font-medium transition-colors",
             activeTab === "mine"
-              ? "border-brand text-brand"
+              ? "border-brand text-accent"
               : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
           )}
         >
@@ -437,7 +437,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
           className={cn(
             "-mb-px rounded-t-lg border-b-2 px-3 py-2 text-sm font-medium transition-colors",
             activeTab === "shared"
-              ? "border-brand text-brand"
+              ? "border-brand text-accent"
               : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
           )}
         >

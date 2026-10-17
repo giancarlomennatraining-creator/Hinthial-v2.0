@@ -40,7 +40,7 @@ export function CapsuleFormHeader({
       >
         ← Torna alle capsule
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">{title}</h1>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">{title}</h1>
       {description ? <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{description}</p> : null}
       {step ? <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">{stepLine(step)}</p> : null}
     </div>
@@ -187,7 +187,7 @@ export function AttachmentSection({
         <button
           type="button"
           onClick={onToggleTools}
-          className="flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"
+          className="flex items-center gap-1.5 text-sm font-medium text-accent hover:underline"
         >
           <svg
             width="15"

@@ -251,7 +251,7 @@ function AccordionStep({
             <span className="flex min-w-0 items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
               <span className="truncate">{summary}</span>
               {locked || state === "todo" ? null : (
-                <span className="shrink-0 font-semibold text-brand">
+                <span className="shrink-0 font-semibold text-accent">
                   Modifica
                 </span>
               )}
@@ -903,7 +903,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
           <span className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
             <CheckCircleIcon width={16} height={16} /> Documento salvato
           </span>
-          <h1 className="text-2xl font-semibold tracking-tight text-brand">
+          <h1 className="text-2xl font-semibold tracking-tight text-title">
             {savedDoc.filename}
           </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -919,7 +919,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
           >
             ← Torna all&apos;archivio
           </Link>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">
             Nuovo contenuto
           </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -1065,7 +1065,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                             </p>
                           ) : null}
                           <div className="flex flex-wrap items-center gap-4">
-                            <label className="w-fit cursor-pointer text-sm font-medium text-brand hover:underline">
+                            <label className="w-fit cursor-pointer text-sm font-medium text-accent hover:underline">
                               ＋ Aggiungi altri file
                               <input
                                 type="file"
@@ -1324,7 +1324,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                           </p>
                           <Link
                             href={`/archive/${savedDoc.id}`}
-                            className="w-fit text-sm font-medium text-brand underline-offset-2 hover:underline"
+                            className="w-fit text-sm font-medium text-accent underline-offset-2 hover:underline"
                           >
                             Vedi tutto sulla scheda →
                           </Link>

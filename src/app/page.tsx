@@ -8,6 +8,7 @@ import { HERO_HIGHLIGHT, HERO_TITLE } from "@/components/landing/landing-content
 import { SecurityIcon } from "@/components/icons/nav-icons";
 import { BTN_PRIMARY } from "@/components/ui/styles";
 import "@/components/landing/landing.css";
+import { BrandLockup } from "@/components/layout/BrandLockup";
 
 /** Scintille che girano intorno a Hinthia: durata, ritardo e raggio dell'orbita. */
 const SPARKS = [
@@ -28,8 +29,7 @@ export default async function Home() {
     <div className="lp flex min-h-screen flex-col font-sans">
       <header className="flex items-center justify-between gap-4 border-b border-[var(--lp-line)] px-6 py-4">
         <Link href="/" className="shrink-0">
-          {/* eslint-disable-next-line @next/next/no-img-element -- brand asset (SVG), not user content */}
-          <img src="/brand/logo-lockup.svg" alt="HINTHIAL" className="h-8 w-auto sm:h-10" />
+          <BrandLockup className="h-8 w-auto sm:h-10" darkSize="md" />
         </Link>
 
         {user ? (

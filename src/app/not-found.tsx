@@ -18,7 +18,7 @@ export default function NotFound() {
           <Link href="/dashboard" className={BTN_PRIMARY}>
             Vai a Oggi
           </Link>
-          <Link href="/" className="text-sm font-medium text-brand hover:underline">
+          <Link href="/" className="text-sm font-medium text-accent hover:underline">
             Pagina iniziale
           </Link>
         </>

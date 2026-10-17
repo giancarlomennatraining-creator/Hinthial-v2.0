@@ -16,7 +16,8 @@ test("il tasto di comprimi/espandi la barra laterale nasconde etichette e nome, 
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   const aside = page.locator("aside");
-  const logo = aside.locator("img");
+  // Nel tema scuro il logo con la scritta ha anche una versione in testo (v. BrandLockup), nascosta in quello chiaro: conta solo il logo visibile.
+  const logo = aside.locator("img:visible");
   const name = fullName(user);
 
   // Stato iniziale: espansa, logo con scritta, nome utente visibile.

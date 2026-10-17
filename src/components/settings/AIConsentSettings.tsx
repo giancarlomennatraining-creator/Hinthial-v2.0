@@ -162,7 +162,7 @@ export function AIConsentSettings() {
                 checked={chatConsent}
                 disabled={!masterEnabled || chatBusy}
                 onChange={() => handleChatChange(!chatConsent)}
-                className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+                className="h-4 w-4 rounded border-zinc-300 text-accent focus:ring-brand dark:border-zinc-700"
               />
               Hinthia che risponde — Raccontami ti fa una domanda in più e il pannello Aiuto risponde alle tue domande
             </label>
@@ -182,7 +182,7 @@ export function AIConsentSettings() {
                 checked={extractionConsent}
                 disabled={!masterEnabled || extractionBusy}
                 onChange={() => handleExtractionChange(!extractionConsent)}
-                className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+                className="h-4 w-4 rounded border-zinc-300 text-accent focus:ring-brand dark:border-zinc-700"
               />
               {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
               <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-4 w-4 shrink-0 rounded-full" />
@@ -224,7 +224,7 @@ export function AIConsentSettings() {
                       checked={category.aiExtractionEnabled}
                       disabled={!masterEnabled || !extractionConsent || busyCategoryId === category.id}
                       onChange={() => handleCategoryToggle(category, !category.aiExtractionEnabled)}
-                      className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+                      className="h-4 w-4 rounded border-zinc-300 text-accent focus:ring-brand dark:border-zinc-700"
                     />
                     {category.icon} {category.name}
                   </label>

@@ -62,7 +62,7 @@ export function LegacyGuardians({ masterKey }: { masterKey: CryptoKey }) {
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Non hai ancora nessun guardiano. Senza, la consegna non può partire: scegline almeno uno tra i tuoi amici.
           </p>
-          <Link href="/friends" className="text-sm font-semibold text-brand hover:underline">
+          <Link href="/friends" className="text-sm font-semibold text-accent hover:underline">
             Scegli i guardiani in Amici →
           </Link>
         </div>
@@ -101,7 +101,7 @@ export function LegacyGuardians({ masterKey }: { masterKey: CryptoKey }) {
               Invitali da Amici.
             </p>
           ) : null}
-          <Link href="/friends" className="w-fit text-sm font-medium text-brand hover:underline">
+          <Link href="/friends" className="w-fit text-sm font-medium text-accent hover:underline">
             Aggiungi o togli guardiani in Amici →
           </Link>
         </>

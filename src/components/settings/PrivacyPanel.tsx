@@ -105,7 +105,7 @@ export function PrivacyPanel({
           dispositivo prima ancora di lasciarlo.
         </p>
         <p className="mt-2 text-sm">
-          <Link href="/privacy" target="_blank" className="font-medium text-brand hover:underline">
+          <Link href="/privacy" target="_blank" className="font-medium text-accent hover:underline">
             Leggi l&apos;informativa privacy completa
           </Link>
         </p>

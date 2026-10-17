@@ -127,7 +127,7 @@ function FactSource({
       <button
         type="button"
         onClick={() => setShowText(!showText)}
-        className="self-start text-xs text-brand underline-offset-2 hover:underline"
+        className="self-start text-xs text-accent underline-offset-2 hover:underline"
       >
         {showText ? "Mostra la pagina originale" : "Mostra il testo letto"}
       </button>
@@ -351,7 +351,7 @@ export function ReadingRegister({
               aria-expanded={openSource === row.id}
               aria-label={`Mostra il punto d'origine di ${row.label}`}
               onClick={() => setOpenSource(openSource === row.id ? null : row.id)}
-              className="rounded-md bg-[#e8edfc] px-1.5 py-px text-[11px] font-semibold text-brand hover:underline dark:bg-brand/25 dark:text-[#9db6ff]"
+              className="rounded-md bg-[#e8edfc] px-1.5 py-px text-[11px] font-semibold text-accent hover:underline dark:bg-brand/25 dark:text-[#9db6ff]"
             >
               {pageLabel(row)}
             </button>
@@ -400,12 +400,12 @@ export function ReadingRegister({
                   aria-expanded={openSource === row.id}
                   aria-label={`Mostra il punto d'origine di ${row.label}`}
                   onClick={() => setOpenSource(openSource === row.id ? null : row.id)}
-                  className="shrink-0 rounded-md bg-[#e8edfc] px-1.5 py-px text-[11px] font-semibold text-brand hover:underline dark:bg-brand/25 dark:text-[#9db6ff]"
+                  className="shrink-0 rounded-md bg-[#e8edfc] px-1.5 py-px text-[11px] font-semibold text-accent hover:underline dark:bg-brand/25 dark:text-[#9db6ff]"
                 >
                   {chip}
                 </button>
               ) : (
-                <span className="shrink-0 rounded-md bg-[#e8edfc] px-1.5 py-px text-[11px] font-semibold text-brand dark:bg-brand/25 dark:text-[#9db6ff]">
+                <span className="shrink-0 rounded-md bg-[#e8edfc] px-1.5 py-px text-[11px] font-semibold text-accent dark:bg-brand/25 dark:text-[#9db6ff]">
                   {chip}
                 </span>
               )
@@ -431,7 +431,7 @@ export function ReadingRegister({
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <p className="flex items-baseline gap-1.5 text-sm text-[#121a35] dark:text-zinc-100">
               <span className="inline-block overflow-hidden leading-[1.15]">
-                <span className={`inline-block font-heading text-[22px] font-extrabold text-brand ${tickClass}`}>{progress.adopted}</span>
+                <span className={`inline-block font-heading text-[22px] font-extrabold text-accent ${tickClass}`}>{progress.adopted}</span>
               </span>
               <span>
                 di {progress.total} nella Scheda{" "}

@@ -113,11 +113,11 @@ export function ProtectedPanel() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-brand">Protetti</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-title">Protetti</h1>
         <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
           Le persone che ti hanno indicato come guardiano — una persona di fiducia da contattare se
           un giorno non dovessero più poter accedere al proprio account.{" "}
-          <Link href="/friends" className="font-medium text-brand hover:underline">
+          <Link href="/friends" className="font-medium text-accent hover:underline">
             Torna ad Amici
           </Link>
           .

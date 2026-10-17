@@ -124,7 +124,7 @@ export function CloseCapsuleDialog({
         <button
           type="button"
           onClick={() => onOpenPreview(shown)}
-          className="self-start text-sm font-semibold text-brand underline-offset-2 hover:underline"
+          className="self-start text-sm font-semibold text-accent underline-offset-2 hover:underline"
         >
           Guarda come la vedrà chi la riceve
         </button>

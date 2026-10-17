@@ -81,7 +81,7 @@ export function EditAssetForm({ masterKey, assetId }: { masterKey: CryptoKey; as
         >
           ← Torna ai beni
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">
           Modifica bene
         </h1>
       </div>

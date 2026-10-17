@@ -145,10 +145,10 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
   return (
     <div className="flex flex-col gap-6 text-[#121a35] dark:text-zinc-100">
       <header className="flex flex-col gap-2">
-        <p className="text-[13px] font-bold text-brand">
+        <p className="text-[13px] font-bold text-accent">
           {manifest.sharedBy ? `${manifest.sharedBy} ha condiviso con te questo fascicolo` : "Questo fascicolo è stato condiviso con te"}
         </p>
-        <h1 className="font-heading text-[30px] leading-tight font-extrabold tracking-[-0.02em] break-words text-brand">{manifest.title}</h1>
+        <h1 className="font-heading text-[30px] leading-tight font-extrabold tracking-[-0.02em] break-words text-title">{manifest.title}</h1>
         {manifest.description ? <p className="max-w-3xl text-sm whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">{manifest.description}</p> : null}
         <p className="text-[13px] text-[#5b6483] dark:text-zinc-400">
           {manifest.documents.length} {manifest.documents.length === 1 ? "documento" : "documenti"} · condiviso il {formatDate(manifest.sharedAt)} · il link vale
@@ -216,7 +216,7 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
                   disabled={busyId === doc.id}
                   onClick={() => void handleOpen(doc)}
                   aria-label={`Apri ${doc.name}`}
-                  className="shrink-0 rounded-[10px] border border-[#c9d0e6] bg-white px-3 py-1.5 text-[13px] font-bold text-brand hover:border-brand disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950"
+                  className="shrink-0 rounded-[10px] border border-[#c9d0e6] bg-white px-3 py-1.5 text-[13px] font-bold text-accent hover:border-brand disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950"
                 >
                   {busyId === doc.id ? "Apro…" : "Apri"}
                 </button>

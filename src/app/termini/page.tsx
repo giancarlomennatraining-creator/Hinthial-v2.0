@@ -19,7 +19,7 @@ export default function TerminiPage() {
       intro={
         <p>
           Questi termini regolano l&apos;uso di Hinthial. Creando un account li accetti, insieme all&apos;
-          <Link href="/privacy" className="font-medium text-brand hover:underline">informativa privacy</Link>. Il servizio è
+          <Link href="/privacy" className="font-medium text-accent hover:underline">informativa privacy</Link>. Il servizio è
           fornito da <LegalValue value={LEGAL.controllerName} />.
         </p>
       }

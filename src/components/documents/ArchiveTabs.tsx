@@ -84,7 +84,7 @@ export function ArchiveTabs() {
             className={cn(
               "shrink-0 rounded-t-lg border-b-2 px-3 py-2 text-sm font-medium transition-colors",
               active
-                ? "border-brand text-brand"
+                ? "border-brand text-accent"
                 : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
             )}
           >

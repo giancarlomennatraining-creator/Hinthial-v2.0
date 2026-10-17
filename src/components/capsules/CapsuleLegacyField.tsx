@@ -21,7 +21,7 @@ export function CapsuleLegacyField({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300 text-brand focus:ring-brand dark:border-zinc-700"
+        className="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300 text-accent focus:ring-brand dark:border-zinc-700"
       />
       <span className="flex flex-col gap-0.5">
         <span className="font-medium text-zinc-900 dark:text-zinc-100">Aprila anche prima, se non ci sono più</span>

@@ -178,7 +178,7 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
     <div className="flex max-w-3xl flex-col gap-6">
       <ol className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
         {["1. Tipo", "2. Template", "3. Carica file", "4. Anteprima", "5. Risultato"].map((label, i) => (
-          <li key={label} className={step === i + 1 ? "font-semibold text-brand" : undefined}>
+          <li key={label} className={step === i + 1 ? "font-semibold text-accent" : undefined}>
             {label}
           </li>
         ))}
@@ -193,7 +193,7 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
                 key={k}
                 type="button"
                 onClick={() => handleChooseKind(k)}
-                className="rounded-md border border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-700 hover:border-brand hover:text-brand dark:border-zinc-700 dark:text-zinc-300 dark:hover:text-brand"
+                className="rounded-md border border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-700 hover:border-brand hover:text-accent dark:border-zinc-700 dark:text-zinc-300 dark:hover:text-accent"
               >
                 {IMPORT_KIND_SPECS[k].label}
               </button>

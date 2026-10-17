@@ -135,7 +135,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
         >
           ← Torna agli amici
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">
           Modifica amico
         </h1>
       </div>

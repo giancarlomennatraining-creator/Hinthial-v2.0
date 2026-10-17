@@ -212,7 +212,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight text-brand">Archivio</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-title">Archivio</h1>
           <PageHelp
             title="Fascicoli"
             tips={[

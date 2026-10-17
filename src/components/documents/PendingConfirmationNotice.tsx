@@ -37,7 +37,7 @@ export function PendingConfirmationNotice({ existingIds }: { existingIds: string
         {ids.length === 1 ? "Hai 1 documento importato da confermare." : `Hai ${ids.length} documenti importati da confermare.`}
       </p>
       <div className="flex items-center gap-4">
-        <Link href={`/archive/confirm?ids=${ids.join(",")}`} className="text-sm font-semibold text-brand underline-offset-2 hover:underline">
+        <Link href={`/archive/confirm?ids=${ids.join(",")}`} className="text-sm font-semibold text-accent underline-offset-2 hover:underline">
           Rivedi
         </Link>
         <button

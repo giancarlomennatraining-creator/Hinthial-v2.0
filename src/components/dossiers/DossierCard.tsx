@@ -58,7 +58,7 @@ export function DossierCard({
         <div className="relative z-10 flex items-center gap-1.5">
           <span
             className={`rounded-full px-2.5 py-[3px] text-xs font-bold ${
-              closed ? "bg-[#eceff4] text-[#5b6483] dark:bg-zinc-800 dark:text-zinc-300" : "bg-[#e8edfc] text-brand dark:bg-brand/20 dark:text-[#9db6ff]"
+              closed ? "bg-[#eceff4] text-[#5b6483] dark:bg-zinc-800 dark:text-zinc-300" : "bg-[#e8edfc] text-accent dark:bg-brand/20 dark:text-[#9db6ff]"
             }`}
           >
             {closed ? "Chiuso" : "Aperto"}
@@ -81,7 +81,7 @@ export function DossierCard({
         {/* Il titolo è un vero link, e il suo ::after copre tutta la scheda: si apre da ovunque, tranne dal menu. */}
         <Link
           href={`/dossiers/${dossier.id}`}
-          className="font-heading text-lg leading-tight font-extrabold tracking-[-0.01em] text-[#121a35] after:absolute after:inset-0 after:content-[''] hover:text-brand dark:text-zinc-100"
+          className="font-heading text-lg leading-tight font-extrabold tracking-[-0.01em] text-[#121a35] after:absolute after:inset-0 after:content-[''] hover:text-accent dark:text-zinc-100"
         >
           {dossier.title}
         </Link>

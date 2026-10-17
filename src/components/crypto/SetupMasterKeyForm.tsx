@@ -152,7 +152,7 @@ export function SetupMasterKeyForm({ onStateChange }: { onStateChange?: (state: 
         <StepStepper step={2} />
 
         <div className="flex flex-col gap-1 text-center">
-          <h1 className="text-lg font-semibold text-brand">Salva la tua recovery key</h1>
+          <h1 className="text-lg font-semibold text-title">Salva la tua recovery key</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             Se dimentichi la master password, solo questa recovery key potrà farti recuperare
             i tuoi documenti. HINTHIAL non la conserva da nessuna parte: viene mostrata una
@@ -254,7 +254,7 @@ export function SetupMasterKeyForm({ onStateChange }: { onStateChange?: (state: 
       <StepStepper step={1} />
 
       <div className="flex flex-col gap-1 text-center">
-        <h1 className="text-lg font-semibold text-brand">Configura la cifratura</h1>
+        <h1 className="text-lg font-semibold text-title">Configura la cifratura</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Crea una master password per proteggere i tuoi documenti. È diversa dalla password
           del tuo account e non lascia mai questo dispositivo.

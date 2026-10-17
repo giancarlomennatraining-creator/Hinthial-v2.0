@@ -65,7 +65,7 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
       {showSplash ? <LoginSplash onDone={() => setShowSplash(false)} /> : null}
       <div>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight text-brand">
+          <h1 className="text-2xl font-semibold tracking-tight text-title">
             Ciao, {displayName}
           </h1>
           <PageHelp

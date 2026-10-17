@@ -121,7 +121,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
         >
           ← Torna ai fascicoli
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-brand">Nuovo fascicolo</h1>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">Nuovo fascicolo</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Una vicenda che attraversa più categorie — un problema di salute, l&apos;acquisto di una casa, un incidente. Parti da
           una vicenda che conosci: ti diciamo quali documenti servono di solito e cerchiamo quelli che hai già.
@@ -171,7 +171,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
                       <path d={item.icon} />
                     </svg>
                   </span>
-                  <span className={`min-w-0 flex-1 font-heading text-[14.5px] leading-tight font-extrabold ${active ? "text-brand" : ""}`}>{item.name}</span>
+                  <span className={`min-w-0 flex-1 font-heading text-[14.5px] leading-tight font-extrabold ${active ? "text-accent" : ""}`}>{item.name}</span>
                 </button>
               );
             })}
@@ -192,7 +192,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
                   <path d="M12 5v14M5 12h14" />
                 </svg>
               </span>
-              <span className={`min-w-0 flex-1 font-heading text-[14.5px] leading-tight font-extrabold ${template === null ? "text-brand" : ""}`}>Parti da zero</span>
+              <span className={`min-w-0 flex-1 font-heading text-[14.5px] leading-tight font-extrabold ${template === null ? "text-accent" : ""}`}>Parti da zero</span>
             </button>
           </div>
 

@@ -32,7 +32,7 @@ export function CandidatesCard({
         {candidates.map((candidate) => (
           <li key={candidate.documentId} className="flex items-center gap-2 border-t border-[#eef0f8] py-2 first:border-t-0 first:pt-0 dark:border-zinc-900">
             <span className="flex min-w-0 flex-1 flex-col">
-              <Link href={`/archive/${candidate.documentId}`} className="truncate text-[13px] font-bold hover:text-brand">
+              <Link href={`/archive/${candidate.documentId}`} className="truncate text-[13px] font-bold hover:text-accent">
                 {candidate.filename}
               </Link>
               <span className="text-xs text-[#5b6483] dark:text-zinc-400">{formatDayMonthYear(candidate.createdAt)}</span>
@@ -42,7 +42,7 @@ export function CandidatesCard({
               disabled={busy}
               onClick={() => onAdd(candidate.documentId)}
               aria-label={`Aggiungi ${candidate.filename} al fascicolo`}
-              className="shrink-0 rounded-lg border border-[#c9d0e6] bg-white px-2.5 py-1 text-xs font-bold text-brand hover:border-brand disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950"
+              className="shrink-0 rounded-lg border border-[#c9d0e6] bg-white px-2.5 py-1 text-xs font-bold text-accent hover:border-brand disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950"
             >
               Aggiungi
             </button>
@@ -93,7 +93,7 @@ export function ExpensesCard({ expenses }: { expenses: DossierExpenses }) {
     <section aria-label="Spese" className={CARD}>
       <div className="flex items-baseline justify-between">
         <h2 className={CARD_TITLE}>Spese</h2>
-        <span className="font-heading text-xl font-extrabold text-brand">{formatEuro(expenses.total)}</span>
+        <span className="font-heading text-xl font-extrabold text-accent">{formatEuro(expenses.total)}</span>
       </div>
       <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-[5px]" aria-hidden="true">
         {slices.map((slice, i) => (
@@ -146,7 +146,7 @@ export function ReadingsCard({
               .filter((d) => d.aiSynthesis)
               .map((d) => (
                 <li key={d.id} className="flex flex-col gap-0.5">
-                  <Link href={`/archive/${d.id}`} className="truncate text-[13px] font-bold hover:text-brand">
+                  <Link href={`/archive/${d.id}`} className="truncate text-[13px] font-bold hover:text-accent">
                     {d.filename}
                   </Link>
                   <span className="line-clamp-4 text-[13px] leading-snug text-[#3d4670] dark:text-zinc-300">{d.aiSynthesis}</span>

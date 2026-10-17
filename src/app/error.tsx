@@ -27,7 +27,7 @@ export default function Error({ error, retry }: { error: Error & { digest?: stri
           <button type="button" onClick={() => retry()} className={BTN_PRIMARY}>
             Riprova
           </button>
-          <Link href="/dashboard" className="text-sm font-medium text-brand hover:underline">
+          <Link href="/dashboard" className="text-sm font-medium text-accent hover:underline">
             Vai a Oggi
           </Link>
         </>

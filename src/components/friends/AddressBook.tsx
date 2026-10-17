@@ -196,7 +196,7 @@ export function AddressBook({
                   <li key={group.letter} role="presentation">
                     <p
                       data-letter={group.letter}
-                      className="sticky top-0 z-[1] border-b border-zinc-200 bg-zinc-50 px-4 py-1 text-xs font-extrabold tracking-widest text-brand dark:border-zinc-800 dark:bg-zinc-900"
+                      className="sticky top-0 z-[1] border-b border-zinc-200 bg-zinc-50 px-4 py-1 text-xs font-extrabold tracking-widest text-accent dark:border-zinc-800 dark:bg-zinc-900"
                     >
                       {group.letter}
                     </p>
@@ -254,7 +254,7 @@ export function AddressBook({
                   onClick={() => jumpTo(letter)}
                   aria-label={`Vai alla lettera ${letter}`}
                   className={`h-[3.4%] min-h-[14px] w-full rounded text-[10px] leading-none font-bold ${
-                    on ? "text-brand hover:bg-brand hover:text-white" : "cursor-default text-zinc-300 dark:text-zinc-700"
+                    on ? "text-accent hover:bg-brand hover:text-white" : "cursor-default text-zinc-300 dark:text-zinc-700"
                   }`}
                 >
                   {letter}
@@ -275,7 +275,7 @@ export function AddressBook({
           <button
             type="button"
             onClick={backToList}
-            className="-mb-1 flex items-center gap-1 self-start text-sm font-semibold text-brand hover:underline lg:hidden"
+            className="-mb-1 flex items-center gap-1 self-start text-sm font-semibold text-accent hover:underline lg:hidden"
           >
             ← Rubrica
           </button>
@@ -418,7 +418,7 @@ function PersonCapsulesSection({ friend, capsules }: { friend: FriendListItem; c
                 <span
                   className={
                     tone === "delivery"
-                      ? "shrink-0 rounded-full bg-[#e8edfc] px-2 py-0.5 text-xs font-bold text-brand dark:bg-brand/20 dark:text-[#9db6ff]"
+                      ? "shrink-0 rounded-full bg-[#e8edfc] px-2 py-0.5 text-xs font-bold text-accent dark:bg-brand/20 dark:text-[#9db6ff]"
                       : "shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                   }
                 >
@@ -449,7 +449,7 @@ function SharedFromSection({ friend, shared }: { friend: FriendListItem; shared:
           ? `: ${ready.length === 1 ? "1 è pronta da aprire" : `${ready.length} sono pronte da aprire`}.`
           : ": nessuna è ancora pronta da aprire."}
       </p>
-      <Link href="/capsules?tab=shared" className="w-fit text-sm font-semibold text-brand hover:underline">
+      <Link href="/capsules?tab=shared" className="w-fit text-sm font-semibold text-accent hover:underline">
         {ready.length > 0 ? "Apri le capsule →" : "Vai alle capsule condivise con te →"}
       </Link>
     </div>

@@ -78,7 +78,7 @@ export function PageHelp({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex shrink-0 items-center gap-2 rounded-full border-[1.5px] border-brand bg-white py-1 pl-1.5 pr-4 text-sm font-semibold text-brand shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:bg-brand/5 dark:bg-zinc-950"
+        className="flex shrink-0 items-center gap-2 rounded-full border-[1.5px] border-brand bg-white py-1 pl-1.5 pr-4 text-sm font-semibold text-accent shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:bg-brand/5 dark:bg-zinc-950"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
         <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-6 w-6 shrink-0 rounded-full" />

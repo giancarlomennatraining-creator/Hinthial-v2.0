@@ -90,7 +90,7 @@ function EventLabel({
 
 function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <li className="flex items-center gap-1 rounded-full bg-brand/10 py-1 pr-1 pl-3 text-xs font-medium text-brand">
+    <li className="flex items-center gap-1 rounded-full bg-brand/10 py-1 pr-1 pl-3 text-xs font-medium text-accent">
       {label}
       <button
         type="button"
