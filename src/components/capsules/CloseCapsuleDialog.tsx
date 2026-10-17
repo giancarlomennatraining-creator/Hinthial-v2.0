@@ -85,7 +85,7 @@ export function CloseCapsuleDialog({
       >
         <div className="flex flex-col gap-1">
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Prima di chiudere</p>
-          <h2 className="font-heading text-xl font-extrabold text-[#121a35] dark:text-zinc-50">{shown.title}</h2>
+          <h2 className="font-heading text-xl font-extrabold text-zinc-900 dark:text-zinc-50">{shown.title}</h2>
         </div>
 
         <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -99,7 +99,7 @@ export function CloseCapsuleDialog({
                 {MARK[check.state].symbol}
               </span>
               <div className="flex min-w-0 flex-col">
-                <span className="font-semibold text-[#121a35] dark:text-zinc-100">{check.label}</span>
+                <span className="font-semibold text-zinc-900 dark:text-zinc-100">{check.label}</span>
                 <span className="text-zinc-600 dark:text-zinc-400">{check.detail}</span>
               </div>
             </li>

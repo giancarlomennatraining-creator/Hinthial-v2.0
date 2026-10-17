@@ -80,7 +80,7 @@ export function EffectDeck({ view, slots, origin, onClose }: OpenEffectProps) {
   }
 
   return (
-    <EffectShell effect="deck" onClose={onClose} className="flex flex-col items-center gap-3 overflow-hidden bg-[#F7FAFB]/95 p-4 text-[#121a35] backdrop-blur-md sm:p-6 dark:bg-zinc-950/95 dark:text-zinc-100">
+    <EffectShell effect="deck" onClose={onClose} className="flex flex-col items-center gap-3 overflow-hidden bg-zinc-50/95 p-4 text-zinc-900 backdrop-blur-md sm:p-6 dark:bg-zinc-950/95 dark:text-zinc-100">
       <div className="flex w-full max-w-md items-center justify-between pr-11">
         <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400" aria-live="polite">
           {index < last ? `Ricordo ${index + 1} di ${last}` : "Per finire"}

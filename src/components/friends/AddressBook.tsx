@@ -418,7 +418,7 @@ function PersonCapsulesSection({ friend, capsules }: { friend: FriendListItem; c
                 <span
                   className={
                     tone === "delivery"
-                      ? "shrink-0 rounded-full bg-[#e8edfc] px-2 py-0.5 text-xs font-bold text-accent dark:bg-brand/20 dark:text-[#9db6ff]"
+                      ? "shrink-0 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-bold text-accent dark:bg-brand/20 dark:text-accent"
                       : "shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                   }
                 >

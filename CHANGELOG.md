@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-18 (126)
+
+### I colori fissi lasciano il posto ai gettoni
+
+**Cosa fa:**
+- Le icone, i testi e i bordi dei fascicoli e dei documenti che erano rimasti nel vecchio blu (e nei suoi grigi azzurrati) ora seguono lo stile e il tema scelti: verdi in Foglia, azzurri in Notte e Luce, e chiari o scuri come il resto. Succede in fascicoli (icone, cronologia, passi successivi, grafico delle spese), nel registro di lettura dei documenti e nel pallino "letto da Hinthia".
+- La **finestra di sblocco** prende i colori dello stile attivo (il lucchetto, il bottone, i campi, il vetro), in chiaro e in scuro.
+- La **home pubblica**: i bottoni dell'intestazione ("Accedi/Registrati") ora hanno lo stesso blu del resto della pagina, non il verde dell'app.
+- **Eredità digitale:** con il monitoraggio spento, la scelta del ritmo (Prudente, Normale, Rilassato) resta leggibile: si attenuano solo le opzioni non scelte, non più tutto il blocco (in scuro "Normale" quasi non si vedeva). Anche la frase che spiega cosa succederebbe è piena, non sbiadita.
+
+**Note tecniche:** ~220 classi con esadecimale (`text-[#5b6483]`, `border-[#dfe3f0]`…) sono diventate scale e gettoni (`text-zinc-500`, `border-zinc-200`, `bg-brand/10`, `text-accent`…); i casi in `style`/attributi SVG usano `var(--brand)`, `var(--accent)`, `var(--n-*)`; `mixColor` (`archive-views.ts`) ora accetta anche un colore non esadecimale e lo lascia mescolare al browser (`color-mix`). `unlock.css`: le variabili `--u-*` leggono i gettoni (`--title`, `--n-*`, `--brand`, `--accent`). Nuova classe `lp-btn-sm` in `landing.css`. **Resta com'era, di proposito:** i colori semantici (verde "ok", rosso errore, ambra e bruno degli avvisi), i colori delle categorie, dei modelli di capsula e di fascicolo, la palette dell'apertura delle capsule e della home pubblica, e il colore fisso delle pillole di scadenza (restano chiare anche in scuro, come nei disegni). Nuovo controllo automatico (`tests/unit/no-hardcoded-palette.test.ts`) che fa fallire i test se i vecchi esadecimali tornano in una classe Tailwind.
+
+---
+
 ## 2026-10-18 (125)
 
 ### Gli stili cambiano anche forma e carattere (passo 3, prima parte)

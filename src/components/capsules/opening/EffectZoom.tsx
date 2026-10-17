@@ -69,7 +69,7 @@ export function EffectZoom({ view, slots, origin, onClose }: OpenEffectProps) {
       <span
         aria-hidden="true"
         className={cn(
-          "absolute left-1/2 top-[42%] -ml-[5px] -mt-[5px] h-[10px] w-[10px] rounded-full bg-[#F7FAFB] transition-transform duration-1000 ease-[cubic-bezier(.6,0,.3,1)]",
+          "absolute left-1/2 top-[42%] -ml-[5px] -mt-[5px] h-[10px] w-[10px] rounded-full bg-zinc-50 transition-transform duration-1000 ease-[cubic-bezier(.6,0,.3,1)]",
           step >= 2 ? "scale-[420]" : "scale-0",
         )}
       />
@@ -79,7 +79,7 @@ export function EffectZoom({ view, slots, origin, onClose }: OpenEffectProps) {
 
       <div
         className={cn(
-          "absolute inset-0 flex flex-col gap-4 overflow-auto bg-[#F7FAFB] p-5 pr-14 text-[#121a35] transition-opacity duration-[600ms] sm:p-8 sm:pr-16 dark:bg-zinc-950 dark:text-zinc-100",
+          "absolute inset-0 flex flex-col gap-4 overflow-auto bg-zinc-50 p-5 pr-14 text-zinc-900 transition-opacity duration-[600ms] sm:p-8 sm:pr-16 dark:bg-zinc-950 dark:text-zinc-100",
           step === 3 ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       >

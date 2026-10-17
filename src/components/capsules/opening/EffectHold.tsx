@@ -158,7 +158,7 @@ export function EffectHold({ view, slots, onClose }: OpenEffectProps) {
 
       <div
         className={cn(
-          "absolute bottom-0 inset-x-0 flex h-[82%] flex-col gap-3 overflow-auto rounded-t-3xl bg-[#F7FAFB] p-4 pt-3 text-[#121a35] shadow-[0_-20px_50px_rgba(8,16,50,.3)] transition-transform duration-[550ms] ease-[cubic-bezier(.2,.9,.25,1)] dark:bg-zinc-950 dark:text-zinc-100",
+          "absolute bottom-0 inset-x-0 flex h-[82%] flex-col gap-3 overflow-auto rounded-t-3xl bg-zinc-50 p-4 pt-3 text-zinc-900 shadow-[0_-20px_50px_rgba(8,16,50,.3)] transition-transform duration-[550ms] ease-[cubic-bezier(.2,.9,.25,1)] dark:bg-zinc-950 dark:text-zinc-100",
           "md:inset-y-0 md:left-auto md:right-0 md:h-auto md:w-[440px] md:rounded-l-3xl md:rounded-tr-none",
           sheetOpen ? "translate-y-0 md:translate-x-0" : "translate-y-full md:translate-y-0 md:translate-x-full",
         )}

@@ -143,14 +143,14 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
   const sortedDocuments = [...manifest.documents].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
-    <div className="flex flex-col gap-6 text-[#121a35] dark:text-zinc-100">
+    <div className="flex flex-col gap-6 text-zinc-900 dark:text-zinc-100">
       <header className="flex flex-col gap-2">
         <p className="text-[13px] font-bold text-accent">
           {manifest.sharedBy ? `${manifest.sharedBy} ha condiviso con te questo fascicolo` : "Questo fascicolo è stato condiviso con te"}
         </p>
         <h1 className="font-heading text-[30px] leading-tight font-extrabold tracking-[-0.02em] break-words text-title">{manifest.title}</h1>
         {manifest.description ? <p className="max-w-3xl text-sm whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">{manifest.description}</p> : null}
-        <p className="text-[13px] text-[#5b6483] dark:text-zinc-400">
+        <p className="text-[13px] text-zinc-500 dark:text-zinc-400">
           {manifest.documents.length} {manifest.documents.length === 1 ? "documento" : "documenti"} · condiviso il {formatDate(manifest.sharedAt)} · il link vale
           fino al {formatDate(expiresAt)}
           {allowDownload ? " · puoi scaricare i documenti" : " · solo lettura"}
@@ -172,7 +172,7 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
                       ? "border-brand bg-brand text-white"
                       : phaseStateValue === "done"
                         ? "border-[#bfe3d2] bg-[#e3f4ec] text-[#1c7c5a]"
-                        : "border-[#dfe3f0] bg-white text-[#5b6483] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400"
+                        : "border-zinc-200 bg-white text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400"
                   }`}
                 >
                   {name}
@@ -184,13 +184,13 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
       ) : null}
 
       {manifest.summary ? (
-        <section aria-label="In breve" className="flex flex-col gap-2 rounded-[18px] border border-[#cdd8fa] bg-[#f3f6ff] px-5 py-4 dark:border-brand/40 dark:bg-brand/10">
+        <section aria-label="In breve" className="flex flex-col gap-2 rounded-[18px] border border-[#cdd8fa] bg-zinc-50 px-5 py-4 dark:border-brand/40 dark:bg-brand/10">
           <h2 className="font-heading text-base font-extrabold">In breve</h2>
           <p className="text-[14.5px] leading-relaxed whitespace-pre-wrap text-[#2c3557] dark:text-zinc-200">{manifest.summary}</p>
         </section>
       ) : null}
 
-      <section aria-label="Documenti" className="flex flex-col gap-3 rounded-[18px] border border-[#dfe3f0] bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950">
+      <section aria-label="Documenti" className="flex flex-col gap-3 rounded-[18px] border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950">
         <h2 className="font-heading text-base font-extrabold">Documenti</h2>
         {documentError ? (
           <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -201,13 +201,13 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
           {sortedDocuments.map((doc) => {
             const kind = contentKindFor(doc.mimeType);
             return (
-              <li key={doc.id} className="flex items-center gap-3 border-t border-[#eef0f8] py-3 first:border-t-0 first:pt-0 dark:border-zinc-900">
+              <li key={doc.id} className="flex items-center gap-3 border-t border-zinc-100 py-3 first:border-t-0 first:pt-0 dark:border-zinc-900">
                 <span className="text-xl" aria-hidden="true">
                   {CONTENT_KIND_ICON[kind]}
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="text-[14.5px] font-bold break-words">{doc.name}</span>
-                  <span className="text-xs text-[#5b6483] dark:text-zinc-400">
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
                     {CONTENT_KIND_LABEL[kind]} · {doc.mimeType === NOTE_MIME_TYPE ? "nota" : formatSize(doc.size)} · {formatDate(doc.createdAt)}
                   </span>
                 </span>
@@ -216,7 +216,7 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
                   disabled={busyId === doc.id}
                   onClick={() => void handleOpen(doc)}
                   aria-label={`Apri ${doc.name}`}
-                  className="shrink-0 rounded-[10px] border border-[#c9d0e6] bg-white px-3 py-1.5 text-[13px] font-bold text-accent hover:border-brand disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950"
+                  className="shrink-0 rounded-[10px] border border-zinc-300 bg-white px-3 py-1.5 text-[13px] font-bold text-accent hover:border-brand disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950"
                 >
                   {busyId === doc.id ? "Apro…" : "Apri"}
                 </button>
@@ -237,7 +237,7 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
         </ul>
       </section>
 
-      <p className="text-center text-xs text-[#8a91ad] dark:text-zinc-500">
+      <p className="text-center text-xs text-zinc-400 dark:text-zinc-500">
         I documenti sono cifrati con la chiave contenuta nel link: Hinthial non può leggerli, e questa pagina li apre solo sul tuo dispositivo.
       </p>
 
@@ -253,7 +253,7 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
             <button
               type="button"
               onClick={closeDocument}
-              className="shrink-0 rounded-[10px] bg-white px-3.5 py-1.5 text-[13px] font-bold text-[#121a35] hover:bg-zinc-100"
+              className="shrink-0 rounded-[10px] bg-white px-3.5 py-1.5 text-[13px] font-bold text-zinc-900 hover:bg-zinc-100"
             >
               Chiudi
             </button>
@@ -271,7 +271,7 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
             ) : opened.url && opened.mimeType.startsWith("video/") ? (
               <video src={opened.url} controls className="max-h-full max-w-full" />
             ) : (
-              <p className="p-6 text-center text-sm text-[#5b6483]">
+              <p className="p-6 text-center text-sm text-zinc-500">
                 Questo tipo di file non ha un&apos;anteprima.{" "}
                 {allowDownload ? "Puoi scaricarlo dalla lista." : "Chi ha condiviso il fascicolo non ha permesso di scaricarlo."}
               </p>

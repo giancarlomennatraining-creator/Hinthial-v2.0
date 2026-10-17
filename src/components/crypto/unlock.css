@@ -14,30 +14,31 @@
   initial-value: 0;
 }
 .unlock-root {
-  --u-fg: #121a35;
-  --u-muted: #5b6483;
-  --u-faint: #8a91ad;
-  --u-line: #c9d0e6;
+  /* I colori seguono lo stile e il tema attivi (v. gettoni in globals.css); danger e ok restano semantici. */
+  --u-fg: var(--title);
+  --u-muted: var(--n-500);
+  --u-faint: var(--n-400);
+  --u-line: var(--n-300);
   --u-field: #ffffff;
   --u-glass: rgba(255, 255, 255, 0.72);
   --u-glass-line: rgba(255, 255, 255, 0.6);
   --u-danger: #b42318;
   --u-ok: #1c7c5a;
-  --u-brand: #2b4fc4;
+  --u-brand: var(--brand);
   --u-on-brand: #ffffff;
 }
 .dark .unlock-root {
-  --u-fg: #e8ecfb;
-  --u-muted: #9aa3c4;
-  --u-faint: #727b9f;
-  --u-line: #38427a;
-  --u-field: #141b36;
-  --u-glass: rgba(20, 27, 54, 0.72);
-  --u-glass-line: rgba(127, 155, 255, 0.22);
+  --u-fg: var(--foreground);
+  --u-muted: var(--n-400);
+  --u-faint: var(--n-500);
+  --u-line: var(--n-700);
+  --u-field: var(--n-950);
+  --u-glass: color-mix(in srgb, var(--n-950) 72%, transparent);
+  --u-glass-line: color-mix(in srgb, var(--accent) 22%, transparent);
   --u-danger: #ff8a7d;
   --u-ok: #5bd6a4;
-  --u-brand: #7f9bff;
-  --u-on-brand: #0c1124;
+  --u-brand: var(--accent);
+  --u-on-brand: var(--background);
 }
 .unlock-veil {
   position: fixed;

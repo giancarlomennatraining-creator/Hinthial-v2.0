@@ -40,7 +40,7 @@ export function DrawnPage({
       <div style={{ height: headerHeight, background: color }} />
       <div className="flex flex-col" style={{ padding, gap }}>
         {lines.map((width, i) => (
-          <div key={i} className="rounded-[3px] bg-[#dfe3f0]" style={{ height: lineHeight, width: `${width}%` }} />
+          <div key={i} className="rounded-[3px] bg-zinc-200" style={{ height: lineHeight, width: `${width}%` }} />
         ))}
       </div>
     </div>
@@ -89,8 +89,8 @@ export function ReadDot({ read, size = 9, className }: { read: boolean; size?: n
       style={{
         width: size,
         height: size,
-        background: read ? "#2b4fc4" : "transparent",
-        borderColor: read ? "#2b4fc4" : "#8a91ad",
+        background: read ? "var(--brand)" : "transparent",
+        borderColor: read ? "var(--brand)" : "var(--n-400)",
       }}
     />
   );

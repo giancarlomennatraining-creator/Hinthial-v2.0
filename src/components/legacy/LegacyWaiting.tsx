@@ -137,7 +137,7 @@ export function LegacyWaiting({ userId }: { userId: string }) {
         </span>
       </label>
 
-      <div className={cn("flex flex-col gap-3", settings.enabled ? undefined : "opacity-60")}>
+      <div className="flex flex-col gap-3">
         <div role="radiogroup" aria-label="Livello di prudenza" className="grid gap-2 sm:grid-cols-3">
           {DIGITAL_LEGACY_PRESET_ORDER.map((preset) => {
             const selected = settings.preset === preset;
@@ -150,9 +150,14 @@ export function LegacyWaiting({ userId }: { userId: string }) {
                 onClick={() => selectPreset(preset)}
                 className={cn(
                   "flex flex-col items-start gap-0.5 rounded-xl border px-4 py-3 text-left transition-colors",
+                  // Con il monitoraggio spento si attenua solo ciò che non è scelto: l'opzione scelta resta leggibile (prima, tutto
+                  // il blocco a opacità ridotta la rendeva quasi invisibile in scuro).
                   selected
                     ? "border-brand bg-brand/10 text-accent"
-                    : "border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900",
+                    : cn(
+                        "border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900",
+                        settings.enabled ? undefined : "opacity-80",
+                      ),
                 )}
               >
                 <span className="text-sm font-semibold">{DIGITAL_LEGACY_PRESET_LABEL[preset]}</span>
@@ -182,12 +187,7 @@ export function LegacyWaiting({ userId }: { userId: string }) {
         ))}
       </ol>
 
-      <p
-        className={cn(
-          "max-w-2xl rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400",
-          settings.enabled ? undefined : "opacity-60",
-        )}
-      >
+      <p className="max-w-2xl rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
         {settings.enabled
           ? describeDigitalLegacySettings(settings)
           : "Il monitoraggio è spento: nessuna email verrà inviata. Ecco comunque cosa succederebbe se lo accendessi così: " +

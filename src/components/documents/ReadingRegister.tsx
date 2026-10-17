@@ -62,15 +62,15 @@ const WAVE_STEP_MS = 150;
 const JUST_CLEAR_MS = 1400;
 
 const INPUT_CLASS =
-  "w-full rounded-lg border-[1.5px] border-brand bg-white px-2.5 py-1.5 text-[15px] font-semibold text-[#121a35] outline-none focus:ring-[3px] focus:ring-brand/20 dark:bg-zinc-950 dark:text-zinc-50";
+  "w-full rounded-lg border-[1.5px] border-brand bg-white px-2.5 py-1.5 text-[15px] font-semibold text-zinc-900 outline-none focus:ring-[3px] focus:ring-brand/20 dark:bg-zinc-950 dark:text-zinc-50";
 const GHOST_BUTTON =
-  "reading-btn flex h-8 w-8 items-center justify-center rounded-lg border border-[#c9d0e6] bg-white text-[#121a35] hover:border-brand hover:bg-[#f1f5ff] disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-brand dark:hover:bg-zinc-900";
+  "reading-btn flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-300 bg-white text-zinc-900 hover:border-brand hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-brand dark:hover:bg-zinc-900";
 const TEXT_GHOST_BUTTON =
-  "reading-btn rounded-lg border border-[#c9d0e6] bg-white px-3 py-[7px] text-[12.5px] font-semibold text-[#121a35] hover:border-brand hover:bg-[#f1f5ff] disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900";
+  "reading-btn rounded-lg border border-zinc-300 bg-white px-3 py-[7px] text-[12.5px] font-semibold text-zinc-900 hover:border-brand hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900";
 const PRIMARY_BUTTON =
   "reading-btn reading-btn-primary whitespace-nowrap rounded-lg bg-brand px-3 py-[7px] text-[12.5px] font-bold text-white hover:bg-brand-hover disabled:opacity-50";
 const LINK_BUTTON =
-  "p-1 text-[12.5px] font-semibold text-[#5b6483] underline transition-colors hover:text-[#121a35] disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-100";
+  "p-1 text-[12.5px] font-semibold text-zinc-500 underline transition-colors hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-100";
 
 /** Il testo del punto d'origine, evidenziato sulla frase che prova il dato. */
 function SourceExcerptView({ text, quote }: { text: string; quote: string }) {
@@ -270,9 +270,9 @@ export function ReadingRegister({
         </span>
       );
     }
-    if (row.state === "rejected") return <span className="h-0.5 w-3.5 rounded-sm bg-[#9aa1bd]" aria-hidden="true" />;
+    if (row.state === "rejected") return <span className="h-0.5 w-3.5 rounded-sm bg-zinc-400" aria-hidden="true" />;
     return (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa1bd" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--n-400)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <rect x="5" y="11" width="14" height="9" rx="2" />
         <path d="M8 11V8a4 4 0 0 1 8 0v3" />
       </svg>
@@ -351,7 +351,7 @@ export function ReadingRegister({
               aria-expanded={openSource === row.id}
               aria-label={`Mostra il punto d'origine di ${row.label}`}
               onClick={() => setOpenSource(openSource === row.id ? null : row.id)}
-              className="rounded-md bg-[#e8edfc] px-1.5 py-px text-[11px] font-semibold text-accent hover:underline dark:bg-brand/25 dark:text-[#9db6ff]"
+              className="rounded-md bg-brand/10 px-1.5 py-px text-[11px] font-semibold text-accent hover:underline dark:bg-brand/25 dark:text-accent"
             >
               {pageLabel(row)}
             </button>
@@ -363,7 +363,7 @@ export function ReadingRegister({
     if (row.state === "rejected") {
       return (
         <>
-          <span className="text-[12.5px] text-[#8a91ad] dark:text-zinc-500">Scartata</span>
+          <span className="text-[12.5px] text-zinc-400 dark:text-zinc-500">Scartata</span>
           {row.rejection ? (
             <button type="button" disabled={busy} onClick={() => onRestore(row.rejection as ProposalRejection)} className={LINK_BUTTON}>
               Ripristina
@@ -373,7 +373,7 @@ export function ReadingRegister({
       );
     }
 
-    return <span className="text-[12.5px] text-[#8a91ad] dark:text-zinc-500">{row.note}</span>;
+    return <span className="text-[12.5px] text-zinc-400 dark:text-zinc-500">{row.note}</span>;
   }
 
   function valueCell(row: RegisterRow) {
@@ -386,7 +386,7 @@ export function ReadingRegister({
       <div className="flex min-w-0 flex-col gap-0.5">
         <div
           className={`reading-value truncate text-[15px] font-bold ${
-            row.state === "rejected" ? "text-[#9aa1bd] line-through" : "text-[#121a35] dark:text-zinc-50"
+            row.state === "rejected" ? "text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-50"
           }`}
         >
           {row.value}
@@ -400,12 +400,12 @@ export function ReadingRegister({
                   aria-expanded={openSource === row.id}
                   aria-label={`Mostra il punto d'origine di ${row.label}`}
                   onClick={() => setOpenSource(openSource === row.id ? null : row.id)}
-                  className="shrink-0 rounded-md bg-[#e8edfc] px-1.5 py-px text-[11px] font-semibold text-accent hover:underline dark:bg-brand/25 dark:text-[#9db6ff]"
+                  className="shrink-0 rounded-md bg-brand/10 px-1.5 py-px text-[11px] font-semibold text-accent hover:underline dark:bg-brand/25 dark:text-accent"
                 >
                   {chip}
                 </button>
               ) : (
-                <span className="shrink-0 rounded-md bg-[#e8edfc] px-1.5 py-px text-[11px] font-semibold text-accent dark:bg-brand/25 dark:text-[#9db6ff]">
+                <span className="shrink-0 rounded-md bg-brand/10 px-1.5 py-px text-[11px] font-semibold text-accent dark:bg-brand/25 dark:text-accent">
                   {chip}
                 </span>
               )
@@ -426,16 +426,16 @@ export function ReadingRegister({
       {progress.total > 0 ? (
         <div
           data-done={allDone ? "true" : "false"}
-          className="reading-card flex flex-col gap-2.5 rounded-[14px] border border-[#dfe3f0] bg-white px-[18px] py-4 dark:border-zinc-800 dark:bg-zinc-950"
+          className="reading-card flex flex-col gap-2.5 rounded-[14px] border border-zinc-200 bg-white px-[18px] py-4 dark:border-zinc-800 dark:bg-zinc-950"
         >
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <p className="flex items-baseline gap-1.5 text-sm text-[#121a35] dark:text-zinc-100">
+            <p className="flex items-baseline gap-1.5 text-sm text-zinc-900 dark:text-zinc-100">
               <span className="inline-block overflow-hidden leading-[1.15]">
                 <span className={`inline-block font-heading text-[22px] font-extrabold text-accent ${tickClass}`}>{progress.adopted}</span>
               </span>
               <span>
                 di {progress.total} nella Scheda{" "}
-                <span className="text-[#5b6483] dark:text-zinc-400">· {progress.pending} da decidere</span>
+                <span className="text-zinc-500 dark:text-zinc-400">· {progress.pending} da decidere</span>
               </span>
             </p>
             {onAcceptAll && (acceptAllCount > 0 || allDone) ? (
@@ -469,7 +469,7 @@ export function ReadingRegister({
       ) : null}
 
       {hasRows ? (
-        <div className="overflow-hidden rounded-[14px] border border-[#dfe3f0] bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="overflow-hidden rounded-[14px] border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
           {REGISTER_GROUPS.map((group, groupIndex) => {
             const groupRows = rows.filter((r) => r.group === group);
             if (groupRows.length === 0) return null;
@@ -477,8 +477,8 @@ export function ReadingRegister({
             return (
               <div key={group}>
                 <h3
-                  className={`bg-[#f8f9fd] px-[18px] pt-3 pb-1.5 font-heading text-[11px] font-extrabold tracking-[0.1em] text-[#5b6483] uppercase dark:bg-zinc-900 dark:text-zinc-400 ${
-                    isFirstShown ? "" : "border-t border-[#dfe3f0] dark:border-zinc-800"
+                  className={`bg-[#f8f9fd] px-[18px] pt-3 pb-1.5 font-heading text-[11px] font-extrabold tracking-[0.1em] text-zinc-500 uppercase dark:bg-zinc-900 dark:text-zinc-400 ${
+                    isFirstShown ? "" : "border-t border-zinc-200 dark:border-zinc-800"
                   }`}
                 >
                   {group}
@@ -499,7 +499,7 @@ export function ReadingRegister({
                           <div className="row-span-3 flex h-[22px] w-[22px] items-center justify-center self-start sm:row-span-1 sm:self-center">
                             {glyph(row)}
                           </div>
-                          <div className="col-start-2 text-[13px] font-medium text-[#5b6483] sm:col-start-auto dark:text-zinc-400">
+                          <div className="col-start-2 text-[13px] font-medium text-zinc-500 sm:col-start-auto dark:text-zinc-400">
                             {row.label}
                           </div>
                           <div className="col-start-2 min-w-0 sm:col-start-auto">{valueCell(row)}</div>
@@ -508,7 +508,7 @@ export function ReadingRegister({
                           </div>
                         </div>
                         {openSource === row.id && row.fact && row.provenance && !isEditing ? (
-                          <div className="border-t border-[#eef0f8] bg-[#fafbfd] px-[18px] py-3 dark:border-zinc-900 dark:bg-zinc-900/40">
+                          <div className="border-t border-zinc-100 bg-[#fafbfd] px-[18px] py-3 dark:border-zinc-900 dark:bg-zinc-900/40">
                             <FactSource
                               fact={row.fact}
                               text={sourceText.get(row.provenance.segmentId) ?? ""}

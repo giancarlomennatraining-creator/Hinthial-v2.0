@@ -52,6 +52,8 @@ describe("colori delle categorie", () => {
   it("mescolare con il bianco schiarisce, con il nero scurisce", () => {
     expect(mixColor("#000000", "#ffffff", 0.5)).toBe("#808080");
     expect(mixColor("#2b4fc4", "#2b4fc4", 0.7)).toBe("#2b4fc4");
+    // Un colore che non è un esadecimale (una variabile CSS) lo mescola il browser.
+    expect(mixColor("var(--brand)", "#ffffff", 0.88)).toBe("color-mix(in srgb, var(--brand) 12%, #ffffff)");
   });
 });
 
