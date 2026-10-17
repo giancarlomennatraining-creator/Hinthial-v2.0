@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-19 (128)
+
+### Notte di vetro
+
+**Cosa fa:**
+- Con lo stile **Notte** la pagina ha uno sfondo a bagliori, come la home (azzurro e verde acqua in chiaro, blu profondo in scuro), e le superfici diventano di vetro: barra laterale, barra in alto e in basso su telefono, e i riquadri di primo livello sono traslucidi e sfocano ciò che hanno dietro.
+- Un riquadro che contiene una finestra (che si apre sopra la pagina) resta senza sfocatura, così la finestra si apre sulla pagina e non dentro il riquadro.
+- Se il sistema chiede meno trasparenza, il vetro torna pieno e senza sfocatura.
+- Foglia e Luce non cambiano.
+
+**Note tecniche:** in `globals.css`, `:root[data-stile="notte"]` ha il fondo (due `radial-gradient` più `--background`, `background-attachment: fixed`, anche in `.dark`) e i gettoni `--glass`, `--glass-line`, `--glass-shadow`; il `body` diventa trasparente per lasciarlo vedere. `--side` in Notte è traslucido (`rgba`). La sfocatura (`backdrop-filter: blur(14px)`) è su `.bg-side` e su `.surface-card:not(:has(.fixed))`, perché `backdrop-filter` crea un nuovo riferimento per i discendenti a posizione fissa. `@media (prefers-reduced-transparency: reduce)` ripristina superfici piene. Test e2e in `theme.spec.ts`: in Notte un riquadro ha `backdrop-filter: blur(14px)` e la pagina un gradiente; in Foglia no.
+
+---
+
 ## 2026-10-19 (127)
 
 ### Luce senza riquadri

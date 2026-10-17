@@ -47,13 +47,20 @@ test("lo stile (Foglia, Notte, Luce) si sceglie in Aspetto → Tema, cambia i co
   // Luce non ha riquadri: l'avviso "serve la master password" (un riquadro negli altri stili) resta due linee sottili,
   // senza angoli né sfondo. Passando a Foglia torna un riquadro.
   await page.goto("/legacy");
-  const notice = page.locator(".surface-card").first();
+  const notice = page.locator(".surface-card", { hasText: "serve prima la master password" });
   await expect(notice).toBeVisible();
   await expect(notice).toHaveCSS("border-top-left-radius", "0px");
   await expect(notice).toHaveCSS("border-left-width", "0px");
   await expect(notice).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   await page.evaluate(() => document.documentElement.setAttribute("data-stile", "foglia"));
   await expect(notice).not.toHaveCSS("border-left-width", "0px");
+
+  // Notte è di vetro: lo stesso riquadro sfoca ciò che ha dietro, e lo sfondo della pagina ha i bagliori (un gradiente).
+  await page.evaluate(() => document.documentElement.setAttribute("data-stile", "notte"));
+  await expect(notice).toHaveCSS("backdrop-filter", /blur\(14px\)/);
+  await expect(page.locator("html")).toHaveCSS("background-image", /radial-gradient/);
+  await page.evaluate(() => document.documentElement.setAttribute("data-stile", "foglia"));
+  await expect(notice).toHaveCSS("backdrop-filter", "none");
 });
 
 test("il toggle del tema in Impostazioni applica la classe dark e persiste al refresh", async ({
