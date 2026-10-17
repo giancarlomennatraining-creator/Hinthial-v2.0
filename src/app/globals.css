@@ -98,7 +98,7 @@
   --accent: #1b4fd0;
   --accent-hover: #0f3a9a;
   --title: #0d1b4a;
-  --side: #dfeaf7;
+  --side: rgba(255, 255, 255, 0.55);
   --wordmark: #0b2f9e;
   --n-50: #f3f7fc;
   --n-100: #e6eef8;
@@ -131,7 +131,7 @@
   --accent: #8fb0ff;
   --accent-hover: #b8cdff;
   --title: #e8f0ff;
-  --side: #0a1738;
+  --side: rgba(7, 17, 46, 0.62);
   --wordmark: #e8f0ff;
   --n-50: #f3f7ff;
   --n-100: #e8f0ff;
@@ -223,6 +223,63 @@
 :root[data-stile="luce"] main h1 {
   font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
   line-height: 1.1;
+}
+
+/*
+ * Notte: vetro. Sfondo a bagliori (come la home) e superfici traslucide che sfocano ciò che hanno dietro: barra laterale,
+ * barre del telefono, e i riquadri di primo livello (`surface-card`). La sfocatura sta solo dove serve: un riquadro che
+ * contiene un elemento a posizione fissa (una finestra) resta senza, perché `backdrop-filter` ne cambia il riferimento e la
+ * finestra si aprirebbe dentro il riquadro invece che sulla pagina. Con meno trasparenza richiesta dal sistema
+ * (`prefers-reduced-transparency`) il vetro torna pieno. Il valore passa da una variabile (`--glass-blur`) per poterlo
+ * azzerare; è scritto senza prefisso `-webkit-`, perché con entrambi l'ottimizzatore dei CSS teneva solo quello con prefisso, che
+ * Chrome non legge: il prefisso lo aggiunge lui dove serve.
+ */
+:root[data-stile="notte"] {
+  background:
+    radial-gradient(900px 520px at 85% -8%, rgba(120, 175, 255, 0.5), transparent 70%),
+    radial-gradient(640px 420px at 0% 105%, rgba(150, 225, 220, 0.5), transparent 70%),
+    var(--background);
+  background-attachment: fixed;
+  --glass: rgba(255, 255, 255, 0.66);
+  --glass-line: rgba(27, 79, 208, 0.14);
+  --glass-shadow: 0 10px 30px rgba(27, 79, 208, 0.08);
+  --glass-blur: 14px;
+}
+:root[data-stile="notte"].dark {
+  background:
+    radial-gradient(900px 520px at 85% -8%, rgba(30, 80, 190, 0.6), transparent 70%),
+    radial-gradient(640px 420px at 0% 105%, rgba(10, 90, 120, 0.5), transparent 70%),
+    var(--background);
+  background-attachment: fixed;
+  --glass: rgba(255, 255, 255, 0.055);
+  --glass-line: rgba(150, 185, 255, 0.17);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  --glass-blur: 14px;
+}
+:root[data-stile="notte"] body {
+  background: transparent;
+}
+:root[data-stile="notte"] .surface-card {
+  background: var(--glass);
+  border-color: var(--glass-line);
+  box-shadow: var(--glass-shadow);
+}
+:root[data-stile="notte"] .bg-side {
+  backdrop-filter: blur(var(--glass-blur));
+}
+/* Regola a parte: se un browser non capisse `:has`, una lista di selettori con quella sola voce invaliderebbe anche la barra. */
+:root[data-stile="notte"] .surface-card:not(:has(.fixed)) {
+  backdrop-filter: blur(var(--glass-blur));
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-stile="notte"] .surface-card {
+    background: var(--n-950);
+    --glass-blur: 0px;
+  }
+  :root[data-stile="notte"] .bg-side {
+    background: var(--background);
+    --glass-blur: 0px;
+  }
 }
 
 @theme inline {
