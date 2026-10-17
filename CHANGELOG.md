@@ -10,6 +10,23 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-17 (122)
+
+### Tablet e telefono: le correzioni della revisione fotografica
+
+**Cosa fa:**
+- **Amici su tablet:** tra 768 e 1023 px la scheda della persona non si schiaccia più accanto all'elenco (il nome andava a capo lettera per lettera). Come su telefono, si vede la rubrica e, toccando una persona, la sua scheda; elenco e scheda affiancati da 1024 px in su.
+- **Impostazioni su tablet:** sotto i 1024 px c'è l'elenco a voci del telefono invece di menu e contenuto in tre colonne strette.
+- **Barra laterale su tablet:** tra 768 e 1023 px resta a sole icone, senza il tasto per allargarla. Da 1024 px vale di nuovo la scelta salvata.
+- **Schede dell'Archivio su telefono:** la riga scorre da sola fino alla scheda attiva (il Cestino era fuori schermo) e il bordo sfuma dal lato dove ci sono altre schede.
+- **Barra in basso su telefono:** l'Archivio prende il posto dell'Eredità digitale, che passa nel menu dell'avatar. In Archivio la sua voce è accesa.
+- **Onboarding a cassaforte bloccata:** l'indicatore nella barra non dice più "100% completato" in verde (contava solo due passi) per poi scendere allo sblocco. Mostra un lucchetto e "Da sbloccare", e il click apre lo sblocco.
+- **Eredità digitale a cassaforte bloccata:** l'avviso "sbloccala per usare questa sezione" è in cima alla pagina, non più in fondo sotto "Salva".
+
+**Note tecniche:** i passaggi da una colonna a due in `AddressBook.tsx` e `SettingsTabs.tsx` sono passati da `md` a `lg` (anche il `matchMedia` della cronologia in `AddressBook`, ora `max-width: 1023px`). `Sidebar.tsx` usa `useMediaQuery("(max-width: 1023px)")` per la forma compatta; al primo paint la barra parte larga e si stringe dopo l'effetto, come già succedeva per la preferenza salvata. `ArchiveTabs.tsx` centra la scheda attiva con `scrollLeft` e sceglie una di tre `mask-image` intere (v. la regola su `cn()`). `BOTTOM_NAV_HREFS` in `nav-items.ts`. In `OnboardingStatus.tsx` i due passi base valgono solo senza master password; anche durante la dissolvenza dello sblocco si mostra lo stato bloccato, che prima mostrava 50% per un istante. Aggiornati `mobile-nav.spec.ts` (Archivio in barra, Eredità nel menu) e un commento di `sticky-nav.spec.ts`. Origine: G1, G2, I1, I2, I5, I6, I7 della revisione fotografica.
+
+---
+
 ## 2026-10-17 (121)
 
 ### Impostazioni: la descrizione giusta per il Cestino

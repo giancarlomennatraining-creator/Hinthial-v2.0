@@ -45,9 +45,10 @@ export const NAV_ITEMS: NavItem[] = [
 
 /**
  * Le voci della barra fissa in basso su smartphone (al massimo cinque, per restare leggibili); le altre stanno nel menu
- * che si apre dall'avatar. Ci sono "Oggi" e i quattro pilastri: l'Archivio, che li alimenta, sta nel menu.
+ * che si apre dall'avatar. L'Archivio si usa ogni giorno e sta in barra; l'Eredità digitale si imposta una volta e poi si
+ * tocca di rado, quindi sta nel menu (v. revisione fotografica del 2026-10-17: in Archivio nessuna voce era accesa).
  */
-export const BOTTOM_NAV_HREFS: string[] = ["/dashboard", "/capsules", "/raccontami", "/friends", "/legacy"];
+export const BOTTOM_NAV_HREFS: string[] = ["/dashboard", "/capsules", "/raccontami", "/friends", "/archive"];
 
 /** Se la voce è quella della pagina in cui ci si trova (o di una sezione che vive dentro di lei). */
 export function isNavItemActive(item: NavItem, pathname: string | null): boolean {
