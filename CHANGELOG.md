@@ -10,6 +10,23 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-18 (124)
+
+### Tre stili: Foglia, Notte e Luce, da scegliere in Impostazioni
+
+**Cosa fa:**
+- In Impostazioni → Aspetto → Tema c'è un nuovo blocco **Stile** con tre scelte, ognuna con un'anteprima dei suoi colori in chiaro e in scuro:
+  - **Foglia** (predefinito): verde foglia e blu inchiostro, toni caldi.
+  - **Notte:** blu notte con accenti azzurri, come la home.
+  - **Luce:** bianco e blu sobrio, il più neutro.
+- Lo stile è indipendente da chiaro/scuro/sistema: sono sei combinazioni, tutte con contrasti leggibili (testi sopra 4,5 a 1). Il cambio è immediato, senza ricaricare, e resta al riavvio.
+- Vale su questo dispositivo, come già il tema: non si sposta da un dispositivo all'altro.
+- Per ora gli stili cambiano solo i colori. Forme, caratteri e i segni distintivi di ciascuno (la costellazione di Notte, l'albero di Foglia) sono il passo successivo.
+
+**Note tecniche:** `lib/theme.ts` ha `StylePreference`, `getStoredStylePreference`/`storeStylePreference` (chiave `hinthial-stile`, valore non valido → Foglia) e `applyStyle`, che scrive l'attributo `data-stile` su `<html>`; lo stesso script prima del primo paint in `app/layout.tsx` lo imposta sempre (per evitare un lampeggio al caricamento). `globals.css` ha quattro blocchi nuovi, `:root[data-stile="notte"]` e `[data-stile="luce"]` con la loro versione `.dark`, che ridefiniscono gli stessi gettoni di Foglia (`--brand`, `--accent`, `--title`, `--side`, `--wordmark`, scala `--n-*`); Foglia resta il valore di base senza attributo. Nuovo `StyleToggle.tsx` (radiogroup con anteprime: i colori delle anteprime sono dati di esempio e vanno tenuti allineati ai gettoni). Test: unitari per la lettura/scrittura/applicazione dello stile, e2e in `theme.spec.ts` (scelta, cambio dei colori, persistenza al ricaricamento, indipendenza dal tema scuro).
+
+---
+
 ## 2026-10-18 (123)
 
 ### Stile "Foglia": i colori diventano gettoni (passo 1 della revisione grafica)

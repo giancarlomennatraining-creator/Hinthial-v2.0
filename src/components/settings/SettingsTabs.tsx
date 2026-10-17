@@ -11,6 +11,7 @@ import { DeviceLockPanel } from "@/components/settings/DeviceLockPanel";
 import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import type { AuditFilterParams } from "@/domain/audit/filters";
 import { CategoriesPanel } from "@/components/settings/CategoriesPanel";
+import { StyleToggle } from "@/components/settings/StyleToggle";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { CapsuleCountdownSettings } from "@/components/settings/CapsuleCountdownSettings";
 import { CapsuleOpenEffectSettings } from "@/components/settings/CapsuleOpenEffectSettings";
@@ -361,12 +362,20 @@ export function SettingsTabs({
         );
       }
       return (
-        <FunctionBlock
-          title="Tema"
-          description="Scegli l'aspetto dell'app, o lascia che segua le impostazioni del tuo dispositivo."
-        >
-          <ThemeToggle />
-        </FunctionBlock>
+        <div className="flex flex-col gap-8">
+          <FunctionBlock
+            title="Stile"
+            description="I colori dell'app. Cambia solo come appare, non ciò che puoi fare. Vale su questo dispositivo."
+          >
+            <StyleToggle />
+          </FunctionBlock>
+          <FunctionBlock
+            title="Tema"
+            description="Scegli l'aspetto dell'app, o lascia che segua le impostazioni del tuo dispositivo."
+          >
+            <ThemeToggle />
+          </FunctionBlock>
+        </div>
       );
     }
     if (activeTab === "activity") {

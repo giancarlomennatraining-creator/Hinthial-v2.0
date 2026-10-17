@@ -3,6 +3,48 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
+test("lo stile (Foglia, Notte, Luce) si sceglie in Aspetto → Tema, cambia i colori, resta al refresh ed è indipendente da chiaro/scuro", async ({
+  page,
+}) => {
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password").fill(user.password);
+  await page.getByRole("button", { name: "Accedi" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+
+  const html = page.locator("html");
+  // Il predefinito è Foglia: lo script prima del primo paint lo scrive sempre.
+  await expect(html).toHaveAttribute("data-stile", "foglia");
+  const brand = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--brand").trim());
+  const foglia = await brand();
+
+  await page.goto("/settings");
+  await page.getByRole("tab", { name: "Aspetto" }).click();
+  await expect(page.getByRole("radio", { name: /Foglia/ })).toHaveAttribute("aria-checked", "true");
+
+  await page.getByRole("radio", { name: /Notte/ }).click();
+  await expect(html).toHaveAttribute("data-stile", "notte");
+  await expect(page.getByRole("radio", { name: /Notte/ })).toHaveAttribute("aria-checked", "true");
+  const notte = await brand();
+  expect(notte).not.toBe(foglia);
+
+  // Resta a un refresh vero, e un tema scuro sopra lo stile cambia ancora i colori senza cambiare lo stile.
+  await page.reload();
+  await expect(html).toHaveAttribute("data-stile", "notte");
+  await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("radio", { name: "Scuro" }).click();
+  await expect(html).toHaveClass(/dark/);
+  await expect(html).toHaveAttribute("data-stile", "notte");
+  expect(await brand()).not.toBe(notte);
+
+  await page.getByRole("radio", { name: /Luce/ }).click();
+  await expect(html).toHaveAttribute("data-stile", "luce");
+  await expect(html).toHaveClass(/dark/);
+});
+
 test("il toggle del tema in Impostazioni applica la classe dark e persiste al refresh", async ({
   page,
 }) => {

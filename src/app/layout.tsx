@@ -5,7 +5,7 @@ import Script from "next/script";
 import { ErrorReporter } from "@/components/errors/ErrorReporter";
 import "./globals.css";
 
-/** Applica il tema chiaro/scuro/sistema (v. lib/theme.ts) prima del primo paint: deve restare uno script inline autonomo, gira prima che qualunque modulo dell'app sia caricato. */
+/** Applica il tema chiaro/scuro/sistema e lo stile (v. lib/theme.ts) prima del primo paint: deve restare uno script inline autonomo, gira prima che qualunque modulo dell'app sia caricato. */
 const THEME_INIT_SCRIPT = `
 (function () {
   try {
@@ -14,6 +14,8 @@ const THEME_INIT_SCRIPT = `
       stored === "dark" ||
       (stored !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     if (isDark) document.documentElement.classList.add("dark");
+    var style = localStorage.getItem("hinthial-stile");
+    document.documentElement.setAttribute("data-stile", style === "notte" || style === "luce" ? style : "foglia");
   } catch (e) {}
 })();
 `;
