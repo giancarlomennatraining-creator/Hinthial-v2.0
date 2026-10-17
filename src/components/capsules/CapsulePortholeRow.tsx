@@ -28,7 +28,7 @@ export function CapsulePortholeRow({ capsule, now, menu, countdown, repliesCount
   const state = capsuleArtState(capsule, now);
 
   return (
-    <li className="relative grid min-w-0 grid-cols-[76px_minmax(0,1fr)] items-start gap-4 rounded-[18px] border border-zinc-200 bg-white p-3 pr-3 shadow-[0_2px_8px_rgba(18,26,53,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(18,26,53,0.12)] sm:grid-cols-[92px_minmax(0,1fr)] dark:border-zinc-800 dark:bg-zinc-950">
+    <li className="relative grid min-w-0 grid-cols-[76px_minmax(0,1fr)] items-start gap-4 surface-card rounded-card border border-zinc-200 bg-white p-3 pr-3 shadow-[0_2px_8px_rgba(18,26,53,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(18,26,53,0.12)] sm:grid-cols-[92px_minmax(0,1fr)] dark:border-zinc-800 dark:bg-zinc-950">
       <CapsulePorthole
         state={state}
         progress={capsuleProgress(capsule, now)}

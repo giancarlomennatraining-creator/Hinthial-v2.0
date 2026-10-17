@@ -761,7 +761,7 @@ export function ArchiveItemDetail({
         <div className="flex flex-col items-stretch gap-6 @3xl:flex-row @3xl:items-start">
           {/* Colonna fissa: solo l'anteprima, sempre visibile, mai dietro una tab. */}
           <div className="flex flex-col gap-6 @3xl:w-[380px] @3xl:shrink-0">
-          <section aria-label="Anteprima" className="flex flex-col gap-3 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+          <section aria-label="Anteprima" className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Anteprima</h2>
             {previewLoading ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
@@ -830,7 +830,7 @@ export function ArchiveItemDetail({
               la fonte. Scheda è la prima tab, non più fissa a sinistra (v. feedback utente). Tab e pannelli
               dentro un unico riquadro bianco con contorno (v. feedback utente), come Anteprima a fianco. */}
           <div className="flex min-w-0 flex-1 flex-col gap-4">
-          <div className="flex flex-col gap-4 rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="flex flex-col gap-4 surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
             <div role="tablist" className="flex flex-wrap gap-1 border-b border-zinc-200 dark:border-zinc-800">
               <button
                 type="button"
@@ -1004,7 +1004,7 @@ export function ArchiveItemDetail({
                 {doc.aiSynthesis ? (
                   <section
                     aria-label="Analisi con Hinthia"
-                    className="flex flex-col gap-3 rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
+                    className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
                   >
                     <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                       {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
@@ -1098,7 +1098,7 @@ function ReadingSection({
     fullText || !tooLong ? doc.extractedText : doc.extractedText.slice(0, TEXT_PREVIEW_CHARS);
 
   return (
-    <section aria-label="Cosa ho letto" className="flex flex-col gap-3 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <section aria-label="Cosa ho letto" className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Cosa ho letto</h2>
 
       {reading === "cannot" ? (

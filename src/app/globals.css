@@ -201,6 +201,30 @@
   --n-950: #151a30;
 }
 
+/*
+ * Luce senza riquadri: i riquadri e gli elenchi dell'app (marcati `surface-card` nei componenti: schede, pannelli, elenchi con
+ * righe) perdono sfondo, bordi laterali, angoli e ombra, e restano due linee sottili, sopra e sotto. Così le pagine si
+ * leggono come un foglio, con le righe separate da una linea. Foglia e Notte ignorano la classe. Le finestre e la scheda
+ * di accesso non la portano e restano riquadri. Il padding resta: l'elenco ha le linee a tutta larghezza e il testo
+ * rientrato, come nelle liste dei telefoni. Il selettore (tre classi) batte sia `bg-white` sia `dark:bg-zinc-950`.
+ */
+:root[data-stile="luce"] .surface-card {
+  background: transparent;
+  border-style: solid;
+  border-width: 1px 0;
+  border-color: var(--n-200);
+  border-radius: 0;
+  box-shadow: none;
+}
+:root[data-stile="luce"].dark .surface-card {
+  border-color: var(--n-800);
+}
+/* Titolo di pagina grande, come nel disegno di Luce: solo i titoli delle pagine dell'app, non quelli delle finestre. */
+:root[data-stile="luce"] main h1 {
+  font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
+  line-height: 1.1;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

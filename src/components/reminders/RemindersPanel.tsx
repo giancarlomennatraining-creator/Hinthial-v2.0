@@ -213,7 +213,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
                   Nessuna scadenza corrisponde ai filtri.
                 </p>
               ) : (
-                <ul className="flex flex-col divide-y divide-zinc-200 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+                <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
                   {filteredReminders.map((reminder) => {
                     const status = dueStatus(reminder.dueAt, reminder.completed);
                     const busy = busyId === reminder.id;

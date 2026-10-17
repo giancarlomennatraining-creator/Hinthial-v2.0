@@ -141,7 +141,7 @@ export function ProtectedPanel() {
             {requests.length === 0 ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessuna richiesta in attesa.</p>
             ) : (
-              <ul className="flex flex-col divide-y divide-zinc-200 rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+              <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
                 {requests.map((request) => {
                   const busy = busyId === request.id;
                   return (
@@ -182,7 +182,7 @@ export function ProtectedPanel() {
                 Non sei ancora guardiano di nessuno.
               </p>
             ) : (
-              <ul className="flex flex-col divide-y divide-zinc-200 rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+              <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
                 {protectedList.map((relationship) => {
                   const busy = busyId === relationship.requestId;
                   return (

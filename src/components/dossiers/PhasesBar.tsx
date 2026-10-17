@@ -22,7 +22,7 @@ export function PhasesBar({
   return (
     <section
       aria-label="Fasi"
-      className="flex flex-col gap-3 rounded-[18px] border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950"
+      className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="font-heading text-base font-extrabold text-zinc-900 dark:text-zinc-100">
@@ -89,7 +89,7 @@ export function PhasesEditor({
   return (
     <section
       aria-label="Modifica le fasi"
-      className="flex flex-col gap-3 rounded-[18px] border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950"
+      className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950"
     >
       <h2 className="font-heading text-base font-extrabold text-zinc-900 dark:text-zinc-100">Le fasi di questo fascicolo</h2>
       <div className="flex flex-wrap items-center gap-2">

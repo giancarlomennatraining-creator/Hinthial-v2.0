@@ -43,6 +43,17 @@ test("lo stile (Foglia, Notte, Luce) si sceglie in Aspetto → Tema, cambia i co
   await page.getByRole("radio", { name: /Luce/ }).click();
   await expect(html).toHaveAttribute("data-stile", "luce");
   await expect(html).toHaveClass(/dark/);
+
+  // Luce non ha riquadri: l'avviso "serve la master password" (un riquadro negli altri stili) resta due linee sottili,
+  // senza angoli né sfondo. Passando a Foglia torna un riquadro.
+  await page.goto("/legacy");
+  const notice = page.locator(".surface-card").first();
+  await expect(notice).toBeVisible();
+  await expect(notice).toHaveCSS("border-top-left-radius", "0px");
+  await expect(notice).toHaveCSS("border-left-width", "0px");
+  await expect(notice).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await page.evaluate(() => document.documentElement.setAttribute("data-stile", "foglia"));
+  await expect(notice).not.toHaveCSS("border-left-width", "0px");
 });
 
 test("il toggle del tema in Impostazioni applica la classe dark e persiste al refresh", async ({

@@ -252,7 +252,7 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
         ) : devices.length === 0 ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessun dispositivo fidato ancora.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-zinc-200 rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+          <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
             {devices.map((device) => (
               <li key={device.id} className="flex items-center justify-between gap-4 p-3 text-sm">
                 <div className="flex flex-col gap-0.5">

@@ -45,7 +45,7 @@ export function DossierCard({
 
   return (
     <div
-      className={`group relative flex flex-col gap-3.5 rounded-[18px] border border-zinc-200 bg-white p-4 pb-3.5 shadow-[0_2px_8px_rgba(18,26,53,0.05)] transition-all duration-[180ms] hover:-translate-y-[3px] hover:shadow-[0_16px_32px_rgba(18,26,53,0.12)] dark:border-zinc-800 dark:bg-zinc-950 ${
+      className={`group relative flex flex-col gap-3.5 surface-card rounded-card border border-zinc-200 bg-white p-4 pb-3.5 shadow-[0_2px_8px_rgba(18,26,53,0.05)] transition-all duration-[180ms] hover:-translate-y-[3px] hover:shadow-[0_16px_32px_rgba(18,26,53,0.12)] dark:border-zinc-800 dark:bg-zinc-950 ${
         closed ? "opacity-90" : ""
       }`}
     >

@@ -190,7 +190,7 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
         </section>
       ) : null}
 
-      <section aria-label="Documenti" className="flex flex-col gap-3 rounded-[18px] border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950">
+      <section aria-label="Documenti" className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950">
         <h2 className="font-heading text-base font-extrabold">Documenti</h2>
         {documentError ? (
           <p role="alert" className="text-sm text-red-600 dark:text-red-400">
