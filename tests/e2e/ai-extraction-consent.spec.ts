@@ -24,8 +24,8 @@ test("cancello generale ed estrazione avanzata per categoria si spengono a casca
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Hinthia" }).click();
-  await expect(page.getByRole("heading", { name: "Hinthia" })).toBeVisible();
+  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
+  await expect(page.getByRole("heading", { name: "Hinthia", exact: true })).toBeVisible();
 
   const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Hinthia" });
   const extractionCheckbox = page.getByRole("checkbox", { name: /^Estrazione avanzata/ });
@@ -72,8 +72,8 @@ test("cancello generale ed estrazione avanzata per categoria si spengono a casca
 
   // Resta impostato dopo un refresh vero.
   await page.reload();
-  await page.getByRole("tab", { name: "Hinthia" }).click();
-  await expect(page.getByRole("heading", { name: "Hinthia" })).toBeVisible();
+  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
+  await expect(page.getByRole("heading", { name: "Hinthia", exact: true })).toBeVisible();
   await expect(extractionCheckbox).not.toBeChecked();
   await expect(saluteCheckbox).toBeDisabled();
 

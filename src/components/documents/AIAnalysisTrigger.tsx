@@ -145,8 +145,8 @@ export function AIAnalysisTrigger({
       ) : !consentActive ? (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Attiva &quot;Estrazione avanzata dei contenuti&quot; in{" "}
-          <Link href="/settings" className="underline underline-offset-2 hover:text-accent">
-            Impostazioni → Hinthia
+          <Link href="/settings?tab=privacy&section=hinthia" className="underline underline-offset-2 hover:text-accent">
+            Impostazioni → Privacy e Hinthia
           </Link>{" "}
           per usare questa funzione.
         </p>
@@ -190,7 +190,7 @@ export function AIAnalysisTrigger({
             </button>
           ) : null}
           <Link
-            href="/settings"
+            href="/settings?tab=privacy&section=hinthia"
             className="text-xs text-zinc-500 underline underline-offset-2 hover:text-accent dark:text-zinc-400"
           >
             Vai alle Impostazioni

@@ -20,211 +20,77 @@ import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { ImportExportTabs } from "@/components/import-export/ImportExportTabs";
 import { AIConsentSettings } from "@/components/settings/AIConsentSettings";
+import { SettingsBlock, SettingsFocusContext } from "@/components/settings/SettingsBlock";
+import { SettingsSearch } from "@/components/settings/SettingsSearch";
+import {
+  resolveSettingsTarget,
+  type SettingsEntry,
+  type SettingsTab as Tab,
+} from "@/components/settings/settings-index";
 import { PageHelp, type HelpTip } from "@/components/help/PageHelp";
-import type { ComponentType, ReactNode, SVGProps } from "react";
+import type { ComponentType, SVGProps } from "react";
 import { BACK_LINK_CLASS } from "@/components/ui/BackLink";
 import {
-  ActivityIcon,
-  AIIcon,
   AlertTriangleIcon,
-  ArchiveIcon,
-  CapsuleIcon,
   CategoryIcon,
-  ChecklistIcon,
   EyeIcon,
-  FingerprintIcon,
-  ImportExportIcon,
   SecurityIcon,
   SlidersIcon,
-  SmartphoneIcon,
-  ThemeIcon,
   UserIcon,
 } from "@/components/icons/nav-icons";
 
-type Tab =
-  | "user-info"
-  | "onboarding"
-  | "privacy"
-  | "security"
-  | "categories"
-  | "appearance"
-  | "activity"
-  | "import-export"
-  | "ai"
-  | "danger-zone";
-
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
-
-/** Secondo livello: una funzione di una voce (es. "Tema" dentro "Aspetto"). Il suo `id` vale solo dentro la voce che la contiene. */
-interface SectionDef {
-  id: string;
-  label: string;
-  icon: IconComponent;
-}
 
 interface TabDef {
   id: Tab;
   label: string;
   icon: IconComponent;
-  /** Se presente la voce è un contenitore: mostra una sola funzione alla volta (la prima, finché non se ne sceglie un'altra). */
-  sections?: SectionDef[];
 }
 
-/** Raggruppate in macro-aree (11 voci piatte erano difficili da scorrere); `label: null` per le due voci pensate per restare da sole, fuori da ogni cartella: "Informazioni utente" in cima, "Zona pericolosa" in fondo. */
-const TAB_GROUPS: { label: string | null; tabs: TabDef[] }[] = [
-  { label: null, tabs: [{ id: "user-info", label: "Informazioni utente", icon: UserIcon }] },
-  {
-    label: "Sicurezza",
-    tabs: [
-      {
-        id: "security",
-        label: "Autenticazione",
-        icon: SecurityIcon,
-        sections: [
-          { id: "authenticator", label: "App Authenticator", icon: SmartphoneIcon },
-          { id: "trusted-devices", label: "Dispositivi fidati", icon: FingerprintIcon },
-        ],
-      },
-      { id: "activity", label: "Attività", icon: ActivityIcon },
-    ],
-  },
-  {
-    label: "Privacy e dati",
-    tabs: [
-      { id: "privacy", label: "Privacy", icon: EyeIcon },
-      { id: "ai", label: "Hinthia", icon: AIIcon },
-      { id: "categories", label: "Categorie", icon: CategoryIcon },
-      { id: "import-export", label: "Importa/Esporta", icon: ImportExportIcon },
-    ],
-  },
-  {
-    label: "Personalizzazione",
-    tabs: [
-      {
-        id: "appearance",
-        label: "Aspetto",
-        icon: SlidersIcon,
-        sections: [
-          { id: "theme", label: "Tema", icon: ThemeIcon },
-          { id: "capsules", label: "Capsule", icon: CapsuleIcon },
-          { id: "archive", label: "Archivio", icon: ArchiveIcon },
-        ],
-      },
-      { id: "onboarding", label: "Onboarding", icon: ChecklistIcon },
-    ],
-  },
+/**
+ * Sei pagine, ognuna col nome di ciò che ci si fa (prima erano undici voci e due sottomenu, raggruppate per categorie che
+ * non dicevano cosa c'era dentro). Dentro ogni pagina, i blocchi: v. SettingsBlock. Il nome della pagina è anche il titolo
+ * della pagina stessa, e quello che si cerca nella ricerca.
+ */
+const TABS: TabDef[] = [
+  { id: "profile", label: "Profilo", icon: UserIcon },
+  { id: "security", label: "Accesso e sicurezza", icon: SecurityIcon },
+  { id: "privacy", label: "Privacy e Hinthia", icon: EyeIcon },
+  { id: "data", label: "I miei dati", icon: CategoryIcon },
+  { id: "preferences", label: "Aspetto e preferenze", icon: SlidersIcon },
   // Sola eccezione di colore: resta nel proprio rosso/arancio di avviso invece del blu del logo, essendo l'unica voce di rischio.
-  { label: null, tabs: [{ id: "danger-zone", label: "Zona pericolosa", icon: AlertTriangleIcon }] },
+  { id: "danger-zone", label: "Zona pericolosa", icon: AlertTriangleIcon },
 ];
 
-const TABS: TabDef[] = TAB_GROUPS.flatMap((group) => group.tabs);
+const TAB_LABELS = Object.fromEntries(TABS.map((t) => [t.id, t.label])) as Record<Tab, string>;
 
-/** Chiave di una vista: la voce da sola, oppure `voce/funzione`; è ciò che le dissolvenze confrontano. */
-function viewKey(tab: Tab, section: string | null): string {
-  return section ? `${tab}/${section}` : tab;
-}
-
-function parseViewKey(key: string): { tab: Tab; section: string | null } {
-  const [tab, section] = key.split("/");
-  return { tab: tab as Tab, section: section ?? null };
-}
-
-/** Titolo, descrizione e corpo di una funzione: il corpo occupa tutta la larghezza disponibile della pagina. */
-function FunctionBlock({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="flex w-full flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{title}</h2>
-        {description ? <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{description}</p> : null}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-/** Riga di un elenco mobile (voce o funzione): icona, nome, freccia. */
-function MobileRow({
-  icon: Icon,
-  label,
-  danger,
-  onClick,
-}: {
-  icon: IconComponent;
-  label: string;
-  danger?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <li>
-      <button
-        type="button"
-        onClick={onClick}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
-      >
-        <Icon
-          width={20}
-          height={20}
-          className={cn("shrink-0", danger ? "text-red-600 dark:text-red-400" : "text-accent")}
-        />
-        <span className={cn("flex-1", danger ? "text-red-600 dark:text-red-400" : undefined)}>{label}</span>
-        <span aria-hidden="true" className="text-zinc-500 dark:text-zinc-500">
-          ›
-        </span>
-      </button>
-    </li>
-  );
-}
-
-/** Consigli statici per il pannello Aiuto di ogni tab (v. feedback utente: niente più testo descrittivo fisso
- * sotto ogni titolo). Un pannello per tab, non uno per Impostazioni intera: il contenuto cambia con `tab`. */
+/** Consigli statici per il pannello Aiuto di ogni pagina (v. feedback utente: niente più testo descrittivo fisso sotto ogni titolo). */
 const TAB_HELP: Record<Tab, HelpTip[]> = {
-  "user-info": [
+  profile: [
     { icon: "👤", text: "Nome, email e data di nascita: usati per la scheda d'emergenza e per farti riconoscere dagli amici." },
     { icon: "🖼️", text: "Cambia il tuo avatar da qui, in qualunque momento." },
   ],
-  onboarding: [
-    { icon: "✅", text: "La checklist guidata per completare la configurazione di Hinthial." },
-    { icon: "🔁", text: "Puoi riaprirla in ogni momento dal gadget nella barra laterale." },
+  security: [
+    { icon: "🔐", text: "Attiva la verifica in due passaggi per un accesso più sicuro." },
+    { icon: "👆", text: "“Dispositivi fidati” sblocca il vault con l'impronta o Face ID, senza digitare la master password." },
+    { icon: "📜", text: "Il registro delle attività elenca ogni accesso e azione sensibile sul tuo account; si filtra per periodo, area, tipo di evento o singolo elemento." },
   ],
   privacy: [
-    { icon: "👁️", text: "Dati reali del tuo account: non richiede la master password sbloccata." },
-    { icon: "📊", text: "Solo conteggi e informazioni mai cifrate: niente contenuto dei tuoi documenti." },
-  ],
-  security: [
-    { icon: "🔐", text: "Attiva l'autenticazione a due fattori per un accesso più sicuro." },
-    { icon: "👆", text: "“Dispositivi fidati” sblocca il vault con l'impronta o Face ID, senza digitare la master password." },
-  ],
-  categories: [
-    { icon: "🏷️", text: "Le categorie predefinite coprono i casi più comuni; puoi aggiungerne altre." },
-    { icon: "✏️", text: "Rinomina o elimina una categoria in ogni momento." },
-  ],
-  appearance: [
-    { icon: "🎨", text: "Il tema e le preferenze delle capsule e dell'Archivio: tutto qui." },
-    { icon: "📱", text: "Le scelte restano le stesse su tutti i tuoi dispositivi." },
-  ],
-  activity: [
-    { icon: "📜", text: "Il registro di ogni accesso e azione sensibile sul tuo account." },
-    { icon: "🔍", text: "Filtra per periodo, area, tipo di evento o singolo elemento: i filtri restano nell'indirizzo della pagina." },
-  ],
-  "import-export": [
-    { icon: "📤", text: "Esporta tutti i tuoi dati in un unico archivio cifrato." },
-    { icon: "📥", text: "Importa amici o beni da un file .csv compilato." },
-  ],
-  ai: [
+    { icon: "👁️", text: "Dati reali del tuo account: non richiede la master password sbloccata. Solo conteggi e informazioni mai cifrate, niente contenuto dei tuoi documenti." },
     { icon: "🔒", text: "Per impostazione predefinita nessuna funzione di Hinthia è attiva." },
-    { icon: "🎚️", text: "Il cancello generale accende solo la possibilità di attivare le singole funzioni, una per una." },
-    { icon: "🏷️", text: "Il consenso all'estrazione avanzata si dà anche per categoria, qui sotto." },
+    { icon: "🎚️", text: "Il cancello generale accende solo la possibilità di attivare le singole funzioni, una per una; il consenso all'estrazione avanzata si dà anche per categoria." },
+  ],
+  data: [
+    { icon: "🏷️", text: "Le categorie predefinite coprono i casi più comuni; puoi aggiungerne altre, rinominarle o eliminarle." },
+    { icon: "📤", text: "Esporta tutti i tuoi dati in un unico archivio cifrato, o importa amici e beni da un file .csv compilato." },
+    { icon: "🗑️", text: "Il Cestino tiene i documenti eliminati per il tempo che scegli qui." },
+  ],
+  preferences: [
+    { icon: "🎨", text: "Stile e tema valgono su questo dispositivo; le preferenze delle capsule restano le stesse su tutti i tuoi dispositivi." },
+    { icon: "✅", text: "La guida iniziale si riapre in ogni momento anche dal gadget nella barra laterale." },
   ],
   "danger-zone": [
-    { icon: "⚠️", text: "“Cancella tutto” svuota Archivio, Beni, Amici e Capsule: non si può annullare." },
+    { icon: "⚠️", text: "“Reimposta l'account” svuota Archivio, Beni, Amici e Capsule: non si può annullare." },
     { icon: "🗑️", text: "Cancellare l'account è definitivo: non sarà più possibile accedere." },
   ],
 };
@@ -248,328 +114,271 @@ export function SettingsTabs({
   avatarPath: string | null;
   avatarUrl: string | null;
   birthDate: string | null;
-  /** Da `?tab=` (es. il link "Vedi tutto" della cronologia di un documento): ignorato se non è una scheda esistente. */
+  /** Da `?tab=` (es. il link "Vedi tutto" della cronologia di un documento): ignorato se non è una pagina esistente. Valgono anche i nomi di prima. */
   initialTab?: string;
-  /** Da `?section=`: la funzione di una voce a due livelli (es. `?tab=appearance&section=theme`); ignorata se non esiste in quella voce. */
+  /** Da `?section=`: il blocco da portare in vista, o (coi nomi di prima) la funzione di una voce a due livelli. */
   initialSection?: string;
-  /** Filtri iniziali di Attività, da `?from=&entity=...` (es. il link "Vedi attività di questo contenuto" da un documento). */
+  /** Filtri iniziali del registro delle attività, da `?from=&entity=...` (es. il link "Vedi attività di questo contenuto" da un documento). */
   activityParams?: AuditFilterParams;
 }) {
-  const startTabDef = TABS.find((t) => t.id === initialTab) ?? null;
-  const startTab = startTabDef?.id ?? null;
-  const startSection = startTabDef?.sections?.find((s) => s.id === initialSection)?.id ?? null;
-  const [tab, setTab] = useState<Tab>(startTab ?? "user-info");
-  // Desktop: una voce a due livelli mostra sempre una funzione (la prima, se non se n'è scelta un'altra).
-  const [section, setSection] = useState<string | null>(startSection ?? startTabDef?.sections?.[0]?.id ?? null);
-  // Il contenuto dissolve verso la scheda scelta invece di sostituirsi di scatto; il tasto (che usa `tab`/`section`, non la vista mostrata) risponde subito al click.
-  const { displayed: displayedKey, visible: tabContentVisible } = useCrossfade(viewKey(tab, section), 150);
-  const displayedView = parseViewKey(displayedKey);
+  const start = resolveSettingsTarget(initialTab, initialSection);
+  const [tab, setTab] = useState<Tab>(start?.tab ?? "profile");
+  // Il contenuto dissolve verso la pagina scelta invece di sostituirsi di scatto; il tasto (che usa `tab`, non la vista mostrata) risponde subito al click.
+  const { displayed: displayedTab, visible: tabContentVisible } = useCrossfade(tab, 150);
+  // Mobile: elenco delle pagine -> pagina, indipendente dal layout desktop (`lg:hidden`/`hidden lg:flex`). `null` = mostra l'elenco.
+  const [mobileTab, setMobileTab] = useState<Tab | null>(start?.tab ?? null);
+  const { displayed: displayedMobileTab, visible: mobileViewVisible } = useCrossfade(mobileTab, 150);
+  // Il blocco da portare in vista: dall'indirizzo, o da un risultato di ricerca. `n` distingue due richieste dello stesso blocco.
+  const [focus, setFocus] = useState<{ block: string | null; n: number }>({ block: start?.block ?? null, n: 0 });
 
-  function selectTab(def: TabDef) {
-    setTab(def.id);
-    setSection(def.sections?.[0]?.id ?? null);
+  function selectTab(next: Tab) {
+    setTab(next);
+    setFocus((f) => ({ block: null, n: f.n + 1 }));
   }
 
-  // Mobile: elenco delle voci -> (per le voci a due livelli, elenco delle funzioni ->) dettaglio, indipendente dal layout desktop (`lg:hidden`/`hidden lg:flex`). `null` = mostra l'elenco.
-  const [mobileSection, setMobileSection] = useState<Tab | null>(startTab);
-  const [mobileSub, setMobileSub] = useState<string | null>(startSection);
-  const mobileKey = mobileSection === null ? "list" : viewKey(mobileSection, mobileSub);
-  const { displayed: displayedMobileKey, visible: mobileViewVisible } = useCrossfade(mobileKey, 150);
-  const displayedMobile = displayedMobileKey === "list" ? null : parseViewKey(displayedMobileKey);
-  const displayedMobileTab = displayedMobile ? (TABS.find((t) => t.id === displayedMobile.tab) ?? null) : null;
+  function selectMobile(next: Tab) {
+    setMobileTab(next);
+    setFocus((f) => ({ block: null, n: f.n + 1 }));
+  }
 
-  /** Il contenuto di una scheda --- condiviso tra il layout desktop (schede + contenuto sempre insieme) e il dettaglio mobile (una voce alla volta), così le due navigazioni indipendenti non duplicano la logica di quale pannello mostrare. */
-  function renderPanel(activeTab: Tab, activeSection: string | null) {
-    if (activeTab === "user-info") {
-      return (
-        <UserInfoPanel
-          userId={userId}
-          firstName={firstName}
-          lastName={lastName}
-          email={email}
-          avatarPath={avatarPath}
-          avatarUrl={avatarUrl}
-          birthDate={birthDate}
-        />
-      );
-    }
-    if (activeTab === "onboarding") {
-      // Serve i dati decifrati per calcolare l'avanzamento --- richiede la master key sbloccata.
-      return (
-        <RequireMasterKey inline>{(masterKey) => <OnboardingSettingsPanel masterKey={masterKey} />}</RequireMasterKey>
-      );
-    }
-    if (activeTab === "privacy") {
-      // Solo conteggi e colonne mai cifrate: non richiede la master key.
-      return (
-        <PrivacyPanel
-          userId={userId}
-          firstName={firstName}
-          lastName={lastName}
-          email={email}
-          birthDate={birthDate}
-        />
-      );
-    }
-    if (activeTab === "security") {
-      // Layer di identità (login), non di cifratura: non richiede la master key. "Dispositivi fidati" la sblocca da sé nel proprio modulo, per non forzare uno sblocco solo per vedere lo stato dell'MFA.
-      if (activeSection === "trusted-devices") {
+  function goTo(entry: SettingsEntry) {
+    setTab(entry.tab);
+    setMobileTab(entry.tab);
+    setFocus((f) => ({ block: entry.block, n: f.n + 1 }));
+  }
+
+  /** Il contenuto di una pagina: condiviso tra il layout desktop e quello mobile, così le due navigazioni indipendenti non duplicano la logica di quale pannello mostrare. */
+  function renderPanel(active: Tab) {
+    switch (active) {
+      case "profile":
         return (
-          <FunctionBlock
-            title="Dispositivi fidati"
-            description="Sblocca il vault con l'impronta o Face ID su questo dispositivo, invece della master password."
-          >
-            <DeviceLockPanel userId={userId} />
-          </FunctionBlock>
+          <UserInfoPanel
+            userId={userId}
+            firstName={firstName}
+            lastName={lastName}
+            email={email}
+            avatarPath={avatarPath}
+            avatarUrl={avatarUrl}
+            birthDate={birthDate}
+          />
         );
-      }
-      return <MfaSettingsPanel userId={userId} />;
-    }
-    if (activeTab === "ai") {
-      // Non richiede la master key: il consenso riguarda solo dati già decifrati e mostrati altrove (v. RaccontamiPage e PageHelp).
-      return (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Hinthia
-          </h2>
-          <AIConsentSettings />
-        </div>
-      );
-    }
-    if (activeTab === "categories") {
-      return <CategoriesPanel />;
-    }
-    if (activeTab === "appearance") {
-      if (activeSection === "capsules") {
+      case "security":
+        // Layer di identità (login), non di cifratura: non richiede la master key. "Dispositivi fidati" la sblocca da sé nel proprio modulo, per non forzare uno sblocco solo per vedere lo stato dell'MFA. Il registro è in chiaro: con vault sbloccato mostra anche i nomi degli elementi.
         return (
-          <div className="flex flex-col gap-8">
-            <FunctionBlock
-              title="Come si aprono"
-              description="L'effetto con cui chi riceve una capsula la vede aprirsi, una volta disponibile. Qui scegli quello che ti propongo quando ne crei una; per ognuna puoi sceglierne un altro."
+          <div className="flex flex-col">
+            <MfaSettingsPanel userId={userId} />
+            <SettingsBlock
+              id="trusted-devices"
+              title="Dispositivi fidati"
+              description="Sblocca il vault con l'impronta o Face ID su questo dispositivo, invece della master password."
             >
-              <CapsuleOpenEffectSettings />
-            </FunctionBlock>
-            <FunctionBlock title="Capsule" description="Elementi visivi propri di questa sezione.">
-              <CapsuleCountdownSettings />
-            </FunctionBlock>
+              <DeviceLockPanel userId={userId} />
+            </SettingsBlock>
+            <SettingsBlock
+              id="activity"
+              title="Registro delle attività"
+              description="Tutto ciò che è successo sul tuo account e sui tuoi contenuti: cosa è stato fatto e quando. Il contenuto dei tuoi dati resta privato."
+              collapsible
+            >
+              <AuditLogPanel initialParams={activityParams} />
+            </SettingsBlock>
           </div>
         );
-      }
-      if (activeSection === "archive") {
+      case "privacy":
+        // Non richiedono la master key: solo conteggi e colonne mai cifrate, e il consenso riguarda dati già decifrati e mostrati altrove (v. RaccontamiPage e PageHelp).
         return (
-          <FunctionBlock title="Archivio" description="Quanto restano i documenti nel Cestino prima di sparire per sempre.">
-            <TrashRetentionSettings />
-          </FunctionBlock>
+          <div className="flex flex-col">
+            <SettingsBlock
+              id="know"
+              title="Cosa sa Hinthial di te"
+              description="I dati reali e attuali del tuo account. Il contenuto di ciò che ci affidi resta cifrato sul tuo dispositivo prima ancora di lasciarlo."
+            >
+              <PrivacyPanel
+                userId={userId}
+                firstName={firstName}
+                lastName={lastName}
+                email={email}
+                birthDate={birthDate}
+              />
+            </SettingsBlock>
+            <SettingsBlock
+              id="hinthia"
+              title="Hinthia"
+              description="Le funzioni di intelligenza artificiale. Nessuna è attiva finché non la accendi tu, una per una."
+            >
+              <AIConsentSettings />
+            </SettingsBlock>
+          </div>
         );
-      }
-      return (
-        <div className="flex flex-col gap-8">
-          <FunctionBlock
-            title="Stile"
-            description="I colori dell'app. Cambia solo come appare, non ciò che puoi fare. Vale su questo dispositivo."
-          >
-            <StyleToggle />
-          </FunctionBlock>
-          <FunctionBlock
-            title="Tema"
-            description="Scegli l'aspetto dell'app, o lascia che segua le impostazioni del tuo dispositivo."
-          >
-            <ThemeToggle />
-          </FunctionBlock>
-        </div>
-      );
+      case "data":
+        return (
+          <div className="flex flex-col">
+            <SettingsBlock
+              id="import-export"
+              title="Importa ed esporta"
+              description="Esporta tutti i tuoi dati in un archivio cifrato, o importa amici e beni da un file .csv."
+            >
+              {/* ImportExportTabs gestisce da sé le proprie sotto-schede e il proprio RequireMasterKey. */}
+              <ImportExportTabs firstName={firstName} lastName={lastName} email={email} />
+            </SettingsBlock>
+            <SettingsBlock
+              id="trash"
+              title="Cestino"
+              description="Quanto restano i documenti nel Cestino prima di sparire per sempre."
+            >
+              <TrashRetentionSettings />
+            </SettingsBlock>
+            <SettingsBlock
+              id="categories"
+              title="Categorie"
+              description="Quelle iniziali sono un punto di partenza: aggiungi, rinomina o elimina le tue."
+            >
+              <CategoriesPanel />
+            </SettingsBlock>
+          </div>
+        );
+      case "preferences":
+        return (
+          <div className="flex flex-col">
+            <SettingsBlock
+              id="style"
+              title="Stile"
+              description="I colori dell'app. Cambia solo come appare, non ciò che puoi fare. Vale su questo dispositivo."
+            >
+              <StyleToggle />
+            </SettingsBlock>
+            <SettingsBlock
+              id="theme"
+              title="Tema"
+              description="Scegli l'aspetto dell'app, o lascia che segua le impostazioni del tuo dispositivo."
+            >
+              <ThemeToggle />
+            </SettingsBlock>
+            <SettingsBlock
+              id="capsule-effect"
+              title="Come si aprono le capsule"
+              description="L'effetto con cui chi riceve una capsula la vede aprirsi. Qui scegli quello che ti propongo quando ne crei una; per ognuna puoi sceglierne un altro."
+            >
+              <CapsuleOpenEffectSettings />
+            </SettingsBlock>
+            <SettingsBlock
+              id="capsule-countdown"
+              title="Conto alla rovescia"
+              description="Se mostrare i giorni, le ore e i minuti che mancano all'apertura di una capsula."
+            >
+              <CapsuleCountdownSettings />
+            </SettingsBlock>
+            <SettingsBlock
+              id="onboarding"
+              title="Guida iniziale"
+              description="La checklist per completare la configurazione di Hinthial."
+            >
+              {/* Serve i dati decifrati per calcolare l'avanzamento --- richiede la master key sbloccata. */}
+              <RequireMasterKey inline>{(masterKey) => <OnboardingSettingsPanel masterKey={masterKey} />}</RequireMasterKey>
+            </SettingsBlock>
+          </div>
+        );
+      case "danger-zone":
+        // "Reimposta l'account" ha bisogno della master key sbloccata per scoprire i path da rimuovere in Storage.
+        return (
+          <RequireMasterKey inline>{(masterKey) => <DangerZonePanel userId={userId} masterKey={masterKey} />}</RequireMasterKey>
+        );
     }
-    if (activeTab === "activity") {
-      // Il registro è in chiaro: non richiede la master key (con vault sbloccato mostra anche i nomi degli elementi).
-      return <AuditLogPanel initialParams={activityParams} />;
-    }
-    if (activeTab === "import-export") {
-      // ImportExportTabs gestisce da sé le proprie sotto-schede e il proprio RequireMasterKey.
-      return <ImportExportTabs firstName={firstName} lastName={lastName} email={email} />;
-    }
-    // "Cancella tutto" ha bisogno della master key sbloccata per scoprire i path da rimuovere in Storage.
-    return (
-      <RequireMasterKey inline>{(masterKey) => <DangerZonePanel userId={userId} masterKey={masterKey} />}</RequireMasterKey>
-    );
   }
 
-  const mobileBackLabel = displayedMobile?.section && displayedMobileTab ? displayedMobileTab.label : "Torna alle impostazioni";
-  // La funzione di una voce a due livelli porta già il proprio titolo nel corpo; la voce senza funzioni, e l'elenco delle sue funzioni, hanno il titolo qui.
-  const mobileIsFunction = displayedMobile?.section != null;
-  const mobileIsFunctionList = displayedMobileTab?.sections != null && !mobileIsFunction;
+  const mobileTabDef = displayedMobileTab ? TABS.find((t) => t.id === displayedMobileTab) : null;
+  const desktopTabDef = TABS.find((t) => t.id === displayedTab);
 
   return (
-    <>
-      {/* Mobile: elenco delle voci -> (elenco delle funzioni ->) dettaglio, con un tasto per tornare indietro. */}
+    <SettingsFocusContext.Provider value={focus}>
+      {/* Mobile: elenco delle pagine -> pagina, con un tasto per tornare indietro. */}
       <div className="lg:hidden">
-        <div
-          className={cn(
-            "transition-opacity duration-150",
-            mobileViewVisible ? "opacity-100" : "opacity-0",
-          )}
-        >
-          {displayedMobile === null || displayedMobileTab === null ? (
-            // Un blocco per gruppo: il nome del gruppo vive sopra e fuori dal proprio blocco.
-            <div className="flex flex-col gap-6">
-              {TAB_GROUPS.map((group, groupIndex) => (
-                <div key={group.label ?? `group-${groupIndex}`} className="flex flex-col gap-2">
-                  {group.label ? (
-                    <p className="px-1 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-500">
-                      {group.label}
-                    </p>
-                  ) : null}
-                  <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
-                    {group.tabs.map((t) => (
-                      <MobileRow
-                        key={t.id}
-                        icon={t.icon}
-                        label={t.label}
-                        danger={t.id === "danger-zone"}
-                        onClick={() => {
-                          setMobileSub(null);
-                          setMobileSection(t.id);
-                        }}
-                      />
-                    ))}
-                  </ul>
-                </div>
-              ))}
+        <div className={cn("transition-opacity duration-150", mobileViewVisible ? "opacity-100" : "opacity-0")}>
+          {mobileTabDef === null || mobileTabDef === undefined ? (
+            <div className="flex flex-col gap-4">
+              <SettingsSearch tabLabels={TAB_LABELS} onSelect={goTo} />
+              <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+                {TABS.map((t) => {
+                  const danger = t.id === "danger-zone";
+                  return (
+                    <li key={t.id}>
+                      <button
+                        type="button"
+                        onClick={() => selectMobile(t.id)}
+                        className="flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                      >
+                        <t.icon width={20} height={20} className={cn("shrink-0", danger ? "text-red-600 dark:text-red-400" : "text-accent")} />
+                        <span className={cn("flex-1", danger ? "text-red-600 dark:text-red-400" : undefined)}>{t.label}</span>
+                        <span aria-hidden="true" className="text-zinc-500 dark:text-zinc-500">
+                          ›
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="@container flex flex-col gap-4">
               <div className="flex items-start justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => (mobileSub ? setMobileSub(null) : setMobileSection(null))}
-                  className={BACK_LINK_CLASS}
-                >
-                  <span aria-hidden="true">←</span> {mobileBackLabel}
+                <button type="button" onClick={() => setMobileTab(null)} className={BACK_LINK_CLASS}>
+                  <span aria-hidden="true">←</span> Torna alle impostazioni
                 </button>
-                {mobileIsFunction ? (
-                  <PageHelp title={displayedMobileTab.label} tips={TAB_HELP[displayedMobileTab.id]} />
-                ) : null}
+                <PageHelp title={mobileTabDef.label} tips={TAB_HELP[mobileTabDef.id]} />
               </div>
-              {mobileIsFunction ? null : (
-                <div className="flex items-start justify-between gap-3">
-                  <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{displayedMobileTab.label}</h2>
-                  <PageHelp title={displayedMobileTab.label} tips={TAB_HELP[displayedMobileTab.id]} />
-                </div>
-              )}
-              {mobileIsFunctionList ? (
-                <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
-                  {displayedMobileTab.sections?.map((sec) => (
-                    <MobileRow key={sec.id} icon={sec.icon} label={sec.label} onClick={() => setMobileSub(sec.id)} />
-                  ))}
-                </ul>
-              ) : (
-                renderPanel(displayedMobile.tab, displayedMobile.section)
-              )}
+              <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">{mobileTabDef.label}</h2>
+              {renderPanel(mobileTabDef.id)}
             </div>
           )}
         </div>
       </div>
 
-      {/* Desktop: schede laterali (con le funzioni sotto la voce aperta) + contenuto, sempre visibili insieme. */}
+      {/* Desktop: pagine a sinistra, contenuto a destra, sempre visibili insieme. */}
       <div className="hidden lg:flex lg:gap-10">
-        <div
-          role="tablist"
-          aria-orientation="vertical"
-          className="flex shrink-0 flex-col gap-1 lg:w-60 lg:border-r lg:border-zinc-200 lg:pr-4 dark:lg:border-zinc-800"
-        >
-          {TAB_GROUPS.map((group, groupIndex) => (
-            <div key={group.label ?? `group-${groupIndex}`} className="flex flex-col gap-1">
-              {group.label ? (
-                <p
+        <div className="flex shrink-0 flex-col gap-4 lg:w-60 lg:border-r lg:border-zinc-200 lg:pr-4 dark:lg:border-zinc-800">
+          <SettingsSearch tabLabels={TAB_LABELS} onSelect={goTo} />
+          <div role="tablist" aria-orientation="vertical" className="flex flex-col gap-1">
+            {TABS.map((t, i) => {
+              const danger = t.id === "danger-zone";
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.id}
+                  onClick={() => selectTab(t.id)}
                   className={cn(
-                    "px-3 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-500",
-                    groupIndex === 0 ? undefined : "mt-3",
+                    "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
+                    danger && i > 0 ? "mt-3" : undefined,
+                    tab === t.id
+                      ? danger
+                        ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                        : "bg-brand/10 text-accent"
+                      : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
                   )}
                 >
-                  {group.label}
-                </p>
-              ) : null}
-              {group.tabs.map((t) => (
-                <div key={t.id} className="flex flex-col gap-1">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={tab === t.id}
-                    aria-expanded={t.sections ? tab === t.id : undefined}
-                    onClick={() => selectTab(t)}
-                    className={cn(
-                      "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
-                      tab === t.id
-                        ? t.id === "danger-zone"
-                          ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                          : "bg-brand/10 text-accent"
-                        : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
-                    )}
-                  >
-                    {/* Icona sempre blu a prescindere dallo stato attivo/inattivo, eccetto "Zona pericolosa" nel proprio colore di avviso. */}
-                    <t.icon
-                      width={20}
-                      height={20}
-                      className={cn(
-                        "shrink-0",
-                        t.id === "danger-zone" ? "text-red-600 dark:text-red-400" : "text-accent",
-                      )}
-                    />
-                    <span className="flex-1">{t.label}</span>
-                    {t.sections ? (
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          "text-zinc-500 transition-transform dark:text-zinc-500",
-                          tab === t.id ? "rotate-90" : undefined,
-                        )}
-                      >
-                        ›
-                      </span>
-                    ) : null}
-                  </button>
-                  {t.sections && tab === t.id ? (
-                    <div className="ml-5 flex flex-col gap-0.5 border-l border-zinc-200 pl-2 dark:border-zinc-800">
-                      {t.sections.map((sec) => (
-                        <button
-                          key={sec.id}
-                          type="button"
-                          role="tab"
-                          aria-selected={section === sec.id}
-                          onClick={() => setSection(sec.id)}
-                          className={cn(
-                            "flex items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
-                            section === sec.id
-                              ? "bg-brand/10 text-accent"
-                              : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
-                          )}
-                        >
-                          <sec.icon width={16} height={16} className="shrink-0 text-accent" />
-                          {sec.label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          ))}
+                  {/* Icona sempre blu a prescindere dallo stato attivo/inattivo, eccetto "Zona pericolosa" nel proprio colore di avviso. */}
+                  <t.icon width={20} height={20} className={cn("shrink-0", danger ? "text-red-600 dark:text-red-400" : "text-accent")} />
+                  <span className="flex-1">{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div
           className={cn(
-            "min-w-0 flex-1 transition-opacity duration-150",
+            "@container min-w-0 flex-1 transition-opacity duration-150",
             tabContentVisible ? "opacity-100" : "opacity-0",
           )}
         >
-          <div className="mb-4 flex justify-end">
-            <PageHelp
-              title={TABS.find((t) => t.id === displayedView.tab)?.label ?? ""}
-              tips={TAB_HELP[displayedView.tab]}
-            />
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">{desktopTabDef?.label}</h2>
+            {desktopTabDef ? <PageHelp title={desktopTabDef.label} tips={TAB_HELP[desktopTabDef.id]} /> : null}
           </div>
-          {renderPanel(displayedView.tab, displayedView.section)}
+          {renderPanel(displayedTab)}
         </div>
       </div>
-    </>
+    </SettingsFocusContext.Provider>
   );
 }

@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-20 (137)
+
+### Impostazioni riordinate: sei pagine, blocchi chiari e una ricerca
+
+**Cosa fa:**
+- Le Impostazioni passano da undici voci (più due sottomenu) a sei pagine con il nome di ciò che ci si fa: **Profilo**, **Accesso e sicurezza**, **Privacy e Hinthia**, **I miei dati**, **Aspetto e preferenze**, **Zona pericolosa**. Niente più sottomenu.
+- Dentro ogni pagina, ogni cosa sta in un blocco: a sinistra il titolo e una frase che dice a cosa serve, a destra i comandi. Prima erano colonne di titoli e moduli tutti uguali.
+- Cose che prima si trovavano per tentativi ora stanno dove te le aspetti: il Cestino con i dati ("I miei dati"), la guida iniziale e le preferenze delle capsule con l'aspetto, il registro delle attività con la sicurezza (resta chiuso finché non lo apri, perché è lungo).
+- Una **ricerca** in cima: scrivi "cestino", "impronta" o "scuro" e vai dritto al blocco giusto, anche in un'altra pagina.
+- I link di prima (`?tab=activity`, `?tab=ai`…) continuano a funzionare e portano al punto nuovo. I testi che rimandano alle Impostazioni (Hinthia, Cestino, registro) usano i nomi nuovi, e il rimando a Hinthia apre direttamente il blocco.
+
+**Note tecniche:** nuovi `SettingsBlock` (blocco a due colonne via container query, richiudibile, apertura e scorrimento sul blocco richiesto tramite `SettingsFocusContext`), `SettingsSearch` e `settings-index.ts` (indice, ricerca senza accenti, traduzione dei vecchi indirizzi: logica pura, provata da `settings-index.test.ts`). `SettingsTabs` riscritto (una sola vista mobile: elenco -> pagina). I pannelli (`UserInfoPanel`, `MfaSettingsPanel`, `AuditLogPanel`, `CategoriesPanel`, `PrivacyPanel`, `AvatarUploadForm`) hanno perso il proprio titolo, ora nel blocco. I test e2e che cliccavano le vecchie schede usano i nomi nuovi; il registro attività si apre con "Apri Registro delle attività". Ricerca e ritorno provati in `mobile-settings-nav.spec.ts`.
+
+---
+
 ## 2026-10-20 (136)
 
 ### I "Torna a…" si vedono e portano dove si era prima

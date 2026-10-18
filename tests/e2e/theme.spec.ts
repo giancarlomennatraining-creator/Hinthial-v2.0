@@ -22,7 +22,7 @@ test("lo stile (Foglia, Notte, Luce) si sceglie in Aspetto → Tema, cambia i co
   const foglia = await brand();
 
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("tab", { name: "Aspetto e preferenze" }).click();
   await expect(page.getByRole("radio", { name: /Foglia/ })).toHaveAttribute("aria-checked", "true");
 
   await page.getByRole("radio", { name: /Notte/ }).click();
@@ -34,13 +34,13 @@ test("lo stile (Foglia, Notte, Luce) si sceglie in Aspetto → Tema, cambia i co
   // Resta a un refresh vero, e un tema scuro sopra lo stile cambia ancora i colori senza cambiare lo stile.
   await page.reload();
   await expect(html).toHaveAttribute("data-stile", "notte");
-  await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("tab", { name: "Aspetto e preferenze" }).click();
   await page.getByRole("radio", { name: "Scuro" }).click();
   await expect(html).toHaveClass(/dark/);
   await expect(html).toHaveAttribute("data-stile", "notte");
   expect(await brand()).not.toBe(notte);
 
-  await page.getByRole("radio", { name: /Luce/ }).click();
+  await page.getByRole("radio", { name: /^Luce(?! e lettera)/ }).click();
   await expect(html).toHaveAttribute("data-stile", "luce");
   await expect(html).toHaveClass(/dark/);
 
@@ -76,7 +76,7 @@ test("il toggle del tema in Impostazioni applica la classe dark e persiste al re
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("tab", { name: "Aspetto e preferenze" }).click();
   await expect(page.getByRole("heading", { name: "Tema" })).toBeVisible();
 
   const html = page.locator("html");
@@ -95,7 +95,7 @@ test("il toggle del tema in Impostazioni applica la classe dark e persiste al re
   // Persiste a un refresh vero (localStorage, letto dallo script inline prima del primo paint).
   await page.reload();
   await expect(html).toHaveClass(/dark/);
-  await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("tab", { name: "Aspetto e preferenze" }).click();
   await expect(page.getByRole("radio", { name: "Scuro" })).toHaveAttribute("aria-checked", "true");
 
   await lightRadio.click();

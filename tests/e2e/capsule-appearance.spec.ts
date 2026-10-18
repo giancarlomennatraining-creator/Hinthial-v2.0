@@ -33,8 +33,7 @@ test("l'effetto delle capsule si sceglie in Impostazioni > Aspetto > Capsule, si
   const user = await setUpWithDocument(page);
 
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Aspetto" }).click();
-  await page.getByRole("tab", { name: "Capsule" }).click();
+  await page.getByRole("tab", { name: "Aspetto e preferenze" }).click();
 
   // L'effetto predefinito: cinque scelte, ognuna con "Provalo".
   const effetti = page.getByRole("radiogroup", { name: "Effetto di apertura predefinito" });

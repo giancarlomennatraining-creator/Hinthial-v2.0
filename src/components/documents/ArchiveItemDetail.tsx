@@ -810,7 +810,7 @@ export function ArchiveItemDetail({
             )}
           </section>
           <Link
-            href={`/settings?tab=activity&entity=document:${doc.id}`}
+            href={`/settings?tab=security&section=activity&entity=document:${doc.id}`}
             className="self-start text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
           >
             Vedi attività di questo contenuto →

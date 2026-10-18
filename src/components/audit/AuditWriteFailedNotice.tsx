@@ -22,7 +22,7 @@ export function AuditWriteFailedNotice() {
         className="pointer-events-auto flex max-w-md items-start gap-3 rounded-xl bg-amber-500 px-4 py-3 text-sm text-zinc-950 shadow-lg"
       >
         <p className="flex-1">
-          L&apos;azione è stata eseguita, ma non è stato possibile registrarla in Impostazioni &gt; Attività.
+          L&apos;azione è stata eseguita, ma non è stato possibile registrarla in Impostazioni &gt; Accesso e sicurezza &gt; Registro delle attività.
         </p>
         <button
           type="button"

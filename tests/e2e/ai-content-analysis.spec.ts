@@ -88,8 +88,8 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
   // Attiva cancello generale + funzione, e abilita la categoria "Assicurazioni" per questo utente.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Hinthia" }).click();
-  await expect(page.getByRole("heading", { name: "Hinthia" })).toBeVisible();
+  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
+  await expect(page.getByRole("heading", { name: "Hinthia", exact: true })).toBeVisible();
 
   const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Hinthia" });
   await Promise.all([
@@ -150,13 +150,13 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
 
   // Il consenso per categoria, impostato in Impostazioni, resta impostato dopo un refresh.
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Hinthia" }).click();
+  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/categories") && res.request().method() === "PATCH"),
     // click e non check(): la categoria si spunta solo a salvataggio avvenuto, non subito.
     page.getByRole("checkbox", { name: "🛡️ Assicurazioni" }).click(),
   ]);
   await page.reload();
-  await page.getByRole("tab", { name: "Hinthia" }).click();
+  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
   await expect(page.getByRole("checkbox", { name: "🛡️ Assicurazioni" })).toBeChecked();
 });

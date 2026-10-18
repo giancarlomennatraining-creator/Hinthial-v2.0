@@ -146,7 +146,7 @@ export async function enableHinthia(page: Page) {
   const documentUrl = page.url();
 
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Hinthia" }).click();
+  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     page.getByRole("switch", { name: "Consenti l'uso di Hinthia" }).click(),

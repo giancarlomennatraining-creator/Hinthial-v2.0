@@ -9,7 +9,7 @@ import { askHinthia, enableHinthia, MASTER_PASSWORD, mockHinthiaReading, setUpWi
 
 async function openCategoriesSettings(page: import("@playwright/test").Page) {
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Categorie" }).click();
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   await expect(page.getByRole("heading", { name: "Categoria proposta per tipo di documento" })).toBeVisible({
     timeout: 20_000,
   });
@@ -38,7 +38,7 @@ test("la categoria proposta segue il tipo, e la scelta dell'utente la cambia", a
   await polizza.selectOption("none");
   await expect(polizza).toHaveValue("none");
   await page.reload();
-  await page.getByRole("tab", { name: "Categorie" }).click();
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   await expect(page.getByLabel("Polizza assicurativa")).toHaveValue("none", { timeout: 20_000 });
 
   // Rileggendo la scheda, la categoria dal tipo non c'è più: restano scadenza ed emittente.

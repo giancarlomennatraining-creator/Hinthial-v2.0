@@ -20,33 +20,35 @@ test.describe("smartphone", () => {
 
     await page.goto("/settings");
 
-    // Niente schede qui sotto md --- solo l'elenco delle voci.
+    // Niente schede qui sotto md --- solo l'elenco delle pagine (sei, senza sottomenu).
     await expect(page.getByRole("tab")).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Informazioni utente" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Aspetto" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Profilo" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Aspetto e preferenze" })).toBeVisible();
 
-    // Un click su una voce mostra solo il suo contenuto, con un tasto per tornare indietro.
-    await page.getByRole("button", { name: "Aspetto" }).click();
-    await expect(page.getByRole("button", { name: "Informazioni utente" })).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: "Aspetto", exact: true })).toBeVisible();
-    // Aspetto è a due livelli: prima l'elenco delle sue funzioni, poi il corpo di quella scelta.
-    await expect(page.getByRole("heading", { name: "Come si aprono" })).toHaveCount(0);
-    await page.getByRole("button", { name: "Capsule" }).click();
+    // Un click su una pagina mostra solo il suo contenuto, con un tasto per tornare indietro.
+    await page.getByRole("button", { name: "Aspetto e preferenze" }).click();
+    await expect(page.getByRole("button", { name: "Profilo" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Aspetto e preferenze", exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Come si aprono" })).toBeVisible();
-    await page.getByRole("button", { name: "Aspetto" }).click();
-    await expect(page.getByRole("button", { name: "Capsule" })).toBeVisible();
     const backButton = page.getByRole("button", { name: "Torna alle impostazioni" });
     await expect(backButton).toBeVisible();
 
     // Il tasto indietro torna all'elenco completo.
     await backButton.click();
-    await expect(page.getByRole("button", { name: "Informazioni utente" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Profilo" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Come si aprono" })).toHaveCount(0);
 
-    // Un'altra voce mostra il proprio contenuto (non quello di prima).
-    await page.getByRole("button", { name: "Informazioni utente" }).click();
+    // Un'altra pagina mostra il proprio contenuto (non quello di prima).
+    await page.getByRole("button", { name: "Profilo" }).click();
     await expect(page.getByLabel("Nome", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Come si aprono" })).toHaveCount(0);
+
+    // La ricerca porta dritto al blocco, anche in un'altra pagina.
+    await page.getByRole("button", { name: "Torna alle impostazioni" }).click();
+    await page.getByRole("searchbox", { name: "Cerca nelle impostazioni" }).fill("cestino");
+    await page.getByRole("button", { name: /Cestino/ }).click();
+    await expect(page.getByRole("heading", { name: "I miei dati", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Cestino" })).toBeVisible();
   });
 });
 
@@ -64,18 +66,14 @@ test("da desktop Impostazioni resta a schede, con contenuto sempre visibile a fi
 
   // Comportamento invariato: le schede ci sono già tutte, il contenuto
   // della prima è già visibile senza bisogno di scegliere nulla.
-  await expect(page.getByRole("tab", { name: "Informazioni utente" })).toHaveAttribute(
-    "aria-selected",
-    "true",
-  );
+  await expect(page.getByRole("tab", { name: "Profilo" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Nome", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Torna alle impostazioni" })).toHaveCount(0);
 
-  await page.getByRole("tab", { name: "Aspetto" }).click();
+  await page.getByRole("tab", { name: "Aspetto e preferenze" }).click();
   await expect(page.getByRole("heading", { name: "Tema" })).toBeVisible();
-  await page.getByRole("tab", { name: "Capsule" }).click();
   await expect(page.getByRole("heading", { name: "Come si aprono" })).toBeVisible();
   // La scheda "Informazioni utente" è ancora lì, a fianco (non sparita
   // come nel dettaglio mobile).
-  await expect(page.getByRole("tab", { name: "Informazioni utente" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Profilo" })).toBeVisible();
 });

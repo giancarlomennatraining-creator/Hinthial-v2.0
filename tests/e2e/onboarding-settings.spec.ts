@@ -33,7 +33,7 @@ test("Impostazioni > Onboarding mostra la percentuale, un messaggio e le attivit
   // master key vive solo in memoria e una navigazione vera la perderebbe,
   // ma questa scheda la richiede (v. RequireMasterKey in SettingsTabs).
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Onboarding" }).click();
+  await page.getByRole("tab", { name: "Aspetto e preferenze" }).click();
 
   // Percentuale in grande (2/7 -> 29%) e messaggio di incoraggiamento accanto.
   await expect(page.getByText("29%")).toBeVisible();
@@ -62,7 +62,7 @@ test("Impostazioni > Onboarding mostra la percentuale, un messaggio e le attivit
   // ...e il pulsante in Impostazioni > Onboarding lo nasconde, senza
   // bisogno di passare dal pannello del gadget stesso.
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Onboarding" }).click();
+  await page.getByRole("tab", { name: "Aspetto e preferenze" }).click();
   await page
     .getByRole("button", { name: "Nascondi l'indicatore dalla barra di navigazione" })
     .click();
@@ -75,7 +75,7 @@ test("Impostazioni > Onboarding mostra la percentuale, un messaggio e le attivit
 
   // Farlo ricomparire funziona allo stesso modo, in entrambe le direzioni.
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Onboarding" }).click();
+  await page.getByRole("tab", { name: "Aspetto e preferenze" }).click();
   await page
     .getByRole("button", { name: "Mostra di nuovo l'indicatore nella barra di navigazione" })
     .click();
