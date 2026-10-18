@@ -6,6 +6,7 @@ import { prefersReducedMotion } from "@/components/capsules/opening/helpers";
 import { OpenedBadge, ReadingPage } from "@/components/capsules/opening/OpenedParts";
 import type { OpenEffectProps } from "@/components/capsules/opening/types";
 import { cn } from "@/lib/utils";
+import { BACK_LINK_CLASS } from "@/components/ui/BackLink";
 
 /**
  * "Sblocco discreto": quasi nessuna scena. La pagina della capsula entra di lato, come qualunque altra pagina dell'app, con la
@@ -37,7 +38,7 @@ export function EffectDiscreet({ view, slots, onClose }: OpenEffectProps) {
       )}
     >
       <div className="mx-auto flex max-w-5xl flex-col gap-4 p-5 pr-14 sm:p-8 sm:pr-16">
-        <button type="button" onClick={onClose} className="w-fit text-sm font-semibold text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400">
+        <button type="button" onClick={onClose} className={BACK_LINK_CLASS}>
           ← Torna alle capsule
         </button>
         <div className="flex flex-wrap items-center gap-3">

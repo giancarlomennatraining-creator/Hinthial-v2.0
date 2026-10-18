@@ -10,6 +10,19 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-20 (136)
+
+### I "Torna a…" si vedono e portano dove si era prima
+
+**Cosa fa:**
+- Tutti i collegamenti per tornare indietro hanno lo stesso aspetto: testo verde in grassetto con una freccia, un'area da toccare di almeno 44 px su telefono e uno sfondo leggero al passaggio. Prima erano righe piccole e grigie, scritte in modo diverso da pagina a pagina, e si perdevano sopra il titolo.
+- Nelle pagine di dettaglio (documento e fascicolo) il ritorno porta alla pagina da cui si era arrivati e lo dice: "Torna al fascicolo" se si apre un documento dalla cronologia di un fascicolo, "Torna al documento" se si apre un fascicolo dalla scheda del documento, "Torna a Oggi" dalla Dashboard, e così per promemoria, capsule, beni, amici ed Eredità digitale. Se la pagina di partenza non si sa (si è aperto un indirizzo direttamente, o si è ricaricata la pagina), porta all'elenco: Archivio o Fascicoli.
+- Anche la rubrica e le Impostazioni su telefono, le pagine legali, "Protetti" (ora con "Torna agli amici" sopra il titolo) e la chiusura di una capsula discreta usano lo stesso stile.
+
+**Note tecniche:** nuovo `components/ui/BackLink.tsx` (`BackLink`, `ContextBackLink`, `NavigationTracker`, `BACK_LINK_CLASS`); `lib/back-target.ts` sceglie la destinazione dalla pagina di provenienza (tabella di origini ammesse, altrimenti il genitore); `lib/navigation-history.ts` tiene in memoria le ultime due pagine visitate, registrate da `NavigationTracker` nella shell. La freccia resta testo semplice, così i nomi accessibili sono "← Torna …". Test unitari `back-target.test.ts`; e2e `dossiers.spec.ts` esteso (documento → fascicolo e ritorno, fascicolo → documento).
+
+---
+
 ## 2026-10-20 (135)
 
 ### Dopo il login, la richiesta della master key aspetta il logo

@@ -10,6 +10,7 @@ import { MAX_PHASE_NAME_LENGTH, MAX_PHASES, normalizePhases, parsePhaseNames } f
 import { DOSSIER_TEMPLATES, filterTemplates, findTemplateMatches, type DossierTemplate, type TemplateMatch } from "@/domain/dossiers/templates";
 import { CARD, CARD_TITLE, TEXT_INPUT } from "@/components/dossiers/styles";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BackLink } from "@/components/ui/BackLink";
 
 /**
  * Creazione di un fascicolo: da zero (solo titolo e descrizione, lo stato nasce "aperto") oppure da un modello, che
@@ -115,12 +116,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
   return (
     <div className="flex flex-col gap-6 text-zinc-900 dark:text-zinc-100">
       <div>
-        <Link
-          href="/dossiers"
-          className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-        >
-          ← Torna ai fascicoli
-        </Link>
+        <BackLink href="/dossiers">Torna ai fascicoli</BackLink>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">Nuovo fascicolo</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Una vicenda che attraversa più categorie — un problema di salute, l&apos;acquisto di una casa, un incidente. Parti da

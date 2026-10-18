@@ -43,6 +43,7 @@ import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { formatDate } from "@/lib/format";
 import { INPUT_FIELD } from "@/components/ui/styles";
 import { sortAlphabetically } from "@/lib/utils";
+import { BackLink } from "@/components/ui/BackLink";
 
 /** Un documento importato, con tutto ciò che serve per calcolarne le proposte (v. proposalsForDocument). */
 interface Item {
@@ -399,9 +400,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link href="/archive" className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400">
-          ← Archivio
-        </Link>
+        <BackLink href="/archive">Torna all&apos;archivio</BackLink>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">
           {items.length === 1 ? "1 documento da confermare" : `${items.length} documenti da confermare`}
         </h1>

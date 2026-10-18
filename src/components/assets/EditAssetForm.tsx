@@ -9,6 +9,7 @@ import { listCategories } from "@/domain/categories/repository";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BackLink } from "@/components/ui/BackLink";
 
 /**
  * Pagina dedicata alla modifica di un bene --- prima era un form inline
@@ -75,12 +76,7 @@ export function EditAssetForm({ masterKey, assetId }: { masterKey: CryptoKey; as
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link
-          href="/assets"
-          className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-        >
-          ← Torna ai beni
-        </Link>
+        <BackLink href="/assets">Torna ai beni</BackLink>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">
           Modifica bene
         </h1>

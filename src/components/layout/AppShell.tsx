@@ -11,6 +11,7 @@ import { OnboardingWidgetVisibilityProvider } from "@/components/layout/Onboardi
 import { AIProcessingConsentProvider } from "@/components/ai/AIProcessingConsentProvider";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { AuditWriteFailedNotice } from "@/components/audit/AuditWriteFailedNotice";
+import { NavigationTracker } from "@/components/ui/BackLink";
 
 /**
  * Shared chrome for the authenticated app (nav + user menu).
@@ -94,6 +95,7 @@ function AppChrome({
 }) {
   return (
     <div className="flex min-h-screen flex-1 flex-col md:flex-row">
+      <NavigationTracker />
       <MobileNavBar
         userId={userId}
         firstName={firstName}

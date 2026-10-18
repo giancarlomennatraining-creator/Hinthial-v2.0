@@ -131,6 +131,11 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   await expect(page.getByRole("heading", { name: /Intervento al ginocchio/ })).toBeVisible();
   const cronologia = page.getByRole("region", { name: "Cronologia" });
   await expect(cronologia.getByRole("link", { name: /referto-visita\.pdf/ })).toBeVisible();
+  // Aprendo il documento da qui, il ritorno porta al fascicolo (non all'archivio) e dice dove porta.
+  await cronologia.getByRole("link", { name: /referto-visita\.pdf/ }).click();
+  await expect(page).toHaveURL(/\/archive\/[0-9a-f-]+$/, { timeout: 15_000 });
+  await page.getByRole("link", { name: "← Torna al fascicolo" }).click();
+  await expect(page.getByRole("heading", { name: /Intervento al ginocchio/ })).toBeVisible({ timeout: 15_000 });
   await expect(cronologia).toContainText(/\d{1,2} [a-zà-ù]{3} \d{4}/);
 
   // Una nota scritta qui entra nella cronologia, come nota dell'Archivio collegata al fascicolo.
@@ -235,8 +240,9 @@ test("un documento può stare in più di un fascicolo insieme (FASE 20c)", async
     page.getByRole("region", { name: "Cronologia" }).getByRole("link", { name: /codice-fiscale\.txt/ }),
   ).toBeVisible();
 
-  await page.getByRole("link", { name: "← Torna ai fascicoli" }).click();
-  await expect(page).toHaveURL(/\/dossiers$/, { timeout: 15_000 });
+  // Si è arrivati dalla scheda del documento: il ritorno riporta lì, e lo dice; da lì si passa all'altro fascicolo.
+  await page.getByRole("link", { name: "← Torna al documento" }).click();
+  await expect(page).toHaveURL(/\/archive\/[^/]+$/, { timeout: 15_000 });
   await page.getByRole("link", { name: /Problema di salute/ }).click();
   await expect(page).toHaveURL(/\/dossiers\/[^/]+$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /Problema di salute/ })).toBeVisible();

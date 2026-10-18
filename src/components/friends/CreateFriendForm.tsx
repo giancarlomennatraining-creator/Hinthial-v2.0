@@ -9,6 +9,7 @@ import { createFriend, updateFriendAvatar } from "@/domain/friends/repository";
 import { inviteFriendToHinthial } from "@/lib/friends/actions";
 import { AvatarPickerCrop } from "@/components/ui/AvatarPickerCrop";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BackLink } from "@/components/ui/BackLink";
 
 /** Un seed stabile per il colore delle iniziali finché l'amico non ha ancora un id --- basta che non cambi ad ogni digitazione. */
 function avatarSeedFor(firstName: string, lastName: string): string {
@@ -98,12 +99,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link
-          href="/friends"
-          className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-        >
-          ← Torna agli amici
-        </Link>
+        <BackLink href="/friends">Torna agli amici</BackLink>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">
           Nuovo amico
         </h1>

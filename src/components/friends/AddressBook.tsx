@@ -7,6 +7,7 @@ import type { FriendListItem, FriendStatus } from "@/domain/friends/types";
 import type { CapsuleListItem, SharedCapsuleListItem } from "@/domain/capsules/types";
 import { starterHref } from "@/domain/capsules/starter";
 import { describeCapsulesForPerson, groupCapsulesForPerson, isReadyToOpen } from "@/domain/friends/person-capsules";
+import { BACK_LINK_CLASS } from "@/components/ui/BackLink";
 
 const STATUS_LABEL: Record<FriendStatus, string> = { active: "Attivo", revoked: "Revocato" };
 const STATUS_BADGE_CLASS: Record<FriendStatus, string> = {
@@ -275,7 +276,7 @@ export function AddressBook({
           <button
             type="button"
             onClick={backToList}
-            className="-mb-1 flex items-center gap-1 self-start text-sm font-semibold text-accent hover:underline lg:hidden"
+            className={`${BACK_LINK_CLASS} lg:hidden`}
           >
             ← Rubrica
           </button>

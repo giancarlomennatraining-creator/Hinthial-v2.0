@@ -22,6 +22,7 @@ import { ImportExportTabs } from "@/components/import-export/ImportExportTabs";
 import { AIConsentSettings } from "@/components/settings/AIConsentSettings";
 import { PageHelp, type HelpTip } from "@/components/help/PageHelp";
 import type { ComponentType, ReactNode, SVGProps } from "react";
+import { BACK_LINK_CLASS } from "@/components/ui/BackLink";
 import {
   ActivityIcon,
   AIIcon,
@@ -440,7 +441,7 @@ export function SettingsTabs({
                 <button
                   type="button"
                   onClick={() => (mobileSub ? setMobileSub(null) : setMobileSection(null))}
-                  className="flex items-center gap-1.5 self-start text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+                  className={BACK_LINK_CLASS}
                 >
                   <span aria-hidden="true">←</span> {mobileBackLabel}
                 </button>
