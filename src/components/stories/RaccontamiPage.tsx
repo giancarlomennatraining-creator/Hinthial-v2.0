@@ -229,7 +229,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
         error ? null : <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
       ) : current === null && saved === null ? (
         <section aria-label="Domanda" className="surface-card rounded-card border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="font-heading text-lg font-extrabold text-zinc-900 dark:text-zinc-100">Hai risposto a tutte le domande</h2>
+          <h2 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100">Hai risposto a tutte le domande</h2>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {progress.total} racconti: complimenti. Puoi rileggerli e farli arrivare a chi vuoi.
           </p>
@@ -240,7 +240,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
             <>
               <div>
                 <p className="text-xs font-bold tracking-wider text-accent uppercase">{current.theme.name}</p>
-                <h2 className="mt-1 font-heading text-xl leading-snug font-extrabold text-zinc-900 dark:text-zinc-100">{current.question}</h2>
+                <h2 className="mt-1 text-xl leading-snug font-extrabold text-zinc-900 dark:text-zinc-100">{current.question}</h2>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{current.theme.intro}</p>
               </div>
               <div role="group" aria-label="Come vuoi rispondere" className="flex w-fit gap-1 rounded-full border border-zinc-200 p-1 dark:border-zinc-800">
@@ -322,7 +322,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
                 <p className="text-xs font-bold tracking-wider text-green-700 uppercase dark:text-green-400">
                   {saved.voice ? "Racconto a voce salvato" : "Racconto salvato"}
                 </p>
-                <h2 className="mt-1 font-heading text-xl leading-snug font-extrabold text-zinc-900 dark:text-zinc-100">{saved.question}</h2>
+                <h2 className="mt-1 text-xl leading-snug font-extrabold text-zinc-900 dark:text-zinc-100">{saved.question}</h2>
               </div>
 
               {followUp?.status === "loading" ? (

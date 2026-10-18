@@ -74,7 +74,7 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
       <section aria-label="Continuità" className={cn(CARD, "flex items-center gap-6")}>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="font-heading text-lg font-extrabold text-zinc-900 dark:text-zinc-100">Continuità</h2>
+            <h2 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100">Continuità</h2>
             {score ? (
               <p className="text-sm font-semibold text-accent">
                 {score.done} su {score.total}

@@ -25,7 +25,7 @@ export function PhasesBar({
       className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="font-heading text-base font-extrabold text-zinc-900 dark:text-zinc-100">
+        <h2 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100">
           Fase: {phases.names[phases.current]}
         </h2>
         <span className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
@@ -91,7 +91,7 @@ export function PhasesEditor({
       aria-label="Modifica le fasi"
       className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950"
     >
-      <h2 className="font-heading text-base font-extrabold text-zinc-900 dark:text-zinc-100">Le fasi di questo fascicolo</h2>
+      <h2 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100">Le fasi di questo fascicolo</h2>
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-zinc-500 dark:text-zinc-400">Parti da un modello:</span>
         {PHASE_PRESETS.map((preset) => (

@@ -41,7 +41,7 @@ export function EffectDiscreet({ view, slots, onClose }: OpenEffectProps) {
           ← Torna alle capsule
         </button>
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="font-heading text-2xl font-extrabold text-accent sm:text-3xl">{view.title}</h2>
+          <h2 className="text-2xl font-extrabold text-accent sm:text-3xl">{view.title}</h2>
           <OpenedBadge />
         </div>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Da {view.ownerName}</p>

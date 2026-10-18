@@ -21,6 +21,7 @@ export function AvatarPickerCrop({
   fallbackFirstName,
   fallbackLastName,
   fallbackSeed,
+  neutralFallback = false,
   busy = false,
   onCropped,
   onRemove,
@@ -29,6 +30,8 @@ export function AvatarPickerCrop({
   fallbackFirstName: string;
   fallbackLastName: string;
   fallbackSeed: string;
+  /** Segnaposto grigio, non colorato dal seed: v. `neutral` di Avatar. */
+  neutralFallback?: boolean;
   busy?: boolean;
   onCropped: (blob: Blob) => void | Promise<void>;
   onRemove?: () => void | Promise<void>;
@@ -320,6 +323,7 @@ export function AvatarPickerCrop({
             lastName={fallbackLastName}
             avatarUrl={currentAvatarUrl}
             seed={fallbackSeed}
+            neutral={neutralFallback}
             size="lg"
           />
           <div className="flex flex-col gap-2">

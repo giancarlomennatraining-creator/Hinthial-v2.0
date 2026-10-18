@@ -166,7 +166,7 @@ export function EffectHold({ view, slots, onClose }: OpenEffectProps) {
         <span aria-hidden="true" className="mx-auto h-1.5 w-11 shrink-0 rounded-full bg-zinc-300 md:hidden dark:bg-zinc-700" />
         <div className="flex flex-col gap-1 pr-10">
           <p className="text-xs text-zinc-500 dark:text-zinc-400">Da {view.ownerName}, per te</p>
-          <h2 className="font-heading text-2xl font-extrabold">{view.title}</h2>
+          <h2 className="text-2xl font-extrabold">{view.title}</h2>
           <span>
             <OpenedBadge />
           </span>

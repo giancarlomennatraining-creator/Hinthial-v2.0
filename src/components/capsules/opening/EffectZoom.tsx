@@ -89,7 +89,7 @@ export function EffectZoom({ view, slots, origin, onClose }: OpenEffectProps) {
           </div>
           <div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">Da {view.ownerName}, per te</p>
-            <h2 className="font-heading text-2xl font-extrabold sm:text-3xl">{view.title}</h2>
+            <h2 className="text-2xl font-extrabold sm:text-3xl">{view.title}</h2>
           </div>
           <ReadingPage view={view} slots={slots} />
         </div>

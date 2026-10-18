@@ -97,7 +97,7 @@ export function GuardianVerificationPanel({ requestId }: { requestId: string }) 
     return (
       <div className="flex max-w-lg flex-col gap-3">
         <p className="text-xs font-bold tracking-wider text-green-700 uppercase dark:text-green-400">Risposta registrata</p>
-        <h1 className="font-heading text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">Grazie</h1>
+        <h1 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">Grazie</h1>
         <p className="text-sm text-zinc-700 dark:text-zinc-300">{afterAnswerText(request.response, request.ownerName)}</p>
         <div className="mt-1 flex flex-wrap gap-3">
           <button type="button" onClick={() => setRequest({ ...request, response: null })} className={BTN_SECONDARY}>
@@ -117,7 +117,7 @@ export function GuardianVerificationPanel({ requestId }: { requestId: string }) 
       <div className="flex max-w-lg flex-col gap-4">
         <div>
           <p className="text-xs font-bold tracking-wider text-red-700 uppercase dark:text-red-400">Prima di confermare</p>
-          <h1 className="mt-1 font-heading text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">
+          <h1 className="mt-1 text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">
             Non riesci a raggiungere {name}?
           </h1>
         </div>
@@ -147,7 +147,7 @@ export function GuardianVerificationPanel({ requestId }: { requestId: string }) 
     <div className="flex max-w-lg flex-col gap-5">
       <div>
         <p className="text-xs font-bold tracking-wider text-accent uppercase">Sei la persona di fiducia di {name}</p>
-        <h1 className="mt-1 font-heading text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">Hai notizie di {name}?</h1>
+        <h1 className="mt-1 text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">Hai notizie di {name}?</h1>
         <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
           {request.ownerName} ti ha scelto come guardiano su Hinthial. Da molto tempo non accede e non ha risposto ai nostri
           promemoria. Prima di fare qualsiasi cosa, chiediamo a te. Te lo chiediamo dal {formatDate(request.createdAt)}.

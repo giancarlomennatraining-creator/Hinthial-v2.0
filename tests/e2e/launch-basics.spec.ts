@@ -27,6 +27,9 @@ test("privacy e termini si leggono senza accesso, e la pagina iniziale porta a e
   await expect(page.getByRole("heading", { name: "Informativa privacy", level: 1 })).toBeVisible();
   await expect(page.getByRole("heading", { name: "2. Cosa non possiamo vedere" })).toBeVisible();
 
+  // In cima c'è un "indietro" a parole, oltre al logo e al link in fondo.
+  await expect(page.getByRole("link", { name: "← Torna alla pagina iniziale" })).toHaveAttribute("href", "/");
+
   await page.getByRole("link", { name: "Termini d'uso" }).last().click();
   await expect(page.getByRole("heading", { name: "Termini d'uso", level: 1 })).toBeVisible();
   await expect(page.getByRole("heading", { name: "4. L'Eredità digitale non è un testamento" })).toBeVisible();
