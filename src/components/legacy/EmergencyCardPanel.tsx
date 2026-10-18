@@ -7,6 +7,7 @@ import { BLOOD_TYPES, EMPTY_EMERGENCY_CARD, isEmergencyCardEmpty, type Emergency
 import { printOnlyMarkedContent } from "@/lib/print";
 import { useToast } from "@/components/ui/ToastProvider";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { SettingsBlock } from "@/components/settings/SettingsBlock";
 
 function emptyContact(): EmergencyContact {
   return { name: "", relation: "", phone: "" };
@@ -95,18 +96,14 @@ export function EmergencyCardPanel({
   const visibleContacts = card.contacts.filter((c) => c.name.trim());
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Scheda d&apos;emergenza</h2>
-        <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
-          Pochi campi, scritti una volta, cifrati come tutto il resto — servono solo a generare
-          una tessera da stampare e portare nel portafoglio o tenere sul frigorifero, per chi
-          presta soccorso quando non puoi parlare tu.
-        </p>
-      </div>
+    <SettingsBlock
+      id="card"
+      title="Scheda d'emergenza"
+      description="Pochi campi, scritti una volta, cifrati come tutto il resto: servono solo a generare una tessera da stampare e portare nel portafoglio o tenere sul frigorifero, per chi presta soccorso quando non puoi parlare tu."
+    >
 
       {/* items-start: senza, il pannello destro si estende all'altezza della colonna sinistra e intercetta i click sugli elementi che finiscono alla stessa altezza. */}
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,28rem)_1fr]">
+      <div className="grid grid-cols-1 items-start gap-6 @2xl:grid-cols-[minmax(0,26rem)_1fr]">
         <div className="flex flex-col gap-4 surface-card rounded-card border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
           <div className="flex gap-3">
             <div className="flex flex-1 flex-col gap-1">
@@ -294,7 +291,7 @@ export function EmergencyCardPanel({
       <div className="print-only hidden flex-col items-center gap-6 p-12 print:flex">
         <EmergencyCardPreview fullName={fullName} birthDate={birthDate} card={card} contacts={visibleContacts} />
       </div>
-    </div>
+    </SettingsBlock>
   );
 }
 

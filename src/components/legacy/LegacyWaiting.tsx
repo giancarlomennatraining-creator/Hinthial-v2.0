@@ -8,40 +8,27 @@ import {
   DIGITAL_LEGACY_PRESET_LABEL,
   DIGITAL_LEGACY_PRESET_ORDER,
   DIGITAL_LEGACY_PRESET_VALUES,
-  describeDigitalLegacySettings,
+  describeDigitalLegacyTotal,
   totalWorstCaseDays,
   type DigitalLegacyPreset,
   type DigitalLegacySettings,
 } from "@/domain/digital-legacy/types";
 import { useToast } from "@/components/ui/ToastProvider";
-import { DigitalLegacyStatusBanner } from "@/components/digital-legacy/DigitalLegacyStatusBanner";
 import { DigitalLegacyRehearsal } from "@/components/digital-legacy/DigitalLegacyRehearsal";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { cn } from "@/lib/utils";
 import { BTN_PRIMARY } from "@/components/ui/styles";
-
-/** Quanto è lungo il tutto, in una parola, per sceglierlo a colpo d'occhio. */
-function totalLabel(preset: Exclude<DigitalLegacyPreset, "custom">): string {
-  const days = totalWorstCaseDays(DIGITAL_LEGACY_PRESET_VALUES[preset]);
-  const months = Math.round(days / 30);
-  return months >= 11 ? "circa un anno" : `circa ${months} mesi`;
-}
+import { SettingsBlock } from "@/components/settings/SettingsBlock";
 
 /**
- * "Quanto aspettare": l'unica scelta dell'Eredità digitale. Tre livelli di prudenza (Prudente, Normale, Rilassato) e un
- * interruttore. Sotto, le quattro fasi con i giorni veri del livello scelto (v. domain/digital-legacy/phases.ts). I
- * sei numeri e il quorum non si scelgono più uno a uno: li decide il livello. Chi li aveva personalizzati vede il
- * suo riepilogo finché non ne sceglie uno.
+ * Le impostazioni dell'Eredità digitale, lette una volta sola dalla pagina: le usano sia "Quanto aspettare" (che le modifica)
+ * sia il riepilogo in cima (che dice se è accesa e a che livello).
  */
-export function LegacyWaiting({ userId }: { userId: string }) {
+export function useLegacySettings(userId: string) {
   const supabase = useSupabase();
-  const showToast = useToast();
-
   const [settings, setSettings] = useState<DigitalLegacySettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [rehearsalOpen, setRehearsalOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,6 +46,32 @@ export function LegacyWaiting({ userId }: { userId: string }) {
       cancelled = true;
     };
   }, [supabase, userId]);
+
+  return { settings, setSettings, loading, error, setError };
+}
+
+export type LegacySettingsState = ReturnType<typeof useLegacySettings>;
+
+/** Quanto è lungo il tutto, in una parola, per sceglierlo a colpo d'occhio. */
+function totalLabel(preset: Exclude<DigitalLegacyPreset, "custom">): string {
+  const days = totalWorstCaseDays(DIGITAL_LEGACY_PRESET_VALUES[preset]);
+  const months = Math.round(days / 30);
+  return months >= 11 ? "circa un anno" : `circa ${months} mesi`;
+}
+
+/**
+ * "Quanto aspettare": l'unica scelta dell'Eredità digitale. Tre livelli di prudenza (Prudente, Normale, Rilassato) e un
+ * interruttore. Sotto, le quattro fasi con i giorni veri del livello scelto (v. domain/digital-legacy/phases.ts). I
+ * sei numeri e il quorum non si scelgono più uno a uno: li decide il livello. Chi li aveva personalizzati vede il
+ * suo riepilogo finché non ne sceglie uno.
+ */
+export function LegacyWaiting({ userId, legacy }: { userId: string; legacy: LegacySettingsState }) {
+  const supabase = useSupabase();
+  const showToast = useToast();
+  const { settings, setSettings, loading, error, setError } = legacy;
+
+  const [saving, setSaving] = useState(false);
+  const [rehearsalOpen, setRehearsalOpen] = useState(false);
 
   function selectPreset(preset: Exclude<DigitalLegacyPreset, "custom">) {
     setSettings((prev) => (prev ? { ...prev, preset, ...DIGITAL_LEGACY_PRESET_VALUES[preset] } : prev));
@@ -108,20 +121,12 @@ export function LegacyWaiting({ userId }: { userId: string }) {
   const isCustom = settings.preset === "custom";
 
   return (
-    <section aria-labelledby="legacy-waiting-title" className="flex flex-col gap-5">
-      <div>
-        <h2 id="legacy-waiting-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Quanto aspettare
-        </h2>
-        <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
-          Se un giorno non dovessi più poter accedere a Hinthial, questo decide quanto tempo passa prima che le tue capsule
-          arrivino a chi le doveva ricevere: prima ti scrivo io, poi chiedo ai tuoi guardiani, poi un&apos;ultima attesa.
-        </p>
-      </div>
-
-      <DigitalLegacyStatusBanner userId={userId} reminderCount={settings.reminderCount} />
-
-      <label className="flex max-w-2xl items-center gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <SettingsBlock
+      id="waiting"
+      title="Quanto aspettare"
+      description="Se un giorno non dovessi più poter accedere a Hinthial, questo decide quanto tempo passa prima che le tue capsule arrivino a chi le doveva ricevere."
+    >
+      <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
         <input
           type="checkbox"
           checked={settings.enabled}
@@ -174,25 +179,32 @@ export function LegacyWaiting({ userId }: { userId: string }) {
         ) : null}
       </div>
 
-      <ol aria-label="Le quattro fasi" className="grid gap-3 sm:grid-cols-2">
-        {phases.map((phase, index) => (
-          <li key={phase.id} className="flex flex-col gap-1 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
-            <span className="flex items-baseline justify-between gap-2">
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                {index + 1}. {phase.name}
+      {/* Le fasi sono una sequenza vera: una sotto l'altra, con il numero, e il totale in fondo. */}
+      <div className="flex flex-col gap-3">
+        <ol aria-label="Le quattro fasi" className="flex flex-col divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+          {phases.map((phase, index) => (
+            <li key={phase.id} className="flex items-start gap-3 px-4 py-3">
+              <span
+                aria-hidden="true"
+                className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-semibold text-accent"
+              >
+                {index + 1}
               </span>
-            </span>
-            <span className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">{phase.text}</span>
-          </li>
-        ))}
-      </ol>
-
-      <p className="max-w-2xl rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
-        {settings.enabled
-          ? describeDigitalLegacySettings(settings)
-          : "Il monitoraggio è spento: nessuna email verrà inviata. Ecco comunque cosa succederebbe se lo accendessi così: " +
-            describeDigitalLegacySettings(settings)}
-      </p>
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  <span className="sr-only">{index + 1}. </span>
+                  {phase.name}
+                </span>
+                <span className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">{phase.text}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          {describeDigitalLegacyTotal(settings)}
+          {settings.enabled ? "" : " Il monitoraggio è spento: nessuna email verrà inviata."}
+        </p>
+      </div>
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -221,6 +233,6 @@ export function LegacyWaiting({ userId }: { userId: string }) {
           </RequireMasterKey>
         </div>
       ) : null}
-    </section>
+    </SettingsBlock>
   );
 }

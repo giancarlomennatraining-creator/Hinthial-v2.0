@@ -9,6 +9,7 @@ import type { CapsuleListItem } from "@/domain/capsules/types";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatDate } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
+import { SettingsBlock } from "@/components/settings/SettingsBlock";
 
 /**
  * "Cosa arriverà": le tue capsule e, per ognuna, se si apre solo alla sua data o anche prima, se l'Eredità digitale
@@ -57,15 +58,11 @@ export function LegacyCapsules({ masterKey }: { masterKey: CryptoKey }) {
   const early = (capsules ?? []).filter((c) => c.openOnLegacy && c.status !== "draft").length;
 
   return (
-    <section aria-labelledby="legacy-capsules-title" className="flex flex-col gap-4">
-      <div>
-        <h2 id="legacy-capsules-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Cosa arriverà
-        </h2>
-        <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
-          Alla consegna si aprono solo le capsule che hai destinato a questo momento. Tutte le altre aspettano la loro data.
-        </p>
-      </div>
+    <SettingsBlock
+      id="capsules"
+      title="Cosa arriverà"
+      description="Alla consegna si aprono solo le capsule che hai destinato a questo momento. Tutte le altre aspettano la loro data."
+    >
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -130,6 +127,6 @@ export function LegacyCapsules({ masterKey }: { masterKey: CryptoKey }) {
           </ul>
         </>
       )}
-    </section>
+    </SettingsBlock>
   );
 }

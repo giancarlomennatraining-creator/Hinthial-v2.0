@@ -6,6 +6,7 @@ import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { listFriends } from "@/domain/friends/repository";
 import type { FriendListItem } from "@/domain/friends/types";
 import { sortAlphabetically } from "@/lib/utils";
+import { SettingsBlock } from "@/components/settings/SettingsBlock";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -40,16 +41,11 @@ export function LegacyGuardians({ masterKey }: { masterKey: CryptoKey }) {
   const unreachable = (guardians ?? []).filter((g) => !g.linkedUserId);
 
   return (
-    <section aria-labelledby="legacy-guardians-title" className="flex flex-col gap-4">
-      <div>
-        <h2 id="legacy-guardians-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Chi conferma la tua assenza
-        </h2>
-        <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
-          I tuoi guardiani sono le persone a cui chiedo se riescono a raggiungerti, prima di consegnare le capsule. Non
-          ereditano nulla: dicono solo se stai bene.
-        </p>
-      </div>
+    <SettingsBlock
+      id="guardians"
+      title="Chi conferma la tua assenza"
+      description="I tuoi guardiani sono le persone a cui chiedo se riescono a raggiungerti, prima di consegnare le capsule. Non ereditano nulla: dicono solo se stai bene."
+    >
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -106,6 +102,6 @@ export function LegacyGuardians({ masterKey }: { masterKey: CryptoKey }) {
           </Link>
         </>
       )}
-    </section>
+    </SettingsBlock>
   );
 }

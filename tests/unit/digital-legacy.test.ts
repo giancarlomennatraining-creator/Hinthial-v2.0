@@ -6,6 +6,7 @@ import {
   clampDigitalLegacyField,
   computeDigitalLegacyTransition,
   describeDigitalLegacySettings,
+  describeDigitalLegacyTotal,
   describeDigitalLegacyStatus,
   isGuardianQuorumSatisfied,
   totalWorstCaseDays,
@@ -86,6 +87,12 @@ describe("describeDigitalLegacySettings", () => {
     const text = describeDigitalLegacySettings({ ...DIGITAL_LEGACY_PRESET_VALUES.balanced, gracePeriodDays: 30 });
     expect(text).toContain("poi un altro mese prima di coinvolgere");
     expect(text).not.toMatch(/altri 1 /);
+  });
+
+  it("gives the total as a sentence of its own, and the full summary ends with it", () => {
+    const values = DIGITAL_LEGACY_PRESET_VALUES.balanced;
+    expect(describeDigitalLegacyTotal(values)).toMatch(/^In totale, nel caso peggiore, circa \d+ mesi prima che le capsule si aprano\.$/);
+    expect(describeDigitalLegacySettings(values).endsWith(describeDigitalLegacyTotal(values))).toBe(true);
   });
 
   it("never lists the six numbers as a bare enumeration --- always inside a sentence", () => {

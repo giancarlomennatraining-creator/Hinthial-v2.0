@@ -156,9 +156,13 @@ function formatApprox(days: number): string {
   return rounded <= 1 ? "circa un mese" : `circa ${rounded} mesi`;
 }
 
+/** La sola frase del totale ("In totale, nel caso peggiore, circa 7 mesi prima che le capsule si aprano."), per mostrarla da sola sotto le quattro fasi. */
+export function describeDigitalLegacyTotal(settings: DigitalLegacyPresetValues): string {
+  return `In totale, nel caso peggiore, ${formatApprox(totalWorstCaseDays(settings))} prima che le capsule si aprano.`;
+}
+
 /** Riepilogo sotto lo slider dei preset, in linguaggio semplice --- mai i 7 valori elencati uno per uno. */
 export function describeDigitalLegacySettings(settings: DigitalLegacyPresetValues): string {
-  const total = totalWorstCaseDays(settings);
   const reminderTimes = settings.reminderCount === 1 ? "1 volta" : `${settings.reminderCount} volte`;
 
   return (
@@ -167,7 +171,7 @@ export function describeDigitalLegacySettings(settings: DigitalLegacyPresetValue
     `${anotherSpan(settings.gracePeriodDays)} prima di coinvolgere i tuoi guardiani ` +
     `(${GUARDIAN_QUORUM_SUMMARY_FRAGMENT[settings.guardianQuorum]}), poi ` +
     `${anotherSpan(settings.formalVerificationDays + settings.finalWaitDays)} di verifica. ` +
-    `In totale, nel caso peggiore, ${formatApprox(total)} prima che le capsule si aprano.`
+    describeDigitalLegacyTotal(settings)
   );
 }
 
