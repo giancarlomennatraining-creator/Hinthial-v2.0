@@ -6,6 +6,7 @@ import { BottomNavBar } from "@/components/layout/BottomNavBar";
 import { MasterKeyProvider } from "@/components/crypto/MasterKeyProvider";
 import { MasterKeyIntroModal } from "@/components/crypto/MasterKeyIntroModal";
 import { UnlockPromptProvider } from "@/components/crypto/UnlockPromptProvider";
+import { LoginSplashProvider } from "@/components/layout/LoginSplashProvider";
 import { OnboardingWidgetVisibilityProvider } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 import { AIProcessingConsentProvider } from "@/components/ai/AIProcessingConsentProvider";
 import { ToastProvider } from "@/components/ui/ToastProvider";
@@ -45,6 +46,7 @@ export function AppShell({
 }) {
   return (
     <ToastProvider>
+    <LoginSplashProvider>
     <MasterKeyProvider>
     <UnlockPromptProvider>
       <MasterKeyIntroModal userId={userId} initialSeen={initialMasterKeyIntroSeen} />
@@ -69,6 +71,7 @@ export function AppShell({
       </OnboardingWidgetVisibilityProvider>
     </UnlockPromptProvider>
     </MasterKeyProvider>
+    </LoginSplashProvider>
     </ToastProvider>
   );
 }
