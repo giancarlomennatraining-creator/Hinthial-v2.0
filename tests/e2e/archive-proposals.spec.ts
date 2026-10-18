@@ -123,7 +123,7 @@ test("le scelte sulle proposte restano in Impostazioni > Attività, filtrabili p
 
   // Ogni scrittura automatica deve lasciare traccia in Attività, raggiungibile dal contenuto con il filtro già impostato.
   await page.getByRole("link", { name: /Vedi attività di questo contenuto/ }).click();
-  await expect(page).toHaveURL(/\/settings\?tab=activity&entity=document(:|%3A)/, { timeout: 15_000 });
+  await expect(page).toHaveURL(/\/settings\?tab=security&section=activity&entity=document(:|%3A)/, { timeout: 15_000 });
   await expect(page.getByRole("table").filter({ visible: true }).getByText("Proposta accettata").first()).toBeVisible({
     timeout: 30_000,
   });

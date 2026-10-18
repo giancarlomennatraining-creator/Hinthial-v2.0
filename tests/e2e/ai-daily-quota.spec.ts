@@ -32,7 +32,7 @@ test("a tetto raggiunto Hinthia si ferma con un messaggio chiaro, e le Impostazi
   expect(usage).toEqual({ used: LIMIT, limit: LIMIT });
 
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Hinthia" }).click();
+  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
   const status = page.getByRole("status", { name: "Richieste a Hinthia di oggi" });
   await expect(status).toContainText(`${LIMIT} richieste a Hinthia su ${LIMIT} al giorno`, { timeout: 15_000 });
   await expect(status).toContainText("Hai raggiunto il tetto: Hinthia riprende domani.");

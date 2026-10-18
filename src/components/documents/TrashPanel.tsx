@@ -202,7 +202,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
           tips={[
             { icon: "🗑️", text: "Qui finiscono i documenti eliminati, prima di sparire per sempre." },
             { icon: "↩️", text: "Ripristina un documento per rimetterlo nell'archivio, singolo o più insieme." },
-            { icon: "⏳", text: "Dopo il periodo scelto in Impostazioni → Aspetto viene rimosso definitivamente." },
+            { icon: "⏳", text: "Dopo il periodo scelto in Impostazioni → I miei dati viene rimosso definitivamente." },
           ]}
         />
       </div>

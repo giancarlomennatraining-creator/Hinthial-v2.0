@@ -16,6 +16,7 @@ import { logAuditEvent } from "@/lib/audit/log-event";
 import type { MfaFactor, TotpEnrollment } from "@/domain/mfa/types";
 import { AlertTriangleIcon } from "@/components/icons/nav-icons";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { SettingsBlock } from "@/components/settings/SettingsBlock";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
@@ -209,19 +210,14 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col">
       {/* --- TOTP (app authenticator) --- */}
+      <SettingsBlock
+        id="authenticator"
+        title="Verifica in due passaggi"
+        description="Dopo email e password, un codice generato da un'app come Google Authenticator. Protegge l'accesso all'account, non la cifratura del vault: quella resta sulla tua master password."
+      >
       <div className="flex flex-col gap-6">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            App authenticator
-          </h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Dopo email e password, un codice generato da un&apos;app come Google Authenticator o
-            1Password. Riguarda solo l&apos;accesso al tuo account — non la cifratura del vault,
-            che resta protetta unicamente dalla tua master password.
-          </p>
-        </div>
 
         {enrollment ? (
           <div className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
@@ -331,19 +327,16 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
           </>
         )}
       </div>
+      </SettingsBlock>
 
       {/* --- Codici di backup --- */}
       {factors.length > 0 ? (
-        <div className="flex flex-col gap-4 border-t border-zinc-200 pt-10 dark:border-zinc-800">
-          <div>
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Codici di backup
-            </h2>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              Da usare al posto di un codice se perdi l&apos;accesso al tuo dispositivo. Ognuno
-              funziona una sola volta.
-            </p>
-          </div>
+        <SettingsBlock
+          id="backup-codes"
+          title="Codici di backup"
+          description="Da usare al posto di un codice se perdi l'accesso al tuo dispositivo. Ognuno funziona una sola volta."
+        >
+        <div className="flex flex-col gap-4">
 
           {revealedCodes ? (
             <div className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
@@ -411,6 +404,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
             </p>
           ) : null}
         </div>
+        </SettingsBlock>
       ) : null}
     </div>
   );

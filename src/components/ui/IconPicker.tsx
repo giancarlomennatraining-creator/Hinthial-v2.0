@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDismissOnOutside } from "@/lib/use-dismiss-on-outside";
 
 /** Curated set --- not exhaustive, just a practical starting point for category icons. */
@@ -35,6 +35,16 @@ export function IconPicker({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useDismissOnOutside(containerRef, open, () => setOpen(false));
+
+  // Passando a un altro campo (con Tab, o scrivendoci) la griglia si chiude: prima restava aperta e copriva il pulsante di conferma sotto il campo. Un clic su un'icona non sposta il fuoco fuori, quindi non la chiude.
+  useEffect(() => {
+    if (!open) return;
+    function onFocusIn(event: FocusEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
+  }, [open]);
 
   return (
     <div ref={containerRef} className="relative">

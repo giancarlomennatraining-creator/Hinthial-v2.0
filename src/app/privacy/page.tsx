@@ -61,7 +61,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Dati di sicurezza</strong>: indirizzo IP e browser di ogni accesso, tentativi falliti, eventi importanti
-            dell&apos;account. Li vedi anche tu in Impostazioni &gt; Attività. Servono a proteggere l&apos;account e a
+            dell&apos;account. Li vedi anche tu in Impostazioni &gt; Accesso e sicurezza &gt; Registro delle attività. Servono a proteggere l&apos;account e a
             ricostruire cosa è successo in caso di abuso. Base giuridica: legittimo interesse alla sicurezza (art. 6.1.f).
           </li>
           <li>

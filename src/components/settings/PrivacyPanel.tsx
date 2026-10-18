@@ -90,26 +90,16 @@ export function PrivacyPanel({
     summary.onboardingWidgetHidden
       ? "Indicatore di onboarding nella barra: nascosto"
       : "Indicatore di onboarding nella barra: visibile",
-    "Indirizzo IP e dispositivo/browser di ogni accesso, ed eventuali tentativi di accesso falliti (registrati in Impostazioni > Attività)",
+    "Indirizzo IP e dispositivo/browser di ogni accesso, ed eventuali tentativi di accesso falliti (registrati in Impostazioni > Accesso e sicurezza > Registro delle attività)",
   ];
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Cosa sa Hinthial di te
-        </h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Non una dichiarazione generica: questi sono i dati reali e attuali del tuo account. Il
-          resto — il contenuto vero e proprio di ciò che ci affidi — resta cifrato sul tuo
-          dispositivo prima ancora di lasciarlo.
-        </p>
-        <p className="mt-2 text-sm">
-          <Link href="/privacy" target="_blank" className="font-medium text-accent hover:underline">
-            Leggi l&apos;informativa privacy completa
-          </Link>
-        </p>
-      </div>
+      <p className="text-sm">
+        <Link href="/privacy" target="_blank" className="font-medium text-accent hover:underline">
+          Leggi l&apos;informativa privacy completa
+        </Link>
+      </p>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">

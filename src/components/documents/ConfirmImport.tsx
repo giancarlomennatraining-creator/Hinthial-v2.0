@@ -450,8 +450,8 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
           ) : !consentActive ? (
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
               La lettura con Hinthia non è attiva: attivala in{" "}
-              <Link href="/settings" className="underline underline-offset-2 hover:text-accent">
-                Impostazioni → Hinthia
+              <Link href="/settings?tab=privacy&section=hinthia" className="underline underline-offset-2 hover:text-accent">
+                Impostazioni → Privacy e Hinthia
               </Link>{" "}
               per avere le proposte. Intanto puoi aprire ogni documento e sistemarlo a mano.
             </p>

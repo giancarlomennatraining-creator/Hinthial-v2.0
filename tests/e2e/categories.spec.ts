@@ -30,7 +30,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
 
   await openSettings(page, user);
   await expect(page).toHaveURL(/\/settings$/);
-  await page.getByRole("tab", { name: "Categorie" }).click();
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   await expect(page.getByRole("heading", { name: "Categorie" })).toBeVisible();
 
   // Le 10 categorie iniziali (seminate alla registrazione) sono già lì.
@@ -64,7 +64,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
 
   // Modifica: rinomina la categoria personalizzata.
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Categorie" }).click();
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   const hobbyRow = page.locator("li", { hasText: "🎯 Hobby" });
   await hobbyRow.getByRole("button", { name: "Modifica" }).click();
   const nameField = page.locator('[id^="edit-"][id$="-name"]');
@@ -98,7 +98,7 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   // Archivio contiene anch'essa il testo della categoria come badge,
   // quindi il locator sotto potrebbe altrimenti trovare quella invece.
   await expect(page).toHaveURL(/\/settings$/);
-  await page.getByRole("tab", { name: "Categorie" }).click();
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   await expect(page.getByRole("heading", { name: "Categorie" })).toBeVisible();
 
   let dialogMessage = "";
@@ -131,7 +131,7 @@ test("il campo Icona propone una lista di icone selezionabili al click", async (
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Categorie" }).click();
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   await expect(page.getByRole("heading", { name: "Categorie" })).toBeVisible();
 
   const iconField = page.getByLabel("Icona");

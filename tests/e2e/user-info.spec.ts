@@ -22,8 +22,8 @@ test("Impostazioni è organizzata a schede: Informazioni utente e Categorie", as
   await expect(page).toHaveURL(/\/settings$/);
 
   // Atterra sulla scheda "Informazioni utente" per default.
-  const userInfoTab = page.getByRole("tab", { name: "Informazioni utente" });
-  const categoriesTab = page.getByRole("tab", { name: "Categorie" });
+  const userInfoTab = page.getByRole("tab", { name: "Profilo" });
+  const categoriesTab = page.getByRole("tab", { name: "I miei dati" });
   await expect(userInfoTab).toHaveAttribute("aria-selected", "true");
   await expect(categoriesTab).toHaveAttribute("aria-selected", "false");
   await expect(page.getByRole("heading", { name: "Dati personali" })).toBeVisible();

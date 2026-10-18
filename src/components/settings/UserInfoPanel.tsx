@@ -8,6 +8,7 @@ import { TextField } from "@/components/ui/TextField";
 import { AvatarUploadForm } from "@/components/settings/AvatarUploadForm";
 import { BTN_PRIMARY } from "@/components/ui/styles";
 import { StorageUsageMeter } from "@/components/ui/StorageUsageMeter";
+import { SettingsBlock } from "@/components/settings/SettingsBlock";
 
 function translateEmailChangeError(message: string): string {
   const normalized = message.toLowerCase();
@@ -124,29 +125,29 @@ export function UserInfoPanel({
   }
 
   return (
-    // @container: i tre campi si affiancano in base allo spazio vero del pannello, non della finestra.
-    <div className="@container flex flex-col gap-8">
-      <div className="max-w-md">
-        <AvatarUploadForm
-          userId={userId}
-          firstName={firstName}
-          lastName={lastName}
-          avatarPath={avatarPath}
-          avatarUrl={avatarUrl}
-        />
-      </div>
-
-      <section className="flex flex-col gap-4 border-t border-zinc-200 pt-8 dark:border-zinc-800">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Dati personali
-          </h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Nome e cognome sono mostrati nell&apos;app; la data di nascita è facoltativa.
-          </p>
+    <div className="flex flex-col">
+      <SettingsBlock
+        id="avatar"
+        title="Foto profilo"
+        description="Mostrata accanto al tuo nome nell'app. In chiaro, non cifrata, come nome e cognome."
+      >
+        <div className="max-w-md">
+          <AvatarUploadForm
+            userId={userId}
+            firstName={firstName}
+            lastName={lastName}
+            avatarPath={avatarPath}
+            avatarUrl={avatarUrl}
+          />
         </div>
+      </SettingsBlock>
 
-        <form onSubmit={handleSaveName} className="flex flex-col gap-4">
+      <SettingsBlock
+        id="personal"
+        title="Dati personali"
+        description="Nome e cognome sono mostrati nell'app; la data di nascita è facoltativa."
+      >
+        <form onSubmit={handleSaveName} className="@container flex flex-col gap-4">
           {/* Tre campi affiancati quando il pannello ha spazio, uno sotto l'altro quando si restringe. */}
           <div className="grid gap-4 @xl:grid-cols-3">
             <TextField
@@ -194,22 +195,22 @@ export function UserInfoPanel({
             {nameSaving ? "Salvataggio…" : "Salva"}
           </button>
         </form>
-      </section>
+      </SettingsBlock>
 
-      <section className="flex flex-col gap-4 border-t border-zinc-200 pt-8 dark:border-zinc-800">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Spazio</h2>
+      <SettingsBlock id="space" title="Spazio" description="Quanto spazio occupano i tuoi file cifrati.">
         <StorageUsageMeter />
-      </section>
+      </SettingsBlock>
 
-      <section className="flex flex-col gap-4 border-t border-zinc-200 pt-8 dark:border-zinc-800">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Email</h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+      <SettingsBlock
+        id="email"
+        title="Email"
+        description={
+          <>
             Email attuale:{" "}
             <span className="font-medium text-zinc-700 dark:text-zinc-300">{currentEmail}</span>
-          </p>
-        </div>
-
+          </>
+        }
+      >
         <form onSubmit={handleChangeEmail} className="flex max-w-md flex-col gap-4">
           <TextField
             id="newEmail"
@@ -243,7 +244,7 @@ export function UserInfoPanel({
             {emailSaving ? "Invio…" : "Cambia email"}
           </button>
         </form>
-      </section>
+      </SettingsBlock>
     </div>
   );
 }

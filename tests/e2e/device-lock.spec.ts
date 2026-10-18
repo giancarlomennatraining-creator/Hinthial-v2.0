@@ -52,8 +52,7 @@ test("registra questo dispositivo come fidato e lo sblocca di nuovo con l'impron
 
   // Registra questo dispositivo: richiede di nuovo la master password, la sola occasione in cui il Master Key diventa temporaneamente esportabile.
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Autenticazione" }).click();
-  await page.getByRole("tab", { name: "Dispositivi fidati" }).click();
+  await page.getByRole("tab", { name: "Accesso e sicurezza" }).click();
   await expect(page.getByRole("heading", { name: "Dispositivi fidati", exact: true })).toBeVisible();
   // Il controllo di supporto (WebAuthn + PRF) è asincrono: attende che si risolva prima di interagire col modulo.
   await expect(page.getByText("Verifica del dispositivo in corso…")).not.toBeVisible({ timeout: 15_000 });
@@ -68,7 +67,7 @@ test("registra questo dispositivo come fidato e lo sblocca di nuovo con l'impron
 
   // Una pagina intera da capo (come una nuova sessione: il Master Key vive solo in memoria): il vault torna "locked".
   await page.reload();
-  await expect(page.getByRole("tab", { name: "Autenticazione" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Accesso e sicurezza" })).toBeVisible();
 
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Sblocca" })).toBeVisible({ timeout: 15_000 });
@@ -104,8 +103,7 @@ test("\"dimentica questo dispositivo\" fa tornare a chiedere la master password"
   await page.getByRole("button", { name: "Continua" }).click();
 
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Autenticazione" }).click();
-  await page.getByRole("tab", { name: "Dispositivi fidati" }).click();
+  await page.getByRole("tab", { name: "Accesso e sicurezza" }).click();
   await page.getByLabel("Nome del dispositivo fidato").fill("Dispositivo di test");
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Capisco che chi ha accesso fisico a questo dispositivo").check();
@@ -151,8 +149,7 @@ test("un dispositivo fidato compare nell'elenco anche da un altro dispositivo, e
   await page.getByRole("button", { name: "Continua" }).click();
 
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Autenticazione" }).click();
-  await page.getByRole("tab", { name: "Dispositivi fidati" }).click();
+  await page.getByRole("tab", { name: "Accesso e sicurezza" }).click();
   await expect(page.getByText("Verifica del dispositivo in corso…")).not.toBeVisible({ timeout: 15_000 });
   await page.getByLabel("Nome del dispositivo fidato").fill("Il mio telefono");
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
@@ -173,8 +170,7 @@ test("un dispositivo fidato compare nell'elenco anche da un altro dispositivo, e
 
   await pcPage.getByRole("button", { name: fullName(user) }).click();
   await pcPage.getByRole("link", { name: "Impostazioni" }).click();
-  await pcPage.getByRole("tab", { name: "Autenticazione" }).click();
-  await pcPage.getByRole("tab", { name: "Dispositivi fidati" }).click();
+  await pcPage.getByRole("tab", { name: "Accesso e sicurezza" }).click();
   const deviceRow = pcPage.locator("li", { hasText: "Il mio telefono" });
   await expect(deviceRow).toBeVisible({ timeout: 15_000 });
   // Non è "questo dispositivo" dal punto di vista del PC --- niente etichetta.

@@ -61,7 +61,7 @@ test("con il consenso a Hinthia arriva una domanda di approfondimento, e se non 
 
   // Il consenso a Hinthia si dà in Impostazioni: prima il cancello generale, poi la funzione.
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Hinthia" }).click();
+  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
   const master = page.getByRole("switch", { name: "Consenti l'uso di Hinthia" });
   const rispondi = page.getByRole("checkbox", { name: /^Hinthia che risponde/ });
   await expect(rispondi).toBeDisabled();

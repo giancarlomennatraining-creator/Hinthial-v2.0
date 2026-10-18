@@ -22,7 +22,9 @@ test("Impostazioni > Attività si interroga con filtri (area, elemento) e apre i
   // sbloccare la cifratura (è un registro tecnico in chiaro). L'elenco si
   // carica da solo, senza premere nulla.
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Attività" }).click();
+  await page.getByRole("tab", { name: "Accesso e sicurezza" }).click();
+  // Il registro è un blocco lungo: sta chiuso finché non lo si apre.
+  await page.getByRole("button", { name: "Apri Registro delle attività" }).click();
 
   // Le schede di Impostazioni possono montare il pannello due volte (mobile/desktop): si lavora su ciò che si vede.
   const table = () => page.getByRole("table").filter({ visible: true });
@@ -34,7 +36,7 @@ test("Impostazioni > Attività si interroga con filtri (area, elemento) e apre i
   const detail = page.getByRole("dialog", { name: "Dettaglio attività" });
   await expect(detail).toBeVisible();
   await expect(detail.getByText("Password")).toBeVisible();
-  await page.getByRole("button", { name: "Chiudi" }).click();
+  await page.getByRole("button", { name: "Chiudi", exact: true }).click();
   await expect(detail).not.toBeVisible();
 
   // Il filtro per area funziona in entrambe le direzioni, vive nell'URL e si azzera con un clic.
@@ -87,7 +89,8 @@ test("Impostazioni > Attività si interroga con filtri (area, elemento) e apre i
   await expect(page).toHaveURL(/\/friends$/, { timeout: 15_000 });
 
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Attività" }).click();
+  await page.getByRole("tab", { name: "Accesso e sicurezza" }).click();
+  await page.getByRole("button", { name: "Apri Registro delle attività" }).click();
 
   // Ora anche le azioni sui contenuti stanno qui, ciascuna agganciata al proprio elemento.
   await expect(table().getByText("Amico aggiunto")).toBeVisible({ timeout: 10_000 });

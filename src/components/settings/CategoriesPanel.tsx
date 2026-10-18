@@ -171,12 +171,6 @@ export function CategoriesPanel() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Categorie</h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Quelle iniziali sono un punto di partenza: aggiungi, rinomina o elimina le tue.
-        </p>
-      </div>
 
       <form
         onSubmit={handleCreate}

@@ -133,7 +133,7 @@ export function AuditLogPanel({ initialParams = {} }: { initialParams?: AuditFil
 
   const commit = useCallback((next: AuditFilters) => {
     setFilters(next);
-    const params = new URLSearchParams({ tab: "activity" });
+    const params = new URLSearchParams({ tab: "security", section: "activity" });
     for (const [key, value] of auditFiltersToParams(next)) params.set(key, value);
     window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
   }, []);
@@ -264,13 +264,6 @@ export function AuditLogPanel({ initialParams = {} }: { initialParams?: AuditFil
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Attività</h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Tutto ciò che è successo sul tuo account e sui tuoi contenuti. Qui vedi solo cosa è stato fatto e quando:
-          il contenuto dei tuoi dati resta privato.
-        </p>
-      </div>
 
       <form
         onSubmit={(e) => e.preventDefault()}

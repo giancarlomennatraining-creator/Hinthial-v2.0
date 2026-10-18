@@ -19,7 +19,7 @@ test("importa amici da CSV: template, anteprima con riga da correggere, risultat
 
   await page.goto("/settings");
   await expect(page).toHaveURL(/\/settings$/);
-  await page.getByRole("tab", { name: "Importa/Esporta" }).click();
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   await page.getByRole("button", { name: "Crea la master password" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
@@ -89,7 +89,7 @@ test("importa amici da CSV: template, anteprima con riga da correggere, risultat
 
   // La scheda Esporta resta raggiungibile dalla stessa scheda di Impostazioni.
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Importa/Esporta" }).click();
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   // goto ricarica la pagina: la Master Key torna bloccata e va sbloccata.
   await page.getByRole("button", { name: "Sblocca ora" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
@@ -112,7 +112,7 @@ test("importa beni da CSV: corregge una categoria non trovata creandola al volo"
 
   await page.goto("/settings");
   await expect(page).toHaveURL(/\/settings$/);
-  await page.getByRole("tab", { name: "Importa/Esporta" }).click();
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   await page.getByRole("button", { name: "Crea la master password" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByLabel("Conferma master password").fill("una-master-password-solida");
@@ -137,9 +137,9 @@ test("importa beni da CSV: corregge una categoria non trovata creandola al volo"
 
   await expect(page.getByRole("heading", { name: "Anteprima" })).toBeVisible();
   await expect(page.getByText("Da correggere", { exact: true })).toBeVisible();
-  await expect(page.getByRole("combobox")).toContainText('"Immobili" non trovato/a: scegli categoria');
+  await expect(page.getByRole("region", { name: "Importa ed esporta" }).getByRole("combobox")).toContainText('"Immobili" non trovato/a: scegli categoria');
 
-  await page.getByRole("combobox").selectOption({ label: '+ Crea categoria "Immobili"' });
+  await page.getByRole("region", { name: "Importa ed esporta" }).getByRole("combobox").selectOption({ label: '+ Crea categoria "Immobili"' });
   await expect(page.getByText('Verrà creato/a: "Immobili"')).toBeVisible();
   await expect(page.getByText("Pronta", { exact: true })).toBeVisible();
 

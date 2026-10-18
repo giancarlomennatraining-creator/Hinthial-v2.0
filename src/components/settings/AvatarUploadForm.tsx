@@ -44,15 +44,7 @@ export function AvatarUploadForm({
   }
 
   return (
-    <section className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Foto profilo</h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Mostrata accanto al tuo nome nell&apos;app. In chiaro, non cifrata — come nome e
-          cognome.
-        </p>
-      </div>
-
+    <div className="flex flex-col gap-4">
       <AvatarPickerCrop
         currentAvatarUrl={avatarUrl}
         fallbackFirstName={firstName}
@@ -61,6 +53,6 @@ export function AvatarUploadForm({
         onCropped={handleCropped}
         onRemove={handleRemove}
       />
-    </section>
+    </div>
   );
 }

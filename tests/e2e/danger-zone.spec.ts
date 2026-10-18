@@ -32,7 +32,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Categorie" }).click();
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   await page.getByLabel("Icona").fill("🎯");
   await page.getByLabel("Nome").fill("Hobby");
   await page.getByRole("button", { name: "Aggiungi categoria" }).click();
@@ -136,7 +136,7 @@ test("\"Cancella tutto\" svuota Archivio, Beni, Amici e Capsule, ripristina le c
 
   // Le categorie sono di nuovo le 10 predefinite --- non più "Hobby".
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Categorie" }).click();
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   await expect(page.locator("li > p", { hasText: "👤 Personale" })).toBeVisible();
   await expect(page.locator("li > p", { hasText: "📦 Altro" })).toBeVisible();
   await expect(page.locator("li > p", { hasText: "🎯 Hobby" })).not.toBeVisible();

@@ -49,7 +49,7 @@ test("esporta tutti i dati in un unico archivio .zip", async ({ page }) => {
   // Impostazioni -> Importa/Esporta -> Esporta.
   await openSettings(page, user);
   await expect(page).toHaveURL(/\/settings$/);
-  await page.getByRole("tab", { name: "Importa/Esporta" }).click();
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   // exact: true --- la scheda di Impostazioni appena cliccata sopra
   // contiene "Esporta" come sottostringa, altrimenti ambigua con questa.
   await page.getByRole("tab", { name: "Esporta", exact: true }).click();

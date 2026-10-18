@@ -23,7 +23,7 @@ test("dopo un lotto Hinthia legge i documenti con una sola conferma e le propost
 
   // La lettura di Hinthia è un consenso: si accende dalle Impostazioni (funzione generale + estrazione avanzata).
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Hinthia" }).click();
+  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
   const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Hinthia" });
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
