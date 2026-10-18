@@ -174,6 +174,21 @@ l'indirizzo email opzionale `E2E_REGISTRATION_TEST_EMAIL` (vedi
 **`npm run reset-dev-data`** --- solo sviluppo: elimina tutti gli utenti a cascata e svuota il bucket Storage,
 lasciando intatti schema e migration. Richiede `SUPABASE_SERVICE_ROLE_KEY`. **Mai** su un progetto con dati reali.
 
+**`npm run seed-demo`** --- solo sviluppo: ricrea il profilo demo "A" (Marta Conti, `marta.conti.demo@mailinator.com`) con un
+archivio ben riempito (documenti, fascicoli, scadenze, beni, capsule, racconti, Eredità digitale), più un secondo account
+"B" (Paolo Conti, `paolo.conti.demo@mailinator.com`) collegato al primo, che serve a mostrare le capsule condivise e il
+guardiano raggiungibile. Password di accesso `Demo-Hinthial-2026`, master password `master-demo-hinthial-2026`. Passa dalle
+stesse funzioni dell'app (la cifratura è quella vera), cancella e ricrea solo i due account demo, e impiega circa due
+minuti. Le date sono relative a oggi, quindi rilanciarlo "ripara" le scadenze. Le email non iniziano con `hinthial-e2e-`:
+la pulizia dei test e2e non le tocca (invece `npm run reset-dev-data` sì). Codice in `tests/seed/`.
+
+**`npm run demo-stage -- <fase>`** --- solo sviluppo, dopo `seed-demo`: porta Marta in una fase di Eredità digitale
+(`normale`, `promemoria`, `grazia`, `attesa`, `confermata`, `verifica`, `attesafinale`, `consegna`) per vedere cosa vede
+Paolo, il suo guardiano, quando lei non accede più. Scrive solo nel database (stato di Marta e richiesta a Paolo): non
+spedisce email. In `attesa` Paolo riceve "Marta ha bisogno di te" in Oggi e in Protetti, con la pagina per rispondere; in
+`consegna` vede in "Condivise con me" la capsula che Marta aveva chiesto di aprire anche prima. Il cron vero (che
+riporta Marta a "normale" se accede) non gira in locale: la fase resta finché non la cambi o rilanci `seed-demo`.
+
 ## Sicurezza e privacy --- principi guida
 
 - La cifratura dei contenuti avviene **lato client**, prima di qualsiasi
