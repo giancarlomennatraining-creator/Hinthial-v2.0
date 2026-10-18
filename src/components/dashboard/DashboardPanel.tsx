@@ -6,6 +6,7 @@ import { AlertTriangleIcon, CheckCircleIcon } from "@/components/icons/nav-icons
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
 import { LoginSplash } from "@/components/dashboard/LoginSplash";
+import { useLoginSplash } from "@/components/layout/LoginSplashProvider";
 import { SharedCapsuleNotificationPopup } from "@/components/dashboard/SharedCapsuleNotificationPopup";
 import { FriendRequestNotificationPopup } from "@/components/dashboard/FriendRequestNotificationPopup";
 import { PageHelp } from "@/components/help/PageHelp";
@@ -33,11 +34,12 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
   const { requestUnlock, requestSetup, releaseUnlock, settling } = useUnlockPrompt();
 
   // "?justLoggedIn=1" arriva da signIn/signUp/verifyMfaCode (v. auth/actions.ts) --- letto una sola volta
-  // all'apertura, poi subito tolto dall'URL: un refresh o un ritorno alla Dashboard più tardi non lo rivede più.
-  const [showSplash, setShowSplash] = useState(() => searchParams.get("justLoggedIn") === "1");
+  // all'apertura (v. LoginSplashProvider, che tiene lo stato del benvenuto), poi subito tolto dall'URL: un refresh o un
+  // ritorno alla Dashboard più tardi non lo rivede più.
+  const { active: showSplash, finish: finishSplash } = useLoginSplash();
   useEffect(() => {
-    if (showSplash) router.replace("/dashboard");
-  }, [showSplash, router]);
+    if (searchParams.get("justLoggedIn") === "1") router.replace("/dashboard");
+  }, [searchParams, router]);
 
   // Con la cassaforte bloccata la finestra di sblocco compare subito sopra la dashboard sfocata; si può chiudere.
   // Chiusa con "Più tardi", sotto non resta lo scheletro: sembrerebbe un caricamento che non finisce mai.
@@ -48,6 +50,8 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
   }, []);
   useEffect(() => {
     if (status.kind !== "locked") return;
+    // Mentre il logo si riempie la finestra non compare: partirebbe insieme a lui. Si apre a benvenuto finito.
+    if (showSplash) return;
     if (unlockWasDismissed()) {
       // sessionStorage si legge solo nel browser: qui, non nello stato iniziale (eviterebbe l'idratazione).
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -55,14 +59,14 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
     } else {
       requestUnlock({ dismissible: true, onDismiss: dismissUnlock });
     }
-  }, [status.kind, requestUnlock, dismissUnlock]);
+  }, [status.kind, showSplash, requestUnlock, dismissUnlock]);
 
   // Lasciando la dashboard con la finestra ancora aperta, questa non resta sopra un'altra pagina.
   useEffect(() => () => releaseUnlock(), [releaseUnlock]);
 
   return (
     <div className="flex flex-col gap-6">
-      {showSplash ? <LoginSplash onDone={() => setShowSplash(false)} /> : null}
+      {showSplash ? <LoginSplash onDone={finishSplash} /> : null}
       <div>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-title">

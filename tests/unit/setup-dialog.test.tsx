@@ -100,6 +100,8 @@ describe("SetupDialog", () => {
     fillStepOne();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Salva la tua recovery key" })).toBeInTheDocument());
     await waitFor(() => expect(screen.queryByRole("button", { name: "Più tardi" })).not.toBeInTheDocument());
+    // Il pulsante sparisce col render; l'ascoltatore di Esc si aggiorna in un effetto subito dopo: si attende che React abbia finito.
+    await act(async () => {});
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });

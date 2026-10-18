@@ -10,6 +10,38 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-20 (135)
+
+### Dopo il login, la richiesta della master key aspetta il logo
+
+**Cosa fa:**
+- Dopo l'accesso il logo Hinthial si riempie per circa tre secondi con la sua barra, poi si dissolve. Prima, la richiesta della master key partiva nello stesso momento e si apriva sopra il logo ancora a metà. Ora compare solo a logo finito: barra piena e dissolvenza compiuta.
+- Vale per chi ha già la cassaforte (la finestra "Sblocca la cassaforte") e per chi non l'ha ancora (il popup "Proteggi i tuoi dati con una master password").
+- Senza il benvenuto (una visita normale alla Dashboard, la ricarica della pagina) non cambia nulla: non c'è nulla da aspettare.
+
+**Note tecniche:** nuovo `LoginSplashProvider` in `AppShell`, che tiene lo stato "benvenuto in corso" (letto una volta dal `?justLoggedIn=1` al montaggio della shell). `DashboardPanel` non chiede lo sblocco finché è attivo e riparte da solo a benvenuto finito (l'effetto dipende dallo stato); `MasterKeyIntroModal` non si mostra finché è attivo. `LoginSplash` chiama `finish` a dissolvenza compiuta. Nuovo e2e `login-splash-order.spec.ts` (due casi: senza cassaforte e con cassaforte bloccata; durante il logo la finestra non c'è, dopo c'è): fallisce sul comportamento di prima e passa ora.
+
+---
+
+## 2026-10-20 (134)
+
+### Il profilo demo "A": un utente già avviato, per vedere tutte le pagine piene
+
+**Cosa fa:**
+- `npm run seed-demo` crea nel progetto di sviluppo **Marta Conti** (`marta.conti.demo@mailinator.com`), un'utente con una vita già archiviata, così ogni pagina si vede piena e in tutte le casistiche. Password `Demo-Hinthial-2026`, master password `master-demo-hinthial-2026`.
+- **Archivio:** 51 contenuti (PDF con testo vero, foto, note, audio, un file non ancora letto, due da "Leggili ora", uno escluso da Hinthia), in 14 categorie (le 10 predefinite, più Famiglia, Lavoro, Viaggi e Racconti). Con emittenti, note, campi della Scheda (targa, numero polizza, importi), miniature, sintesi di Hinthia, e date di aggiunta sparse su due anni e mezzo. Scadenze di ogni tipo: già scadute, entro pochi giorni, entro due mesi, lontane. Due contenuti nel Cestino.
+- **Fascicoli (7):** quattro aperti con fasi, documenti attesi spuntati, prossimi passi, persone, riassunto e spese; due chiusi; uno vuoto. Più i suggerimenti "hai 5 documenti senza un fascicolo".
+- **Scadenze (19):** oggi, domani, scadute, imminenti, lontane, completate; alcune collegate a documenti e a beni.
+- **Beni (7)** con note su cosa succede; **Amici (9)**: un marito con account collegato, guardiani raggiungibili e non, una persona revocata, altre con amicizia non ancora accettata.
+- **Guardiani:** Marta ha chiesto a Paolo di essere il suo guardiano e lui ha accettato: in "Protetti" di Paolo compare Marta sotto "Chi proteggi". Paolo a sua volta ha chiesto a Marta, che non ha ancora risposto: in "Protetti" di Marta c'è una richiesta in attesa da accettare o rifiutare.
+- **Capsule (8 + 2):** bozze, chiuse, condivise, una già disponibile, una "anche se non ci sono più", con allegati, documenti e audio; e due capsule che **Paolo** (account B) ha condiviso con Marta, per "Condivise con me" e l'avviso in Oggi.
+- **Raccontami:** dieci racconti scritti e uno a voce. **Eredità digitale:** attivata, scheda d'emergenza compilata.
+- **Cosa vede Paolo quando Marta non accede più:** `npm run demo-stage -- <fase>` porta Marta in una fase di Eredità digitale (`normale`, `promemoria`, `grazia`, `attesa`, `confermata`, `verifica`, `attesafinale`, `consegna`). In `attesa` Paolo vede "Marta Conti ha bisogno di te" in Oggi e in Protetti e la pagina "Hai notizie di Marta?" con le tre risposte; in `consegna` vede in "Condivise con me" la capsula "Se mi succede qualcosa" come "aperta in anticipo, come aveva chiesto". Lo script (`scripts/demo-stage.mjs`) scrive solo nel database, senza email.
+
+**Note tecniche:** i dati dell'app sono cifrati sul dispositivo, quindi non si possono scrivere nel database: la semina (`tests/seed/demo.seed.ts`, con `vitest.seed.config.mts`, separata dai test) usa le stesse funzioni di dominio dell'app, con la cifratura vera, accede come l'utente con le credenziali e imposta con la chiave di servizio solo ciò che l'app non permette (date di creazione, consensi degli amici, i flag guardiano). Legge il testo dei PDF e le miniature da sé (nel browser lo fanno motori che qui non girano: sono sostituiti con `vi.mock`). Account B per le capsule condivise e il guardiano collegato. Le due email non iniziano con `hinthial-e2e-`: la pulizia dei test e2e non le cancella; `npm run reset-dev-data` sì. Dati in `tests/seed/support/`. Dura circa due minuti; le date sono relative a oggi, quindi rilanciarlo rinfresca le scadenze. **Non seminabile:** "Documenti da confermare" (è una memoria del dispositivo, non del database) e le proposte di Hinthia accettate o rifiutate nel registro di lettura (richiedono la lettura vera di Claude).
+
+---
+
 ## 2026-10-20 (133)
 
 ### Titoli coerenti, "indietro" nelle pagine legali, foto neutra in Nuovo amico

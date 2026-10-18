@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { createClient } from "@/lib/db/supabase/client";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
+import { useLoginSplash } from "@/components/layout/LoginSplashProvider";
 import { PasswordComparisonNote } from "@/components/crypto/PasswordComparisonNote";
 import { markMasterKeyIntroSeen } from "@/domain/profile/repository";
 import { BTN_PRIMARY } from "@/components/ui/styles";
@@ -25,6 +26,8 @@ export function MasterKeyIntroModal({
   const { status } = useMasterKey();
   const [seen, setSeen] = useState(initialSeen);
   const { requestSetup, setupOpen } = useUnlockPrompt();
+  // Dopo il login il logo si riempie per qualche secondo: il popup compare a benvenuto finito, non insieme a lui.
+  const { active: splashActive } = useLoginSplash();
 
   function dismiss() {
     setSeen(true);
@@ -41,7 +44,7 @@ export function MasterKeyIntroModal({
   }
 
   // Con la finestra di creazione già aperta (una pagina che serve la chiave l'ha aperta da sola) il popup sarebbe un doppione.
-  if (seen || status.kind !== "not-set-up" || setupOpen) return null;
+  if (seen || status.kind !== "not-set-up" || setupOpen || splashActive) return null;
 
   return createPortal(
     <div
