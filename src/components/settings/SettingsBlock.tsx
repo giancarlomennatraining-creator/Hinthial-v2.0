@@ -82,7 +82,7 @@ export function SettingsBlock({
         ) : null}
       </div>
       {open ? (
-        <div id={`${headingId}-body`} className="min-w-0">
+        <div id={`${headingId}-body`} className="@container flex min-w-0 flex-col gap-4">
           {children}
         </div>
       ) : null}

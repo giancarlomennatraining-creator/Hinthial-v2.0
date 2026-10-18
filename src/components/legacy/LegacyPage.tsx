@@ -7,12 +7,13 @@ import { EmergencyCardPanel } from "@/components/legacy/EmergencyCardPanel";
 import { LegacyAssets } from "@/components/legacy/LegacyAssets";
 import { LegacyCapsules } from "@/components/legacy/LegacyCapsules";
 import { LegacyGuardians } from "@/components/legacy/LegacyGuardians";
-import { LegacyWaiting } from "@/components/legacy/LegacyWaiting";
+import { LegacyOverview } from "@/components/legacy/LegacyOverview";
+import { LegacyWaiting, useLegacySettings } from "@/components/legacy/LegacyWaiting";
 import { PageHelp } from "@/components/help/PageHelp";
 
 /**
- * "Eredità digitale": la promessa per intero, in cinque blocchi. Chi conferma la tua assenza (i guardiani), quanto
- * aspettare (l'unica scelta: il livello di prudenza), cosa arriverà (le capsule che si aprono anche prima della loro
+ * "Eredità digitale": la promessa per intero, in cinque blocchi, preceduti da un riepilogo (accesa o spenta, a che livello).
+ * Quanto aspettare (l'unica scelta: il livello di prudenza), chi conferma la tua assenza (i guardiani), cosa arriverà (le capsule che si aprono anche prima della loro
  * data), cosa succede a ogni bene e cosa fare in un'emergenza, adesso (la scheda). "Quanto aspettare" non cifra nulla e si legge subito; gli altri
  * mostrano nomi e titoli cifrati e chiedono la master key: con la cassaforte bloccata c'è un solo riquadro per sbloccarla, in
  * cima (dove poi compaiono i guardiani) --- in fondo, sotto "Salva", non lo si vedeva prima di aver già toccato il resto.
@@ -32,9 +33,10 @@ export function LegacyPage({
   const { settling } = useUnlockPrompt();
   // Appena sbloccato la finestra si sta ancora dissolvendo: i blocchi cifrati compaiono dopo, non durante.
   const masterKey = status.kind === "unlocked" && !settling ? status.masterKey : null;
+  const legacy = useLegacySettings(userId);
 
   return (
-    <div className="flex flex-col gap-10 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
+    <div className="@container flex flex-col gap-8 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="flex items-start justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-title">Eredità digitale</h1>
         <PageHelp
@@ -49,23 +51,28 @@ export function LegacyPage({
         />
       </div>
 
-      {masterKey ? <LegacyGuardians masterKey={masterKey} /> : <RequireMasterKey inline>{() => null}</RequireMasterKey>}
+      <LegacyOverview userId={userId} legacy={legacy} showIndex={masterKey !== null} />
 
-      <LegacyWaiting userId={userId} />
+      {masterKey ? null : <RequireMasterKey inline>{() => null}</RequireMasterKey>}
 
-      {masterKey ? (
-        <>
-          <LegacyCapsules masterKey={masterKey} />
-          <LegacyAssets masterKey={masterKey} />
-          <EmergencyCardPanel
-            masterKey={masterKey}
-            userId={userId}
-            firstName={firstName}
-            lastName={lastName}
-            birthDate={birthDate}
-          />
-        </>
-      ) : null}
+      <div className="flex flex-col">
+        <LegacyWaiting userId={userId} legacy={legacy} />
+
+        {masterKey ? (
+          <>
+            <LegacyGuardians masterKey={masterKey} />
+            <LegacyCapsules masterKey={masterKey} />
+            <LegacyAssets masterKey={masterKey} />
+            <EmergencyCardPanel
+              masterKey={masterKey}
+              userId={userId}
+              firstName={firstName}
+              lastName={lastName}
+              birthDate={birthDate}
+            />
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

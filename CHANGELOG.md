@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-20 (138)
+
+### Eredità digitale: prima lo stato, poi i cinque blocchi
+
+**Cosa fa:**
+- In cima alla pagina un riepilogo dice subito se l'Eredità digitale è **accesa o spenta**, a che livello (Prudente, Normale, Rilassato) e cosa succederebbe. Prima l'interruttore stava a metà pagina, sotto i guardiani.
+- Sotto il riepilogo, un indice per saltare al blocco che serve: Quanto aspettare, Guardiani, Cosa arriverà, I tuoi beni, Scheda d'emergenza (compare quando la cassaforte è sbloccata).
+- Se una verifica è in corso, l'avviso arancione sta subito sotto il titolo e non in fondo a un blocco.
+- I cinque blocchi hanno lo stesso schema delle Impostazioni: a sinistra cosa sono e a cosa servono, a destra i comandi. "Quanto aspettare" viene per primo, perché è quello che non chiede la master key; i guardiani vengono dopo.
+- Le quattro fasi sono un elenco numerato, una sotto l'altra, e il totale ("In totale, nel caso peggiore, circa 7 mesi…") sta in una riga sola. Prima c'erano quattro riquadri e un paragrafo lungo che ripeteva le stesse cose.
+
+**Note tecniche:** `useLegacySettings` legge le impostazioni una volta nella pagina e le passa a `LegacyOverview` e a `LegacyWaiting`; i cinque componenti usano `SettingsBlock` (corpo ora con container query e colonna). `describeDigitalLegacyTotal` è la frase del totale estratta da `describeDigitalLegacySettings` (provata in `digital-legacy.test.ts`). Nessuna logica di stato o di consegna è cambiata.
+
+---
+
 ## 2026-10-20 (137)
 
 ### Impostazioni riordinate: sei pagine, blocchi chiari e una ricerca

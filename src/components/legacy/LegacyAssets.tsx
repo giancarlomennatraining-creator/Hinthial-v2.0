@@ -9,6 +9,7 @@ import type { AssetListItem } from "@/domain/assets/types";
 import { useToast } from "@/components/ui/ToastProvider";
 import { sortAlphabetically } from "@/lib/utils";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { SettingsBlock } from "@/components/settings/SettingsBlock";
 
 /**
  * "I tuoi beni": per ogni bene, cosa succede se non ci sei più (a chi va, dove sono le chiavi, chi chiamare). È una nota
@@ -64,19 +65,19 @@ export function LegacyAssets({ masterKey }: { masterKey: CryptoKey }) {
   const withNote = (assets ?? []).filter((a) => a.legacyNote !== "").length;
 
   return (
-    <section aria-labelledby="legacy-assets-title" className="flex flex-col gap-4">
-      <div>
-        <h2 id="legacy-assets-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          I tuoi beni
-        </h2>
-        <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
+    <SettingsBlock
+      id="assets"
+      title="I tuoi beni"
+      description={
+        <>
           Per ogni bene, scrivi cosa succede se non ci sei più: a chi va, dove sono le chiavi, chi chiamare. La nota resta
           cifrata e la vedi solo tu. Per farla arrivare a qualcuno, scrivila anche in una capsula.{" "}
           <Link href="/capsules/new" className="font-medium text-accent hover:underline">
             Scrivi una capsula →
           </Link>
-        </p>
-      </div>
+        </>
+      }
+    >
 
       {error ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -164,6 +165,6 @@ export function LegacyAssets({ masterKey }: { masterKey: CryptoKey }) {
           </ul>
         </>
       )}
-    </section>
+    </SettingsBlock>
   );
 }
