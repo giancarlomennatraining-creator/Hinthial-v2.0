@@ -11,6 +11,7 @@ import { sortAlphabetically } from "@/lib/utils";
 import type { DocumentSummary } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BackLink } from "@/components/ui/BackLink";
 
 /**
  * Pagina dedicata alla creazione di una scadenza (estratta da
@@ -102,12 +103,7 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link
-          href="/reminders"
-          className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-        >
-          ← Torna alle scadenze
-        </Link>
+        <BackLink href="/reminders">Torna alle scadenze</BackLink>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">
           Nuova scadenza
         </h1>

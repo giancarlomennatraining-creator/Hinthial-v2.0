@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { isPlaceholder, LEGAL } from "@/content/legal";
 import { BrandLockup } from "@/components/layout/BrandLockup";
+import { BackLink } from "@/components/ui/BackLink";
 
 /**
  * L'impaginazione comune di Privacy e Termini: pubbliche, leggibili senza accesso, testo a colonna stretta. Fuori da
@@ -16,9 +17,7 @@ export function LegalPage({ title, intro, children }: { title: string; intro: Re
             <BrandLockup className="h-auto w-40" darkSize="md" />
           </Link>
           {/* Il logo porta alla home, ma non si capisce: un "indietro" a parole, in cima, dove lo si cerca. */}
-          <Link href="/" className="w-fit text-sm font-medium text-accent hover:underline">
-            ← Torna alla pagina iniziale
-          </Link>
+          <BackLink href="/">Torna alla pagina iniziale</BackLink>
         </div>
         <header className="flex flex-col gap-2">
           <h1 className="text-3xl font-extrabold text-balance text-zinc-900 dark:text-zinc-100">{title}</h1>

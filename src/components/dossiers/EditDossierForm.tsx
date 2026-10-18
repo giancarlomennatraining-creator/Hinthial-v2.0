@@ -7,6 +7,7 @@ import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { listDossiers, updateDossier } from "@/domain/dossiers/repository";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BackLink } from "@/components/ui/BackLink";
 
 /**
  * Modifica titolo/descrizione di un fascicolo --- non lo stato
@@ -67,12 +68,7 @@ export function EditDossierForm({ masterKey, dossierId }: { masterKey: CryptoKey
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link
-          href={`/dossiers/${dossierId}`}
-          className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-        >
-          ← Torna al fascicolo
-        </Link>
+        <BackLink href={`/dossiers/${dossierId}`}>Torna al fascicolo</BackLink>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">
           Modifica fascicolo
         </h1>

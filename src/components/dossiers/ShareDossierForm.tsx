@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { listDossiers } from "@/domain/dossiers/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
@@ -23,6 +22,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { CARD, CARD_TITLE, SMALL_BUTTON, TEXT_INPUT } from "@/components/dossiers/styles";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import type { DocumentSummary } from "@/domain/documents/types";
+import { BackLink } from "@/components/ui/BackLink";
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -96,9 +96,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
   if (!dossier) {
     return (
       <div className="flex flex-col gap-4">
-        <Link href="/dossiers" className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400">
-          ← Torna ai fascicoli
-        </Link>
+        <BackLink href="/dossiers">Torna ai fascicoli</BackLink>
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           Fascicolo non trovato.
         </p>
@@ -181,9 +179,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
   return (
     <div className="flex flex-col gap-6 text-zinc-900 dark:text-zinc-100">
       <div className="flex flex-col gap-1.5">
-        <Link href={`/dossiers/${dossierId}`} className="self-start text-[13.5px] font-bold text-accent underline-offset-2 hover:underline">
-          ← {dossier.title}
-        </Link>
+        <BackLink href={`/dossiers/${dossierId}`}>Torna al fascicolo «{dossier.title}»</BackLink>
         <h1 className="text-[28px] leading-tight font-extrabold tracking-[-0.02em] text-title">Condividi un fascicolo</h1>
         <p className="max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
           Scegli cosa mostrare, a chi e per quanto tempo. Il link si chiude da solo, e lo puoi revocare quando vuoi.

@@ -80,6 +80,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BackLink, ContextBackLink } from "@/components/ui/BackLink";
 
 /**
  * Scheda di un contenuto d'Archivio --- fonde vista e modifica (v. feedback utente: due pagine separate creavano
@@ -640,12 +641,7 @@ export function ArchiveItemDetail({
   if (!doc || !kind) {
     return (
       <div className="flex flex-col gap-4">
-        <Link
-          href="/archive"
-          className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-        >
-          ← Torna all&apos;archivio
-        </Link>
+        <BackLink href="/archive">Torna all&apos;archivio</BackLink>
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           Contenuto non trovato.
         </p>
@@ -693,12 +689,7 @@ export function ArchiveItemDetail({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link
-          href="/archive"
-          className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-        >
-          ← Torna all&apos;archivio
-        </Link>
+        <ContextBackLink parent={{ href: "/archive", label: "Torna all'archivio" }} />
         <h1 className="mt-2 flex min-w-0 items-start gap-2 text-2xl font-semibold tracking-tight text-title">
           <span aria-hidden="true">{CONTENT_KIND_ICON[kind]}</span>
           <span className="min-w-0 break-words">{doc.filename}</span>

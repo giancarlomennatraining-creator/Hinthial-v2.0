@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import { AudioVideoRecorder } from "@/components/media/AudioVideoRecorder";
 import { BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BackLink } from "@/components/ui/BackLink";
 
 /**
  * I pezzi che il wizard di creazione (CreateCapsuleForm) e la pagina di modifica (EditCapsuleForm) di una capsula
@@ -34,12 +35,7 @@ export function CapsuleFormHeader({
 }) {
   return (
     <div>
-      <Link
-        href="/capsules"
-        className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-      >
-        ← Torna alle capsule
-      </Link>
+      <BackLink href="/capsules">Torna alle capsule</BackLink>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">{title}</h1>
       {description ? <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{description}</p> : null}
       {step ? <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">{stepLine(step)}</p> : null}

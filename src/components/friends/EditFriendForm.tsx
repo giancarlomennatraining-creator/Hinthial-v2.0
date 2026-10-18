@@ -10,6 +10,7 @@ import { inviteFriendToHinthial } from "@/lib/friends/actions";
 import { AvatarPickerCrop } from "@/components/ui/AvatarPickerCrop";
 import type { FriendListItem } from "@/domain/friends/types";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BackLink } from "@/components/ui/BackLink";
 
 /** Pagina di modifica di un amico. Conferma via `?updated=1` nell'URL, mai il nome in chiaro. Nessun elenco per id lato repository: si carica l'intero elenco già decifrato e si cerca l'id. */
 export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; friendId: string }) {
@@ -129,12 +130,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link
-          href="/friends"
-          className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-        >
-          ← Torna agli amici
-        </Link>
+        <BackLink href="/friends">Torna agli amici</BackLink>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">
           Modifica amico
         </h1>

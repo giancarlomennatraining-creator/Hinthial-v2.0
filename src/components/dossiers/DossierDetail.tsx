@@ -54,6 +54,7 @@ import type { AssetListItem } from "@/domain/assets/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import type { DocumentListItem, DocumentSummary } from "@/domain/documents/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
+import { BackLink, ContextBackLink } from "@/components/ui/BackLink";
 
 /**
  * La scheda di un fascicolo: titolo, descrizione, stato, e la vicenda che racconta, in gran parte ricavata dai suoi
@@ -327,12 +328,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
   if (!dossier) {
     return (
       <div className="flex flex-col gap-4">
-        <Link
-          href="/dossiers"
-          className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-        >
-          ← Torna ai fascicoli
-        </Link>
+        <BackLink href="/dossiers">Torna ai fascicoli</BackLink>
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           Fascicolo non trovato.
         </p>
@@ -371,12 +367,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
     <div className="flex flex-col gap-6 text-zinc-900 dark:text-zinc-100">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1.5">
-          <Link
-            href="/dossiers"
-            className="self-start text-[13.5px] font-bold text-accent underline-offset-2 hover:underline"
-          >
-            ← Torna ai fascicoli
-          </Link>
+          <ContextBackLink parent={{ href: "/dossiers", label: "Torna ai fascicoli" }} />
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] bg-brand/10 dark:bg-brand/20">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

@@ -69,6 +69,7 @@ import type {
   DocumentSummary,
 } from "@/domain/documents/types";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BackLink } from "@/components/ui/BackLink";
 
 type CreationMode = "upload" | "record" | "note";
 
@@ -913,12 +914,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
         </div>
       ) : (
         <div>
-          <Link
-            href="/archive"
-            className="text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-          >
-            ← Torna all&apos;archivio
-          </Link>
+          <BackLink href="/archive">Torna all&apos;archivio</BackLink>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-title">
             Nuovo contenuto
           </h1>
