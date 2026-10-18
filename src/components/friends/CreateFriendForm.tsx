@@ -121,6 +121,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
           fallbackFirstName={firstName}
           fallbackLastName={lastName}
           fallbackSeed={avatarSeedFor(firstName, lastName)}
+          neutralFallback
           onCropped={handleAvatarCropped}
         />
       </div>

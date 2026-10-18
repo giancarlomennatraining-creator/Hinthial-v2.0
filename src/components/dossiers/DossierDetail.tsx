@@ -383,7 +383,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
                 <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
               </svg>
             </span>
-            <h1 className="min-w-0 font-heading text-[30px] leading-tight font-extrabold tracking-[-0.02em] break-words text-title">{dossier.title}</h1>
+            <h1 className="min-w-0 text-[30px] leading-tight font-extrabold tracking-[-0.02em] break-words text-title">{dossier.title}</h1>
             <span
               className={`rounded-full px-[11px] py-1 text-[12.5px] font-bold ${
                 isClosed ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300" : "bg-brand/10 text-accent dark:bg-brand/20 dark:text-accent"

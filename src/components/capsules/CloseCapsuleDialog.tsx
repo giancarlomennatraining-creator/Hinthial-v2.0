@@ -85,7 +85,7 @@ export function CloseCapsuleDialog({
       >
         <div className="flex flex-col gap-1">
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Prima di chiudere</p>
-          <h2 className="font-heading text-xl font-extrabold text-zinc-900 dark:text-zinc-50">{shown.title}</h2>
+          <h2 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-50">{shown.title}</h2>
         </div>
 
         <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">

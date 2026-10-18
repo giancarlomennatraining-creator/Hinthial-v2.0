@@ -206,7 +206,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
                     </svg>
                   </span>
                   <div className="min-w-0">
-                    <h2 className="font-heading text-xl leading-tight font-extrabold">{template.name}</h2>
+                    <h2 className="text-xl leading-tight font-extrabold">{template.name}</h2>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">{template.description}</p>
                   </div>
                 </div>
@@ -233,7 +233,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
               </>
             ) : (
               <div className="flex flex-col gap-1">
-                <h2 className="font-heading text-xl leading-tight font-extrabold">Parti da zero</h2>
+                <h2 className="text-xl leading-tight font-extrabold">Parti da zero</h2>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   Un fascicolo vuoto: solo titolo e descrizione. Le fasi e i documenti attesi li aggiungi tu quando ti servono.
                 </p>

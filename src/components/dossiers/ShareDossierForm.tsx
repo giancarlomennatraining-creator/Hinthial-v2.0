@@ -184,7 +184,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
         <Link href={`/dossiers/${dossierId}`} className="self-start text-[13.5px] font-bold text-accent underline-offset-2 hover:underline">
           ← {dossier.title}
         </Link>
-        <h1 className="font-heading text-[28px] leading-tight font-extrabold tracking-[-0.02em] text-title">Condividi un fascicolo</h1>
+        <h1 className="text-[28px] leading-tight font-extrabold tracking-[-0.02em] text-title">Condividi un fascicolo</h1>
         <p className="max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
           Scegli cosa mostrare, a chi e per quanto tempo. Il link si chiude da solo, e lo puoi revocare quando vuoi.
         </p>
@@ -345,7 +345,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
 
           {created ? (
             <section aria-label="Link pronto" className="flex flex-col gap-3 rounded-[18px] border border-[#bfe3d2] bg-[#e3f4ec] p-4 dark:border-emerald-900 dark:bg-emerald-950">
-              <h2 className="font-heading text-base font-extrabold text-[#14604a] dark:text-emerald-200">
+              <h2 className="text-base font-extrabold text-[#14604a] dark:text-emerald-200">
                 Link pronto per {created.label || "chi lo riceve"}
               </h2>
               <input

@@ -40,7 +40,7 @@ export function EffectLight({ view, slots, origin, onClose }: OpenEffectProps) {
         <p className="capsule-line text-xs font-semibold uppercase tracking-wider text-[#BFCBF0]" style={{ ["--i" as string]: -1 }}>
           Da {view.ownerName}
         </p>
-        <h2 className="capsule-line font-heading text-3xl font-extrabold text-white" style={{ ["--i" as string]: -0.5 }}>
+        <h2 className="capsule-line text-3xl font-extrabold text-white" style={{ ["--i" as string]: -0.5 }}>
           {view.title}
         </h2>
         {lines.length > 0 ? (

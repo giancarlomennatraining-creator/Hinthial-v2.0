@@ -133,7 +133,7 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
   if (state.status === "error") {
     return (
       <div role="alert" className="mx-auto flex max-w-md flex-col gap-2 rounded-card border border-red-200 bg-red-50 p-6 text-center dark:border-red-900 dark:bg-red-950">
-        <h1 className="font-heading text-lg font-extrabold text-red-700 dark:text-red-300">Non posso aprire questo fascicolo</h1>
+        <h1 className="text-lg font-extrabold text-red-700 dark:text-red-300">Non posso aprire questo fascicolo</h1>
         <p className="text-sm text-red-700 dark:text-red-300">{state.message}</p>
       </div>
     );
@@ -148,7 +148,7 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
         <p className="text-[13px] font-bold text-accent">
           {manifest.sharedBy ? `${manifest.sharedBy} ha condiviso con te questo fascicolo` : "Questo fascicolo è stato condiviso con te"}
         </p>
-        <h1 className="font-heading text-[30px] leading-tight font-extrabold tracking-[-0.02em] break-words text-title">{manifest.title}</h1>
+        <h1 className="text-[30px] leading-tight font-extrabold tracking-[-0.02em] break-words text-title">{manifest.title}</h1>
         {manifest.description ? <p className="max-w-3xl text-sm whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">{manifest.description}</p> : null}
         <p className="text-[13px] text-zinc-500 dark:text-zinc-400">
           {manifest.documents.length} {manifest.documents.length === 1 ? "documento" : "documenti"} · condiviso il {formatDate(manifest.sharedAt)} · il link vale
@@ -159,7 +159,7 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
 
       {manifest.phase ? (
         <section aria-label="Fasi" className="flex flex-col gap-2">
-          <h2 className="font-heading text-base font-extrabold">Fase: {manifest.phase.names[manifest.phase.current]}</h2>
+          <h2 className="text-base font-extrabold">Fase: {manifest.phase.names[manifest.phase.current]}</h2>
           <ol className="flex flex-wrap gap-2">
             {manifest.phase.names.map((name, index) => {
               const phaseStateValue = phaseState(manifest.phase!, index);
@@ -185,13 +185,13 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
 
       {manifest.summary ? (
         <section aria-label="In breve" className="flex flex-col gap-2 rounded-[18px] border border-[#cdd8fa] bg-zinc-50 px-5 py-4 dark:border-brand/40 dark:bg-brand/10">
-          <h2 className="font-heading text-base font-extrabold">In breve</h2>
+          <h2 className="text-base font-extrabold">In breve</h2>
           <p className="text-[14.5px] leading-relaxed whitespace-pre-wrap text-[#2c3557] dark:text-zinc-200">{manifest.summary}</p>
         </section>
       ) : null}
 
       <section aria-label="Documenti" className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="font-heading text-base font-extrabold">Documenti</h2>
+        <h2 className="text-base font-extrabold">Documenti</h2>
         {documentError ? (
           <p role="alert" className="text-sm text-red-600 dark:text-red-400">
             {documentError}

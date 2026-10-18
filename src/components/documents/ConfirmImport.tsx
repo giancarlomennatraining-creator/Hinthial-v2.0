@@ -484,7 +484,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
 
       {items.length > 1 ? (
         <section aria-label="Per tutti" className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="font-heading text-base font-extrabold text-zinc-900 dark:text-zinc-100">Per tutti i {items.length} documenti</h2>
+          <h2 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100">Per tutti i {items.length} documenti</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <label className="flex flex-col gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Categoria

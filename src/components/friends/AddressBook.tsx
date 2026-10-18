@@ -289,7 +289,7 @@ export function AddressBook({
               linked={shown.linkedUserId !== null}
             />
             <div className="min-w-0 flex-1">
-              <h2 className="font-heading text-2xl leading-tight font-extrabold tracking-tight break-words text-zinc-900 dark:text-zinc-100">{shown.name}</h2>
+              <h2 className="text-2xl leading-tight font-extrabold tracking-tight break-words text-zinc-900 dark:text-zinc-100">{shown.name}</h2>
               {shown.role ? <p className="text-sm text-zinc-500 dark:text-zinc-400">{shown.role}</p> : null}
             </div>
             {renderMenu(shown)}

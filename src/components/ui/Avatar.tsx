@@ -50,6 +50,7 @@ export function Avatar({
   seed,
   size = "md",
   linked = false,
+  neutral = false,
 }: {
   firstName: string;
   lastName: string;
@@ -65,6 +66,8 @@ export function Avatar({
    * smartphone (v. richiesta utente).
    */
   linked?: boolean;
+  /** Sfondo grigio invece di un colore tratto dal `seed`: per l'anteprima di una persona che non c'è ancora (Nuovo amico), il cui colore vero sarà deciso dal suo id alla creazione. */
+  neutral?: boolean;
 }) {
   const sizeClass = SIZE_CLASSES[size];
 
@@ -74,7 +77,7 @@ export function Avatar({
   ) : (
     <span
       aria-hidden="true"
-      className={`${sizeClass} flex items-center justify-center rounded-full font-semibold text-white ${colorFor(seed)}`}
+      className={`${sizeClass} flex items-center justify-center rounded-full font-semibold text-white ${neutral ? "bg-zinc-500" : colorFor(seed)}`}
     >
       {initialsOf(firstName, lastName)}
     </span>

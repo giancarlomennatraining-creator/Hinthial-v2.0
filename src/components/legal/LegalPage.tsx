@@ -11,11 +11,17 @@ export function LegalPage({ title, intro, children }: { title: string; intro: Re
   return (
     <div className="flex min-h-screen flex-1 flex-col items-center bg-background px-4 py-10 sm:px-6">
       <article className="flex w-full max-w-2xl flex-col gap-8">
-        <Link href="/" className="w-fit">
-          <BrandLockup className="h-auto w-40" darkSize="md" />
-        </Link>
+        <div className="flex flex-col gap-3">
+          <Link href="/" className="w-fit">
+            <BrandLockup className="h-auto w-40" darkSize="md" />
+          </Link>
+          {/* Il logo porta alla home, ma non si capisce: un "indietro" a parole, in cima, dove lo si cerca. */}
+          <Link href="/" className="w-fit text-sm font-medium text-accent hover:underline">
+            ← Torna alla pagina iniziale
+          </Link>
+        </div>
         <header className="flex flex-col gap-2">
-          <h1 className="font-heading text-3xl font-extrabold text-balance text-zinc-900 dark:text-zinc-100">{title}</h1>
+          <h1 className="text-3xl font-extrabold text-balance text-zinc-900 dark:text-zinc-100">{title}</h1>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">Ultimo aggiornamento: {LEGAL.lastUpdated}</p>
           <div className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{intro}</div>
         </header>
@@ -39,7 +45,7 @@ export function LegalPage({ title, intro, children }: { title: string; intro: Re
 export function LegalSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-heading text-lg font-bold text-zinc-900 dark:text-zinc-100">{title}</h2>
+      <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{title}</h2>
       {children}
     </section>
   );

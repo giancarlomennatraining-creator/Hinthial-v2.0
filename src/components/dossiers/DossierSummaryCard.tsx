@@ -44,7 +44,7 @@ export function DossierSummaryCard({
             <path d="M12 3l1.8 4.7L18.5 9l-4.7 1.8L12 15.5l-1.8-4.7L5.5 9l4.7-1.3Z" />
           </svg>
         </span>
-        <h2 className="font-heading text-base font-extrabold text-zinc-900 dark:text-zinc-100">In breve</h2>
+        <h2 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100">In breve</h2>
       </div>
 
       {summary ? (

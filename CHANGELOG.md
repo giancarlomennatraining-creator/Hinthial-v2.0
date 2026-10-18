@@ -10,6 +10,19 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-20 (133)
+
+### Titoli coerenti, "indietro" nelle pagine legali, foto neutra in Nuovo amico
+
+**Cosa fa:**
+- **Titoli:** i titoli di pagina e di sezione (31 punti, in 19 file: pagine legali, fascicolo, condivisione, schermate di stato, verifica del guardiano…) avevano un carattere fisso che ignorava lo stile; ora seguono quello scelto (Baloo 2 in Foglia, Manrope in Notte, Work Sans in Luce), come tutti gli altri titoli dell'app.
+- **Pagine legali:** in cima c'è "← Torna alla pagina iniziale", oltre al logo (che portava alla home senza dirlo) e al link in fondo.
+- **Nuovo amico:** il segnaposto della foto è grigio finché la persona non c'è. Prima era un colore scelto dal nome che si digitava, diverso da quello che la persona avrebbe avuto davvero (deciso dal suo id): in "Modifica amico" compariva un colore diverso.
+
+**Note tecniche:** tolto `font-heading` da tutti gli `<h1>` e `<h2>` scritti su una riga (restano nei titoli più piccoli); `Avatar` ha la prop `neutral` (sfondo `bg-zinc-500`) e `AvatarPickerCrop` la inoltra come `neutralFallback`, usata da `CreateFriendForm`. Test: unitario `avatar-neutral.test.tsx`; `launch-basics.spec.ts` controlla il nuovo link in cima alle pagine legali.
+
+---
+
 ## 2026-10-20 (132)
 
 ### Scheda del contenuto su telefono: prima i campi
