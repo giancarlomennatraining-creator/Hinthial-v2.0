@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-21 (144)
+
+### Un suono più meditativo per l'entrata
+
+**Cosa fa:** il suono dell'entrata non ha più la melodia a campanelli: ora è un'atmosfera calma e "karmica". Un fondo basso e caldo che respira, tre colpi di campana tibetana che risuonano a lungo (all'inizio, sul logo, sul nome), un soffio d'aria che sale con la luce e uno che scende all'uscita, il tutto dentro un riverbero largo e morbido. Dura sempre 3,5 secondi, a volume basso, e si può spegnere o riascoltare da Impostazioni → Aspetto e preferenze → Entrata dell'app.
+
+**Note tecniche:** `lib/intro-sound.ts` riscritto con Web Audio: campane a tre parziali non armoniche (rapporti 1 : 2,76 : 5,4), ognuna doppia e appena stonata per il battito lento; fondo di onde sinusoidali su Re; riverbero a convoluzione con una risposta d'ambiente generata sul momento; sempre nessun file da scaricare. Livello controllato con un analizzatore: picco intorno a 0,17, senza distorsione.
+
+---
+
 ## 2026-10-21 (143)
 
 ### Entrata più fluida e più frequente, con le sue impostazioni
