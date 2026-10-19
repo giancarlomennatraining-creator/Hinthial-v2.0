@@ -41,6 +41,7 @@ test("a spazio finito un caricamento si ferma con un messaggio chiaro, e le Impo
   });
 
   await page.goto("/settings");
+  await page.getByRole("tab", { name: "I miei dati" }).click();
   const meter = page.getByRole("progressbar", { name: "Spazio usato" });
   await expect(meter).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("0 B di 0 B")).toBeVisible();

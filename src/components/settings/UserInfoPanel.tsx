@@ -7,7 +7,6 @@ import { updateProfile } from "@/domain/profile/repository";
 import { TextField } from "@/components/ui/TextField";
 import { AvatarUploadForm } from "@/components/settings/AvatarUploadForm";
 import { BTN_PRIMARY } from "@/components/ui/styles";
-import { StorageUsageMeter } from "@/components/ui/StorageUsageMeter";
 import { SettingsBlock } from "@/components/settings/SettingsBlock";
 
 function translateEmailChangeError(message: string): string {
@@ -197,20 +196,16 @@ export function UserInfoPanel({
         </form>
       </SettingsBlock>
 
-      <SettingsBlock id="space" title="Spazio" description="Quanto spazio occupano i tuoi file cifrati.">
-        <StorageUsageMeter />
-      </SettingsBlock>
-
       <SettingsBlock
         id="email"
         title="Email"
-        description={
-          <>
-            Email attuale:{" "}
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">{currentEmail}</span>
-          </>
-        }
+        description="L'indirizzo con cui accedi e a cui scrivo."
       >
+        {/* L'indirizzo sta qui, nella colonna larga: nella stretta di sinistra, un indirizzo lungo non ci stava. */}
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          Email attuale:{" "}
+          <span className="font-medium break-all text-zinc-800 dark:text-zinc-200">{currentEmail}</span>
+        </p>
         <form onSubmit={handleChangeEmail} className="flex max-w-md flex-col gap-4">
           <TextField
             id="newEmail"

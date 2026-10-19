@@ -20,7 +20,6 @@ export interface SettingsEntry extends SettingsTarget {
 export const SETTINGS_ENTRIES: SettingsEntry[] = [
   { tab: "profile", block: "avatar", label: "Foto profilo", keywords: "avatar immagine scatta carica" },
   { tab: "profile", block: "personal", label: "Dati personali", keywords: "nome cognome data di nascita compleanno" },
-  { tab: "profile", block: "space", label: "Spazio usato", keywords: "quota archiviazione gigabyte memoria" },
   { tab: "profile", block: "email", label: "Email", keywords: "indirizzo posta cambia" },
   { tab: "security", block: "authenticator", label: "Verifica in due passaggi", keywords: "2fa mfa authenticator codice app accesso" },
   { tab: "security", block: "backup-codes", label: "Codici di backup", keywords: "recupero emergenza perso telefono" },
@@ -28,6 +27,7 @@ export const SETTINGS_ENTRIES: SettingsEntry[] = [
   { tab: "security", block: "activity", label: "Registro delle attività", keywords: "accessi cronologia log storico audit" },
   { tab: "privacy", block: "know", label: "Cosa sa Hinthial di te", keywords: "privacy dati informativa visibile cifrato" },
   { tab: "privacy", block: "hinthia", label: "Hinthia", keywords: "intelligenza artificiale ai consenso estrazione assistente" },
+  { tab: "data", block: "space", label: "Spazio usato", keywords: "quota archiviazione gigabyte memoria occupato" },
   { tab: "data", block: "categories", label: "Categorie", keywords: "etichette tipi documenti" },
   { tab: "data", block: "import-export", label: "Importa ed esporta", keywords: "backup csv scarica file template" },
   { tab: "data", block: "trash", label: "Cestino", keywords: "eliminati giorni rimozione definitiva" },

@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-21 (141)
+
+### Impostazioni: l'email si legge per intero e lo spazio usato passa in "I miei dati"
+
+**Cosa fa:**
+- Nel Profilo, "Email attuale" sta ora nella colonna larga, sopra il campo "Nuova email": prima, un indirizzo lungo non entrava nella colonna stretta di sinistra e finiva sotto il campo. A sinistra resta una frase breve.
+- Lo **spazio usato** non sta più nel Profilo ma in **I miei dati**, in cima, vicino al Cestino, a Importa/Esporta e alle Categorie: parla di cosa conservi, non di chi sei. La ricerca delle Impostazioni ("spazio", "quota") porta lì.
+
+**Note tecniche:** `StorageUsageMeter` spostato da `UserInfoPanel` a `SettingsTabs` (pagina "data", che ora ha l'ordine Spazio, Cestino, Importa ed esporta, Categorie); aggiornati l'indice di ricerca e `storage-quota.spec.ts`.
+
+---
+
 ## 2026-10-21 (140)
 
 ### Archivio: Panoramica, Schede ed Elenco
