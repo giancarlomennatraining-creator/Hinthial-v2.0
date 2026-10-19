@@ -10,6 +10,20 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-21 (142)
+
+### L'entrata "Aurora" alla prima apertura dell'app
+
+**Cosa fa:**
+- La **prima volta** che l'app installata (schermata Home o guscio Android) si apre su un dispositivo, parte un'entrata animata di **3,5 secondi** e poi si vede la pagina di sempre: chiazze di luce verde, turchese e blu che scorrono, il logo che emerge sfocato e poi nitido, un lampo che lo attraversa, il **nome Hinthial** (l'immagine ufficiale di `wordmark.svg`) che si compone da sinistra a destra, un riflesso, e il velo che si dissolve.
+- Un **suono calmo** accompagna le luci: un tappeto morbido, qualche scintilla, un soffio sul lampo, una campana quando appare il nome. È sintetizzato sul momento, senza file da scaricare, a volume basso, e si spegne con l'uscita.
+- Un tocco sullo schermo **salta** l'entrata (e il suono). Non compare mai a chi ha chiesto meno movimento.
+- Non si ripete: dopo la prima volta il dispositivo la ricorda. In una scheda del browser non compare da sola; per provarla si apre l'indirizzo con `?intro=1` (si salta sempre con `?intro=0`).
+
+**Note tecniche:** `lib/app-intro.ts` (regola `shouldPlayIntro` e lo script `INTRO_INIT_SCRIPT`, che decide prima del primo paint come quello del tema, così la pagina non lampeggia), `components/layout/AppIntro.tsx` e `app-intro.css` (tutta CSS: si chiude da sola anche se lo script non parte), `lib/intro-sound.ts` (Web Audio; il suono parte solo per un'app installata o dopo un gesto dell'utente, come impongono i browser: altrove l'entrata si vede senza suono). Nuove immagini `public/brand/intro-wordmark.webp` e `intro-logo.webp`, ridotte dagli originali (nome ritagliato a 900 px, logo a 400 px), caricate solo quando il velo compare. Provata da `app-intro.test.ts` (regola e script) e `app-intro.spec.ts`.
+
+---
+
 ## 2026-10-21 (141)
 
 ### Impostazioni: l'email si legge per intero e lo spazio usato passa in "I miei dati"
