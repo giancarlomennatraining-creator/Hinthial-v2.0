@@ -470,30 +470,64 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
         />
       ) : null}
 
+      {/* Da telefono le schede stanno in quest'ordine: riepilogo, cosa fare (documenti attesi, prossimi passi, scadenze), poi la cronologia e
+          il resto. Da lg in su: a sinistra ciò che si legge (riepilogo, cronologia, spese, persone, sintesi), a destra ciò che si fa. */}
       <div className="flex flex-col items-stretch gap-5 lg:flex-row lg:items-start">
-        <div className="flex min-w-0 flex-1 flex-col gap-5">
+        <div className="contents lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:gap-5">
           {showSummary ? (
-            <DossierSummaryCard
-              summary={dossier.summary}
-              readable={readable}
-              canWrite={canWriteSummary}
-              busy={summaryBusy}
-              notice={summaryNotice}
-              now={now}
-              onWrite={() => void handleWriteSummary()}
-              onRemove={() => void handleRemoveSummary()}
-            />
+            <div className="order-1">
+              <DossierSummaryCard
+                summary={dossier.summary}
+                readable={readable}
+                canWrite={canWriteSummary}
+                busy={summaryBusy}
+                notice={summaryNotice}
+                now={now}
+                onWrite={() => void handleWriteSummary()}
+                onRemove={() => void handleRemoveSummary()}
+              />
+            </div>
           ) : null}
-          <DossierTimeline
-            timeline={timeline}
-            noteText={noteText}
-            noteBusy={noteBusy}
-            onNoteChange={setNoteText}
-            onAddNote={() => void handleAddNote()}
-          />
+          <div className="order-3 flex min-w-0 flex-col gap-5">
+            <DossierTimeline
+              timeline={timeline}
+              noteText={noteText}
+              noteBusy={noteBusy}
+              onNoteChange={setNoteText}
+              onAddNote={() => void handleAddNote()}
+            />
+            {overview.expenses || showInvolved ? (
+              <div className="grid items-start gap-5 md:grid-cols-2">
+                {overview.expenses ? <ExpensesCard expenses={overview.expenses} /> : null}
+                {showInvolved ? (
+                  <DossierInvolved
+                    assets={overview.assets}
+                    people={people}
+                    busy={itemsBusy}
+                    adding={adding.people}
+                    canAddPeople={items !== null && !isClosed}
+                    onAddPerson={(name, role) =>
+                      void runItemsAction(
+                        (userId) => addDossierPerson(supabase, masterKey, userId, dossierId, { name, role }),
+                        "Impossibile aggiungere la persona.",
+                      )
+                    }
+                    onDeletePerson={(person) => void runItemsAction(() => deleteDossierItem(supabase, person.id), "Impossibile togliere la persona.")}
+                  />
+                ) : null}
+              </div>
+            ) : null}
+            {linkedDocuments.length > 0 ? (
+              <ReadingsCard
+                readings={readings}
+                busy={readingsBusy}
+                onShow={() => void handleShowReadings(linkedDocuments.map((d) => d.id))}
+              />
+            ) : null}
+          </div>
         </div>
 
-        <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[300px]">
+        <div className="order-2 flex w-full shrink-0 flex-col gap-4 lg:w-[300px]">
           {showExpected && expected ? (
             <ExpectedItemsCard
               expected={expected}
@@ -546,32 +580,6 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
 
           {overview.deadlines.length > 0 ? <DeadlinesCard deadlines={overview.deadlines} /> : null}
 
-          {overview.expenses ? <ExpensesCard expenses={overview.expenses} /> : null}
-
-          {showInvolved ? (
-            <DossierInvolved
-              assets={overview.assets}
-              people={people}
-              busy={itemsBusy}
-              adding={adding.people}
-              canAddPeople={items !== null && !isClosed}
-              onAddPerson={(name, role) =>
-                void runItemsAction(
-                  (userId) => addDossierPerson(supabase, masterKey, userId, dossierId, { name, role }),
-                  "Impossibile aggiungere la persona.",
-                )
-              }
-              onDeletePerson={(person) => void runItemsAction(() => deleteDossierItem(supabase, person.id), "Impossibile togliere la persona.")}
-            />
-          ) : null}
-
-          {linkedDocuments.length > 0 ? (
-            <ReadingsCard
-              readings={readings}
-              busy={readingsBusy}
-              onShow={() => void handleShowReadings(linkedDocuments.map((d) => d.id))}
-            />
-          ) : null}
         </div>
       </div>
     </div>

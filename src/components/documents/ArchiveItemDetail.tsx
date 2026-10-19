@@ -708,7 +708,7 @@ export function ArchiveItemDetail({
 
       {/* Barra a sé (v. feedback utente): Salva modifiche/Scarica/Elimina, stessa forma per tutti e tre
           (rounded-xl), sopra al riquadro bianco con Anteprima e le tab --- non più dentro la tab Scheda. */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
           disabled={!fieldsDirty || savingFields}
@@ -717,6 +717,11 @@ export function ArchiveItemDetail({
         >
           {savingFields ? "Salvataggio…" : "Salva modifiche"}
         </button>
+        {fieldsDirty && !savingFields ? (
+          <span role="status" className="text-sm text-orange-700 dark:text-orange-400">
+            Modifiche non salvate
+          </span>
+        ) : null}
         {kind === "note" ? null : (
           <button
             type="button"
@@ -737,7 +742,7 @@ export function ArchiveItemDetail({
           type="button"
           disabled={busy}
           onClick={handleDelete}
-          className="rounded-xl border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
+          className="rounded-xl border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 sm:ml-auto dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
         >
           Elimina
         </button>
@@ -940,13 +945,16 @@ export function ArchiveItemDetail({
                   />
                 ) : null}
                 {structuredValues && Object.keys(structuredValues).length > 0 ? (
-                  <div className="flex flex-col gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-900">
+                  <div role="group" aria-labelledby="scheda-group-data" className="flex flex-col gap-3">
+                    <p id="scheda-group-data" className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                      Dati del documento
+                    </p>
                     {Object.entries(structuredValues).map(([key, value]) => {
                       const inputId = `scheda-field-${key}`;
                       return (
                         <div key={key} className="flex flex-col gap-1">
                           <label htmlFor={inputId} className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                            {fieldVocabulary.find((v) => v.fieldKey === key)?.label ?? key}
+                            {capitalizeFirst(fieldVocabulary.find((v) => v.fieldKey === key)?.label ?? key)}
                           </label>
                           {/* Il tipo segue il dato salvato, non quello che si sta digitando: una data si sceglie dal calendario. */}
                           <input
@@ -1048,6 +1056,11 @@ export function ArchiveItemDetail({
 }
 
 /** Confronto per valore, senza voci vuote né ordine: una voce svuotata equivale a una rimossa. */
+/** Le voci del vocabolario sono scritte in minuscolo ("importo"): come etichetta di un campo vanno con la maiuscola, come le altre. */
+function capitalizeFirst(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function normalizeStructuredFields(fields: Record<string, string>): string {
   return JSON.stringify(
     Object.entries(fields)
