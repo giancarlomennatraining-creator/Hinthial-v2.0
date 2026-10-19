@@ -5,6 +5,8 @@
  * altrove il contesto resta sospeso e l'entrata si vede senza suono.
  */
 
+import { INTRO_SOUND_KEY } from "@/lib/app-intro";
+
 export interface IntroSound {
   /** Spegne il suono con una breve dissolvenza (per il tocco che salta l'entrata). */
   stop: () => void;
@@ -25,6 +27,13 @@ export async function startIntroSound(): Promise<IntroSound | null> {
   const Ctor: AudioContextCtor | undefined =
     window.AudioContext ?? (window as unknown as { webkitAudioContext?: AudioContextCtor }).webkitAudioContext;
   if (!Ctor) return null;
+
+  // Chi l'ha spenta nelle Impostazioni (Entrata dell'app) non la sente.
+  try {
+    if (window.localStorage.getItem(INTRO_SOUND_KEY) === "off") return null;
+  } catch {
+    // Senza memoria del browser il suono resta acceso.
+  }
 
   // Senza un gesto dell'utente il browser lascia partire l'audio solo per un'app installata: altrove non si prova nemmeno,
   // così non resta un avviso in console per un suono che non potrebbe partire.

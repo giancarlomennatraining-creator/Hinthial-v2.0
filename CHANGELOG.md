@@ -10,6 +10,19 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-21 (143)
+
+### Entrata più fluida e più frequente, con le sue impostazioni
+
+**Cosa fa:**
+- L'entrata Aurora ora compare **a ogni apertura** dell'app installata (ogni volta che la riapri da chiusa, non quando ci torni da un'altra app), non più solo la prima volta.
+- In **Impostazioni → Aspetto e preferenze → Entrata dell'app** si sceglie: **a ogni apertura**, **solo la prima volta** o **mai**; si può togliere il **suono**; e c'è **Rivedila ora** per vederla subito (anche dal browser, e con il suono). La scelta vale su questo dispositivo.
+- **Più liscia**: rifatta per animare solo movimento e trasparenza, che il telefono disegna sulla scheda grafica senza intralciare la pagina che intanto si carica. Via le sfocature animate, le sovrapposizioni di colore e il ritaglio che si apre, che erano ciò che faceva scattare. Le sfumature sono ora gradienti morbidi, il logo emerge da una luce bianca che si ritira, il nome compare dal basso e il riflesso è una striscia che scorre dentro la sua forma. Le immagini si preparano prima che servano. Sui telefoni con poca memoria o pochi processori la versione è più leggera (due chiazze di luce in meno, niente riflesso).
+
+**Note tecniche:** nuove chiavi `hinthial-intro-mode` (always/first/never), `hinthial-intro-sound`, `hinthial-intro-session` (in sessionStorage, che si azzera quando l'app si chiude del tutto); `shouldPlayIntro` e lo script iniziale aggiornati e provati in ogni combinazione (`app-intro.test.ts`); `IntroSettings` e l'evento `hinthial:play-intro` che `AppIntro` ascolta per ripartire. Misurato con la CPU rallentata di quattro volte e un telefono simulato: nei 3,5 secondi dell'animazione nessun fotogramma lungo; i pochi che restano cadono nei primi 400 ms, quando la pagina sotto si sta ancora preparando. Test e2e in `app-intro.spec.ts`.
+
+---
+
 ## 2026-10-21 (142)
 
 ### L'entrata "Aurora" alla prima apertura dell'app

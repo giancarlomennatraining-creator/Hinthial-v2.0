@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures";
+import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // L'entrata animata della prima apertura (v. lib/app-intro.ts). In una scheda del browser non compare da sola:
 // `?intro=1` serve a provarla, e il primo passaggio dell'app installata si decide con le stesse regole (provate in
@@ -46,4 +47,34 @@ test("?intro=0 la salta sempre", async ({ page }) => {
   await page.goto("/login?intro=0");
   await expect(page.getByRole("heading", { name: "Accedi" })).toBeVisible();
   await expect(page.locator("#app-intro")).toBeHidden();
+});
+
+test("dalle Impostazioni si sceglie quando mostrarla, si spegne il suono e si rivede subito", async ({ page }) => {
+  test.slow();
+  const user = uniqueTestUser();
+  await createConfirmedTestUser(user);
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password").fill(user.password);
+  await page.getByRole("button", { name: "Accedi" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+
+  await page.goto("/settings");
+  await page.getByRole("tab", { name: "Aspetto e preferenze" }).click();
+  const gruppo = page.getByRole("radiogroup", { name: "Quando mostrare l'entrata" });
+  await expect(gruppo.getByRole("radio", { name: "A ogni apertura" })).toHaveAttribute("aria-checked", "true");
+
+  await gruppo.getByRole("radio", { name: "Mai" }).click();
+  expect(await page.evaluate(() => window.localStorage.getItem("hinthial-intro-mode"))).toBe("never");
+  await gruppo.getByRole("radio", { name: "Solo la prima volta" }).click();
+  expect(await page.evaluate(() => window.localStorage.getItem("hinthial-intro-mode"))).toBe("first");
+
+  await page.getByLabel("Con il suono").uncheck();
+  expect(await page.evaluate(() => window.localStorage.getItem("hinthial-intro-sound"))).toBe("off");
+
+  // «Rivedila ora»: il velo compare, e dopo circa tre secondi e mezzo se ne va.
+  await page.getByRole("button", { name: "Rivedila ora" }).click();
+  const velo = page.locator("#app-intro");
+  await expect(velo).toBeVisible();
+  await expect(velo).toBeHidden({ timeout: 8_000 });
 });
