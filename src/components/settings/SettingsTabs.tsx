@@ -19,6 +19,7 @@ import { TrashRetentionSettings } from "@/components/settings/TrashRetentionSett
 import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { ImportExportTabs } from "@/components/import-export/ImportExportTabs";
+import { StorageUsageMeter } from "@/components/ui/StorageUsageMeter";
 import { AIConsentSettings } from "@/components/settings/AIConsentSettings";
 import { SettingsBlock, SettingsFocusContext } from "@/components/settings/SettingsBlock";
 import { SettingsSearch } from "@/components/settings/SettingsSearch";
@@ -82,6 +83,7 @@ const TAB_HELP: Record<Tab, HelpTip[]> = {
   ],
   data: [
     { icon: "🏷️", text: "Le categorie predefinite coprono i casi più comuni; puoi aggiungerne altre, rinominarle o eliminarle." },
+    { icon: "💾", text: "Lo spazio mostra quanto occupano i tuoi file cifrati e quanto te ne resta." },
     { icon: "📤", text: "Esporta tutti i tuoi dati in un unico archivio cifrato, o importa amici e beni da un file .csv compilato." },
     { icon: "🗑️", text: "Il Cestino tiene i documenti eliminati per il tempo che scegli qui." },
   ],
@@ -213,13 +215,8 @@ export function SettingsTabs({
       case "data":
         return (
           <div className="flex flex-col">
-            <SettingsBlock
-              id="import-export"
-              title="Importa ed esporta"
-              description="Esporta tutti i tuoi dati in un archivio cifrato, o importa amici e beni da un file .csv."
-            >
-              {/* ImportExportTabs gestisce da sé le proprie sotto-schede e il proprio RequireMasterKey. */}
-              <ImportExportTabs firstName={firstName} lastName={lastName} email={email} />
+            <SettingsBlock id="space" title="Spazio" description="Quanto spazio occupano i tuoi file cifrati.">
+              <StorageUsageMeter />
             </SettingsBlock>
             <SettingsBlock
               id="trash"
@@ -227,6 +224,14 @@ export function SettingsTabs({
               description="Quanto restano i documenti nel Cestino prima di sparire per sempre."
             >
               <TrashRetentionSettings />
+            </SettingsBlock>
+            <SettingsBlock
+              id="import-export"
+              title="Importa ed esporta"
+              description="Esporta tutti i tuoi dati in un archivio cifrato, o importa amici e beni da un file .csv."
+            >
+              {/* ImportExportTabs gestisce da sé le proprie sotto-schede e il proprio RequireMasterKey. */}
+              <ImportExportTabs firstName={firstName} lastName={lastName} email={email} />
             </SettingsBlock>
             <SettingsBlock
               id="categories"
