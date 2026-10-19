@@ -10,6 +10,21 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-21 (140)
+
+### Archivio: Panoramica, Schede ed Elenco
+
+**Cosa fa:**
+- L'Archivio si apre sulla **Panoramica**, una vista breve (circa una schermata): "Da guardare" (le scadenze urgenti e i contenuti senza categoria), "Aggiunti di recente" (una fila di schede con l'anteprima, che scorre di lato) e "Per categoria" (un riquadro per categoria con quanti contenuti ha e quando è arrivato l'ultimo; i primi otto, poi "Mostra tutte"). Un riquadro apre le Schede già filtrate su quella categoria.
+- **Schede**: tutti i contenuti come schede con l'anteprima (la prima pagina del PDF, la foto, oppure una pagina disegnata nel colore della categoria o l'icona del tipo), raggruppati per mese e a gruppi di ventiquattro con "Mostra altri". Le miniature si scaricano solo quando la scheda sta per comparire, tre alla volta, e restano in memoria finché la cassaforte è sbloccata.
+- **Elenco**: quello di prima, con la selezione e le azioni su più contenuti.
+- In Schede ed Elenco, in alto, una **ricerca** (titolo, emittente, note, campi), il filtro per categoria (con "Senza categoria") e l'ordine (più recenti, scadenza, nome). Il passaggio da una vista all'altra mantiene ricerca e filtro.
+- La vista scelta resta sul dispositivo.
+
+**Note tecniche:** `archive-overview.ts` (logica pura: vista salvata, filtri, ordine, raggruppamento per mese, scadenze e riquadri di categoria; provata da `archive-overview.test.ts`); componenti `ArchiveOverview`, `ArchiveCards`, `DocumentCard`, `DocumentThumb` (cache per master key, `IntersectionObserver`, coda da tre), `ArchiveToolbar`, `ArchiveViewSwitcher` in `components/documents/archive/`. `main` di `AppShell` ora ha `min-w-0`, perché una fila che scorre non allarghi la pagina. Nei test e2e la fixture imposta l'Elenco come vista iniziale (se non ce n'è già una), così i test che cercano un contenuto nella lista restano validi; `archive-views.spec.ts` parte invece da una visita nuova.
+
+---
+
 ## 2026-10-20 (139)
 
 ### Scheda documento e Fascicolo più chiari

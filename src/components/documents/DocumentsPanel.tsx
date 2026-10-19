@@ -15,6 +15,20 @@ import type { DocumentSummary } from "@/domain/documents/types";
 import { dueIn } from "@/domain/documents/archive-views";
 import { formatDate, formatSize } from "@/lib/format";
 import { sortAlphabetically } from "@/lib/utils";
+import {
+  ARCHIVE_VIEW_STORAGE_KEY,
+  NO_CATEGORY,
+  filterByCategory,
+  parseArchiveView,
+  sortDocuments,
+  type ArchiveSort,
+  type ArchiveView,
+} from "@/domain/documents/archive-overview";
+import { matchesQuery } from "@/domain/documents/archive-views";
+import { ArchiveViewSwitcher } from "@/components/documents/archive/ArchiveViewSwitcher";
+import { ArchiveOverview } from "@/components/documents/archive/ArchiveOverview";
+import { ArchiveCards } from "@/components/documents/archive/ArchiveCards";
+import { ArchiveToolbar } from "@/components/documents/archive/ArchiveToolbar";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { PageHelp, type HelpTip } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
@@ -44,7 +58,8 @@ const ARCHIVE_HELP_TIPS: HelpTip[] = [
   { icon: "🖱️", text: "Da computer puoi anche trascinarlo qui sopra.", desktopOnly: true },
   { icon: "🔍", text: "Per cercare in tutto Hinthial, per nome, note o dentro ai documenti, usa la ricerca nel menu." },
   { icon: "⌨️", text: "Da computer: premi Ctrl+K per cercare ovunque.", desktopOnly: true },
-  { icon: "🏷️", text: "Filtra per categoria dal menu in alto." },
+  { icon: "🗂️", text: "Cambia vista in alto: Panoramica per il colpo d'occhio, Schede con le anteprime, Elenco per selezionare e spostare più contenuti insieme." },
+  { icon: "🏷️", text: "In Schede ed Elenco puoi cercare, filtrare per categoria e ordinare." },
   { icon: "📂", text: "Passa a “Fascicolo” per raggruppare più contenuti insieme." },
 ];
 
@@ -58,6 +73,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const {
     supabase,
     categories,
+    assets,
     dossiers,
     documents,
     loading,
@@ -81,6 +97,27 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     assetFor,
   } = data;
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<ArchiveSort>("recenti");
+  // La vista resta sul dispositivo: chi preferisce l'Elenco non lo cambia a ogni visita. Senza una scelta, la Panoramica.
+  const [view, setView] = useState<ArchiveView>(() => {
+    try {
+      return parseArchiveView(window.localStorage.getItem(ARCHIVE_VIEW_STORAGE_KEY));
+    } catch {
+      return "panoramica";
+    }
+  });
+  const [now] = useState(() => new Date());
+
+  function changeView(next: ArchiveView) {
+    setView(next);
+    clearSelection();
+    try {
+      window.localStorage.setItem(ARCHIVE_VIEW_STORAGE_KEY, next);
+    } catch {
+      // Senza memoria del browser la scelta vale solo per questa visita.
+    }
+  }
   // Avanzamento della lettura dei documenti già archiviati; `fraction` è il progresso dentro il file corrente
   // (con l'OCR un singolo contenuto può occupare mezzo minuto, senza "3 di 7" resterebbe immobile).
   const [extractionProgress, setExtractionProgress] = useState<{
@@ -219,8 +256,10 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
     );
   }
 
-  const filteredDocuments = documents
-    .filter((doc) => !categoryFilter || doc.categoryId === categoryFilter);
+  const filteredDocuments = sortDocuments(
+    filterByCategory(documents, categoryFilter).filter((doc) => matchesQuery(doc, query, categories, assets)),
+    sort,
+  );
 
   return (
     <div className="flex flex-col gap-6 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:pb-0">
@@ -286,21 +325,54 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             </div>
           ) : null}
 
-          <div className="flex flex-wrap gap-3">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              aria-label="Filtra per categoria"
-              className={INPUT_FIELD}
-            >
-              <option value="">Tutte le categorie</option>
-              {sortAlphabetically(categories, (c) => c.name).map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.icon} {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <ArchiveViewSwitcher view={view} onChange={changeView} />
+
+          {view === "panoramica" ? (
+            <ArchiveOverview
+              documents={documents}
+              categories={categories}
+              masterKey={masterKey}
+              now={now}
+              onCategory={(id) => {
+                setCategoryFilter(id ?? NO_CATEGORY);
+                changeView("schede");
+              }}
+              onSeeAll={() => {
+                setCategoryFilter("");
+                changeView("schede");
+              }}
+              onSeeList={() => {
+                setCategoryFilter("");
+                changeView("elenco");
+              }}
+            />
+          ) : (
+          <>
+          <ArchiveToolbar
+            query={query}
+            onQuery={setQuery}
+            categoryFilter={categoryFilter}
+            onCategory={setCategoryFilter}
+            categories={categories}
+            sort={sort}
+            onSort={setSort}
+          />
+
+          {view === "schede" ? (
+            filteredDocuments.length === 0 ? (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessun contenuto corrisponde ai filtri.</p>
+            ) : (
+              <ArchiveCards
+                key={`${categoryFilter}|${query}|${sort}`}
+                documents={filteredDocuments}
+                categories={categories}
+                sort={sort}
+                masterKey={masterKey}
+                now={now}
+              />
+            )
+          ) : (
+          <>
 
           {/* Barra contestuale: compare solo con almeno un documento selezionato. */}
           {selectedIds.size > 0 ? (
@@ -527,6 +599,10 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                 );
               })}
             </ul>
+          )}
+          </>
+          )}
+          </>
           )}
         </>
       )}
