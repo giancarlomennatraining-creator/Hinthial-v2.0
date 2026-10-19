@@ -24,6 +24,17 @@ import { test as base, expect, type Page } from "@playwright/test";
  */
 export const test = base.extend({
   page: async ({ page }, use) => {
+    // L'Archivio si apre di default sulla Panoramica (v. archive-overview.ts); la maggior parte dei test, che cerca un contenuto
+    // nell'elenco e lo seleziona o lo apre, parte invece dall'Elenco: la vista sta sul dispositivo, e si imposta una volta
+    // sola, se non c'è già una scelta. I test della Panoramica e delle Schede (archive-views.spec.ts) le scelgono da sé.
+    await page.addInitScript(() => {
+      try {
+        if (!window.localStorage.getItem("hinthial-archive-view")) window.localStorage.setItem("hinthial-archive-view", "elenco");
+      } catch {
+        // Senza memoria del browser si parte dalla Panoramica, come un utente qualunque.
+      }
+    });
+
     // Con un limite di tempo: se il pulsante sparisce da solo mentre lo si clicca (succede quando una finestra cambia
     // al volo), il gestore non resta ad aspettarlo fino alla fine del test; l'azione che l'ha chiamato riprova.
     const dismissMasterKeyIntro = page

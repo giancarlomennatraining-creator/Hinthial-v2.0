@@ -110,7 +110,7 @@ function AppChrome({
         displayName={displayName}
         avatarUrl={avatarUrl}
       />
-      <main className="flex-1 px-6 pt-6 pb-24 md:px-10 md:pt-10 md:pb-10">
+      <main className="min-w-0 flex-1 px-6 pt-6 pb-24 md:px-10 md:pt-10 md:pb-10">
         {children}
       </main>
       <BottomNavBar />
