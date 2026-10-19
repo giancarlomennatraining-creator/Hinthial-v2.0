@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import { Baloo_2, Caveat, Geist_Mono, Manrope, Work_Sans } from "next/font/google";
 import Script from "next/script";
 import { ErrorReporter } from "@/components/errors/ErrorReporter";
+import { AppIntro } from "@/components/layout/AppIntro";
+import { INTRO_INIT_SCRIPT } from "@/lib/app-intro";
 import "./globals.css";
 
 /** Applica il tema chiaro/scuro/sistema e lo stile (v. lib/theme.ts) prima del primo paint: deve restare uno script inline autonomo, gira prima che qualunque modulo dell'app sia caricato. */
@@ -85,6 +87,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <Script id="theme-init" strategy="beforeInteractive" nonce={nonce}>
           {THEME_INIT_SCRIPT}
         </Script>
+        {/* L'entrata animata della prima apertura (v. lib/app-intro.ts): lo script decide prima del primo paint, il velo è CSS. */}
+        <Script id="intro-init" strategy="beforeInteractive" nonce={nonce}>
+          {INTRO_INIT_SCRIPT}
+        </Script>
+        <AppIntro />
         <ErrorReporter />
         {children}
         <Script id="sw-register" strategy="afterInteractive" nonce={nonce}>

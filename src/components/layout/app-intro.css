@@ -1,0 +1,164 @@
+/*
+ * L'entrata "Aurora": chiazze di luce verde, turchese e blu su fondo scuro, il logo che emerge sfocato e poi nitido, un
+ * lampo che lo attraversa, il nome che si compone, e l'uscita sulla pagina di sempre. Tutto in 3,5 secondi (v.
+ * INTRO_DURATION_MS in lib/app-intro.ts):
+ *
+ *   0,0 -- 1,1  la luce sboccia
+ *   1,0 -- 2,1  il logo emerge; il lampo passa a 1,15
+ *   1,7 -- 2,7  il nome si compone da sinistra a destra
+ *   2,55 -- 3,0 un riflesso passa sul nome
+ *   2,9 -- 3,5  il velo si dissolve sulla pagina
+ *
+ * Nascosta di default: la mostra `html[data-intro="1"]`, messo dallo script iniziale. I colori sono fissi di proposito, in
+ * ogni stile e tema: è una scena, non una pagina.
+ */
+
+.ai-root {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: none;
+  background: #04110d;
+  --ai-u: 1vmin;
+}
+html[data-intro="1"] .ai-root {
+  display: block;
+  animation: ai-exit 0.6s ease-in 2.9s forwards;
+}
+.ai-root.ai-skip {
+  animation: ai-exit 0.25s ease-out forwards !important;
+}
+.ai-root > * { position: absolute; }
+
+.ai-base { inset: 0; background: linear-gradient(180deg, #04110d, #06202a); }
+
+.ai-blob {
+  width: calc(var(--ai-u) * 70);
+  height: calc(var(--ai-u) * 70);
+  border-radius: 50%;
+  filter: blur(calc(var(--ai-u) * 9));
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+.ai-b1 { left: -12%; top: 6%; background: #2fd18a; --drift: ai-d1; }
+.ai-b2 { left: 34%; top: 50%; background: #19b3c4; --drift: ai-d2; }
+.ai-b3 { left: -14%; top: 58%; background: #3d6cf2; --drift: ai-d3; }
+.ai-b4 { left: 48%; top: -4%; width: calc(var(--ai-u) * 48); height: calc(var(--ai-u) * 48); background: #a6f06b; --drift: ai-d4; }
+
+.ai-grain {
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.13;
+  mix-blend-mode: overlay;
+}
+
+.ai-stage {
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--ai-u) * 5);
+  padding-bottom: calc(var(--ai-u) * 4);
+}
+.ai-stage > * { position: relative; }
+
+/* Il logo, su un alone chiaro: ha parti blu scuro che altrimenti si perderebbero sull'aurora. */
+.ai-mark {
+  width: clamp(120px, calc(var(--ai-u) * 34), 210px);
+  aspect-ratio: 1;
+}
+.ai-halo {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.93) 0 38%, rgba(255, 255, 255, 0.35) 56%, transparent 72%);
+  opacity: 0;
+}
+.ai-logo {
+  position: absolute;
+  inset: 0;
+  background: url("/brand/intro-logo.webp") center / contain no-repeat;
+  opacity: 0;
+}
+.ai-flare {
+  position: absolute;
+  left: -90vw;
+  right: -90vw;
+  top: calc(50% - 1.5px);
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #fff 50%, transparent);
+  filter: blur(1px);
+  mix-blend-mode: screen;
+  transform: scaleX(0);
+  opacity: 0;
+}
+
+/* Il nome: l'immagine ufficiale, su una luce morbida per non perdere i suoi colori sull'aurora. */
+.ai-wm {
+  width: clamp(190px, calc(var(--ai-u) * 62), 380px);
+  aspect-ratio: 900 / 226;
+}
+.ai-plate {
+  position: absolute;
+  inset: -34% -14%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.45) 62%, transparent);
+  opacity: 0;
+}
+.ai-wordmark {
+  position: absolute;
+  inset: 0;
+  background: url("/brand/intro-wordmark.webp") center / contain no-repeat;
+  clip-path: inset(0 100% 0 0);
+  opacity: 0;
+}
+.ai-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 62%) -140% 0 / 260% 100% no-repeat;
+  -webkit-mask: url("/brand/intro-wordmark.webp") center / contain no-repeat;
+  mask: url("/brand/intro-wordmark.webp") center / contain no-repeat;
+  mix-blend-mode: plus-lighter;
+  opacity: 0;
+}
+
+/* ---- I tempi ---- */
+html[data-intro="1"] .ai-blob {
+  animation: ai-blob-in 1.1s ease-out both, var(--drift) 3.4s ease-in-out infinite alternate;
+}
+html[data-intro="1"] .ai-halo { animation: ai-halo-in 1s cubic-bezier(0.2, 0.8, 0.3, 1) 1s both; }
+html[data-intro="1"] .ai-logo { animation: ai-reveal 1.1s cubic-bezier(0.2, 0.8, 0.3, 1) 1s both; }
+html[data-intro="1"] .ai-flare { animation: ai-flare 1s ease-out 1.15s both; }
+html[data-intro="1"] .ai-plate { animation: ai-plate-in 0.9s ease-out 1.7s both; }
+html[data-intro="1"] .ai-wordmark { animation: ai-wordmark-in 1s cubic-bezier(0.3, 0.7, 0.3, 1) 1.75s both; }
+html[data-intro="1"] .ai-shine { animation: ai-shine 0.6s ease-in-out 2.55s both; }
+
+@keyframes ai-blob-in { from { opacity: 0; scale: 0.3; } to { opacity: 0.9; scale: 1; } }
+@keyframes ai-d1 { from { translate: 0 0; } to { translate: calc(var(--ai-u) * 14) calc(var(--ai-u) * 16); } }
+@keyframes ai-d2 { from { translate: 0 0; } to { translate: calc(var(--ai-u) * -12) calc(var(--ai-u) * -20); } }
+@keyframes ai-d3 { from { translate: 0 0; } to { translate: calc(var(--ai-u) * 16) calc(var(--ai-u) * -14); } }
+@keyframes ai-d4 { from { translate: 0 0; } to { translate: calc(var(--ai-u) * -14) calc(var(--ai-u) * 20); } }
+@keyframes ai-halo-in { from { opacity: 0; scale: 0.6; } to { opacity: 1; scale: 1; } }
+@keyframes ai-reveal {
+  from { opacity: 0; filter: blur(14px) brightness(2); scale: 1.18; }
+  to { opacity: 1; filter: none; scale: 1; }
+}
+@keyframes ai-flare {
+  0% { transform: scaleX(0); opacity: 0; }
+  40% { transform: scaleX(1.1); opacity: 1; }
+  100% { transform: scaleX(1.5); opacity: 0; }
+}
+@keyframes ai-plate-in { from { opacity: 0; scale: 0.7; } to { opacity: 1; scale: 1; } }
+@keyframes ai-wordmark-in {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); filter: blur(6px); }
+  35% { opacity: 1; }
+  to { opacity: 1; clip-path: inset(0 0 0 0); filter: none; }
+}
+@keyframes ai-shine { 0% { opacity: 1; background-position: -140% 0; } 100% { opacity: 1; background-position: 140% 0; } }
+@keyframes ai-exit {
+  to { opacity: 0; scale: 1.06; filter: blur(6px); visibility: hidden; pointer-events: none; }
+}
