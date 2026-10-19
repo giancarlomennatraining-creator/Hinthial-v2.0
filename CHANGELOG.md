@@ -10,6 +10,19 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-20 (139)
+
+### Scheda documento e Fascicolo più chiari
+
+**Cosa fa:**
+- **Scheda documento:** i campi non sono più una colonna di voci tutte uguali ma tre gruppi con un titolo: "Di cosa si tratta" (categoria, emittente, scadenza), "Collegato a" (bene collegato, fascicoli) e le note; sotto, i "Dati del documento" letti da Hinthia, ora con l'iniziale maiuscola ("Importo", non "importo"). Vale anche per il modulo di creazione, che usa gli stessi campi.
+- **Pulsanti del documento:** "Elimina" sta a destra, staccato da Salva, Scarica e "Fallo arrivare a…", così non si preme per sbaglio. Se hai cambiato qualcosa e non hai salvato, compare "Modifiche non salvate" accanto a "Salva modifiche".
+- **Fascicolo:** la colonna destra, con sette riquadri contro una sinistra quasi vuota, è bilanciata. A destra restano le cose da fare (documenti attesi, prossimi passi, "forse appartengono qui", scadenze); a sinistra ciò che si legge: riepilogo, cronologia, spese, persone coinvolte e sintesi dei documenti. Da telefono l'ordine è riepilogo, cosa fare, poi cronologia e il resto.
+
+**Note tecniche:** `DocumentMetadataFields` raggruppato con `role="group"` e titoli (le etichette non cambiano, quindi i test restano validi); `DossierDetail` usa un wrapper `contents` e `order-*` per avere due ordini diversi (telefono e `lg`) senza duplicare i riquadri; `capitalizeFirst` per le etichette dei dati letti.
+
+---
+
 ## 2026-10-20 (138)
 
 ### Eredità digitale: prima lo stato, poi i cinque blocchi

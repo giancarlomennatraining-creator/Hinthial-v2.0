@@ -105,157 +105,169 @@ export function DocumentMetadataFields({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Su smartphone le voci stanno una sotto l'altra, a tutta larghezza (v. feedback utente); da sm in su tornano affiancate. */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor={`${idPrefix}-category`}
-            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-          >
-            Categoria
-          </label>
-          <select
-            id={`${idPrefix}-category`}
-            value={value.categoryId}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-          >
-            <option value="">Nessuna categoria</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.icon} {category.name}
-              </option>
-            ))}
-          </select>
-          {hints?.categoryId}
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor={`${idPrefix}-asset`}
-            className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-          >
-            Bene collegato
-          </label>
-          <select
-            id={`${idPrefix}-asset`}
-            value={value.relatedAssetId}
-            onChange={(e) => onChange({ ...value, relatedAssetId: e.target.value })}
-            disabled={!assetPickable}
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 disabled:opacity-50 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-          >
-            <option value="">{assetPickable ? "Nessuno" : "Scegli prima una categoria"}</option>
-            {filteredAssets.map((asset) => (
-              <option key={asset.id} value={asset.id}>
-                {asset.name}
-              </option>
-            ))}
-          </select>
-          {hints?.relatedAssetId}
-        </div>
-
-        {showExpiry ? (
+    <div className="flex flex-col gap-5">
+      {/* Tre gruppi, non una colonna di campi tutti uguali: di cosa si tratta, a cosa è collegato, le note. Su smartphone le voci stanno una sotto l'altra, a tutta larghezza (v. feedback utente); da sm in su tornano affiancate. */}
+      <div role="group" aria-labelledby={`${idPrefix}-group-about`} className="flex flex-col gap-3">
+        <p id={`${idPrefix}-group-about`} className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          Di cosa si tratta
+        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <div className="flex flex-col gap-1">
             <label
-              htmlFor={`${idPrefix}-expires`}
+              htmlFor={`${idPrefix}-category`}
               className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
             >
-              Scadenza
+              Categoria
+            </label>
+            <select
+              id={`${idPrefix}-category`}
+              value={value.categoryId}
+              onChange={(e) => handleCategoryChange(e.target.value)}
+              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            >
+              <option value="">Nessuna categoria</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.icon} {category.name}
+                </option>
+              ))}
+            </select>
+            {hints?.categoryId}
+          </div>
+
+
+        {showIssuer ? (
+          <div className="flex min-w-[14rem] flex-1 flex-col gap-1">
+            <label
+              htmlFor={`${idPrefix}-issuer`}
+              className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
+            >
+              Emittente
             </label>
             <input
-              id={`${idPrefix}-expires`}
-              type="date"
-              value={value.expiresAt}
-              onChange={(e) => onChange({ ...value, expiresAt: e.target.value })}
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              id={`${idPrefix}-issuer`}
+              type="text"
+              value={value.issuer}
+              onChange={(e) => onChange({ ...value, issuer: e.target.value })}
+              placeholder="es. Generali Italia S.p.A."
+              className={`w-full ${INPUT_FIELD}`}
             />
-            {hints?.expiresAt}
           </div>
         ) : null}
-      </div>
 
-      {/* Nessun filtro per categoria: un fascicolo attraversa le categorie di proposito. Scegli-e-aggiungi invece di <select multiple>, poco leggibile senza Ctrl/Cmd-click. */}
-      <div className="flex flex-col gap-1">
-        <label
-          htmlFor={`${idPrefix}-dossier`}
-          className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
-        >
-          Fascicoli
-        </label>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <select
-            id={`${idPrefix}-dossier`}
-            value={dossierToAdd}
-            onChange={(e) => setDossierToAdd(e.target.value)}
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-          >
-            <option value="">Aggiungi a un fascicolo…</option>
-            {pickableDossiers.map((dossier) => (
-              <option key={dossier.id} value={dossier.id}>
-                {dossier.status === "closed" ? "🗂️ " : "📂 "}
-                {dossier.title}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            disabled={!dossierToAdd}
-            onClick={handleAddDossier}
-            className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 sm:w-auto dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-          >
-            + Aggiungi fascicolo
-          </button>
+          {showExpiry ? (
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor={`${idPrefix}-expires`}
+                className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
+              >
+                Scadenza
+              </label>
+              <input
+                id={`${idPrefix}-expires`}
+                type="date"
+                value={value.expiresAt}
+                onChange={(e) => onChange({ ...value, expiresAt: e.target.value })}
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              />
+              {hints?.expiresAt}
+            </div>
+          ) : null}
         </div>
-        {value.dossierIds.length > 0 ? (
-          <ul className="flex flex-wrap gap-1">
-            {value.dossierIds.map((dossierId) => {
-              const dossier = dossiers.find((d) => d.id === dossierId);
-              if (!dossier) return null;
-              return (
-                <li
-                  key={dossierId}
-                  className="flex items-center gap-1 rounded-full bg-zinc-100 py-0.5 pl-2.5 pr-1 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
-                >
-                  {/* Link, non solo etichetta: la Scheda fusa (v. ArchiveItemDetail.tsx) è anche l'unico modo di
-                      arrivare al fascicolo da un documento, ora che non esiste più una vista di sola lettura a parte. */}
-                  <Link href={`/dossiers/${dossierId}`} className="hover:underline">
-                    {dossier.status === "closed" ? "🗂️" : "📂"} {dossier.title}
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveDossier(dossierId)}
-                    aria-label={`Rimuovi ${dossier.title}`}
-                    className="rounded-full px-1.5 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
-                  >
-                    ×
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-        {hints?.dossierIds}
       </div>
 
-      {showIssuer ? (
+      <div role="group" aria-labelledby={`${idPrefix}-group-links`} className="flex flex-col gap-3">
+        <p id={`${idPrefix}-group-links`} className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          Collegato a
+        </p>
+          <div className="flex flex-col gap-1 sm:max-w-sm">
+            <label
+              htmlFor={`${idPrefix}-asset`}
+              className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
+            >
+              Bene collegato
+            </label>
+            <select
+              id={`${idPrefix}-asset`}
+              value={value.relatedAssetId}
+              onChange={(e) => onChange({ ...value, relatedAssetId: e.target.value })}
+              disabled={!assetPickable}
+              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 disabled:opacity-50 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            >
+              <option value="">{assetPickable ? "Nessuno" : "Scegli prima una categoria"}</option>
+              {filteredAssets.map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  {asset.name}
+                </option>
+              ))}
+            </select>
+            {hints?.relatedAssetId}
+          </div>
+
+
+        {/* Nessun filtro per categoria: un fascicolo attraversa le categorie di proposito. Scegli-e-aggiungi invece di <select multiple>, poco leggibile senza Ctrl/Cmd-click. */}
         <div className="flex flex-col gap-1">
           <label
-            htmlFor={`${idPrefix}-issuer`}
+            htmlFor={`${idPrefix}-dossier`}
             className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
           >
-            Emittente
+            Fascicoli
           </label>
-          <input
-            id={`${idPrefix}-issuer`}
-            type="text"
-            value={value.issuer}
-            onChange={(e) => onChange({ ...value, issuer: e.target.value })}
-            placeholder="es. Generali Italia S.p.A."
-            className={`w-full ${INPUT_FIELD}`}
-          />
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <select
+              id={`${idPrefix}-dossier`}
+              value={dossierToAdd}
+              onChange={(e) => setDossierToAdd(e.target.value)}
+              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 sm:w-auto dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            >
+              <option value="">Aggiungi a un fascicolo…</option>
+              {pickableDossiers.map((dossier) => (
+                <option key={dossier.id} value={dossier.id}>
+                  {dossier.status === "closed" ? "🗂️ " : "📂 "}
+                  {dossier.title}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={!dossierToAdd}
+              onClick={handleAddDossier}
+              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 sm:w-auto dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            >
+              + Aggiungi fascicolo
+            </button>
+          </div>
+          {value.dossierIds.length > 0 ? (
+            <ul className="flex flex-wrap gap-1">
+              {value.dossierIds.map((dossierId) => {
+                const dossier = dossiers.find((d) => d.id === dossierId);
+                if (!dossier) return null;
+                return (
+                  <li
+                    key={dossierId}
+                    className="flex items-center gap-1 rounded-full bg-zinc-100 py-0.5 pl-2.5 pr-1 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                  >
+                    {/* Link, non solo etichetta: la Scheda fusa (v. ArchiveItemDetail.tsx) è anche l'unico modo di
+                        arrivare al fascicolo da un documento, ora che non esiste più una vista di sola lettura a parte. */}
+                    <Link href={`/dossiers/${dossierId}`} className="hover:underline">
+                      {dossier.status === "closed" ? "🗂️" : "📂"} {dossier.title}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDossier(dossierId)}
+                      aria-label={`Rimuovi ${dossier.title}`}
+                      className="rounded-full px-1.5 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+                    >
+                      ×
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+          {hints?.dossierIds}
         </div>
-      ) : null}
+      </div>
 
       <div className="flex flex-col gap-1">
         <label
