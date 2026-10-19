@@ -1,16 +1,19 @@
 /*
- * L'entrata "Aurora": chiazze di luce verde, turchese e blu su fondo scuro, il logo che emerge sfocato e poi nitido, un
- * lampo che lo attraversa, il nome che si compone, e l'uscita sulla pagina di sempre. Tutto in 3,5 secondi (v.
- * INTRO_DURATION_MS in lib/app-intro.ts):
+ * L'entrata "Aurora": chiazze di luce verde, turchese e blu su fondo scuro, il logo che emerge dalla luce, un lampo che lo
+ * attraversa, il nome che compare, e l'uscita sulla pagina di sempre. Tutto in 3,5 secondi (v. INTRO_DURATION_MS in
+ * lib/app-intro.ts):
  *
  *   0,0 -- 1,1  la luce sboccia
  *   1,0 -- 2,1  il logo emerge; il lampo passa a 1,15
- *   1,7 -- 2,7  il nome si compone da sinistra a destra
- *   2,55 -- 3,0 un riflesso passa sul nome
+ *   1,7 -- 2,6  il nome compare
+ *   2,5 -- 3,0  un riflesso passa sul nome
  *   2,9 -- 3,5  il velo si dissolve sulla pagina
  *
- * Nascosta di default: la mostra `html[data-intro="1"]`, messo dallo script iniziale. I colori sono fissi di proposito, in
- * ogni stile e tema: è una scena, non una pagina.
+ * Scritta per scorrere liscia anche su un telefono modesto mentre sotto la pagina si sta ancora caricando: si animano
+ * solo `transform` (translate/scale) e `opacity`, che il telefono disegna sulla scheda grafica senza disturbare il resto.
+ * Niente `filter: blur`, niente `mix-blend-mode`, niente `clip-path` animati: sono i tre che fanno scattare. Le sfumature
+ * morbide sono gradienti radiali, non sfocature. Nascosta di default: la mostra `html[data-intro="1"]`, messo dallo
+ * script iniziale. I colori sono fissi di proposito, in ogni stile e tema: è una scena, non una pagina.
  */
 
 .ai-root {
@@ -22,10 +25,13 @@
   overscroll-behavior: contain;
   touch-action: none;
   background: #04110d;
+  contain: layout paint style;
+  isolation: isolate;
   --ai-u: 1vmin;
 }
 html[data-intro="1"] .ai-root {
   display: block;
+  will-change: opacity;
   animation: ai-exit 0.6s ease-in 2.9s forwards;
 }
 .ai-root.ai-skip {
@@ -35,25 +41,26 @@ html[data-intro="1"] .ai-root {
 
 .ai-base { inset: 0; background: linear-gradient(180deg, #04110d, #06202a); }
 
+/* Le chiazze di luce: gradienti radiali morbidi, non cerchi sfocati. */
 .ai-blob {
-  width: calc(var(--ai-u) * 70);
-  height: calc(var(--ai-u) * 70);
+  width: calc(var(--ai-u) * 104);
+  height: calc(var(--ai-u) * 104);
   border-radius: 50%;
-  filter: blur(calc(var(--ai-u) * 9));
-  mix-blend-mode: screen;
   opacity: 0;
+  will-change: transform, opacity;
 }
-.ai-b1 { left: -12%; top: 6%; background: #2fd18a; --drift: ai-d1; }
-.ai-b2 { left: 34%; top: 50%; background: #19b3c4; --drift: ai-d2; }
-.ai-b3 { left: -14%; top: 58%; background: #3d6cf2; --drift: ai-d3; }
-.ai-b4 { left: 48%; top: -4%; width: calc(var(--ai-u) * 48); height: calc(var(--ai-u) * 48); background: #a6f06b; --drift: ai-d4; }
+.ai-b1 { left: -26%; top: -4%; --drift: ai-d1; background: radial-gradient(closest-side, rgba(47, 209, 138, 0.95), rgba(47, 209, 138, 0.5) 46%, rgba(47, 209, 138, 0)); }
+.ai-b2 { left: 22%; top: 42%; --drift: ai-d2; background: radial-gradient(closest-side, rgba(25, 179, 196, 0.95), rgba(25, 179, 196, 0.5) 46%, rgba(25, 179, 196, 0)); }
+.ai-b3 { left: -30%; top: 50%; --drift: ai-d3; background: radial-gradient(closest-side, rgba(61, 108, 242, 0.95), rgba(61, 108, 242, 0.5) 46%, rgba(61, 108, 242, 0)); }
+.ai-b4 {
+  left: 30%; top: -14%; --drift: ai-d4;
+  width: calc(var(--ai-u) * 76);
+  height: calc(var(--ai-u) * 76);
+  background: radial-gradient(closest-side, rgba(166, 240, 107, 0.9), rgba(166, 240, 107, 0.45) 46%, rgba(166, 240, 107, 0));
+}
 
-.ai-grain {
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.13;
-  mix-blend-mode: overlay;
-}
+/* Un velo scuro ai bordi, fermo: dà profondità senza costare nulla. */
+.ai-vignette { inset: 0; background: radial-gradient(120% 90% at 50% 45%, transparent 52%, rgba(0, 0, 0, 0.5)); }
 
 .ai-stage {
   inset: 0;
@@ -77,12 +84,23 @@ html[data-intro="1"] .ai-root {
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.93) 0 38%, rgba(255, 255, 255, 0.35) 56%, transparent 72%);
   opacity: 0;
+  will-change: transform, opacity;
 }
 .ai-logo {
   position: absolute;
   inset: 0;
   background: url("/brand/intro-logo.webp") center / contain no-repeat;
   opacity: 0;
+  will-change: transform, opacity;
+}
+/* La luce bianca che si ritira dal logo mentre emerge: al posto di una sfocatura animata. */
+.ai-wash {
+  position: absolute;
+  inset: -4%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 55%, rgba(255, 255, 255, 0) 72%);
+  opacity: 0;
+  will-change: opacity;
 }
 .ai-flare {
   position: absolute;
@@ -91,10 +109,10 @@ html[data-intro="1"] .ai-root {
   top: calc(50% - 1.5px);
   height: 3px;
   background: linear-gradient(90deg, transparent, #fff 50%, transparent);
-  filter: blur(1px);
-  mix-blend-mode: screen;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
   transform: scaleX(0);
   opacity: 0;
+  will-change: transform, opacity;
 }
 
 /* Il nome: l'immagine ufficiale, su una luce morbida per non perdere i suoi colori sull'aurora. */
@@ -108,23 +126,40 @@ html[data-intro="1"] .ai-root {
   border-radius: 50%;
   background: radial-gradient(closest-side, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.45) 62%, transparent);
   opacity: 0;
+  will-change: transform, opacity;
 }
 .ai-wordmark {
   position: absolute;
   inset: 0;
   background: url("/brand/intro-wordmark.webp") center / contain no-repeat;
-  clip-path: inset(0 100% 0 0);
   opacity: 0;
+  will-change: transform, opacity;
 }
+/* Il riflesso sul nome: la forma del nome (ferma) fa da maschera, e una striscia chiara ci scorre dietro (movimento). */
 .ai-shine {
   position: absolute;
   inset: 0;
-  background: linear-gradient(100deg, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 62%) -140% 0 / 260% 100% no-repeat;
+  overflow: hidden;
   -webkit-mask: url("/brand/intro-wordmark.webp") center / contain no-repeat;
   mask: url("/brand/intro-wordmark.webp") center / contain no-repeat;
-  mix-blend-mode: plus-lighter;
   opacity: 0;
 }
+.ai-shine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 46%;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0));
+  transform: translateX(-120%);
+  will-change: transform;
+}
+
+/* Telefoni con poca memoria o pochi processori (lo segna lo script iniziale): due chiazze di luce in meno e niente riflesso. */
+html[data-intro-lite] .ai-b3,
+html[data-intro-lite] .ai-b4,
+html[data-intro-lite] .ai-shine { display: none; }
 
 /* ---- I tempi ---- */
 html[data-intro="1"] .ai-blob {
@@ -132,10 +167,12 @@ html[data-intro="1"] .ai-blob {
 }
 html[data-intro="1"] .ai-halo { animation: ai-halo-in 1s cubic-bezier(0.2, 0.8, 0.3, 1) 1s both; }
 html[data-intro="1"] .ai-logo { animation: ai-reveal 1.1s cubic-bezier(0.2, 0.8, 0.3, 1) 1s both; }
+html[data-intro="1"] .ai-wash { animation: ai-wash 1.1s ease-out 1s both; }
 html[data-intro="1"] .ai-flare { animation: ai-flare 1s ease-out 1.15s both; }
 html[data-intro="1"] .ai-plate { animation: ai-plate-in 0.9s ease-out 1.7s both; }
-html[data-intro="1"] .ai-wordmark { animation: ai-wordmark-in 1s cubic-bezier(0.3, 0.7, 0.3, 1) 1.75s both; }
-html[data-intro="1"] .ai-shine { animation: ai-shine 0.6s ease-in-out 2.55s both; }
+html[data-intro="1"] .ai-wordmark { animation: ai-wordmark-in 0.9s cubic-bezier(0.25, 0.8, 0.3, 1) 1.75s both; }
+html[data-intro="1"] .ai-shine { animation: ai-shine-on 0.7s linear 2.5s both; }
+html[data-intro="1"] .ai-shine::before { animation: ai-shine-move 0.7s ease-in-out 2.5s both; }
 
 @keyframes ai-blob-in { from { opacity: 0; scale: 0.3; } to { opacity: 0.9; scale: 1; } }
 @keyframes ai-d1 { from { translate: 0 0; } to { translate: calc(var(--ai-u) * 14) calc(var(--ai-u) * 16); } }
@@ -143,22 +180,15 @@ html[data-intro="1"] .ai-shine { animation: ai-shine 0.6s ease-in-out 2.55s both
 @keyframes ai-d3 { from { translate: 0 0; } to { translate: calc(var(--ai-u) * 16) calc(var(--ai-u) * -14); } }
 @keyframes ai-d4 { from { translate: 0 0; } to { translate: calc(var(--ai-u) * -14) calc(var(--ai-u) * 20); } }
 @keyframes ai-halo-in { from { opacity: 0; scale: 0.6; } to { opacity: 1; scale: 1; } }
-@keyframes ai-reveal {
-  from { opacity: 0; filter: blur(14px) brightness(2); scale: 1.18; }
-  to { opacity: 1; filter: none; scale: 1; }
-}
+@keyframes ai-reveal { from { opacity: 0; scale: 1.18; } to { opacity: 1; scale: 1; } }
+@keyframes ai-wash { 0% { opacity: 0; } 25% { opacity: 0.95; } 100% { opacity: 0; } }
 @keyframes ai-flare {
   0% { transform: scaleX(0); opacity: 0; }
   40% { transform: scaleX(1.1); opacity: 1; }
   100% { transform: scaleX(1.5); opacity: 0; }
 }
 @keyframes ai-plate-in { from { opacity: 0; scale: 0.7; } to { opacity: 1; scale: 1; } }
-@keyframes ai-wordmark-in {
-  from { opacity: 0; clip-path: inset(0 100% 0 0); filter: blur(6px); }
-  35% { opacity: 1; }
-  to { opacity: 1; clip-path: inset(0 0 0 0); filter: none; }
-}
-@keyframes ai-shine { 0% { opacity: 1; background-position: -140% 0; } 100% { opacity: 1; background-position: 140% 0; } }
-@keyframes ai-exit {
-  to { opacity: 0; scale: 1.06; filter: blur(6px); visibility: hidden; pointer-events: none; }
-}
+@keyframes ai-wordmark-in { from { opacity: 0; translate: 0 12px; scale: 0.96; } to { opacity: 1; translate: 0 0; scale: 1; } }
+@keyframes ai-shine-on { from, to { opacity: 1; } }
+@keyframes ai-shine-move { from { transform: translateX(-120%); } to { transform: translateX(240%); } }
+@keyframes ai-exit { to { opacity: 0; visibility: hidden; pointer-events: none; } }

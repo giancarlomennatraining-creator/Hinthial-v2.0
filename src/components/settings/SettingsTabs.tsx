@@ -15,6 +15,7 @@ import { StyleToggle } from "@/components/settings/StyleToggle";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { CapsuleCountdownSettings } from "@/components/settings/CapsuleCountdownSettings";
 import { CapsuleOpenEffectSettings } from "@/components/settings/CapsuleOpenEffectSettings";
+import { IntroSettings } from "@/components/settings/IntroSettings";
 import { TrashRetentionSettings } from "@/components/settings/TrashRetentionSettings";
 import { DangerZonePanel } from "@/components/settings/DangerZonePanel";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
@@ -272,6 +273,13 @@ export function SettingsTabs({
               description="Se mostrare i giorni, le ore e i minuti che mancano all'apertura di una capsula."
             >
               <CapsuleCountdownSettings />
+            </SettingsBlock>
+            <SettingsBlock
+              id="intro"
+              title="Entrata dell'app"
+              description="L'animazione che si vede aprendo Hinthial installata sul telefono. Vale su questo dispositivo."
+            >
+              <IntroSettings />
             </SettingsBlock>
             <SettingsBlock
               id="onboarding"

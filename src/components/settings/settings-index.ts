@@ -35,6 +35,7 @@ export const SETTINGS_ENTRIES: SettingsEntry[] = [
   { tab: "preferences", block: "theme", label: "Tema", keywords: "chiaro scuro sistema notte" },
   { tab: "preferences", block: "capsule-effect", label: "Come si aprono le capsule", keywords: "effetto animazione apertura" },
   { tab: "preferences", block: "capsule-countdown", label: "Conto alla rovescia delle capsule", keywords: "countdown cartellino giorni ore" },
+  { tab: "preferences", block: "intro", label: "Entrata dell'app", keywords: "animazione avvio apertura splash suono intro aurora" },
   { tab: "preferences", block: "onboarding", label: "Guida iniziale", keywords: "onboarding checklist configurazione primi passi" },
   { tab: "danger-zone", block: "reset", label: "Reimposta l'account", keywords: "cancella tutto svuota azzera reset" },
   { tab: "danger-zone", block: "delete", label: "Cancella il tuo account", keywords: "elimina chiudi account definitivo" },
