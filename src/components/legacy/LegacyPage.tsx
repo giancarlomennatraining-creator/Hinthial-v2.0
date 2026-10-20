@@ -3,7 +3,6 @@
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
-import { EmergencyCardPanel } from "@/components/legacy/EmergencyCardPanel";
 import { LegacyAssets } from "@/components/legacy/LegacyAssets";
 import { LegacyCapsules } from "@/components/legacy/LegacyCapsules";
 import { LegacyGuardians } from "@/components/legacy/LegacyGuardians";
@@ -12,22 +11,16 @@ import { LegacyWaiting, useLegacySettings } from "@/components/legacy/LegacyWait
 import { PageHelp } from "@/components/help/PageHelp";
 
 /**
- * "Eredità digitale": la promessa per intero, in cinque blocchi, preceduti da un riepilogo (accesa o spenta, a che livello).
+ * "Eredità digitale": la promessa per intero, in quattro blocchi, preceduti da un riepilogo (accesa o spenta, a che livello).
  * Quanto aspettare (l'unica scelta: il livello di prudenza), chi conferma la tua assenza (i guardiani), cosa arriverà (le capsule che si aprono anche prima della loro
- * data), cosa succede a ogni bene e cosa fare in un'emergenza, adesso (la scheda). "Quanto aspettare" non cifra nulla e si legge subito; gli altri
+ * data) e cosa succede a ogni bene. La scheda d'emergenza non sta qui (serve adesso, non dopo): è in Impostazioni -> Profilo. "Quanto aspettare" non cifra nulla e si legge subito; gli altri
  * mostrano nomi e titoli cifrati e chiedono la master key: con la cassaforte bloccata c'è un solo riquadro per sbloccarla, in
  * cima (dove poi compaiono i guardiani) --- in fondo, sotto "Salva", non lo si vedeva prima di aver già toccato il resto.
  */
 export function LegacyPage({
   userId,
-  firstName,
-  lastName,
-  birthDate,
 }: {
   userId: string;
-  firstName: string;
-  lastName: string;
-  birthDate: string | null;
 }) {
   const { status } = useMasterKey();
   const { settling } = useUnlockPrompt();
@@ -46,7 +39,6 @@ export function LegacyPage({
             { icon: "⏳", text: "Scegli quanto aspettare: Prudente, Normale o Rilassato. Un tuo accesso annulla tutto, in qualunque fase." },
             { icon: "💌", text: "Alla consegna si aprono solo le capsule che hai destinato a questo momento." },
             { icon: "🏠", text: "Per ogni bene puoi scrivere cosa succede se non ci sei più. La nota è cifrata e la vedi solo tu." },
-            { icon: "🆘", text: "La scheda d'emergenza è una pagina stampabile con le informazioni utili in caso di emergenza." },
           ]}
         />
       </div>
@@ -63,13 +55,6 @@ export function LegacyPage({
             <LegacyGuardians masterKey={masterKey} />
             <LegacyCapsules masterKey={masterKey} />
             <LegacyAssets masterKey={masterKey} />
-            <EmergencyCardPanel
-              masterKey={masterKey}
-              userId={userId}
-              firstName={firstName}
-              lastName={lastName}
-              birthDate={birthDate}
-            />
           </>
         ) : null}
       </div>

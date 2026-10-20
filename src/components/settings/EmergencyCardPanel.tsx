@@ -7,7 +7,6 @@ import { BLOOD_TYPES, EMPTY_EMERGENCY_CARD, isEmergencyCardEmpty, type Emergency
 import { printOnlyMarkedContent } from "@/lib/print";
 import { useToast } from "@/components/ui/ToastProvider";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
-import { SettingsBlock } from "@/components/settings/SettingsBlock";
 
 function emptyContact(): EmergencyContact {
   return { name: "", relation: "", phone: "" };
@@ -96,11 +95,7 @@ export function EmergencyCardPanel({
   const visibleContacts = card.contacts.filter((c) => c.name.trim());
 
   return (
-    <SettingsBlock
-      id="card"
-      title="Scheda d'emergenza"
-      description="Pochi campi, scritti una volta, cifrati come tutto il resto: servono solo a generare una tessera da stampare e portare nel portafoglio o tenere sul frigorifero, per chi presta soccorso quando non puoi parlare tu."
-    >
+    <div className="flex flex-col gap-6">
 
       {/* items-start: senza, il pannello destro si estende all'altezza della colonna sinistra e intercetta i click sugli elementi che finiscono alla stessa altezza. */}
       <div className="grid grid-cols-1 items-start gap-6 @2xl:grid-cols-[minmax(0,26rem)_1fr]">
@@ -291,7 +286,7 @@ export function EmergencyCardPanel({
       <div className="print-only hidden flex-col items-center gap-6 p-12 print:flex">
         <EmergencyCardPreview fullName={fullName} birthDate={birthDate} card={card} contacts={visibleContacts} />
       </div>
-    </SettingsBlock>
+    </div>
   );
 }
 

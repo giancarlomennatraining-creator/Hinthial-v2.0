@@ -14,7 +14,7 @@ describe("continuitySteps", () => {
     const steps = continuitySteps(NOTHING);
     expect(steps.map((s) => s.id)).toEqual(["guardians", "legacy", "emergency-card", "capsules"]);
     expect(steps.every((s) => !s.done)).toBe(true);
-    expect(steps.map((s) => s.href)).toEqual(["/friends", "/legacy", "/legacy", "/capsules/new"]);
+    expect(steps.map((s) => s.href)).toEqual(["/friends", "/legacy", "/settings?tab=profile&section=card", "/capsules/new"]);
     expect(continuityScore(steps)).toEqual({ done: 0, total: 4 });
   });
 

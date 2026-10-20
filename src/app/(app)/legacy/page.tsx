@@ -5,11 +5,6 @@ export default async function LegacyRoute() {
   const user = await getCurrentUser();
 
   return (
-    <LegacyPage
-      userId={user?.id ?? ""}
-      firstName={user?.firstName ?? ""}
-      lastName={user?.lastName ?? ""}
-      birthDate={user?.birthDate ?? null}
-    />
+    <LegacyPage userId={user?.id ?? ""} />
   );
 }

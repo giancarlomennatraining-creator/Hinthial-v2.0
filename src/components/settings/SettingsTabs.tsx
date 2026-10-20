@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useCrossfade } from "@/lib/use-crossfade";
 import { UserInfoPanel } from "@/components/settings/UserInfoPanel";
+import { EmergencyCardPanel } from "@/components/settings/EmergencyCardPanel";
 import { OnboardingSettingsPanel } from "@/components/settings/OnboardingSettingsPanel";
 import { PrivacyPanel } from "@/components/settings/PrivacyPanel";
 import { MfaSettingsPanel } from "@/components/settings/MfaSettingsPanel";
@@ -71,6 +72,7 @@ const TAB_HELP: Record<Tab, HelpTip[]> = {
   profile: [
     { icon: "👤", text: "Nome, email e data di nascita: usati per la scheda d'emergenza e per farti riconoscere dagli amici." },
     { icon: "🖼️", text: "Cambia il tuo avatar da qui, in qualunque momento." },
+    { icon: "🆘", text: "La scheda d'emergenza è una tessera stampabile con le informazioni utili a chi ti soccorre: gruppo sanguigno, allergie, farmaci, medico e contatti." },
   ],
   security: [
     { icon: "🔐", text: "Attiva la verifica in due passaggi per un accesso più sicuro." },
@@ -154,16 +156,36 @@ export function SettingsTabs({
   function renderPanel(active: Tab) {
     switch (active) {
       case "profile":
+        // La scheda d'emergenza serve a chi presta soccorso adesso, non a chi eredita: sta qui, coi dati personali. È cifrata, quindi chiede la master key (nel suo blocco, senza fermare il resto del profilo).
         return (
-          <UserInfoPanel
-            userId={userId}
-            firstName={firstName}
-            lastName={lastName}
-            email={email}
-            avatarPath={avatarPath}
-            avatarUrl={avatarUrl}
-            birthDate={birthDate}
-          />
+          <div className="flex flex-col">
+            <UserInfoPanel
+              userId={userId}
+              firstName={firstName}
+              lastName={lastName}
+              email={email}
+              avatarPath={avatarPath}
+              avatarUrl={avatarUrl}
+              birthDate={birthDate}
+            />
+            <SettingsBlock
+              id="card"
+              title="Scheda d'emergenza"
+              description="Pochi campi, scritti una volta, cifrati come tutto il resto: servono solo a generare una tessera da stampare e portare nel portafoglio o tenere sul frigorifero, per chi presta soccorso quando non puoi parlare tu."
+            >
+              <RequireMasterKey inline>
+                {(masterKey) => (
+                  <EmergencyCardPanel
+                    masterKey={masterKey}
+                    userId={userId}
+                    firstName={firstName}
+                    lastName={lastName}
+                    birthDate={birthDate}
+                  />
+                )}
+              </RequireMasterKey>
+            </SettingsBlock>
+          </div>
         );
       case "security":
         // Layer di identità (login), non di cifratura: non richiede la master key. "Dispositivi fidati" la sblocca da sé nel proprio modulo, per non forzare uno sblocco solo per vedere lo stato dell'MFA. Il registro è in chiaro: con vault sbloccato mostra anche i nomi degli elementi.

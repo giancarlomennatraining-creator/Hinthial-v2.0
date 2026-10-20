@@ -105,7 +105,8 @@ test("la prova generale mostra un calendario reale e si ferma onestamente senza 
   await expect(page.getByText("Non hai ancora nessun guardiano.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Cosa arriverà" })).toBeVisible();
   await expect(page.getByText("Non hai ancora scritto nessuna capsula.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Scheda d'emergenza" })).toBeVisible();
+  // La scheda d'emergenza non sta più qui: sta in Impostazioni, nel Profilo.
+  await expect(page.getByRole("heading", { name: "Scheda d'emergenza" })).toHaveCount(0);
 
   // La prova generale sta dietro un link, non occupa la pagina.
   await expect(page.getByRole("heading", { name: "La prova generale" })).toHaveCount(0);

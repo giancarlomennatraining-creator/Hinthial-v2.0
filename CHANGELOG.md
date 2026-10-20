@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-22 (145)
+
+### La scheda d'emergenza passa nel Profilo
+
+**Cosa fa:** la scheda d'emergenza (gruppo sanguigno, allergie, farmaci, medico e contatti, con l'anteprima della tessera e il pulsante Stampa) non sta più in Eredità digitale: serve a chi ti soccorre *adesso*, non a chi eredita. Ora è in **Impostazioni, Profilo**, sotto i dati personali. Se la cassaforte è bloccata, il suo blocco mostra il riquadro per sbloccarla, senza fermare il resto del profilo. In Eredità digitale restano quattro blocchi: Quanto aspettare, Guardiani, Cosa arriverà, I tuoi beni.
+
+**Note tecniche:** `EmergencyCardPanel` spostato da `components/legacy` a `components/settings`, senza più il proprio blocco (lo mette `SettingsTabs`, dentro `RequireMasterKey`); `LegacyPage` non riceve più nome e data di nascita; il passo "scheda d'emergenza" di Continuità in Oggi rimanda a `/settings?tab=profile&section=card`; la ricerca delle Impostazioni trova "scheda d'emergenza", "allergie", "sanguigno". Aggiornati i test (`emergency-card.spec.ts`, `digital-legacy-settings.spec.ts`, `continuity.test.ts`).
+
+---
+
 ## 2026-10-21 (144)
 
 ### Un suono più meditativo per l'entrata
