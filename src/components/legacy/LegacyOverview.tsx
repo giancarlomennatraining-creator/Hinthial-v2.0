@@ -11,7 +11,6 @@ const SECTIONS = [
   { id: "guardians", label: "Guardiani" },
   { id: "capsules", label: "Cosa arriverà" },
   { id: "assets", label: "I tuoi beni" },
-  { id: "card", label: "Scheda d'emergenza" },
 ];
 
 /**

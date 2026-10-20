@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { openSettings } from "./settings-nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -28,7 +29,8 @@ test("compilare la scheda d'emergenza aggiorna l'anteprima, si salva e sopravviv
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Eredità digitale", exact: true }).click();
+  // Sta in Impostazioni -> Profilo, coi dati personali.
+  await openSettings(page, user);
   await expect(page.getByRole("heading", { name: "Scheda d'emergenza" })).toBeVisible();
 
   // Vuota all'inizio: niente da stampare ancora.
@@ -64,9 +66,8 @@ test("compilare la scheda d'emergenza aggiorna l'anteprima, si salva e sopravviv
   // costruzione) --- questa scheda la richiede, a differenza di quella
   // dei soli parametri: va sbloccata di nuovo per rivederla.
   await page.reload();
-  // La sezione è "inline": nessuna finestra automatica, si apre dal riquadro.
-  // Due riquadri inline (parametri dell'eredità e scheda): sbloccano la stessa cassaforte, basta il primo.
-  await page.getByRole("button", { name: "Sblocca ora" }).first().click();
+  // La scheda è "inline": nessuna finestra automatica, si sblocca dal suo riquadro.
+  await page.getByRole("button", { name: "Sblocca ora" }).click();
   await page.getByLabel("Master password", { exact: true }).fill("una-master-password-solida");
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await expect(page.getByLabel("Gruppo sanguigno")).toHaveValue("0+");

@@ -54,7 +54,8 @@ export function continuitySteps(input: ContinuityInput): ContinuityStep[] {
       id: "emergency-card",
       done: emergencyCardFilled,
       label: emergencyCardFilled ? "La scheda d'emergenza è compilata" : "La scheda d'emergenza è vuota: compilala",
-      href: "/legacy",
+      // Sta in Impostazioni -> Profilo, non in Eredità digitale: serve a chi ti soccorre adesso.
+      href: "/settings?tab=profile&section=card",
       action: "Compila",
     },
     {

@@ -20,6 +20,7 @@ export interface SettingsEntry extends SettingsTarget {
 export const SETTINGS_ENTRIES: SettingsEntry[] = [
   { tab: "profile", block: "avatar", label: "Foto profilo", keywords: "avatar immagine scatta carica" },
   { tab: "profile", block: "personal", label: "Dati personali", keywords: "nome cognome data di nascita compleanno" },
+  { tab: "profile", block: "card", label: "Scheda d'emergenza", keywords: "tessera sanguigno allergie farmaci medico contatti soccorso stampa emergenza" },
   { tab: "profile", block: "email", label: "Email", keywords: "indirizzo posta cambia" },
   { tab: "security", block: "authenticator", label: "Verifica in due passaggi", keywords: "2fa mfa authenticator codice app accesso" },
   { tab: "security", block: "backup-codes", label: "Codici di backup", keywords: "recupero emergenza perso telefono" },
