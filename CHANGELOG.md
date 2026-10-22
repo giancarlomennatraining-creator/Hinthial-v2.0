@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-22 (146)
+
+### Pulizia: codice che non serve più e rami già uniti
+
+**Cosa fa:** nessun cambiamento visibile per chi usa l'app. Tolto il codice che nessuno richiamava più (frutto di analisi su tutto il progetto): due hook delle notifiche di Oggi (`useDashboardNotices`), dodici icone mai usate, `ReadDot`, `setReminderDueAt` e due definizioni minori. Cancellati i 73 rami git già uniti in `master`, in locale e sul server: restano `master`, `maintenance/v2` e le etichette `v2-freeze` e `pre-interpretazione-locale`.
+
+**Note tecniche:** dopo la pulizia nessun export del progetto risulta senza usi; restano 51 funzioni usate solo dai test (tra cui `loadPendingProposals`, la logica delle proposte in sospeso di Oggi, oggi senza interfaccia).
+
+---
+
 ## 2026-10-22 (145)
 
 ### La scheda d'emergenza passa nel Profilo

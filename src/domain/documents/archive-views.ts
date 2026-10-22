@@ -32,8 +32,6 @@ const KNOWN_CATEGORY_COLORS: Record<string, string> = {
 const FALLBACK_PALETTE = ["#2b4fc4", "#0f8b8d", "#c2417a", "#a9731a", "#6d4fc4", "#1c7c5a", "#0f6fa8", "#b4532a"];
 
 export const UNCATEGORIZED_COLOR = "#9aa1bd";
-export const UNCATEGORIZED_NAME = "Senza categoria";
-
 function normalizeName(name: string): string {
   return name
     .normalize("NFD")

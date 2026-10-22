@@ -78,24 +78,6 @@ export function ExpiryPill({
   );
 }
 
-/** Il puntino "letto da Hinthia": pieno blu se letto, vuoto se ancora da leggere. */
-export function ReadDot({ read, size = 9, className }: { read: boolean; size?: number; className?: string }) {
-  return (
-    <span
-      role="img"
-      aria-label={read ? "Letto da Hinthia" : "Ancora da leggere con Hinthia"}
-      title={read ? "Letto da Hinthia" : "Ancora da leggere"}
-      className={cn("inline-block shrink-0 rounded-full border-[1.5px] box-border", className)}
-      style={{
-        width: size,
-        height: size,
-        background: read ? "var(--brand)" : "transparent",
-        borderColor: read ? "var(--brand)" : "var(--n-400)",
-      }}
-    />
-  );
-}
-
 /** "+ Aggiungi contenuto" con il suo menu: lo stesso per tutte le viste. */
 export function AddContentMenu({
   className,

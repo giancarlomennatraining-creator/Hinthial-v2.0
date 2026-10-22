@@ -264,4 +264,3 @@ export function useArchiveData(masterKey: CryptoKey) {
   };
 }
 
-export type ArchiveData = ReturnType<typeof useArchiveData>;

@@ -43,15 +43,6 @@ export function ArchiveIcon(props: IconProps) {
   );
 }
 
-export function ReminderIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <circle cx="12" cy="12" r="8" />
-      <path d="M12 8v4l3 2" />
-    </svg>
-  );
-}
-
 export function AssetIcon(props: IconProps) {
   return (
     <svg {...baseProps(props)}>
@@ -134,17 +125,6 @@ export function HeartIcon(props: IconProps) {
   );
 }
 
-/** Scheda "Scheda d'emergenza" in Impostazioni --- una tessera con una croce, non un'emoji: indicazione di sistema come le altre icone di questa scheda. */
-export function MedicalCardIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M12 9v6" />
-      <path d="M9 12h6" />
-    </svg>
-  );
-}
-
 /** Scheda "Autenticazione" in Impostazioni (stesso lucchetto del badge "zero-knowledge" nella hero). */
 export function SecurityIcon(props: IconProps) {
   return (
@@ -188,41 +168,6 @@ export function EyeIcon(props: IconProps) {
   );
 }
 
-/** Scheda "Importa/Esporta" in Impostazioni. */
-export function ImportExportIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <path d="M8 3v11" />
-      <path d="M4.5 10.5 8 14l3.5-3.5" />
-      <path d="M16 21V10" />
-      <path d="M19.5 13.5 16 10l-3.5 3.5" />
-    </svg>
-  );
-}
-
-/** Scheda "Onboarding" in Impostazioni. */
-export function ChecklistIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <path d="M3.5 6.5 5 8l2.5-2.5" />
-      <line x1="10.5" y1="6.5" x2="20.5" y2="6.5" />
-      <path d="M3.5 12.5 5 14l2.5-2.5" />
-      <line x1="10.5" y1="12.5" x2="20.5" y2="12.5" />
-      <path d="M3.5 18.5 5 20l2.5-2.5" />
-      <line x1="10.5" y1="18.5" x2="20.5" y2="18.5" />
-    </svg>
-  );
-}
-
-/** Scheda "Attività" (registro di audit) in Impostazioni. */
-export function ActivityIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <path d="M3 12h4l2-8 4 16 2-8h6" />
-    </svg>
-  );
-}
-
 /** Scheda "Aspetto" in Impostazioni. */
 export function SlidersIcon(props: IconProps) {
   return (
@@ -233,15 +178,6 @@ export function SlidersIcon(props: IconProps) {
       <circle cx="15" cy="12" r="2" />
       <line x1="4" y1="18" x2="20" y2="18" />
       <circle cx="7" cy="18" r="2" />
-    </svg>
-  );
-}
-
-/** Freccia nel bottone principale della homepage ("Crea account"). */
-export function ArrowRightIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <path d="M9 5l6 7-6 7" />
     </svg>
   );
 }
@@ -275,67 +211,3 @@ export function CircleIcon(props: IconProps) {
   );
 }
 
-/** Tema chiaro/scuro (Impostazioni > Aspetto) --- cerchio con metà piena. */
-export function ThemeIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <circle cx="12" cy="12" r="8" />
-      <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" />
-    </svg>
-  );
-}
-
-/** Disposizione del menu: finestra con la barra laterale a sinistra. */
-export function SidebarLayoutIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
-      <line x1="9.5" y1="4.5" x2="9.5" y2="19.5" />
-    </svg>
-  );
-}
-
-/** Voci del menu principale: elenco puntato. */
-export function MenuListIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <line x1="9" y1="7" x2="20" y2="7" />
-      <line x1="9" y1="12" x2="20" y2="12" />
-      <line x1="9" y1="17" x2="20" y2="17" />
-      <circle cx="5" cy="7" r="0.6" />
-      <circle cx="5" cy="12" r="0.6" />
-      <circle cx="5" cy="17" r="0.6" />
-    </svg>
-  );
-}
-
-/** Smartphone: app authenticator (il codice vive sul telefono). */
-export function SmartphoneIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <rect x="7" y="3" width="10" height="18" rx="2" />
-      <line x1="11" y1="18" x2="13" y2="18" />
-    </svg>
-  );
-}
-
-/** Barra di navigazione in basso su smartphone: telefono con la barra al fondo. */
-export function BottomBarIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <rect x="6.5" y="3" width="11" height="18" rx="2" />
-      <line x1="6.5" y1="16.5" x2="17.5" y2="16.5" />
-    </svg>
-  );
-}
-
-/** Visualizzazione delle liste: elenco a righe in una tabella. */
-export function ListViewIcon(props: IconProps) {
-  return (
-    <svg {...baseProps(props)}>
-      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
-      <line x1="3.5" y1="10" x2="20.5" y2="10" />
-      <line x1="3.5" y1="14.5" x2="20.5" y2="14.5" />
-    </svg>
-  );
-}
