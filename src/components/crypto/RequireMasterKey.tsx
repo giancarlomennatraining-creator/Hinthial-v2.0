@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { LockedPlaceholder } from "@/components/crypto/LockedPlaceholder";
 import { useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
-import { BTN_PRIMARY } from "@/components/ui/styles";
+import { BTN_PRIMARY, PANEL_FLAT } from "@/components/ui/styles";
+import { LoadingText } from "@/components/ui/LoadingText";
 
 /**
  * Gates its children behind an unlocked Master Key. Due modi:
@@ -37,7 +38,7 @@ export function RequireMasterKey({
 
   switch (status.kind) {
     case "checking":
-      return <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>;
+      return <LoadingText />;
     case "not-set-up":
     case "locked":
       return inline ? (
@@ -63,7 +64,7 @@ export function RequireMasterKey({
 
 function InlineNotice({ text, action, onAction }: { text: string; action: string; onAction: () => void }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className={`${PANEL_FLAT} flex flex-wrap items-center gap-3 p-4`}>
       <p className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-zinc-400">{text}</p>
       <button
         type="button"

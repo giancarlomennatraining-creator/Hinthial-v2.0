@@ -8,6 +8,7 @@ import type { CapsuleListItem, SharedCapsuleListItem } from "@/domain/capsules/t
 import { starterHref } from "@/domain/capsules/starter";
 import { describeCapsulesForPerson, groupCapsulesForPerson, isReadyToOpen } from "@/domain/friends/person-capsules";
 import { BACK_LINK_CLASS } from "@/components/ui/BackLink";
+import { PANEL } from "@/components/ui/styles";
 
 const STATUS_LABEL: Record<FriendStatus, string> = { active: "Attivo", revoked: "Revocato" };
 const STATUS_BADGE_CLASS: Record<FriendStatus, string> = {
@@ -187,7 +188,7 @@ export function AddressBook({
         <div className="flex gap-1.5">
           <div
             ref={listRef}
-            className="max-h-[calc(100dvh-17rem)] min-h-[200px] min-w-0 flex-1 overflow-y-auto surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] lg:max-h-[640px] dark:border-zinc-800 dark:bg-zinc-950"
+            className={`${PANEL} max-h-[calc(100dvh-17rem)] min-h-[200px] min-w-0 flex-1 overflow-y-auto lg:max-h-[640px]`}
           >
             {ordered.length === 0 ? (
               <p className="p-4 text-sm text-zinc-500 dark:text-zinc-400">Nessuno corrisponde alla ricerca.</p>

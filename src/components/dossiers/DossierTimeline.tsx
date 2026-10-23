@@ -4,6 +4,7 @@ import Link from "next/link";
 import { formatDayMonthYear } from "@/domain/documents/archive-views";
 import { formatEuro, type LivingTimelineEntry, type TimelineKind } from "@/domain/dossiers/overview";
 import { CARD_TITLE } from "@/components/dossiers/styles";
+import { PANEL_FLAT } from "@/components/ui/styles";
 
 const ENTRY_STYLE: Record<TimelineKind, { bg: string; fg: string; icon: string }> = {
   document: { bg: "color-mix(in srgb, var(--brand) 12%, transparent)", fg: "var(--accent)", icon: "M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z M14 3v5h5" },
@@ -69,7 +70,7 @@ export function DossierTimeline({
   return (
     <section
       aria-label="Cronologia"
-      className="flex min-w-0 flex-col gap-3.5 surface-card rounded-card border border-zinc-200 bg-white px-5 py-[18px] dark:border-zinc-800 dark:bg-zinc-950"
+      className={`${PANEL_FLAT} flex min-w-0 flex-col gap-3.5 px-5 py-[18px]`}
     >
       <h2 className={CARD_TITLE}>Cronologia</h2>
 

@@ -5,6 +5,7 @@ import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import { AudioVideoRecorder } from "@/components/media/AudioVideoRecorder";
 import { BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
 import { BackLink } from "@/components/ui/BackLink";
+import { ErrorText } from "@/components/ui/ErrorText";
 
 /**
  * I pezzi che il wizard di creazione (CreateCapsuleForm) e la pagina di modifica (EditCapsuleForm) di una capsula
@@ -92,9 +93,9 @@ export function CapsuleTitleField({
 
 export function StepError({ error }: { error: string | null }) {
   return error ? (
-    <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+    <ErrorText>
       {error}
-    </p>
+    </ErrorText>
   ) : null;
 }
 

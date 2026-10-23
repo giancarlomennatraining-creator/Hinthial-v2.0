@@ -16,10 +16,12 @@ import {
 import { useToast } from "@/components/ui/ToastProvider";
 import { DigitalLegacyRehearsal } from "@/components/digital-legacy/DigitalLegacyRehearsal";
 import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
-import { cn } from "@/lib/utils";
+import { cn, errorMessage } from "@/lib/utils";
 import { BTN_PRIMARY } from "@/components/ui/styles";
 import { SettingsBlock } from "@/components/settings/SettingsBlock";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
 
 /**
  * Le impostazioni dell'Eredità digitale, lette una volta sola dalla pagina: le usano sia "Quanto aspettare" (che le modifica)
@@ -38,7 +40,7 @@ export function useLegacySettings(userId: string) {
         const loaded = await getDigitalLegacySettings(supabase, userId);
         if (!cancelled) setSettings(loaded);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Impossibile caricare le impostazioni.");
+        if (!cancelled) setError(errorMessage(err, "Impossibile caricare le impostazioni."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -105,20 +107,20 @@ export function LegacyWaiting({ userId, legacy }: { userId: string; legacy: Lega
       await updateDigitalLegacySettings(supabase, userId, settings);
       showToast("Impostazioni di Eredità digitale salvate.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile salvare le impostazioni.");
+      setError(errorMessage(err, "Impossibile salvare le impostazioni."));
     } finally {
       setSaving(false);
     }
   }
 
   if (loading) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>;
+    return <LoadingText />;
   }
   if (!settings) {
     return (
-      <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+      <ErrorText>
         {error ?? "Impossibile caricare le impostazioni."}
-      </p>
+      </ErrorText>
     );
   }
 
@@ -212,9 +214,9 @@ export function LegacyWaiting({ userId, legacy }: { userId: string; legacy: Lega
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       <div className="flex flex-wrap items-center gap-4">

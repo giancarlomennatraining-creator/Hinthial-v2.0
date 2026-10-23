@@ -13,7 +13,8 @@ import { PageHelp } from "@/components/help/PageHelp";
 import { PendingGuardianChecks } from "@/components/digital-legacy/PendingGuardianChecks";
 import { rememberUnlockDismissed, unlockWasDismissed, useUnlockPrompt } from "@/components/crypto/UnlockPromptProvider";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
-import { BTN_PRIMARY } from "@/components/ui/styles";
+import { BTN_PRIMARY, PANEL_FLAT } from "@/components/ui/styles";
+import { LoadingText } from "@/components/ui/LoadingText";
 
 /**
  * The greeting always renders, regardless of encryption status ---
@@ -112,12 +113,12 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
           <DashboardWidgets masterKey={status.masterKey} />
         </>
       ) : status.kind === "checking" ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        <LoadingText />
       ) : status.kind === "locked" || status.kind === "unlocked" ? (
         <div className="flex flex-col gap-4">
           {/* Con la finestra che si sta dissolvendo dopo lo sblocco la dashboard resta uno scheletro: si popola a fine animazione. */}
           {status.kind === "locked" ? (
-            <div className="flex flex-wrap items-center gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+            <div className={`${PANEL_FLAT} flex flex-wrap items-center gap-3 p-4`}>
               <p className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
                 La cassaforte è bloccata: sblocca per vedere le tue scadenze e il tuo archivio recente.
               </p>
@@ -141,7 +142,7 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
           )}
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className={`${PANEL_FLAT} flex flex-wrap items-center gap-3 p-4`}>
           <p className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
             Crea la tua master password per iniziare a usare Hinthial: è un minuto.
           </p>

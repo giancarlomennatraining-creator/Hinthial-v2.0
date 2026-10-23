@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { errorMessage } from "@/lib/utils";
 
 const POLL_INTERVAL_MS = 2000;
 /** Deve restare in linea con "interval '5 minutes'" nella migrazione (v. device_pairing_requests). */
@@ -36,7 +38,7 @@ export function DevicePairingUnlock() {
       setQrDataUrl(dataUrl);
       setPanelState("waiting");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile generare il codice. Riprova.");
+      setError(errorMessage(err, "Impossibile generare il codice. Riprova."));
       setPanelState("error");
     }
   }
@@ -117,9 +119,9 @@ export function DevicePairingUnlock() {
       ) : null}
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       <button

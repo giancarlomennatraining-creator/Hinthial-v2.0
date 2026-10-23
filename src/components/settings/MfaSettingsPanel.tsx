@@ -15,8 +15,11 @@ import { saveBlobAsFile } from "@/lib/download";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import type { MfaFactor, TotpEnrollment } from "@/domain/mfa/types";
 import { AlertTriangleIcon } from "@/components/icons/nav-icons";
-import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { SettingsBlock } from "@/components/settings/SettingsBlock";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
@@ -32,7 +35,7 @@ function FactorList({
   onRemove: (factor: MfaFactor) => void;
 }) {
   return (
-    <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+    <ul className={`${PANEL} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
       {factors.map((factor) => (
         <li key={factor.id} className="flex items-center justify-between gap-4 p-3 text-sm">
           <div className="flex flex-col gap-0.5">
@@ -86,7 +89,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
       setFactors(totp);
       setBackupCodesCount(codesCount);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare lo stato dell'MFA.");
+      setError(errorMessage(err, "Impossibile caricare lo stato dell'MFA."));
     }
   }, [supabase, userId]);
 
@@ -106,7 +109,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
     try {
       setEnrollment(await enrollTotpFactor(supabase, deviceName.trim()));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile avviare l'attivazione.");
+      setError(errorMessage(err, "Impossibile avviare l'attivazione."));
     } finally {
       setBusy(false);
     }
@@ -142,7 +145,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
       setDeviceName("Il mio telefono");
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Codice non valido. Riprova.");
+      setError(errorMessage(err, "Codice non valido. Riprova."));
     } finally {
       setBusy(false);
     }
@@ -156,7 +159,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
       await logAuditEvent(supabase, userId, "mfa_removed");
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile rimuovere il dispositivo.");
+      setError(errorMessage(err, "Impossibile rimuovere il dispositivo."));
     } finally {
       setBusy(false);
     }
@@ -172,7 +175,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
       setRevealedCodes(codes);
       setBackupCodesCount(codes.length);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile generare i codici di backup.");
+      setError(errorMessage(err, "Impossibile generare i codici di backup."));
     } finally {
       setBusy(false);
     }
@@ -199,14 +202,14 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
 
   if (error && !factors && !enrollment) {
     return (
-      <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+      <ErrorText>
         {error}
-      </p>
+      </ErrorText>
     );
   }
 
   if (!factors || backupCodesCount === null) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>;
+    return <LoadingText />;
   }
 
   return (
@@ -220,7 +223,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
       <div className="flex flex-col gap-6">
 
         {enrollment ? (
-          <div className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+          <div className={`${PANEL} flex flex-col gap-3 p-4`}>
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
               Inquadra questo codice con l&apos;app authenticator, poi conferma con il codice a 6
               cifre che ti mostra.
@@ -253,9 +256,9 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
             </div>
 
             {error ? (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              <ErrorText>
                 {error}
-              </p>
+              </ErrorText>
             ) : null}
 
             <div className="flex gap-3">
@@ -271,7 +274,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
                 type="button"
                 disabled={busy}
                 onClick={handleCancelEnroll}
-                className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                className={`${BTN_SECONDARY} disabled:opacity-50`}
               >
                 Annulla
               </button>
@@ -320,9 +323,9 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
             </div>
 
             {error ? (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              <ErrorText>
                 {error}
-              </p>
+              </ErrorText>
             ) : null}
           </>
         )}
@@ -339,7 +342,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
         <div className="flex flex-col gap-4">
 
           {revealedCodes ? (
-            <div className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+            <div className={`${PANEL} flex flex-col gap-3 p-4`}>
               <p className="text-sm text-zinc-700 dark:text-zinc-300">
                 Salvane una copia adesso: non verranno mostrati di nuovo.
               </p>
@@ -391,7 +394,7 @@ export function MfaSettingsPanel({ userId }: { userId: string }) {
                 type="button"
                 disabled={busy}
                 onClick={handleGenerateBackupCodes}
-                className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                className={`${BTN_SECONDARY} disabled:opacity-50`}
               >
                 {backupCodesCount > 0 ? "Rigenera codici di backup" : "Genera codici di backup"}
               </button>

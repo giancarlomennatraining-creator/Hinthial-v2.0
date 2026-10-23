@@ -24,6 +24,9 @@ import type { DossierListItem } from "@/domain/dossiers/types";
 import type { DocumentSummary } from "@/domain/documents/types";
 import { BackLink } from "@/components/ui/BackLink";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -79,7 +82,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
       setDocuments(summaries.filter((d) => d.dossierIds.includes(dossierId)));
       setShares(sharesResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare il fascicolo.");
+      setError(errorMessage(err, "Impossibile caricare il fascicolo."));
     } finally {
       setLoading(false);
     }
@@ -92,16 +95,16 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
   }, [refresh]);
 
   if (loading) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>;
+    return <LoadingText />;
   }
 
   if (!dossier) {
     return (
       <div className="flex flex-col gap-4">
         <BackLink href="/dossiers">Torna ai fascicoli</BackLink>
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           Fascicolo non trovato.
-        </p>
+        </ErrorText>
       </div>
     );
   }
@@ -148,7 +151,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
       setCreated({ url: result.url, expiresAt: result.expiresAt, label: label.trim(), title: dossier.title });
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile creare il link.");
+      setError(errorMessage(err, "Impossibile creare il link."));
     } finally {
       setProgress(null);
     }
@@ -179,7 +182,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
       await refresh();
       showToast("Link revocato.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile revocare il link.");
+      setError(errorMessage(err, "Impossibile revocare il link."));
     } finally {
       setBusyShareId(null);
     }
@@ -196,9 +199,9 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       <div className="flex flex-col items-stretch gap-5 lg:flex-row lg:items-start">

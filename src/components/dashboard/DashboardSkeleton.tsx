@@ -1,10 +1,11 @@
 import { Skeleton } from "@/components/ui/Skeleton";
+import { PANEL } from "@/components/ui/styles";
 
 /** Placeholder mostrato mentre si leggono e decifrano i dati di "Oggi" --- ne riprende la forma (la continuità in alto, sotto due riquadri affiancati) perché la pagina non salti quando arriva il contenuto vero. */
 export function DashboardSkeleton() {
   return (
     <div role="status" aria-label="Caricamento…" className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+      <div className={`${PANEL} flex flex-col gap-3 p-4`}>
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-3 w-2/3" />
         <Skeleton className="h-2 w-full" />
@@ -16,7 +17,7 @@ export function DashboardSkeleton() {
         {Array.from({ length: 2 }).map((_, i) => (
           <div
             key={i}
-            className="flex flex-col gap-2 surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950"
+            className={`${PANEL} flex flex-col gap-2 p-4`}
           >
             <Skeleton className="h-3 w-24" />
             <Skeleton className="h-3 w-full" />

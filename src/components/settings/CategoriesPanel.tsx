@@ -13,8 +13,11 @@ import type { Category } from "@/domain/categories/types";
 import { DocumentTypeCategoriesPanel } from "@/components/settings/DocumentTypeCategoriesPanel";
 import { IconPicker } from "@/components/ui/IconPicker";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
-import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 const DEFAULT_ICON = "📁";
 
@@ -43,7 +46,7 @@ export function CategoriesPanel() {
     try {
       setCategories(await listCategories(supabase));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare le categorie.");
+      setError(errorMessage(err, "Impossibile caricare le categorie."));
     } finally {
       setLoading(false);
     }
@@ -83,7 +86,7 @@ export function CategoriesPanel() {
       setCreateIcon("");
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile creare la categoria.");
+      setError(errorMessage(err, "Impossibile creare la categoria."));
     } finally {
       setCreating(false);
     }
@@ -111,7 +114,7 @@ export function CategoriesPanel() {
       setEditingId(null);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare la categoria.");
+      setError(errorMessage(err, "Impossibile aggiornare la categoria."));
     } finally {
       setBusyId(null);
     }
@@ -126,7 +129,7 @@ export function CategoriesPanel() {
       usage = await countCategoryUsage(supabase, category.id);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Impossibile verificare l'utilizzo della categoria.",
+        errorMessage(err, "Impossibile verificare l'utilizzo della categoria."),
       );
       setBusyId(null);
       return;
@@ -165,7 +168,7 @@ export function CategoriesPanel() {
       );
       setCategories((prev) => prev.filter((c) => c.id !== category.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare la categoria.");
+      setError(errorMessage(err, "Impossibile eliminare la categoria."));
     } finally {
       setBusyId(null);
     }
@@ -176,7 +179,7 @@ export function CategoriesPanel() {
 
       <form
         onSubmit={handleCreate}
-        className="flex flex-wrap items-end gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
+        className={`${PANEL} flex flex-wrap items-end gap-3 p-4`}
       >
         <div className="flex w-20 flex-col gap-1">
           <label htmlFor="icon" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -215,17 +218,17 @@ export function CategoriesPanel() {
       </form>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {loading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        <LoadingText />
       ) : categories.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessuna categoria ancora.</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+        <ul className={`${PANEL} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
           {categories.map((category) => {
             const busy = busyId === category.id;
             const isEditing = editingId === category.id;

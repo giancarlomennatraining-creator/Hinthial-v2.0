@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type ChangeEvent, type PointerEvent as Rea
 import { Avatar } from "@/components/ui/Avatar";
 import { clampOffset, computeCropRect, coverScale } from "@/lib/image-crop";
 import { BTN_PRIMARY, BTN_SECONDARY } from "@/components/ui/styles";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { errorMessage } from "@/lib/utils";
 
 const CONTAINER_SIZE = 240;
 const OUTPUT_SIZE = 256;
@@ -197,7 +199,7 @@ export function AvatarPickerCrop({
       await onCropped(blob);
       resetCropState();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile salvare la foto.");
+      setError(errorMessage(err, "Impossibile salvare la foto."));
     } finally {
       setSaving(false);
     }
@@ -210,7 +212,7 @@ export function AvatarPickerCrop({
     try {
       await onRemove();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile rimuovere la foto.");
+      setError(errorMessage(err, "Impossibile rimuovere la foto."));
     } finally {
       setSaving(false);
     }
@@ -221,9 +223,9 @@ export function AvatarPickerCrop({
   return (
     <div className="flex flex-col gap-3">
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {pickedImageSrc ? (
@@ -280,7 +282,7 @@ export function AvatarPickerCrop({
               type="button"
               onClick={resetCropState}
               disabled={disabled}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              className={`${BTN_SECONDARY} disabled:opacity-50`}
             >
               Annulla
             </button>
@@ -333,7 +335,7 @@ export function AvatarPickerCrop({
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
               </label>
               {/* Su smartphone/tablet: apre la fotocamera nativa, `capture` impostato una volta per tutte in JSX. */}
-              <label className="w-fit cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 md:hidden dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900">
+              <label className={`${BTN_SECONDARY} w-fit cursor-pointer md:hidden`}>
                 📷 Scatta foto
                 <input
                   type="file"
@@ -347,7 +349,7 @@ export function AvatarPickerCrop({
               <button
                 type="button"
                 onClick={handleStartWebcam}
-                className="hidden w-fit rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 md:inline-flex dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                className={`${BTN_SECONDARY} hidden w-fit md:inline-flex`}
               >
                 📷 Scatta foto
               </button>

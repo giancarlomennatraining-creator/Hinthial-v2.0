@@ -7,6 +7,10 @@ import { loadOnboardingSteps, onboardingCompletionPercent } from "@/domain/onboa
 import type { OnboardingStep } from "@/components/dashboard/OnboardingChecklist";
 import { useOnboardingWidgetVisibility } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 import { CheckCircleIcon } from "@/components/icons/nav-icons";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { PANEL } from "@/components/ui/styles";
+import { errorMessage } from "@/lib/utils";
 
 /** Messaggio accanto alla percentuale --- dal più alto al più basso, il primo che si applica vince. */
 const ENCOURAGEMENT: { min: number; message: string }[] = [
@@ -39,7 +43,7 @@ export function OnboardingSettingsPanel({ masterKey }: { masterKey: CryptoKey })
       const supabase = createClient();
       setSteps(await loadOnboardingSteps(supabase, masterKey));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare l'avanzamento.");
+      setError(errorMessage(err, "Impossibile caricare l'avanzamento."));
     }
   }, [masterKey]);
 
@@ -54,21 +58,21 @@ export function OnboardingSettingsPanel({ masterKey }: { masterKey: CryptoKey })
 
   if (error) {
     return (
-      <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+      <ErrorText>
         {error}
-      </p>
+      </ErrorText>
     );
   }
 
   if (!steps) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>;
+    return <LoadingText />;
   }
 
   const percent = onboardingCompletionPercent(steps);
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col items-center gap-4 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-6 text-center sm:flex-row sm:items-center sm:text-left dark:border-zinc-800 dark:bg-zinc-950">
+      <div className={`${PANEL} flex flex-col items-center gap-4 p-6 text-center sm:flex-row sm:items-center sm:text-left`}>
         <span
           aria-hidden="true"
           className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700"
@@ -97,7 +101,7 @@ export function OnboardingSettingsPanel({ masterKey }: { masterKey: CryptoKey })
           </button>
         </div>
 
-        <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+        <ul className={`${PANEL} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
           {steps.map((step) => (
             <li key={step.key} className="flex items-center justify-between gap-4 p-3">
               <div className="flex min-w-0 flex-col gap-0.5">

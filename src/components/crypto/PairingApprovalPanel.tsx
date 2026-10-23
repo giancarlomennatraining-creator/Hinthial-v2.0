@@ -17,6 +17,9 @@ import {
 } from "@/lib/crypto";
 import { TextField } from "@/components/ui/TextField";
 import { BTN_PRIMARY } from "@/components/ui/styles";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * Lato dispositivo già fidato, dopo aver scansionato il QR mostrato dal dispositivo nuovo: cifra il Master Key
@@ -39,7 +42,7 @@ export function PairingApprovalPanel({ requestId }: { requestId: string }) {
         if (!cancelled) setRequest(found);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Impossibile leggere la richiesta.");
+          setError(errorMessage(err, "Impossibile leggere la richiesta."));
           setRequest(null);
         }
       }
@@ -107,7 +110,7 @@ export function PairingApprovalPanel({ requestId }: { requestId: string }) {
   }
 
   if (request === "loading") {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>;
+    return <LoadingText />;
   }
 
   if (!request) {
@@ -154,9 +157,9 @@ export function PairingApprovalPanel({ requestId }: { requestId: string }) {
       />
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       <button

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatDuration, recordingFilename } from "@/lib/media-recording";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { PANEL } from "@/components/ui/styles";
 
 type Kind = "audio" | "video";
 
@@ -135,16 +137,16 @@ export function AudioVideoRecorder({
   }
 
   return (
-    <div className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className={`${PANEL} flex flex-col gap-3 p-4`}>
       <div>
         <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{title}</p>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{description}</p>
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {previewUrl && previewFile ? (

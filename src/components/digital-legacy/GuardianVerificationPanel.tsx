@@ -16,8 +16,10 @@ import {
   unreachableConsequence,
 } from "@/domain/digital-legacy/guardian-answers";
 import { formatDate } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { cn, errorMessage } from "@/lib/utils";
 import { BTN_SECONDARY } from "@/components/ui/styles";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
 
 /**
  * Dove porta la richiesta "hai notizie di …?" (dall'email, v. lib/email/templates.ts, o dal riquadro in Oggi e Protetti,
@@ -42,7 +44,7 @@ export function GuardianVerificationPanel({ requestId }: { requestId: string }) 
         if (!cancelled) setRequest(found);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Impossibile leggere la richiesta.");
+          setError(errorMessage(err, "Impossibile leggere la richiesta."));
           setRequest(null);
         }
       }
@@ -61,14 +63,14 @@ export function GuardianVerificationPanel({ requestId }: { requestId: string }) 
       setRequest({ ...request, response });
       setConfirmingUnreachable(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile registrare la risposta. Riprova.");
+      setError(errorMessage(err, "Impossibile registrare la risposta. Riprova."));
     } finally {
       setBusy(false);
     }
   }
 
   if (request === "loading") {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>;
+    return <LoadingText />;
   }
 
   if (!request) {
@@ -88,9 +90,9 @@ export function GuardianVerificationPanel({ requestId }: { requestId: string }) 
 
   const name = firstNameOf(request.ownerName);
   const errorNote = error ? (
-    <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+    <ErrorText>
       {error}
-    </p>
+    </ErrorText>
   ) : null;
 
   if (request.response) {

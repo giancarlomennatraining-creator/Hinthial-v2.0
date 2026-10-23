@@ -13,6 +13,9 @@ import {
 import { GUARDIAN_QUORUM_LABEL, describeDigitalLegacySettings, type DigitalLegacySettings } from "@/domain/digital-legacy/types";
 import { formatDate } from "@/lib/format";
 import type { FriendListItem } from "@/domain/friends/types";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { BTN_SECONDARY } from "@/components/ui/styles";
+import { errorMessage } from "@/lib/utils";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -127,7 +130,7 @@ export function DigitalLegacyRehearsal({
       setGuardians(friends.filter((f) => f.isGuardian && f.linkedUserId !== null));
       setRecipientGroups(groupSharedCapsulesByRecipient(capsules));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile preparare la prova generale.");
+      setError(errorMessage(err, "Impossibile preparare la prova generale."));
     } finally {
       setLoading(false);
     }
@@ -149,7 +152,7 @@ export function DigitalLegacyRehearsal({
       <button
         type="button"
         onClick={handleOpen}
-        className="w-fit rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+        className={`${BTN_SECONDARY} w-fit`}
       >
         🎬 Prova generale
       </button>
@@ -186,9 +189,9 @@ export function DigitalLegacyRehearsal({
             {loading ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">Preparazione…</p>
             ) : error ? (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              <ErrorText>
                 {error}
-              </p>
+              </ErrorText>
             ) : (
               <>
                 <p className="rounded-xl bg-zinc-50 p-3 text-xs leading-relaxed text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">

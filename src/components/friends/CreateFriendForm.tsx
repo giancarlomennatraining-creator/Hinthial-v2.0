@@ -8,8 +8,10 @@ import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { createFriend, updateFriendAvatar } from "@/domain/friends/repository";
 import { inviteFriendToHinthial } from "@/lib/friends/actions";
 import { AvatarPickerCrop } from "@/components/ui/AvatarPickerCrop";
-import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { BackLink } from "@/components/ui/BackLink";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { errorMessage } from "@/lib/utils";
 
 /** Un seed stabile per il colore delle iniziali finché l'amico non ha ancora un id --- basta che non cambi ad ogni digitazione. */
 function avatarSeedFor(firstName: string, lastName: string): string {
@@ -91,7 +93,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
         `/friends?created=1${inviteFailed ? "&inviteFailed=1" : ""}${avatarFailed ? "&avatarFailed=1" : ""}`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiungere l'amico.");
+      setError(errorMessage(err, "Impossibile aggiungere l'amico."));
       setCreating(false);
     }
   }
@@ -110,7 +112,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
         </p>
       </div>
 
-      <div className="surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+      <div className={`${PANEL} p-4`}>
         <p className="mb-3 text-xs font-medium text-zinc-600 dark:text-zinc-400">Foto (facoltativa)</p>
         <AvatarPickerCrop
           currentAvatarUrl={avatarPreviewUrl}
@@ -124,7 +126,7 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
 
       <form
         onSubmit={handleCreate}
-        className="flex flex-wrap items-end gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
+        className={`${PANEL} flex flex-wrap items-end gap-3 p-4`}
       >
         <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
           <label htmlFor="firstName" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -210,9 +212,9 @@ export function CreateFriendForm({ masterKey }: { masterKey: CryptoKey }) {
         </label>
 
         {error ? (
-          <p role="alert" className="w-full text-sm text-red-600 dark:text-red-400">
+          <ErrorText className="w-full">
             {error}
-          </p>
+          </ErrorText>
         ) : null}
 
         <button

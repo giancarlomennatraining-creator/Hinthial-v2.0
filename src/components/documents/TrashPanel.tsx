@@ -12,6 +12,9 @@ import { ListSkeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { DocumentListItem } from "@/domain/documents/types";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { PANEL } from "@/components/ui/styles";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * Cestino: eliminare più documenti insieme moltiplica il rischio di un clic distratto, quindi l'eliminazione
@@ -35,7 +38,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
     try {
       setDocuments(await listTrashedDocuments(supabase, masterKey));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare il cestino.");
+      setError(errorMessage(err, "Impossibile caricare il cestino."));
     } finally {
       setLoading(false);
     }
@@ -80,7 +83,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
       setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
       showToast(`"${doc.filename}" ripristinato.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile ripristinare il documento.");
+      setError(errorMessage(err, "Impossibile ripristinare il documento."));
     } finally {
       setBusyId(null);
     }
@@ -107,7 +110,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
       await deleteDocument(supabase, user.id, doc);
       setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare il documento.");
+      setError(errorMessage(err, "Impossibile eliminare il documento."));
     } finally {
       setBusyId(null);
     }
@@ -131,7 +134,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
       clearSelection();
       showToast(`${count} ${count === 1 ? "documento ripristinato" : "documenti ripristinati"}.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile ripristinare i documenti.");
+      setError(errorMessage(err, "Impossibile ripristinare i documenti."));
     } finally {
       setBulkBusy(false);
     }
@@ -165,7 +168,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
       clearSelection();
       showToast(`${count} ${count === 1 ? "documento eliminato" : "documenti eliminati"} per sempre.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare i documenti.");
+      setError(errorMessage(err, "Impossibile eliminare i documenti."));
     } finally {
       setBulkBusy(false);
     }
@@ -197,7 +200,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
       clearSelection();
       showToast("Cestino vuotato.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile vuotare il cestino.");
+      setError(errorMessage(err, "Impossibile vuotare il cestino."));
     } finally {
       setBulkBusy(false);
     }
@@ -223,9 +226,9 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
       <StorageUsageMeter refreshKey={documents.length} />
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {loading ? (
@@ -291,7 +294,7 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
             </div>
           ) : null}
 
-          <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+          <ul className={`${PANEL} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
             {documents.map((doc) => {
               const busy = busyId === doc.id;
               const remaining = doc.purgeAt ? daysRemaining(new Date(doc.purgeAt)) : null;

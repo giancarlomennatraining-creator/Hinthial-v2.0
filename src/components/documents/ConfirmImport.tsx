@@ -38,13 +38,15 @@ import { listDocumentReminderDates, localDateKey } from "@/domain/reminders/repo
 import type { DocumentListItem, DocumentMetadataInput } from "@/domain/documents/types";
 import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
 import { Spinner } from "@/components/ui/Spinner";
-import { BTN_PRIMARY, BTN_SECONDARY } from "@/components/ui/styles";
+import { BTN_PRIMARY, BTN_SECONDARY, PANEL, PANEL_FLAT } from "@/components/ui/styles";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { formatDate } from "@/lib/format";
 import { INPUT_FIELD } from "@/components/ui/styles";
-import { sortAlphabetically } from "@/lib/utils";
+import { errorMessage, sortAlphabetically } from "@/lib/utils";
 import { BackLink } from "@/components/ui/BackLink";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
 
 /** Un documento importato, con tutto ciò che serve per calcolarne le proposte (v. proposalsForDocument). */
 interface Item {
@@ -166,7 +168,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
         setDossiers(dossiersResult);
         setTypeCategories(typeCategoriesResult);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Impossibile caricare i documenti.");
+        if (!cancelled) setError(errorMessage(err, "Impossibile caricare i documenti."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -199,7 +201,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
       await action(user.id);
       await reloadItem(docId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile applicare la proposta.");
+      setError(errorMessage(err, "Impossibile applicare la proposta."));
     } finally {
       setBusyId(null);
     }
@@ -321,7 +323,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
       }
       setNotice(accepted.length === 1 ? "1 informazione aggiunta." : `${accepted.length} informazioni aggiunte ai documenti.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile accettare le proposte.");
+      setError(errorMessage(err, "Impossibile accettare le proposte."));
     } finally {
       setBusyId(null);
     }
@@ -336,7 +338,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
       setUndo(null);
       setNotice("Annullato.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile annullare.");
+      setError(errorMessage(err, "Impossibile annullare."));
     } finally {
       setBusyId(null);
     }
@@ -381,7 +383,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
       setAllDossier("");
     } catch (err) {
       await Promise.all(items.map((item) => reloadItem(item.doc.id))).catch(() => undefined);
-      setError(err instanceof Error ? err.message : "Impossibile applicare a tutti.");
+      setError(errorMessage(err, "Impossibile applicare a tutti."));
     } finally {
       setBusyId(null);
     }
@@ -413,12 +415,12 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
         </p>
       </div>
 
-      {loading ? <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p> : null}
+      {loading ? <LoadingText /> : null}
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
       {notice ? (
         <p role="status" className="flex flex-wrap items-center gap-3 text-sm text-emerald-700 dark:text-emerald-400">
@@ -436,7 +438,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
       ) : null}
 
       {items.length > 0 ? (
-        <section aria-label="Cosa può fare Hinthia" className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+        <section aria-label="Cosa può fare Hinthia" className={`${PANEL} flex flex-col gap-3 p-4`}>
           {reading ? (
             <div role="status" aria-live="polite" className="flex flex-col gap-2">
               <p className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
@@ -486,7 +488,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
       ) : null}
 
       {items.length > 1 ? (
-        <section aria-label="Per tutti" className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+        <section aria-label="Per tutti" className={`${PANEL} flex flex-col gap-3 p-4`}>
           <h2 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100">Per tutti i {items.length} documenti</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <label className="flex flex-col gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -548,7 +550,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
           const sureKeys = new Set(onePerSlot(proposals).map(proposalKey));
           const rowBusy = busyId === doc.id || busyId === "all";
           return (
-            <li key={doc.id} className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_2px_8px_rgba(18,26,53,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+            <li key={doc.id} className={`${PANEL_FLAT} flex flex-col gap-3 p-4 shadow-[0_2px_8px_rgba(18,26,53,0.04)]`}>
               <div className="flex flex-wrap items-center gap-2">
                 <span aria-hidden="true">{CONTENT_KIND_ICON[kind]}</span>
                 <Link href={`/archive/${doc.id}`} className="min-w-0 break-words text-sm font-semibold text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-100">

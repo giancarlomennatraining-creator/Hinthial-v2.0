@@ -24,6 +24,8 @@ import type {
 import type { Category } from "@/domain/categories/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import { BTN_PRIMARY, BTN_SECONDARY } from "@/components/ui/styles";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { errorMessage } from "@/lib/utils";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -165,7 +167,7 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
       setStep(5);
       await refreshReferenceData();
     } catch (err) {
-      setFileError(err instanceof Error ? err.message : "Impossibile completare l'importazione. Riprova.");
+      setFileError(errorMessage(err, "Impossibile completare l'importazione. Riprova."));
     } finally {
       setBusy(false);
     }
@@ -283,9 +285,9 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
           />
 
           {fileError ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <ErrorText>
               {fileError}
-            </p>
+            </ErrorText>
           ) : null}
 
           <button
@@ -321,9 +323,9 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
           </div>
 
           {fileError ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <ErrorText>
               {fileError}
-            </p>
+            </ErrorText>
           ) : null}
 
           <div className="flex flex-wrap gap-3">
@@ -339,7 +341,7 @@ export function ImportWizard({ masterKey }: { masterKey: CryptoKey }) {
               type="button"
               onClick={goToStep1}
               disabled={busy}
-              className="w-fit rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              className={`${BTN_SECONDARY} w-fit disabled:opacity-50`}
             >
               Annulla
             </button>

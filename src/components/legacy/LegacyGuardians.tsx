@@ -5,8 +5,10 @@ import { useEffect, useState } from "react";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { listFriends } from "@/domain/friends/repository";
 import type { FriendListItem } from "@/domain/friends/types";
-import { sortAlphabetically } from "@/lib/utils";
+import { errorMessage, sortAlphabetically } from "@/lib/utils";
 import { SettingsBlock } from "@/components/settings/SettingsBlock";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -30,7 +32,7 @@ export function LegacyGuardians({ masterKey }: { masterKey: CryptoKey }) {
         const friends = await listFriends(supabase, masterKey);
         if (!cancelled) setGuardians(friends.filter((f) => f.isGuardian && f.status === "active"));
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Impossibile caricare i guardiani.");
+        if (!cancelled) setError(errorMessage(err, "Impossibile caricare i guardiani."));
       }
     })();
     return () => {
@@ -48,11 +50,11 @@ export function LegacyGuardians({ masterKey }: { masterKey: CryptoKey }) {
     >
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : guardians === null ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        <LoadingText />
       ) : guardians.length === 0 ? (
         <div className="flex max-w-2xl flex-col items-start gap-2 rounded-xl border border-dashed border-zinc-300 p-4 dark:border-zinc-700">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">

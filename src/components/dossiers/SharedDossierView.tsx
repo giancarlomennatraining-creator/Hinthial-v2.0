@@ -7,6 +7,8 @@ import { saveBytesAsFile } from "@/lib/download";
 import { formatDate, formatSize } from "@/lib/format";
 import { phaseState } from "@/domain/dossiers/phases";
 import { fragmentFromHash, fragmentToKeyBytes, parseManifest, type ShareManifest, type ShareManifestDocument } from "@/domain/dossiers/sharing";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { PANEL_FLAT } from "@/components/ui/styles";
 
 /**
  * Il fascicolo condiviso, visto da chi riceve il link: nessun account. La chiave sta nel link dopo il #, che il browser non
@@ -190,12 +192,12 @@ export function SharedDossierView({ shareId }: { shareId: string }) {
         </section>
       ) : null}
 
-      <section aria-label="Documenti" className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950">
+      <section aria-label="Documenti" className={`${PANEL_FLAT} flex flex-col gap-3 px-5 py-4`}>
         <h2 className="text-base font-extrabold">Documenti</h2>
         {documentError ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <ErrorText>
             {documentError}
-          </p>
+          </ErrorText>
         ) : null}
         <ul className="flex flex-col">
           {sortedDocuments.map((doc) => {

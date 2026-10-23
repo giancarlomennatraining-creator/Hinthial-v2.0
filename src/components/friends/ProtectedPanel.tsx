@@ -16,6 +16,9 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { PendingGuardianChecks } from "@/components/digital-legacy/PendingGuardianChecks";
 import { BackLink } from "@/components/ui/BackLink";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { PANEL_FLAT } from "@/components/ui/styles";
+import { errorMessage } from "@/lib/utils";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" });
@@ -55,7 +58,7 @@ export function ProtectedPanel() {
       setRequests(incoming);
       setProtectedList(protectedRows);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare i protetti.");
+      setError(errorMessage(err, "Impossibile caricare i protetti."));
     } finally {
       setLoading(false);
     }
@@ -76,7 +79,7 @@ export function ProtectedPanel() {
       showToast(`Ora sei guardiano di ${request.ownerName}.`);
       void refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile accettare la richiesta.");
+      setError(errorMessage(err, "Impossibile accettare la richiesta."));
     } finally {
       setBusyId(null);
     }
@@ -90,7 +93,7 @@ export function ProtectedPanel() {
       setRequests((prev) => prev.filter((r) => r.id !== request.id));
       showToast("Richiesta rifiutata.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile rifiutare la richiesta.");
+      setError(errorMessage(err, "Impossibile rifiutare la richiesta."));
     } finally {
       setBusyId(null);
     }
@@ -113,7 +116,7 @@ export function ProtectedPanel() {
       setProtectedList((prev) => prev.filter((p) => p.requestId !== relationship.requestId));
       showToast("Non sei più guardiano.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile dimettersi.");
+      setError(errorMessage(err, "Impossibile dimettersi."));
     } finally {
       setBusyId(null);
     }
@@ -133,9 +136,9 @@ export function ProtectedPanel() {
       <PendingGuardianChecks />
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {loading ? (
@@ -147,7 +150,7 @@ export function ProtectedPanel() {
             {requests.length === 0 ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessuna richiesta in attesa.</p>
             ) : (
-              <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+              <ul className={`${PANEL_FLAT} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
                 {requests.map((request) => {
                   const busy = busyId === request.id;
                   return (
@@ -188,7 +191,7 @@ export function ProtectedPanel() {
                 Non sei ancora guardiano di nessuno.
               </p>
             ) : (
-              <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+              <ul className={`${PANEL_FLAT} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
                 {protectedList.map((relationship) => {
                   const busy = busyId === relationship.requestId;
                   return (

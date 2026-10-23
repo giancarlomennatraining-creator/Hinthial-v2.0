@@ -5,7 +5,9 @@ import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { deleteReply, getMyReply, leaveReply } from "@/domain/capsules/replies-repository";
 import { MAX_REPLY_LENGTH, normalizeReply } from "@/domain/capsules/replies";
 import { formatDate } from "@/lib/format";
-import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL_FLAT } from "@/components/ui/styles";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * "Lascia un pensiero": in fondo a una capsula aperta, due righe per chi l'ha lasciata. Il pensiero è cifrato sul dispositivo
@@ -55,7 +57,7 @@ export function CapsuleReplyBox({
       setSent(await leaveReply(supabase, capsuleId, ownerId, text));
       setText("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile inviare il pensiero.");
+      setError(errorMessage(err, "Impossibile inviare il pensiero."));
     } finally {
       setBusy(false);
     }
@@ -69,14 +71,14 @@ export function CapsuleReplyBox({
       await deleteReply(supabase, sent.id);
       setSent(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile ritirare il pensiero.");
+      setError(errorMessage(err, "Impossibile ritirare il pensiero."));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <section aria-label="Lascia un pensiero" className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <section aria-label="Lascia un pensiero" className={`${PANEL_FLAT} flex flex-col gap-3 p-4`}>
       <h3 className="font-heading text-base font-extrabold text-zinc-900 dark:text-zinc-100">Lascia un pensiero a {ownerName}</h3>
 
       {sent ? (
@@ -120,9 +122,9 @@ export function CapsuleReplyBox({
       )}
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
     </section>
   );

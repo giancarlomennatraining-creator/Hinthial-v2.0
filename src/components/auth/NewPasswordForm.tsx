@@ -5,6 +5,7 @@ import { resetPassword } from "@/lib/auth/actions";
 import { initialAuthActionState } from "@/lib/auth/action-state";
 import { TextField } from "@/components/ui/TextField";
 import { PasswordStrengthMeter } from "@/components/ui/PasswordStrengthMeter";
+import { ErrorText } from "@/components/ui/ErrorText";
 
 /** Il form della nuova password. Chi ha l'autenticazione a due fattori deve inserire anche il codice: senza, Supabase non permette di cambiare la password. */
 export function NewPasswordForm({ requiresMfa }: { requiresMfa: boolean }) {
@@ -72,9 +73,9 @@ export function NewPasswordForm({ requiresMfa }: { requiresMfa: boolean }) {
         ) : null}
 
         {state.error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <ErrorText>
             {state.error}
-          </p>
+          </ErrorText>
         ) : null}
 
         <button

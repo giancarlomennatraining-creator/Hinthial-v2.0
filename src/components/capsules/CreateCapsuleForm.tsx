@@ -36,6 +36,8 @@ import type { CapsuleContentStyle } from "@/domain/capsules/types";
 import { buildCapsuleStarter, parseStarter } from "@/domain/capsules/starter";
 import { promptsFor, suggestedOpenAt, type CapsuleTemplate } from "@/domain/capsules/templates";
 import { BTN_PRIMARY } from "@/components/ui/styles";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * Wizard a tre passi: chi/quando (titolo, data e ora di apertura, destinatari, e in cima un modello da cui partire), elementi già in Archivio da
@@ -118,7 +120,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
         );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare i dati necessari.");
+      setError(errorMessage(err, "Impossibile caricare i dati necessari."));
     } finally {
       setLoading(false);
     }
@@ -199,7 +201,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
       });
       router.push("/capsules?created=1");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile creare la capsula.");
+      setError(errorMessage(err, "Impossibile creare la capsula."));
       setCreating(false);
     }
   }
@@ -218,7 +220,7 @@ export function CreateCapsuleForm({ masterKey }: { masterKey: CryptoKey }) {
       {!loading && step === 1 ? <CapsuleTemplatePicker selected={template} onPick={handlePickTemplate} /> : null}
 
       {loading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        <LoadingText />
       ) : (
         <CapsuleFormCard onSubmit={handleCreate}>
           {step === 1 ? (

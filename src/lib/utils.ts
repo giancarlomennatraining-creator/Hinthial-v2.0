@@ -9,6 +9,14 @@ export function cn(...classes: Array<string | false | null | undefined>): string
 }
 
 /**
+ * Il messaggio di un errore catturato in un `catch`, o quello di riserva se non è un `Error` (un valore lanciato qualunque):
+ * `setError(errorMessage(err, "Impossibile salvare."))`. Prima era scritto per esteso 144 volte, in 56 file.
+ */
+export function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+/**
  * Returns a new array sorted A→Z (locale-aware, case-insensitive) by a
  * label derived from each item. Used for every dropdown/selection list
  * in the app --- main list views keep their own order (usually most

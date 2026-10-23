@@ -7,8 +7,11 @@ import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { createAsset } from "@/domain/assets/repository";
 import { listCategories } from "@/domain/categories/repository";
 import type { Category } from "@/domain/categories/types";
-import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { BackLink } from "@/components/ui/BackLink";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * Pagina dedicata alla creazione di un bene (estratta da AssetsPanel,
@@ -32,7 +35,7 @@ export function CreateAssetForm({ masterKey }: { masterKey: CryptoKey }) {
     try {
       setCategories(await listCategories(supabase));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare le categorie.");
+      setError(errorMessage(err, "Impossibile caricare le categorie."));
     } finally {
       setLoading(false);
     }
@@ -69,7 +72,7 @@ export function CreateAssetForm({ masterKey }: { masterKey: CryptoKey }) {
       await createAsset(supabase, masterKey, user.id, { name, categoryId, legacyNote });
       router.push("/assets?created=1");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile creare il bene.");
+      setError(errorMessage(err, "Impossibile creare il bene."));
       setCreating(false);
     }
   }
@@ -87,11 +90,11 @@ export function CreateAssetForm({ masterKey }: { masterKey: CryptoKey }) {
       </div>
 
       {loading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        <LoadingText />
       ) : (
         <form
           onSubmit={handleCreate}
-          className="flex flex-wrap items-end gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
+          className={`${PANEL} flex flex-wrap items-end gap-3 p-4`}
         >
           <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
             <label htmlFor="name" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -146,9 +149,9 @@ export function CreateAssetForm({ masterKey }: { masterKey: CryptoKey }) {
           </div>
 
           {error ? (
-            <p role="alert" className="w-full text-sm text-red-600 dark:text-red-400">
+            <ErrorText className="w-full">
               {error}
-            </p>
+            </ErrorText>
           ) : null}
 
           <button

@@ -56,6 +56,9 @@ import type { DocumentListItem, DocumentSummary } from "@/domain/documents/types
 import type { ReminderListItem } from "@/domain/reminders/types";
 import { BackLink, ContextBackLink } from "@/components/ui/BackLink";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * La scheda di un fascicolo: titolo, descrizione, stato, e la vicenda che racconta, in gran parte ricavata dai suoi
@@ -120,7 +123,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
       setReminders(remindersResult);
     } catch (err) {
       if (requestId !== latestRequestRef.current) return;
-      setError(err instanceof Error ? err.message : "Impossibile caricare il fascicolo.");
+      setError(errorMessage(err, "Impossibile caricare il fascicolo."));
     } finally {
       if (requestId === latestRequestRef.current) setLoading(false);
     }
@@ -174,7 +177,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
       await setDossierStatus(supabase, dossierId, next);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare lo stato.");
+      setError(errorMessage(err, "Impossibile aggiornare lo stato."));
     } finally {
       setBusy(false);
     }
@@ -201,7 +204,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
       await deleteDossier(supabase, user.id, dossierId);
       router.push("/dossiers?deleted=1");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare il fascicolo.");
+      setError(errorMessage(err, "Impossibile eliminare il fascicolo."));
       setBusy(false);
     }
   }
@@ -230,7 +233,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
       await refresh();
       showToast("Nota aggiunta.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiungere la nota.");
+      setError(errorMessage(err, "Impossibile aggiungere la nota."));
     } finally {
       setNoteBusy(false);
     }
@@ -257,7 +260,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
       await refresh();
       showToast("Documento aggiunto al fascicolo.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiungere il documento.");
+      setError(errorMessage(err, "Impossibile aggiungere il documento."));
     } finally {
       setSuggestionBusy(false);
     }
@@ -292,7 +295,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
       }
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile scrivere il riassunto.");
+      setError(errorMessage(err, "Impossibile scrivere il riassunto."));
     } finally {
       setSummaryBusy(false);
     }
@@ -306,7 +309,7 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
       setSummaryNotice(null);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare il riassunto.");
+      setError(errorMessage(err, "Impossibile eliminare il riassunto."));
     } finally {
       setSummaryBusy(false);
     }
@@ -319,23 +322,23 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
     try {
       setReadings(await getDocumentsByIds(supabase, masterKey, ids));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile leggere i documenti.");
+      setError(errorMessage(err, "Impossibile leggere i documenti."));
     } finally {
       setReadingsBusy(false);
     }
   }
 
   if (loading) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>;
+    return <LoadingText />;
   }
 
   if (!dossier) {
     return (
       <div className="flex flex-col gap-4">
         <BackLink href="/dossiers">Torna ai fascicoli</BackLink>
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           Fascicolo non trovato.
-        </p>
+        </ErrorText>
       </div>
     );
   }
@@ -432,9 +435,9 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {addButtons.length > 0 ? (

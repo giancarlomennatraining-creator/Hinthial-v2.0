@@ -8,7 +8,7 @@ import { buildAIContext } from "@/domain/ai/context";
 import { answerWithClaude } from "@/domain/ai/claude-provider";
 import { mockAIProvider } from "@/domain/ai/mock-provider";
 import { SidePanel } from "@/components/ui/SidePanel";
-import { cn } from "@/lib/utils";
+import { cn, errorMessage } from "@/lib/utils";
 
 export interface HelpTip {
   /** Emoji, coerente con le liste puntate già in uso altrove (v. ReadingRegister). */
@@ -69,7 +69,7 @@ export function PageHelp({
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: err instanceof Error ? err.message : "Impossibile contattare Hinthia." },
+        { role: "assistant", text: errorMessage(err, "Impossibile contattare Hinthia.") },
       ]);
     } finally {
       setAsking(false);

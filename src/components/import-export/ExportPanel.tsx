@@ -6,6 +6,8 @@ import { createClient } from "@/lib/db/supabase/client";
 import { buildExport } from "@/domain/export/repository";
 import { saveBlobAsFile } from "@/lib/download";
 import { BTN_PRIMARY } from "@/components/ui/styles";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { errorMessage } from "@/lib/utils";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -61,7 +63,7 @@ export function ExportPanel({
         totalSize: files.reduce((sum, f) => sum + f.data.byteLength, 0),
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile completare l'export. Riprova.");
+      setError(errorMessage(err, "Impossibile completare l'export. Riprova."));
     } finally {
       setBusy(false);
     }
@@ -81,9 +83,9 @@ export function ExportPanel({
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {done ? (

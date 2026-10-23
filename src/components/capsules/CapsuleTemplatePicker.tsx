@@ -1,6 +1,7 @@
 "use client";
 
 import { CAPSULE_TEMPLATES, templateMeta, type CapsuleTemplate } from "@/domain/capsules/templates";
+import { PANEL_FLAT } from "@/components/ui/styles";
 
 const DETAIL_TITLE = "text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400";
 
@@ -59,7 +60,7 @@ export function CapsuleTemplatePicker({
       {selected ? (
         <section
           aria-label="Cosa propone il modello"
-          className="grid grid-cols-1 gap-4 surface-card rounded-card border border-zinc-200 bg-white p-4 text-sm sm:grid-cols-3 dark:border-zinc-800 dark:bg-zinc-950"
+          className={`${PANEL_FLAT} grid grid-cols-1 gap-4 p-4 text-sm sm:grid-cols-3`}
         >
           <div className="flex flex-col gap-1">
             <h2 className={DETAIL_TITLE}>Si apre</h2>

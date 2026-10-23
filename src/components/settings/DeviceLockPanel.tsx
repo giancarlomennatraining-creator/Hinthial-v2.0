@@ -11,7 +11,10 @@ import {
 } from "@/domain/trusted-devices/repository";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import { TextField } from "@/components/ui/TextField";
-import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 /** Solo un suggerimento amichevole, mai affidabile al 100% --- l'utente può sempre correggerlo. */
 function guessDeviceLabel(): string {
@@ -73,7 +76,7 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
     try {
       setDevices(await listTrustedDevices(supabase, userId));
     } catch (err) {
-      setListError(err instanceof Error ? err.message : "Impossibile caricare i dispositivi fidati.");
+      setListError(errorMessage(err, "Impossibile caricare i dispositivi fidati."));
     }
   }, [supabase, userId]);
 
@@ -118,7 +121,7 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
       await forgetDeviceLock();
       await refreshList();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile dimenticare questo dispositivo.");
+      setError(errorMessage(err, "Impossibile dimenticare questo dispositivo."));
     } finally {
       setBusy(false);
     }
@@ -138,7 +141,7 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
       }
       await refreshList();
     } catch (err) {
-      setListError(err instanceof Error ? err.message : "Impossibile revocare il dispositivo.");
+      setListError(errorMessage(err, "Impossibile revocare il dispositivo."));
     } finally {
       setRevokingId(null);
     }
@@ -164,9 +167,9 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
             Puoi sbloccare qui con l&apos;impronta o Face ID, senza digitare la master password.
           </p>
           {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <ErrorText>
               {error}
-            </p>
+            </ErrorText>
           ) : null}
           <button
             type="button"
@@ -220,9 +223,9 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
           </label>
 
           {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <ErrorText>
               {error}
-            </p>
+            </ErrorText>
           ) : null}
 
           <button
@@ -242,17 +245,17 @@ export function DeviceLockPanel({ userId }: { userId: string }) {
         </h3>
 
         {listError ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <ErrorText>
             {listError}
-          </p>
+          </ErrorText>
         ) : null}
 
         {devices === null ? (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+          <LoadingText />
         ) : devices.length === 0 ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessun dispositivo fidato ancora.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+          <ul className={`${PANEL} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
             {devices.map((device) => (
               <li key={device.id} className="flex items-center justify-between gap-4 p-3 text-sm">
                 <div className="flex flex-col gap-0.5">

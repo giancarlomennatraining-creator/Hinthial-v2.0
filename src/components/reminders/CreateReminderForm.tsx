@@ -7,11 +7,13 @@ import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { createReminder } from "@/domain/reminders/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
 import { listAssets } from "@/domain/assets/repository";
-import { sortAlphabetically } from "@/lib/utils";
+import { errorMessage, sortAlphabetically } from "@/lib/utils";
 import type { DocumentSummary } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
-import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { BackLink } from "@/components/ui/BackLink";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
 
 /**
  * Pagina dedicata alla creazione di una scadenza (estratta da
@@ -44,7 +46,7 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
       setDocuments(documentsResult);
       setAssets(assetsResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare i dati necessari.");
+      setError(errorMessage(err, "Impossibile caricare i dati necessari."));
     } finally {
       setLoading(false);
     }
@@ -87,7 +89,7 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
       });
       router.push("/reminders?created=1");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile creare la scadenza.");
+      setError(errorMessage(err, "Impossibile creare la scadenza."));
       setCreating(false);
     }
   }
@@ -113,11 +115,11 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
       </div>
 
       {loading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        <LoadingText />
       ) : (
         <form
           onSubmit={handleCreate}
-          className="flex flex-wrap items-end gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
+          className={`${PANEL} flex flex-wrap items-end gap-3 p-4`}
         >
           <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
             <label htmlFor="title" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -195,9 +197,9 @@ export function CreateReminderForm({ masterKey }: { masterKey: CryptoKey }) {
           </div>
 
           {error ? (
-            <p role="alert" className="w-full text-sm text-red-600 dark:text-red-400">
+            <ErrorText className="w-full">
               {error}
-            </p>
+            </ErrorText>
           ) : null}
 
           <button

@@ -8,8 +8,11 @@ import { CAPSULE_STATUS_LABEL } from "@/domain/capsules/labels";
 import type { CapsuleListItem } from "@/domain/capsules/types";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatDate } from "@/lib/format";
-import { sortAlphabetically } from "@/lib/utils";
+import { errorMessage, sortAlphabetically } from "@/lib/utils";
 import { SettingsBlock } from "@/components/settings/SettingsBlock";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { PANEL_FLAT } from "@/components/ui/styles";
 
 /**
  * "Cosa arriverà": le tue capsule e, per ognuna, se si apre solo alla sua data o anche prima, se l'Eredità digitale
@@ -32,7 +35,7 @@ export function LegacyCapsules({ masterKey }: { masterKey: CryptoKey }) {
         const loaded = await listCapsules(supabase, masterKey);
         if (!cancelled) setCapsules(loaded);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Impossibile caricare le capsule.");
+        if (!cancelled) setError(errorMessage(err, "Impossibile caricare le capsule."));
       }
     })();
     return () => {
@@ -49,7 +52,7 @@ export function LegacyCapsules({ masterKey }: { masterKey: CryptoKey }) {
       setCapsules((prev) => (prev ?? []).map((c) => (c.id === capsule.id ? { ...c, openOnLegacy: next } : c)));
       showToast(next ? "Si aprirà anche prima, se non ci sei più." : "Si aprirà solo alla data scelta.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile cambiare la regola della capsula.");
+      setError(errorMessage(err, "Impossibile cambiare la regola della capsula."));
     } finally {
       setBusyId(null);
     }
@@ -65,13 +68,13 @@ export function LegacyCapsules({ masterKey }: { masterKey: CryptoKey }) {
     >
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {capsules === null ? (
-        error ? null : <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        error ? null : <LoadingText />
       ) : capsules.length === 0 ? (
         <div className="flex max-w-2xl flex-col items-start gap-2 rounded-xl border border-dashed border-zinc-300 p-4 dark:border-zinc-700">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
@@ -90,7 +93,7 @@ export function LegacyCapsules({ masterKey }: { masterKey: CryptoKey }) {
                 ? "1 capsula si aprirà anche prima, alla consegna."
                 : `${early} capsule si apriranno anche prima, alla consegna.`}
           </p>
-          <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+          <ul className={`${PANEL_FLAT} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
             {sortAlphabetically(capsules, (c) => c.title).map((capsule) => {
               const opened = capsule.openAt !== null && new Date(capsule.openAt) <= now;
               const recipients = sortAlphabetically(capsule.relatedFriends, (f) => f.name)

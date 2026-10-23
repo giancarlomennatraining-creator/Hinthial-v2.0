@@ -5,6 +5,7 @@ import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
 import { parseSummaryRequest } from "@/domain/ai/dossier-summary";
 import { summarizeDossierWithClaude } from "@/lib/ai/claude-dossier-summary";
 import { consumeAiCall } from "@/lib/ai/daily-quota";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * Il riassunto di un fascicolo: Hinthia riassume le sintesi che ha già scritto sui documenti, non rilegge i file. Come
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
     );
     return NextResponse.json({ summary, used: documents.length, skipped });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Errore sconosciuto.";
+    const message = errorMessage(err, "Errore sconosciuto.");
     return NextResponse.json({ error: `Impossibile contattare Hinthia: ${message}` }, { status: 502 });
   }
 }

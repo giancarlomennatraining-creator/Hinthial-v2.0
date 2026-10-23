@@ -6,8 +6,11 @@ import Link from "next/link";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { listDossiers, updateDossier } from "@/domain/dossiers/repository";
 import type { DossierListItem } from "@/domain/dossiers/types";
-import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { BackLink } from "@/components/ui/BackLink";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * Modifica titolo/descrizione di un fascicolo --- non lo stato
@@ -29,7 +32,7 @@ export function EditDossierForm({ masterKey, dossierId }: { masterKey: CryptoKey
       const dossiers = await listDossiers(supabase, masterKey);
       setDossier(dossiers.find((d) => d.id === dossierId) ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare il fascicolo.");
+      setError(errorMessage(err, "Impossibile caricare il fascicolo."));
     } finally {
       setLoading(false);
     }
@@ -60,7 +63,7 @@ export function EditDossierForm({ masterKey, dossierId }: { masterKey: CryptoKey
       await updateDossier(supabase, masterKey, dossierId, { title, description });
       router.push(`/dossiers/${dossierId}?updated=1`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare il fascicolo.");
+      setError(errorMessage(err, "Impossibile aggiornare il fascicolo."));
       setSaving(false);
     }
   }
@@ -75,15 +78,15 @@ export function EditDossierForm({ masterKey, dossierId }: { masterKey: CryptoKey
       </div>
 
       {loading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        <LoadingText />
       ) : !dossier ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           Fascicolo non trovato.
-        </p>
+        </ErrorText>
       ) : (
         <form
           onSubmit={handleSave}
-          className="flex flex-col gap-4 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
+          className={`${PANEL} flex flex-col gap-4 p-4`}
         >
           <div className="flex flex-col gap-1">
             <label htmlFor="title" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -116,9 +119,9 @@ export function EditDossierForm({ masterKey, dossierId }: { masterKey: CryptoKey
           </div>
 
           {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <ErrorText>
               {error}
-            </p>
+            </ErrorText>
           ) : null}
 
           <div className="flex gap-3">
