@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-23 (149)
+
+### Le pagine già viste si riaprono subito
+
+**Cosa fa:** passando da una pagina all'altra (Archivio, Fascicoli, Beni, Scadenze, Amici, Capsule) i dati già letti si vedono subito, senza lo scheletro di caricamento, mentre in parallelo vengono riletti e aggiornati come prima. Misurato su un telefono simulato con connessione tipo 4G, con l'account demo: tornare su una pagina già vista passa da circa 0,5-1,4 secondi a circa 0,17-0,2; la prima visita di una pagina resta com'era. Dopo una modifica (creare, modificare, eliminare) la pagina successiva non mostra il dato vecchio nemmeno per un istante: parte da zero come prima.
+
+**Sicurezza:** la memoria contiene solo ciò che le pagine già tengono decifrato mentre sono aperte, mai su disco e mai sul server. Appartiene a una sola master key: con un'altra non si vede nulla, e si svuota quando la cassaforte si blocca, quando si esce dall'app o con "Cancella tutto".
+
+**Note tecniche:** `lib/vault-store.ts` (memoria, chiavi `VAULT.*`, `invalidateVault`, `clearVaultCache`) e `lib/use-vault-state.ts` (`useVaultState`, un `useState` che parte dall'ultima copia e la aggiorna a ogni valore impostato; mai il valore vuoto di partenza). Le funzioni che scrivono nei `repository.ts` (beni, documenti, fascicoli, scadenze, amici, richieste, capsule, categorie, importazioni) chiamano `invalidateVault` per i dati che toccano: 56 punti. Usata da `useArchiveData`, `DossiersPanel`, `AssetsPanel`, `RemindersPanel`, `FriendsPanel` e `CapsulesPanel` (compresa la preferenza del conto alla rovescia, che prima faceva aspettare l'elenco). Non coperti, per ora: la Dashboard (Oggi) e i moduli di creazione/modifica. Test: `vault-store.test.ts`, `use-vault-state.test.tsx`.
+
+---
+
 ## 2026-10-23 (148)
 
 ### Mattoni condivisi: riquadri, messaggi d'errore, caricamenti e pulsanti

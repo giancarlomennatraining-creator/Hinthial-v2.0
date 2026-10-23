@@ -22,6 +22,8 @@ import { saveBytesAsFile } from "@/lib/download";
 import { useToast } from "@/components/ui/ToastProvider";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
 import { errorMessage } from "@/lib/utils";
+import { useVaultState } from "@/lib/use-vault-state";
+import { VAULT } from "@/lib/vault-store";
 
 export type BulkPopover = "category" | "dossier" | null;
 
@@ -35,11 +37,11 @@ export function useArchiveData(masterKey: CryptoKey) {
   const confirm = useConfirm();
   const showToast = useToast();
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [assets, setAssets] = useState<AssetListItem[]>([]);
-  const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
-  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories, hitCategories] = useVaultState<Category[]>(masterKey, VAULT.categories, []);
+  const [assets, setAssets, hitAssets] = useVaultState<AssetListItem[]>(masterKey, VAULT.assets, []);
+  const [dossiers, setDossiers, hitDossiers] = useVaultState<DossierListItem[]>(masterKey, VAULT.dossiers, []);
+  const [documents, setDocuments, hitDocuments] = useVaultState<DocumentSummary[]>(masterKey, VAULT.documents, []);
+  const [loading, setLoading] = useState(!(hitCategories && hitAssets && hitDossiers && hitDocuments));
   const [error, setError] = useState<string | null>(null);
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
 
@@ -72,7 +74,7 @@ export function useArchiveData(masterKey: CryptoKey) {
     } finally {
       setLoading(false);
     }
-  }, [supabase, masterKey]);
+  }, [supabase, masterKey, setCategories, setAssets, setDossiers, setDocuments]);
 
   useEffect(() => {
     // Legittimo qui: i dati si decifrano solo con la masterKey in memoria, non possono venire da un Server Component.

@@ -45,6 +45,8 @@ import { BTN_PRIMARY } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
 import { ErrorText } from "@/components/ui/ErrorText";
+import { useVaultState } from "@/lib/use-vault-state";
+import { VAULT } from "@/lib/vault-store";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -66,8 +68,8 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const searchParams = useSearchParams();
   const showToast = useToast();
 
-  const [capsules, setCapsules] = useState<CapsuleListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [capsules, setCapsules, hitCapsules] = useVaultState<CapsuleListItem[]>(masterKey, VAULT.capsules, []);
+  const [loading, setLoading] = useState(!hitCapsules);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [busyAttachment, setBusyAttachment] = useState<string | null>(null);
@@ -83,15 +85,16 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   // Da dove parte l'apertura (l'oblò o la capsula toccati), per gli effetti che si allargano o escono da lì.
   const [openingOrigin, setOpeningOrigin] = useState<OpenOrigin | null>(null);
   // L'elenco aspetta di sapere se mostrare il conto alla rovescia, per non lampeggiare.
-  const [prefsReady, setPrefsReady] = useState(false);
 
   // "Condivise con me" è una scheda qui dentro, non una voce di menu a parte. Caricata insieme alle proprie capsule, così passare da una vista all'altra è istantaneo.
   const [activeTab, setActiveTab] = useState<"mine" | "shared">(() => (searchParams.get("tab") === "shared" ? "shared" : "mine"));
-  const [sharedCapsules, setSharedCapsules] = useState<SharedCapsuleListItem[]>([]);
+  const [sharedCapsules, setSharedCapsules] = useVaultState<SharedCapsuleListItem[]>(masterKey, VAULT.capsulesShared, []);
   const [sharedError, setSharedError] = useState<string | null>(null);
 
   // Impostazioni > Aspetto (v. CapsuleCountdownSettings). Default true mentre si attende la risposta.
-  const [showCountdown, setShowCountdown] = useState(true);
+  const [showCountdown, setShowCountdown, hitCountdown] = useVaultState<boolean>(masterKey, VAULT.capsuleCountdown, true);
+  // Con la preferenza già in memoria l'elenco non aspetta la risposta.
+  const [prefsReady, setPrefsReady] = useState(hitCountdown);
 
   // "?created=1"/"?updated=1": solo un flag, mai il titolo o contenuto (finirebbe in chiaro nell'URL). Stato pigro: il messaggio non deve sparire quando ripuliamo l'URL con router.replace.
   const [showCreatedMessage] = useState(() => searchParams.get("created") === "1");
@@ -146,7 +149,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     } finally {
       setPrefsReady(true);
     }
-  }, [supabase, masterKey]);
+  }, [supabase, masterKey, setCapsules, setSharedCapsules, setShowCountdown]);
 
   useEffect(() => {
     // See DocumentsPanel.tsx for why fetch-on-mount is legitimate here.

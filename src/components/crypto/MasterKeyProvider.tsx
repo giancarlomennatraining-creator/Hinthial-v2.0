@@ -33,6 +33,7 @@ import {
   forgetTrustedDevice,
 } from "@/domain/trusted-devices/repository";
 import { logAuditEvent } from "@/lib/audit/log-event";
+import { clearVaultCache } from "@/lib/vault-store";
 import {
   createPairingRequest,
   checkPairingRequestApproved,
@@ -95,6 +96,9 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<MasterKeyStatus>({ kind: "checking" });
   const [deviceLockSupported, setDeviceLockSupported] = useState<boolean | null>(null);
   const [deviceLockAvailable, setDeviceLockAvailable] = useState(false);
+
+  // Se la cassaforte esce di scena (si esce dall'app), niente resta in memoria.
+  useEffect(() => () => clearVaultCache(), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -324,7 +328,11 @@ export function MasterKeyProvider({ children }: { children: React.ReactNode }) {
     await deletePairingRequest(supabase, requestId);
   }, []);
 
-  const lock = useCallback(() => setStatus({ kind: "locked" }), []);
+  // Al blocco si svuota anche la memoria condivisa dei dati decifrati (v. lib/vault-store.ts): nulla deve restare leggibile.
+  const lock = useCallback(() => {
+    clearVaultCache();
+    setStatus({ kind: "locked" });
+  }, []);
 
   const value = useMemo<MasterKeyContextValue>(
     () => ({

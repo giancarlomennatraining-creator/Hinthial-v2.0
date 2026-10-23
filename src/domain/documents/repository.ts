@@ -47,6 +47,7 @@ import type {
   TextNoteInput,
 } from "@/domain/documents/types";
 import { decryptOptionalText, encryptOptionalText } from "@/lib/crypto/optional-text";
+import { invalidateVault, VAULT } from "@/lib/vault-store";
 
 /** V. uploadDocument, `onPhase` --- "reading" può durare da secondi a decine su OCR di una foto. */
 export type UploadPhase = "reading" | "saving";
@@ -434,6 +435,7 @@ export async function uploadDocument(
   metadata: DocumentMetadataInput,
   options: UploadOptions = {},
 ): Promise<string> {
+  invalidateVault(VAULT.documents, VAULT.documentExpiries);
   const { title, extraction, onPhase } = options;
   const plaintext = new Uint8Array(await file.arrayBuffer());
   const mimeType = mimeTypeOfFile(file);
@@ -544,6 +546,7 @@ export async function createTextNote(
   note: TextNoteInput,
   metadata: DocumentMetadataInput,
 ): Promise<string> {
+  invalidateVault(VAULT.documents, VAULT.documentExpiries);
   const plaintext = utf8ToBytes(note.body);
   const [{ wrappedDocumentKey, payload }, encryptedFilename, encryptedNotes, encryptedIssuer] =
     await Promise.all([
@@ -591,6 +594,7 @@ export async function updateTextNoteContent(
   doc: Pick<DocumentListItem, "id" | "storagePath">,
   note: TextNoteInput,
 ): Promise<void> {
+  invalidateVault(VAULT.documents, VAULT.documentExpiries);
   const plaintext = utf8ToBytes(note.body);
   const [{ wrappedDocumentKey, payload }, encryptedFilename] = await Promise.all([
     encryptDocument(masterKey, plaintext),
@@ -626,6 +630,7 @@ export async function updateDocumentMetadata(
   documentId: string,
   metadata: DocumentMetadataInput,
 ): Promise<void> {
+  invalidateVault(VAULT.documents, VAULT.documentExpiries);
   const [encryptedNotes, encryptedIssuer] = await Promise.all([
     encryptOptionalText(masterKey, metadata.notes),
     encryptOptionalText(masterKey, metadata.issuer),
@@ -692,6 +697,7 @@ export async function saveAISynthesis(
   documentId: string,
   synthesis: string,
 ): Promise<void> {
+  invalidateVault(VAULT.documents, VAULT.documentExpiries);
   const { error } = await supabase
     .from("documents")
     .update({
@@ -715,6 +721,7 @@ export async function saveContentAnalysis(
   analysis: PersistedContentAnalysis,
   status: AnalysisStatus,
 ): Promise<void> {
+  invalidateVault(VAULT.documents, VAULT.documentExpiries);
   const { error } = await supabase
     .from("documents")
     .update({
@@ -737,6 +744,7 @@ export async function updateDocumentAIExtractionExclusion(
   documentId: string,
   excluded: boolean,
 ): Promise<void> {
+  invalidateVault(VAULT.documents, VAULT.documentExpiries);
   const { error } = await supabase
     .from("documents")
     .update({ ai_extraction_excluded: excluded })
@@ -815,6 +823,7 @@ export async function extractTextForExistingDocument(
   > & { extractedText?: string },
   onProgress?: (fraction: number) => void,
 ): Promise<{ foundText: boolean }> {
+  invalidateVault(VAULT.documents, VAULT.documentExpiries);
   const { bytes } = await downloadDocument(supabase, masterKey, doc);
   const content = await extractContent(bytes, doc.mimeType, onProgress);
   const text = content?.text ?? null;
@@ -896,6 +905,7 @@ export async function deleteDocument(
   ownerId: string,
   doc: Pick<DocumentListItem, "id" | "storagePath" | "hasThumbnail">,
 ): Promise<void> {
+  invalidateVault(VAULT.documents, VAULT.documentExpiries);
   // Il titolo è già cifrato nella riga: lo si copia nell'evento (serve a riconoscere il contenuto dopo l'eliminazione, senza la master key).
   const { data: titleRow } = await supabase
     .from("documents")
@@ -930,6 +940,7 @@ export async function moveDocumentsToTrash(
   documentIds: string[],
   retentionDays: number,
 ): Promise<void> {
+  invalidateVault(VAULT.documents, VAULT.documentExpiries);
   if (documentIds.length === 0) return;
 
   const deletedAt = new Date();
@@ -955,6 +966,7 @@ export async function restoreDocuments(
   ownerId: string,
   documentIds: string[],
 ): Promise<void> {
+  invalidateVault(VAULT.documents, VAULT.documentExpiries);
   if (documentIds.length === 0) return;
 
   const { error } = await supabase

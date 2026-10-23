@@ -8,6 +8,7 @@ import {
 } from "@/lib/storage/avatars-bucket";
 import { parseOpenEffect, type CapsuleOpenEffect } from "@/domain/capsules/open-effects";
 import type { ProfileInput } from "@/domain/profile/types";
+import { invalidateVault, VAULT } from "@/lib/vault-store";
 
 /** Nome/cognome in chiaro, mai cifrati --- non sensibili come il contenuto di un documento. */
 export async function updateProfile(
@@ -174,6 +175,7 @@ export async function updateCapsuleCountdownVisible(
   userId: string,
   visible: boolean,
 ): Promise<void> {
+  invalidateVault(VAULT.capsuleCountdown);
   const { error } = await supabase
     .from("profiles")
     .update({ capsule_countdown_visible: visible })

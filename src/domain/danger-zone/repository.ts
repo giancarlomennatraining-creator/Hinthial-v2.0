@@ -13,6 +13,7 @@ import {
 import { resetCategoriesToDefault } from "@/domain/categories/repository";
 import { removeAllOwnerShareFiles } from "@/lib/storage/dossier-shares-bucket";
 import { logAuditEvent } from "@/lib/audit/log-event";
+import { clearVaultCache } from "@/lib/vault-store";
 
 /**
  * "Cancella tutto": irreversibile, svuota Archivio/Beni/Amici/Capsule (con i blob in Storage) e ripristina le categorie
@@ -24,6 +25,8 @@ export async function wipeVault(
   masterKey: CryptoKey,
   ownerId: string,
 ): Promise<void> {
+  // Si svuota tutto: ciò che la memoria condivisa tiene non esiste più (e le categorie tornano quelle predefinite).
+  clearVaultCache();
   // Anche i documenti nel Cestino (listDocuments li escluderebbe, lasciando i loro file in Storage), e senza decifrare nulla: servono solo i percorsi.
   const [{ data: documentRows, error: documentsReadError }, capsules] = await Promise.all([
     supabase.from("documents").select("storage_path, has_thumbnail").eq("owner_id", ownerId),

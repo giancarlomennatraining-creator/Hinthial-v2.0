@@ -32,6 +32,7 @@ import { logAuditEvent } from "@/lib/audit/log-event";
 import { encryptAuditLabel } from "@/lib/audit/label";
 import { notifyCapsuleShared } from "@/lib/capsules/actions";
 import { parseOpenEffect, type CapsuleOpenEffect } from "@/domain/capsules/open-effects";
+import { invalidateVault, VAULT } from "@/lib/vault-store";
 import type {
   CapsuleAccessCondition,
   CapsuleAttachment,
@@ -206,6 +207,7 @@ export async function createCapsule(
   ownerId: string,
   input: CapsuleInput,
 ): Promise<void> {
+  invalidateVault(VAULT.capsules);
   const capsuleId = crypto.randomUUID();
 
   const attachments: CapsuleAttachment[] = [];
@@ -263,6 +265,7 @@ export async function updateCapsule(
   removedAttachments: CapsuleAttachment[],
   input: CapsuleEditInput,
 ): Promise<void> {
+  invalidateVault(VAULT.capsules);
   const uploadedAttachments: CapsuleAttachment[] = [];
   try {
     for (const file of input.newFiles) {
@@ -323,6 +326,7 @@ export async function setCapsuleOpenOnLegacy(
   capsuleId: string,
   openOnLegacy: boolean,
 ): Promise<void> {
+  invalidateVault(VAULT.capsules);
   const { error } = await supabase.from("capsules").update({ open_on_legacy: openOnLegacy }).eq("id", capsuleId);
 
   if (error) {
@@ -337,6 +341,7 @@ export async function closeCapsule(
   ownerId: string,
   capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "openEffect" | "attachments" | "linkedDocuments" | "relatedFriends" | "openAt">,
 ): Promise<void> {
+  invalidateVault(VAULT.capsules);
   const newAttachments: CapsuleAttachment[] = [];
   try {
     for (const doc of capsule.linkedDocuments) {
@@ -484,6 +489,7 @@ export async function shareCapsule(
   ownerId: string,
   capsule: Pick<CapsuleListItem, "id" | "title" | "content" | "contentStyle" | "openEffect" | "attachments" | "relatedFriends">,
 ): Promise<void> {
+  invalidateVault(VAULT.capsules);
   const linkedFriends = capsule.relatedFriends.filter((friend) => friend.linkedUserId !== null);
 
   for (const friend of linkedFriends) {
@@ -602,6 +608,7 @@ export async function dismissCapsuleShareNotification(
   supabase: SupabaseClient<Database>,
   capsuleId: string,
 ): Promise<void> {
+  invalidateVault(VAULT.capsulesShared);
   const { error } = await supabase
     .from("capsule_shares")
     .update({ dismissed_at: new Date().toISOString() })
@@ -617,6 +624,7 @@ export async function openSharedCapsule(
   masterKey: CryptoKey,
   capsuleId: string,
 ): Promise<SharedCapsuleOpenedContent> {
+  invalidateVault(VAULT.capsulesShared);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -691,6 +699,7 @@ export async function deleteCapsule(
   ownerId: string,
   capsule: Pick<CapsuleListItem, "id" | "title" | "attachments">,
 ): Promise<void> {
+  invalidateVault(VAULT.capsules);
   // Il titolo sta dentro il payload cifrato: lo si cifra di nuovo per l'evento, per riconoscere la capsula dopo l'eliminazione.
   const encryptedLabel = await encryptAuditLabel(masterKey, capsule.title);
 

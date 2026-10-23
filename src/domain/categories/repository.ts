@@ -3,6 +3,7 @@ import type { Database } from "@/types/supabase";
 import { logAuditEvent, logAuditEventForCurrentUser } from "@/lib/audit/log-event";
 import { encryptAuditLabel } from "@/lib/audit/label";
 import type { Category, CategoryInput } from "@/domain/categories/types";
+import { invalidateVault, VAULT } from "@/lib/vault-store";
 
 /**
  * Lists the current user's categories (alphabetical). Unlike documents/
@@ -32,6 +33,7 @@ export async function createCategory(
   ownerId: string,
   input: CategoryInput,
 ): Promise<string> {
+  invalidateVault(VAULT.categories);
   const id = crypto.randomUUID();
   const { error } = await supabase.from("categories").insert({
     id,
@@ -54,6 +56,7 @@ export async function updateCategory(
   categoryId: string,
   input: CategoryInput,
 ): Promise<void> {
+  invalidateVault(VAULT.categories, VAULT.documents, VAULT.assets);
   const { error } = await supabase
     .from("categories")
     .update({ name: input.name, icon: input.icon })
@@ -149,6 +152,7 @@ export async function deleteCategory(
   categoryId: string,
   categoryName: string,
 ): Promise<void> {
+  invalidateVault(VAULT.categories, VAULT.documents, VAULT.assets);
   const { error } = await supabase.from("categories").delete().eq("id", categoryId);
 
   if (error) {
@@ -180,6 +184,7 @@ export async function resetCategoriesToDefault(
   supabase: SupabaseClient<Database>,
   ownerId: string,
 ): Promise<void> {
+  invalidateVault(VAULT.categories, VAULT.documents, VAULT.assets);
   const { error } = await supabase.from("categories").insert(
     DEFAULT_CATEGORIES.map((category) => ({
       id: crypto.randomUUID(),

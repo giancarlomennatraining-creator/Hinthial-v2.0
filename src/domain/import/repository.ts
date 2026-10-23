@@ -6,6 +6,7 @@ import { createCategory } from "@/domain/categories/repository";
 import { createReminder } from "@/domain/reminders/repository";
 import { isRowReady } from "@/domain/import/types";
 import { errorMessage } from "@/lib/utils";
+import { invalidateVault, VAULT } from "@/lib/vault-store";
 import type {
   AssetRow,
   FriendRow,
@@ -48,6 +49,7 @@ export async function importFriends(
   ownerId: string,
   rows: FriendRow[],
 ): Promise<ImportRowResult[]> {
+  invalidateVault(VAULT.friends);
   const results: ImportRowResult[] = [];
 
   for (const row of rows) {
@@ -83,6 +85,7 @@ export async function importAssets(
   ownerId: string,
   rows: AssetRow[],
 ): Promise<ImportRowResult[]> {
+  invalidateVault(VAULT.assets, VAULT.categories);
   const categoryCache = new Map<string, string>();
   const results: ImportRowResult[] = [];
 
@@ -111,6 +114,7 @@ export async function importReminders(
   ownerId: string,
   rows: ReminderRow[],
 ): Promise<ImportRowResult[]> {
+  invalidateVault(VAULT.reminders, VAULT.assets);
   const assetCache = new Map<string, string>();
   const results: ImportRowResult[] = [];
 

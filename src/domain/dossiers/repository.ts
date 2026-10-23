@@ -23,6 +23,7 @@ import {
 } from "@/domain/dossiers/items";
 import type { ExpectedItem } from "@/domain/dossiers/expected";
 import { decryptOptionalText, encryptOptionalText } from "@/lib/crypto/optional-text";
+import { invalidateVault, VAULT } from "@/lib/vault-store";
 
 const DOSSIER_COLUMNS =
   "id, encrypted_title, encrypted_description, encrypted_phases, encrypted_summary, status, created_at, closed_at";
@@ -111,6 +112,7 @@ export async function createDossier(
   ownerId: string,
   input: DossierInput,
 ): Promise<string> {
+  invalidateVault(VAULT.dossiers);
   const id = crypto.randomUUID();
   const [encryptedTitle, encryptedDescription] = await Promise.all([
     encryptBytes(masterKey, utf8ToBytes(input.title)),
@@ -140,6 +142,7 @@ export async function updateDossier(
   dossierId: string,
   input: DossierInput,
 ): Promise<void> {
+  invalidateVault(VAULT.dossiers);
   const [encryptedTitle, encryptedDescription] = await Promise.all([
     encryptBytes(masterKey, utf8ToBytes(input.title)),
     encryptOptionalText(masterKey, input.description),
@@ -166,6 +169,7 @@ export async function setDossierStatus(
   dossierId: string,
   status: DossierStatus,
 ): Promise<void> {
+  invalidateVault(VAULT.dossiers);
   const { error } = await supabase
     .from("dossiers")
     .update({ status, closed_at: status === "closed" ? new Date().toISOString() : null })
@@ -182,6 +186,7 @@ export async function deleteDossier(
   ownerId: string,
   dossierId: string,
 ): Promise<void> {
+  invalidateVault(VAULT.dossiers, VAULT.documents);
   // I link di condivisione spariscono con il fascicolo, ma le copie cifrate dei documenti in Storage vanno tolte a parte.
   await removeDossierShareFiles(supabase, ownerId, dossierId);
 
@@ -253,6 +258,7 @@ export async function replaceDocumentDossierLinks(
   documentId: string,
   dossierIds: string[],
 ): Promise<void> {
+  invalidateVault(VAULT.dossiers, VAULT.documents);
   const { error: deleteError } = await supabase
     .from("document_dossiers")
     .delete()
@@ -356,6 +362,7 @@ export async function setDossierPhases(
   dossierId: string,
   phases: DossierPhases | null,
 ): Promise<void> {
+  invalidateVault(VAULT.dossiers);
   const encrypted = phases ? await encryptOptionalText(masterKey, serializePhases(phases)) : null;
   const { error } = await supabase.from("dossiers").update({ encrypted_phases: encrypted }).eq("id", dossierId);
 
@@ -370,6 +377,7 @@ export async function setDossierSummary(
   dossierId: string,
   summary: DossierSummary | null,
 ): Promise<void> {
+  invalidateVault(VAULT.dossiers);
   const encrypted = summary ? await encryptOptionalText(masterKey, JSON.stringify(summary)) : null;
   const { error } = await supabase.from("dossiers").update({ encrypted_summary: encrypted }).eq("id", dossierId);
 

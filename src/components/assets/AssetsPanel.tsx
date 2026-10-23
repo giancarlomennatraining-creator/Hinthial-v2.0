@@ -26,6 +26,8 @@ import { BTN_PRIMARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
 import { ErrorText } from "@/components/ui/ErrorText";
+import { useVaultState } from "@/lib/use-vault-state";
+import { VAULT } from "@/lib/vault-store";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -42,11 +44,11 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const searchParams = useSearchParams();
   const showToast = useToast();
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [assets, setAssets] = useState<AssetListItem[]>([]);
-  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
-  const [reminders, setReminders] = useState<ReminderListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories, hitCategories] = useVaultState<Category[]>(masterKey, VAULT.categories, []);
+  const [assets, setAssets, hitAssets] = useVaultState<AssetListItem[]>(masterKey, VAULT.assets, []);
+  const [documents, setDocuments, hitDocuments] = useVaultState<DocumentSummary[]>(masterKey, VAULT.documents, []);
+  const [reminders, setReminders, hitReminders] = useVaultState<ReminderListItem[]>(masterKey, VAULT.reminders, []);
+  const [loading, setLoading] = useState(!(hitCategories && hitAssets && hitDocuments && hitReminders));
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -81,7 +83,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
     } finally {
       setLoading(false);
     }
-  }, [supabase, masterKey]);
+  }, [supabase, masterKey, setCategories, setAssets, setDocuments, setReminders]);
 
   useEffect(() => {
     // See DocumentsPanel.tsx for why fetch-on-mount is legitimate here.
