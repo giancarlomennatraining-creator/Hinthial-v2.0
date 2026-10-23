@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-24 (152)
+
+### Il form "Nuovo contenuto", in pezzi
+
+**Cosa fa:** nessun cambiamento visibile. `CreateArchiveItemForm.tsx` (1443 righe, 28 stati in un solo componente) ora è un componente di 317 righe che compone pezzi in `components/documents/create/`. Quattro hook, uno per compito: `useCreateFormData` (categorie, beni, fascicoli, errore condiviso), `useFileLot` (i file scelti: lettura sul dispositivo, doppioni, fascicoli suggeriti per nome), `useCreateSubmit` (il salvataggio di file, registrazione o nota) e `usePostSave` (i passi dopo il salvataggio e l'analisi di Hinthia). I componenti: la fisarmonica a passi, i tre contenuti del passo 2 (file, registrazione, nota), il passo Dettagli, i passi 4 e 5 e il fondo del form.
+
+**Note tecniche:** il codice è stato spostato così com'è; l'unica cosa che cambia è dove vive. Verificato: typecheck, eslint, i test unitari e gli e2e di creazione, importazione di più file, conferma, lettura delle immagini e analisi di Hinthia sulla versione di produzione.
+
+---
+
 ## 2026-10-24 (151)
 
 ### La scheda del documento, in pezzi
