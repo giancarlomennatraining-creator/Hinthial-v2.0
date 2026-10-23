@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-24 (151)
+
+### La scheda del documento, in pezzi
+
+**Cosa fa:** nessun cambiamento visibile. `ArchiveItemDetail.tsx` (1209 righe, un solo componente con decine di stati) ora è un componente di 178 righe che compone pezzi in `components/documents/detail/`. Sei hook, uno per compito: `useDocumentData` (cosa si legge dal database e come si ricarica), `useDocumentPreview` (anteprima e byte del PDF), `useDocumentFields` (titolo, campi e voci libere, con il salvataggio), `useDocumentProposals` (proposte, accetta/rifiuta/annulla), `useDocumentAnalysis` (lettura di Hinthia, avanzamento, interruzione) e `useDocumentActions` (scarica, rileggi, elimina). E sei componenti: barra delle azioni, anteprima, tab, pannello Scheda, pannello Chiedi a Hinthia, sezione "Cosa ho letto".
+
+**Note tecniche:** il codice è stato spostato così com'è. Unico accorgimento: i campi della Scheda si riempiono al primo caricamento del documento durante il render (non più dentro il ricaricamento), così hook e ricaricamento non dipendono l'uno dall'altro; "Accetta tutto" usa un solo elenco di candidati (prima ce n'erano due identici). Verificato: typecheck, eslint, 1098 test unitari e gli e2e dell'Archivio, delle proposte, dell'analisi e dei fascicoli sulla versione di produzione.
+
+---
+
 ## 2026-10-24 (150)
 
 ### Il repository dei documenti, in moduli per compito
