@@ -1,90 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useSupabase } from "@/lib/db/supabase/use-supabase";
-import { bytesToUtf8 } from "@/lib/crypto";
-import {
-  deleteDocument,
-  downloadDocument,
-  logDocumentDownloaded,
-  downloadThumbnail,
-  extractTextForExistingDocument,
-  getDocumentById,
-  listAssetLinkedFields,
-  saveAISynthesis,
-  saveContentAnalysis,
-  updateDocumentAIExtractionExclusion,
-  updateDocumentMetadata,
-} from "@/domain/documents/repository";
-import { starterHref } from "@/domain/capsules/starter";
-import { loadDocumentSegments } from "@/domain/documents/segments";
-import type { ContentSegment } from "@/domain/extraction/types";
-import { useDocumentSegments } from "@/components/documents/useDocumentSegments";
-import type { LinkedDocumentFields } from "@/domain/assets/link-proposal";
-import { listAssets } from "@/domain/assets/repository";
-import { listCategories, grantCategoryAIExtractionTemporarily } from "@/domain/categories/repository";
-import { isCategoryEnabledForExtraction } from "@/domain/categories/ai-consent";
-import { listFieldVocabulary, type FieldVocabularyEntry } from "@/domain/structured-fields/vocabulary";
-import { inferFieldInputType } from "@/domain/structured-fields/value-type";
-import { listDossiers } from "@/domain/dossiers/repository";
-import type { DossierListItem } from "@/domain/dossiers/types";
+import { useState } from "react";
 import { readingStateFor } from "@/domain/extraction/reading-state";
-import {
-  acceptProposal,
-  type AcceptedProposal,
-  listProposalRejections,
-  rejectProposal,
-  undoAcceptance,
-  undoRejection,
-} from "@/domain/proposals/repository";
-import {
-  AnalysisAbortedError,
-  analysisConfirmMessage,
-  analyzeDocumentWithClaude,
-  pastEventsOf,
-  inspectSavedAnalysis,
-  planAnalysis,
-  type AIAnalysisScope,
-  type AnalysisProgress,
-  type SavedAnalysisState,
-} from "@/domain/ai/analyze-document";
-import { listDocumentReminderDates, localDateKey } from "@/domain/reminders/repository";
-import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvider";
-import { listTypeCategoryOverrides } from "@/domain/categories/type-categories";
-import type { TypeCategoryOverrides } from "@/domain/ai/analysis/category-defaults";
-import { PastEventsNotice } from "@/components/documents/PastEventsNotice";
-import { ReadingRegister, type UndoableAction } from "@/components/documents/ReadingRegister";
-import { AIAnalysisTrigger } from "@/components/documents/AIAnalysisTrigger";
-import { buildAnalysisOverview } from "@/domain/ai/analysis/overview";
-import {
-  DocumentMetadataFields,
-  documentToFields,
-  type DocumentMetadataFieldsValue,
-} from "@/components/documents/DocumentMetadataFields";
-import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
-import { onePerSlot, proposalsForDocument } from "@/domain/proposals/for-document";
-import {
-  contentKindFor,
-  CONTENT_KIND_ICON,
-  CONTENT_KIND_LABEL,
-  hasInlinePlayer,
-} from "@/lib/content-kind";
-import { saveBytesAsFile } from "@/lib/download";
+import { CONTENT_KIND_ICON, CONTENT_KIND_LABEL } from "@/lib/content-kind";
 import { formatDate, formatSize } from "@/lib/format";
-import { renderPdfFirstPage } from "@/lib/pdf";
-import { useToast } from "@/components/ui/ToastProvider";
-import { Spinner } from "@/components/ui/Spinner";
-import type { DocumentListItem } from "@/domain/documents/types";
-import type { AssetListItem } from "@/domain/assets/types";
-import type { Category } from "@/domain/categories/types";
-import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL, PANEL_FLAT } from "@/components/ui/styles";
+import { PANEL } from "@/components/ui/styles";
 import { BackLink, ContextBackLink } from "@/components/ui/BackLink";
-import { useConfirm } from "@/components/ui/ConfirmProvider";
 import { ErrorText } from "@/components/ui/ErrorText";
 import { LoadingText } from "@/components/ui/LoadingText";
-import { errorMessage } from "@/lib/utils";
+import { AnalysisPanel } from "@/components/documents/detail/AnalysisPanel";
+import { DocumentActionBar } from "@/components/documents/detail/DocumentActionBar";
+import { DocumentPreviewPanel } from "@/components/documents/detail/DocumentPreviewPanel";
+import { DocumentTabList, UndoableStatus, type DocumentTab } from "@/components/documents/detail/DocumentTabs";
+import { ReadingSection } from "@/components/documents/detail/ReadingSection";
+import { SchedaPanel } from "@/components/documents/detail/SchedaPanel";
+import { useDocumentActions } from "@/components/documents/detail/useDocumentActions";
+import { useDocumentAnalysis } from "@/components/documents/detail/useDocumentAnalysis";
+import { useDocumentData } from "@/components/documents/detail/useDocumentData";
+import { useDocumentFields } from "@/components/documents/detail/useDocumentFields";
+import { useDocumentPreview } from "@/components/documents/detail/useDocumentPreview";
+import { useDocumentProposals } from "@/components/documents/detail/useDocumentProposals";
 
 /**
  * Scheda di un contenuto d'Archivio --- fonde vista e modifica (v. feedback utente: due pagine separate creavano
@@ -93,6 +28,9 @@ import { errorMessage } from "@/lib/utils";
  * dispositivo. Niente più tab "Proposte" a sé: quello che c'è da accettare/rifiutare vive dentro "Letto dal
  * dispositivo" (locale) o "Chiedi a Hinthia" (Claude), a seconda di dove viene. Niente sezioni vuote per fasi
  * future --- sembrerebbero quasi finite e non lo sono.
+ *
+ * Qui solo la composizione: i dati, l'anteprima, i campi, le proposte, la lettura di Hinthia e le azioni vivono
+ * ciascuno nel proprio hook (cartella `detail/`), i pezzi di pagina nei propri componenti.
  */
 export function ArchiveItemDetail({
   masterKey,
@@ -101,556 +39,25 @@ export function ArchiveItemDetail({
   masterKey: CryptoKey;
   documentId: string;
 }) {
-  const supabase = useSupabase();
-  const confirm = useConfirm();
-  const router = useRouter();
-  const showToast = useToast();
-  const { masterEnabled, extractionConsent } = useAIProcessingConsent();
+  const data = useDocumentData(masterKey, documentId);
+  const { doc, categories, assets, dossiers, rejections, fieldVocabulary, loading, error, setError, refresh } = data;
 
-  const [doc, setDoc] = useState<DocumentListItem | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [assets, setAssets] = useState<AssetListItem[]>([]);
-  const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  // Anteprima: object URL per immagini/audio/video e per la prima pagina disegnata di un PDF, testo per le note.
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [noteBody, setNoteBody] = useState<string | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  /** Pagine del PDF per "prima di N" --- null se non è un PDF o se l'anteprima viene dalla miniatura. */
-  const [pdfPageCount, setPdfPageCount] = useState<number | null>(null);
-  /** Un PDF che pdf.js non è riuscito a disegnare: si ripiega sul messaggio. */
-  const [previewUnavailable, setPreviewUnavailable] = useState(false);
-  /** Vero quando `previewUrl` viene dalla miniatura: non porta il numero di pagine, quindi niente "Prima pagina di N". */
-  const [previewIsThumbnail, setPreviewIsThumbnail] = useState(false);
-
-  const [rereading, setRereading] = useState<number | null>(null);
-
-  // Proposte, rifiuti già espressi e ultima azione annullabile.
-  const [rejections, setRejections] = useState<ProposalRejection[]>([]);
-  /** I documenti già collegati a un bene, con i loro campi: da qui si propone il bene di questo documento. */
-  const [linkedFields, setLinkedFields] = useState<LinkedDocumentFields[]>([]);
-  const [undoable, setUndoable] = useState<UndoableAction | null>(null);
-  const [proposalBusy, setProposalBusy] = useState(false);
-  // Le scadenze già collegate a questo documento (solo i giorni): un evento letto che c'è già non si ripropone.
-  const [reminderDates, setReminderDates] = useState<string[]>([]);
-  const [typeCategories, setTypeCategories] = useState<TypeCategoryOverrides>({});
-  const [today] = useState(() => localDateKey(new Date().toISOString()));
-
-  // FASE 22: quello che Claude ha letto in questa sessione --- ricalcolato in proposte a ogni render come le
-  // locali (v. buildAIProposals), così accettare/rifiutare le filtra allo stesso modo, automaticamente.
-  const [aiBusy, setAiBusy] = useState(false);
-  const aiAbortRef = useRef<AbortController | null>(null);
-  const [savedAnalysis, setSavedAnalysis] = useState<SavedAnalysisState>({ kind: "none" });
-  const [aiProgress, setAiProgress] = useState<AnalysisProgress | null>(null);
-  // Etichette dei campi eterogenei già registrati (v. domain/structured-fields) --- per mostrare "Numero polizza" e non la chiave grezza in Scheda.
-  const [fieldVocabulary, setFieldVocabulary] = useState<FieldVocabularyEntry[]>([]);
-
+  // Scheda / Letto dal dispositivo / Chiedi a Hinthia: quale delle tre tab è attiva a destra. Si azzera su
+  // "scheda" a ogni apertura della pagina, come fullText --- nessuna persistenza necessaria; "scheda" di default
+  // perché prima era sempre visibile a sinistra, mai dietro un click.
+  const [activeTab, setActiveTab] = useState<DocumentTab>("scheda");
   // Testo letto potenzialmente lungo: se ne mostra un pezzo, il resto solo a richiesta.
   const [fullText, setFullText] = useState(false);
 
-  // Scheda / Letto dal dispositivo / Chiedi a Hinthia: quale delle tre tab è attiva a destra --- "Proposte"
-  // non esiste più come tab a sé (v. feedback utente): quello che c'è da accettare vive già dentro una delle
-  // due letture. Si azzera su "scheda" a ogni apertura della pagina, come fullText --- nessuna persistenza
-  // necessaria; "scheda" di default perché prima era sempre visibile a sinistra, mai dietro un click.
-  const [activeTab, setActiveTab] = useState<"scheda" | "reading" | "analysis">("scheda");
+  const preview = useDocumentPreview(masterKey, doc, setError);
+  const fieldsState = useDocumentFields(masterKey, documentId, doc, refresh, setError);
+  const proposals = useDocumentProposals(masterKey, data);
+  // Senza il passaggio alla tab, l'utente non si accorgerebbe che qualcosa è successo: quello che Hinthia ha
+  // trovato vive già in "Chiedi a Hinthia".
+  const analysis = useDocumentAnalysis(masterKey, data, () => setActiveTab("analysis"));
+  const actions = useDocumentActions(masterKey, data);
 
-  // Fusione Scheda/Modifica: i metadati modificabili, sempre live qui (mai una pagina a parte). `null` finché
-  // il documento non è ancora caricato. Le proposte (Scadenza/Categoria/Emittente) scrivono direttamente su `doc`
-  // via acceptProposal, non su questo stato --- v. i tre effect più sotto, che li tengono sincronizzati uno per
-  // uno: un ricalcolo unico sovrascriverebbe una modifica in corso su un ALTRO campo non toccato dalla proposta.
-  const [fields, setFields] = useState<DocumentMetadataFieldsValue | null>(null);
-  const [savingFields, setSavingFields] = useState(false);
-
-  // Voci libere della Scheda (numero polizza, data di nascita, ...), modificabili come gli altri campi e salvate
-  // con "Salva modifiche". Si risincronizzano da `doc` chiave per chiave, non in blocco: dopo un'accettazione
-  // cambia solo quella chiave, e una modifica in corso su un'altra non va sovrascritta.
-  // Titolo (il nome del contenuto), modificabile in Scheda e salvato con "Salva modifiche". `null` finché il documento non è caricato.
-  const [titleValue, setTitleValue] = useState<string | null>(null);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- risincronizza il titolo da `doc` (cambia solo dopo un salvataggio o un ricaricamento).
-    setTitleValue(doc?.filename ?? null);
-  }, [doc?.filename]);
-
-  const [structuredValues, setStructuredValues] = useState<Record<string, string> | null>(null);
-  const prevStructuredRef = useRef<Record<string, string>>({});
-  useEffect(() => {
-    const next = doc?.structuredFields ?? {};
-    const prev = prevStructuredRef.current;
-    prevStructuredRef.current = next;
-    setStructuredValues((current) => {
-      if (current === null) return { ...next };
-      const merged = { ...current };
-      for (const key of new Set([...Object.keys(prev), ...Object.keys(next)])) {
-        if (prev[key] === next[key]) continue;
-        if (next[key] === undefined) delete merged[key];
-        else merged[key] = next[key];
-      }
-      return merged;
-    });
-  }, [doc?.structuredFields]);
-
-  // Sincronizzano UN campo alla volta da `doc` a `fields` quando una proposta lo scrive --- mai un ricalcolo
-  // unico dell'intero oggetto, che sovrascriverebbe una modifica in corso su un campo diverso (v. commento sopra).
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- risincronizza `fields` da `doc`, non solo un DOM esterno.
-    setFields((prev) => (prev ? { ...prev, categoryId: doc?.categoryId ?? "" } : prev));
-  }, [doc?.categoryId]);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- v. sopra.
-    setFields((prev) =>
-      prev ? { ...prev, expiresAt: doc?.expiresAt ? doc.expiresAt.slice(0, 10) : "" } : prev,
-    );
-  }, [doc?.expiresAt]);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- v. sopra.
-    setFields((prev) => (prev ? { ...prev, issuer: doc?.issuer ?? "" } : prev));
-  }, [doc?.issuer]);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- v. sopra: il bene collegato da una proposta.
-    setFields((prev) => (prev ? { ...prev, relatedAssetId: doc?.relatedAssetId ?? "" } : prev));
-  }, [doc?.relatedAssetId]);
-
-  // Ciò che Hinthia ha già letto vale ancora per il testo di adesso? Serve a scegliere tra "chiedi", "riprendi" e "già letto".
-  const savedAnalysisSource = doc?.contentAnalysis ?? null;
-  const savedAnalysisText = doc?.extractedText ?? "";
-  // Le pagine lette, se ci sono: l'impronta della lettura dipende dalla fonte (pagine o sezioni), quindi si aspetta che siano caricate.
-  const { segments: pageSegments, ready: segmentsReady } = useDocumentSegments(supabase, masterKey, doc);
-  useEffect(() => {
-    if (!segmentsReady) return;
-    let cancelled = false;
-    inspectSavedAnalysis({ extractedText: savedAnalysisText, contentAnalysis: savedAnalysisSource }, masterKey, {
-      segments: pageSegments,
-    })
-      .then((state) => {
-        if (!cancelled) setSavedAnalysis(state);
-      })
-      .catch(() => {
-        if (!cancelled) setSavedAnalysis({ kind: "none" });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [savedAnalysisSource, savedAnalysisText, masterKey, pageSegments, segmentsReady]);
-
-  // Contatore di richieste --- v. EditArchiveItemForm (StrictMode invoca l'effetto due volte al mount).
-  const latestRequestRef = useRef(0);
-
-  const refresh = useCallback(async () => {
-    const requestId = ++latestRequestRef.current;
-    setError(null);
-    try {
-      const [
-        found,
-        assetsResult,
-        categoriesResult,
-        dossiersResult,
-        rejectionsResult,
-        vocabularyResult,
-        reminderDatesResult,
-        typeCategoriesResult,
-        linkedFieldsResult,
-      ] = await Promise.all([
-          getDocumentById(supabase, masterKey, documentId),
-          listAssets(supabase, masterKey),
-          listCategories(supabase),
-          listDossiers(supabase, masterKey),
-          listProposalRejections(supabase, masterKey, documentId),
-          listFieldVocabulary(supabase),
-          listDocumentReminderDates(supabase, documentId),
-          // Una preferenza, non un dato della pagina: se non si legge (tabella non ancora presente) valgono le predefinite.
-          listTypeCategoryOverrides(supabase).catch((): TypeCategoryOverrides => ({})),
-          // Un suggerimento in più: se non si legge, la pagina funziona lo stesso, solo senza la proposta del bene.
-          listAssetLinkedFields(supabase, masterKey, documentId).catch((): LinkedDocumentFields[] => []),
-        ]);
-      if (requestId !== latestRequestRef.current) return;
-      setDoc(found);
-      setFields((prev) => prev ?? (found ? documentToFields(found) : null));
-      setAssets(assetsResult);
-      setCategories(categoriesResult);
-      setDossiers(dossiersResult);
-      setRejections(rejectionsResult);
-      setFieldVocabulary(vocabularyResult);
-      setReminderDates(reminderDatesResult);
-      setTypeCategories(typeCategoriesResult);
-      setLinkedFields(linkedFieldsResult);
-    } catch (err) {
-      if (requestId !== latestRequestRef.current) return;
-      setError(errorMessage(err, "Impossibile caricare il contenuto."));
-    } finally {
-      if (requestId === latestRequestRef.current) setLoading(false);
-    }
-  }, [supabase, masterKey, documentId]);
-
-  useEffect(() => {
-    // See DocumentsPanel.tsx for why fetch-on-mount is legitimate here.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
-
-  const kind = doc ? contentKindFor(doc.mimeType) : null;
-
-  const isPdf = doc?.mimeType === "application/pdf";
-
-  // Immagine, nota e PDF si aprono da soli: audio e video no, possono pesare decine di megabyte.
-  const autoPreview = kind === "image" || kind === "note" || isPdf;
-
-  const loadPreview = useCallback(async () => {
-    if (!doc) return;
-    setPreviewLoading(true);
-    setError(null);
-    try {
-      if (contentKindFor(doc.mimeType) === "note") {
-        const { bytes } = await downloadDocument(supabase, masterKey, doc);
-        setNoteBody(bytesToUtf8(bytes));
-        return;
-      }
-
-      if (doc.mimeType === "application/pdf" || doc.mimeType.startsWith("image/")) {
-        // La miniatura evita di scaricare il file intero solo per l'anteprima (v. lib/thumbnail.ts).
-        const thumbnail = await downloadThumbnail(supabase, masterKey, doc);
-        if (thumbnail) {
-          setPreviewUrl(URL.createObjectURL(thumbnail));
-          setPreviewIsThumbnail(true);
-          return;
-        }
-      }
-
-      // Nessuna miniatura (tipo non supportato o non generata a suo tempo): si scarica il file intero.
-      const { mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
-
-      if (mimeType === "application/pdf") {
-        // Se ne disegna la prima pagina con lo stesso pdf.js che l'OCR usa per leggerle (v. lib/pdf.ts).
-        const rendered = await renderPdfFirstPage(bytes);
-        if (!rendered) {
-          setPreviewUnavailable(true);
-          return;
-        }
-        setPdfPageCount(rendered.pageCount);
-        setPreviewUrl(URL.createObjectURL(rendered.image));
-        return;
-      }
-
-      setPreviewUrl(URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: mimeType })));
-    } catch (err) {
-      setError(errorMessage(err, "Impossibile aprire il contenuto."));
-      setPreviewUnavailable(true);
-    } finally {
-      setPreviewLoading(false);
-    }
-  }, [supabase, masterKey, doc]);
-
-  // I byte del PDF decifrato, scaricati una volta sola per tutte le pagine che si aprono dalla lettura di Hinthia.
-  const pdfBytesRef = useRef<Promise<Uint8Array> | null>(null);
-  const loadPdfBytes = useCallback(() => {
-    if (!doc) return Promise.reject(new Error("Contenuto non disponibile."));
-    if (!pdfBytesRef.current) {
-      pdfBytesRef.current = downloadDocument(supabase, masterKey, doc)
-        .then(({ bytes }) => bytes)
-        .catch((err) => {
-          pdfBytesRef.current = null;
-          throw err;
-        });
-    }
-    return pdfBytesRef.current;
-  }, [supabase, masterKey, doc]);
-
-  useEffect(() => {
-    if (!doc || !autoPreview) return;
-    if (previewUrl || noteBody !== null || previewLoading || previewUnavailable) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadPreview();
-  }, [doc, autoPreview, previewUrl, noteBody, previewLoading, previewUnavailable, loadPreview]);
-
-  async function handleDownload() {
-    if (!doc) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const { filename, mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
-      saveBytesAsFile(bytes, filename, mimeType);
-      void logDocumentDownloaded(supabase, doc.id);
-    } catch (err) {
-      setError(errorMessage(err, "Impossibile aprire il contenuto."));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  /** Rilegge da zero: l'OCR ha sbagliato, il contenuto è stato caricato prima che si sapesse leggerlo, o è stato letto da una versione precedente che non conservava l'impaginazione. */
-  async function handleReread() {
-    if (!doc) return;
-    setRereading(0);
-    setError(null);
-    try {
-      const { foundText } = await extractTextForExistingDocument(
-        supabase,
-        masterKey,
-        doc,
-        (fraction) => setRereading(fraction),
-      );
-      await refresh();
-      showToast(
-        foundText ? "Lettura completata." : "L'ho guardato, ma non ci ho trovato testo.",
-      );
-    } catch (err) {
-      setError(errorMessage(err, "Impossibile rileggere il contenuto."));
-    } finally {
-      setRereading(null);
-    }
-  }
-
-  /** Ogni azione su una proposta passa di qui: esegue, ricarica, lascia pronto l'annullamento. L'id utente serve perché l'audit registra a nome di chi. */
-  async function runProposalAction(
-    action: (ownerId: string) => Promise<UndoableAction>,
-  ): Promise<void> {
-    setProposalBusy(true);
-    setError(null);
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Devi essere autenticato.");
-
-      const next = await action(user.id);
-      await refresh();
-      setUndoable(next);
-    } catch (err) {
-      setError(errorMessage(err, "Impossibile applicare la proposta."));
-    } finally {
-      setProposalBusy(false);
-    }
-  }
-
-  function handleAcceptProposal(proposal: Proposal, value: string) {
-    if (!doc) return;
-    void runProposalAction(async (ownerId) => {
-      const accepted = await acceptProposal(supabase, masterKey, ownerId, doc, proposal, value);
-      return {
-        message:
-          proposal.kind === "event"
-            ? `Aggiunta in Scadenze: ${proposal.eventTitle ?? "evento"}, ${formatDate(value)}.`
-            : proposal.kind === "asset"
-            ? proposal.createAsset
-              ? `Bene "${value.trim()}" creato e collegato.`
-              : `Collegato a ${assets.find((a) => a.id === value)?.name ?? "un bene"}.`
-            : proposal.kind === "expiry"
-            ? `Scadenza impostata al ${formatDate(value)}.`
-            : proposal.kind === "issuer"
-              ? "Emittente impostato."
-              : proposal.kind === "field"
-                ? `${proposal.fieldLabel ?? "Campo"} impostato.`
-                : "Categoria impostata.",
-        onUndo: () =>
-          void runProposalAction(async (undoOwnerId) => {
-            await undoAcceptance(supabase, masterKey, undoOwnerId, doc.id, accepted);
-            return { message: "Annullato.", onUndo: () => setUndoable(null) };
-          }),
-      };
-    });
-  }
-
-  /** Una sola proposta per tipo (per "campo": per chiave) --- con più candidati della stessa cosa vince la prima, non si sovrascrive in sequenza. */
-  function handleAcceptAll(candidates: Proposal[]) {
-    if (!doc || candidates.length === 0) return;
-    void runProposalAction(async (ownerId) => {
-      const accepted: AcceptedProposal[] = [];
-      try {
-        for (const proposal of candidates) {
-          accepted.push(await acceptProposal(supabase, masterKey, ownerId, doc, proposal, proposal.value));
-        }
-      } catch (err) {
-        if (accepted.length > 0) await refresh();
-        throw err;
-      }
-      return {
-        message:
-          accepted.length === 1 ? "1 informazione aggiunta alla Scheda." : `${accepted.length} informazioni aggiunte alla Scheda.`,
-        onUndo: () =>
-          void runProposalAction(async (undoOwnerId) => {
-            for (const item of [...accepted].reverse()) {
-              await undoAcceptance(supabase, masterKey, undoOwnerId, doc.id, item);
-            }
-            return { message: "Annullato.", onUndo: () => setUndoable(null) };
-          }),
-      };
-    });
-  }
-
-  function handleRejectProposal(proposal: Proposal) {
-    if (!doc) return;
-    void runProposalAction(async (ownerId) => {
-      const rejectionId = await rejectProposal(supabase, masterKey, ownerId, doc.id, proposal);
-      return {
-        message: "Non te lo richiederò più.",
-        onUndo: () =>
-          void runProposalAction(async (undoOwnerId) => {
-            await undoRejection(supabase, undoOwnerId, rejectionId, {
-              documentId: doc.id,
-              kind: proposal.kind,
-              fieldKey: proposal.fieldKey,
-            });
-            return { message: "Annullato.", onUndo: () => setUndoable(null) };
-          }),
-      };
-    });
-  }
-
-  /** Una riga scartata si riprende dal registro: il rifiuto registrato si cancella e la proposta torna da decidere. */
-  function handleRestoreRejection(rejection: ProposalRejection) {
-    if (!doc) return;
-    void runProposalAction(async (ownerId) => {
-      await undoRejection(supabase, ownerId, rejection.id, {
-        documentId: doc.id,
-        kind: rejection.kind,
-        fieldKey: rejection.fieldKey,
-      });
-      return { message: "Proposta ripristinata.", onUndo: () => setUndoable(null) };
-    });
-  }
-
-  /** FASE 22: unica fase irreversibile del piano --- un contenuto uscito è uscito, quindi un window.confirm prima di ogni invio, qualunque sia lo scope scelto. */
-  async function handleAnalyzeWithClaude(scope: AIAnalysisScope, options?: { force?: boolean }) {
-    if (!doc) return;
-    const force = options?.force === true;
-    // Le pagine e lo stato della lettura salvata si rileggono qui, non dallo stato: se il click arriva prima che il
-    // caricamento finisca, uno stato ancora "none" farebbe ripartire (e pagare) una lettura già completa.
-    let segments: ContentSegment[] | null;
-    let saved: SavedAnalysisState;
-    try {
-      segments = await loadDocumentSegments(supabase, masterKey, doc).catch(() => null);
-      saved = force ? { kind: "none" } : await inspectSavedAnalysis(doc, masterKey, { segments });
-    } catch {
-      return;
-    }
-    // Con una lettura già salvata che vale ancora, "Chiedi" riprende da dove era arrivata; "Rileggi da capo" riparte.
-    if (saved.kind === "complete") return;
-    if (
-      !(await confirm({
-        title: "Leggere con Hinthia?",
-        message: analysisConfirmMessage(planAnalysis(doc, { segments }), saved),
-        confirmLabel: "Invia a Hinthia",
-      }))
-    ) {
-      return;
-    }
-
-    const abort = new AbortController();
-    aiAbortRef.current = abort;
-    setAiBusy(true);
-    setError(null);
-    try {
-      if (scope === "temporary" && doc.categoryId) {
-        await grantCategoryAIExtractionTemporarily(supabase, doc.categoryId, 30);
-        await refresh();
-      }
-      const extracted = await analyzeDocumentWithClaude(doc, categories, scope, {
-        segments,
-        onProgress: setAiProgress,
-        signal: abort.signal,
-        force,
-        reread: doc.aiSynthesisGeneratedAt !== null,
-        persistence: {
-          masterKey,
-          saved: doc.contentAnalysis,
-          save: (analysis, status) => saveContentAnalysis(supabase, masterKey, doc.id, analysis, status),
-        },
-      });
-      if (extracted.synthesis) {
-        // Non è una proposta: sostituisce sempre l'ultima lettura, come extractedText/Rileggi per il testo locale.
-        await saveAISynthesis(supabase, masterKey, doc.id, extracted.synthesis);
-      }
-      await refresh();
-      // Senza, l'utente non si accorgerebbe che qualcosa è successo: niente più tab "Proposte" a sé, quello che
-      // Hinthia ha trovato vive già in "Chiedi a Hinthia".
-      setActiveTab("analysis");
-    } catch (err) {
-      // refresh() azzera l'errore, quindi prima si rilegge ciò che è stato salvato, poi si mostra l'errore.
-      await refresh();
-      // Interrompere non è un guasto: ciò che era già stato letto è salvato e il bottone propone di riprendere.
-      if (!(err instanceof AnalysisAbortedError)) {
-        setError(errorMessage(err, "Impossibile analizzare il documento con Hinthia."));
-      }
-    } finally {
-      aiAbortRef.current = null;
-      setAiBusy(false);
-      setAiProgress(null);
-    }
-  }
-
-  async function handleToggleAIExclusion(next: boolean) {
-    if (!doc) return;
-    setError(null);
-    try {
-      await updateDocumentAIExtractionExclusion(supabase, doc.id, next);
-      await refresh();
-    } catch (err) {
-      setError(errorMessage(err, "Impossibile salvare l'esclusione."));
-    }
-  }
-
-  /** Fusione Scheda/Modifica: non più una pagina a parte (v. EditArchiveItemForm, ora rimossa). */
-  async function handleSaveFields() {
-    if (!fields) return;
-    if (titleValue !== null && titleValue.trim() === "") {
-      setError("Il titolo non può essere vuoto.");
-      return;
-    }
-    setSavingFields(true);
-    setError(null);
-    try {
-      await updateDocumentMetadata(supabase, masterKey, documentId, {
-        categoryId: fields.categoryId || null,
-        relatedAssetId: fields.relatedAssetId || null,
-        dossierIds: fields.dossierIds,
-        expiresAt: fields.expiresAt || null,
-        notes: fields.notes,
-        issuer: fields.issuer,
-        ...(structuredDirty && structuredValues ? { structuredFields: structuredValues } : {}),
-        ...(titleDirty && titleValue !== null ? { title: titleValue } : {}),
-      });
-      await refresh();
-      showToast("Modifiche salvate.");
-    } catch (err) {
-      setError(errorMessage(err, "Impossibile aggiornare il contenuto."));
-    } finally {
-      setSavingFields(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!doc) return;
-    if (
-      !(await confirm({
-        message: `Eliminare "${doc.filename}"? L'operazione non è reversibile.`,
-        confirmLabel: "Elimina",
-        danger: true,
-      }))
-    )
-      return;
-
-    setBusy(true);
-    setError(null);
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Devi essere autenticato.");
-      await deleteDocument(supabase, user.id, doc);
-      router.push("/archive");
-    } catch (err) {
-      setError(errorMessage(err, "Impossibile eliminare il contenuto."));
-      setBusy(false);
-    }
-  }
+  const { kind, isPdf } = preview;
 
   if (loading) {
     return <LoadingText />;
@@ -669,40 +76,6 @@ export function ArchiveItemDetail({
 
   const category = categories.find((c) => c.id === doc.categoryId);
   const reading = readingStateFor(doc);
-  // Ricalcolate a ogni render: accettare o rifiutare una proposta la filtra automaticamente, senza stato a parte.
-  // Vengono dalla lettura salvata, non da uno stato della pagina: sopravvivono al ricaricamento e a un'interruzione.
-  const { proposals: aiProposals, aiFields } = proposalsForDocument({
-    doc,
-    categories,
-    typeCategories,
-    assets,
-    linkedFields,
-    rejections,
-    reminderDates,
-    today,
-  });
-  const pastEvents = aiFields ? pastEventsOf(aiFields, today) : [];
-  const analysisOverview = doc.contentAnalysis
-    ? buildAnalysisOverview(doc.contentAnalysis, doc, categories, reminderDates)
-    : null;
-  const proposals = aiProposals;
-  const categoryEnabledForAI = category ? isCategoryEnabledForExtraction(category) : false;
-
-  // Disabilita "Salva modifiche" quando non c'è nulla da salvare --- confronto per valore, non per riferimento:
-  // `fields` è un oggetto nuovo a ogni onChange anche quando il contenuto torna uguale (es. una proposta accettata
-  // e poi risincronizzata dagli effect sopra).
-  const structuredDirty =
-    structuredValues !== null &&
-    normalizeStructuredFields(structuredValues) !== normalizeStructuredFields(doc.structuredFields);
-  const titleDirty = titleValue !== null && titleValue.trim() !== doc.filename;
-  const fieldsDirty =
-    (fields !== null && JSON.stringify(fields) !== JSON.stringify(documentToFields(doc))) ||
-    structuredDirty ||
-    titleDirty;
-
-  // "Accetta tutto": una sola proposta per tipo (per "campo": per chiave) --- v. handleAcceptAll.
-  const acceptAllCandidates = onePerSlot(proposals);
-  const aiAcceptAllCandidates = onePerSlot(aiProposals);
 
   return (
     <div className="flex flex-col gap-6">
@@ -724,47 +97,16 @@ export function ArchiveItemDetail({
         </ErrorText>
       ) : null}
 
-      {/* Barra a sé (v. feedback utente): Salva modifiche/Scarica/Elimina, stessa forma per tutti e tre
-          (rounded-xl), sopra al riquadro bianco con Anteprima e le tab --- non più dentro la tab Scheda. */}
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          disabled={!fieldsDirty || savingFields}
-          onClick={handleSaveFields}
-          className={`${BTN_PRIMARY} disabled:opacity-50`}
-        >
-          {savingFields ? "Salvataggio…" : "Salva modifiche"}
-        </button>
-        {fieldsDirty && !savingFields ? (
-          <span role="status" className="text-sm text-orange-700 dark:text-orange-400">
-            Modifiche non salvate
-          </span>
-        ) : null}
-        {kind === "note" ? null : (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={handleDownload}
-            className={`${BTN_SECONDARY} disabled:opacity-50`}
-          >
-            Scarica
-          </button>
-        )}
-        <Link
-          href={starterHref("documento", doc.id)}
-          className={BTN_SECONDARY}
-        >
-          Fallo arrivare a…
-        </Link>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={handleDelete}
-          className="rounded-xl border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 sm:ml-auto dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
-        >
-          Elimina
-        </button>
-      </div>
+      <DocumentActionBar
+        documentId={doc.id}
+        isNote={kind === "note"}
+        dirty={fieldsState.fieldsDirty}
+        saving={fieldsState.savingFields}
+        busy={actions.busy}
+        onSave={fieldsState.handleSaveFields}
+        onDownload={actions.handleDownload}
+        onDelete={actions.handleDelete}
+      />
 
       {/* Anteprima fissa a sinistra (v. feedback utente); Scheda/Letto dal dispositivo/Analisi con Hinthia sono
           tre tab a destra --- niente più Scheda né il trigger di analisi sempre visibili a sinistra.
@@ -773,437 +115,64 @@ export function ArchiveItemDetail({
       <div className="@container">
         {/* items-start: senza, il flex allungherebbe la colonna fissa fino all'altezza del pannello attivo. */}
         <div className="flex flex-col items-stretch gap-6 @3xl:flex-row @3xl:items-start">
-          {/* Colonna fissa: solo l'anteprima, sempre visibile, mai dietro una tab. */}
           {/* Su telefono l'anteprima viene dopo i campi (order-2): prima si deve poter compilare, non scorrere una schermata di pagina. */}
           <div className="order-2 flex flex-col gap-6 @3xl:order-1 @3xl:w-[380px] @3xl:shrink-0">
-          <section aria-label="Anteprima" className={`${PANEL} flex flex-col gap-3 p-4`}>
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Anteprima</h2>
-            {previewLoading ? (
-              <LoadingText />
-            ) : kind === "note" ? (
-              <p className="text-sm whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
-                {noteBody || "(nota vuota)"}
-              </p>
-            ) : (kind === "image" || isPdf) && previewUrl ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element -- object URL locale, decifrata sul dispositivo */}
-                <img
-                  src={previewUrl}
-                  alt={
-                    isPdf ? `Prima pagina di ${doc.filename}` : doc.filename
-                  }
-                  className="max-h-[32rem] max-w-full self-start rounded-md border border-zinc-200 dark:border-zinc-800"
-                />
-                {isPdf && pdfPageCount !== null ? (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {pdfPageCount === 1
-                      ? "Pagina unica."
-                      : `Prima pagina di ${pdfPageCount}.`}{" "}
-                    Usa &laquo;Scarica&raquo; per sfogliarlo tutto.
-                  </p>
-                ) : previewIsThumbnail ? (
-                  // La miniatura non porta il numero di pagine: didascalia più generica.
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Anteprima. Usa &laquo;Scarica&raquo; per l&apos;originale
-                    {isPdf ? ", pagina per pagina" : ""}.
-                  </p>
-                ) : null}
-              </>
-            ) : hasInlinePlayer(kind) && previewUrl ? (
-              kind === "video" ? (
-                <video src={previewUrl} controls className="max-h-[32rem] max-w-full rounded-md" />
-              ) : (
-                <audio src={previewUrl} controls className="w-full" />
-              )
-            ) : hasInlinePlayer(kind) ? (
-              <button
-                type="button"
-                onClick={loadPreview}
-                className="self-start rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-              >
-                Riproduci
-              </button>
-            ) : (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {isPdf
-                  ? "Non sono riuscito a disegnarne l'anteprima."
-                  : `Un ${CONTENT_KIND_LABEL[kind].toLowerCase()} di questo tipo non si può sfogliare qui.`}{" "}
-                Usa &laquo;Scarica&raquo; per aprirlo con il tuo programma.
-              </p>
-            )}
-          </section>
-          <Link
-            href={`/settings?tab=security&section=activity&entity=document:${doc.id}`}
-            className="self-start text-sm font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
-          >
-            Vedi attività di questo contenuto →
-          </Link>
+            <DocumentPreviewPanel doc={doc} kind={kind} preview={preview} />
           </div>
 
-          {/* Colonna a tab: Scheda / Letto dal dispositivo / Analisi con Hinthia --- niente più "Proposte" a sé
-              (v. feedback utente): quello che c'è da accettare vive già dentro una delle due letture, secondo
-              la fonte. Scheda è la prima tab, non più fissa a sinistra (v. feedback utente). Tab e pannelli
-              dentro un unico riquadro bianco con contorno (v. feedback utente), come Anteprima a fianco. */}
+          {/* Colonna a tab: tab e pannelli dentro un unico riquadro bianco con contorno (v. feedback utente),
+              come Anteprima a fianco. */}
           <div className="order-1 flex min-w-0 flex-1 flex-col gap-4 @3xl:order-2">
           <div className={`${PANEL} flex flex-col gap-4 p-4`}>
-            <div role="tablist" className="flex gap-1 overflow-x-auto border-b border-zinc-200 [scrollbar-width:none] dark:border-zinc-800 [&::-webkit-scrollbar]:hidden">
-              <button
-                type="button"
-                role="tab"
-                id="tab-scheda"
-                aria-selected={activeTab === "scheda"}
-                aria-controls="tabpanel-scheda"
-                onClick={() => setActiveTab("scheda")}
-                className={`shrink-0 rounded-t-md px-3 py-2 text-sm font-medium whitespace-nowrap ${
-                  activeTab === "scheda"
-                    ? "border-b-2 border-brand text-accent"
-                    : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
-                }`}
-              >
-                Scheda
-              </button>
-              <button
-                type="button"
-                role="tab"
-                id="tab-reading"
-                aria-selected={activeTab === "reading"}
-                aria-controls="tabpanel-reading"
-                onClick={() => setActiveTab("reading")}
-                className={`shrink-0 rounded-t-md px-3 py-2 text-sm font-medium whitespace-nowrap ${
-                  activeTab === "reading"
-                    ? "border-b-2 border-brand text-accent"
-                    : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
-                }`}
-              >
-                Letto dal dispositivo
-              </button>
-              <button
-                type="button"
-                role="tab"
-                id="tab-analysis"
-                aria-selected={activeTab === "analysis"}
-                aria-controls="tabpanel-analysis"
-                onClick={() => setActiveTab("analysis")}
-                className={`shrink-0 rounded-t-md px-3 py-2 text-sm font-medium whitespace-nowrap ${
-                  activeTab === "analysis"
-                    ? "border-b-2 border-brand text-accent"
-                    : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
-                }`}
-              >
-                Chiedi a Hinthia{aiProposals.length > 0 ? ` · ${aiProposals.length}` : ""}
-              </button>
-            </div>
-            {/* L'annullamento resta visibile a cambio tab: una sola istanza sopra i pannelli, non una per tab.
-                aria-label distinto dal toast globale (v. ToastProvider): entrambi sono role="status". */}
-            {undoable ? (
-              <div
-                role="status"
-                aria-label="Ultima proposta"
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/20 bg-brand/5 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300"
-              >
-                <span>{undoable.message}</span>
-                <button
-                  type="button"
-                  onClick={undoable.onUndo}
-                  className="font-medium text-accent underline-offset-2 hover:underline"
-                >
-                  Annulla
-                </button>
-              </div>
-            ) : null}
+            <DocumentTabList active={activeTab} onChange={setActiveTab} proposalCount={proposals.proposals.length} />
+            {proposals.undoable ? <UndoableStatus undoable={proposals.undoable} /> : null}
 
             {/* Un solo pannello montato alla volta, come SettingsTabs.tsx --- non tutti nascosti con `hidden`. */}
             {activeTab === "scheda" ? (
-              <div id="tabpanel-scheda" role="tabpanel" aria-labelledby="tab-scheda" className="flex flex-col gap-3">
-                {/* Fusione Scheda/Modifica (v. feedback utente): niente più una pagina /edit a parte, i campi
-                    sono sempre modificabili qui --- un "Salva modifiche" li mette via quando ce n'è bisogno. */}
-                {acceptAllCandidates.length > 0 ? (
-                  <div
-                    role="group"
-                    aria-label="Informazioni trovate da Hinthia"
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/20 bg-brand/5 px-3 py-2"
-                  >
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
-                      {acceptAllCandidates.length === 1
-                        ? "Hinthia ha trovato 1 informazione da aggiungere alla Scheda."
-                        : `Hinthia ha trovato ${acceptAllCandidates.length} informazioni da aggiungere alla Scheda.`}
-                    </p>
-                    <button
-                      type="button"
-                      disabled={proposalBusy}
-                      onClick={() => handleAcceptAll(acceptAllCandidates)}
-                      className="rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
-                    >
-                      Accetta tutto
-                    </button>
-                  </div>
-                ) : null}
-                {titleValue !== null ? (
-                  <div className="flex flex-col gap-1">
-                    <label htmlFor="scheda-title" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                      Titolo
-                    </label>
-                    <input
-                      id="scheda-title"
-                      type="text"
-                      value={titleValue}
-                      onChange={(e) => setTitleValue(e.target.value)}
-                      className={`w-full ${INPUT_FIELD}`}
-                    />
-                  </div>
-                ) : null}
-                {fields ? (
-                  <DocumentMetadataFields
-                    idPrefix="scheda"
-                    categories={categories}
-                    assets={assets}
-                    dossiers={dossiers}
-                    value={fields}
-                    onChange={setFields}
-                  />
-                ) : null}
-                {structuredValues && Object.keys(structuredValues).length > 0 ? (
-                  <div role="group" aria-labelledby="scheda-group-data" className="flex flex-col gap-3">
-                    <p id="scheda-group-data" className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                      Dati del documento
-                    </p>
-                    {Object.entries(structuredValues).map(([key, value]) => {
-                      const inputId = `scheda-field-${key}`;
-                      return (
-                        <div key={key} className="flex flex-col gap-1">
-                          <label htmlFor={inputId} className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                            {capitalizeFirst(fieldVocabulary.find((v) => v.fieldKey === key)?.label ?? key)}
-                          </label>
-                          {/* Il tipo segue il dato salvato, non quello che si sta digitando: una data si sceglie dal calendario. */}
-                          <input
-                            id={inputId}
-                            type={inferFieldInputType(doc.structuredFields[key] ?? value)}
-                            value={value}
-                            onChange={(e) => setStructuredValues({ ...structuredValues, [key]: e.target.value })}
-                            className={`w-full ${INPUT_FIELD}`}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : null}
-              </div>
+              <SchedaPanel
+                doc={doc}
+                categories={categories}
+                assets={assets}
+                dossiers={dossiers}
+                fieldVocabulary={fieldVocabulary}
+                acceptAllCandidates={proposals.acceptAllCandidates}
+                proposalBusy={proposals.proposalBusy}
+                onAcceptAll={proposals.handleAcceptAll}
+                titleValue={fieldsState.titleValue}
+                onTitleChange={fieldsState.setTitleValue}
+                fields={fieldsState.fields}
+                onFieldsChange={fieldsState.setFields}
+                structuredValues={fieldsState.structuredValues}
+                onStructuredValuesChange={fieldsState.setStructuredValues}
+              />
             ) : activeTab === "reading" ? (
               <div id="tabpanel-reading" role="tabpanel" aria-labelledby="tab-reading" className="flex flex-col gap-6">
                 <ReadingSection
                   doc={doc}
                   reading={reading}
-                  rereading={rereading}
+                  rereading={actions.rereading}
                   fullText={fullText}
                   onToggleFullText={() => setFullText((v) => !v)}
-                  onReread={handleReread}
+                  onReread={actions.handleReread}
                 />
               </div>
             ) : (
-              <div id="tabpanel-analysis" role="tabpanel" aria-labelledby="tab-analysis" className="flex flex-col gap-6">
-                {/* Il trigger vive qui, non più fisso a sinistra (v. feedback utente): "Analisi con Hinthia" è
-                    sia dove si chiede la lettura sia dove ne arriva il risultato. */}
-                <AIAnalysisTrigger
-                  masterEnabled={masterEnabled}
-                  extractionConsent={extractionConsent}
-                  hasCategory={doc.categoryId !== null}
-                  categoryEnabled={categoryEnabledForAI}
-                  excluded={doc.aiExtractionExcluded}
-                  busy={aiBusy}
-                  progress={aiProgress}
-                  savedState={savedAnalysis}
-                  analyzedAtLabel={doc.analysisUpdatedAt ? formatDate(doc.analysisUpdatedAt) : null}
-                  documentTitle={doc.filename}
-                  lastRunFailed={doc.analysisStatus === "failed"}
-                  onAnalyze={handleAnalyzeWithClaude}
-                  onAbort={() => aiAbortRef.current?.abort()}
-                  onToggleExcluded={handleToggleAIExclusion}
-                />
-                {doc.aiSynthesis ? (
-                  <section
-                    aria-label="Analisi con Hinthia"
-                    className={`${PANEL_FLAT} flex flex-col gap-3 p-4`}
-                  >
-                    <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
-                      <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-5 w-5 shrink-0 rounded-full" />
-                      Analisi con Hinthia
-                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-normal text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
-                        Generata da Hinthia
-                      </span>
-                    </h2>
-                    <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">{doc.aiSynthesis}</p>
-                    {doc.aiSynthesisGeneratedAt ? (
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Letta il {formatDate(doc.aiSynthesisGeneratedAt)}. È un riassunto scritto da Hinthia, non una
-                        citazione del documento: può contenere imprecisioni.
-                      </p>
-                    ) : null}
-                  </section>
-                ) : analysisOverview ? null : (
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    Non hai ancora chiesto a Hinthia di leggere questo documento.
-                  </p>
-                )}
-                <ReadingRegister
-                  overview={analysisOverview}
-                  proposals={aiProposals}
-                  rejections={rejections}
-                  categories={categories}
-                  assets={assets}
-                  today={today}
-                  busy={proposalBusy}
-                  segments={pageSegments}
-                  text={doc.extractedText}
-                  loadPdfBytes={isPdf ? loadPdfBytes : undefined}
-                  onAccept={handleAcceptProposal}
-                  onReject={handleRejectProposal}
-                  onRestore={handleRestoreRejection}
-                  acceptAllCount={aiAcceptAllCandidates.length}
-                  onAcceptAll={() => handleAcceptAll(aiAcceptAllCandidates)}
-                />
-                <PastEventsNotice events={pastEvents} />
-              </div>
+              <AnalysisPanel
+                doc={doc}
+                category={category}
+                categories={categories}
+                assets={assets}
+                rejections={rejections}
+                isPdf={isPdf}
+                analysis={analysis}
+                proposals={proposals}
+                loadPdfBytes={preview.loadPdfBytes}
+              />
             )}
           </div>
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
-/** Confronto per valore, senza voci vuote né ordine: una voce svuotata equivale a una rimossa. */
-/** Le voci del vocabolario sono scritte in minuscolo ("importo"): come etichetta di un campo vanno con la maiuscola, come le altre. */
-function capitalizeFirst(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-function normalizeStructuredFields(fields: Record<string, string>): string {
-  return JSON.stringify(
-    Object.entries(fields)
-      .filter(([, value]) => value.trim() !== "")
-      .sort(([a], [b]) => a.localeCompare(b)),
-  );
-}
-
-/** Quanti caratteri del testo letto si mostrano prima di "Mostra tutto". */
-const TEXT_PREVIEW_CHARS = 1200;
-
-/** "Cosa ho letto" --- unico posto dove i quattro stati di lettura (v. domain/extraction/reading-state.ts) diventano leggibili invece che dedotti. */
-function ReadingSection({
-  doc,
-  reading,
-  rereading,
-  fullText,
-  onToggleFullText,
-  onReread,
-}: {
-  doc: DocumentListItem;
-  reading: ReturnType<typeof readingStateFor>;
-  rereading: number | null;
-  fullText: boolean;
-  onToggleFullText: () => void;
-  onReread: () => void;
-}) {
-  // Per una nota il testo È il contenuto: l'anteprima lo mostra già per intero.
-  if (reading === "own-text") return null;
-
-  const busy = rereading !== null;
-  const rereadLabel = busy
-    ? `Lettura… ${Math.round((rereading ?? 0) * 100)}%`
-    : reading === "never"
-      ? "Leggilo ora"
-      : "Rileggi";
-
-  const tooLong = doc.extractedText.length > TEXT_PREVIEW_CHARS;
-  const shown =
-    fullText || !tooLong ? doc.extractedText : doc.extractedText.slice(0, TEXT_PREVIEW_CHARS);
-
-  return (
-    <section aria-label="Cosa ho letto" className={`${PANEL} flex flex-col gap-3 p-4`}>
-      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Cosa ho letto</h2>
-
-      {reading === "cannot" ? (
-        <>
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">
-            Non so ancora ascoltare gli audio e i video.
-          </p>
-        </>
-      ) : reading === "never" ? (
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">
-          Non l&apos;ho ancora letto: è arrivato in archivio prima che sapessi leggerne il
-          contenuto. Finché non lo leggo, lo trovi solo per nome e note.
-        </p>
-      ) : reading === "nothing" ? (
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">
-          L&apos;ho guardato il {doc.extractedAt ? formatDate(doc.extractedAt) : "—"}, ma non ci ho
-          trovato testo. Capita con le foto che non ne contengono, o quando la scrittura è troppo
-          sfocata per esserne sicuro.
-        </p>
-      ) : (
-        <>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Letto il {doc.extractedAt ? formatDate(doc.extractedAt) : "—"} ·{" "}
-            {doc.extractedText.length.toLocaleString("it-IT")} caratteri
-          </p>
-          <p
-            data-testid="extracted-text"
-            className="max-h-96 overflow-y-auto rounded-md bg-zinc-50 p-3 text-sm whitespace-pre-wrap text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
-          >
-            {shown}
-            {tooLong && !fullText ? "…" : ""}
-          </p>
-          {tooLong ? (
-            <button
-              type="button"
-              onClick={onToggleFullText}
-              className="self-start text-sm font-medium text-accent underline-offset-2 hover:underline"
-            >
-              {fullText ? "Mostra meno" : "Mostra tutto"}
-            </button>
-          ) : null}
-        </>
-      )}
-
-      {busy ? (
-        <div role="status" aria-live="polite" className="flex flex-col gap-1.5">
-          <p className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
-            <Spinner />
-            Lettura del documento sul dispositivo… {Math.round((rereading ?? 0) * 100)}%
-          </p>
-          <div
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round((rereading ?? 0) * 100)}
-            aria-label="Avanzamento della lettura sul dispositivo"
-            className="h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
-          >
-            <div
-              className="h-full rounded-full bg-brand transition-all duration-300"
-              style={{ width: `${Math.round((rereading ?? 0) * 100)}%` }}
-            />
-          </div>
-        </div>
-      ) : null}
-
-      {reading === "cannot" ? null : (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
-          <p className="min-w-0 text-xs text-zinc-500 dark:text-zinc-400">
-            Letto qui, sul tuo dispositivo: questo testo non è mai uscito. Serve a ritrovare il
-            contenuto quando lo cerchi.
-          </p>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onReread}
-            className="shrink-0 rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-          >
-            {rereadLabel}
-          </button>
-        </div>
-      )}
-    </section>
   );
 }
