@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-24 (150)
+
+### Il repository dei documenti, in moduli per compito
+
+**Cosa fa:** nessun cambiamento visibile. Il file `domain/documents/repository.ts` (983 righe, tutto insieme) è ora un ingresso unico che rimanda a cinque moduli, ognuno con un compito: `row-mapping` (dalle righe del database ai documenti decifrati e viceversa), `read` (elenchi e letture), `write` (caricamento, note, modifica dei dati e dei risultati di lettura), `files` (scaricamento, miniature, lettura del testo) e `removal` (cestino ed eliminazione). Chi lo usa continua a importare da `@/domain/documents/repository`: stessi 28 nomi di prima.
+
+**Note tecniche:** divisione fatta con uno script che sposta i blocchi interi e ricalcola gli import (nessun codice riscritto); i moduli dipendono solo da `row-mapping`, senza cicli. Verificato: elenco dei nomi esportati identico, typecheck, eslint, 1098 test unitari e 40 test e2e sulla versione di produzione.
+
+---
+
 ## 2026-10-23 (149)
 
 ### Le pagine già viste si riaprono subito
