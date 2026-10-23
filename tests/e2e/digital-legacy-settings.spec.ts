@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -47,8 +48,8 @@ test("Eredità digitale ha una sola scelta, quanto aspettare: le quattro fasi si
   await expect(fasi.nth(3)).toContainText("4. Consegna");
 
   // Attivarlo chiede conferma (v. window.confirm) e fa sparire l'avviso "spento".
-  page.once("dialog", (dialog) => dialog.accept());
   await enableToggle.click();
+  await acceptConfirm(page);
   await expect(enableToggle).toBeChecked();
   await expect(page.getByText("Il monitoraggio è spento")).not.toBeVisible();
 

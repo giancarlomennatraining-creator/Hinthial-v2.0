@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -165,8 +166,8 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   await expect(page.getByRole("menuitem", { name: "Chiudi fascicolo" })).toBeVisible({ timeout: 10_000 });
 
   // Eliminare il fascicolo non elimina il documento: solo lo scollega (il menu è ancora aperto).
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("menuitem", { name: "Elimina" }).click();
+  await acceptConfirm(page);
   await expect(page).toHaveURL(/\/dossiers$/, { timeout: 15_000 });
   await expect(page.getByText("Fascicolo eliminato.")).toBeVisible();
   await expect(page.getByText(/Ancora nessun fascicolo/)).toBeVisible();

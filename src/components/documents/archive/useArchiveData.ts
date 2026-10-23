@@ -20,6 +20,7 @@ import type { Category } from "@/domain/categories/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import { saveBytesAsFile } from "@/lib/download";
 import { useToast } from "@/components/ui/ToastProvider";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export type BulkPopover = "category" | "dossier" | null;
 
@@ -30,6 +31,7 @@ export type BulkPopover = "category" | "dossier" | null;
  */
 export function useArchiveData(masterKey: CryptoKey) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const showToast = useToast();
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -94,9 +96,10 @@ export function useArchiveData(masterKey: CryptoKey) {
   /** L'eliminazione sposta nel Cestino, non elimina più per sempre: farlo su più documenti insieme moltiplica il rischio di un clic distratto. */
   async function handleDelete(doc: DocumentSummary) {
     if (
-      !window.confirm(
-        `Spostare "${doc.filename}" nel cestino? Potrai ripristinarlo entro ${trashRetentionDays} giorni, da Archivio → Cestino.`,
-      )
+      !(await confirm({
+        message: `Spostare "${doc.filename}" nel cestino? Potrai ripristinarlo entro ${trashRetentionDays} giorni, da Archivio → Cestino.`,
+        confirmLabel: "Sposta nel cestino",
+      }))
     )
       return;
 
@@ -150,9 +153,10 @@ export function useArchiveData(masterKey: CryptoKey) {
     const count = selectedDocuments.length;
     if (count === 0) return;
     if (
-      !window.confirm(
-        `Spostare ${count} ${count === 1 ? "documento" : "documenti"} nel cestino? Potrai ripristinarli entro ${trashRetentionDays} giorni, da Archivio → Cestino.`,
-      )
+      !(await confirm({
+        message: `Spostare ${count} ${count === 1 ? "documento" : "documenti"} nel cestino? Potrai ripristinarli entro ${trashRetentionDays} giorni, da Archivio → Cestino.`,
+        confirmLabel: "Sposta nel cestino",
+      }))
     )
       return;
 

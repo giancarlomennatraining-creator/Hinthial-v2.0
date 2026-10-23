@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { buildPdf } from "./hinthia";
+import { acceptConfirm } from "./confirm-dialog";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
@@ -92,12 +93,8 @@ test("dopo un lotto Hinthia legge i documenti con una sola conferma e le propost
   await page.getByRole("link", { name: "Rivedi" }).click();
   await expect(page.getByRole("heading", { name: "2 documenti da confermare" })).toBeVisible();
 
-  let confirmMessage = "";
-  page.once("dialog", async (dialog) => {
-    confirmMessage = dialog.message();
-    await dialog.accept();
-  });
   await page.getByRole("button", { name: "Chiedi a Hinthia di leggere questi 2 documenti" }).click();
+  const confirmMessage = await acceptConfirm(page);
   await expect(page.getByText("Hinthia ha letto 2 documenti.")).toBeVisible({ timeout: 60_000 });
   expect(confirmMessage).toContain("Il testo di 2 documenti verrà inviato a Hinthia");
   expect(confirmMessage).toContain("polizza-casa.pdf");

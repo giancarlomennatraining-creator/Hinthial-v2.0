@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -67,8 +68,8 @@ test("selezione multipla e poi l'eliminazione in blocco passa dal Cestino", asyn
   await expect(page.getByRole("button", { name: "Seleziona tutti (3)" })).toBeVisible();
 
   // Elimina i due selezionati in blocco --- ora sposta nel cestino, non elimina più subito per sempre.
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "🗑️ Elimina" }).click();
+  await acceptConfirm(page);
   await expect(page.getByText("documento-uno.txt")).not.toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("documento-due.txt")).not.toBeVisible();
   await expect(page.getByText("documento-tre.txt")).toBeVisible(); // il terzo non era selezionato, resta
@@ -94,11 +95,11 @@ test("selezione multipla e poi l'eliminazione in blocco passa dal Cestino", asyn
   // Elimina per sempre il secondo, direttamente dal Cestino.
   await page.getByRole("link", { name: "Cestino" }).click();
   await expect(page.getByText("documento-due.txt")).toBeVisible({ timeout: 15_000 });
-  page.once("dialog", (dialog) => dialog.accept());
   await page
     .locator("li", { hasText: "documento-due.txt" })
     .getByRole("button", { name: "Elimina ora" })
     .click();
+  await acceptConfirm(page);
   await expect(page.getByText("documento-due.txt")).not.toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("Il cestino è vuoto.")).toBeVisible();
 });

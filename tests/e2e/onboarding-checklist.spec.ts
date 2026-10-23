@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, forceOwnFriendToGuardian, uniqueTestUser } from "./test-users";
+import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -105,8 +106,8 @@ test("la checklist \"Onboarding\" segue i pilastri: racconto, persona, capsula p
   await page.getByRole("link", { name: "Eredità digitale", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Eredità digitale", level: 1 })).toBeVisible();
   const enableToggle = page.getByRole("checkbox", { name: "Attiva Eredità digitale" });
-  page.once("dialog", (dialog) => dialog.accept());
   await enableToggle.click();
+  await acceptConfirm(page);
   await expect(enableToggle).toBeChecked();
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),

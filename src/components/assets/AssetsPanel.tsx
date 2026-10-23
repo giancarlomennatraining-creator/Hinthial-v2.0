@@ -24,6 +24,7 @@ import type { ReminderListItem } from "@/domain/reminders/types";
 import { useToast } from "@/components/ui/ToastProvider";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -35,6 +36,7 @@ function formatDate(iso: string): string {
 
 export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();
@@ -88,9 +90,11 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   async function handleDelete(asset: AssetListItem) {
     if (
-      !window.confirm(
-        `Eliminare il bene "${asset.name}"? I documenti e le scadenze collegati non verranno eliminati, solo scollegati.`,
-      )
+      !(await confirm({
+        message: `Eliminare il bene "${asset.name}"? I documenti e le scadenze collegati non verranno eliminati, solo scollegati.`,
+        confirmLabel: "Elimina",
+        danger: true,
+      }))
     )
       return;
 

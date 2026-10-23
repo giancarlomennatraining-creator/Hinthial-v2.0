@@ -1,0 +1,21 @@
+/* La finestra di conferma (v. ConfirmProvider): entra con una dissolvenza e un leggero ingrandimento, solo movimento e trasparenza. */
+.confirm-backdrop {
+  animation: confirm-fade 0.14s ease-out both;
+}
+.confirm-panel {
+  animation: confirm-pop 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+@keyframes confirm-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes confirm-pop {
+  from { opacity: 0; scale: 0.96; translate: 0 6px; }
+  to { opacity: 1; scale: 1; translate: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confirm-backdrop,
+  .confirm-panel {
+    animation: none;
+  }
+}

@@ -41,6 +41,7 @@ import type { DossierListItem, DossierStatus } from "@/domain/dossiers/types";
 import type { DocumentSummary } from "@/domain/documents/types";
 import { BTN_PRIMARY } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 /**
  * FASE 20 --- l'elenco dei fascicoli. I documenti si collegano dal loro
@@ -49,6 +50,7 @@ import { EmptyListCard } from "@/components/ui/EmptyListCard";
  */
 export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();
@@ -142,9 +144,11 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   async function handleDelete(dossier: DossierListItem) {
     if (
-      !window.confirm(
-        `Eliminare il fascicolo "${dossier.title}"? I documenti collegati non verranno eliminati, solo scollegati.`,
-      )
+      !(await confirm({
+        message: `Eliminare il fascicolo "${dossier.title}"? I documenti collegati non verranno eliminati, solo scollegati.`,
+        confirmLabel: "Elimina",
+        danger: true,
+      }))
     )
       return;
 

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { createConfirmedTestUser, fullName, uniqueTestUser } from "./test-users";
 import { openRowMenu } from "./row-actions";
 import { openArchiveTab } from "./nav";
+import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -63,9 +64,9 @@ test("crea, completa ed elimina scadenze", async ({ page }) => {
 
   // Elimina.
   const reminderRow = page.locator("li", { hasText: "Rinnovo assicurazione auto" });
-  page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(reminderRow);
   await page.getByRole("menuitem", { name: "Elimina" }).click();
+  await acceptConfirm(page);
   await expect(page.getByText("Nessuna scadenza ancora")).toBeVisible();
 });
 

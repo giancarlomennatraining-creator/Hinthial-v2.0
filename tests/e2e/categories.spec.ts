@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { openSettings } from "./settings-nav";
+import { acceptConfirm } from "./confirm-dialog";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
@@ -101,15 +102,11 @@ test("gestisce le categorie: elenco iniziale, creazione, modifica, eliminazione"
   await page.getByRole("tab", { name: "I miei dati" }).click();
   await expect(page.getByRole("heading", { name: "Categorie" })).toBeVisible();
 
-  let dialogMessage = "";
-  page.once("dialog", (dialog) => {
-    dialogMessage = dialog.message();
-    dialog.accept();
-  });
   await page
     .locator("li", { hasText: "🎯 Hobby e sport" })
     .getByRole("button", { name: "Elimina" })
     .click();
+  const dialogMessage = await acceptConfirm(page);
   await expect(categoryName(page, "🎯 Hobby e sport")).not.toBeVisible({ timeout: 10_000 });
   expect(dialogMessage).toContain("1 documento");
   expect(dialogMessage).toContain("NON verranno cancellati");

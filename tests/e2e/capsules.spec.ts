@@ -2,6 +2,7 @@ import { expect, test, type Page } from "./fixtures";
 import * as fs from "node:fs/promises";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 import { openRowMenu } from "./row-actions";
+import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -222,9 +223,9 @@ test("crea una capsula con destinatario e allegato, ne segue lo stato, apre l'al
   await expect(page.getByRole("heading", { name: "Capsule" })).toBeVisible();
 
   // Eliminazione.
-  page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(updatedRow);
   await page.getByRole("menuitem", { name: "Elimina" }).click();
+  await acceptConfirm(page);
   await expect(page.getByText("Nessuna capsula ancora")).toBeVisible({ timeout: 10_000 });
 });
 
@@ -477,8 +478,8 @@ test("chiudere una capsula copia il contenuto collegato al suo interno; l'origin
   await expect(docRow).toBeVisible();
   await openRowMenu(docRow);
   await expect(page.getByRole("menuitem", { name: "Elimina" })).toBeEnabled();
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("menuitem", { name: "Elimina" }).click();
+  await acceptConfirm(page);
   await expect(page.getByText("Ancora nulla in archivio.")).toBeVisible({ timeout: 10_000 });
 
   // ...eppure la capsula continua ad aprire il proprio contenuto, identico all'originale ormai cancellato: è una copia autosufficiente.

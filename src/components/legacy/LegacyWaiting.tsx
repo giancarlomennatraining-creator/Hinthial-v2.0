@@ -19,6 +19,7 @@ import { RequireMasterKey } from "@/components/crypto/RequireMasterKey";
 import { cn } from "@/lib/utils";
 import { BTN_PRIMARY } from "@/components/ui/styles";
 import { SettingsBlock } from "@/components/settings/SettingsBlock";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 /**
  * Le impostazioni dell'Eredità digitale, lette una volta sola dalla pagina: le usano sia "Quanto aspettare" (che le modifica)
@@ -68,6 +69,7 @@ function totalLabel(preset: Exclude<DigitalLegacyPreset, "custom">): string {
 export function LegacyWaiting({ userId, legacy }: { userId: string; legacy: LegacySettingsState }) {
   const supabase = useSupabase();
   const showToast = useToast();
+  const confirm = useConfirm();
   const { settings, setSettings, loading, error, setError } = legacy;
 
   const [saving, setSaving] = useState(false);
@@ -77,15 +79,18 @@ export function LegacyWaiting({ userId, legacy }: { userId: string; legacy: Lega
     setSettings((prev) => (prev ? { ...prev, preset, ...DIGITAL_LEGACY_PRESET_VALUES[preset] } : prev));
   }
 
-  function toggleEnabled() {
+  async function toggleEnabled() {
     if (!settings) return;
     // La conferma sta fuori da `setSettings`: una funzione di aggiornamento deve essere pura, e in sviluppo React la esegue due
     // volte, quindi la finestra si apriva due volte e la seconda risposta (rifiutata) annullava l'attivazione.
     if (
       !settings.enabled &&
-      !window.confirm(
-        "Attivare Eredità digitale? Da questo momento, se non accedi a Hinthial per il periodo previsto dal livello scelto qui sotto, inizierai a ricevere email di verifica.",
-      )
+      !(await confirm({
+        title: "Attivare Eredità digitale?",
+        message:
+          "Da questo momento, se non accedi a Hinthial per il periodo previsto dal livello scelto qui sotto, inizierai a ricevere email di verifica.",
+        confirmLabel: "Attiva",
+      }))
     ) {
       return;
     }

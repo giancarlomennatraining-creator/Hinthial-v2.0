@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-22 (147)
+
+### Una finestra di conferma dell'app, al posto di quelle del browser
+
+**Cosa fa:** tutte le conferme (eliminare un bene, una capsula, un amico, un fascicolo, una scadenza, un documento o il cestino; revocare un link; rimuovere una foto; smettere di essere guardiano; attivare l'Eredità digitale; mandare un documento a Hinthia) ora usano una finestra dell'app, nello stile dell'app, non quella di sistema del browser. Il pulsante porta il **verbo dell'azione** ("Elimina", "Sposta nel cestino", "Revoca il link", "Invia a Hinthia") invece di un generico OK, e per le azioni che non si disfano è rosso e il fuoco parte su **Annulla**, così un Invio distratto non le compie. Esc e un clic fuori annullano; il fuoco resta dentro la finestra e torna dov'era. Da telefono è una scheda ben leggibile, e in un'app installata (o in un APK) non appare più la finestra di Chrome.
+
+**Note tecniche:** `ConfirmProvider` e `useConfirm()` in `components/ui` (`if (!(await confirm({ message, confirmLabel, danger }))) return;`), montato in `AppShell`; 21 `window.confirm` in 17 file sostituiti. Nei test e2e un aiuto `acceptConfirm(page)` (in `tests/e2e/confirm-dialog.ts`) sostituisce `page.once("dialog", …)` e restituisce il testo, per chi lo controlla. Cinque test unitari nuovi (`confirm-provider.test.tsx`). Misura utile: gli e2e sulla versione di produzione hanno richiesto 2,5 minuti contro 10,6 sul server di sviluppo, senza le attese lente che li facevano fallire.
+
+---
+
 ## 2026-10-22 (146)
 
 ### Pulizia: codice che non serve più e rami già uniti

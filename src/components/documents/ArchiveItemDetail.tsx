@@ -81,6 +81,7 @@ import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 import { BackLink, ContextBackLink } from "@/components/ui/BackLink";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 /**
  * Scheda di un contenuto d'Archivio --- fonde vista e modifica (v. feedback utente: due pagine separate creavano
@@ -98,6 +99,7 @@ export function ArchiveItemDetail({
   documentId: string;
 }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const router = useRouter();
   const showToast = useToast();
   const { masterEnabled, extractionConsent } = useAIProcessingConsent();
@@ -528,7 +530,13 @@ export function ArchiveItemDetail({
     }
     // Con una lettura già salvata che vale ancora, "Chiedi" riprende da dove era arrivata; "Rileggi da capo" riparte.
     if (saved.kind === "complete") return;
-    if (!window.confirm(analysisConfirmMessage(planAnalysis(doc, { segments }), saved))) {
+    if (
+      !(await confirm({
+        title: "Leggere con Hinthia?",
+        message: analysisConfirmMessage(planAnalysis(doc, { segments }), saved),
+        confirmLabel: "Invia a Hinthia",
+      }))
+    ) {
       return;
     }
 
@@ -617,7 +625,14 @@ export function ArchiveItemDetail({
 
   async function handleDelete() {
     if (!doc) return;
-    if (!window.confirm(`Eliminare "${doc.filename}"? L'operazione non è reversibile.`)) return;
+    if (
+      !(await confirm({
+        message: `Eliminare "${doc.filename}"? L'operazione non è reversibile.`,
+        confirmLabel: "Elimina",
+        danger: true,
+      }))
+    )
+      return;
 
     setBusy(true);
     setError(null);

@@ -201,7 +201,7 @@ export function planAnalysis(doc: Pick<DocumentListItem, "extractedText">, optio
   return { parts: prepared.blocks.length, truncated: prepared.truncated };
 }
 
-/** Il testo del window.confirm prima dell'invio: dice quanto lavoro parte, perché un contenuto uscito è uscito. */
+/** Il testo della conferma prima dell'invio: dice quanto lavoro parte, perché un contenuto uscito è uscito. */
 export function analysisConfirmMessage(plan: AnalysisPlan, saved?: SavedAnalysisState): string {
   if (saved?.kind === "merge-pending") {
     return "Hinthia ha già letto tutte le parti: resta da preparare la sintesi finale, e verranno inviate solo le sintesi parziali. Continuare?";
