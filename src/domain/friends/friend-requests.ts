@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 import { encryptBytes, serializeEnvelope, utf8ToBytes } from "@/lib/crypto";
 import { logAuditEvent } from "@/lib/audit/log-event";
+import { invalidateVault, VAULT } from "@/lib/vault-store";
 
 /** Nome del mittente in chiaro (letto da profiles) --- non è un dato del vault, è il display name pubblico dell'account. */
 export interface IncomingFriendRequest {
@@ -80,6 +81,7 @@ export async function sendFriendRequest(
   senderEmail: string,
   recipientId: string,
 ): Promise<void> {
+  invalidateVault(VAULT.friends);
   const { error } = await supabase.from("friend_requests").insert({
     sender_id: senderId,
     recipient_id: recipientId,
@@ -100,6 +102,7 @@ export async function acceptFriendRequest(
   recipientId: string,
   request: IncomingFriendRequest,
 ): Promise<void> {
+  invalidateVault(VAULT.friends);
   const { error: rpcError } = await supabase.rpc("accept_friend_request", { request_id: request.id });
   if (rpcError) {
     throw new Error(`Impossibile accettare la richiesta: ${rpcError.message}`);
@@ -137,6 +140,7 @@ export async function acceptFriendRequest(
 }
 
 export async function rejectFriendRequest(supabase: SupabaseClient<Database>, requestId: string): Promise<void> {
+  invalidateVault(VAULT.friends);
   const { error } = await supabase.rpc("reject_friend_request", { request_id: requestId });
   if (error) {
     throw new Error(`Impossibile rifiutare la richiesta: ${error.message}`);

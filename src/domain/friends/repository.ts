@@ -16,6 +16,7 @@ import {
   uploadAvatarBlob,
 } from "@/lib/storage/avatars-bucket";
 import type { FriendInput, FriendListItem, FriendStatus, LinkedAccountMatch } from "@/domain/friends/types";
+import { invalidateVault, VAULT } from "@/lib/vault-store";
 
 const FRIEND_COLUMNS =
   "id, encrypted_name, encrypted_email, encrypted_first_name, encrypted_last_name, avatar_path, role, status, is_guardian, is_friend, linked_user_id, created_at";
@@ -119,6 +120,7 @@ export async function createFriend(
   ownerId: string,
   input: FriendInput,
 ): Promise<{ id: string }> {
+  invalidateVault(VAULT.friends);
   const [encryptedName, encryptedEmail, encryptedFirstName, encryptedLastName] = await Promise.all([
     encryptBytes(masterKey, utf8ToBytes(input.name)),
     encryptBytes(masterKey, utf8ToBytes(input.email)),
@@ -155,6 +157,7 @@ export async function updateFriend(
   input: FriendInput,
   emailChanged: boolean,
 ): Promise<void> {
+  invalidateVault(VAULT.friends);
   const [encryptedName, encryptedEmail, encryptedFirstName, encryptedLastName] = await Promise.all([
     encryptBytes(masterKey, utf8ToBytes(input.name)),
     encryptBytes(masterKey, utf8ToBytes(input.email)),
@@ -187,6 +190,7 @@ export async function setFriendStatus(
   friendId: string,
   status: FriendStatus,
 ): Promise<void> {
+  invalidateVault(VAULT.friends);
   const { error } = await supabase.from("friends").update({ status }).eq("id", friendId);
 
   if (error) {
@@ -195,6 +199,7 @@ export async function setFriendStatus(
 }
 
 export async function deleteFriend(supabase: SupabaseClient<Database>, friendId: string): Promise<void> {
+  invalidateVault(VAULT.friends, VAULT.capsules);
   // Il nome è già cifrato nella riga: lo si copia nell'evento, per riconoscere l'amico dopo l'eliminazione.
   const { data: nameRow } = await supabase.from("friends").select("encrypted_name").eq("id", friendId).maybeSingle();
 
@@ -219,6 +224,7 @@ export async function updateFriendAvatar(
   blob: Blob,
   previousPath: string | null,
 ): Promise<{ path: string; url: string }> {
+  invalidateVault(VAULT.friends);
   const path = friendAvatarStoragePath(ownerId, friendId);
   await uploadAvatarBlob(supabase, path, blob);
 
@@ -241,6 +247,7 @@ export async function removeFriendAvatar(
   friendId: string,
   currentPath: string,
 ): Promise<void> {
+  invalidateVault(VAULT.friends);
   const { error } = await supabase.from("friends").update({ avatar_path: null }).eq("id", friendId);
   if (error) {
     throw new Error(`Impossibile aggiornare l'amico: ${error.message}`);
@@ -298,6 +305,7 @@ export async function setFriendLinkedUser(
   friendId: string,
   linkedUserId: string,
 ): Promise<void> {
+  invalidateVault(VAULT.friends);
   const { error } = await supabase.from("friends").update({ linked_user_id: linkedUserId }).eq("id", friendId);
 
   if (error) {

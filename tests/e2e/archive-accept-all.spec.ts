@@ -93,8 +93,9 @@ test("su smartphone le voci della Scheda stanno una sotto l'altra", async ({ pag
 
   const [c, b, s] = await Promise.all([categoria.boundingBox(), bene.boundingBox(), scadenza.boundingBox()]);
   if (!c || !b || !s) throw new Error("Campi della Scheda non misurabili.");
-  expect(b.y).toBeGreaterThan(c.y + c.height - 1);
-  expect(s.y).toBeGreaterThan(b.y + b.height - 1);
-  expect(Math.abs(b.x - c.x)).toBeLessThan(2);
+  // L'ordine della Scheda: "Di cosa si tratta" (categoria, emittente, scadenza), poi "Collegato a" (bene collegato).
+  expect(s.y).toBeGreaterThan(c.y + c.height - 1);
+  expect(b.y).toBeGreaterThan(s.y + s.height - 1);
   expect(Math.abs(s.x - c.x)).toBeLessThan(2);
+  expect(Math.abs(b.x - c.x)).toBeLessThan(2);
 });

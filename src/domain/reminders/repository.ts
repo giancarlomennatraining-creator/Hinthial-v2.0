@@ -9,6 +9,7 @@ import {
   bytesToUtf8,
 } from "@/lib/crypto";
 import type { ReminderInput, ReminderListItem } from "@/domain/reminders/types";
+import { invalidateVault, VAULT } from "@/lib/vault-store";
 
 const REMINDER_COLUMNS =
   "id, encrypted_title, due_at, completed, related_document_id, related_asset_id, created_at, documents(encrypted_filename), assets(encrypted_name)";
@@ -87,6 +88,7 @@ export async function createReminder(
   ownerId: string,
   input: ReminderInput,
 ): Promise<string> {
+  invalidateVault(VAULT.reminders);
   const encryptedTitle = await encryptBytes(masterKey, utf8ToBytes(input.title));
 
   const { data, error } = await supabase
@@ -132,6 +134,7 @@ export async function setReminderCompleted(
   reminderId: string,
   completed: boolean,
 ): Promise<void> {
+  invalidateVault(VAULT.reminders);
   const { error } = await supabase.from("reminders").update({ completed }).eq("id", reminderId);
 
   if (error) {
@@ -143,6 +146,7 @@ export async function deleteReminder(
   supabase: SupabaseClient<Database>,
   reminderId: string,
 ): Promise<void> {
+  invalidateVault(VAULT.reminders);
   const { error } = await supabase.from("reminders").delete().eq("id", reminderId);
 
   if (error) {

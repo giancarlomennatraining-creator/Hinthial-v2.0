@@ -43,6 +43,8 @@ import { BTN_PRIMARY } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
 import { ErrorText } from "@/components/ui/ErrorText";
+import { useVaultState } from "@/lib/use-vault-state";
+import { VAULT } from "@/lib/vault-store";
 
 /**
  * FASE 20 --- l'elenco dei fascicoli. I documenti si collegano dal loro
@@ -56,14 +58,14 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const searchParams = useSearchParams();
   const showToast = useToast();
 
-  const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
-  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [assets, setAssets] = useState<AssetListItem[]>([]);
-  const [reminders, setReminders] = useState<ReminderListItem[]>([]);
+  const [dossiers, setDossiers, hitDossiers] = useVaultState<DossierListItem[]>(masterKey, VAULT.dossiers, []);
+  const [documents, setDocuments, hitDocuments] = useVaultState<DocumentSummary[]>(masterKey, VAULT.documents, []);
+  const [categories, setCategories, hitCategories] = useVaultState<Category[]>(masterKey, VAULT.categories, []);
+  const [assets, setAssets, hitAssets] = useVaultState<AssetListItem[]>(masterKey, VAULT.assets, []);
+  const [reminders, setReminders, hitReminders] = useVaultState<ReminderListItem[]>(masterKey, VAULT.reminders, []);
   const [steps, setSteps] = useState<DossierStep[]>([]);
   const [now] = useState(() => new Date());
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!(hitDossiers && hitDocuments && hitCategories && hitAssets && hitReminders));
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [suggestionBusy, setSuggestionBusy] = useState<string | null>(null);
@@ -104,7 +106,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
     } finally {
       setLoading(false);
     }
-  }, [supabase, masterKey]);
+  }, [supabase, masterKey, setDossiers, setDocuments, setCategories, setAssets, setReminders]);
 
   useEffect(() => {
     // See DocumentsPanel.tsx for why fetch-on-mount is legitimate here.

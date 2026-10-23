@@ -42,6 +42,8 @@ import { EmptyListCard } from "@/components/ui/EmptyListCard";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
 import { ErrorText } from "@/components/ui/ErrorText";
 import { errorMessage } from "@/lib/utils";
+import { useVaultState } from "@/lib/use-vault-state";
+import { VAULT } from "@/lib/vault-store";
 
 /** Richieste di amicizia in arrivo --- v. richiesta utente: email + un punto ben visibile in app per accettare/rifiutare, non solo l'email. */
 function IncomingRequestsBanner({
@@ -107,11 +109,11 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const searchParams = useSearchParams();
   const showToast = useToast();
 
-  const [friends, setFriends] = useState<FriendListItem[]>([]);
-  const [capsules, setCapsules] = useState<CapsuleListItem[]>([]);
+  const [friends, setFriends, hitFriends] = useVaultState<FriendListItem[]>(masterKey, VAULT.friends, []);
+  const [capsules, setCapsules, hitCapsules] = useVaultState<CapsuleListItem[]>(masterKey, VAULT.capsules, []);
   // Le capsule che altri hanno condiviso con me, per mostrare nella scheda di ognuno quelle che mi ha lasciato.
-  const [sharedWithMe, setSharedWithMe] = useState<SharedCapsuleListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [sharedWithMe, setSharedWithMe, hitSharedWithMe] = useVaultState<SharedCapsuleListItem[]>(masterKey, VAULT.capsulesShared, []);
+  const [loading, setLoading] = useState(!(hitFriends && hitCapsules && hitSharedWithMe));
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<FriendStatus | "all">("all");
@@ -182,7 +184,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
         }
       }
     },
-    [supabase, resolveLinkedAvatar, masterKey],
+    [supabase, resolveLinkedAvatar, masterKey, setFriends],
   );
 
   const refresh = useCallback(async () => {
@@ -214,7 +216,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
     } finally {
       setLoading(false);
     }
-  }, [supabase, masterKey, checkLinkedAccounts]);
+  }, [supabase, masterKey, checkLinkedAccounts, setFriends, setCapsules, setSharedWithMe]);
 
   useEffect(() => {
     // See DocumentsPanel.tsx for why fetch-on-mount is legitimate here.

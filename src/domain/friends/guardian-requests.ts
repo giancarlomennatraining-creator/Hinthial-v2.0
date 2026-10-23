@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 import { logAuditEvent } from "@/lib/audit/log-event";
+import { invalidateVault, VAULT } from "@/lib/vault-store";
 
 /** Distinta da guardian_verification_requests: questa è il consenso PRELIMINARE al ruolo, non la verifica reale di un'inattività. */
 export interface IncomingGuardianRoleRequest {
@@ -109,6 +110,7 @@ export async function requestGuardianRole(
   friendId: string,
   guardianUserId: string,
 ): Promise<void> {
+  invalidateVault(VAULT.friends);
   const { error } = await supabase.from("guardian_role_requests").insert({
     owner_id: ownerId,
     guardian_user_id: guardianUserId,
@@ -126,6 +128,7 @@ export async function acceptGuardianRoleRequest(
   supabase: SupabaseClient<Database>,
   requestId: string,
 ): Promise<void> {
+  invalidateVault(VAULT.friends);
   const { error } = await supabase.rpc("accept_guardian_role_request", { request_id: requestId });
   if (error) {
     throw new Error(`Impossibile accettare la richiesta: ${error.message}`);
@@ -136,6 +139,7 @@ export async function rejectGuardianRoleRequest(
   supabase: SupabaseClient<Database>,
   requestId: string,
 ): Promise<void> {
+  invalidateVault(VAULT.friends);
   const { error } = await supabase.rpc("reject_guardian_role_request", { request_id: requestId });
   if (error) {
     throw new Error(`Impossibile rifiutare la richiesta: ${error.message}`);
@@ -144,6 +148,7 @@ export async function rejectGuardianRoleRequest(
 
 /** Il PROPRIETARIO rimuove un guardiano già accettato --- nessun consenso richiesto per togliere la responsabilità, solo per darla (v. requestGuardianRole). */
 export async function revokeGuardianRole(supabase: SupabaseClient<Database>, friendId: string): Promise<void> {
+  invalidateVault(VAULT.friends);
   const { error } = await supabase.rpc("revoke_guardian_role", { p_friend_id: friendId });
   if (error) {
     throw new Error(`Impossibile rimuovere il guardiano: ${error.message}`);
@@ -152,6 +157,7 @@ export async function revokeGuardianRole(supabase: SupabaseClient<Database>, fri
 
 /** Il GUARDIANO si dimette da solo --- v. richiesta utente: visibilità reciproca (PROTETTO) significa anche potersi tirare indietro. */
 export async function resignAsGuardian(supabase: SupabaseClient<Database>, requestId: string): Promise<void> {
+  invalidateVault(VAULT.friends);
   const { error } = await supabase.rpc("resign_as_guardian", { request_id: requestId });
   if (error) {
     throw new Error(`Impossibile dimettersi da guardiano: ${error.message}`);

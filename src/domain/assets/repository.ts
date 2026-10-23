@@ -10,6 +10,7 @@ import {
 } from "@/lib/crypto";
 import { logAuditEvent, logAuditEventForCurrentUser } from "@/lib/audit/log-event";
 import type { AssetInput, AssetListItem } from "@/domain/assets/types";
+import { invalidateVault, VAULT } from "@/lib/vault-store";
 
 const ASSET_COLUMNS = "id, encrypted_name, encrypted_legacy_note, category_id, created_at";
 
@@ -70,6 +71,7 @@ export async function createAsset(
   ownerId: string,
   input: AssetInput,
 ): Promise<string> {
+  invalidateVault(VAULT.assets);
   const id = crypto.randomUUID();
   const encryptedName = await encryptBytes(masterKey, utf8ToBytes(input.name));
 
@@ -96,6 +98,7 @@ export async function updateAsset(
   assetId: string,
   input: AssetInput,
 ): Promise<void> {
+  invalidateVault(VAULT.assets);
   const encryptedName = await encryptBytes(masterKey, utf8ToBytes(input.name));
 
   const { error } = await supabase
@@ -124,6 +127,7 @@ export async function setAssetLegacyNote(
   assetId: string,
   note: string,
 ): Promise<void> {
+  invalidateVault(VAULT.assets);
   const { error } = await supabase
     .from("assets")
     .update({ encrypted_legacy_note: await encryptLegacyNote(masterKey, note) })
@@ -141,6 +145,7 @@ export async function deleteAsset(
   ownerId: string,
   assetId: string,
 ): Promise<void> {
+  invalidateVault(VAULT.assets, VAULT.documents);
   // Il nome è già cifrato nella riga: lo si copia nell'evento, per riconoscere il bene dopo l'eliminazione.
   const { data: nameRow } = await supabase.from("assets").select("encrypted_name").eq("id", assetId).maybeSingle();
 

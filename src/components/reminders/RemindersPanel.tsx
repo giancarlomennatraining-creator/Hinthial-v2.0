@@ -22,6 +22,8 @@ import { DocumentExpiryList } from "@/components/reminders/DocumentExpiryList";
 import { listDocumentExpiries, type DocumentExpiry } from "@/domain/documents/repository";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
 import { ErrorText } from "@/components/ui/ErrorText";
+import { useVaultState } from "@/lib/use-vault-state";
+import { VAULT } from "@/lib/vault-store";
 
 type StatusFilter = "all" | "pending" | "completed";
 
@@ -59,10 +61,10 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const searchParams = useSearchParams();
   const showToast = useToast();
 
-  const [reminders, setReminders] = useState<ReminderListItem[]>([]);
+  const [reminders, setReminders, hitReminders] = useVaultState<ReminderListItem[]>(masterKey, VAULT.reminders, []);
   // Le date di scadenza scritte nella scheda dei documenti: si vedono qui accanto alle scadenze create come tali.
-  const [documentExpiries, setDocumentExpiries] = useState<DocumentExpiry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [documentExpiries, setDocumentExpiries, hitDocumentExpiries] = useVaultState<DocumentExpiry[]>(masterKey, VAULT.documentExpiries, []);
+  const [loading, setLoading] = useState(!(hitReminders && hitDocumentExpiries));
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -89,7 +91,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
     } finally {
       setLoading(false);
     }
-  }, [supabase, masterKey]);
+  }, [supabase, masterKey, setReminders, setDocumentExpiries]);
 
   useEffect(() => {
     // See DocumentsPanel.tsx for why fetch-on-mount is legitimate here.
