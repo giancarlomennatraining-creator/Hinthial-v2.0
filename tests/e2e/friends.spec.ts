@@ -1,6 +1,7 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 import { openRowMenu } from "./row-actions";
+import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -79,9 +80,9 @@ test("aggiunge un amico, ne segue lo stato e lo elimina", async ({ page }) => {
   await expect(updatedScheda.getByText("Revocato")).toBeVisible();
 
   // Eliminazione.
-  page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(updatedScheda);
   await page.getByRole("menuitem", { name: "Elimina" }).click();
+  await acceptConfirm(page);
   await expect(page.getByText("Nessun amico ancora")).toBeVisible({
     timeout: 10_000,
   });

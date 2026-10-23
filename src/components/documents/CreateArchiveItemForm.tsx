@@ -70,6 +70,7 @@ import type {
 } from "@/domain/documents/types";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
 import { BackLink } from "@/components/ui/BackLink";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 type CreationMode = "upload" | "record" | "note";
 
@@ -327,6 +328,7 @@ function FileReadingStatus({ reading }: { reading: ReadingState }) {
  */
 export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { masterEnabled, extractionConsent } = useAIProcessingConsent();
@@ -759,7 +761,11 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
     }
     if (saved.kind === "complete") return;
     if (
-      !window.confirm(analysisConfirmMessage(planAnalysis(savedDoc, { segments }), saved))
+      !(await confirm({
+        title: "Leggere con Hinthia?",
+        message: analysisConfirmMessage(planAnalysis(savedDoc, { segments }), saved),
+        confirmLabel: "Invia a Hinthia",
+      }))
     ) {
       return;
     }

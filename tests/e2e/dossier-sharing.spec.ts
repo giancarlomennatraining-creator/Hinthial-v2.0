@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { setUpWithDocument } from "./hinthia";
+import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -70,8 +71,8 @@ test("si condivide un fascicolo con un link protetto, lo si apre senza account, 
   await expect(link).toContainText("Notaio", { timeout: 15_000 });
   await expect(link).toContainText("Attivo");
   await expect(link).toContainText("1 documento visto");
-  page.once("dialog", (dialog) => dialog.accept());
   await link.getByRole("button", { name: "Revoca subito" }).click();
+  await acceptConfirm(page);
   await expect(link).toContainText("Revocato", { timeout: 20_000 });
 
   // Da ora il link non apre più niente.

@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 import { createConfirmedTestUser, uniqueTestUser, type TestUser } from "./test-users";
+import { acceptConfirm } from "./confirm-dialog";
 
 /**
  * Aiuti per gli e2e che passano dalla lettura di Hinthia. La chiamata ad Anthropic è sempre simulata (`page.route`):
@@ -165,8 +166,8 @@ export async function enableHinthia(page: Page) {
 /** "Chiedi a Hinthia" -> "Solo questa volta" -> attende che arrivino le proposte (tab "Chiedi a Hinthia · N"). */
 export async function askHinthia(page: Page, expectedProposals: number) {
   await page.getByRole("tab", { name: /^Chiedi a Hinthia/ }).click();
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Solo questa volta" }).click();
+  await acceptConfirm(page);
   await expect(page.getByRole("tab", { name: `Chiedi a Hinthia · ${expectedProposals}` })).toBeVisible({
     timeout: 20_000,
   });

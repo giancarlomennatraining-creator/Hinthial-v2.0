@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { enableHinthia, setUpWithDocument } from "./hinthia";
+import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
@@ -56,8 +57,8 @@ test("un fascicolo con un documento letto da Hinthia si può riassumere, e il ri
   // Hinthia legge il documento.
   await enableHinthia(page);
   await page.getByRole("tab", { name: /^Chiedi a Hinthia/ }).click();
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Solo questa volta" }).click();
+  await acceptConfirm(page);
   await expect(page.getByRole("tab", { name: /^Chiedi a Hinthia · \d+/ })).toBeVisible({ timeout: 20_000 });
 
   // Il fascicolo offre il riassunto, e Hinthia lo scrive solo quando glielo si chiede.

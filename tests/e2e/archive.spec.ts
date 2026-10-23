@@ -2,6 +2,7 @@ import { expect, test } from "./fixtures";
 import * as fs from "node:fs/promises";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 import { openRowMenu } from "./row-actions";
+import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -98,9 +99,9 @@ test("configura la cifratura, carica, apre e cancella un documento", async ({
   expect(downloadedContent).toBe(fileContent);
 
   // --- Eliminazione ---
-  page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(row);
   await page.getByRole("menuitem", { name: "Elimina" }).click();
+  await acceptConfirm(page);
   await expect(page.getByText("appunti.txt")).not.toBeVisible();
   await expect(page.getByText("Ancora nulla in archivio")).toBeVisible();
 });

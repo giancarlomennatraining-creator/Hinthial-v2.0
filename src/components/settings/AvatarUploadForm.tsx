@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { removeAvatar, updateAvatar } from "@/domain/profile/repository";
 import { AvatarPickerCrop } from "@/components/ui/AvatarPickerCrop";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 /**
  * Impostazioni -> Informazioni utente -> Foto profilo. In chiaro, non
@@ -27,6 +28,7 @@ export function AvatarUploadForm({
   avatarUrl: string | null;
 }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const [avatarPath, setAvatarPath] = useState(initialAvatarPath);
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
 
@@ -37,7 +39,8 @@ export function AvatarUploadForm({
   }
 
   async function handleRemove() {
-    if (!avatarPath || !window.confirm("Rimuovere la foto profilo?")) return;
+    if (!avatarPath) return;
+    if (!(await confirm({ message: "Rimuovere la foto profilo?", confirmLabel: "Rimuovi la foto", danger: true }))) return;
     await removeAvatar(supabase, userId, avatarPath);
     setAvatarUrl(null);
     setAvatarPath(null);

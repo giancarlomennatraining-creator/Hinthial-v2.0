@@ -10,6 +10,7 @@ import { LoginSplashProvider } from "@/components/layout/LoginSplashProvider";
 import { OnboardingWidgetVisibilityProvider } from "@/components/layout/OnboardingWidgetVisibilityProvider";
 import { AIProcessingConsentProvider } from "@/components/ai/AIProcessingConsentProvider";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { ConfirmProvider } from "@/components/ui/ConfirmProvider";
 import { AuditWriteFailedNotice } from "@/components/audit/AuditWriteFailedNotice";
 import { NavigationTracker } from "@/components/ui/BackLink";
 
@@ -47,6 +48,7 @@ export function AppShell({
 }) {
   return (
     <ToastProvider>
+    <ConfirmProvider>
     <LoginSplashProvider>
     <MasterKeyProvider>
     <UnlockPromptProvider>
@@ -73,6 +75,7 @@ export function AppShell({
     </UnlockPromptProvider>
     </MasterKeyProvider>
     </LoginSplashProvider>
+    </ConfirmProvider>
     </ToastProvider>
   );
 }

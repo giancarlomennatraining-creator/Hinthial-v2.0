@@ -23,6 +23,7 @@ import { CARD, CARD_TITLE, SMALL_BUTTON, TEXT_INPUT } from "@/components/dossier
 import type { DossierListItem } from "@/domain/dossiers/types";
 import type { DocumentSummary } from "@/domain/documents/types";
 import { BackLink } from "@/components/ui/BackLink";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -46,6 +47,7 @@ const OPTION_BASE = "flex cursor-pointer items-start gap-2.5 rounded-xl border-[
  */
 export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKey; dossierId: string }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const showToast = useToast();
 
   const [dossier, setDossier] = useState<DossierListItem | null>(null);
@@ -157,7 +159,14 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
   }
 
   async function handleRevoke(share: DossierShare) {
-    if (!window.confirm("Revocare questo link? Chi lo ha non potrà più aprire il fascicolo.")) return;
+    if (
+      !(await confirm({
+        message: "Revocare questo link? Chi lo ha non potrà più aprire il fascicolo.",
+        confirmLabel: "Revoca il link",
+        danger: true,
+      }))
+    )
+      return;
     setBusyShareId(share.id);
     setError(null);
     try {

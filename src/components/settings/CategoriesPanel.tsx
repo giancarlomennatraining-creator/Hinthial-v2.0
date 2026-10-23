@@ -14,6 +14,7 @@ import { DocumentTypeCategoriesPanel } from "@/components/settings/DocumentTypeC
 import { IconPicker } from "@/components/ui/IconPicker";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 const DEFAULT_ICON = "📁";
 
@@ -23,6 +24,7 @@ const DEFAULT_ICON = "📁";
  */
 export function CategoriesPanel() {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   // Serve solo a cifrare il nome nell'evento di eliminazione, quando il vault è sbloccato.
   const { status } = useMasterKey();
 
@@ -143,7 +145,7 @@ export function CategoriesPanel() {
         ? `Attenzione: la categoria "${category.icon} ${category.name}" è collegata a ${usedBy.join(" e ")}. Eliminandola NON verranno cancellati: resteranno semplicemente senza categoria. Procedere comunque?`
         : `Eliminare la categoria "${category.icon} ${category.name}"? Nessun documento o bene è attualmente collegato.`;
 
-    if (!window.confirm(message)) {
+    if (!(await confirm({ message, confirmLabel: "Elimina la categoria", danger: true }))) {
       setBusyId(null);
       return;
     }

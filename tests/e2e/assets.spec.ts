@@ -2,6 +2,7 @@ import { expect, test, type Page } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 import { openRowMenu } from "./row-actions";
 import { openArchiveTab } from "./nav";
+import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -120,9 +121,9 @@ test("crea un bene e vi collega un documento e una scadenza", async ({ page }) =
   await expect(renamedAssetRow.getByText("🚗 Veicoli")).toBeVisible();
 
   // Eliminare il bene scollega, non elimina, documento e scadenza.
-  page.once("dialog", (dialog) => dialog.accept());
   await openRowMenu(renamedAssetRow);
   await page.getByRole("menuitem", { name: "Elimina" }).click();
+  await acceptConfirm(page);
   await expect(page.getByText("Nessun bene ancora")).toBeVisible();
 
   await page.getByRole("link", { name: "Archivio" }).click();

@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
+import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
@@ -127,9 +128,9 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
       body: JSON.stringify({ error: "Hinthia non è ancora configurata su questo server." }),
     }),
   );
-  page.once("dialog", (dialog) => dialog.accept());
   const analyzeRequest = page.waitForRequest("**/api/ai/analyze");
   await page.getByRole("button", { name: "Solo questa volta" }).click();
+  await acceptConfirm(page);
   await analyzeRequest;
   await expect(
     page.getByText("Hinthia non è ancora configurata su questo server."),

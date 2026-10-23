@@ -15,6 +15,7 @@ import { ListSkeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/ToastProvider";
 import { PendingGuardianChecks } from "@/components/digital-legacy/PendingGuardianChecks";
 import { BackLink } from "@/components/ui/BackLink";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" });
@@ -30,6 +31,7 @@ function formatDate(iso: string): string {
  */
 export function ProtectedPanel() {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const showToast = useToast();
 
   const [requests, setRequests] = useState<IncomingGuardianRoleRequest[]>([]);
@@ -95,7 +97,14 @@ export function ProtectedPanel() {
   }
 
   async function handleResign(relationship: ProtectedRelationship) {
-    if (!window.confirm(`Smettere di essere guardiano di ${relationship.ownerName}?`)) return;
+    if (
+      !(await confirm({
+        message: `Smettere di essere guardiano di ${relationship.ownerName}?`,
+        confirmLabel: "Smetti di essere guardiano",
+        danger: true,
+      }))
+    )
+      return;
 
     setBusyId(relationship.requestId);
     setError(null);

@@ -43,6 +43,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
 import { useToast } from "@/components/ui/ToastProvider";
 import { BTN_PRIMARY } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -59,6 +60,7 @@ function formatSize(bytes: number): string {
  */
 export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();
@@ -242,7 +244,13 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   async function handleDelete(capsule: CapsuleListItem) {
-    if (!window.confirm(`Eliminare la capsula "${capsule.title}"? L'operazione non è reversibile.`))
+    if (
+      !(await confirm({
+        message: `Eliminare la capsula "${capsule.title}"? L'operazione non è reversibile.`,
+        confirmLabel: "Elimina",
+        danger: true,
+      }))
+    )
       return;
 
     setBusyId(capsule.id);

@@ -20,6 +20,7 @@ import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
 import { DocumentExpiryList } from "@/components/reminders/DocumentExpiryList";
 import { listDocumentExpiries, type DocumentExpiry } from "@/domain/documents/repository";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 type StatusFilter = "all" | "pending" | "completed";
 
@@ -52,6 +53,7 @@ function dueStatus(dueAt: string, completed: boolean): "overdue" | "soon" | "ok"
 
 export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();
@@ -110,7 +112,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
   }
 
   async function handleDelete(reminder: ReminderListItem) {
-    if (!window.confirm(`Eliminare la scadenza "${reminder.title}"?`)) return;
+    if (!(await confirm({ message: `Eliminare la scadenza "${reminder.title}"?`, confirmLabel: "Elimina", danger: true }))) return;
 
     setBusyId(reminder.id);
     setError(null);

@@ -55,6 +55,7 @@ import type { DossierListItem } from "@/domain/dossiers/types";
 import type { DocumentListItem, DocumentSummary } from "@/domain/documents/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
 import { BackLink, ContextBackLink } from "@/components/ui/BackLink";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 /**
  * La scheda di un fascicolo: titolo, descrizione, stato, e la vicenda che racconta, in gran parte ricavata dai suoi
@@ -65,6 +66,7 @@ import { BackLink, ContextBackLink } from "@/components/ui/BackLink";
  */
 export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; dossierId: string }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();
@@ -181,9 +183,11 @@ export function DossierDetail({ masterKey, dossierId }: { masterKey: CryptoKey; 
   async function handleDelete() {
     if (!dossier) return;
     if (
-      !window.confirm(
-        `Eliminare il fascicolo "${dossier.title}"? I documenti collegati non verranno eliminati, solo scollegati.`,
-      )
+      !(await confirm({
+        message: `Eliminare il fascicolo "${dossier.title}"? I documenti collegati non verranno eliminati, solo scollegati.`,
+        confirmLabel: "Elimina",
+        danger: true,
+      }))
     )
       return;
 

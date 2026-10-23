@@ -39,6 +39,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { AlertTriangleIcon } from "@/components/icons/nav-icons";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 /** Richieste di amicizia in arrivo --- v. richiesta utente: email + un punto ben visibile in app per accettare/rifiutare, non solo l'email. */
 function IncomingRequestsBanner({
@@ -99,6 +100,7 @@ function IncomingRequestsBanner({
 /** Ogni riga è per default una PERSONA (contatto privato). Diventa AMICO solo con richiesta reciproca accettata (v. domain/friends/friend-requests); solo un AMICO può diventare GUARDIANO, anch'esso su richiesta accettata --- mai flag impostati unilateralmente. */
 export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useToast();
@@ -339,7 +341,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
 
 
   async function handleDelete(friend: FriendListItem) {
-    if (!window.confirm(`Eliminare l'amico "${friend.name}"?`)) return;
+    if (!(await confirm({ message: `Eliminare l'amico "${friend.name}"?`, confirmLabel: "Elimina", danger: true }))) return;
 
     setBusyId(friend.id);
     setError(null);

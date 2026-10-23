@@ -11,6 +11,7 @@ import { PageHelp } from "@/components/help/PageHelp";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { DocumentListItem } from "@/domain/documents/types";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 /**
  * Cestino: eliminare più documenti insieme moltiplica il rischio di un clic distratto, quindi l'eliminazione
@@ -19,6 +20,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
  */
 export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const showToast = useToast();
 
   const [documents, setDocuments] = useState<DocumentListItem[]>([]);
@@ -86,7 +88,11 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
 
   async function handlePurgeNow(doc: DocumentListItem) {
     if (
-      !window.confirm(`Eliminare "${doc.filename}" per sempre? Non potrai più ripristinarlo.`)
+      !(await confirm({
+        message: `Eliminare "${doc.filename}" per sempre? Non potrai più ripristinarlo.`,
+        confirmLabel: "Elimina per sempre",
+        danger: true,
+      }))
     )
       return;
 
@@ -135,9 +141,11 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
     const count = selectedDocuments.length;
     if (count === 0) return;
     if (
-      !window.confirm(
-        `Eliminare per sempre ${count} ${count === 1 ? "documento" : "documenti"}? Non potrai più ripristinarli.`,
-      )
+      !(await confirm({
+        message: `Eliminare per sempre ${count} ${count === 1 ? "documento" : "documenti"}? Non potrai più ripristinarli.`,
+        confirmLabel: "Elimina per sempre",
+        danger: true,
+      }))
     )
       return;
 
@@ -166,9 +174,11 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
   async function handleEmptyTrash() {
     if (documents.length === 0) return;
     if (
-      !window.confirm(
-        `Vuotare il cestino? Tutti i ${documents.length} documenti verranno eliminati per sempre.`,
-      )
+      !(await confirm({
+        message: `Vuotare il cestino? Tutti i ${documents.length} documenti verranno eliminati per sempre.`,
+        confirmLabel: "Svuota il cestino",
+        danger: true,
+      }))
     )
       return;
 

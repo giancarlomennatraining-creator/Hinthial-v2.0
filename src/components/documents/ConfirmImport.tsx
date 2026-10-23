@@ -44,6 +44,7 @@ import { formatDate } from "@/lib/format";
 import { INPUT_FIELD } from "@/components/ui/styles";
 import { sortAlphabetically } from "@/lib/utils";
 import { BackLink } from "@/components/ui/BackLink";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 /** Un documento importato, con tutto ciò che serve per calcolarne le proposte (v. proposalsForDocument). */
 interface Item {
@@ -100,6 +101,7 @@ function proposalKey(proposal: Proposal): string {
  */
 export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { masterEnabled, extractionConsent } = useAIProcessingConsent();
@@ -228,9 +230,11 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
     if (readable.length === 0 || reading) return;
     const list = readable.slice(0, 8).map((item) => `• ${item.doc.filename}`).join("\n");
     const more = readable.length > 8 ? `\n… e altri ${readable.length - 8}` : "";
-    const confirmed = window.confirm(
-      `Il testo di ${readable.length} ${readable.length === 1 ? "documento verrà inviato" : "documenti verrà inviato"} a Hinthia, uno dopo l'altro:\n\n${list}${more}\n\nUn contenuto uscito è uscito. Continuare?`,
-    );
+    const confirmed = await confirm({
+      title: "Leggere con Hinthia?",
+      message: `Il testo di ${readable.length} ${readable.length === 1 ? "documento verrà inviato" : "documenti verrà inviato"} a Hinthia, uno dopo l'altro:\n\n${list}${more}\n\nUn contenuto uscito è uscito.`,
+      confirmLabel: "Invia a Hinthia",
+    });
     if (!confirmed) return;
 
     const abort = new AbortController();

@@ -39,7 +39,7 @@ function ProgressStatus({ progress }: { progress: AnalysisProgress | null }) {
 /**
  * FASE 22: il bottone che manda per davvero il testo di un documento a Claude --- niente di automatico, un clic
  * esplicito per documento. Puramente presentazionale (come ReadingRegister): stato e chiamate vivono in
- * ArchiveItemDetail.tsx, incluso il window.confirm prima dell'invio (v. handleAnalyzeWithClaude).
+ * ArchiveItemDetail.tsx, inclusa la conferma prima dell'invio (v. handleAnalyzeWithClaude).
  */
 export function AIAnalysisTrigger({
   masterEnabled,

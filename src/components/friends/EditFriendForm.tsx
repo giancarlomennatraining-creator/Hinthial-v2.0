@@ -11,10 +11,12 @@ import { AvatarPickerCrop } from "@/components/ui/AvatarPickerCrop";
 import type { FriendListItem } from "@/domain/friends/types";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
 import { BackLink } from "@/components/ui/BackLink";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 /** Pagina di modifica di un amico. Conferma via `?updated=1` nell'URL, mai il nome in chiaro. Nessun elenco per id lato repository: si carica l'intero elenco già decifrato e si cerca l'id. */
 export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; friendId: string }) {
   const supabase = useSupabase();
+  const confirm = useConfirm();
   const router = useRouter();
 
   const [friend, setFriend] = useState<FriendListItem | null>(null);
@@ -75,7 +77,8 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
   }
 
   async function handleAvatarRemove() {
-    if (!avatarPath || !window.confirm("Rimuovere la foto di questo amico?")) return;
+    if (!avatarPath) return;
+    if (!(await confirm({ message: "Rimuovere la foto di questo amico?", confirmLabel: "Rimuovi la foto", danger: true }))) return;
     setAvatarBusy(true);
     try {
       await removeFriendAvatar(supabase, friendId, avatarPath);
