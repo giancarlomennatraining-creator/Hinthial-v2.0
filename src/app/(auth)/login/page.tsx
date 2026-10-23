@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { signIn } from "@/lib/auth/actions";
 import { initialAuthActionState } from "@/lib/auth/action-state";
 import { TextField } from "@/components/ui/TextField";
+import { ErrorText } from "@/components/ui/ErrorText";
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState(
@@ -52,9 +53,9 @@ export default function LoginPage() {
         </Link>
 
         {state.error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <ErrorText>
             {state.error}
-          </p>
+          </ErrorText>
         ) : null}
 
         <button

@@ -4,6 +4,7 @@ import { DIGITAL_LEGACY_PRESET_LABEL } from "@/domain/digital-legacy/types";
 import type { LegacySettingsState } from "@/components/legacy/LegacyWaiting";
 import { DigitalLegacyStatusBanner } from "@/components/digital-legacy/DigitalLegacyStatusBanner";
 import { cn } from "@/lib/utils";
+import { PANEL_FLAT } from "@/components/ui/styles";
 
 /** I blocchi della pagina, nell'ordine in cui compaiono: i primi due non cifrano nulla, gli altri chiedono la master key. */
 const SECTIONS = [
@@ -29,7 +30,7 @@ export function LegacyOverview({ userId, legacy, showIndex }: { userId: string; 
       <DigitalLegacyStatusBanner userId={userId} reminderCount={settings.reminderCount} />
       <section
         aria-label="Stato di Eredità digitale"
-        className="flex flex-col gap-4 surface-card rounded-card border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+        className={`${PANEL_FLAT} flex flex-col gap-4 p-5`}
       >
         <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
           <span

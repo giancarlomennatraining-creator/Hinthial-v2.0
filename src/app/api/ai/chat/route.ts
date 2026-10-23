@@ -4,6 +4,7 @@ import { authenticate, readJsonBody } from "@/lib/http/api-guards";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import type { MinimalItem } from "@/domain/ai/claude-provider";
 import { consumeAiCall } from "@/lib/ai/daily-quota";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * Unico punto di contatto tra Hinthial e Anthropic: la chiave API vive solo qui (server-side), mai nel browser. Il
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ text: textBlock?.text ?? "" });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Errore sconosciuto.";
+    const message = errorMessage(err, "Errore sconosciuto.");
     return NextResponse.json({ error: `Impossibile contattare Hinthia: ${message}` }, { status: 502 });
   }
 }

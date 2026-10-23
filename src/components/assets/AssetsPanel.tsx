@@ -10,7 +10,7 @@ import { deleteAsset, listAssets } from "@/domain/assets/repository";
 import { listDocumentSummaries } from "@/domain/documents/repository";
 import { listCategories } from "@/domain/categories/repository";
 import { listReminders } from "@/domain/reminders/repository";
-import { sortAlphabetically } from "@/lib/utils";
+import { errorMessage, sortAlphabetically } from "@/lib/utils";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { ArchiveTabs } from "@/components/documents/ArchiveTabs";
@@ -22,9 +22,10 @@ import type { DocumentSummary } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
 import { useToast } from "@/components/ui/ToastProvider";
-import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", {
@@ -76,7 +77,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
       setDocuments(documentsResult);
       setReminders(remindersResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare i beni.");
+      setError(errorMessage(err, "Impossibile caricare i beni."));
     } finally {
       setLoading(false);
     }
@@ -109,7 +110,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
       await deleteAsset(supabase, user.id, asset.id);
       setAssets((prev) => prev.filter((a) => a.id !== asset.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare il bene.");
+      setError(errorMessage(err, "Impossibile eliminare il bene."));
     } finally {
       setBusyId(null);
     }
@@ -151,9 +152,9 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
       <MobileAddFab href="/assets/new" label="Aggiungi bene" />
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {loading ? (
@@ -183,7 +184,7 @@ export function AssetsPanel({ masterKey }: { masterKey: CryptoKey }) {
               Nessun bene corrisponde ai filtri.
             </p>
           ) : (
-            <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+            <ul className={`${PANEL} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
               {filteredAssets.map((asset) => {
                 const category = categoryFor(asset);
                 const busy = busyId === asset.id;

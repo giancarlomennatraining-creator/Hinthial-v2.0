@@ -3,7 +3,8 @@
 import { useState, type ReactNode } from "react";
 import { useMasterKey } from "@/components/crypto/MasterKeyProvider";
 import { PasswordInput } from "@/components/ui/PasswordInput";
-import { INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { ErrorText } from "@/components/ui/ErrorText";
 
 /**
  * La scheda rossa di un'azione irreversibile sull'account (v. ResetAccountCard, DeleteAccountCard): un pulsante che
@@ -159,9 +160,9 @@ export function DangerConfirmCard({
             </div>
 
             {error ? (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              <ErrorText>
                 {error}
-              </p>
+              </ErrorText>
             ) : null}
 
             <div className="flex gap-3">
@@ -177,7 +178,7 @@ export function DangerConfirmCard({
                 type="button"
                 disabled={busy}
                 onClick={closeModal}
-                className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                className={`${BTN_SECONDARY} disabled:opacity-50`}
               >
                 Annulla
               </button>

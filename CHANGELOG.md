@@ -10,6 +10,23 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-23 (148)
+
+### Mattoni condivisi: riquadri, messaggi d'errore, caricamenti e pulsanti
+
+**Cosa fa:** nessun cambiamento di funzione. Ciò che era scritto a mano decine di volte è ora in un posto solo, così una correzione grafica si fa una volta e vale ovunque, come già succede con i colori:
+- `PANEL` e `PANEL_FLAT` (in `components/ui/styles.ts`): il riquadro, con o senza ombra, che cambia con lo stile (Foglia, Notte, Luce). 66 riquadri sostituiti.
+- `ErrorText`: il messaggio d'errore rosso, annunciato dagli screen reader. 78 sostituiti.
+- `LoadingText`: "Caricamento…". 32 sostituiti.
+- `errorMessage(err, "…")` (in `lib/utils.ts`) al posto di `err instanceof Error ? err.message : "…"`, scritto 144 volte in 56 file.
+- 13 pulsanti scritti a mano passano a `BTN_SECONDARY` / `BTN_PRIMARY`.
+
+**Una differenza visibile, voluta:** quei 13 pulsanti avevano un angolo arrotondato fisso (`rounded-xl`, `rounded-md`); ora seguono la forma dello stile (`rounded-btn`: a pillola in Foglia). Sono nella scheda del documento (Scarica, Elimina e simili), nel modulo di nuovo contenuto, nell'editor della foto, nella verifica in due passaggi, nell'importazione, nella prova generale dell'Eredità digitale e nelle conferme di cancellazione: ora sono come tutti gli altri pulsanti.
+
+**Note tecniche:** trasformazione fatta a livello di singole classi, quindi le classi risultanti sono le stesse di prima. Restano due definizioni locali, `CARD` in `components/dossiers/styles.ts` e `TodayHome.tsx`, che non coincidono con `PANEL` e vanno riviste a parte (quella dei fascicoli, ad esempio, non segue gli stili). Un hook generico per le azioni asincrone non c'è: gli schemi di occupato/errore/fine variano troppo da punto a punto perché un solo aiuto non nasconda la logica; è stata estratta la parte davvero identica (`errorMessage`).
+
+---
+
 ## 2026-10-22 (147)
 
 ### Una finestra di conferma dell'app, al posto di quelle del browser

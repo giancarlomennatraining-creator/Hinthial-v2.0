@@ -5,6 +5,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { fetchAccountVisibilitySummary } from "@/domain/privacy/repository";
 import type { AccountVisibilitySummary } from "@/domain/privacy/types";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { PANEL } from "@/components/ui/styles";
+import { errorMessage } from "@/lib/utils";
 
 const NEVER_VISIBLE = [
   "Il nome dei tuoi file",
@@ -50,7 +54,7 @@ export function PrivacyPanel({
     try {
       setSummary(await fetchAccountVisibilitySummary(supabase, userId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare il riepilogo.");
+      setError(errorMessage(err, "Impossibile caricare il riepilogo."));
     }
   }, [supabase, userId]);
 
@@ -62,14 +66,14 @@ export function PrivacyPanel({
 
   if (error) {
     return (
-      <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+      <ErrorText>
         {error}
-      </p>
+      </ErrorText>
     );
   }
 
   if (!summary) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>;
+    return <LoadingText />;
   }
 
   const visibleNow = [
@@ -102,7 +106,7 @@ export function PrivacyPanel({
       </p>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className={`${PANEL} flex flex-col gap-3 p-4`}>
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             👁️ Quello che vediamo
           </h3>

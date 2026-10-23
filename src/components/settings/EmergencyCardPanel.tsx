@@ -6,7 +6,10 @@ import { getEmergencyCard, saveEmergencyCard } from "@/domain/emergency-card/rep
 import { BLOOD_TYPES, EMPTY_EMERGENCY_CARD, isEmergencyCardEmpty, type EmergencyCard, type EmergencyContact } from "@/domain/emergency-card/types";
 import { printOnlyMarkedContent } from "@/lib/print";
 import { useToast } from "@/components/ui/ToastProvider";
-import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, INPUT_FIELD, PANEL_FLAT } from "@/components/ui/styles";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 function emptyContact(): EmergencyContact {
   return { name: "", relation: "", phone: "" };
@@ -46,7 +49,7 @@ export function EmergencyCardPanel({
         const loaded = await getEmergencyCard(supabase, masterKey, userId);
         if (!cancelled) setCard(loaded);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Impossibile caricare la scheda.");
+        if (!cancelled) setError(errorMessage(err, "Impossibile caricare la scheda."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -80,14 +83,14 @@ export function EmergencyCardPanel({
       setCard((prev) => ({ ...prev, contacts: toSave.contacts, updatedAt: new Date().toISOString() }));
       showToast("Scheda d'emergenza salvata.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile salvare la scheda.");
+      setError(errorMessage(err, "Impossibile salvare la scheda."));
     } finally {
       setSaving(false);
     }
   }
 
   if (loading) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>;
+    return <LoadingText />;
   }
 
   const fullName = `${firstName} ${lastName}`.trim();
@@ -99,7 +102,7 @@ export function EmergencyCardPanel({
 
       {/* items-start: senza, il pannello destro si estende all'altezza della colonna sinistra e intercetta i click sugli elementi che finiscono alla stessa altezza. */}
       <div className="grid grid-cols-1 items-start gap-6 @2xl:grid-cols-[minmax(0,26rem)_1fr]">
-        <div className="flex flex-col gap-4 surface-card rounded-card border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className={`${PANEL_FLAT} flex flex-col gap-4 p-5`}>
           <div className="flex gap-3">
             <div className="flex flex-1 flex-col gap-1">
               <label htmlFor="blood-type" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -244,9 +247,9 @@ export function EmergencyCardPanel({
           </div>
 
           {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <ErrorText>
               {error}
-            </p>
+            </ErrorText>
           ) : null}
 
           <button
@@ -310,7 +313,7 @@ function EmergencyCardPreview({
   const hasDoctor = Boolean(card.doctorName.trim());
 
   return (
-    <div className="flex w-[340px] flex-col gap-2.5 surface-card rounded-card border border-zinc-200 bg-white p-5 shadow-[0_8px_20px_rgba(16,24,40,0.06)] dark:border-zinc-800 dark:bg-zinc-950">
+    <div className={`${PANEL_FLAT} flex w-[340px] flex-col gap-2.5 p-5 shadow-[0_8px_20px_rgba(16,24,40,0.06)]`}>
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold text-accent">🌿 Hinthial</span>
         <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">

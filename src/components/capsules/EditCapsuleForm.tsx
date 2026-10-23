@@ -34,6 +34,9 @@ import type { DocumentSummary } from "@/domain/documents/types";
 import type { Category } from "@/domain/categories/types";
 import type { DossierListItem } from "@/domain/dossiers/types";
 import { BTN_PRIMARY } from "@/components/ui/styles";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -110,7 +113,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
       }
     } catch (err) {
       if (requestId !== latestRequestRef.current) return;
-      setError(err instanceof Error ? err.message : "Impossibile caricare la capsula.");
+      setError(errorMessage(err, "Impossibile caricare la capsula."));
     } finally {
       if (requestId === latestRequestRef.current) setLoading(false);
     }
@@ -176,7 +179,7 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
       });
       router.push("/capsules?updated=1");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare la capsula.");
+      setError(errorMessage(err, "Impossibile aggiornare la capsula."));
       setSaving(false);
     }
   }
@@ -189,15 +192,15 @@ export function EditCapsuleForm({ masterKey, capsuleId }: { masterKey: CryptoKey
       />
 
       {loading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        <LoadingText />
       ) : !capsule ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           Capsula non trovata.
-        </p>
+        </ErrorText>
       ) : capsule.status !== "draft" ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           Solo le capsule ancora in bozza sono modificabili — questa è già stata chiusa.
-        </p>
+        </ErrorText>
       ) : (
         <CapsuleFormCard>
           {step === 1 ? (

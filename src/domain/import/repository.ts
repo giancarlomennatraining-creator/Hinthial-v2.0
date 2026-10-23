@@ -5,6 +5,7 @@ import { createAsset } from "@/domain/assets/repository";
 import { createCategory } from "@/domain/categories/repository";
 import { createReminder } from "@/domain/reminders/repository";
 import { isRowReady } from "@/domain/import/types";
+import { errorMessage } from "@/lib/utils";
 import type {
   AssetRow,
   FriendRow,
@@ -66,7 +67,7 @@ export async function importFriends(
       });
       results.push({ rowNumber: row.rowNumber, status: "imported" });
     } catch (err) {
-      results.push(skippedResult(row.rowNumber, err instanceof Error ? err.message : "Errore sconosciuto."));
+      results.push(skippedResult(row.rowNumber, errorMessage(err, "Errore sconosciuto.")));
     }
   }
 
@@ -97,7 +98,7 @@ export async function importAssets(
       await createAsset(supabase, masterKey, ownerId, { name: row.name, categoryId });
       results.push({ rowNumber: row.rowNumber, status: "imported" });
     } catch (err) {
-      results.push(skippedResult(row.rowNumber, err instanceof Error ? err.message : "Errore sconosciuto."));
+      results.push(skippedResult(row.rowNumber, errorMessage(err, "Errore sconosciuto.")));
     }
   }
 
@@ -132,7 +133,7 @@ export async function importReminders(
       });
       results.push({ rowNumber: row.rowNumber, status: "imported" });
     } catch (err) {
-      results.push(skippedResult(row.rowNumber, err instanceof Error ? err.message : "Errore sconosciuto."));
+      results.push(skippedResult(row.rowNumber, errorMessage(err, "Errore sconosciuto.")));
     }
   }
 

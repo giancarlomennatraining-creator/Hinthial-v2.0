@@ -79,9 +79,12 @@ import { Spinner } from "@/components/ui/Spinner";
 import type { DocumentListItem } from "@/domain/documents/types";
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
-import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL, PANEL_FLAT } from "@/components/ui/styles";
 import { BackLink, ContextBackLink } from "@/components/ui/BackLink";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * Scheda di un contenuto d'Archivio --- fonde vista e modifica (v. feedback utente: due pagine separate creavano
@@ -275,7 +278,7 @@ export function ArchiveItemDetail({
       setLinkedFields(linkedFieldsResult);
     } catch (err) {
       if (requestId !== latestRequestRef.current) return;
-      setError(err instanceof Error ? err.message : "Impossibile caricare il contenuto.");
+      setError(errorMessage(err, "Impossibile caricare il contenuto."));
     } finally {
       if (requestId === latestRequestRef.current) setLoading(false);
     }
@@ -338,7 +341,7 @@ export function ArchiveItemDetail({
 
       setPreviewUrl(URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: mimeType })));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aprire il contenuto.");
+      setError(errorMessage(err, "Impossibile aprire il contenuto."));
       setPreviewUnavailable(true);
     } finally {
       setPreviewLoading(false);
@@ -376,7 +379,7 @@ export function ArchiveItemDetail({
       saveBytesAsFile(bytes, filename, mimeType);
       void logDocumentDownloaded(supabase, doc.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aprire il contenuto.");
+      setError(errorMessage(err, "Impossibile aprire il contenuto."));
     } finally {
       setBusy(false);
     }
@@ -399,7 +402,7 @@ export function ArchiveItemDetail({
         foundText ? "Lettura completata." : "L'ho guardato, ma non ci ho trovato testo.",
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile rileggere il contenuto.");
+      setError(errorMessage(err, "Impossibile rileggere il contenuto."));
     } finally {
       setRereading(null);
     }
@@ -421,7 +424,7 @@ export function ArchiveItemDetail({
       await refresh();
       setUndoable(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile applicare la proposta.");
+      setError(errorMessage(err, "Impossibile applicare la proposta."));
     } finally {
       setProposalBusy(false);
     }
@@ -574,7 +577,7 @@ export function ArchiveItemDetail({
       await refresh();
       // Interrompere non è un guasto: ciò che era già stato letto è salvato e il bottone propone di riprendere.
       if (!(err instanceof AnalysisAbortedError)) {
-        setError(err instanceof Error ? err.message : "Impossibile analizzare il documento con Hinthia.");
+        setError(errorMessage(err, "Impossibile analizzare il documento con Hinthia."));
       }
     } finally {
       aiAbortRef.current = null;
@@ -590,7 +593,7 @@ export function ArchiveItemDetail({
       await updateDocumentAIExtractionExclusion(supabase, doc.id, next);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile salvare l'esclusione.");
+      setError(errorMessage(err, "Impossibile salvare l'esclusione."));
     }
   }
 
@@ -617,7 +620,7 @@ export function ArchiveItemDetail({
       await refresh();
       showToast("Modifiche salvate.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare il contenuto.");
+      setError(errorMessage(err, "Impossibile aggiornare il contenuto."));
     } finally {
       setSavingFields(false);
     }
@@ -644,22 +647,22 @@ export function ArchiveItemDetail({
       await deleteDocument(supabase, user.id, doc);
       router.push("/archive");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare il contenuto.");
+      setError(errorMessage(err, "Impossibile eliminare il contenuto."));
       setBusy(false);
     }
   }
 
   if (loading) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>;
+    return <LoadingText />;
   }
 
   if (!doc || !kind) {
     return (
       <div className="flex flex-col gap-4">
         <BackLink href="/archive">Torna all&apos;archivio</BackLink>
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           Contenuto non trovato.
-        </p>
+        </ErrorText>
       </div>
     );
   }
@@ -716,9 +719,9 @@ export function ArchiveItemDetail({
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {/* Barra a sé (v. feedback utente): Salva modifiche/Scarica/Elimina, stessa forma per tutti e tre
@@ -742,14 +745,14 @@ export function ArchiveItemDetail({
             type="button"
             disabled={busy}
             onClick={handleDownload}
-            className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            className={`${BTN_SECONDARY} disabled:opacity-50`}
           >
             Scarica
           </button>
         )}
         <Link
           href={starterHref("documento", doc.id)}
-          className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          className={BTN_SECONDARY}
         >
           Fallo arrivare a…
         </Link>
@@ -773,10 +776,10 @@ export function ArchiveItemDetail({
           {/* Colonna fissa: solo l'anteprima, sempre visibile, mai dietro una tab. */}
           {/* Su telefono l'anteprima viene dopo i campi (order-2): prima si deve poter compilare, non scorrere una schermata di pagina. */}
           <div className="order-2 flex flex-col gap-6 @3xl:order-1 @3xl:w-[380px] @3xl:shrink-0">
-          <section aria-label="Anteprima" className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+          <section aria-label="Anteprima" className={`${PANEL} flex flex-col gap-3 p-4`}>
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Anteprima</h2>
             {previewLoading ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+              <LoadingText />
             ) : kind === "note" ? (
               <p className="text-sm whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
                 {noteBody || "(nota vuota)"}
@@ -842,7 +845,7 @@ export function ArchiveItemDetail({
               la fonte. Scheda è la prima tab, non più fissa a sinistra (v. feedback utente). Tab e pannelli
               dentro un unico riquadro bianco con contorno (v. feedback utente), come Anteprima a fianco. */}
           <div className="order-1 flex min-w-0 flex-1 flex-col gap-4 @3xl:order-2">
-          <div className="flex flex-col gap-4 surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+          <div className={`${PANEL} flex flex-col gap-4 p-4`}>
             <div role="tablist" className="flex gap-1 overflow-x-auto border-b border-zinc-200 [scrollbar-width:none] dark:border-zinc-800 [&::-webkit-scrollbar]:hidden">
               <button
                 type="button"
@@ -1019,7 +1022,7 @@ export function ArchiveItemDetail({
                 {doc.aiSynthesis ? (
                   <section
                     aria-label="Analisi con Hinthia"
-                    className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
+                    className={`${PANEL_FLAT} flex flex-col gap-3 p-4`}
                   >
                     <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                       {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
@@ -1118,7 +1121,7 @@ function ReadingSection({
     fullText || !tooLong ? doc.extractedText : doc.extractedText.slice(0, TEXT_PREVIEW_CHARS);
 
   return (
-    <section aria-label="Cosa ho letto" className="flex flex-col gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <section aria-label="Cosa ho letto" className={`${PANEL} flex flex-col gap-3 p-4`}>
       <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Cosa ho letto</h2>
 
       {reading === "cannot" ? (

@@ -8,6 +8,8 @@ import { useAIProcessingConsent } from "@/components/ai/AIProcessingConsentProvi
 import { listCategories, setCategoryAIExtractionEnabled } from "@/domain/categories/repository";
 import { sortAlphabetically } from "@/lib/utils";
 import type { Category } from "@/domain/categories/types";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { PANEL_FLAT } from "@/components/ui/styles";
 
 /**
  * Impostazioni -> Intelligenza artificiale: il "cancello" generale per l'IA reale più le funzioni specifiche che ne
@@ -108,7 +110,7 @@ export function AIConsentSettings() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+      <div className={`${PANEL_FLAT} flex flex-wrap items-center gap-3 p-4`}>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
             Consenti l&apos;uso di Hinthia
@@ -118,9 +120,9 @@ export function AIConsentSettings() {
             possa essere attivata qui sotto. Spegnerlo spegne anche le funzioni già attive.
           </p>
           {masterError ? (
-            <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+            <ErrorText size="xs" className="mt-1">
               Preferenza non salvata.
-            </p>
+            </ErrorText>
           ) : null}
         </div>
         <button
@@ -204,9 +206,9 @@ export function AIConsentSettings() {
               anche Salute:
             </p>
             {categoriesError ? (
-              <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+              <ErrorText size="xs">
                 Impossibile caricare o salvare le categorie.
-              </p>
+              </ErrorText>
             ) : null}
             <ul className="flex flex-col gap-0.5">
               {sortAlphabetically(categories, (c) => c.name).map((category) => (
@@ -235,9 +237,9 @@ export function AIConsentSettings() {
 
         </ul>
         {chatError || extractionError ? (
-          <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+          <ErrorText size="xs">
             Preferenza non salvata.
-          </p>
+          </ErrorText>
         ) : null}
       </div>
     </div>

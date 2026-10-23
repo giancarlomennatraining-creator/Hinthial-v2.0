@@ -68,9 +68,11 @@ import type {
   DocumentMetadataInput,
   DocumentSummary,
 } from "@/domain/documents/types";
-import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { BackLink } from "@/components/ui/BackLink";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
 
 type CreationMode = "upload" | "record" | "note";
 
@@ -137,7 +139,7 @@ function StepCheck() {
 /** La scheda unica che contiene tutti i passi: le linee tra i cerchi la attraversano da un passo al successivo. */
 function AccordionCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+    <div className={`${PANEL} overflow-hidden`}>
       {children}
     </div>
   );
@@ -932,7 +934,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
       )}
 
       {loading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        <LoadingText />
       ) : (
         <form onSubmit={handleCreate} className="flex flex-col gap-4">
           <AccordionCard>
@@ -1214,7 +1216,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                     type="button"
                     disabled={!canSubmit}
                     onClick={() => setActiveStep(3)}
-                    className="w-full rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 sm:w-fit dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                    className={`${BTN_SECONDARY} w-full disabled:opacity-50 sm:w-fit`}
                   >
                     Continua →
                   </button>
@@ -1335,7 +1337,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
                       <button
                         type="button"
                         onClick={() => setActiveStep(5)}
-                        className="w-full rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 sm:w-fit dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                        className={`${BTN_SECONDARY} w-full sm:w-fit`}
                       >
                         Continua →
                       </button>
@@ -1389,9 +1391,9 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
           </AccordionCard>
 
           {error ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <ErrorText>
               {error}
-            </p>
+            </ErrorText>
           ) : null}
 
           {savedDoc ? (
@@ -1414,7 +1416,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
               <button
                 type="submit"
                 disabled={creating || !canSubmit}
-                className="w-full rounded-xl bg-brand px-4 py-2 sm:w-auto text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+                className={`${BTN_PRIMARY} w-full sm:w-auto disabled:opacity-50`}
               >
                 {creating
                   ? lot.length > 1 && batchProgress

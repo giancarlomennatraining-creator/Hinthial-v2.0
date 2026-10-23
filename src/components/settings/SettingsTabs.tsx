@@ -33,6 +33,7 @@ import {
 import { PageHelp, type HelpTip } from "@/components/help/PageHelp";
 import type { ComponentType, SVGProps } from "react";
 import { BACK_LINK_CLASS } from "@/components/ui/BackLink";
+import { PANEL_FLAT } from "@/components/ui/styles";
 import {
   AlertTriangleIcon,
   CategoryIcon,
@@ -332,7 +333,7 @@ export function SettingsTabs({
           {mobileTabDef === null || mobileTabDef === undefined ? (
             <div className="flex flex-col gap-4">
               <SettingsSearch tabLabels={TAB_LABELS} onSelect={goTo} />
-              <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+              <ul className={`${PANEL_FLAT} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
                 {TABS.map((t) => {
                   const danger = t.id === "danger-zone";
                   return (

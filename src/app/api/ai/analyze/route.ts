@@ -7,6 +7,7 @@ import { MAX_BLOCK_CHARS, MAX_BLOCKS_PER_DOCUMENT } from "@/domain/ai/analysis/b
 import { isAnalysisDocumentType } from "@/domain/ai/analysis/schemas";
 import { AnalysisOutputError } from "@/domain/ai/analysis/types";
 import { consumeAiCall } from "@/lib/ai/daily-quota";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * FASE 22: unico punto di contatto tra Hinthial e Anthropic per l'analisi vera di un documento (non solo la Chat,
@@ -185,7 +186,7 @@ export async function POST(request: NextRequest) {
     if (err instanceof AnalysisOutputError) {
       return NextResponse.json({ error: "Risposta di Hinthia non valida." }, { status: 502 });
     }
-    const message = err instanceof Error ? err.message : "Errore sconosciuto.";
+    const message = errorMessage(err, "Errore sconosciuto.");
     return NextResponse.json({ error: `Impossibile contattare Hinthia: ${message}` }, { status: 502 });
   }
 }

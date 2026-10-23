@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { verifyMfaCode } from "@/lib/auth/actions";
 import { initialAuthActionState } from "@/lib/auth/action-state";
 import { TextField } from "@/components/ui/TextField";
+import { ErrorText } from "@/components/ui/ErrorText";
 
 /** Form della pagina /login/mfa --- stesso pattern di LoginPage (server action + useActionState). Un solo campo per il codice TOTP o un codice di backup: verifyMfaCode prova entrambi. */
 export function MfaChallengeForm() {
@@ -33,9 +34,9 @@ export function MfaChallengeForm() {
         />
 
         {state.error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <ErrorText>
             {state.error}
-          </p>
+          </ErrorText>
         ) : null}
 
         <button

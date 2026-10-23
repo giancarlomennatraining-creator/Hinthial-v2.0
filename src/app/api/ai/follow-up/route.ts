@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { authenticate, readJsonBody } from "@/lib/http/api-guards";
 import { logAuditEvent } from "@/lib/audit/log-event";
 import { consumeAiCall } from "@/lib/ai/daily-quota";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * "Raccontami": dopo una risposta, Hinthia fa UNA domanda di approfondimento. È uno dei pochi punti in cui il testo di
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ text });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Errore sconosciuto.";
+    const message = errorMessage(err, "Errore sconosciuto.");
     return NextResponse.json({ error: `Impossibile contattare Hinthia: ${message}` }, { status: 502 });
   }
 }

@@ -30,7 +30,7 @@ import { dossierOverview, type DossierOverview } from "@/domain/dossiers/overvie
 import type { AssetListItem } from "@/domain/assets/types";
 import type { Category } from "@/domain/categories/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
-import { cn } from "@/lib/utils";
+import { cn, errorMessage } from "@/lib/utils";
 import { MobileAddFab } from "@/components/ui/MobileAddFab";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { ListSkeleton } from "@/components/ui/Skeleton";
@@ -42,6 +42,7 @@ import type { DocumentSummary } from "@/domain/documents/types";
 import { BTN_PRIMARY } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
 
 /**
  * FASE 20 --- l'elenco dei fascicoli. I documenti si collegano dal loro
@@ -99,7 +100,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
       setAssets(assetsResult);
       setReminders(remindersResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare i fascicoli.");
+      setError(errorMessage(err, "Impossibile caricare i fascicoli."));
     } finally {
       setLoading(false);
     }
@@ -137,7 +138,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
       }
       router.push(`/dossiers/${dossierId}?created=1`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile creare il fascicolo.");
+      setError(errorMessage(err, "Impossibile creare il fascicolo."));
       setSuggestionBusy(null);
     }
   }
@@ -163,7 +164,7 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
       await deleteDossier(supabase, user.id, dossier.id);
       setDossiers((prev) => prev.filter((d) => d.id !== dossier.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare il fascicolo.");
+      setError(errorMessage(err, "Impossibile eliminare il fascicolo."));
     } finally {
       setBusyId(null);
     }
@@ -240,9 +241,9 @@ export function DossiersPanel({ masterKey }: { masterKey: CryptoKey }) {
       <MobileAddFab href="/dossiers/new" label="Nuovo fascicolo" />
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {!loading ? (

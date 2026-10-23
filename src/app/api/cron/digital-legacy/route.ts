@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/db/supabase/admin";
 import { runDigitalLegacyCheck } from "@/domain/digital-legacy/automation";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * Chiamata una volta al giorno da Vercel Cron (v. vercel.json) --- unico
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     console.error("[cron/digital-legacy] failed:", err);
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : "Errore sconosciuto." },
+      { ok: false, error: errorMessage(err, "Errore sconosciuto.") },
       { status: 500 },
     );
   }

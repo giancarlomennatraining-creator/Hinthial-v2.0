@@ -10,6 +10,8 @@ import { LiveAttachment } from "@/components/capsules/opening/OpenedParts";
 import type { OpenOrigin, OpenedCapsuleSlots, OpenedCapsuleView } from "@/components/capsules/opening/types";
 import { parseOpenEffect } from "@/domain/capsules/open-effects";
 import type { SharedCapsuleListItem, SharedCapsuleOpenedContent } from "@/domain/capsules/types";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * FASE C1 --- apre davvero una capsula condivisa: a differenza di CapsulePreview (il proprietario, sui propri dati già
@@ -55,7 +57,7 @@ export function SharedCapsuleViewer({
           setLoadedForId(capsuleId);
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Impossibile aprire la capsula.");
+        if (!cancelled) setError(errorMessage(err, "Impossibile aprire la capsula."));
       }
     })();
     return () => {
@@ -105,9 +107,9 @@ export function SharedCapsuleViewer({
           className="flex w-full max-w-sm flex-col gap-3 rounded-card border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
         >
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Da {shared.ownerName}</p>
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <ErrorText>
             {error}
-          </p>
+          </ErrorText>
           <button type="button" onClick={onClose} className="w-fit rounded-md px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900">
             Chiudi
           </button>

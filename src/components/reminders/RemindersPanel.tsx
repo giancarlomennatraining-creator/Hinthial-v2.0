@@ -13,14 +13,15 @@ import { ListSkeleton } from "@/components/ui/Skeleton";
 import { RowActionsMenu, RowMenuItem } from "@/components/ui/RowActionsMenu";
 import { buildIcsCalendar } from "@/lib/ics";
 import { saveBlobAsFile } from "@/lib/download";
-import { sanitizeFilename } from "@/lib/utils";
+import { errorMessage, sanitizeFilename } from "@/lib/utils";
 import type { ReminderListItem } from "@/domain/reminders/types";
 import { useToast } from "@/components/ui/ToastProvider";
-import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
 import { DocumentExpiryList } from "@/components/reminders/DocumentExpiryList";
 import { listDocumentExpiries, type DocumentExpiry } from "@/domain/documents/repository";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
 
 type StatusFilter = "all" | "pending" | "completed";
 
@@ -84,7 +85,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
       setReminders(remindersResult);
       setDocumentExpiries(expiriesResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare le scadenze.");
+      setError(errorMessage(err, "Impossibile caricare le scadenze."));
     } finally {
       setLoading(false);
     }
@@ -105,7 +106,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
         prev.map((r) => (r.id === reminder.id ? { ...r, completed: !r.completed } : r)),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare la scadenza.");
+      setError(errorMessage(err, "Impossibile aggiornare la scadenza."));
     } finally {
       setBusyId(null);
     }
@@ -120,7 +121,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
       await deleteReminder(supabase, reminder.id);
       setReminders((prev) => prev.filter((r) => r.id !== reminder.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare la scadenza.");
+      setError(errorMessage(err, "Impossibile eliminare la scadenza."));
     } finally {
       setBusyId(null);
     }
@@ -178,9 +179,9 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
       <MobileAddFab href="/reminders/new" label="Aggiungi scadenza" />
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {loading ? (
@@ -225,7 +226,7 @@ export function RemindersPanel({ masterKey }: { masterKey: CryptoKey }) {
                   Nessuna scadenza corrisponde ai filtri.
                 </p>
               ) : (
-                <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+                <ul className={`${PANEL} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
                   {filteredReminders.map((reminder) => {
                     const status = dueStatus(reminder.dueAt, reminder.completed);
                     const due = dueIn(reminder.dueAt, new Date());

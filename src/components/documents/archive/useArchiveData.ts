@@ -21,6 +21,7 @@ import type { DossierListItem } from "@/domain/dossiers/types";
 import { saveBytesAsFile } from "@/lib/download";
 import { useToast } from "@/components/ui/ToastProvider";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { errorMessage } from "@/lib/utils";
 
 export type BulkPopover = "category" | "dossier" | null;
 
@@ -67,7 +68,7 @@ export function useArchiveData(masterKey: CryptoKey) {
       setDocuments(documentsResult);
       if (trashDays !== null) setTrashRetentionDays(trashDays);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare l'archivio.");
+      setError(errorMessage(err, "Impossibile caricare l'archivio."));
     } finally {
       setLoading(false);
     }
@@ -87,7 +88,7 @@ export function useArchiveData(masterKey: CryptoKey) {
       saveBytesAsFile(bytes, filename, mimeType);
       void logDocumentDownloaded(supabase, doc.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aprire il contenuto.");
+      setError(errorMessage(err, "Impossibile aprire il contenuto."));
     } finally {
       setBusyDocId(null);
     }
@@ -120,7 +121,7 @@ export function useArchiveData(masterKey: CryptoKey) {
         return next;
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile spostare il contenuto nel cestino.");
+      setError(errorMessage(err, "Impossibile spostare il contenuto nel cestino."));
     } finally {
       setBusyDocId(null);
     }
@@ -174,7 +175,7 @@ export function useArchiveData(masterKey: CryptoKey) {
       clearSelection();
       showToast(`${count} ${count === 1 ? "documento spostato" : "documenti spostati"} nel cestino.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile spostare nel cestino.");
+      setError(errorMessage(err, "Impossibile spostare nel cestino."));
     } finally {
       setBulkBusy(false);
     }
@@ -198,7 +199,7 @@ export function useArchiveData(masterKey: CryptoKey) {
       await refresh();
       clearSelection();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare la categoria.");
+      setError(errorMessage(err, "Impossibile aggiornare la categoria."));
     } finally {
       setBulkBusy(false);
     }
@@ -220,7 +221,7 @@ export function useArchiveData(masterKey: CryptoKey) {
       await refresh();
       clearSelection();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiungere al fascicolo.");
+      setError(errorMessage(err, "Impossibile aggiungere al fascicolo."));
     } finally {
       setBulkBusy(false);
     }

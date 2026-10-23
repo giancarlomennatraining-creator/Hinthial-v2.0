@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/db/supabase/admin";
 import { runTrashPurge } from "@/domain/documents/purge";
 import { runSharesPurge } from "@/lib/shares/purge";
 import { sendErrorDigest } from "@/lib/errors/digest";
+import { errorMessage } from "@/lib/utils";
 
 /** Stesso guscio del cron di Eredità digitale --- v. app/api/cron/digital-legacy/route.ts. */
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     console.error("[cron/trash-purge] failed:", err);
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : "Errore sconosciuto." },
+      { ok: false, error: errorMessage(err, "Errore sconosciuto.") },
       { status: 500 },
     );
   }

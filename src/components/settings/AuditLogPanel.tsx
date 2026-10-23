@@ -34,6 +34,10 @@ import {
 } from "@/domain/audit/filters";
 import type { AuditEntityType, AuditEventType } from "@/lib/audit/log-event";
 import type { AuditEventListItem, AuditEventPage } from "@/domain/audit/types";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { PANEL } from "@/components/ui/styles";
+import { errorMessage } from "@/lib/utils";
 
 const LOGIN_METHOD_LABEL: Record<string, string> = {
   password: "Password",
@@ -154,7 +158,7 @@ export function AuditLogPanel({ initialParams = {} }: { initialParams?: AuditFil
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setFailure({ key, message: err instanceof Error ? err.message : "Impossibile caricare il registro attività." });
+        setFailure({ key, message: errorMessage(err, "Impossibile caricare il registro attività.") });
       });
     return () => {
       cancelled = true;
@@ -268,7 +272,7 @@ export function AuditLogPanel({ initialParams = {} }: { initialParams?: AuditFil
       <form
         onSubmit={(e) => e.preventDefault()}
         aria-label="Filtri attività"
-        className="flex flex-col gap-4 surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950"
+        className={`${PANEL} flex flex-col gap-4 p-4`}
       >
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">
@@ -420,13 +424,13 @@ export function AuditLogPanel({ initialParams = {} }: { initialParams?: AuditFil
       </form>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {!result && !error ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        <LoadingText />
       ) : result && total === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -435,7 +439,7 @@ export function AuditLogPanel({ initialParams = {} }: { initialParams?: AuditFil
         </div>
       ) : result ? (
         <div className={loading ? "opacity-60 transition-opacity" : "transition-opacity"}>
-          <div className="overflow-x-auto surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+          <div className={`${PANEL} overflow-x-auto`}>
             <table className="w-full text-left text-sm">
               <thead className="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
                 <tr>

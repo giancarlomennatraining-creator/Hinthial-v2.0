@@ -14,7 +14,7 @@ import { contentKindFor, hasInlinePlayer } from "@/lib/content-kind";
 import type { DocumentSummary } from "@/domain/documents/types";
 import { dueIn } from "@/domain/documents/archive-views";
 import { formatDate, formatSize } from "@/lib/format";
-import { sortAlphabetically } from "@/lib/utils";
+import { errorMessage, sortAlphabetically } from "@/lib/utils";
 import {
   ARCHIVE_VIEW_STORAGE_KEY,
   NO_CATEGORY,
@@ -39,8 +39,10 @@ import { PendingConfirmationNotice } from "@/components/documents/PendingConfirm
 import { useArchiveData } from "@/components/documents/archive/useArchiveData";
 import { ContentTypeIcon } from "@/components/documents/ContentTypeIcon";
 import { useToast } from "@/components/ui/ToastProvider";
-import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -172,7 +174,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
       const blob = new Blob([new Uint8Array(bytes)], { type: mimeType });
       setPlayerUrl(URL.createObjectURL(blob));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile riprodurre il contenuto.");
+      setError(errorMessage(err, "Impossibile riprodurre il contenuto."));
       setPlayingId(null);
     } finally {
       setPlayerLoading(false);
@@ -192,7 +194,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
       const { bytes } = await downloadDocument(supabase, masterKey, doc);
       setNoteDraft({ title: doc.filename, body: bytesToUtf8(bytes) });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aprire la nota.");
+      setError(errorMessage(err, "Impossibile aprire la nota."));
       setOpenNoteId(null);
     } finally {
       setNoteLoading(false);
@@ -220,7 +222,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
       setOpenNoteId(null);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare la nota.");
+      setError(errorMessage(err, "Impossibile aggiornare la nota."));
     } finally {
       setNoteSaving(false);
     }
@@ -282,9 +284,9 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
       <PendingConfirmationNotice existingIds={documents.map((d) => d.id)} />
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {loading ? (
@@ -463,7 +465,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
               Nessun contenuto corrisponde ai filtri.
             </p>
           ) : (
-            <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+            <ul className={`${PANEL} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
               {filteredDocuments.map((doc) => {
                 const category = categoryFor(doc);
                 const asset = assetFor(doc);
@@ -548,7 +550,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                     {isPlaying ? (
                       <div className="rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
                         {playerLoading || !playerUrl ? (
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+                          <LoadingText size="xs" />
                         ) : kind === "image" ? (
                           // eslint-disable-next-line @next/next/no-img-element -- object URL locale, decifrata sul dispositivo
                           <img src={playerUrl} alt={doc.filename} className="max-h-96 max-w-full rounded-md" />
@@ -563,7 +565,7 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
                     {isNoteOpen ? (
                       <div className="flex flex-col gap-2 rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
                         {noteLoading ? (
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+                          <LoadingText size="xs" />
                         ) : (
                           <>
                             <input

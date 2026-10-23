@@ -7,9 +7,11 @@ import { starterHref } from "@/domain/capsules/starter";
 import { listAssets, setAssetLegacyNote } from "@/domain/assets/repository";
 import type { AssetListItem } from "@/domain/assets/types";
 import { useToast } from "@/components/ui/ToastProvider";
-import { sortAlphabetically } from "@/lib/utils";
-import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { errorMessage, sortAlphabetically } from "@/lib/utils";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL_FLAT } from "@/components/ui/styles";
 import { SettingsBlock } from "@/components/settings/SettingsBlock";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
 
 /**
  * "I tuoi beni": per ogni bene, cosa succede se non ci sei più (a chi va, dove sono le chiavi, chi chiamare). È una nota
@@ -32,7 +34,7 @@ export function LegacyAssets({ masterKey }: { masterKey: CryptoKey }) {
         const loaded = await listAssets(supabase, masterKey);
         if (!cancelled) setAssets(loaded);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Impossibile caricare i beni.");
+        if (!cancelled) setError(errorMessage(err, "Impossibile caricare i beni."));
       }
     })();
     return () => {
@@ -56,7 +58,7 @@ export function LegacyAssets({ masterKey }: { masterKey: CryptoKey }) {
       setEditingId(null);
       showToast(note ? "Nota salvata." : "Nota tolta.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile salvare la nota.");
+      setError(errorMessage(err, "Impossibile salvare la nota."));
     } finally {
       setSaving(false);
     }
@@ -80,13 +82,13 @@ export function LegacyAssets({ masterKey }: { masterKey: CryptoKey }) {
     >
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {assets === null ? (
-        error ? null : <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        error ? null : <LoadingText />
       ) : assets.length === 0 ? (
         <div className="flex max-w-2xl flex-col items-start gap-2 rounded-xl border border-dashed border-zinc-300 p-4 dark:border-zinc-700">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
@@ -103,7 +105,7 @@ export function LegacyAssets({ masterKey }: { masterKey: CryptoKey }) {
               ? "Non hai ancora detto cosa succede a nessun bene."
               : `Hai detto cosa succede a ${withNote} ${withNote === 1 ? "bene" : "beni"} su ${assets.length}.`}
           </p>
-          <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+          <ul className={`${PANEL_FLAT} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
             {sortAlphabetically(assets, (a) => a.name).map((asset) => (
               <li key={asset.id} className="flex flex-col gap-2 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">

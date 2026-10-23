@@ -9,6 +9,7 @@ import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { getCapsuleAppearance, updateCapsuleOpenEffect } from "@/domain/profile/repository";
 import { DEFAULT_OPEN_EFFECT, OPEN_EFFECT_OPTIONS, type CapsuleOpenEffect } from "@/domain/capsules/open-effects";
 import { cn } from "@/lib/utils";
+import { ErrorText } from "@/components/ui/ErrorText";
 
 /**
  * Impostazioni -> Aspetto -> Capsule: l'effetto di apertura che si propone per default a chi crea una capsula (v.
@@ -109,9 +110,9 @@ export function CapsuleOpenEffectSettings() {
         Lo propongo quando crei una capsula: per ognuna puoi scegliere un effetto diverso. Chi la riceve vede quello che hai scelto tu.
       </p>
       {error ? (
-        <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <ErrorText size="xs">
           Preferenza non salvata.
-        </p>
+        </ErrorText>
       ) : null}
 
       {previewing ? (

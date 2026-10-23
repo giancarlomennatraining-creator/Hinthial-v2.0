@@ -9,8 +9,10 @@ import { listDocumentSummaries } from "@/domain/documents/repository";
 import { MAX_PHASE_NAME_LENGTH, MAX_PHASES, normalizePhases, parsePhaseNames } from "@/domain/dossiers/phases";
 import { DOSSIER_TEMPLATES, filterTemplates, findTemplateMatches, type DossierTemplate, type TemplateMatch } from "@/domain/dossiers/templates";
 import { CARD, CARD_TITLE, TEXT_INPUT } from "@/components/dossiers/styles";
-import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { BackLink } from "@/components/ui/BackLink";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * Creazione di un fascicolo: da zero (solo titolo e descrizione, lo stato nasce "aperto") oppure da un modello, che
@@ -101,7 +103,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
       }
       router.push(template ? `/dossiers/${id}?created=1` : "/dossiers?created=1");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Impossibile creare il fascicolo.";
+      const message = errorMessage(err, "Impossibile creare il fascicolo.");
       // Se il fascicolo c'è già, un secondo tentativo ne farebbe un doppione: si dice com'è andata e si offre di aprirlo.
       setError(id ? `Il fascicolo è stato creato, ma non ho potuto completarlo: ${message}` : message);
       setCreatedId(id);
@@ -241,7 +243,7 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
 
       <form
         onSubmit={handleCreate}
-        className="flex flex-col gap-4 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
+        className={`${PANEL} flex flex-col gap-4 p-4`}
       >
         <div className="flex flex-col gap-1">
           <label htmlFor="title" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -363,14 +365,14 @@ export function CreateDossierForm({ masterKey }: { masterKey: CryptoKey }) {
         ) : null}
 
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <ErrorText>
             {error}{" "}
             {createdId ? (
               <Link href={`/dossiers/${createdId}`} className="font-bold underline">
                 Apri il fascicolo
               </Link>
             ) : null}
-          </p>
+          </ErrorText>
         ) : null}
 
         <div className="flex gap-3">

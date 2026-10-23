@@ -8,6 +8,8 @@ import { TextField } from "@/components/ui/TextField";
 import { AvatarUploadForm } from "@/components/settings/AvatarUploadForm";
 import { BTN_PRIMARY } from "@/components/ui/styles";
 import { SettingsBlock } from "@/components/settings/SettingsBlock";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { errorMessage } from "@/lib/utils";
 
 function translateEmailChangeError(message: string): string {
   const normalized = message.toLowerCase();
@@ -84,7 +86,7 @@ export function UserInfoPanel({
       // Il nome in sidebar/saluto viene da un Server Component (getCurrentUser): va rinfrescato.
       router.refresh();
     } catch (err) {
-      setNameError(err instanceof Error ? err.message : "Impossibile aggiornare il profilo.");
+      setNameError(errorMessage(err, "Impossibile aggiornare il profilo."));
     } finally {
       setNameSaving(false);
     }
@@ -117,7 +119,7 @@ export function UserInfoPanel({
       setEmailRequested(true);
       setNewEmail("");
     } catch (err) {
-      setEmailError(err instanceof Error ? err.message : "Impossibile richiedere il cambio email.");
+      setEmailError(errorMessage(err, "Impossibile richiedere il cambio email."));
     } finally {
       setEmailSaving(false);
     }
@@ -178,9 +180,9 @@ export function UserInfoPanel({
           </div>
 
           {nameError ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <ErrorText>
               {nameError}
-            </p>
+            </ErrorText>
           ) : null}
           {nameSaved ? (
             <p className="text-sm text-green-700 dark:text-green-400">Salvato.</p>
@@ -219,9 +221,9 @@ export function UserInfoPanel({
           />
 
           {emailError ? (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <ErrorText>
               {emailError}
-            </p>
+            </ErrorText>
           ) : null}
           {emailRequested ? (
             <p className="text-sm text-green-700 dark:text-green-400">

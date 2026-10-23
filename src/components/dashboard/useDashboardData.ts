@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { buildSummaryContext } from "@/domain/ai/context";
 import type { SummaryContext } from "@/domain/ai/types";
+import { errorMessage } from "@/lib/utils";
 
 /**
  * I dati della dashboard: un unico SummaryContext (v. domain/ai/context.ts), lo stesso snapshot già decifrato di
@@ -20,7 +21,7 @@ export function useDashboardData(masterKey: CryptoKey) {
     try {
       setContext(await buildSummaryContext(supabase, masterKey));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare la dashboard.");
+      setError(errorMessage(err, "Impossibile caricare la dashboard."));
     } finally {
       setLoading(false);
     }

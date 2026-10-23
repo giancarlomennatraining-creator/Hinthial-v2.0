@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { verifyPasswordResetOtp } from "@/lib/auth/actions";
 import { initialAuthActionState } from "@/lib/auth/action-state";
 import { TextField } from "@/components/ui/TextField";
+import { ErrorText } from "@/components/ui/ErrorText";
 
 function VerifyCodeForm() {
   const searchParams = useSearchParams();
@@ -50,9 +51,9 @@ function VerifyCodeForm() {
         />
 
         {state.error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <ErrorText>
             {state.error}
-          </p>
+          </ErrorText>
         ) : null}
 
         <button

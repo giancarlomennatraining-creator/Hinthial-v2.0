@@ -24,8 +24,10 @@ import {
   type Story,
 } from "@/domain/stories/repository";
 import { formatDate } from "@/lib/format";
-import { cn } from "@/lib/utils";
-import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { cn, errorMessage } from "@/lib/utils";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL, PANEL_FLAT } from "@/components/ui/styles";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
 
 type Current = { theme: StoryTheme; question: string };
 
@@ -73,7 +75,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
         setStories(loaded);
         setCurrent(nextQuestion(answeredQuestions(loaded.map((s) => s.question))));
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Impossibile caricare i racconti.");
+        if (!cancelled) setError(errorMessage(err, "Impossibile caricare i racconti."));
       }
     })();
     return () => {
@@ -117,7 +119,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile salvare il racconto.");
+      setError(errorMessage(err, "Impossibile salvare il racconto."));
     } finally {
       setSaving(false);
     }
@@ -137,7 +139,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
       const loaded = await refresh();
       setSaved(loaded.find((s) => s.id === id) ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile salvare il racconto a voce.");
+      setError(errorMessage(err, "Impossibile salvare il racconto a voce."));
     } finally {
       setSaving(false);
     }
@@ -156,7 +158,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
       setFollowUpDone(true);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiungere la risposta al racconto.");
+      setError(errorMessage(err, "Impossibile aggiungere la risposta al racconto."));
     } finally {
       setSaving(false);
     }
@@ -220,22 +222,22 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {stories === null ? (
-        error ? null : <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        error ? null : <LoadingText />
       ) : current === null && saved === null ? (
-        <section aria-label="Domanda" className="surface-card rounded-card border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+        <section aria-label="Domanda" className={`${PANEL_FLAT} p-5`}>
           <h2 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100">Hai risposto a tutte le domande</h2>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {progress.total} racconti: complimenti. Puoi rileggerli e farli arrivare a chi vuoi.
           </p>
         </section>
       ) : (
-        <section aria-label="Domanda" className="flex flex-col gap-4 surface-card rounded-card border border-zinc-200 bg-white p-5 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+        <section aria-label="Domanda" className={`${PANEL} flex flex-col gap-4 p-5`}>
           {writing && current ? (
             <>
               <div>
@@ -383,7 +385,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             {progress.done} {progress.done === 1 ? "domanda raccontata" : "domande raccontate"} su {progress.total}.
           </p>
-          <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+          <ul className={`${PANEL_FLAT} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
             {stories.map((story) => (
               <li key={story.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <span className="flex min-w-0 flex-col gap-0.5">

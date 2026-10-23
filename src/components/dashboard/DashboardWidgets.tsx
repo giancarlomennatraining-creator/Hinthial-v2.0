@@ -3,6 +3,7 @@
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { TodayHome } from "@/components/dashboard/TodayHome";
 import { useDashboardData } from "@/components/dashboard/useDashboardData";
+import { ErrorText } from "@/components/ui/ErrorText";
 
 /** Il corpo di "Oggi" (v. TodayHome). */
 export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
@@ -10,9 +11,9 @@ export function DashboardWidgets({ masterKey }: { masterKey: CryptoKey }) {
 
   if (error) {
     return (
-      <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+      <ErrorText>
         {error}
-      </p>
+      </ErrorText>
     );
   }
 

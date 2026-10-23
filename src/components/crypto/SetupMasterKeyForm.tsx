@@ -7,6 +7,8 @@ import { TextField } from "@/components/ui/TextField";
 import { saveBlobAsFile } from "@/lib/download";
 import { printOnlyMarkedContent } from "@/lib/print";
 import type { MasterKeySetup } from "@/lib/crypto";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { errorMessage } from "@/lib/utils";
 
 type PendingSetup = { setup: MasterKeySetup; masterKey: CryptoKey };
 
@@ -94,7 +96,7 @@ export function SetupMasterKeyForm({ onStateChange }: { onStateChange?: (state: 
       const result = await setup(password);
       setPending(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Si è verificato un errore. Riprova.");
+      setError(errorMessage(err, "Si è verificato un errore. Riprova."));
     } finally {
       setBusy(false);
     }
@@ -140,7 +142,7 @@ export function SetupMasterKeyForm({ onStateChange }: { onStateChange?: (state: 
     try {
       await confirmSetup(pending.setup, pending.masterKey);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Si è verificato un errore. Riprova.");
+      setError(errorMessage(err, "Si è verificato un errore. Riprova."));
     } finally {
       setBusy(false);
     }
@@ -232,9 +234,9 @@ export function SetupMasterKeyForm({ onStateChange }: { onStateChange?: (state: 
         </label>
 
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <ErrorText>
             {error}
-          </p>
+          </ErrorText>
         ) : null}
 
         <button
@@ -305,9 +307,9 @@ export function SetupMasterKeyForm({ onStateChange }: { onStateChange?: (state: 
         />
 
         {error ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <ErrorText>
             {error}
-          </p>
+          </ErrorText>
         ) : null}
 
         <button

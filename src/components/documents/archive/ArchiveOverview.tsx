@@ -8,6 +8,7 @@ import { attentionFor, categoryTiles, sortDocuments } from "@/domain/documents/a
 import { relativeDay } from "@/domain/documents/archive-views";
 import { DocumentCard } from "@/components/documents/archive/DocumentCard";
 import { ExpiryPill } from "@/components/documents/archive/parts";
+import { PANEL } from "@/components/ui/styles";
 
 const RECENT_COUNT = 8;
 /** Quanti riquadri di categoria mostrare prima di "Mostra tutte": la Panoramica deve restare breve. */
@@ -123,7 +124,7 @@ export function ArchiveOverview({
               <button
                 type="button"
                 onClick={() => onCategory(tile.id)}
-                className="flex w-full items-center gap-3 surface-card rounded-card border border-zinc-200 bg-white p-3 text-left shadow-[0_8px_20px_rgba(16,24,40,0.04)] transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(16,24,40,0.10)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:border-zinc-800 dark:bg-zinc-950"
+                className={`${PANEL} flex w-full items-center gap-3 p-3 text-left transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(16,24,40,0.10)] motion-reduce:transition-none motion-reduce:hover:translate-y-0`}
               >
                 <span
                   aria-hidden="true"

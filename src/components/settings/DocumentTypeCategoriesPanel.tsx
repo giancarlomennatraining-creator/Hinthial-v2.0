@@ -7,6 +7,10 @@ import { listTypeCategoryOverrides, resetTypeCategory, setTypeCategory } from "@
 import type { Category } from "@/domain/categories/types";
 import { defaultCategoryNameFor, type TypeCategoryOverrides } from "@/domain/ai/analysis/category-defaults";
 import { ANALYSIS_DOCUMENT_TYPES, ANALYSIS_SCHEMAS } from "@/domain/ai/analysis/schemas";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { PANEL } from "@/components/ui/styles";
+import { errorMessage } from "@/lib/utils";
 
 const USE_DEFAULT = "";
 const NONE = "none";
@@ -28,7 +32,7 @@ export function DocumentTypeCategoriesPanel({ categories }: { categories: Catego
     try {
       setOverrides(await listTypeCategoryOverrides(supabase));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare le scelte.");
+      setError(errorMessage(err, "Impossibile caricare le scelte."));
     } finally {
       setLoading(false);
     }
@@ -68,7 +72,7 @@ export function DocumentTypeCategoriesPanel({ categories }: { categories: Catego
         setOverrides((prev) => ({ ...prev, [type]: categoryId }));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile salvare la scelta.");
+      setError(errorMessage(err, "Impossibile salvare la scelta."));
     } finally {
       setBusyType(null);
     }
@@ -85,15 +89,15 @@ export function DocumentTypeCategoriesPanel({ categories }: { categories: Catego
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {loading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        <LoadingText />
       ) : (
-        <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+        <ul className={`${PANEL} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
           {ANALYSIS_DOCUMENT_TYPES.map((type) => {
             const label = ANALYSIS_SCHEMAS[type].label;
             const defaultName = defaultCategoryNameFor(type);

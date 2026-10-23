@@ -40,6 +40,8 @@ import { AlertTriangleIcon } from "@/components/icons/nav-icons";
 import { BTN_PRIMARY, INPUT_FIELD } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { errorMessage } from "@/lib/utils";
 
 /** Richieste di amicizia in arrivo --- v. richiesta utente: email + un punto ben visibile in app per accettare/rifiutare, non solo l'email. */
 function IncomingRequestsBanner({
@@ -208,7 +210,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       setPendingGuardianRequestTo(new Set(outgoingGuardian));
       void checkLinkedAccounts(friendsResult, capsulesResult, user.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare gli amici.");
+      setError(errorMessage(err, "Impossibile caricare gli amici."));
     } finally {
       setLoading(false);
     }
@@ -227,7 +229,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       await setFriendStatus(supabase, friend.id, status);
       setFriends((prev) => prev.map((c) => (c.id === friend.id ? { ...c, status } : c)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare lo stato dell'amico.");
+      setError(errorMessage(err, "Impossibile aggiornare lo stato dell'amico."));
     } finally {
       setBusyId(null);
     }
@@ -248,7 +250,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
         // Best-effort: la richiesta resta comunque visibile nella sua scheda Amici.
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile inviare la richiesta di amicizia.");
+      setError(errorMessage(err, "Impossibile inviare la richiesta di amicizia."));
     } finally {
       setBusyId(null);
     }
@@ -264,7 +266,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       showToast(`Ora sei amico di ${request.senderName}.`);
       void refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile accettare la richiesta.");
+      setError(errorMessage(err, "Impossibile accettare la richiesta."));
     } finally {
       setBusyId(null);
     }
@@ -278,7 +280,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       setIncomingRequests((prev) => prev.filter((r) => r.id !== request.id));
       showToast("Richiesta di amicizia rifiutata.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile rifiutare la richiesta.");
+      setError(errorMessage(err, "Impossibile rifiutare la richiesta."));
     } finally {
       setBusyId(null);
     }
@@ -305,7 +307,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare l'amico.");
+      setError(errorMessage(err, "Impossibile aggiornare l'amico."));
     } finally {
       setBusyId(null);
     }
@@ -349,7 +351,7 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       await deleteFriend(supabase, friend.id);
       setFriends((prev) => prev.filter((c) => c.id !== friend.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare l'amico.");
+      setError(errorMessage(err, "Impossibile eliminare l'amico."));
     } finally {
       setBusyId(null);
     }
@@ -444,9 +446,9 @@ export function FriendsPanel({ masterKey }: { masterKey: CryptoKey }) {
       ) : null}
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {loading ? (

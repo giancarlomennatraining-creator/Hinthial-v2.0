@@ -17,7 +17,7 @@ import { deleteReply, listReceivedReplies, type CapsuleReply } from "@/domain/ca
 import { downloadDocument } from "@/domain/documents/repository";
 import { lookupFriendAccount, setFriendLinkedUser } from "@/domain/friends/repository";
 import { getCapsuleCountdownVisible } from "@/domain/profile/repository";
-import { cn } from "@/lib/utils";
+import { cn, errorMessage } from "@/lib/utils";
 import { saveBytesAsFile } from "@/lib/download";
 import { contentKindFor, CONTENT_KIND_ICON } from "@/lib/content-kind";
 import { isOpened } from "@/components/capsules/CapsuleCardParts";
@@ -44,6 +44,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { BTN_PRIMARY } from "@/components/ui/styles";
 import { EmptyListCard } from "@/components/ui/EmptyListCard";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -113,7 +114,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       const capsulesResult = await listCapsules(supabase, masterKey);
       setCapsules(capsulesResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare le capsule.");
+      setError(errorMessage(err, "Impossibile caricare le capsule."));
     } finally {
       setLoading(false);
     }
@@ -123,7 +124,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
     try {
       setSharedCapsules(await listCapsulesSharedWithMe(supabase));
     } catch (err) {
-      setSharedError(err instanceof Error ? err.message : "Impossibile caricare le capsule condivise con te.");
+      setSharedError(errorMessage(err, "Impossibile caricare le capsule condivise con te."));
     }
 
     // Best-effort: i pensieri ricevuti non devono mai impedire di vedere le proprie capsule.
@@ -167,7 +168,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       await refresh();
       showToast("Capsula chiusa.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile chiudere la capsula.");
+      setError(errorMessage(err, "Impossibile chiudere la capsula."));
     } finally {
       setBusyId(null);
       setClosingCapsule(null);
@@ -181,7 +182,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       await deleteReply(supabase, reply.id);
       setReplies((prev) => prev.filter((r) => r.id !== reply.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile togliere il pensiero.");
+      setError(errorMessage(err, "Impossibile togliere il pensiero."));
     } finally {
       setBusyReplyId(null);
     }
@@ -221,7 +222,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
           : "Capsula condivisa.",
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile condividere la capsula.");
+      setError(errorMessage(err, "Impossibile condividere la capsula."));
     } finally {
       setBusyId(null);
     }
@@ -237,7 +238,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       setCapsules((prev) => prev.map((c) => (c.id === capsule.id ? { ...c, openOnLegacy: next } : c)));
       showToast(next ? "Si aprirà anche prima, se non ci sei più." : "Si aprirà solo alla data scelta.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile cambiare la regola della capsula.");
+      setError(errorMessage(err, "Impossibile cambiare la regola della capsula."));
     } finally {
       setBusyId(null);
     }
@@ -264,7 +265,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       await deleteCapsule(supabase, masterKey, user.id, capsule);
       setCapsules((prev) => prev.filter((c) => c.id !== capsule.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile eliminare la capsula.");
+      setError(errorMessage(err, "Impossibile eliminare la capsula."));
     } finally {
       setBusyId(null);
     }
@@ -288,7 +289,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       );
       saveBytesAsFile(bytes, filename, mimeType);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aprire l'allegato.");
+      setError(errorMessage(err, "Impossibile aprire l'allegato."));
     } finally {
       setBusyAttachment(null);
     }
@@ -302,7 +303,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       const { filename, mimeType, bytes } = await downloadDocument(supabase, masterKey, doc);
       saveBytesAsFile(bytes, filename, mimeType);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aprire il documento.");
+      setError(errorMessage(err, "Impossibile aprire il documento."));
     } finally {
       setBusyAttachment(null);
     }
@@ -454,16 +455,16 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           {error}
-        </p>
+        </ErrorText>
       ) : null}
 
       {activeTab === "shared" ? (
         sharedError ? (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <ErrorText>
             {sharedError}
-          </p>
+          </ErrorText>
         ) : sharedCapsules.length === 0 ? (
           <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
             <p className="text-sm text-zinc-500 dark:text-zinc-400">

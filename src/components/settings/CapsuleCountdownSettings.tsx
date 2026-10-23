@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useSupabase } from "@/lib/db/supabase/use-supabase";
 import { getCapsuleCountdownVisible, updateCapsuleCountdownVisible } from "@/domain/profile/repository";
 import { cn } from "@/lib/utils";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { PANEL_FLAT } from "@/components/ui/styles";
 
 /**
  * Impostazioni -> Aspetto: mostra/nasconde il countdown a cartellini
@@ -58,7 +60,7 @@ export function CapsuleCountdownSettings() {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 surface-card rounded-card border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className={`${PANEL_FLAT} flex flex-wrap items-center gap-3 p-4`}>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
           Countdown verso l&apos;apertura delle capsule
@@ -68,9 +70,9 @@ export function CapsuleCountdownSettings() {
           nell&apos;anteprima di ogni capsula chiusa o condivisa.
         </p>
         {error ? (
-          <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+          <ErrorText size="xs" className="mt-1">
             Preferenza non salvata.
-          </p>
+          </ErrorText>
         ) : null}
       </div>
       <button

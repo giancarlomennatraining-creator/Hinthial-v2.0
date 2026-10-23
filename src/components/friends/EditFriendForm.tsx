@@ -9,9 +9,12 @@ import { listFriends, removeFriendAvatar, updateFriend, updateFriendAvatar } fro
 import { inviteFriendToHinthial } from "@/lib/friends/actions";
 import { AvatarPickerCrop } from "@/components/ui/AvatarPickerCrop";
 import type { FriendListItem } from "@/domain/friends/types";
-import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD } from "@/components/ui/styles";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT_FIELD, PANEL } from "@/components/ui/styles";
 import { BackLink } from "@/components/ui/BackLink";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { ErrorText } from "@/components/ui/ErrorText";
+import { LoadingText } from "@/components/ui/LoadingText";
+import { errorMessage } from "@/lib/utils";
 
 /** Pagina di modifica di un amico. Conferma via `?updated=1` nell'URL, mai il nome in chiaro. Nessun elenco per id lato repository: si carica l'intero elenco già decifrato e si cerca l'id. */
 export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; friendId: string }) {
@@ -39,7 +42,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
       const friends = await listFriends(supabase, masterKey);
       setFriend(friends.find((c) => c.id === friendId) ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile caricare l'amico.");
+      setError(errorMessage(err, "Impossibile caricare l'amico."));
     } finally {
       setLoading(false);
     }
@@ -125,7 +128,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
 
       router.push(`/friends?updated=1${inviteFailed ? "&inviteFailed=1" : ""}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossibile aggiornare l'amico.");
+      setError(errorMessage(err, "Impossibile aggiornare l'amico."));
       setSaving(false);
     }
   }
@@ -140,14 +143,14 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
       </div>
 
       {loading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Caricamento…</p>
+        <LoadingText />
       ) : !friend ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <ErrorText>
           Amico non trovato.
-        </p>
+        </ErrorText>
       ) : (
         <>
-          <div className="surface-card rounded-card border border-zinc-200 bg-white p-4 shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+          <div className={`${PANEL} p-4`}>
             <p className="mb-3 text-xs font-medium text-zinc-600 dark:text-zinc-400">Foto</p>
             <AvatarPickerCrop
               currentAvatarUrl={avatarUrl}
@@ -162,7 +165,7 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
 
           <form
             onSubmit={handleSave}
-            className="flex flex-wrap items-end gap-3 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] p-4 dark:border-zinc-800 dark:bg-zinc-950"
+            className={`${PANEL} flex flex-wrap items-end gap-3 p-4`}
           >
             <div className="flex flex-1 min-w-[10rem] flex-col gap-1">
               <label htmlFor="firstName" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -245,9 +248,9 @@ export function EditFriendForm({ masterKey, friendId }: { masterKey: CryptoKey; 
             </label>
 
             {error ? (
-              <p role="alert" className="w-full text-sm text-red-600 dark:text-red-400">
+              <ErrorText className="w-full">
                 {error}
-              </p>
+              </ErrorText>
             ) : null}
 
             <button

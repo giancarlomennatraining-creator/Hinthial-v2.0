@@ -2,6 +2,7 @@ import Link from "next/link";
 import { expiryInfo, formatDayMonthYear } from "@/domain/documents/archive-views";
 import type { DocumentExpiry } from "@/domain/documents/repository";
 import { cn } from "@/lib/utils";
+import { PANEL } from "@/components/ui/styles";
 
 const LEVEL_CLASS = {
   overdue: "font-medium text-red-600 dark:text-red-400",
@@ -25,7 +26,7 @@ export function DocumentExpiryList({ items, now }: { items: DocumentExpiry[]; no
           La data viene dalla scheda di ogni documento: per cambiarla, aprilo.
         </p>
       </div>
-      <ul className="flex flex-col divide-y divide-zinc-200 surface-card rounded-card border border-zinc-200 bg-white shadow-[0_8px_20px_rgba(16,24,40,0.04)] dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+      <ul className={`${PANEL} flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800`}>
         {items.map((item) => {
           const info = expiryInfo(item.expiresAt, now);
           return (
