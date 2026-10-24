@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-24 (153)
+
+### La scheda del fascicolo, in pezzi
+
+**Cosa fa:** nessun cambiamento visibile. `DossierDetail.tsx` (594 righe, un solo componente con molti stati) ora è un componente di 285 righe che compone pezzi in `components/dossiers/detail/`. Cinque hook, uno per compito: `useDossierData` (cosa si legge dal database e come si ricarica), `useDossierActions` (apri/chiudi, elimina, note), `useDossierItemsAction` (il giro di ogni modifica a fasi, passi, persone e documenti attesi), `useDossierSuggestions` (documenti che sembrano appartenere al fascicolo) e `useDossierSummary` (riassunto di Hinthia e sintesi dei documenti). Più il componente dell'intestazione (titolo, stato, azioni).
+
+**Note tecniche:** il codice è stato spostato così com'è. Verificato: typecheck, eslint, i test unitari e gli e2e dei fascicoli (dettagli, condivisione, suggerimenti, riassunto, modelli) sulla versione di produzione.
+
+---
+
 ## 2026-10-24 (152)
 
 ### Il form "Nuovo contenuto", in pezzi
