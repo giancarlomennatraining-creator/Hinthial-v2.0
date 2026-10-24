@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-24 (154)
+
+### Il registro attività, in pezzi
+
+**Cosa fa:** nessun cambiamento visibile. `AuditLogPanel.tsx` (589 righe) ora è un componente di 109 righe che compone pezzi in `components/settings/audit/`. Tre hook: `useAuditFilters` (i filtri, nell'URL e nello stato), `useAuditEvents` (la pagina di eventi per i filtri di adesso) e `useAuditLabels` (le etichette leggibili: vocabolario dei campi, nomi degli elementi decifrati, titoli degli elementi eliminati). E i componenti: il modulo dei filtri, l'elenco degli eventi, il piè di pagina con le pagine e le righe per pagina, il dettaglio nel pannello laterale.
+
+**Note tecniche:** il codice è stato spostato così com'è. Con questa voce si chiude il giro di divisione dei cinque file più grossi (repository dei documenti, scheda documento, form di creazione, scheda fascicolo, registro attività). Verificato: typecheck, eslint, i test unitari e gli e2e del registro attività, dell'onboarding e delle proposte sulla versione di produzione.
+
+---
+
 ## 2026-10-24 (153)
 
 ### La scheda del fascicolo, in pezzi
