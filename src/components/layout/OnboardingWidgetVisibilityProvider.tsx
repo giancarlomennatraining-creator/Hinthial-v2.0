@@ -14,15 +14,15 @@ const OnboardingWidgetVisibilityContext = createContext<OnboardingWidgetVisibili
 );
 
 /**
- * Se il gadget "Onboarding" nella barra di navigazione è nascosto ---
+ * Se l'indicatore del piano ("Il tuo piano") nella barra di navigazione è nascosto ---
  * sincronizzato sul server (profiles.onboarding_widget_hidden), come la
  * disposizione del menu (v. NavOrientationProvider): così "Nascondi" vale
  * per davvero anche a un login successivo, non solo su questo browser.
  * Il valore iniziale arriva già letto lato server (v.
  * AppShell/getCurrentUser), per evitare un lampo del gadget al primo
- * render. Condiviso tra OnboardingStatus (che lo mostra/nasconde e offre
- * il pulsante "Nascondi" nel proprio pannello) e OnboardingSettingsPanel
- * (che offre lo stesso interruttore in Impostazioni > Onboarding).
+ * render. Condiviso tra PlanStatus (che lo mostra) e PlanSettingsPanel
+ * (l'interruttore in Impostazioni > Il tuo piano). Il nome `onboarding_widget_hidden`
+ * viene dal vecchio indicatore "Onboarding": la colonna è rimasta la stessa.
  */
 export function OnboardingWidgetVisibilityProvider({
   userId,

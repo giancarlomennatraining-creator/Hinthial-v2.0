@@ -92,8 +92,8 @@ export function PrivacyPanel({
       : "Nessuna categoria configurata",
     "Per ogni contenuto in archivio: a quale categoria, bene e fascicolo è collegato, e la sua scadenza — non il nome del file né cosa contiene",
     summary.onboardingWidgetHidden
-      ? "Indicatore di onboarding nella barra: nascosto"
-      : "Indicatore di onboarding nella barra: visibile",
+      ? "Indicatore del piano nella barra: nascosto"
+      : "Indicatore del piano nella barra: visibile",
     "Indirizzo IP e dispositivo/browser di ogni accesso, ed eventuali tentativi di accesso falliti (registrati in Impostazioni > Accesso e sicurezza > Registro delle attività)",
   ];
 

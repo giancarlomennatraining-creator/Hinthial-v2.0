@@ -23,10 +23,8 @@ import { LoadingText } from "@/components/ui/LoadingText";
  * takeover. A brand-new user (no encryption set up yet) or a returning
  * one after a refresh (locked) should still see "Ciao, ..." immediately.
  *
- * Niente checklist "Onboarding" qui (v. richiesta utente) --- resta
- * comunque consultabile dal gadget persistente nella barra laterale
- * (v. OnboardingStatus), che copre lo stesso scopo senza occupare corpo
- * della pagina.
+ * Il piano ("Il tuo piano", v. PlanCard) è la prima scheda di "Oggi": mostra il prossimo passo e, a piano finito,
+ * si riduce a una riga. Nella barra laterale resta solo un piccolo indicatore (v. PlanStatus) che porta qui.
  */
 export function DashboardPanel({ displayName }: { displayName: string }) {
   const { status } = useMasterKey();
@@ -76,7 +74,7 @@ export function DashboardPanel({ displayName }: { displayName: string }) {
           <PageHelp
             title="Oggi"
             tips={[
-              { icon: "💞", text: "La continuità dice quanto Hinthial è pronto a far arrivare ciò che sai e ciò che hai a chi ami, se un giorno non ci sei." },
+              { icon: "💞", text: "Il piano dice quanto Hinthial è pronto a far arrivare ciò che sai e ciò che hai a chi ami, se un giorno non ci sei: ti mostra il prossimo passo." },
               { icon: "💌", text: "Qui vedi le capsule che ti aspettano, quelle che si aprono presto e le bozze da chiudere." },
               { icon: "⏰", text: "Le scadenze più vicine, o già passate, arrivano qui per prime." },
               { icon: "🔒", text: "Serve la master password sbloccata per vedere i dettagli cifrati — il resto resta comunque visibile." },

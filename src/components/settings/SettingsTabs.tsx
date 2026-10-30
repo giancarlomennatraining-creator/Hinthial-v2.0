@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useCrossfade } from "@/lib/use-crossfade";
 import { UserInfoPanel } from "@/components/settings/UserInfoPanel";
 import { EmergencyCardPanel } from "@/components/settings/EmergencyCardPanel";
-import { OnboardingSettingsPanel } from "@/components/settings/OnboardingSettingsPanel";
+import { PlanSettingsPanel } from "@/components/settings/PlanSettingsPanel";
 import { PrivacyPanel } from "@/components/settings/PrivacyPanel";
 import { MfaSettingsPanel } from "@/components/settings/MfaSettingsPanel";
 import { DeviceLockPanel } from "@/components/settings/DeviceLockPanel";
@@ -306,11 +306,10 @@ export function SettingsTabs({
             </SettingsBlock>
             <SettingsBlock
               id="onboarding"
-              title="Guida iniziale"
-              description="La checklist per completare la configurazione di Hinthial."
+              title="Il tuo piano"
+              description="L'indicatore dell'avanzamento nella barra di navigazione. Il piano sta in Oggi."
             >
-              {/* Serve i dati decifrati per calcolare l'avanzamento --- richiede la master key sbloccata. */}
-              <RequireMasterKey inline>{(masterKey) => <OnboardingSettingsPanel masterKey={masterKey} />}</RequireMasterKey>
+              <PlanSettingsPanel />
             </SettingsBlock>
           </div>
         );

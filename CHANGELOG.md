@@ -10,6 +10,18 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-29 (155)
+
+### "Il tuo piano": un solo percorso, al posto di Onboarding e Continuità
+
+**Cosa fa:** prima c'erano due indicatori per la stessa cosa. "Onboarding" (7 passi, nel menu laterale, con un 29% di partenza gonfiato da "Crea un account", che è sempre fatto) e "Continuità" (4 passi, in Oggi), con nomi diversi e regole diverse: la "capsula" di uno non era quella dell'altro. In più nessuno dei due parlava di mettere dentro un documento, che è il motivo per cui si apre l'app. Ora c'è un solo piano, di nove passi in quattro pilastri: **Sicurezza** (crea la tua chiave, metti dentro il primo documento), **Persone** (aggiungi una persona, scegli un guardiano), **Ricordi** (racconta un primo ricordo, prepara una capsula) ed **Eredità** (compila la scheda d'emergenza, scegli quali capsule arrivano anche se non ci sei, attiva l'Eredità digitale).
+
+**Come si vede:** in Oggi la prima scheda è "Il tuo piano". Finché non è finito mette in evidenza solo il prossimo passo, con il perché in una riga e un pulsante; gli altri stanno ripiegati sotto "Vedi tutti i passi", raggruppati per pilastro. A piano finito la scheda si riduce a "Completo" con "Rivedi i passi". L'albero (Foglia) e le stelle (Notte) restano: ogni pilastro completato apre una foglia o accende una stella. Su telefono, dove il disegno non c'è, nei tre stili si vede la barra di avanzamento (prima negli stili Foglia e Notte restava solo il testo). Nel menu laterale resta un piccolo anello con "4/9" che porta a Oggi (prima della master password invita a crearla). Impostazioni > "Guida iniziale" diventa "Il tuo piano" e contiene solo la scelta di nascondere o mostrare l'indicatore.
+
+**Note tecniche:** i passi sono in `domain/plan/steps.ts` (puro, con test), che sostituisce `domain/onboarding/steps.ts` e `domain/continuity/steps.ts`. L'indicatore nel menu riprende l'avanzamento da Oggi (`lib/plan-progress-store.ts`) invece di rileggere tutto a ogni cambio di pagina, e lo dimentica al blocco della cassaforte. Si parte da 1 su 9 e non da zero: la chiave è un passo vero, appena fatto. La colonna `onboarding_widget_hidden` del profilo resta com'è (nessuna migrazione). Riscritti i test dei passi e gli e2e (piano, impostazioni, Oggi, sblocco, privacy).
+
+---
+
 ## 2026-10-24 (154)
 
 ### Il registro attività, in pezzi
