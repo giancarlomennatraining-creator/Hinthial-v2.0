@@ -1257,3 +1257,32 @@ h6 {
     animation: none !important;
   }
 }
+
+/* Il cambio di pagina (v. app/(app)/template.tsx): una dissolvenza breve del solo contenuto. Il resto della pagina non
+   si anima, e con "riduci movimento" nulla si muove. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+@keyframes page-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(.page-out) {
+    animation: 90ms ease-in both page-fade reverse;
+  }
+  ::view-transition-new(.page-in) {
+    animation: 160ms ease-out 90ms both page-fade;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(.page-out),
+  ::view-transition-new(.page-in) {
+    animation: none;
+  }
+}
