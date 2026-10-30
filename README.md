@@ -157,6 +157,7 @@ npm run typecheck     # genera i tipi delle route Next.js + TypeScript in modali
 npm run test           # unit test (Vitest), incl. il test di integrazione RLS se .env.local è configurato
 npm run test:watch     # unit test in watch mode
 npm run test:e2e        # end-to-end test (Playwright; esegue build + start automaticamente)
+npm run test:e2e:fast   # solo gli e2e segnati @fast (otto test di base, circa un minuto); girano anche in CI
 npm run dev:https       # come npm run dev, ma su HTTPS --- serve per aprire l'app da altri
                         # dispositivi sulla stessa rete locale (crypto.subtle richiede un
                         # "secure context": localhost o HTTPS, un IP LAN in HTTP non basta).

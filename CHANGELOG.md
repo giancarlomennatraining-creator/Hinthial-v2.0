@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-30 (160)
+
+### Gli e2e veloci, anche in CI
+
+**Cosa fa:** la suite e2e completa (95 file) richiede molto tempo e prima non girava mai su GitHub, quindi un errore di login o dell'Archivio si scopriva solo a mano. Ora otto test di base, quelli segnati `@fast`, girano in circa un minuto: intestazioni di sicurezza e pagina 404, privacy e termini, rotte protette, login, Archivio (cifratura, carica, apre, cancella), Scadenze e Fascicoli. `npm run test:e2e:fast` li lancia in locale, e in CI c'è un lavoro `e2e-fast` dopo lint, typecheck, test unitari e build.
+
+**Note tecniche:** il lavoro in CI crea utenti veri nel progetto Supabase dei secrets e li cancella alla fine (`global-teardown`), quindi i secrets devono puntare a un progetto di prova, mai ai dati reali. Se `SUPABASE_SERVICE_ROLE_KEY` manca, il lavoro si salta. In caso di errore il rapporto Playwright è allegato per 7 giorni. Verificato in locale: 8 test passati in 58 secondi sulla versione di produzione. Il lavoro in CI non è ancora stato eseguito su GitHub.
+
+---
+
 ## 2026-10-30 (159)
 
 ### L'assistente si chiama Silva, non più Hinthia

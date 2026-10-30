@@ -40,3 +40,53 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # Gli e2e veloci (i test con @fast: sicurezza, login, Archivio, Scadenze, Fascicoli) girano sulla versione di produzione.
+  # Creano utenti veri nel progetto Supabase dei secrets e li cancellano alla fine: i secrets devono puntare a un progetto
+  # di prova, mai a quello con i dati reali. Senza i secrets il lavoro si salta.
+  e2e-fast:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Controlla i secrets
+        id: secrets
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "Secrets di Supabase mancanti: e2e saltati."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.secrets.outputs.present == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.secrets.outputs.present == 'true'
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        if: steps.secrets.outputs.present == 'true'
+        run: npm ci
+
+      - name: Install Chromium
+        if: steps.secrets.outputs.present == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E veloci
+        if: steps.secrets.outputs.present == 'true'
+        run: npm run test:e2e:fast
+
+      - name: Rapporto Playwright
+        if: failure() && steps.secrets.outputs.present == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

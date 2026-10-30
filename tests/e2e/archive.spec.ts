@@ -6,7 +6,7 @@ import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("configura la cifratura, carica, apre e cancella un documento", async ({
+test("configura la cifratura, carica, apre e cancella un documento @fast", async ({
   page,
 }) => {
   // Real PBKDF2 (600,000 iterations, x2) in-browser during setup can push

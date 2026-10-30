@@ -62,7 +62,7 @@ async function signInAndSetUpVault(page: import("@playwright/test").Page) {
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 }
 
-test("creare un fascicolo, collegarci un documento al caricamento, e vederne la cronologia", async ({
+test("creare un fascicolo, collegarci un documento al caricamento, e vederne la cronologia @fast", async ({
   page,
 }) => {
   test.slow();

@@ -23,6 +23,7 @@
     "test:watch": "vitest",
     "pretest:e2e": "npm run sync-ocr-assets",
     "test:e2e": "playwright test",
+    "test:e2e:fast": "playwright test --grep @fast",
     "reset-dev-data": "node scripts/reset-dev-data.mjs",
     "seed-demo": "vitest run --config vitest.seed.config.mts",
     "demo-stage": "node scripts/demo-stage.mjs"
