@@ -5,7 +5,7 @@ import { askHinthia, enableHinthia, MASTER_PASSWORD, mockHinthiaReading, setUpWi
 // 20261005000000_document_type_categories.sql applicata.
 //
 // "Categoria proposta per tipo di documento": quando il motore non dà una categoria, ne propone una in base al tipo; in
-// Impostazioni > Categorie l'utente cambia la corrispondenza. La lettura di Hinthia è simulata (v. hinthia.ts).
+// Impostazioni > Categorie l'utente cambia la corrispondenza. La lettura di Silva è simulata (v. hinthia.ts).
 
 async function openCategoriesSettings(page: import("@playwright/test").Page) {
   await page.goto("/settings");
@@ -26,7 +26,7 @@ test("la categoria proposta segue il tipo, e la scelta dell'utente la cambia", a
 
   // Predefinito: scadenza, emittente e la categoria "Assicurazioni" calcolata dal tipo.
   await askHinthia(page, 3);
-  const panel = page.getByRole("tabpanel", { name: /^Chiedi a Hinthia/ });
+  const panel = page.getByRole("tabpanel", { name: /^Chiedi a Silva/ });
   await expect(panel).toContainText("Dal tipo di documento: Polizza assicurativa");
   // La categoria "Assicurazioni" è proposta dal tipo: lo dice la riga stessa del registro di lettura.
   await expect(panel).toContainText("Assicurazioni");
@@ -45,9 +45,9 @@ test("la categoria proposta segue il tipo, e la scelta dell'utente la cambia", a
   await page.goto(documentUrl);
   await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
-  await page.getByRole("tab", { name: /^Chiedi a Hinthia/ }).click();
-  await expect(page.getByRole("tab", { name: "Chiedi a Hinthia · 2" })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("tabpanel", { name: /^Chiedi a Hinthia/ })).not.toContainText("Dal tipo di documento");
+  await page.getByRole("tab", { name: /^Chiedi a Silva/ }).click();
+  await expect(page.getByRole("tab", { name: "Chiedi a Silva · 2" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("tabpanel", { name: /^Chiedi a Silva/ })).not.toContainText("Dal tipo di documento");
 
   // Torna alla predefinita: la categoria dal tipo ricompare.
   await openCategoriesSettings(page);
@@ -56,6 +56,6 @@ test("la categoria proposta segue il tipo, e la scelta dell'utente la cambia", a
   await page.goto(documentUrl);
   await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
-  await page.getByRole("tab", { name: /^Chiedi a Hinthia/ }).click();
-  await expect(page.getByRole("tab", { name: "Chiedi a Hinthia · 3" })).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("tab", { name: /^Chiedi a Silva/ }).click();
+  await expect(page.getByRole("tab", { name: "Chiedi a Silva · 3" })).toBeVisible({ timeout: 30_000 });
 });

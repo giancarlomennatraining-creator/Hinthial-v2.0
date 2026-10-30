@@ -1,5 +1,5 @@
 /**
- * "Raccontami": le domande con cui Hinthia fa raccontare ciò che sai e che non sta in nessun documento. Raccolta scritta a
+ * "Raccontami": le domande con cui Silva fa raccontare ciò che sai e che non sta in nessun documento. Raccolta scritta a
  * mano, senza rete e senza AI: le risposte diventano note in Archivio (categoria "Racconti"), e una domanda è "fatta"
  * quando esiste una nota con quel titolo. Puro.
  */

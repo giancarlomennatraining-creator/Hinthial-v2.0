@@ -2,7 +2,7 @@ import type { AnalysisStatus, PersistedContentAnalysis } from "@/domain/ai/analy
 
 /** `filename`/`notes` già decifrati client-side; `wrappedDocumentKey`/`storagePath` restano opachi per evitare un secondo fetch. */
 /**
- * Un documento senza le colonne pesanti (testo letto, sintesi, analisi di Hinthia): quanto basta per
+ * Un documento senza le colonne pesanti (testo letto, sintesi, analisi di Silva): quanto basta per
  * elenchi, conteggi e selettori. Quel testo può pesare fino a 200.000 caratteri a documento, e scaricarlo e
  * decifrarlo per tutti i documenti a ogni apertura di una pagina costa tempo che cresce con l'archivio. Chi ha
  * bisogno del contenuto usa `DocumentListItem` (`listDocuments`, `getDocumentById`).
@@ -49,7 +49,7 @@ export interface DocumentListItem {
   aiSynthesis: string;
   /** Quando aiSynthesis è stata generata --- null se il documento non è mai stato letto da Claude. */
   aiSynthesisGeneratedAt: string | null;
-  /** L'ultima lettura di Hinthia --- blocchi con citazione e provenienza, impronta, ripresa. null se mai letto o se il blocco cifrato non si legge più. */
+  /** L'ultima lettura di Silva --- blocchi con citazione e provenienza, impronta, ripresa. null se mai letto o se il blocco cifrato non si legge più. */
   contentAnalysis: PersistedContentAnalysis | null;
   /** Stato grossolano in chiaro --- null se mai letto. */
   analysisStatus: AnalysisStatus | null;

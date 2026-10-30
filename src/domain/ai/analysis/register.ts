@@ -5,8 +5,8 @@ import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
 import { formatDate } from "@/lib/format";
 
 /**
- * Il "registro di lettura": un solo elenco al posto di "Proposte" e "Cosa ha letto Hinthia". Ogni riga è una cosa che
- * Hinthia ha trovato (o proposto) e dice a che punto è: da decidere, già nella Scheda, scartata, o solo da leggere.
+ * Il "registro di lettura": un solo elenco al posto di "Proposte" e "Cosa ha letto Silva". Ogni riga è una cosa che
+ * Silva ha trovato (o proposto) e dice a che punto è: da decidere, già nella Scheda, scartata, o solo da leggere.
  * Puro: nessuna rete, nessun database; le righe si ricalcolano a ogni render dai dati già in pagina.
  */
 

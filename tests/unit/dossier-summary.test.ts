@@ -77,7 +77,7 @@ describe("buildSummaryMessage", () => {
 });
 
 describe("riassunto da aggiornare", () => {
-  it("conta i documenti letti da Hinthia", () => {
+  it("conta i documenti letti da Silva", () => {
     expect(readableDocumentCount([{ aiSynthesisGeneratedAt: "2026-09-01T00:00:00Z" }, { aiSynthesisGeneratedAt: null }])).toBe(1);
   });
 

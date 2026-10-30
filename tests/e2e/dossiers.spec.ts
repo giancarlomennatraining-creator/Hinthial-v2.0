@@ -84,6 +84,8 @@ test("creare un fascicolo, collegarci un documento al caricamento, e vederne la 
   await page.getByRole("button", { name: "Aiuto" }).click();
   await expect(page.getByRole("dialog", { name: "Aiuto — Fascicoli" })).toBeVisible();
   await page.getByRole("button", { name: "Chiudi" }).click();
+  // Il Cestino non è una scheda: si raggiunge da Contenuti.
+  await page.getByRole("link", { name: "Contenuti", exact: true }).click();
   await page.getByRole("link", { name: "Cestino", exact: true }).click();
   await expect(page.getByRole("button", { name: "Aiuto" })).toBeVisible();
   await page.getByRole("link", { name: "Fascicoli", exact: true }).click();

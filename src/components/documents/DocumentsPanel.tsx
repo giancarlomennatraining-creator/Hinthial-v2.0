@@ -271,7 +271,13 @@ export function DocumentsPanel({ masterKey }: { masterKey: CryptoKey }) {
             <h1 className="text-2xl font-semibold tracking-tight text-title">
               Archivio
             </h1>
-            <PageHelp title="Archivio" tips={ARCHIVE_HELP_TIPS} />
+            <div className="flex shrink-0 items-center gap-3">
+              {/* Il Cestino non è un modo di guardare l'Archivio come le schede: è dove si recupera ciò che si è buttato. */}
+              <Link href="/archive/trash" className="text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200">
+                Cestino
+              </Link>
+              <PageHelp title="Archivio" tips={ARCHIVE_HELP_TIPS} />
+            </div>
           </div>
         </div>
         <AddContentMenu />

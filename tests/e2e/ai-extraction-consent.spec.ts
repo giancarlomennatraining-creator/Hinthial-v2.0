@@ -5,7 +5,7 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 /**
  * FASE 22/22b/24 --- il cancello generale e le funzioni specifiche che ne dipendono. L'estrazione avanzata (FASE
- * 22) ha oggi una funzione reale dietro (v. ai-content-analysis.spec.ts per il bottone "Chiedi a Hinthia"); questo
+ * 22) ha oggi una funzione reale dietro (v. ai-content-analysis.spec.ts per il bottone "Chiedi a Silva"); questo
  * test resta sulla cascata di consenso in Impostazioni, comune a tutte le funzioni, incluso l'elenco per categoria
  * che ha sostituito l'eccezione a parte "Includi anche Salute" (Salute è ora una categoria come le altre).
  */
@@ -24,10 +24,10 @@ test("cancello generale ed estrazione avanzata per categoria si spengono a casca
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
-  await expect(page.getByRole("heading", { name: "Hinthia", exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Privacy e Silva" }).click();
+  await expect(page.getByRole("heading", { name: "Silva", exact: true })).toBeVisible();
 
-  const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Hinthia" });
+  const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Silva" });
   const extractionCheckbox = page.getByRole("checkbox", { name: /^Estrazione avanzata/ });
   // "Salute" è una categoria predefinita come le altre --- non più un'eccezione a parte con un consenso proprio.
   const saluteCheckbox = page.getByRole("checkbox", { name: "❤️ Salute" });
@@ -72,8 +72,8 @@ test("cancello generale ed estrazione avanzata per categoria si spengono a casca
 
   // Resta impostato dopo un refresh vero.
   await page.reload();
-  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
-  await expect(page.getByRole("heading", { name: "Hinthia", exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Privacy e Silva" }).click();
+  await expect(page.getByRole("heading", { name: "Silva", exact: true })).toBeVisible();
   await expect(extractionCheckbox).not.toBeChecked();
   await expect(saluteCheckbox).toBeDisabled();
 

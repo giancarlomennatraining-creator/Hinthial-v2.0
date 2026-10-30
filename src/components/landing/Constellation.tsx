@@ -36,7 +36,7 @@ function makeStars(count: number): Star[] {
 }
 
 /**
- * "Costellazione": Hinthia al centro, intorno le persone d'esempio. Si fanno scorrere gli anni (o "Fai scorrere il tempo") e
+ * "Costellazione": Silva al centro, intorno le persone d'esempio. Si fanno scorrere gli anni (o "Fai scorrere il tempo") e
  * ogni capsula parte come un impulso di luce quando arriva la sua data; "Se un giorno non rispondo più" mostra cosa consegna
  * l'Eredità digitale. Il disegno è un canvas decorativo: l'elenco sotto dice le stesse cose in testo.
  */
@@ -183,7 +183,7 @@ export function Constellation() {
         c.fillText(open ? "✓ consegnata" : person.year !== undefined ? String(person.year) : "eredità", p.x, p.y + 41);
       });
 
-      // Hinthia al centro, con un alone che respira.
+      // Silva al centro, con un alone che respira.
       const breath = reduced ? 0 : Math.sin(now / 700) * 4;
       const glow = c.createRadialGradient(cx, cy, 4, cx, cy, 70 + breath);
       glow.addColorStop(0, "rgba(21,179,212,.55)");

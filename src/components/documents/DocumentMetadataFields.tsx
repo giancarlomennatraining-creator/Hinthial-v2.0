@@ -71,7 +71,7 @@ export function DocumentMetadataFields({
   const [dossierToAdd, setDossierToAdd] = useState("");
 
   // La categoria filtra i beni proposti: senza categoria selezionata, nessun bene è proponibile. Il bene già collegato
-  // resta sempre scelto e visibile: può esserlo stato da una proposta di Hinthia, anche di un'altra categoria.
+  // resta sempre scelto e visibile: può esserlo stato da una proposta di Silva, anche di un'altra categoria.
   const filteredAssets = sortAlphabetically(
     assets.filter(
       (asset) => asset.id === value.relatedAssetId || (value.categoryId !== "" && asset.categoryId === value.categoryId),

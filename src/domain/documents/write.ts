@@ -25,7 +25,7 @@ type UploadPhaseListener = (phase: UploadPhase, progress: number | null) => void
 /** FASE 19b: una lettura già fatta al momento della scelta del file, per non rileggere al salvataggio. `attempted: false` = si è salvato mentre leggeva ancora, `extracted_at` resta nullo (recuperato da "Leggili ora", FASE 17b). */
 export interface PriorExtraction {
   text: string | null;
-  /** Le pagine lette, per la provenienza dell'analisi di Hinthia: se mancano si salva solo il testo. */
+  /** Le pagine lette, per la provenienza dell'analisi di Silva: se mancano si salva solo il testo. */
   segments?: ContentSegment[];
   attempted: boolean;
 }
@@ -330,7 +330,7 @@ export async function saveContentAnalysis(
     .eq("id", documentId);
 
   if (error) {
-    throw new Error(`Impossibile salvare la lettura di Hinthia: ${error.message}`);
+    throw new Error(`Impossibile salvare la lettura di Silva: ${error.message}`);
   }
 }
 

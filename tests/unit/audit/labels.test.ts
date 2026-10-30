@@ -26,9 +26,9 @@ describe("mappe degli eventi", () => {
 
 describe("describeAuditEvent", () => {
   it("distingue letto da riletto", () => {
-    expect(describeAuditEvent({ type: "ai_extraction_used", metadata: null }).label).toBe("Documento letto da Hinthia");
+    expect(describeAuditEvent({ type: "ai_extraction_used", metadata: null }).label).toBe("Documento letto da Silva");
     expect(describeAuditEvent({ type: "ai_extraction_used", metadata: { reread: true } }).label).toBe(
-      "Documento riletto da Hinthia",
+      "Documento riletto da Silva",
     );
   });
 
@@ -66,11 +66,11 @@ describe("describeAuditEvent", () => {
       detail: "Trascrizione",
     });
     expect(describeAuditEvent({ type: "document_updated", metadata: { change: "ai_reading" } }).detail).toBe(
-      "Lettura di Hinthia salvata",
+      "Lettura di Silva salvata",
     );
     expect(
       describeAuditEvent({ type: "document_updated", metadata: { change: "ai_exclusion", excluded: true } }).detail,
-    ).toBe("Esclusione da Hinthia: escluso");
+    ).toBe("Esclusione da Silva: escluso");
     expect(describeAuditEvent({ type: "document_updated", metadata: null }).detail).toBeNull();
   });
 

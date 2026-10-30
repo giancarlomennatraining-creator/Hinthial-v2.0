@@ -97,9 +97,9 @@ export function usePostSave(
     if (saved.kind === "complete") return;
     if (
       !(await confirm({
-        title: "Leggere con Hinthia?",
+        title: "Leggere con Silva?",
         message: analysisConfirmMessage(planAnalysis(savedDoc, { segments }), saved),
-        confirmLabel: "Invia a Hinthia",
+        confirmLabel: "Invia a Silva",
       }))
     ) {
       return;
@@ -151,7 +151,7 @@ export function usePostSave(
         setError(
           err instanceof Error
             ? err.message
-            : "Impossibile analizzare il documento con Hinthia.",
+            : "Impossibile analizzare il documento con Silva.",
         );
       }
     } finally {

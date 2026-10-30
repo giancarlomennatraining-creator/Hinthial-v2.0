@@ -114,7 +114,7 @@ export function ExpensesCard({ expenses }: { expenses: DossierExpenses }) {
   );
 }
 
-/** Le sintesi che Hinthia ha già scritto sui documenti letti: si leggono solo al clic, nessuna nuova lettura parte. */
+/** Le sintesi che Silva ha già scritto sui documenti letti: si leggono solo al clic, nessuna nuova lettura parte. */
 export function ReadingsCard({
   readings,
   busy,
@@ -130,7 +130,7 @@ export function ReadingsCard({
       {readings === null ? (
         <>
           <p className="text-[13px] leading-snug text-zinc-500 dark:text-zinc-400">
-            Le sintesi che Hinthia ha già scritto leggendo i documenti: nessuna nuova lettura parte.
+            Le sintesi che Silva ha già scritto leggendo i documenti: nessuna nuova lettura parte.
           </p>
           <button type="button" disabled={busy} onClick={onShow} className={`${SMALL_BUTTON} self-start`}>
             {busy ? "Leggo…" : "Mostra le sintesi"}
@@ -139,7 +139,7 @@ export function ReadingsCard({
       ) : (
         <>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {readings.filter((d) => d.aiSynthesis).length} di {readings.length} documenti letti da Hinthia
+            {readings.filter((d) => d.aiSynthesis).length} di {readings.length} documenti letti da Silva
           </p>
           <ul className="flex flex-col gap-3">
             {readings

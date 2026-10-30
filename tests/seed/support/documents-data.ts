@@ -32,7 +32,7 @@ export interface DocSpec {
   picture?: { caption: string; hue: [string, string] };
   accent?: string;
   reading?: Reading;
-  /** Una sintesi di Hinthia già salvata. */
+  /** Una sintesi di Silva già salvata. */
   synthesis?: string;
   trashed?: boolean;
   excludeFromAI?: boolean;
@@ -252,7 +252,7 @@ export const DOCUMENTS: DocSpec[] = [
     "Colesterolo totale: 198 mg/dl",
     "Glicemia: 92 mg/dl",
     "Vitamina D: 24 ng/ml (lievemente bassa)",
-  ], { addedAgo: 75, excludeFromAI: true, notes: "Escluso dalla lettura di Hinthia." }),
+  ], { addedAgo: 75, excludeFromAI: true, notes: "Escluso dalla lettura di Silva." }),
   {
     key: "tessera", kind: "image", title: "Tessera sanitaria", category: "Salute", expires: 260, addedAgo: 480,
     picture: { caption: "Tessera sanitaria - Marta Conti", hue: ["#2d6a4f", "#1b4332"] }, reading: "none",

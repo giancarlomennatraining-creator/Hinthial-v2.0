@@ -204,7 +204,7 @@ describe("analyzeDocumentWithClaude", () => {
   it("un output che non ha la forma attesa non viene accettato", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ result: { expiry: "domani" } }) }));
 
-    await expect(analyzeDocumentWithClaude(doc(), CATEGORIES, "category")).rejects.toThrow("Risposta di Hinthia non valida.");
+    await expect(analyzeDocumentWithClaude(doc(), CATEGORIES, "category")).rejects.toThrow("Risposta di Silva non valida.");
   });
 
   it("propaga il messaggio di errore del server (consenso non attivo, categoria non abilitata, ...)", async () => {
@@ -383,7 +383,7 @@ describe("planAnalysis e messaggio di conferma", () => {
   it("un documento breve parte in una parte e il messaggio resta quello di sempre", () => {
     const plan = planAnalysis({ extractedText: TEXT });
     expect(plan).toEqual({ parts: 1, truncated: false });
-    expect(analysisConfirmMessage(plan)).toBe("Il testo di questo documento verrà inviato a Hinthia. Continuare?");
+    expect(analysisConfirmMessage(plan)).toBe("Il testo di questo documento verrà inviato a Silva. Continuare?");
   });
 
   it("un documento lungo dice in quante parti parte", () => {

@@ -18,7 +18,7 @@ import { normalizeExtractedText, type ContentSegment } from "@/domain/extraction
 
 /**
  * I segmenti per pagina del testo letto sul dispositivo, tenuti in un blob cifrato accanto al file (nessuna colonna).
- * Servono solo all'analisi di Hinthia, per citare "pagina N": non sono mai nell'esportazione e spariscono con il
+ * Servono solo all'analisi di Silva, per citare "pagina N": non sono mai nell'esportazione e spariscono con il
  * documento (v. deleteDocument, "Cancella tutto", cancellazione account).
  */
 

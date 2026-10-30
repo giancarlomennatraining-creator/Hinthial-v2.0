@@ -121,7 +121,7 @@ export function useFileLot(
     }
   }
 
-  /** Legge il testo del file sul dispositivo, per salvarlo con il contenuto (ricerca, analisi di Hinthia). Non compila nessun campo. */
+  /** Legge il testo del file sul dispositivo, per salvarlo con il contenuto (ricerca, analisi di Silva). Non compila nessun campo. */
   async function readLotFile({ id, file }: LotFile): Promise<PriorExtraction> {
     const mimeType = mimeTypeOfFile(file);
 

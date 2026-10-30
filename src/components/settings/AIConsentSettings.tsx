@@ -14,7 +14,7 @@ import { PANEL_FLAT } from "@/components/ui/styles";
 /**
  * Impostazioni -> Intelligenza artificiale: il "cancello" generale per l'IA reale più le funzioni specifiche che ne
  * dipendono, riusato anche nel pannello ⚙ della pagina AI. Spegnere il cancello spegne anche le funzioni sotto;
- * riaccenderlo non le riaccende da solo. Hinthia che risponde (Raccontami e il pannello Aiuto) ed Estrazione avanzata hanno una funzione reale dietro
+ * riaccenderlo non le riaccende da solo. Silva che risponde (Raccontami e il pannello Aiuto) ed Estrazione avanzata hanno una funzione reale dietro
  * (rispettivamente FASE 11 e FASE 22).
  *
  * FASE 22: il consenso all'estrazione avanzata è a due livelli --- questo generale, poi per categoria (elenco sotto,
@@ -113,10 +113,10 @@ export function AIConsentSettings() {
       <div className={`${PANEL_FLAT} flex flex-wrap items-center gap-3 p-4`}>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-            Consenti l&apos;uso di Hinthia
+            Consenti l&apos;uso di Silva
           </p>
           <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-            Cancello generale — deve essere acceso perché una qualunque funzione di Hinthia
+            Cancello generale — deve essere acceso perché una qualunque funzione di Silva
             possa essere attivata qui sotto. Spegnerlo spegne anche le funzioni già attive.
           </p>
           {masterError ? (
@@ -129,7 +129,7 @@ export function AIConsentSettings() {
           type="button"
           role="switch"
           aria-checked={masterEnabled}
-          aria-label="Consenti l'uso di Hinthia"
+          aria-label="Consenti l'uso di Silva"
           disabled={masterBusy}
           onClick={() => handleMasterChange(!masterEnabled)}
           className={cn(
@@ -166,7 +166,7 @@ export function AIConsentSettings() {
                 onChange={() => handleChatChange(!chatConsent)}
                 className="h-4 w-4 rounded border-zinc-300 text-accent focus:ring-brand dark:border-zinc-700"
               />
-              Hinthia che risponde — Raccontami ti fa una domanda in più e il pannello Aiuto risponde alle tue domande
+              Silva che risponde — Raccontami ti fa una domanda in più e il pannello Aiuto risponde alle tue domande
             </label>
           </li>
 
@@ -188,7 +188,7 @@ export function AIConsentSettings() {
               />
               {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
               <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-4 w-4 shrink-0 rounded-full" />
-              Estrazione avanzata dei contenuti — Hinthia legge il testo dei documenti delle
+              Estrazione avanzata dei contenuti — Silva legge il testo dei documenti delle
               categorie che abiliti qui sotto
             </label>
           </li>

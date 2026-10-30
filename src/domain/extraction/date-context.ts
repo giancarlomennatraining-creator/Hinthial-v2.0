@@ -1,6 +1,6 @@
 /**
  * Le date scritte in un testo (in lettere, numeriche, ISO) e la frase attorno a ciascuna. Serve alla validazione
- * dell'analisi di Hinthia per controllare che una data letta compaia davvero nella citazione che la prova.
+ * dell'analisi di Silva per controllare che una data letta compaia davvero nella citazione che la prova.
  */
 
 const MONTHS: Record<string, number> = {

@@ -26,7 +26,7 @@ import { errorMessage } from "@/lib/utils";
 import type { DocumentData } from "@/components/documents/detail/useDocumentData";
 
 /**
- * FASE 22: la lettura di Hinthia (Claude) di questo contenuto --- lo stato di quella già salvata, l'invio con la
+ * FASE 22: la lettura di Silva (Claude) di questo contenuto --- lo stato di quella già salvata, l'invio con la
  * conferma, l'avanzamento, l'interruzione. `onAnalyzed` scatta a lettura finita, per portare l'utente sul risultato.
  */
 export function useDocumentAnalysis(masterKey: CryptoKey, data: DocumentData, onAnalyzed: () => void) {
@@ -39,7 +39,7 @@ export function useDocumentAnalysis(masterKey: CryptoKey, data: DocumentData, on
   const [savedAnalysis, setSavedAnalysis] = useState<SavedAnalysisState>({ kind: "none" });
   const [aiProgress, setAiProgress] = useState<AnalysisProgress | null>(null);
 
-  // Ciò che Hinthia ha già letto vale ancora per il testo di adesso? Serve a scegliere tra "chiedi", "riprendi" e "già letto".
+  // Ciò che Silva ha già letto vale ancora per il testo di adesso? Serve a scegliere tra "chiedi", "riprendi" e "già letto".
   const savedAnalysisSource = doc?.contentAnalysis ?? null;
   const savedAnalysisText = doc?.extractedText ?? "";
   // Le pagine lette, se ci sono: l'impronta della lettura dipende dalla fonte (pagine o sezioni), quindi si aspetta che siano caricate.
@@ -79,9 +79,9 @@ export function useDocumentAnalysis(masterKey: CryptoKey, data: DocumentData, on
     if (saved.kind === "complete") return;
     if (
       !(await confirm({
-        title: "Leggere con Hinthia?",
+        title: "Leggere con Silva?",
         message: analysisConfirmMessage(planAnalysis(doc, { segments }), saved),
-        confirmLabel: "Invia a Hinthia",
+        confirmLabel: "Invia a Silva",
       }))
     ) {
       return;
@@ -114,14 +114,14 @@ export function useDocumentAnalysis(masterKey: CryptoKey, data: DocumentData, on
       }
       await refresh();
       // Senza, l'utente non si accorgerebbe che qualcosa è successo: niente più tab "Proposte" a sé, quello che
-      // Hinthia ha trovato vive già in "Chiedi a Hinthia".
+      // Silva ha trovato vive già in "Chiedi a Silva".
       onAnalyzed();
     } catch (err) {
       // refresh() azzera l'errore, quindi prima si rilegge ciò che è stato salvato, poi si mostra l'errore.
       await refresh();
       // Interrompere non è un guasto: ciò che era già stato letto è salvato e il bottone propone di riprendere.
       if (!(err instanceof AnalysisAbortedError)) {
-        setError(errorMessage(err, "Impossibile analizzare il documento con Hinthia."));
+        setError(errorMessage(err, "Impossibile analizzare il documento con Silva."));
       }
     } finally {
       aiAbortRef.current = null;

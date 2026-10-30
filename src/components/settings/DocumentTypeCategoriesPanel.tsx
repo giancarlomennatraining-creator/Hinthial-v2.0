@@ -16,7 +16,7 @@ const USE_DEFAULT = "";
 const NONE = "none";
 
 /**
- * "Categoria proposta per tipo di documento": quando Hinthia legge un documento e il modello non propone una categoria,
+ * "Categoria proposta per tipo di documento": quando Silva legge un documento e il modello non propone una categoria,
  * se ne propone una in base al tipo riconosciuto. Qui l'utente cambia la corrispondenza: una categoria sua, "nessuna", o
  * la predefinita.
  */
@@ -83,7 +83,7 @@ export function DocumentTypeCategoriesPanel({ categories }: { categories: Catego
       <div>
         <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Categoria proposta per tipo di documento</h3>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Quando Hinthia legge un documento e non propone una categoria, ne propone una in base al tipo che ha
+          Quando Silva legge un documento e non propone una categoria, ne propone una in base al tipo che ha
           riconosciuto. Qui scegli quale. La proposta resta sempre da accettare.
         </p>
       </div>

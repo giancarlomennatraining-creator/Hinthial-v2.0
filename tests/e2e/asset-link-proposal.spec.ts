@@ -5,7 +5,7 @@ import { openArchiveTab } from "./nav";
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
 // Il bene impara dai documenti già collegati: la polizza A (numero ABC12345) è collegata alla Panda, la polizza B ha
-// lo stesso numero, quindi Hinthial propone di collegarla alla Panda. La lettura di Hinthia è simulata (v. hinthia.ts).
+// lo stesso numero, quindi Hinthial propone di collegarla alla Panda. La lettura di Silva è simulata (v. hinthia.ts).
 
 async function createAsset(page: Page, name: string, categoryLabel: string) {
   await openArchiveTab(page, "Beni");
@@ -39,10 +39,10 @@ test("propone di collegare la polizza al bene che ha già un documento con lo st
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByRole("link", { name: /polizza-a\.pdf/ }).click();
 
-  // La polizza A: Hinthia la legge, il numero finisce nella Scheda, poi la si collega alla Panda a mano.
+  // La polizza A: Silva la legge, il numero finisce nella Scheda, poi la si collega alla Panda a mano.
   await askHinthia(page, 4);
   await page.getByRole("tab", { name: "Scheda" }).click();
-  await page.getByRole("group", { name: "Informazioni trovate da Hinthia" }).getByRole("button", { name: "Accetta tutto" }).click();
+  await page.getByRole("group", { name: "Informazioni trovate da Silva" }).getByRole("button", { name: "Accetta tutto" }).click();
   await expect(page.getByRole("status", { name: "Ultima proposta" })).toContainText("informazioni aggiunte", { timeout: 20_000 });
   await page.getByLabel("Categoria").selectOption({ label: "🏠 Casa" });
   await page.getByLabel("Bene collegato").selectOption({ label: "Fiat Panda" });
@@ -83,10 +83,10 @@ test("da una polizza propone di creare il bene, lo crea collegando il documento,
   // Scadenza, emittente, due campi e il bene da creare.
   await askHinthia(page, 5);
   await page.getByRole("tab", { name: "Scheda" }).click();
-  await page.getByRole("group", { name: "Informazioni trovate da Hinthia" }).getByRole("button", { name: "Accetta tutto" }).click();
+  await page.getByRole("group", { name: "Informazioni trovate da Silva" }).getByRole("button", { name: "Accetta tutto" }).click();
   await expect(page.getByRole("status", { name: "Ultima proposta" })).toContainText("informazioni aggiunte", { timeout: 20_000 });
 
-  await page.getByRole("tab", { name: /^Chiedi a Hinthia/ }).click();
+  await page.getByRole("tab", { name: /^Chiedi a Silva/ }).click();
   await expect(page.getByText("Nuovo bene: Ford Focus 1.5 EcoBlue (EY389YM)")).toBeVisible();
   await page.getByRole("button", { name: "Crea e collega" }).click();
   const lastAction = page.getByRole("status", { name: "Ultima proposta" });
@@ -98,7 +98,7 @@ test("da una polizza propone di creare il bene, lo crea collegando il documento,
   await page.getByRole("tab", { name: "Scheda" }).click();
   await expect(page.getByLabel("Bene collegato").locator("option:checked")).toHaveText("Scegli prima una categoria");
 
-  await page.getByRole("tab", { name: /^Chiedi a Hinthia/ }).click();
+  await page.getByRole("tab", { name: /^Chiedi a Silva/ }).click();
   await page.getByRole("button", { name: "Crea e collega" }).click();
   await expect(lastAction).toContainText("creato e collegato", { timeout: 20_000 });
   await page.getByRole("tab", { name: "Scheda" }).click();

@@ -254,7 +254,7 @@ export function ShareDossierForm({ masterKey, dossierId }: { masterKey: CryptoKe
               {dossier.summary ? (
                 <label className="flex cursor-pointer items-center gap-2.5 text-sm">
                   <input type="checkbox" checked={includeSummary} onChange={(e) => setIncludeSummary(e.target.checked)} className="h-4 w-4 accent-brand" />
-                  Includi il riassunto scritto da Hinthia
+                  Includi il riassunto scritto da Silva
                 </label>
               ) : null}
               {dossier.phases ? (

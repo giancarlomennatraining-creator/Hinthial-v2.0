@@ -5,12 +5,12 @@ import { createConfirmedTestUser, uniqueTestUser } from "./test-users";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// La conferma dopo un'importazione: più documenti, una lettura di gruppo di Hinthia con una sola conferma, le proposte per
+// La conferma dopo un'importazione: più documenti, una lettura di gruppo di Silva con una sola conferma, le proposte per
 // documento e "Accetta le sicure" (con annulla). La risposta del modello è simulata sulla route: non serve una vera chiave.
 
 const MASTER_PASSWORD = "una-master-password-solida";
 
-test("dopo un lotto Hinthia legge i documenti con una sola conferma e le proposte si accettano in blocco", async ({ page }) => {
+test("dopo un lotto Silva legge i documenti con una sola conferma e le proposte si accettano in blocco", async ({ page }) => {
   test.slow();
 
   const user = uniqueTestUser();
@@ -22,10 +22,10 @@ test("dopo un lotto Hinthia legge i documenti con una sola conferma e le propost
   await page.getByRole("button", { name: "Accedi" }).click();
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 
-  // La lettura di Hinthia è un consenso: si accende dalle Impostazioni (funzione generale + estrazione avanzata).
+  // La lettura di Silva è un consenso: si accende dalle Impostazioni (funzione generale + estrazione avanzata).
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
-  const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Hinthia" });
+  await page.getByRole("tab", { name: "Privacy e Silva" }).click();
+  const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Silva" });
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     masterSwitch.click(),
@@ -81,7 +81,7 @@ test("dopo un lotto Hinthia legge i documenti con una sola conferma e le propost
   await expect(page.getByText("polizza-auto.pdf")).toBeVisible({ timeout: 30_000 });
   await page.getByRole("button", { name: "Aggiungi 2 file all'archivio" }).click();
 
-  // La conferma: nessuna proposta finché Hinthia non ha letto, e la lettura parte solo dopo una conferma.
+  // La conferma: nessuna proposta finché Silva non ha letto, e la lettura parte solo dopo una conferma.
   await expect(page).toHaveURL(/\/archive\/confirm\?ids=/, { timeout: 60_000 });
   await expect(page.getByRole("heading", { name: "2 documenti da confermare" })).toBeVisible();
   await expect(page.getByText("Nessuna proposta, per ora").first()).toBeVisible();
@@ -93,10 +93,10 @@ test("dopo un lotto Hinthia legge i documenti con una sola conferma e le propost
   await page.getByRole("link", { name: "Rivedi" }).click();
   await expect(page.getByRole("heading", { name: "2 documenti da confermare" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Chiedi a Hinthia di leggere questi 2 documenti" }).click();
+  await page.getByRole("button", { name: "Chiedi a Silva di leggere questi 2 documenti" }).click();
   const confirmMessage = await acceptConfirm(page);
-  await expect(page.getByText("Hinthia ha letto 2 documenti.")).toBeVisible({ timeout: 60_000 });
-  expect(confirmMessage).toContain("Il testo di 2 documenti verrà inviato a Hinthia");
+  await expect(page.getByText("Silva ha letto 2 documenti.")).toBeVisible({ timeout: 60_000 });
+  expect(confirmMessage).toContain("Il testo di 2 documenti verrà inviato a Silva");
   expect(confirmMessage).toContain("polizza-casa.pdf");
 
   // Le proposte, per documento: scadenza ed emittente, con la citazione del testo.

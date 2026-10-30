@@ -1,5 +1,6 @@
 import { expiryInfo, type ExpiryInfo } from "@/domain/documents/archive-views";
 import type { AssetListItem } from "@/domain/assets/types";
+import { mergeDeadlines } from "@/domain/deadlines";
 import type { DocumentSummary } from "@/domain/documents/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
 import type { DossierStep } from "@/domain/dossiers/items";
@@ -8,7 +9,7 @@ import { NOTE_MIME_TYPE } from "@/lib/content-kind";
 /**
  * Un fascicolo "vivo": quello che si capisce di una vicenda guardando i suoi documenti, senza che nessuno debba compilare
  * niente. Prossima scadenza, spese, beni coinvolti e cronologia si ricavano da ciò che c'è già (le scadenze collegate ai
- * documenti, gli importi letti da Hinthia, i beni collegati). Puro: nessuna rete, nessun database.
+ * documenti, gli importi letti da Silva, i beni collegati). Puro: nessuna rete, nessun database.
  */
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -100,28 +101,18 @@ export function dossierDeadlines(
 ): DossierDeadline[] {
   const documentIds = new Set(documents.map((d) => d.id));
   const mine = reminders.filter((r) => r.relatedDocumentId !== null && documentIds.has(r.relatedDocumentId));
-  const dayOf = (iso: string) => iso.slice(0, 10);
-  const covered = new Set(mine.map((r) => `${r.relatedDocumentId}:${dayOf(r.dueAt)}`));
 
-  const fromReminders: DossierDeadline[] = mine
-    .filter((r) => !r.completed)
-    .map((r) => ({ kind: "reminder", id: r.id, title: r.title, date: r.dueAt, info: expiryInfo(r.dueAt.slice(0, 10), now) }));
-
-  const fromDocuments: DossierDeadline[] = documents
-    .filter((d) => d.expiresAt && !covered.has(`${d.id}:${dayOf(d.expiresAt)}`))
-    .map((d) => ({
-      kind: "document",
-      id: d.id,
-      title: `${d.filename} scade`,
-      date: d.expiresAt as string,
-      info: expiryInfo(d.expiresAt, now),
-    }));
+  // Create e date dei documenti si riuniscono come ovunque (v. domain/deadlines); qui si aggiunge solo quanto manca all'urgenza.
+  const fromDeadlines: DossierDeadline[] = mergeDeadlines(documents, mine).map((d) => ({
+    ...d,
+    info: expiryInfo(d.kind === "reminder" ? d.date.slice(0, 10) : d.date, now),
+  }));
 
   const fromSteps: DossierDeadline[] = steps
     .filter((s) => !s.done && s.dueOn)
     .map((s) => ({ kind: "step", id: s.id, title: s.text, date: s.dueOn as string, info: expiryInfo(s.dueOn, now) }));
 
-  return [...fromReminders, ...fromDocuments, ...fromSteps].sort((a, b) => (a.info.days ?? 0) - (b.info.days ?? 0));
+  return [...fromDeadlines, ...fromSteps].sort((a, b) => (a.info.days ?? 0) - (b.info.days ?? 0));
 }
 
 // ---------------------------------------------------------------------------------------------------------------

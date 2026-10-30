@@ -19,7 +19,7 @@ export const SEED_STEPS: SeedStep[] = [
   {
     section: "Raccontami",
     title: "Si comincia da un seme",
-    text: "Un ricordo, una ricetta, un'istruzione. Hinthia ti fa una domanda alla volta e tu rispondi come vuoi, anche con due righe.",
+    text: "Un ricordo, una ricetta, un'istruzione. Silva ti fa una domanda alla volta e tu rispondi come vuoi, anche con due righe.",
   },
   {
     section: "Archivio",

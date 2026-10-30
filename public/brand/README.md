@@ -51,7 +51,7 @@ WebP.
 | `hinthia-32.*` | solo dove lo spazio è davvero minimo: a questa misura la faccia non si legge più |
 | `hinthia-64.*` | misura minima consigliata per l'avatar accanto a un messaggio in chat (30px a schermo, densità 2x) |
 | `hinthia-128.*` | intestazione di sezione, stato "sta pensando" |
-| `hinthia-256.*` | presentazione grande (es. chat vuota: "Ciao, sono Hinthia") |
+| `hinthia-256.*` | presentazione grande (es. chat vuota: "Ciao, sono Silva") |
 | `hinthia-512.*` | la stessa, su schermi ad alta densità |
 
 Nota: l'SVG originale porta con sé i metadati C2PA (content

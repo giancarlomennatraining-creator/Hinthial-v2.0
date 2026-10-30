@@ -20,7 +20,7 @@ test("Impostazioni > Privacy mostra dati reali dell'account e non richiede la ma
 
   // Consultabile subito, prima ancora di configurare la cifratura.
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
+  await page.getByRole("tab", { name: "Privacy e Silva" }).click();
 
   await expect(page.getByRole("heading", { name: "Cosa sa Hinthial di te" })).toBeVisible();
   await expect(page.getByText(`La tua email: ${user.email}`)).toBeVisible();
@@ -67,7 +67,7 @@ test("Impostazioni > Privacy mostra dati reali dell'account e non richiede la ma
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
 
   await openSettings(page, user);
-  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
+  await page.getByRole("tab", { name: "Privacy e Silva" }).click();
   await expect(page.getByText("1 contenuti in archivio")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText(/Le tue categorie: .*Assicurazioni/)).toBeVisible();
 

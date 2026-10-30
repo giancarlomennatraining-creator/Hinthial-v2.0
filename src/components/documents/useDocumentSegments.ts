@@ -7,7 +7,7 @@ import { loadDocumentSegments } from "@/domain/documents/segments";
 import type { ContentSegment } from "@/domain/extraction/types";
 
 /**
- * Le pagine lette di un documento, per la provenienza dell'analisi di Hinthia. `ready` dice se il caricamento per il
+ * Le pagine lette di un documento, per la provenienza dell'analisi di Silva. `ready` dice se il caricamento per il
  * documento di adesso è finito (con `segments: null` se non ci sono): finché non lo è, chi calcola lo stato della
  * lettura salvata deve aspettare, perché le impronte dipendono dalla fonte (pagine o sezioni).
  */

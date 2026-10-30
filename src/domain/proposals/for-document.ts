@@ -5,7 +5,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
 import type { Proposal, ProposalRejection } from "@/domain/proposals/types";
 
 /**
- * Le proposte di un documento: quelle che nascono dalla lettura di Hinthia (v. buildAIProposals) e il collegamento a un
+ * Le proposte di un documento: quelle che nascono dalla lettura di Silva (v. buildAIProposals) e il collegamento a un
  * bene (uno che c'è già, altrimenti uno da creare). Ricalcolate a ogni uso dallo stato attuale del documento: accettare o
  * rifiutare una proposta la filtra da sola, senza uno stato a parte. Puro: la scheda del documento e la schermata di
  * conferma dopo un'importazione usano la stessa funzione, così mostrano sempre le stesse proposte.

@@ -1,9 +1,9 @@
 import type { DossierSummary } from "@/domain/dossiers/types";
 
 /**
- * Il riassunto di un fascicolo ("In breve"): Hinthia riassume ciò che ha già letto dei documenti, non rilegge i file.
+ * Il riassunto di un fascicolo ("In breve"): Silva riassume ciò che ha già letto dei documenti, non rilegge i file.
  * Parte solo ciò che serve (titolo del fascicolo, e per ogni documento nome, data, sintesi e campi letti), solo dei
- * documenti che l'utente ha permesso di far leggere a Hinthia: il server lo ricontrolla (v. api/ai/dossier-summary).
+ * documenti che l'utente ha permesso di far leggere a Silva: il server lo ricontrolla (v. api/ai/dossier-summary).
  * Il testo del riassunto resta cifrato sul dispositivo. Puro: nessuna rete.
  */
 
@@ -51,7 +51,7 @@ interface SummarizableDocument {
 }
 
 /**
- * Dai documenti del fascicolo, quelli che Hinthia ha già letto (hanno una sintesi): i più recenti se sono molti, in ordine
+ * Dai documenti del fascicolo, quelli che Silva ha già letto (hanno una sintesi): i più recenti se sono molti, in ordine
  * di data. Sintesi e campi tagliati a misura: una richiesta è sempre piccola, qualunque sia il fascicolo.
  */
 export function buildSummaryRequest(title: string, documents: SummarizableDocument[]): DossierSummaryRequest {
@@ -105,7 +105,7 @@ export function parseSummaryRequest(body: unknown): DossierSummaryRequest | null
   return { title: title.trim(), documents: parsed };
 }
 
-/** Quanti documenti letti da Hinthia ci sono: se più di quelli che il riassunto ha usato, vale la pena aggiornarlo. */
+/** Quanti documenti letti da Silva ci sono: se più di quelli che il riassunto ha usato, vale la pena aggiornarlo. */
 export function readableDocumentCount(documents: { aiSynthesisGeneratedAt: string | null }[]): number {
   return documents.filter((doc) => doc.aiSynthesisGeneratedAt !== null).length;
 }

@@ -411,6 +411,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
               { icon: "🔒", text: "Contenuti cifrati da lasciare a chi vuoi tu, in condizioni definite da te." },
               { icon: "⚠️", text: "Chiudere una capsula è irreversibile: non sarà più modificabile." },
               { icon: "📎", text: "Un contenuto d'Archivio collegato viene copiato dentro, l'originale resta libero." },
+              { icon: "📖", text: "Un racconto di Raccontami si ricorda: la capsula lo consegna a una persona, quando vuoi tu. Da ogni racconto parte con \"Fallo arrivare a…\"." },
             ]}
           />
         </div>
@@ -493,7 +494,7 @@ export function CapsulesPanel({ masterKey }: { masterKey: CryptoKey }) {
       ) : loading || !prefsReady ? (
         <ListSkeleton />
       ) : capsules.length === 0 ? (
-        <EmptyListCard text="Nessuna capsula ancora." actionHref="/capsules/new" actionLabel="Scrivi la prima capsula" />
+        <EmptyListCard text="Nessuna capsula ancora. Una capsula consegna a qualcuno ciò che hai scritto o raccontato." actionHref="/capsules/new" actionLabel="Scrivi la prima capsula" />
       ) : (
         <>
           <ul className="flex flex-col gap-3">

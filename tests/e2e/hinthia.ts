@@ -3,7 +3,7 @@ import { createConfirmedTestUser, uniqueTestUser, type TestUser } from "./test-u
 import { acceptConfirm } from "./confirm-dialog";
 
 /**
- * Aiuti per gli e2e che passano dalla lettura di Hinthia. La chiamata ad Anthropic è sempre simulata (`page.route`):
+ * Aiuti per gli e2e che passano dalla lettura di Silva. La chiamata ad Anthropic è sempre simulata (`page.route`):
  * nessun test spedisce testo a un servizio esterno, qualunque chiave ci sia in `.env.local`.
  */
 
@@ -147,10 +147,10 @@ export async function enableHinthia(page: Page) {
   const documentUrl = page.url();
 
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
+  await page.getByRole("tab", { name: "Privacy e Silva" }).click();
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
-    page.getByRole("switch", { name: "Consenti l'uso di Hinthia" }).click(),
+    page.getByRole("switch", { name: "Consenti l'uso di Silva" }).click(),
   ]);
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
@@ -163,17 +163,17 @@ export async function enableHinthia(page: Page) {
   await expect(page.getByRole("tab", { name: "Scheda" })).toBeVisible({ timeout: 30_000 });
 }
 
-/** "Chiedi a Hinthia" -> "Solo questa volta" -> attende che arrivino le proposte (tab "Chiedi a Hinthia · N"). */
+/** "Chiedi a Silva" -> "Solo questa volta" -> attende che arrivino le proposte (tab "Chiedi a Silva · N"). */
 export async function askHinthia(page: Page, expectedProposals: number) {
-  await page.getByRole("tab", { name: /^Chiedi a Hinthia/ }).click();
+  await page.getByRole("tab", { name: /^Chiedi a Silva/ }).click();
   await page.getByRole("button", { name: "Solo questa volta" }).click();
   await acceptConfirm(page);
-  await expect(page.getByRole("tab", { name: `Chiedi a Hinthia · ${expectedProposals}` })).toBeVisible({
+  await expect(page.getByRole("tab", { name: `Chiedi a Silva · ${expectedProposals}` })).toBeVisible({
     timeout: 20_000,
   });
 }
 
-/** Documento caricato, Hinthia attiva e già interrogata: si è sulla tab "Chiedi a Hinthia" con le proposte. */
+/** Documento caricato, Silva attiva e già interrogata: si è sulla tab "Chiedi a Silva" con le proposte. */
 export async function openAnalysedDocument(
   page: Page,
   options: { filename?: string; lines?: string[] } & MockedReading & { expectedProposals: number },

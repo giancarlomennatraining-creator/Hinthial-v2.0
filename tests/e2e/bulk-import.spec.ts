@@ -118,7 +118,7 @@ test("due file con lo stesso nome propongono un fascicolo, importati insieme a u
   await expect(page.getByRole("heading", { name: "3 documenti da confermare" })).toBeVisible();
   await expect(page.getByRole("link", { name: "bolletta-luce-01.pdf" })).toBeVisible();
   await expect(page.getByRole("link", { name: "biglietto-treno.txt" })).toBeVisible();
-  // Senza la lettura di Hinthia non ci sono proposte: lo dice, e non scrive nulla.
+  // Senza la lettura di Silva non ci sono proposte: lo dice, e non scrive nulla.
   await expect(page.getByText("Nessuna proposta, per ora").first()).toBeVisible();
 
   // Per tutti: una categoria applicata a ogni documento con un solo gesto, e annullabile.
@@ -139,7 +139,7 @@ test("due file con lo stesso nome propongono un fascicolo, importati insieme a u
   await expect(categoriaDocumento).not.toHaveValue("");
   await expect(page.getByLabel("Categoria per bolletta-luce-01.pdf")).toHaveValue("");
 
-  // Senza la lettura di Hinthia non c'è nulla da decidere: tornare all'archivio non lascia promemoria.
+  // Senza la lettura di Silva non c'è nulla da decidere: tornare all'archivio non lascia promemoria.
   await page.getByRole("link", { name: "Torna all'archivio", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/, { timeout: 15_000 });
   await expect(page.getByText(/importati da confermare/)).toHaveCount(0);

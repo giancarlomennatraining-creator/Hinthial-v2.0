@@ -194,7 +194,7 @@ describe("profilo demo", () => {
         await backdate("documents", id, spec.addedAgo);
       }
     });
-    await step("sintesi di Hinthia già salvate", async () => {
+    await step("sintesi di Silva già salvate", async () => {
       for (const spec of DOCUMENTS.filter((d) => d.synthesis)) {
         await saveAISynthesis(a.supabase, a.masterKey, documentIds.get(spec.key) as string, spec.synthesis as string);
       }

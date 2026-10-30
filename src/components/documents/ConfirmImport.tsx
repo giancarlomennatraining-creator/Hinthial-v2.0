@@ -96,8 +96,8 @@ function proposalKey(proposal: Proposal): string {
 
 /**
  * La conferma dopo aver importato più documenti (flusso "Arriva un documento", fase 3). Una scheda per documento con ciò che
- * Hinthia ne ha capito e un Sì / No su ogni proposta, e in cima i gesti che valgono per tutti: far leggere i documenti a
- * Hinthia con una sola conferma, e accettare in blocco le proposte sicure. Le proposte nascono solo dalla lettura di Hinthia
+ * Silva ne ha capito e un Sì / No su ogni proposta, e in cima i gesti che valgono per tutti: far leggere i documenti a
+ * Silva con una sola conferma, e accettare in blocco le proposte sicure. Le proposte nascono solo dalla lettura di Silva
  * (che manda il testo a Claude): si parte sempre da una conferma esplicita, mai da sola, e le regole di consenso sono quelle
  * della scheda del documento. Nulla si scrive senza un sì.
  */
@@ -221,21 +221,21 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
     });
   }
 
-  // I documenti che Hinthia può ancora leggere: testo letto sul dispositivo, nessuna lettura salvata, non esclusi dall'analisi.
+  // I documenti che Silva può ancora leggere: testo letto sul dispositivo, nessuna lettura salvata, non esclusi dall'analisi.
   const readable = items.filter((item) => !item.doc.contentAnalysis && readingStateFor(item.doc) === "text" && !item.doc.aiExtractionExcluded);
   const consentActive = masterEnabled && extractionConsent;
   const sure = items.map((item) => ({ item, proposals: onePerSlot(proposalsOf(item)) })).filter((entry) => entry.proposals.length > 0);
   const sureCount = sure.reduce((sum, entry) => sum + entry.proposals.length, 0);
 
-  /** Hinthia legge i documenti uno dopo l'altro, con una sola conferma in cima: dice chi sono e che il testo esce dal dispositivo. */
+  /** Silva legge i documenti uno dopo l'altro, con una sola conferma in cima: dice chi sono e che il testo esce dal dispositivo. */
   async function handleReadAll() {
     if (readable.length === 0 || reading) return;
     const list = readable.slice(0, 8).map((item) => `• ${item.doc.filename}`).join("\n");
     const more = readable.length > 8 ? `\n… e altri ${readable.length - 8}` : "";
     const confirmed = await confirm({
-      title: "Leggere con Hinthia?",
-      message: `Il testo di ${readable.length} ${readable.length === 1 ? "documento verrà inviato" : "documenti verrà inviato"} a Hinthia, uno dopo l'altro:\n\n${list}${more}\n\nUn contenuto uscito è uscito.`,
-      confirmLabel: "Invia a Hinthia",
+      title: "Leggere con Silva?",
+      message: `Il testo di ${readable.length} ${readable.length === 1 ? "documento verrà inviato" : "documenti verrà inviato"} a Silva, uno dopo l'altro:\n\n${list}${more}\n\nUn contenuto uscito è uscito.`,
+      confirmLabel: "Invia a Silva",
     });
     if (!confirmed) return;
 
@@ -278,9 +278,9 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
       setReading(null);
     }
     if (failures.length > 0) {
-      setError(`Hinthia non è riuscita a leggere: ${failures.join(", ")}. Si può riprovare dalla scheda del documento.`);
+      setError(`Silva non è riuscita a leggere: ${failures.join(", ")}. Si può riprovare dalla scheda del documento.`);
     } else if (done > 0) {
-      setNotice(done === 1 ? "Hinthia ha letto 1 documento." : `Hinthia ha letto ${done} documenti.`);
+      setNotice(done === 1 ? "Silva ha letto 1 documento." : `Silva ha letto ${done} documenti.`);
     }
   }
 
@@ -394,7 +394,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
     router.push("/archive");
   }
 
-  // Resta qualcosa da decidere? Una lettura che Hinthia può fare, o proposte da accettare o scartare.
+  // Resta qualcosa da decidere? Una lettura che Silva può fare, o proposte da accettare o scartare.
   const hasWork = (consentActive && readable.length > 0) || items.some((item) => proposalsOf(item).length > 0);
   /** Lasciare la conferma a metà la tiene in sospeso (la si ritrova in Archivio); se non c'è più nulla da decidere non lascia promemoria. */
   function handleLeave() {
@@ -411,7 +411,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
           {items.length === 1 ? "1 documento da confermare" : `${items.length} documenti da confermare`}
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Sono già nel tuo Archivio, cifrati sul dispositivo. Qui decidi cosa tenere di ciò che Hinthia ne ricava: nulla si scrive senza un tuo sì.
+          Sono già nel tuo Archivio, cifrati sul dispositivo. Qui decidi cosa tenere di ciò che Silva ne ricava: nulla si scrive senza un tuo sì.
         </p>
       </div>
 
@@ -438,12 +438,12 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
       ) : null}
 
       {items.length > 0 ? (
-        <section aria-label="Cosa può fare Hinthia" className={`${PANEL} flex flex-col gap-3 p-4`}>
+        <section aria-label="Cosa può fare Silva" className={`${PANEL} flex flex-col gap-3 p-4`}>
           {reading ? (
             <div role="status" aria-live="polite" className="flex flex-col gap-2">
               <p className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
                 <Spinner />
-                Hinthia sta leggendo il documento {reading.current} di {reading.total}
+                Silva sta leggendo il documento {reading.current} di {reading.total}
                 {reading.progress && reading.progress.total >= 2
                   ? ` (parte ${Math.min(reading.progress.current, reading.progress.total)} di ${reading.progress.total})`
                   : ""}
@@ -455,23 +455,23 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
             </div>
           ) : !consentActive ? (
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              La lettura con Hinthia non è attiva: attivala in{" "}
+              La lettura con Silva non è attiva: attivala in{" "}
               <Link href="/settings?tab=privacy&section=hinthia" className="underline underline-offset-2 hover:text-accent">
-                Impostazioni → Privacy e Hinthia
+                Impostazioni → Privacy e Silva
               </Link>{" "}
               per avere le proposte. Intanto puoi aprire ogni documento e sistemarlo a mano.
             </p>
           ) : readable.length > 0 ? (
             <>
               <button type="button" disabled={working} onClick={() => void handleReadAll()} className={`${BTN_PRIMARY} w-fit disabled:opacity-50`}>
-                Chiedi a Hinthia di leggere {readable.length === 1 ? "questo documento" : `questi ${readable.length} documenti`}
+                Chiedi a Silva di leggere {readable.length === 1 ? "questo documento" : `questi ${readable.length} documenti`}
               </button>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 Il testo parte solo dopo la tua conferma, e solo per i documenti elencati. Rimangono esclusi quelli senza testo letto o esclusi dall&apos;analisi.
               </p>
             </>
           ) : (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Non c&apos;è altro da far leggere a Hinthia.</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">Non c&apos;è altro da far leggere a Silva.</p>
           )}
 
           {sureCount > 0 ? (
@@ -557,7 +557,7 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
                   {doc.filename}
                 </Link>
                 {doc.contentAnalysis ? (
-                  <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Letto da Hinthia</span>
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Letto da Silva</span>
                 ) : doc.aiExtractionExcluded ? (
                   <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-bold text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">Escluso dall&apos;analisi</span>
                 ) : state === "text" ? (
@@ -636,9 +636,9 @@ export function ConfirmImport({ masterKey }: { masterKey: CryptoKey }) {
                   })}
                 </ul>
               ) : doc.contentAnalysis ? (
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessuna proposta da decidere: tutto già sistemato, o Hinthia non ha trovato altro.</p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessuna proposta da decidere: tutto già sistemato, o Silva non ha trovato altro.</p>
               ) : (
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessuna proposta, per ora: compaiono dopo la lettura di Hinthia.</p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Nessuna proposta, per ora: compaiono dopo la lettura di Silva.</p>
               )}
             </li>
           );

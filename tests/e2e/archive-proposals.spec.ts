@@ -3,19 +3,19 @@ import { MASTER_PASSWORD, openAnalysedDocument } from "./hinthia";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// Il meccanismo delle proposte, quelle che arrivano dalla lettura di Hinthia (simulata: v. hinthia.ts): le due
+// Il meccanismo delle proposte, quelle che arrivano dalla lettura di Silva (simulata: v. hinthia.ts): le due
 // promesse che nessun test unitario può verificare sono che accettare scrive davvero (l'effetto si vede altrove) e che
 // rifiutare viene ricordato (il rifiuto passa per il database, cifrato, e va riletto e decifrato perché la proposta
 // resti sparita).
 
 // "exact": senza, "Accetta tutto" sarebbe contato come una proposta.
 const accettaDi = (page: import("@playwright/test").Page) =>
-  page.getByRole("tabpanel", { name: /^Chiedi a Hinthia/ }).getByRole("button", { name: "Accetta", exact: true });
+  page.getByRole("tabpanel", { name: /^Chiedi a Silva/ }).getByRole("button", { name: "Accetta", exact: true });
 
 // Nel registro la categoria viene prima della scadenza: per accettare "la scadenza" si cerca la sua riga.
 const accettaScadenza = (page: import("@playwright/test").Page) =>
   page
-    .getByRole("tabpanel", { name: /^Chiedi a Hinthia/ })
+    .getByRole("tabpanel", { name: /^Chiedi a Silva/ })
     .getByRole("listitem")
     .filter({ hasText: "Scadenza" })
     .getByRole("button", { name: "Accetta", exact: true });
@@ -25,12 +25,12 @@ test("accettare una proposta scrive davvero, e si può annullare", async ({ page
 
   await openAnalysedDocument(page, { expectedProposals: 3 });
 
-  const proposte = page.getByRole("tabpanel", { name: /^Chiedi a Hinthia/ });
+  const proposte = page.getByRole("tabpanel", { name: /^Chiedi a Silva/ });
   await expect(proposte).toContainText("3 giu 2027");
 
   // La scadenza si vede sulla tab "Scheda": va aperta per guardarla.
   const schedaTab = page.getByRole("tab", { name: "Scheda" });
-  const hinthiaTab = page.getByRole("tab", { name: /^Chiedi a Hinthia/ });
+  const hinthiaTab = page.getByRole("tab", { name: /^Chiedi a Silva/ });
   const scadenza = page.getByLabel("Scadenza");
   await schedaTab.click();
   await expect(scadenza).toHaveValue("");
@@ -72,7 +72,7 @@ test("un rifiuto viene ricordato e sopravvive al ricaricamento", async ({ page }
 
   await openAnalysedDocument(page, { expectedProposals: 3 });
 
-  const proposte = page.getByRole("tabpanel", { name: /^Chiedi a Hinthia/ });
+  const proposte = page.getByRole("tabpanel", { name: /^Chiedi a Silva/ });
   await expect(proposte).toContainText("Scadenza");
   // 3 proposte (scadenza, categoria, emittente): il conteggio dei bottoni "Accetta" distingue una proposta accettabile.
   await expect(accettaDi(page)).toHaveCount(3);
@@ -82,11 +82,11 @@ test("un rifiuto viene ricordato e sopravvive al ricaricamento", async ({ page }
   await expect(accettaDi(page)).toHaveCount(2);
 
   // La prova vera: il rifiuto è cifrato nel database, e per restare valido dev'essere riletto e decifrato al caricamento successivo.
-  // Anche la lettura di Hinthia è salvata: dopo il ricaricamento le proposte si ricalcolano senza chiamare di nuovo il modello.
+  // Anche la lettura di Silva è salvata: dopo il ricaricamento le proposte si ricalcolano senza chiamare di nuovo il modello.
   await page.reload();
   await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
-  await page.getByRole("tab", { name: /^Chiedi a Hinthia/ }).click();
+  await page.getByRole("tab", { name: /^Chiedi a Silva/ }).click();
 
   // Rifiutarne una non è rifiutarle tutte, ma la proposta rifiutata non deve tornare.
   await expect(proposte).toBeVisible({ timeout: 30_000 });
@@ -99,7 +99,7 @@ test("modificare una proposta prima di accettarla", async ({ page }) => {
   await openAnalysedDocument(page, { expectedProposals: 3 });
 
   await page
-    .getByRole("tabpanel", { name: /^Chiedi a Hinthia/ })
+    .getByRole("tabpanel", { name: /^Chiedi a Silva/ })
     .getByRole("button", { name: "Modifica Scadenza" })
     .click();
 
@@ -145,7 +145,7 @@ test("una data da ricordare già passata non si propone, ma la scheda lo dice", 
     events: [{ value: "2020-09-12", title: "Pagamento rata", quote: "Pagamento della rata entro il 12/09/2020" }],
   });
 
-  const panel = page.getByRole("tabpanel", { name: /^Chiedi a Hinthia/ });
+  const panel = page.getByRole("tabpanel", { name: /^Chiedi a Silva/ });
   await expect(panel.getByRole("button", { name: "Aggiungi a Scadenze" })).toHaveCount(0);
   const note = panel.getByRole("complementary", { name: "Date già passate" });
   await expect(note).toBeVisible();
