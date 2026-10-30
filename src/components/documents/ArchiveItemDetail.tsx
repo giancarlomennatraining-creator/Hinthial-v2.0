@@ -26,10 +26,10 @@ import { useDocumentProposals } from "@/components/documents/detail/useDocumentP
  * confusione): niente più `/archive/[id]/edit`, i campi della Scheda sono sempre modificabili qui, un "Salva
  * modifiche" li mette via. Mostra anche cosa Hinthial ha estratto dal file, a dimostrazione che resta sul
  * dispositivo. Niente più tab "Proposte" a sé: quello che c'è da accettare/rifiutare vive dentro "Letto dal
- * dispositivo" (locale) o "Chiedi a Hinthia" (Claude), a seconda di dove viene. Niente sezioni vuote per fasi
+ * dispositivo" (locale) o "Chiedi a Silva" (Claude), a seconda di dove viene. Niente sezioni vuote per fasi
  * future --- sembrerebbero quasi finite e non lo sono.
  *
- * Qui solo la composizione: i dati, l'anteprima, i campi, le proposte, la lettura di Hinthia e le azioni vivono
+ * Qui solo la composizione: i dati, l'anteprima, i campi, le proposte, la lettura di Silva e le azioni vivono
  * ciascuno nel proprio hook (cartella `detail/`), i pezzi di pagina nei propri componenti.
  */
 export function ArchiveItemDetail({
@@ -42,7 +42,7 @@ export function ArchiveItemDetail({
   const data = useDocumentData(masterKey, documentId);
   const { doc, categories, assets, dossiers, rejections, fieldVocabulary, loading, error, setError, refresh } = data;
 
-  // Scheda / Letto dal dispositivo / Chiedi a Hinthia: quale delle tre tab è attiva a destra. Si azzera su
+  // Scheda / Letto dal dispositivo / Chiedi a Silva: quale delle tre tab è attiva a destra. Si azzera su
   // "scheda" a ogni apertura della pagina, come fullText --- nessuna persistenza necessaria; "scheda" di default
   // perché prima era sempre visibile a sinistra, mai dietro un click.
   const [activeTab, setActiveTab] = useState<DocumentTab>("scheda");
@@ -52,8 +52,8 @@ export function ArchiveItemDetail({
   const preview = useDocumentPreview(masterKey, doc, setError);
   const fieldsState = useDocumentFields(masterKey, documentId, doc, refresh, setError);
   const proposals = useDocumentProposals(masterKey, data);
-  // Senza il passaggio alla tab, l'utente non si accorgerebbe che qualcosa è successo: quello che Hinthia ha
-  // trovato vive già in "Chiedi a Hinthia".
+  // Senza il passaggio alla tab, l'utente non si accorgerebbe che qualcosa è successo: quello che Silva ha
+  // trovato vive già in "Chiedi a Silva".
   const analysis = useDocumentAnalysis(masterKey, data, () => setActiveTab("analysis"));
   const actions = useDocumentActions(masterKey, data);
 
@@ -108,7 +108,7 @@ export function ArchiveItemDetail({
         onDelete={actions.handleDelete}
       />
 
-      {/* Anteprima fissa a sinistra (v. feedback utente); Scheda/Letto dal dispositivo/Analisi con Hinthia sono
+      {/* Anteprima fissa a sinistra (v. feedback utente); Scheda/Letto dal dispositivo/Analisi con Silva sono
           tre tab a destra --- niente più Scheda né il trigger di analisi sempre visibili a sinistra.
           Container query (non breakpoint di viewport) perché la larghezza reale dipende anche
           dalla barra laterale, aperta o chiusa. */}

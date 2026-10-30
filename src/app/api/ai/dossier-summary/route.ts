@@ -8,7 +8,7 @@ import { consumeAiCall } from "@/lib/ai/daily-quota";
 import { errorMessage } from "@/lib/utils";
 
 /**
- * Il riassunto di un fascicolo: Hinthia riassume le sintesi che ha già scritto sui documenti, non rilegge i file. Come
+ * Il riassunto di un fascicolo: Silva riassume le sintesi che ha già scritto sui documenti, non rilegge i file. Come
  * per api/ai/analyze, i controlli di consenso sono QUI sul database, non fidandosi del client: cancello generale +
  * funzione (ai_master_enabled/ai_extraction_consent), e per ogni documento l'esclusione (vince sempre) e la categoria
  * abilitata (permanente o temporanea). Un documento che non passa resta fuori dal riassunto e viene contato come
@@ -70,14 +70,14 @@ export async function POST(request: NextRequest) {
   const skipped = parsed.documents.length - documents.length;
   if (documents.length === 0) {
     return NextResponse.json(
-      { error: "Nessun documento di questo fascicolo è abilitato alla lettura di Hinthia (categoria non abilitata o documento escluso)." },
+      { error: "Nessun documento di questo fascicolo è abilitato alla lettura di Silva (categoria non abilitata o documento escluso)." },
       { status: 403 },
     );
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "Hinthia non è ancora configurata su questo server." }, { status: 503 });
+    return NextResponse.json({ error: "Silva non è ancora configurata su questo server." }, { status: 503 });
   }
 
   // Il tetto giornaliero (v. lib/ai/daily-quota.ts): dopo ogni altro controllo, subito prima di chiamare Claude.
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
   try {
     const summary = await summarizeDossierWithClaude(apiKey, { title: parsed.title, documents });
     if (!summary) {
-      return NextResponse.json({ error: "Hinthia non ha scritto nulla: riprova." }, { status: 502 });
+      return NextResponse.json({ error: "Silva non ha scritto nulla: riprova." }, { status: 502 });
     }
 
     // Traccia che il contenuto è davvero uscito, con che permesso --- mai il testo o il nome del file.
@@ -102,6 +102,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ summary, used: documents.length, skipped });
   } catch (err) {
     const message = errorMessage(err, "Errore sconosciuto.");
-    return NextResponse.json({ error: `Impossibile contattare Hinthia: ${message}` }, { status: 502 });
+    return NextResponse.json({ error: `Impossibile contattare Silva: ${message}` }, { status: 502 });
   }
 }

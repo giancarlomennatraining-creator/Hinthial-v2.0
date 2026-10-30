@@ -11,7 +11,7 @@ import { listProposalRejections } from "@/domain/proposals/repository";
 import type { ProposalRejection } from "@/domain/proposals/types";
 import type { ReminderListItem } from "@/domain/reminders/types";
 
-/** Quanti documenti letti da Hinthia hanno ancora proposte da decidere, quante in tutto, e il primo documento da aprire. */
+/** Quanti documenti letti da Silva hanno ancora proposte da decidere, quante in tutto, e il primo documento da aprire. */
 export interface PendingProposals {
   documents: number;
   proposals: number;
@@ -47,7 +47,7 @@ export function summarizePending(counts: { id: string; filename: string; count: 
 }
 
 /**
- * Le proposte di Hinthia ancora da decidere, sui documenti letti più di recente. Si calcolano qui nel browser, come
+ * Le proposte di Silva ancora da decidere, sui documenti letti più di recente. Si calcolano qui nel browser, come
  * nella scheda del documento (il server non le vede mai nascere): per ogni documento letto si decifra la lettura e si
  * tolgono le proposte già accettate o rifiutate. Non propone beni (richiederebbe i campi degli altri documenti): il
  * conteggio può quindi essere appena più basso di quello della scheda.

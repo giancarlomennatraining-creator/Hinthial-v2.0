@@ -92,9 +92,9 @@ export interface AuditEventMetadata {
   fieldKey?: string;
   /** ai_extraction_used / document_text_read: vero se il documento era già stato letto (rilettura), falso alla prima lettura. */
   reread?: boolean;
-  /** document_updated: quale salvataggio è stato fatto --- "details" (scheda), "note" (testo della nota), "transcript", "ai_exclusion", "ai_reading" (lettura di Hinthia salvata). */
+  /** document_updated: quale salvataggio è stato fatto --- "details" (scheda), "note" (testo della nota), "transcript", "ai_exclusion", "ai_reading" (lettura di Silva salvata). */
   change?: "details" | "note" | "transcript" | "ai_exclusion" | "ai_reading";
-  /** document_updated con change "ai_exclusion": vero se il contenuto è stato escluso da Hinthia, falso se riammesso. */
+  /** document_updated con change "ai_exclusion": vero se il contenuto è stato escluso da Silva, falso se riammesso. */
   excluded?: boolean;
 }
 

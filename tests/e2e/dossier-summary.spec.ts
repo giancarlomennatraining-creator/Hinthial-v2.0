@@ -4,13 +4,13 @@ import { acceptConfirm } from "./confirm-dialog";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
-// "In breve": Hinthia riassume le sintesi dei documenti che ha già letto. La lettura e il riassunto sono simulati qui
+// "In breve": Silva riassume le sintesi dei documenti che ha già letto. La lettura e il riassunto sono simulati qui
 // (nessuna chiamata a Claude); i permessi veri della rotta sono provati dai test unitari (dossier-summary.test.ts).
 
-test("un fascicolo con un documento letto da Hinthia si può riassumere, e il riassunto si ritrova", async ({ page }) => {
+test("un fascicolo con un documento letto da Silva si può riassumere, e il riassunto si ritrova", async ({ page }) => {
   test.slow();
 
-  // La lettura del documento: una sintesi, così il documento risulta "letto da Hinthia".
+  // La lettura del documento: una sintesi, così il documento risulta "letto da Silva".
   await page.route("**/api/ai/analyze", (route) => {
     const request = route.request().postDataJSON() as { mode?: string };
     if (request.mode === "merge") {
@@ -54,14 +54,14 @@ test("un fascicolo con un documento letto da Hinthia si può riassumere, e il ri
   await page.getByRole("button", { name: "Salva modifiche" }).click();
   await expect(page.getByRole("button", { name: "Salva modifiche" })).toBeDisabled({ timeout: 20_000 });
 
-  // Hinthia legge il documento.
+  // Silva legge il documento.
   await enableHinthia(page);
-  await page.getByRole("tab", { name: /^Chiedi a Hinthia/ }).click();
+  await page.getByRole("tab", { name: /^Chiedi a Silva/ }).click();
   await page.getByRole("button", { name: "Solo questa volta" }).click();
   await acceptConfirm(page);
-  await expect(page.getByRole("tab", { name: /^Chiedi a Hinthia · \d+/ })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("tab", { name: /^Chiedi a Silva · \d+/ })).toBeVisible({ timeout: 20_000 });
 
-  // Il fascicolo offre il riassunto, e Hinthia lo scrive solo quando glielo si chiede.
+  // Il fascicolo offre il riassunto, e Silva lo scrive solo quando glielo si chiede.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.getByRole("link", { name: "Fascicoli", exact: true }).click();
   await page.getByRole("link", { name: /Polizza auto/ }).click();

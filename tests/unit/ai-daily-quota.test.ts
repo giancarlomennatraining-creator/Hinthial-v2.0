@@ -55,7 +55,7 @@ describe("consumeAiCall", () => {
     expect(await response?.json()).toEqual({ error: aiQuotaExceededMessage(10), quotaExceeded: true });
   });
 
-  it("keeps Hinthia working if the migration is not applied yet, and says so in the log", async () => {
+  it("keeps Silva working if the migration is not applied yet, and says so in the log", async () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const { client } = fakeSupabase({ data: null, error: { code: "PGRST202", message: "not found" } });
     expect(await consumeAiCall(client)).toBeNull();

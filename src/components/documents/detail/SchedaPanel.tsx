@@ -53,13 +53,13 @@ export function SchedaPanel({
       {acceptAllCandidates.length > 0 ? (
         <div
           role="group"
-          aria-label="Informazioni trovate da Hinthia"
+          aria-label="Informazioni trovate da Silva"
           className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/20 bg-brand/5 px-3 py-2"
         >
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
             {acceptAllCandidates.length === 1
-              ? "Hinthia ha trovato 1 informazione da aggiungere alla Scheda."
-              : `Hinthia ha trovato ${acceptAllCandidates.length} informazioni da aggiungere alla Scheda.`}
+              ? "Silva ha trovato 1 informazione da aggiungere alla Scheda."
+              : `Silva ha trovato ${acceptAllCandidates.length} informazioni da aggiungere alla Scheda.`}
           </p>
           <button
             type="button"

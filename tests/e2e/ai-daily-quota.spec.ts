@@ -8,7 +8,7 @@ import { createConfirmedTestUser, setTodayAiUsage, uniqueTestUser } from "./test
 
 const LIMIT = 300; // il valore predefinito (v. src/lib/ai/daily-quota.ts): il server degli e2e non imposta AI_DAILY_CALL_LIMIT.
 
-test("a tetto raggiunto Hinthia si ferma con un messaggio chiaro, e le Impostazioni lo dicono", async ({ page }) => {
+test("a tetto raggiunto Silva si ferma con un messaggio chiaro, e le Impostazioni lo dicono", async ({ page }) => {
   test.slow();
   const user = uniqueTestUser();
   await createConfirmedTestUser(user);
@@ -26,14 +26,14 @@ test("a tetto raggiunto Hinthia si ferma con un messaggio chiaro, e le Impostazi
   });
   expect(response.status()).toBe(429);
   const body = await response.json();
-  expect(body.error).toBe(`Hai usato tutte le ${LIMIT} richieste a Hinthia di oggi. Riprende domani: quello che hai già salvato resta com'è.`);
+  expect(body.error).toBe(`Hai usato tutte le ${LIMIT} richieste a Silva di oggi. Riprende domani: quello che hai già salvato resta com'è.`);
 
   const usage = await (await page.request.get("/api/ai/usage")).json();
   expect(usage).toEqual({ used: LIMIT, limit: LIMIT });
 
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
-  const status = page.getByRole("status", { name: "Richieste a Hinthia di oggi" });
-  await expect(status).toContainText(`${LIMIT} richieste a Hinthia su ${LIMIT} al giorno`, { timeout: 15_000 });
-  await expect(status).toContainText("Hai raggiunto il tetto: Hinthia riprende domani.");
+  await page.getByRole("tab", { name: "Privacy e Silva" }).click();
+  const status = page.getByRole("status", { name: "Richieste a Silva di oggi" });
+  await expect(status).toContainText(`${LIMIT} richieste a Silva su ${LIMIT} al giorno`, { timeout: 15_000 });
+  await expect(status).toContainText("Hai raggiunto il tetto: Silva riprende domani.");
 });

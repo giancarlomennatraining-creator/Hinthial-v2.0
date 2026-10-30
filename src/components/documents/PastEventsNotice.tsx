@@ -1,7 +1,7 @@
 import { formatDate } from "@/lib/format";
 
 /**
- * Le date da ricordare che Hinthia ha trovato ma che sono già passate: non si propongono (un promemoria nel passato non
+ * Le date da ricordare che Silva ha trovato ma che sono già passate: non si propongono (un promemoria nel passato non
  * serve), e per non farle sparire in silenzio si dice cosa è successo. Se servono, si crea la scadenza a mano.
  */
 export function PastEventsNotice({ events }: { events: { date: string; title: string }[] }) {
@@ -14,8 +14,8 @@ export function PastEventsNotice({ events }: { events: { date: string; title: st
     >
       <p>
         {events.length === 1
-          ? "Hinthia ha trovato una data da ricordare, ma è già passata: non l'ho aggiunta a Scadenze."
-          : "Hinthia ha trovato alcune date da ricordare, ma sono già passate: non le ho aggiunte a Scadenze."}
+          ? "Silva ha trovato una data da ricordare, ma è già passata: non l'ho aggiunta a Scadenze."
+          : "Silva ha trovato alcune date da ricordare, ma sono già passate: non le ho aggiunte a Scadenze."}
       </p>
       <ul className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
         {events.map((event) => (

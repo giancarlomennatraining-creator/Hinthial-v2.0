@@ -10,6 +10,46 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-30 (159)
+
+### L'assistente si chiama Silva, non più Hinthia
+
+**Cosa fa:** l'assistente e l'app avevano nomi che differivano di una lettera (Hinthia e Hinthial), e nei testi, in Privacy e Termini compresi, sembravano un refuso. L'assistente ora si chiama Silva, in tutta l'app: Impostazioni > "Privacy e Silva", il pannello Aiuto, Raccontami, la lettura dei documenti, il riassunto dei fascicoli, i messaggi di errore, il registro delle attività, la pagina di presentazione, Privacy e Termini. Chi cerca "hinthia" nelle impostazioni trova ancora il blocco giusto. Il nome è femminile come prima, quindi gli accordi dei testi restano validi. Resta tutto com'è nel comportamento: stessi consensi, stesso tetto giornaliero, stessa lettura.
+
+**Note tecniche:** sostituzione del nome in `src`, nei test e nei documenti correnti. Non toccati di proposito: le voci passate di questo file, le migrazioni già applicate (hanno solo commenti), il documento di specifica di Content Intelligence, i nomi dei file dell'avatar (`hinthia-*.png`), gli id interni (`hinthia` come id di blocco, `tests/e2e/hinthia.ts`) e `enableHinthia`/`askHinthia` nei test. Nessuna costante unica per il nome: i testi sono letterali, e la prossima volta il cambio si fa allo stesso modo.
+
+---
+
+## 2026-10-30 (158)
+
+### Raccontami e Capsule: la stessa frase in entrambe
+
+**Cosa fa:** Raccontami e le Capsule sono già collegate ("Fallo arrivare a…" porta da un racconto a una capsula già avviata), ma i testi non lo dicevano allo stesso modo. Ora dicono la stessa cosa: il racconto si ricorda e resta tuo, in Archivio; la capsula lo consegna a una persona, quando vuoi tu. Cambiano l'introduzione e l'aiuto di Raccontami, il messaggio dopo il salvataggio, l'aiuto delle Capsule e il testo di "Nessuna capsula ancora".
+
+**Note tecniche:** solo testi, nessun cambiamento di comportamento.
+
+---
+
+## 2026-10-30 (157)
+
+### Scadenze: un solo elenco, con le stesse regole ovunque
+
+**Cosa fa:** una scadenza in Hinthial nasce in due modi: la crei tu, oppure è la data di scadenza scritta sulla scheda di un documento. Oggi, la scheda del bene e quella del fascicolo le riunivano ognuno a modo suo (con piccole differenze: in Oggi un pagamento accettato da una polizza compariva due volte, come scadenza e come data del documento). Ora le regole sono le stesse dappertutto: se un documento ha già una scadenza dello stesso giorno, resta solo quella; le completate non contano; i documenti si chiamano "nome.pdf scade". In Archivio > Scadenze le date dei documenti stanno nello stesso elenco delle scadenze create, in ordine di data, invece che in un secondo elenco sotto ("Documenti in scadenza"): le scadenze create hanno la casella da spuntare, le righe dei documenti portano alla scheda, dove la data si cambia.
+
+**Note tecniche:** nuovo `domain/deadlines.ts` (`mergeDeadlines`, `uncoveredExpiries`, puri, con test) usato da `TodayHome`, `assetDeadlines`, `dossierDeadlines` e da `RemindersPanel`. `DocumentExpiryList` diventa `DocumentExpiryRow`. In Oggi i documenti in scadenza mostrano ora "nome.pdf scade" al posto del solo nome.
+
+---
+
+## 2026-10-30 (156)
+
+### Archivio: quattro schede, il Cestino si raggiunge da Contenuti
+
+**Cosa fa:** le schede dell'Archivio erano cinque (Contenuti, Fascicoli, Beni, Scadenze, Cestino) e su un telefono stretto non ci stavano: bisognava scorrerle. Il Cestino però non è un modo di guardare l'Archivio come le altre: è il posto dove si recupera ciò che si è buttato. Ora le schede sono quattro e il Cestino è un link nell'intestazione di Contenuti, accanto ad Aiuto. Nella pagina del Cestino resta accesa la scheda Contenuti e un titolo "Cestino" dice dove ci si trova.
+
+**Note tecniche:** `ArchiveTabs` perde il codice di scorrimento e di sfumatura dei bordi (a 360 px le quattro schede ci stanno, con un margine interno più stretto su telefono). L'indirizzo `/archive/trash` non cambia. Aggiornati gli e2e che aprivano il Cestino dalla barra delle schede.
+
+---
+
 ## 2026-10-29 (155)
 
 ### "Il tuo piano": un solo percorso, al posto di Onboarding e Continuità

@@ -4,9 +4,9 @@ import { MASTER_PASSWORD, openAnalysedDocument, setUpWithDocument } from "./hint
 // Requires a configured Supabase project (.env.local) --- see README.md.
 //
 // "Accetta tutto" nella Scheda, voci libere modificabili secondo il tipo di dato (una data col calendario), e la
-// Scheda impilata su smartphone. La lettura di Hinthia è simulata (v. hinthia.ts): nessuna chiamata reale alla API.
+// Scheda impilata su smartphone. La lettura di Silva è simulata (v. hinthia.ts): nessuna chiamata reale alla API.
 
-test("Accetta tutto aggiunge in un colpo ciò che Hinthia ha trovato, le voci restano modificabili col loro tipo di dato, e si annulla", async ({
+test("Accetta tutto aggiunge in un colpo ciò che Silva ha trovato, le voci restano modificabili col loro tipo di dato, e si annulla", async ({
   page,
 }) => {
   test.slow();
@@ -14,9 +14,9 @@ test("Accetta tutto aggiunge in un colpo ciò che Hinthia ha trovato, le voci re
   // Scadenza, emittente e due campi liberi: 4 proposte (senza categoria).
   await openAnalysedDocument(page, { expectedProposals: 4, fields: true, category: false });
 
-  // Prima che Hinthia abbia letto non c'è niente da accettare: il banner compare solo con le sue proposte.
+  // Prima che Silva abbia letto non c'è niente da accettare: il banner compare solo con le sue proposte.
   await page.getByRole("tab", { name: "Scheda" }).click();
-  const banner = page.getByRole("group", { name: "Informazioni trovate da Hinthia" });
+  const banner = page.getByRole("group", { name: "Informazioni trovate da Silva" });
   await expect(banner).toContainText("4 informazioni");
   await banner.getByRole("button", { name: "Accetta tutto" }).click();
 
@@ -52,7 +52,7 @@ test("Accetta tutto si annulla in un colpo solo", async ({ page }) => {
   await openAnalysedDocument(page, { expectedProposals: 2, category: false });
 
   await page.getByRole("tab", { name: "Scheda" }).click();
-  const banner = page.getByRole("group", { name: "Informazioni trovate da Hinthia" });
+  const banner = page.getByRole("group", { name: "Informazioni trovate da Silva" });
   await expect(banner).toContainText("2 informazioni", { timeout: 30_000 });
   await banner.getByRole("button", { name: "Accetta tutto" }).click();
 
@@ -65,13 +65,13 @@ test("Accetta tutto si annulla in un colpo solo", async ({ page }) => {
   await expect(banner).toContainText("2 informazioni");
 });
 
-test("senza Hinthia il documento ha il testo letto ma nessuna proposta da accettare", async ({ page }) => {
+test("senza Silva il documento ha il testo letto ma nessuna proposta da accettare", async ({ page }) => {
   test.slow();
 
   await setUpWithDocument(page);
 
-  // Nessuna lettura di Hinthia: la Scheda è vuota e il dispositivo non ricava scadenza, emittente o categoria.
-  await expect(page.getByRole("group", { name: "Informazioni trovate da Hinthia" })).toHaveCount(0);
+  // Nessuna lettura di Silva: la Scheda è vuota e il dispositivo non ricava scadenza, emittente o categoria.
+  await expect(page.getByRole("group", { name: "Informazioni trovate da Silva" })).toHaveCount(0);
   await expect(page.getByLabel("Scadenza")).toHaveValue("");
 
   await page.getByRole("tab", { name: "Letto dal dispositivo" }).click();

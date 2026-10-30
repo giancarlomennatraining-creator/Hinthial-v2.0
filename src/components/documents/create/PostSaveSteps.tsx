@@ -11,7 +11,7 @@ import { formatDate } from "@/lib/format";
 import { BTN_SECONDARY } from "@/components/ui/styles";
 import type { DocumentListItem } from "@/domain/documents/types";
 
-/** I passi di dopo il salvataggio: il momento "salvato", poi la lettura sul dispositivo (4) e l'analisi di Hinthia (5, facoltativa). */
+/** I passi di dopo il salvataggio: il momento "salvato", poi la lettura sul dispositivo (4) e l'analisi di Silva (5, facoltativa). */
 export function PostSaveSteps({
   savedDoc,
   postSave,
@@ -85,7 +85,7 @@ export function PostSaveSteps({
         step={5}
         state={aiDone && activeStep !== 5 ? "done" : stepState(5)}
         last
-        title="Analisi di Hinthia"
+        title="Analisi di Silva"
         summary={aiDone ? "Fatto" : "Opzionale"}
         onOpen={() => setActiveStep(5)}
       >
@@ -96,7 +96,7 @@ export function PostSaveSteps({
             alt=""
             className="h-5 w-5 shrink-0 rounded-full"
           />
-          Facoltativa: se vuoi, Hinthia legge il testo e prepara
+          Facoltativa: se vuoi, Silva legge il testo e prepara
           una sintesi.
         </p>
         {aiDone ? (

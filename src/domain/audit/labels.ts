@@ -34,8 +34,8 @@ export const AUDIT_EVENT_TYPE_LABEL: Record<AuditEventType, string> = {
   friend_updated: "Amico modificato",
   friend_deleted: "Amico eliminato",
   vault_wiped: "Vault svuotato",
-  ai_chat_used: "Domanda inviata a Hinthia",
-  ai_extraction_used: "Documento letto da Hinthia",
+  ai_chat_used: "Domanda inviata a Silva",
+  ai_extraction_used: "Documento letto da Silva",
   trusted_device_registered: "Dispositivo fidato registrato",
   trusted_device_revoked: "Dispositivo fidato revocato",
   digital_legacy_reminder_sent: "Promemoria di inattività inviato",
@@ -205,7 +205,7 @@ export const AUDIT_EVENT_CATEGORY_LABEL: Record<AuditEventCategory, string> = {
   capsules: "Capsule",
   friends: "Amici",
   "digital-legacy": "Eredità digitale",
-  hinthia: "Hinthia",
+  hinthia: "Silva",
 };
 
 export const AUDIT_EVENT_CATEGORIES: AuditEventCategory[] = [
@@ -239,8 +239,8 @@ const DOCUMENT_CHANGE_LABEL = {
   details: "Dettagli",
   note: "Testo della nota",
   transcript: "Trascrizione",
-  ai_exclusion: "Esclusione da Hinthia",
-  ai_reading: "Lettura di Hinthia salvata",
+  ai_exclusion: "Esclusione da Silva",
+  ai_reading: "Lettura di Silva salvata",
 } as const;
 
 const PROPOSAL_KIND_LABEL = {
@@ -252,7 +252,7 @@ const PROPOSAL_KIND_LABEL = {
 } as const;
 
 /**
- * Etichetta di un evento così com'è stato registrato: la lettura di Hinthia distingue "letto" da "riletto", le
+ * Etichetta di un evento così com'è stato registrato: la lettura di Silva distingue "letto" da "riletto", le
  * proposte dicono su quale campo. `fieldLabels` traduce le chiavi dei campi liberi nelle etichette del vocabolario
  * (senza, si mostra la chiave). Mai valori: nei metadati non ce ne sono.
  */
@@ -262,7 +262,7 @@ export function describeAuditEvent(
 ): { label: string; detail: string | null } {
   const metadata = event.metadata;
   if (event.type === "ai_extraction_used" && metadata?.reread) {
-    return { label: "Documento riletto da Hinthia", detail: null };
+    return { label: "Documento riletto da Silva", detail: null };
   }
   if (event.type === "document_text_read" && metadata?.reread) {
     return { label: "Testo riletto sul dispositivo", detail: null };

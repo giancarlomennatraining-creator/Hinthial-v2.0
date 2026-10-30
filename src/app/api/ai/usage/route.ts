@@ -3,7 +3,7 @@ import { authenticate } from "@/lib/http/api-guards";
 import { aiDailyCallLimit, romeDay } from "@/lib/ai/daily-quota";
 
 /**
- * Quante richieste a Hinthia ha usato oggi l'utente, e il tetto (v. lib/ai/daily-quota.ts). Il tetto vive nelle
+ * Quante richieste a Silva ha usato oggi l'utente, e il tetto (v. lib/ai/daily-quota.ts). Il tetto vive nelle
  * variabili d'ambiente del server: per questo lo dice una rotta, non il browser da solo. Non consuma nulla.
  */
 export async function GET() {

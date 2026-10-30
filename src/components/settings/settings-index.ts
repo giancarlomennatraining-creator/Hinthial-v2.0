@@ -27,7 +27,7 @@ export const SETTINGS_ENTRIES: SettingsEntry[] = [
   { tab: "security", block: "trusted-devices", label: "Dispositivi fidati", keywords: "impronta face id biometrico sblocco master password" },
   { tab: "security", block: "activity", label: "Registro delle attività", keywords: "accessi cronologia log storico audit" },
   { tab: "privacy", block: "know", label: "Cosa sa Hinthial di te", keywords: "privacy dati informativa visibile cifrato" },
-  { tab: "privacy", block: "hinthia", label: "Hinthia", keywords: "intelligenza artificiale ai consenso estrazione assistente" },
+  { tab: "privacy", block: "hinthia", label: "Silva", keywords: "hinthia intelligenza artificiale ai consenso estrazione assistente" },
   { tab: "data", block: "space", label: "Spazio usato", keywords: "quota archiviazione gigabyte memoria occupato" },
   { tab: "data", block: "categories", label: "Categorie", keywords: "etichette tipi documenti" },
   { tab: "data", block: "import-export", label: "Importa ed esporta", keywords: "backup csv scarica file template" },

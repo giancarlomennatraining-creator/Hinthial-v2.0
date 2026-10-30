@@ -4,7 +4,7 @@ import type { Database } from "@/types/supabase";
 
 /**
  * Il tetto giornaliero alle chiamate a Claude, per utente (v. migrazione 20261017000000_ai_daily_usage.sql). Ogni rotta
- * di Hinthia lo consuma dopo aver verificato consenso e richiesta, subito prima di chiamare Claude: una richiesta non
+ * di Silva lo consuma dopo aver verificato consenso e richiesta, subito prima di chiamare Claude: una richiesta non
  * valida non conta. Una lettura di documento lungo sono più chiamate (una per parte, più la fusione).
  *
  * Il valore si cambia con AI_DAILY_CALL_LIMIT nelle variabili d'ambiente, senza toccare il codice.
@@ -17,7 +17,7 @@ export function aiDailyCallLimit(raw: string | undefined = process.env.AI_DAILY_
 }
 
 export function aiQuotaExceededMessage(limit: number): string {
-  return `Hai usato tutte le ${limit} richieste a Hinthia di oggi. Riprende domani: quello che hai già salvato resta com'è.`;
+  return `Hai usato tutte le ${limit} richieste a Silva di oggi. Riprende domani: quello che hai già salvato resta com'è.`;
 }
 
 /** PostgREST risponde così quando la funzione non esiste: la migrazione non è ancora stata applicata. */
@@ -26,7 +26,7 @@ const FUNCTION_NOT_FOUND = "PGRST202";
 /**
  * Conta una chiamata. `null` se si può procedere; altrimenti la risposta da restituire così com'è (429 a tetto
  * raggiunto). Se la funzione non c'è ancora, si procede e lo si scrive nel log: il codice arriva in produzione prima che
- * la migrazione sia applicata, e Hinthia non deve spegnersi nel frattempo. Per ogni altro errore ci si ferma: senza
+ * la migrazione sia applicata, e Silva non deve spegnersi nel frattempo. Per ogni altro errore ci si ferma: senza
  * contatore non si chiama Claude.
  */
 export async function consumeAiCall(supabase: SupabaseClient<Database>): Promise<NextResponse | null> {
@@ -39,7 +39,7 @@ export async function consumeAiCall(supabase: SupabaseClient<Database>): Promise
       return null;
     }
     return NextResponse.json(
-      { error: "Hinthia non riesce a verificare le richieste di oggi. Riprova tra poco." },
+      { error: "Silva non riesce a verificare le richieste di oggi. Riprova tra poco." },
       { status: 503 },
     );
   }

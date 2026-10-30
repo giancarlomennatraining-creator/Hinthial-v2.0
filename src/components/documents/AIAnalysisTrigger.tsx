@@ -15,7 +15,7 @@ function ProgressStatus({ progress }: { progress: AnalysisProgress | null }) {
       <p className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
         <Spinner />
         {!multiPart
-          ? "Hinthia sta leggendo il documento…"
+          ? "Silva sta leggendo il documento…"
           : merging
             ? `Letto tutto (${progress.total} parti): preparo la sintesi…`
             : `Leggo la parte ${progress.current} di ${progress.total}…`}
@@ -91,7 +91,7 @@ export function AIAnalysisTrigger({
       ? `Riprendi la lettura (${savedState.done} di ${savedState.total})`
       : savedState.kind === "merge-pending"
         ? "Prepara la sintesi finale"
-        : "Chiedi a Hinthia";
+        : "Chiedi a Silva";
 
   const excludeToggle = (
     <label className="mt-1 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -101,7 +101,7 @@ export function AIAnalysisTrigger({
         onChange={() => onToggleExcluded(!excluded)}
         className="h-3.5 w-3.5 rounded border-zinc-300 text-accent focus:ring-brand dark:border-zinc-700"
       />
-      Escludi questo documento dall&apos;analisi di Hinthia, anche con la categoria abilitata
+      Escludi questo documento dall&apos;analisi di Silva, anche con la categoria abilitata
     </label>
   );
 
@@ -114,7 +114,7 @@ export function AIAnalysisTrigger({
           {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
           <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-11 w-11 shrink-0 rounded-full shadow-[0_6px_16px_rgba(43,79,196,0.35)]" />
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <p className="font-heading text-xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">Lettura di Hinthia</p>
+            <p className="font-heading text-xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">Lettura di Silva</p>
             <p className="truncate text-[13px] text-zinc-500 dark:text-zinc-400">{subtitle}</p>
           </div>
           <button
@@ -135,24 +135,24 @@ export function AIAnalysisTrigger({
       <p className="flex items-center gap-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
         {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
         <img src="/brand/hinthia/hinthia-64.png" alt="" className="h-5 w-5 shrink-0 rounded-full" />
-        Chiedi a Hinthia di leggere questo documento
+        Chiedi a Silva di leggere questo documento
       </p>
 
       {excluded ? (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Questo documento è escluso dall&apos;analisi di Hinthia — vince su qualunque consenso di categoria.
+          Questo documento è escluso dall&apos;analisi di Silva — vince su qualunque consenso di categoria.
         </p>
       ) : !consentActive ? (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Attiva &quot;Estrazione avanzata dei contenuti&quot; in{" "}
           <Link href="/settings?tab=privacy&section=hinthia" className="underline underline-offset-2 hover:text-accent">
-            Impostazioni → Privacy e Hinthia
+            Impostazioni → Privacy e Silva
           </Link>{" "}
           per usare questa funzione.
         </p>
       ) : alreadyRead ? (
         <p className="text-xs text-zinc-600 dark:text-zinc-400">
-          {analyzedAtLabel ? `Hinthia ha già letto questo documento il ${analyzedAtLabel}.` : "Hinthia ha già letto questo documento."}{" "}
+          {analyzedAtLabel ? `Silva ha già letto questo documento il ${analyzedAtLabel}.` : "Silva ha già letto questo documento."}{" "}
           Quello che ha trovato è qui sotto, senza una nuova lettura.
         </p>
       ) : hasCategory && categoryEnabled ? (

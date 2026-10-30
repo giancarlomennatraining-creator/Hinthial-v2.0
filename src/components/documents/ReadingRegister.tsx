@@ -20,8 +20,8 @@ import { inferFieldInputType } from "@/domain/structured-fields/value-type";
 import { sortAlphabetically } from "@/lib/utils";
 
 /**
- * Il registro di lettura: un solo elenco al posto di "Proposte" e "Cosa ha letto Hinthia". Ogni riga è una cosa che
- * Hinthia ha trovato; accettarla la rende di sola lettura ("nella Scheda") e la restringe a una riga, così la pagina
+ * Il registro di lettura: un solo elenco al posto di "Proposte" e "Cosa ha letto Silva". Ogni riga è una cosa che
+ * Silva ha trovato; accettarla la rende di sola lettura ("nella Scheda") e la restringe a una riga, così la pagina
  * si snellisce mentre si decide. Accetta, Modifica e No grazie stanno di fianco alla voce. Puramente presentazionale:
  * le chiamate (accettare, rifiutare, ripristinare) vivono in ArchiveItemDetail.tsx. Il movimento è in globals.css
  * (`.reading-*`): con "Accetta le N rimaste" le righe si accendono a onda, `--d` è il ritardo di ciascuna.
@@ -526,7 +526,7 @@ export function ReadingRegister({
         </div>
       ) : (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Hinthia non ha trovato dati da ricavare in questo documento.
+          Silva non ha trovato dati da ricavare in questo documento.
         </p>
       )}
 

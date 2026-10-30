@@ -6,8 +6,8 @@ import type { DossierSummary } from "@/domain/dossiers/types";
 import { SMALL_BUTTON } from "@/components/dossiers/styles";
 
 /**
- * "In breve": il riassunto della vicenda scritto da Hinthia leggendo le sintesi dei documenti che ha già letto. Si scrive
- * solo quando lo chiedi, e solo con i documenti che hai permesso di far leggere a Hinthia.
+ * "In breve": il riassunto della vicenda scritto da Silva leggendo le sintesi dei documenti che ha già letto. Si scrive
+ * solo quando lo chiedi, e solo con i documenti che hai permesso di far leggere a Silva.
  */
 export function DossierSummaryCard({
   summary,
@@ -20,9 +20,9 @@ export function DossierSummaryCard({
   onRemove,
 }: {
   summary: DossierSummary | null;
-  /** Quanti documenti del fascicolo Hinthia ha già letto. */
+  /** Quanti documenti del fascicolo Silva ha già letto. */
   readable: number;
-  /** Hinthia attiva e consenso all'estrazione dati: senza, il riassunto non si può scrivere. */
+  /** Silva attiva e consenso all'estrazione dati: senza, il riassunto non si può scrivere. */
   canWrite: boolean;
   busy: boolean;
   /** Un'avvertenza dell'ultima richiesta ("2 documenti sono rimasti fuori"). */
@@ -52,7 +52,7 @@ export function DossierSummaryCard({
           <p className="text-[14.5px] leading-relaxed whitespace-pre-wrap text-[#2c3557] dark:text-zinc-200">{summary.text}</p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              Scritto da Hinthia {relativeDay(summary.generatedAt, now)} · letto da {summary.documentCount}{" "}
+              Scritto da Silva {relativeDay(summary.generatedAt, now)} · letto da {summary.documentCount}{" "}
               {summary.documentCount === 1 ? "documento" : "documenti"}
             </span>
             {canWrite ? (
@@ -66,14 +66,14 @@ export function DossierSummaryCard({
           </div>
           {stale ? (
             <p className="text-xs font-bold text-[#8a5a00]">
-              Hinthia ha letto altri documenti dopo questo riassunto: aggiornalo per includerli.
+              Silva ha letto altri documenti dopo questo riassunto: aggiornalo per includerli.
             </p>
           ) : null}
         </>
       ) : (
         <>
           <p className="text-[13.5px] leading-snug text-zinc-700 dark:text-zinc-300">
-            Hinthia può riassumere questa vicenda in poche righe, partendo da ciò che ha già letto dei tuoi documenti ({readable}{" "}
+            Silva può riassumere questa vicenda in poche righe, partendo da ciò che ha già letto dei tuoi documenti ({readable}{" "}
             {readable === 1 ? "letto" : "letti"}). Le sintesi vengono inviate a Claude solo ora, e solo quelle dei documenti che hai
             abilitato.
           </p>

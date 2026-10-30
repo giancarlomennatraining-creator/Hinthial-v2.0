@@ -142,7 +142,7 @@ test("la scheda mostra il testo letto dall'OCR e non ricava niente da sola", asy
   await expect(page.getByTestId("extracted-text")).toContainText("14 marzo 2026");
 
   // ...ma il dispositivo non lo interpreta: niente proposte né riquadro "Cosa ne ho ricavato". Scadenza, emittente e
-  // categoria arrivano solo se chiedi a Hinthia di leggere il documento.
+  // categoria arrivano solo se chiedi a Silva di leggere il documento.
   await expect(tabpanel.getByRole("button", { name: "Accetta", exact: true })).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Cosa ne ho ricavato" })).toHaveCount(0);
 

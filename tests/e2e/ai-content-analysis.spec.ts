@@ -35,7 +35,7 @@ function buildPdf(line: string): Buffer {
   return Buffer.from(pdf, "latin1");
 }
 
-test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed esclusione per singolo documento", async ({
+test("il bottone 'Chiedi a Silva' rispetta consenso generale, per categoria ed esclusione per singolo documento", async ({
   page,
 }) => {
   test.slow();
@@ -78,21 +78,21 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
 
   await page.getByRole("link", { name: /polizza\.pdf/ }).click();
   await expect(page).toHaveURL(/\/archive\/[0-9a-f-]+$/, { timeout: 15_000 });
-  // Il trigger di analisi vive nella tab "Chiedi a Hinthia" (v. feedback utente), non più fisso a sinistra.
-  await page.getByRole("tab", { name: "Chiedi a Hinthia" }).click();
+  // Il trigger di analisi vive nella tab "Chiedi a Silva" (v. feedback utente), non più fisso a sinistra.
+  await page.getByRole("tab", { name: "Chiedi a Silva" }).click();
 
   // Senza consenso generale/di funzione, il bottone non compare --- solo il rimando alle Impostazioni.
-  await expect(page.getByText("Chiedi a Hinthia di leggere questo documento")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Chiedi a Hinthia" })).toHaveCount(0);
+  await expect(page.getByText("Chiedi a Silva di leggere questo documento")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Chiedi a Silva" })).toHaveCount(0);
   await expect(page.getByText(/Attiva "Estrazione avanzata dei contenuti"/)).toBeVisible();
 
   // Attiva cancello generale + funzione, e abilita la categoria "Assicurazioni" per questo utente.
   await page.getByRole("link", { name: "Archivio", exact: true }).click();
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
-  await expect(page.getByRole("heading", { name: "Hinthia", exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Privacy e Silva" }).click();
+  await expect(page.getByRole("heading", { name: "Silva", exact: true })).toBeVisible();
 
-  const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Hinthia" });
+  const masterSwitch = page.getByRole("switch", { name: "Consenti l'uso di Silva" });
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/profiles") && res.request().method() === "PATCH"),
     masterSwitch.click(),
@@ -114,7 +114,7 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
   await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
   await page.getByRole("link", { name: /polizza\.pdf/ }).click();
-  await page.getByRole("tab", { name: "Chiedi a Hinthia" }).click();
+  await page.getByRole("tab", { name: "Chiedi a Silva" }).click();
   await expect(page.getByRole("button", { name: "Solo questa volta" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Abilita questa categoria per 30 giorni" })).toBeVisible();
 
@@ -125,7 +125,7 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
     route.fulfill({
       status: 503,
       contentType: "application/json",
-      body: JSON.stringify({ error: "Hinthia non è ancora configurata su questo server." }),
+      body: JSON.stringify({ error: "Silva non è ancora configurata su questo server." }),
     }),
   );
   const analyzeRequest = page.waitForRequest("**/api/ai/analyze");
@@ -133,31 +133,31 @@ test("il bottone 'Chiedi a Hinthia' rispetta consenso generale, per categoria ed
   await acceptConfirm(page);
   await analyzeRequest;
   await expect(
-    page.getByText("Hinthia non è ancora configurata su questo server."),
+    page.getByText("Silva non è ancora configurata su questo server."),
   ).toBeVisible({ timeout: 15_000 });
 
   // Escludere il documento nasconde il bottone e resta impostato dopo un refresh.
   // click e non check(): l'esclusione si spunta a salvataggio avvenuto, non subito.
-  const excludeCheckbox = page.getByLabel(/Escludi questo documento dall'analisi di Hinthia/);
+  const excludeCheckbox = page.getByLabel(/Escludi questo documento dall'analisi di Silva/);
   await excludeCheckbox.click();
   await expect(excludeCheckbox).toBeChecked();
   await page.reload();
   await page.getByLabel("Master password", { exact: true }).fill(MASTER_PASSWORD);
   await page.getByRole("button", { name: "Sblocca", exact: true }).click();
-  // Il reload azzera la tab attiva sulla scheda: si riapre "Chiedi a Hinthia" per ritrovare il trigger.
-  await page.getByRole("tab", { name: "Chiedi a Hinthia" }).click();
-  await expect(page.getByText("Questo documento è escluso dall'analisi di Hinthia")).toBeVisible();
+  // Il reload azzera la tab attiva sulla scheda: si riapre "Chiedi a Silva" per ritrovare il trigger.
+  await page.getByRole("tab", { name: "Chiedi a Silva" }).click();
+  await expect(page.getByText("Questo documento è escluso dall'analisi di Silva")).toBeVisible();
   await expect(page.getByRole("button", { name: "Solo questa volta" })).toHaveCount(0);
 
   // Il consenso per categoria, impostato in Impostazioni, resta impostato dopo un refresh.
   await page.goto("/settings");
-  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
+  await page.getByRole("tab", { name: "Privacy e Silva" }).click();
   await Promise.all([
     page.waitForResponse((res) => res.url().includes("/categories") && res.request().method() === "PATCH"),
     // click e non check(): la categoria si spunta solo a salvataggio avvenuto, non subito.
     page.getByRole("checkbox", { name: "🛡️ Assicurazioni" }).click(),
   ]);
   await page.reload();
-  await page.getByRole("tab", { name: "Privacy e Hinthia" }).click();
+  await page.getByRole("tab", { name: "Privacy e Silva" }).click();
   await expect(page.getByRole("checkbox", { name: "🛡️ Assicurazioni" })).toBeChecked();
 });

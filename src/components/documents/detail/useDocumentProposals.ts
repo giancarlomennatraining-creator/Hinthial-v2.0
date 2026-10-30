@@ -20,7 +20,7 @@ import { errorMessage } from "@/lib/utils";
 import type { DocumentData } from "@/components/documents/detail/useDocumentData";
 
 /**
- * Le proposte di Hinthia su questo contenuto: quelle ancora da decidere (ricalcolate a ogni render, così accettare o
+ * Le proposte di Silva su questo contenuto: quelle ancora da decidere (ricalcolate a ogni render, così accettare o
  * rifiutare ne filtra da sola), le azioni per accettarle, rifiutarle o riprenderle, e l'ultima azione annullabile.
  */
 export function useDocumentProposals(masterKey: CryptoKey, data: DocumentData) {

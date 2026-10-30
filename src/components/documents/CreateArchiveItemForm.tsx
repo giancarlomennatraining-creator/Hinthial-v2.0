@@ -36,7 +36,7 @@ export function CreateArchiveItemForm({ masterKey }: { masterKey: CryptoKey }) {
   const { categories, assets, dossiers, loading, error, setError } = useCreateFormData(masterKey);
 
   // Quale passo è aperto --- gli altri restano come riepilogo, mai tutti insieme. 1-3 prima del salvataggio, 4-5
-  // dopo (lettura sul dispositivo, analisi con Hinthia). Parte dal passo 1: il primo input deve essere davvero la
+  // dopo (lettura sul dispositivo, analisi con Silva). Parte dal passo 1: il primo input deve essere davvero la
   // prima scelta dell'utente, non una modalità già decisa per lui.
   const [activeStep, setActiveStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 

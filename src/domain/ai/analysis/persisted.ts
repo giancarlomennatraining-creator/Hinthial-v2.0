@@ -20,7 +20,7 @@ export function isAnalysisStatus(value: unknown): value is AnalysisStatus {
 }
 
 /**
- * Ciò che resta di una lettura di Hinthia, tutto cifrato con la Master Key in `documents.encrypted_content_analysis`.
+ * Ciò che resta di una lettura di Silva, tutto cifrato con la Master Key in `documents.encrypted_content_analysis`.
  * I blocchi sono quelli già letti e validati, in ordine: la ripresa dopo un'interruzione parte dal primo mancante.
  */
 export interface PersistedContentAnalysis {

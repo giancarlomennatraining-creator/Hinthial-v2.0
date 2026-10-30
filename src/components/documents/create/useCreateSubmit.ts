@@ -167,7 +167,7 @@ export function useCreateSubmit(masterKey: CryptoKey, input: SubmitInput) {
       } else if (mode === "upload") {
         const result = await uploadLot(user.id, metadataInput);
         if (result.ids.length === 0) throw new Error("Nessun file è stato importato.");
-        // Uno o molti, dopo il salvataggio si va alla conferma (v. ConfirmImport): lettura di Hinthia, proposte, dettagli.
+        // Uno o molti, dopo il salvataggio si va alla conferma (v. ConfirmImport): lettura di Silva, proposte, dettagli.
         showToast(
           lot.length === 1
             ? "Documento aggiunto."

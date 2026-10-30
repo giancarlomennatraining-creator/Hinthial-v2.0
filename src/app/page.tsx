@@ -9,7 +9,7 @@ import { SecurityIcon } from "@/components/icons/nav-icons";
 import "@/components/landing/landing.css";
 import { BrandLockup } from "@/components/layout/BrandLockup";
 
-/** Scintille che girano intorno a Hinthia: durata, ritardo e raggio dell'orbita. */
+/** Scintille che girano intorno a Silva: durata, ritardo e raggio dell'orbita. */
 const SPARKS = [
   { t: "7s", d: "0s", r: "150px" },
   { t: "9s", d: "-3s", r: "130px" },

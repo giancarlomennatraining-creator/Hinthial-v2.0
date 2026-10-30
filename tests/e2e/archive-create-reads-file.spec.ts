@@ -95,7 +95,7 @@ test("scegliendo il file, Hinthial lo legge sul dispositivo ma non compila nessu
     buffer: buildPdf(POLIZZA),
   });
 
-  // La lettura avviene QUI, senza aver premuto Salva: il testo si salva col documento (ricerca, analisi di Hinthia).
+  // La lettura avviene QUI, senza aver premuto Salva: il testo si salva col documento (ricerca, analisi di Silva).
   await expect(page.getByText("Letto sul dispositivo")).toBeVisible({ timeout: 45_000 });
 
   // Ma non decide niente al posto tuo: né titolo, né categoria, né bene collegato.

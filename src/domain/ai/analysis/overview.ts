@@ -5,7 +5,7 @@ import type { Provenance, ValidatedEvidence } from "@/domain/ai/analysis/validat
 import type { DocumentListItem } from "@/domain/documents/types";
 
 /**
- * Content Intelligence, PR4: la lettura di Hinthia com'è mostrata nella scheda (§13). Ogni dato qui è già passato dal
+ * Content Intelligence, PR4: la lettura di Silva com'è mostrata nella scheda (§13). Ogni dato qui è già passato dal
  * controllo sulla citazione (v. validate.ts), quindi la "confidenza" è quella: verificato nel testo o scartato. Il modello
  * non dà un numero e non se ne inventa uno.
  */
@@ -23,7 +23,7 @@ export interface OverviewFact {
   /** La citazione del documento che lo prova. */
   quote: string;
   provenance: Provenance;
-  /** Già nella Scheda (o, per un evento, già in Scadenze): il dato è tuo, non solo una lettura di Hinthia. */
+  /** Già nella Scheda (o, per un evento, già in Scadenze): il dato è tuo, non solo una lettura di Silva. */
   adopted: boolean;
 }
 

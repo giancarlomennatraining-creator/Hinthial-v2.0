@@ -80,7 +80,7 @@ export async function answerWithClaude(query: string, context: AIContext): Promi
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.error ?? "Impossibile contattare Hinthia.");
+    throw new Error(body?.error ?? "Impossibile contattare Silva.");
   }
 
   const data = await response.json();

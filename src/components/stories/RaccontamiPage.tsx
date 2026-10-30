@@ -32,9 +32,9 @@ import { LoadingText } from "@/components/ui/LoadingText";
 type Current = { theme: StoryTheme; question: string };
 
 /**
- * "Raccontami": Hinthia ti fa una domanda alla volta su ciò che sai e che non sta in nessun documento. Ogni risposta
+ * "Raccontami": Silva ti fa una domanda alla volta su ciò che sai e che non sta in nessun documento. Ogni risposta
  * diventa una nota cifrata in Archivio (categoria "Racconti") che puoi far arrivare a chi vuoi con "Fallo arrivare a…".
- * Con il consenso a Hinthia, dopo la risposta arriva anche una domanda di approfondimento (v. app/api/ai/follow-up):
+ * Con il consenso a Silva, dopo la risposta arriva anche una domanda di approfondimento (v. app/api/ai/follow-up):
  * senza, restano le domande scritte e nulla lascia il dispositivo. Si può anche rispondere a voce: la registrazione diventa
  * un racconto audio cifrato, senza trascrizione e quindi senza domanda di approfondimento.
  */
@@ -51,7 +51,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Dopo il salvataggio: il racconto scritto, e (se c'è il consenso) la domanda di approfondimento di Hinthia.
+  // Dopo il salvataggio: il racconto scritto, e (se c'è il consenso) la domanda di approfondimento di Silva.
   const [saved, setSaved] = useState<Story | null>(null);
   const [followUp, setFollowUp] = useState<{ status: "loading" | "ready" | "failed"; question: string } | null>(null);
   const [followUpAnswer, setFollowUpAnswer] = useState("");
@@ -114,7 +114,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
           const question = await askFollowUp(current.question, answer);
           setFollowUp({ status: "ready", question });
         } catch {
-          // Il racconto è già salvato: senza la domanda di Hinthia si prosegue lo stesso.
+          // Il racconto è già salvato: senza la domanda di Silva si prosegue lo stesso.
           setFollowUp({ status: "failed", question: "" });
         }
       }
@@ -182,7 +182,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
           <h1 className="text-2xl font-semibold tracking-tight text-title">Raccontami</h1>
           <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
             Ci sono cose che sai solo tu e che non stanno in nessun documento. Ti faccio una domanda alla volta: le risposte
-            restano tue, cifrate, e puoi farle arrivare a chi vuoi.
+            restano tue, cifrate, in Archivio. Quando vuoi che arrivino a qualcuno, le consegni con una capsula.
           </p>
         </div>
         <PageHelp
@@ -190,8 +190,8 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
           tips={[
             { icon: "📖", text: "Ogni risposta diventa una nota nella categoria Racconti dell'Archivio." },
             { icon: "🎙️", text: "Puoi anche rispondere a voce: la registrazione resta cifrata e la ascolti solo tu, finché non la fai arrivare a qualcuno." },
-            { icon: "💌", text: "Da ogni racconto puoi aprire una capsula per farlo arrivare a una persona." },
-            { icon: "🤖", text: "Con Hinthia attiva, dopo la risposta ti faccio una domanda in più per ricordare un dettaglio. Senza, le domande sono quelle scritte." },
+            { icon: "💌", text: "Il racconto resta tuo. Per farlo arrivare a una persona lo consegni con una capsula: scegli tu quando si apre." },
+            { icon: "🤖", text: "Con Silva attiva, dopo la risposta ti faccio una domanda in più per ricordare un dettaglio. Senza, le domande sono quelle scritte." },
             { icon: "🔑", text: "Non scrivere password: per quelle servono altri posti." },
           ]}
         />
@@ -283,7 +283,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
                   ) : null}
                   {canFollowUp ? (
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      Hinthia non ascolta le registrazioni: la domanda in più arriva solo con le risposte scritte.
+                      Silva non ascolta le registrazioni: la domanda in più arriva solo con le risposte scritte.
                     </p>
                   ) : null}
                 </div>
@@ -302,8 +302,8 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
                   />
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     {canFollowUp
-                      ? "Salvandola, Hinthia la legge per farti una domanda in più. Il racconto resta cifrato."
-                      : "Resta cifrata e la vedi solo tu. Per ricevere anche una domanda di approfondimento, attiva Hinthia in Impostazioni."}
+                      ? "Salvandola, Silva la legge per farti una domanda in più. Il racconto resta cifrato."
+                      : "Resta cifrata e la vedi solo tu. Per ricevere anche una domanda di approfondimento, attiva Silva in Impostazioni."}
                   </p>
                 </div>
               )}
@@ -329,14 +329,14 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
 
               {followUp?.status === "loading" ? (
                 <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Hinthia ci sta pensando…
+                  Silva ci sta pensando…
                 </p>
               ) : followUp?.status === "ready" && !followUpDone ? (
                 <div className="flex flex-col gap-2 rounded-xl bg-brand/10 p-4">
-                  <p className="text-xs font-bold tracking-wider text-accent uppercase">Hinthia chiede</p>
+                  <p className="text-xs font-bold tracking-wider text-accent uppercase">Silva chiede</p>
                   <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{followUp.question}</p>
                   <label htmlFor="story-follow-up" className="sr-only">
-                    La tua risposta alla domanda di Hinthia
+                    La tua risposta alla domanda di Silva
                   </label>
                   <textarea
                     id="story-follow-up"
@@ -359,7 +359,7 @@ export function RaccontamiPage({ masterKey }: { masterKey: CryptoKey }) {
               {finished ? (
                 <div className="flex flex-col gap-3">
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Lo trovi in Archivio, nella categoria Racconti.
+                    Lo trovi in Archivio, nella categoria Racconti. Per farlo arrivare a qualcuno, consegnalo con una capsula.
                     {followUpDone && followUpAnswer.trim() ? " La risposta in più è stata aggiunta." : ""}
                   </p>
                   <div className="flex flex-wrap gap-3">

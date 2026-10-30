@@ -95,7 +95,7 @@ export async function extractTextForExistingDocument(
     extracted_at: new Date().toISOString(),
   };
 
-  // Una lettura di Hinthia riguarda il testo di allora: se il testo cambia non vale più, e non va mostrata come attuale.
+  // Una lettura di Silva riguarda il testo di allora: se il testo cambia non vale più, e non va mostrata come attuale.
   // Chi chiama con un elenco leggero non ha il testo di prima: si rilegge solo se serve (mai letto = nessun testo né analisi).
   const previousText =
     doc.extractedText ??

@@ -6,13 +6,13 @@ import { consumeAiCall } from "@/lib/ai/daily-quota";
 import { errorMessage } from "@/lib/utils";
 
 /**
- * "Raccontami": dopo una risposta, Hinthia fa UNA domanda di approfondimento. È uno dei pochi punti in cui il testo di
+ * "Raccontami": dopo una risposta, Silva fa UNA domanda di approfondimento. È uno dei pochi punti in cui il testo di
  * una persona raggiunge Anthropic, quindi il consenso si riverifica QUI sul valore salvato sul server, non fidandosi
- * del solo stato del browser: il "cancello" generale (ai_master_enabled) e il consenso a Hinthia (ai_chat_consent).
+ * del solo stato del browser: il "cancello" generale (ai_master_enabled) e il consenso a Silva (ai_chat_consent).
  * La chiave vive solo qui. Niente viene salvato lato server: la domanda torna al browser, che la cifra come tutto il resto.
  */
 
-const SYSTEM_PROMPT = `Sei Hinthia, l'intervistatrice di Hinthial. Una persona ti sta raccontando un ricordo o un'informazione che vuole lasciare a chi le sta a cuore.
+const SYSTEM_PROMPT = `Sei Silva, l'intervistatrice di Hinthial. Una persona ti sta raccontando un ricordo o un'informazione che vuole lasciare a chi le sta a cuore.
 Dopo la sua risposta fai UNA sola domanda di approfondimento, in italiano, calda e concreta, che aiuti a ricordare un dettaglio che altrimenti andrebbe perso: un nome, un luogo, un odore, un motivo, una data.
 Massimo 25 parole. Dai del tu. Non dare consigli, non commentare, non riassumere, non fare più di una domanda.
 Non chiedere mai password, codici, numeri di carte o dati bancari.
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     .eq("id", user.id)
     .single();
   if (profileError || !profile?.ai_master_enabled || !profile.ai_chat_consent) {
-    return NextResponse.json({ error: "Consenso all'uso di Hinthia non attivo." }, { status: 403 });
+    return NextResponse.json({ error: "Consenso all'uso di Silva non attivo." }, { status: 403 });
   }
 
   const parsedBody = await readJsonBody(request);
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "Hinthia non è ancora configurata su questo server." }, { status: 503 });
+    return NextResponse.json({ error: "Silva non è ancora configurata su questo server." }, { status: 503 });
   }
 
   // Il tetto giornaliero (v. lib/ai/daily-quota.ts): dopo ogni altro controllo, subito prima di chiamare Claude.
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     const textBlock = response.content.find((block) => block.type === "text");
     const text = (textBlock?.text ?? "").trim();
     if (!text) {
-      return NextResponse.json({ error: "Hinthia non ha trovato nulla da chiedere." }, { status: 502 });
+      return NextResponse.json({ error: "Silva non ha trovato nulla da chiedere." }, { status: 502 });
     }
 
     // Traccia che il testo ha davvero raggiunto Claude, non solo che il consenso lo permetteva.
@@ -81,6 +81,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ text });
   } catch (err) {
     const message = errorMessage(err, "Errore sconosciuto.");
-    return NextResponse.json({ error: `Impossibile contattare Hinthia: ${message}` }, { status: 502 });
+    return NextResponse.json({ error: `Impossibile contattare Silva: ${message}` }, { status: 502 });
   }
 }

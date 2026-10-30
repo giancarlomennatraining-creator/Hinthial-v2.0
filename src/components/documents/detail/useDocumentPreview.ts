@@ -88,7 +88,7 @@ export function useDocumentPreview(
     }
   }, [supabase, masterKey, doc, setError]);
 
-  // I byte del PDF decifrato, scaricati una volta sola per tutte le pagine che si aprono dalla lettura di Hinthia.
+  // I byte del PDF decifrato, scaricati una volta sola per tutte le pagine che si aprono dalla lettura di Silva.
   const pdfBytesRef = useRef<Promise<Uint8Array> | null>(null);
   const loadPdfBytes = useCallback(() => {
     if (!doc) return Promise.reject(new Error("Contenuto non disponibile."));

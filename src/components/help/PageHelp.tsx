@@ -24,7 +24,7 @@ interface HelpMessage {
 }
 
 /**
- * Il pannello "Aiuto" con la voce di Hinthia (v. feedback utente): sostituisce il paragrafo descrittivo che ogni
+ * Il pannello "Aiuto" con la voce di Silva (v. feedback utente): sostituisce il paragrafo descrittivo che ogni
  * pagina teneva fisso sotto il titolo. Due parti: consigli statici sempre presenti ("In breve", nessuna IA
  * coinvolta, gratis), e --- dove ha senso --- un campo per fare una domanda vera, che riusa lo stesso motore già
  * dietro /ai (stesso consenso, stesso ripiego locale senza consenso): niente cronologia condivisa con la chat
@@ -38,7 +38,7 @@ export function PageHelp({
   /** Nome della pagina (o della tab), mostrato come sottotitolo nel pannello e nell'aria-label. */
   title: string;
   tips: HelpTip[];
-  /** false dove chiedere a Hinthia è già l'intera pagina (v. /ai): niente sezione domanda, sarebbe ridondante. */
+  /** false dove chiedere a Silva è già l'intera pagina (v. /ai): niente sezione domanda, sarebbe ridondante. */
   chatEnabled?: boolean;
 }) {
   const supabase = useSupabase();
@@ -69,7 +69,7 @@ export function PageHelp({
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: errorMessage(err, "Impossibile contattare Hinthia.") },
+        { role: "assistant", text: errorMessage(err, "Impossibile contattare Silva.") },
       ]);
     } finally {
       setAsking(false);
@@ -93,7 +93,7 @@ export function PageHelp({
           {/* eslint-disable-next-line @next/next/no-img-element -- copia ridotta dell'avatar HINTHIA, v. public/brand/README.md */}
           <img src="/brand/hinthia/hinthia-128.png" alt="" className="h-11 w-11 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Hinthia</p>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Silva</p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               {chatEnabled ? `Guida e domande su ${title}` : `Aiuto per ${title}`}
             </p>
@@ -151,14 +151,14 @@ export function PageHelp({
             {status.kind === "unlocked" ? (
               <form onSubmit={handleAsk} className="flex gap-2">
                 <label htmlFor={`page-help-question-${title}`} className="sr-only">
-                  Chiedi a Hinthia
+                  Chiedi a Silva
                 </label>
                 <input
                   id={`page-help-question-${title}`}
                   type="text"
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
-                  placeholder="Chiedi a Hinthia…"
+                  placeholder="Chiedi a Silva…"
                   className="min-w-0 flex-1 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-950 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
                 />
                 <button
@@ -172,7 +172,7 @@ export function PageHelp({
               </form>
             ) : (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Sblocca la master password per fare domande a Hinthia su questa pagina.
+                Sblocca la master password per fare domande a Silva su questa pagina.
               </p>
             )}
           </div>

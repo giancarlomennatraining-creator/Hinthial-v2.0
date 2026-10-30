@@ -48,8 +48,12 @@ test("Fascicoli e Cestino non hanno più il testo descrittivo sotto i tab", asyn
     page.getByText("Vicende che attraversano più categorie"),
   ).toHaveCount(0);
 
+  // Il Cestino non è una scheda: si raggiunge da Contenuti, che resta accesa anche lì.
+  await page.getByRole("link", { name: "Contenuti", exact: true }).click();
   await page.getByRole("link", { name: "Cestino", exact: true }).click();
   await expect(page).toHaveURL(/\/trash$/);
+  await expect(page.getByRole("heading", { name: "Cestino", level: 2 })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Contenuti", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByText("Un documento eliminato resta qui")).toHaveCount(
     0,
   );

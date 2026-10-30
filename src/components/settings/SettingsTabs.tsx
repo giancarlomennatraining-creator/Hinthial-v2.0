@@ -59,7 +59,7 @@ interface TabDef {
 const TABS: TabDef[] = [
   { id: "profile", label: "Profilo", icon: UserIcon },
   { id: "security", label: "Accesso e sicurezza", icon: SecurityIcon },
-  { id: "privacy", label: "Privacy e Hinthia", icon: EyeIcon },
+  { id: "privacy", label: "Privacy e Silva", icon: EyeIcon },
   { id: "data", label: "I miei dati", icon: CategoryIcon },
   { id: "preferences", label: "Aspetto e preferenze", icon: SlidersIcon },
   // Sola eccezione di colore: resta nel proprio rosso/arancio di avviso invece del blu del logo, essendo l'unica voce di rischio.
@@ -82,7 +82,7 @@ const TAB_HELP: Record<Tab, HelpTip[]> = {
   ],
   privacy: [
     { icon: "👁️", text: "Dati reali del tuo account: non richiede la master password sbloccata. Solo conteggi e informazioni mai cifrate, niente contenuto dei tuoi documenti." },
-    { icon: "🔒", text: "Per impostazione predefinita nessuna funzione di Hinthia è attiva." },
+    { icon: "🔒", text: "Per impostazione predefinita nessuna funzione di Silva è attiva." },
     { icon: "🎚️", text: "Il cancello generale accende solo la possibilità di attivare le singole funzioni, una per una; il consenso all'estrazione avanzata si dà anche per categoria." },
   ],
   data: [
@@ -229,7 +229,7 @@ export function SettingsTabs({
             </SettingsBlock>
             <SettingsBlock
               id="hinthia"
-              title="Hinthia"
+              title="Silva"
               description="Le funzioni di intelligenza artificiale. Nessuna è attiva finché non la accendi tu, una per una."
             >
               <AIConsentSettings />

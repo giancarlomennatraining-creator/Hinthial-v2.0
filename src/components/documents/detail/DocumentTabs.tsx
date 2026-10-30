@@ -1,6 +1,6 @@
 import type { UndoableAction } from "@/components/documents/ReadingRegister";
 
-/** Scheda / Letto dal dispositivo / Chiedi a Hinthia: le tre tab della colonna a destra. */
+/** Scheda / Letto dal dispositivo / Chiedi a Silva: le tre tab della colonna a destra. */
 export type DocumentTab = "scheda" | "reading" | "analysis";
 
 /**
@@ -19,7 +19,7 @@ export function DocumentTabList({
   const tabs: { id: DocumentTab; label: string }[] = [
     { id: "scheda", label: "Scheda" },
     { id: "reading", label: "Letto dal dispositivo" },
-    { id: "analysis", label: `Chiedi a Hinthia${proposalCount > 0 ? ` · ${proposalCount}` : ""}` },
+    { id: "analysis", label: `Chiedi a Silva${proposalCount > 0 ? ` · ${proposalCount}` : ""}` },
   ];
 
   return (

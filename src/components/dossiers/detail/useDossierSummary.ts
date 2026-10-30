@@ -10,7 +10,7 @@ import type { DocumentListItem } from "@/domain/documents/types";
 import { errorMessage } from "@/lib/utils";
 import type { DossierData } from "@/components/dossiers/detail/useDossierData";
 
-/** Il riassunto del fascicolo scritto da Hinthia e le sintesi dei documenti che lo compongono. */
+/** Il riassunto del fascicolo scritto da Silva e le sintesi dei documenti che lo compongono. */
 export function useDossierSummary(masterKey: CryptoKey, dossierId: string, data: DossierData) {
   const supabase = useSupabase();
   const { dossier, documents, refresh, setError } = data;
@@ -32,7 +32,7 @@ export function useDossierSummary(masterKey: CryptoKey, dossierId: string, data:
     try {
       const readableIds = documents.filter((d) => d.dossierIds.includes(dossierId) && d.aiSynthesisGeneratedAt !== null).map((d) => d.id);
       const request = buildSummaryRequest(dossier.title, await getDocumentsByIds(supabase, masterKey, readableIds));
-      if (request.documents.length === 0) throw new Error("Hinthia non ha ancora letto nessun documento di questo fascicolo.");
+      if (request.documents.length === 0) throw new Error("Silva non ha ancora letto nessun documento di questo fascicolo.");
       const result = await requestDossierSummary(request);
       await setDossierSummary(supabase, masterKey, dossierId, {
         text: result.summary,
@@ -69,7 +69,7 @@ export function useDossierSummary(masterKey: CryptoKey, dossierId: string, data:
     }
   }
 
-  /** Le sintesi sono già nei documenti letti da Hinthia: si leggono solo quando le chiedi, e nessuna nuova lettura parte. */
+  /** Le sintesi sono già nei documenti letti da Silva: si leggono solo quando le chiedi, e nessuna nuova lettura parte. */
   async function handleShowReadings(ids: string[]) {
     setReadingsBusy(true);
     setError(null);

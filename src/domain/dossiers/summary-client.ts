@@ -8,7 +8,7 @@ export interface DossierSummaryResult {
   skipped: number;
 }
 
-/** Chiede a Hinthia il riassunto: il server ricontrolla i consensi e risponde con un messaggio leggibile se non si può. */
+/** Chiede a Silva il riassunto: il server ricontrolla i consensi e risponde con un messaggio leggibile se non si può. */
 export async function requestDossierSummary(request: DossierSummaryRequest): Promise<DossierSummaryResult> {
   const response = await fetch("/api/ai/dossier-summary", {
     method: "POST",

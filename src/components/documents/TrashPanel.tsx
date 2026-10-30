@@ -222,6 +222,8 @@ export function TrashPanel({ masterKey }: { masterKey: CryptoKey }) {
 
       <ArchiveTabs />
 
+      <h2 className="-mb-2 text-base font-semibold text-zinc-900 dark:text-zinc-100">Cestino</h2>
+
       {/* Qui lo spazio si libera: la barra si aggiorna a ogni eliminazione definitiva. */}
       <StorageUsageMeter refreshKey={documents.length} />
 

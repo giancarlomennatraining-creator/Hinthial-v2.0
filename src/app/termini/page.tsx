@@ -68,9 +68,9 @@ export default function TerminiPage() {
         </ul>
       </LegalSection>
 
-      <LegalSection title="5. Hinthia">
+      <LegalSection title="5. Silva">
         <p>
-          Hinthia, l&apos;assistente basato su un modello di intelligenza artificiale, è facoltativa e si attiva solo con il
+          Silva, l&apos;assistente basato su un modello di intelligenza artificiale, è facoltativa e si attiva solo con il
           tuo consenso. Quello che propone (una scadenza, una categoria, una domanda) può essere sbagliato: decidi sempre tu
           cosa accettare. Non usarla per decisioni mediche, legali o finanziarie.
         </p>

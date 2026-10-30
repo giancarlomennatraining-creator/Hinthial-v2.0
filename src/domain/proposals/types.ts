@@ -20,7 +20,7 @@ export interface Proposal {
   value: string;
   /** Il pezzo di documento da cui nasce, da mostrare accanto alla proposta. */
   source: string;
-  /** Solo per le proposte di Hinthia su un documento letto per pagine: il numero di pagina (da 1) da cui nasce. */
+  /** Solo per le proposte di Silva su un documento letto per pagine: il numero di pagina (da 1) da cui nasce. */
   page?: number;
   /** Vero se il valore è calcolato e non letto (es. "controllo tra 12 mesi" + data documento) --- chi accetta deve saperlo. */
   derived?: boolean;

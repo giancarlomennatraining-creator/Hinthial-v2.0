@@ -46,7 +46,7 @@ describe("summarizePending", () => {
 });
 
 describe("loadPendingProposals", () => {
-  it("guarda solo i documenti già letti da Hinthia, i più recenti per primi", async () => {
+  it("guarda solo i documenti già letti da Silva, i più recenti per primi", async () => {
     proposalsByDoc.old = 1;
     proposalsByDoc.fresh = 2;
     const result = await loadPendingProposals(

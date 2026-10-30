@@ -65,11 +65,11 @@ export default function PrivacyPage() {
             ricostruire cosa è successo in caso di abuso. Base giuridica: legittimo interesse alla sicurezza (art. 6.1.f).
           </li>
           <li>
-            <strong>Hinthia, solo se la attivi</strong>: quando chiedi a Hinthia di leggere un documento o di aiutarti in un
+            <strong>Silva, solo se la attivi</strong>: quando chiedi a Silva di leggere un documento o di aiutarti in un
             racconto, il testo che scegli viene decifrato sul tuo dispositivo e inviato, attraverso il nostro server, ad
             Anthropic, che fornisce il modello. Non lo conserviamo dopo la risposta. Base giuridica: il tuo consenso (art.
             6.1.a e, se il testo contiene dati sanitari o di altre categorie particolari, art. 9.2.a), che puoi ritirare in
-            qualsiasi momento da Impostazioni &gt; Hinthia.
+            qualsiasi momento da Impostazioni &gt; Silva.
           </li>
         </ul>
         <p>
@@ -99,7 +99,7 @@ export default function PrivacyPage() {
             <strong>Resend</strong>: invia le email del servizio;
           </li>
           <li>
-            <strong>Anthropic</strong>: solo se attivi Hinthia, riceve il testo che scegli di farle leggere.
+            <strong>Anthropic</strong>: solo se attivi Silva, riceve il testo che scegli di farle leggere.
           </li>
         </ul>
         <p>
@@ -127,7 +127,7 @@ export default function PrivacyPage() {
           <li>correggerli, da Impostazioni &gt; Informazioni utente;</li>
           <li>portarli via, da Impostazioni &gt; Importa/Esporta;</li>
           <li>cancellare tutto, da Impostazioni &gt; Zona pericolosa;</li>
-          <li>opporti a un trattamento o limitarlo, e ritirare il consenso a Hinthia.</li>
+          <li>opporti a un trattamento o limitarlo, e ritirare il consenso a Silva.</li>
         </ul>
         <p>
           Per tutto il resto scrivi a <LegalValue value={LEGAL.contactEmail} />. Se ritieni che i tuoi dati siano trattati in

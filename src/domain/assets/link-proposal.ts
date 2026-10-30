@@ -38,7 +38,7 @@ export interface LinkedDocumentFields {
   fields: Record<string, string>;
 }
 
-/** Un identificativo del documento da collegare: salvato nella Scheda o letto da Hinthia. */
+/** Un identificativo del documento da collegare: salvato nella Scheda o letto da Silva. */
 export interface OwnIdentifier {
   key: string;
   value: string;
@@ -46,7 +46,7 @@ export interface OwnIdentifier {
 
 export function buildAssetProposal(input: {
   doc: { relatedAssetId: string | null; structuredFields: Record<string, string> };
-  /** I campi letti da Hinthia e non ancora accettati: contano come quelli già salvati. */
+  /** I campi letti da Silva e non ancora accettati: contano come quelli già salvati. */
   readFields: OwnIdentifier[];
   linked: LinkedDocumentFields[];
   assets: { id: string; name: string }[];
@@ -55,7 +55,7 @@ export function buildAssetProposal(input: {
   const { doc, readFields, linked, assets, rejections } = input;
   if (doc.relatedAssetId) return null;
 
-  // Prima ciò che l'utente ha già confermato nella Scheda, poi ciò che Hinthia ha letto.
+  // Prima ciò che l'utente ha già confermato nella Scheda, poi ciò che Silva ha letto.
   const own: OwnIdentifier[] = [
     ...Object.entries(doc.structuredFields).map(([key, value]) => ({ key, value })),
     ...readFields,
@@ -107,7 +107,7 @@ export function buildNewAssetProposal(input: {
   const { doc, readFields, assets, rejections } = input;
   if (doc.relatedAssetId) return null;
 
-  // Ciò che è già nella Scheda vince su ciò che Hinthia ha letto.
+  // Ciò che è già nella Scheda vince su ciò che Silva ha letto.
   const values: Record<string, string> = {};
   for (const { key, value } of [...readFields, ...Object.entries(doc.structuredFields).map(([key, value]) => ({ key, value }))]) {
     if (value.trim()) values[key] = value.trim();

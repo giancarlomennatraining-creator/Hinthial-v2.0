@@ -120,15 +120,15 @@ test("aggiunge scadenza e note a un documento e li vede in dashboard", async ({
     timeout: 15_000,
   });
 
-  // Anche Archivio > Scadenze lo mostra, accanto alle scadenze create come tali (qui nessuna), e porta alla sua scheda.
+  // Anche Archivio > Scadenze lo mostra, nello stesso elenco delle scadenze create come tali (qui nessuna), e porta alla sua scheda.
   await openArchiveTab(page, "Scadenze");
   await expect(page).toHaveURL(/\/reminders$/, { timeout: 15_000 });
-  const documentExpiries = page.getByRole("region", { name: "Documenti in scadenza" });
-  await expect(documentExpiries.getByText("documento-con-metadati.txt")).toBeVisible({ timeout: 15_000 });
+  const documentExpiry = page.getByRole("link", { name: /documento-con-metadati\.txt/ });
+  await expect(documentExpiry).toBeVisible({ timeout: 15_000 });
   // 9 o 10: la data è scritta in UTC, i giorni si contano nel fuso locale.
-  await expect(documentExpiries.getByText(/scade tra (9|10) giorni/)).toBeVisible();
-  await expect(page.getByText("Nessuna scadenza creata da te.")).toBeVisible();
-  await documentExpiries.getByRole("link", { name: /documento-con-metadati\.txt/ }).click();
+  await expect(documentExpiry.getByText(/scade tra (9|10) giorni/)).toBeVisible();
+  await expect(page.getByRole("region", { name: "Documenti in scadenza" })).toHaveCount(0);
+  await documentExpiry.click();
   await expect(page).toHaveURL(/\/archive\/[^/]+$/, { timeout: 15_000 });
 });
 

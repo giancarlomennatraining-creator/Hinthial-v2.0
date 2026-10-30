@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { PlanCard } from "@/components/dashboard/PlanCard";
 import { useTodayExtras } from "@/components/dashboard/useTodayExtras";
 import { isOpeningSoon, sortByOpening } from "@/domain/capsules/overview";
+import { mergeDeadlines } from "@/domain/deadlines";
 import { computePlan, planProgress } from "@/domain/plan/steps";
 import { dueIn, expiryInfo, needsAttention } from "@/domain/documents/archive-views";
 import type { SummaryContext } from "@/domain/ai/types";
@@ -62,16 +63,12 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
   const drafts = context.capsules.filter((c) => c.status === "draft");
   const capsuleRows = readyForMe.length + openingSoon.length + drafts.length;
 
-  // Le scadenze vicine sono le promemoria aperti e i documenti in scadenza o già scaduti (v. needsAttention), dalla più
-  // urgente: quelle già passate prima.
-  const deadlines = [
-    ...context.reminders.filter((r) => !r.completed).map((r) => ({ key: `reminder-${r.id}`, title: r.title, date: r.dueAt })),
-    ...context.documents
-      .filter((d) => d.expiresAt && needsAttention(expiryInfo(d.expiresAt, now)))
-      .map((d) => ({ key: `document-${d.id}`, title: d.filename, date: d.expiresAt as string })),
-  ]
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, MAX_ROWS);
+  // Le scadenze vicine sono quelle create e i documenti in scadenza o già scaduti (v. needsAttention), dalla più
+  // urgente: quelle già passate prima. Si riuniscono come altrove (v. domain/deadlines).
+  const deadlines = mergeDeadlines(
+    context.documents.filter((d) => d.expiresAt && needsAttention(expiryInfo(d.expiresAt, now))),
+    context.reminders,
+  ).slice(0, MAX_ROWS);
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
@@ -132,7 +129,7 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
                 const late = new Date(d.date) < now;
                 const due = dueIn(d.date, now);
                 return (
-                  <li key={d.key} className="min-w-0 text-xs">
+                  <li key={`${d.kind}-${d.id}`} className="min-w-0 text-xs">
                     <p className={cn("truncate font-medium", late ? "text-red-700 dark:text-red-400" : "text-zinc-800 dark:text-zinc-200")}>
                       {d.title}
                     </p>

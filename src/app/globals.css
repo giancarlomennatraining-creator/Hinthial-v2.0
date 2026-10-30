@@ -520,7 +520,7 @@ h6 {
 }
 
 /*
- * "Hinthia sta scrivendo" (v. PageHelp): tre puntini mentre si aspetta
+ * "Silva sta scrivendo" (v. PageHelp): tre puntini mentre si aspetta
  * la risposta, invece di un'attesa muta --- segnala che la domanda è
  * partita davvero. Stesso motivo di sopra per una regola CSS invece di
  * un'utility Tailwind: un keyframe non ha un equivalente pratico qui.
@@ -667,7 +667,7 @@ h6 {
 }
 
 /*
- * Registro di lettura (v. ReadingRegister.tsx): le righe di ciò che Hinthia ha trovato passano da "da decidere" a
+ * Registro di lettura (v. ReadingRegister.tsx): le righe di ciò che Silva ha trovato passano da "da decidere" a
  * "nella Scheda" con un movimento --- un lampo verde attraversa la riga, la spunta si disegna, la tacca della barra
  * cresce, la riga si restringe a una sola riga. Regole qui e non come utility Tailwind: servono keyframe e selettori
  * sullo stato (v. altre eccezioni in questo file). `--d` è il ritardo della riga: con "Accetta le N rimaste" le righe

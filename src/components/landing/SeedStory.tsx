@@ -13,7 +13,7 @@ function vars(values: Record<string, string>): CSSProperties {
 }
 
 /**
- * "Il seme": mentre si scorre, il seme (Hinthia) germoglia, l'albero si riempie di foglie (racconti e documenti), compaiono le
+ * "Il seme": mentre si scorre, il seme (Silva) germoglia, l'albero si riempie di foglie (racconti e documenti), compaiono le
  * persone e alcune foglie volano da chi deve riceverle. Lo stato è solo il passo attivo (0-4): tutto il resto lo fanno le
  * transizioni CSS di landing.css. Il testo dei passi è sempre nella pagina, il disegno è decorazione.
  */

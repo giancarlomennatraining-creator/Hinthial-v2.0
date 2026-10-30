@@ -76,7 +76,7 @@ export interface AnalyzeOptions {
   signal?: AbortSignal;
   /** "Rileggi da capo": ignora la lettura salvata e rilegge tutto. */
   force?: boolean;
-  /** Il documento era già stato letto da Hinthia prima di questa lettura: finisce così nella cronologia ("riletto" e non "letto"). */
+  /** Il documento era già stato letto da Silva prima di questa lettura: finisce così nella cronologia ("riletto" e non "letto"). */
   reread?: boolean;
 }
 
@@ -103,14 +103,14 @@ export function resetAnalysisSession() {
 function reserveRequests(count: number) {
   if (requestsThisSession + count > MAX_REQUESTS_PER_SESSION) {
     throw new Error(
-      "Hai già fatto leggere molti documenti a Hinthia in questa sessione. Ricarica la pagina per continuare.",
+      "Hai già fatto leggere molti documenti a Silva in questa sessione. Ricarica la pagina per continuare.",
     );
   }
   requestsThisSession += count;
 }
 
 export interface AnalysisPlan {
-  /** In quante richieste a Hinthia si divide la lettura. */
+  /** In quante richieste a Silva si divide la lettura. */
   parts: number;
   truncated: boolean;
 }
@@ -204,13 +204,13 @@ export function planAnalysis(doc: Pick<DocumentListItem, "extractedText">, optio
 /** Il testo della conferma prima dell'invio: dice quanto lavoro parte, perché un contenuto uscito è uscito. */
 export function analysisConfirmMessage(plan: AnalysisPlan, saved?: SavedAnalysisState): string {
   if (saved?.kind === "merge-pending") {
-    return "Hinthia ha già letto tutte le parti: resta da preparare la sintesi finale, e verranno inviate solo le sintesi parziali. Continuare?";
+    return "Silva ha già letto tutte le parti: resta da preparare la sintesi finale, e verranno inviate solo le sintesi parziali. Continuare?";
   }
   if (saved?.kind === "interrupted") {
     const left = saved.total - saved.done;
-    return `Hinthia aveva già letto ${saved.done} parti su ${saved.total}. Riprendo da dove si era fermata: il testo delle ${left} restanti verrà inviato a Hinthia. Continuare?`;
+    return `Silva aveva già letto ${saved.done} parti su ${saved.total}. Riprendo da dove si era fermata: il testo delle ${left} restanti verrà inviato a Silva. Continuare?`;
   }
-  let message = "Il testo di questo documento verrà inviato a Hinthia";
+  let message = "Il testo di questo documento verrà inviato a Silva";
   if (plan.parts > 1) message += ` in ${plan.parts} parti`;
   message += ". Continuare?";
   if (plan.truncated) {
@@ -249,7 +249,7 @@ export async function analyzeDocumentWithClaude(
 ): Promise<AIExtractedFields> {
   const prepared = prepareAnalysis({ segments: options?.segments, text: doc.extractedText });
   if (prepared.blocks.length === 0) {
-    throw new Error("Questo documento non ha testo da far leggere a Hinthia.");
+    throw new Error("Questo documento non ha testo da far leggere a Silva.");
   }
 
   const persistence = options?.persistence;
@@ -314,7 +314,7 @@ export async function analyzeDocumentWithClaude(
       )) as { result?: unknown } | null;
 
       const raw = parseBlockAnalysis(data?.result);
-      if (!raw) throw new Error("Risposta di Hinthia non valida.");
+      if (!raw) throw new Error("Risposta di Silva non valida.");
 
       // Il tipo si decide al primo blocco e vale per i successivi: lo schema atteso non cambia a metà documento.
       state.documentType ??= isAnalysisDocumentType(raw.documentType) ? raw.documentType : "generico";
