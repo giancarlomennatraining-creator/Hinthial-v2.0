@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-30 (162)
+
+### Privacy e Termini senza segnaposto
+
+**Cosa fa:** le pagine Privacy e Termini mostravano in evidenza "[DA COMPILARE…]" al posto del titolare e dell'e-mail per le richieste. Ora il titolare è Giancarlo Menna e le richieste sui dati vanno a giancarlo.menna.training@gmail.com. Nessun indirizzo: nella Privacy la frase dice solo chi è il titolare e a chi scrivere.
+
+**Note tecniche:** `src/content/legal.ts` perde il campo `controllerAddress` (usato solo dalla Privacy). La versione dei testi (`2026-10-15`) non cambia: non cambia ciò che si accetta. Se in futuro Hinthial sarà offerto a pagamento o a più persone, conviene far verificare i testi a un legale. Verificato: typecheck, eslint e le due pagine renderizzate sul server di sviluppo, senza più segnaposto.
+
+---
+
 ## 2026-10-30 (161)
 
 ### "Anche prima, se non ci sono più": una frase sola
