@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { BrandLockup } from "@/components/layout/BrandLockup";
 import { MainNav } from "@/components/layout/MainNav";
 import { UserMenu } from "@/components/layout/UserMenu";
-import { OnboardingStatus } from "@/components/layout/OnboardingStatus";
+import { PlanStatus } from "@/components/layout/PlanStatus";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { getStoredSidebarCollapsed, storeSidebarCollapsed } from "@/lib/sidebar";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -81,7 +81,7 @@ export function Sidebar({
       <MainNav collapsed={compact} />
 
       <div className="mt-auto flex flex-col gap-2">
-        <OnboardingStatus collapsed={compact} />
+        <PlanStatus collapsed={compact} />
         <UserMenu
           userId={userId}
           firstName={firstName}

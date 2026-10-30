@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { ContinuitySign } from "@/components/dashboard/ContinuitySign";
+import { useEffect, useState } from "react";
+import { PlanCard } from "@/components/dashboard/PlanCard";
 import { useTodayExtras } from "@/components/dashboard/useTodayExtras";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { isOpeningSoon, sortByOpening } from "@/domain/capsules/overview";
-import { continuityScore, continuitySteps } from "@/domain/continuity/steps";
+import { computePlan, planProgress } from "@/domain/plan/steps";
 import { dueIn, expiryInfo, needsAttention } from "@/domain/documents/archive-views";
 import type { SummaryContext } from "@/domain/ai/types";
 import { formatDate } from "@/lib/format";
+import { publishPlanProgress } from "@/lib/plan-progress-store";
 import { cn } from "@/lib/utils";
 
 const CARD =
@@ -26,7 +26,7 @@ function formatDateTime(iso: string): string {
 
 /**
  * "Oggi": la home di Hinthial. Tre cose in ordine di importanza per chi ama: quanto Hinthial è pronto a far arrivare ciò
- * che sai e ciò che hai a chi resta (la continuità), cosa sta per arrivare a chi ami (le capsule), e cosa scade presto.
+ * che sai e ciò che hai a chi resta (il piano), cosa sta per arrivare a chi ami (le capsule), e cosa scade presto.
  * Tutto si ricava dai dati già decifrati in pagina più poche letture in più (v. useTodayExtras).
  */
 export function TodayHome({ context, masterKey }: { context: SummaryContext; masterKey: CryptoKey }) {
@@ -34,18 +34,22 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
   // Letto una volta al mount, non chiamando l'impuro Date.now() durante il render.
   const [now] = useState(() => new Date());
 
-  const steps = extras
-    ? continuitySteps({
-        guardianCount: context.friends.filter((f) => f.isGuardian && f.status === "active").length,
+  const plan = extras
+    ? computePlan({
+        documents: context.documents,
+        categories: context.categories,
+        friends: context.friends,
+        capsules: context.capsules,
         legacyEnabled: extras.legacyEnabled,
         emergencyCardFilled: extras.emergencyCardFilled,
-        capsulesForOthers: context.capsules.filter((c) => c.status !== "draft" && c.relatedFriends.length > 0).length,
-        capsulesForDelivery: context.capsules.filter(
-          (c) => c.status !== "draft" && c.relatedFriends.length > 0 && c.openOnLegacy,
-        ).length,
       })
     : null;
-  const score = steps ? continuityScore(steps) : null;
+  // L'indicatore nel menu riprende da qui l'avanzamento, senza rileggere tutto a ogni cambio di pagina.
+  const planDone = plan ? planProgress(plan).done : null;
+  const planTotal = plan ? plan.length : null;
+  useEffect(() => {
+    if (planDone !== null && planTotal !== null) publishPlanProgress({ done: planDone, total: planTotal });
+  }, [planDone, planTotal]);
 
   // Le capsule: prima quelle che aspettano me, poi quelle che si aprono presto, poi le bozze da chiudere.
   const readyForMe = (extras?.sharedWithMe ?? []).filter(
@@ -71,69 +75,7 @@ export function TodayHome({ context, masterKey }: { context: SummaryContext; mas
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      <section aria-label="Continuità" className={cn(CARD, "flex items-center gap-6")}>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100">Continuità</h2>
-            {score ? (
-              <p className="text-sm font-semibold text-accent">
-                {score.done} su {score.total}
-              </p>
-            ) : null}
-          </div>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Quanto Hinthial è pronto a far arrivare ciò che sai e ciò che hai alle persone a cui tieni, se un giorno non ci sei.
-          </p>
-          {steps && score ? (
-            <>
-              <div
-                role="progressbar"
-                aria-label="Continuità"
-                aria-valuemin={0}
-                aria-valuemax={score.total}
-                aria-valuenow={score.done}
-                className="sig-bar mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900"
-              >
-                <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${(score.done / score.total) * 100}%` }} />
-              </div>
-              <ul className="mt-3 flex flex-col gap-2">
-                {steps.map((step) => (
-                  <li key={step.id} className="flex items-center justify-between gap-3 text-sm">
-                    <span className="flex min-w-0 items-center gap-2">
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                          step.done
-                            ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"
-                            : "border border-dashed border-zinc-300 text-zinc-500 dark:border-zinc-700",
-                        )}
-                      >
-                        {step.done ? "✓" : ""}
-                      </span>
-                      <span className={cn("min-w-0", step.done ? "text-zinc-600 dark:text-zinc-400" : "font-medium text-zinc-900 dark:text-zinc-100")}>
-                        {step.label}
-                      </span>
-                    </span>
-                    {step.done ? null : (
-                      <Link href={step.href} className="shrink-0 text-xs font-semibold text-accent hover:underline">
-                        {step.action} →
-                      </Link>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <div role="status" aria-label="Caricamento…" className="mt-3 flex flex-col gap-2">
-              <Skeleton className="h-2 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-2/3" />
-            </div>
-          )}
-        </div>
-        {steps ? <ContinuitySign done={steps.map((step) => step.done)} /> : null}
-      </section>
+      <PlanCard steps={plan} />
 
       <div className="grid min-w-0 gap-6 lg:grid-cols-2">
         <section aria-label="Per chi ami" className={CARD}>

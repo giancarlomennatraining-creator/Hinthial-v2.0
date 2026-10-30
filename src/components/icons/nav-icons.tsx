@@ -202,7 +202,7 @@ export function AlertTriangleIcon(props: IconProps) {
   );
 }
 
-/** Passo non ancora fatto nella checklist di onboarding (sostituisce ⬜). */
+/** Passo non ancora fatto nel piano (sostituisce ⬜). */
 export function CircleIcon(props: IconProps) {
   return (
     <svg {...baseProps(props)}>

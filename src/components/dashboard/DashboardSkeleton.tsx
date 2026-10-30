@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/Skeleton";
 import { PANEL } from "@/components/ui/styles";
 
-/** Placeholder mostrato mentre si leggono e decifrano i dati di "Oggi" --- ne riprende la forma (la continuità in alto, sotto due riquadri affiancati) perché la pagina non salti quando arriva il contenuto vero. */
+/** Placeholder mostrato mentre si leggono e decifrano i dati di "Oggi" --- ne riprende la forma (il piano in alto, sotto due riquadri affiancati) perché la pagina non salti quando arriva il contenuto vero. */
 export function DashboardSkeleton() {
   return (
     <div role="status" aria-label="Caricamento…" className="flex flex-col gap-6">

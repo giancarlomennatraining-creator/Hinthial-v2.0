@@ -4,7 +4,7 @@ import { openArchiveTab } from "./nav";
 
 // Requires a configured Supabase project (.env.local) --- see README.md.
 
-test("\"Oggi\" mostra la continuità, le capsule per chi ami e le scadenze vicine; il punteggio sale quando si fa un passo", async ({
+test("\"Oggi\" mostra il piano, le capsule per chi ami e le scadenze vicine; il punteggio sale quando si fa un passo", async ({
   page,
 }) => {
   test.slow();
@@ -27,15 +27,18 @@ test("\"Oggi\" mostra la continuità, le capsule per chi ami e le scadenze vicin
   await page.getByRole("button", { name: "Continua" }).click();
   await expect(page.getByRole("heading", { name: "Archivio" })).toBeVisible();
 
-  // Vault ancora vuoto: la continuità è a zero e dice cosa fare, le capsule invitano a scriverne una, nessuna scadenza.
+  // Vault ancora vuoto: il piano è alla chiave (1 su 9) e dice cosa fare; tutti i passi si aprono su richiesta, le
+  // capsule invitano a scriverne una, nessuna scadenza.
   await page.getByRole("link", { name: "Oggi" }).click();
-  await expect(page.getByRole("heading", { name: "Continuità" })).toBeVisible({ timeout: 15_000 });
-  const continuity = page.getByRole("region", { name: "Continuità" });
-  await expect(continuity.getByText("0 su 4")).toBeVisible({ timeout: 15_000 });
-  await expect(continuity.getByText("Nessun guardiano: scegli chi può confermare la tua assenza")).toBeVisible();
-  await expect(continuity.getByText("L'eredità digitale è spenta: attivala")).toBeVisible();
-  await expect(continuity.getByText("La scheda d'emergenza è vuota: compilala")).toBeVisible();
-  await expect(continuity.getByText("Nessuna capsula per chi ami: scrivine una")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Il tuo piano" })).toBeVisible({ timeout: 15_000 });
+  const continuity = page.getByRole("region", { name: "Il tuo piano" });
+  await expect(continuity.getByText("1 su 9")).toBeVisible({ timeout: 15_000 });
+  await expect(continuity.getByText("Metti dentro il primo documento")).toBeVisible();
+  await continuity.getByRole("button", { name: "Vedi tutti i passi" }).click();
+  await expect(continuity.getByText("Scegli un guardiano")).toBeVisible();
+  await expect(continuity.getByText("Attiva l'Eredità digitale")).toBeVisible();
+  await expect(continuity.getByText("Compila la scheda d'emergenza")).toBeVisible();
+  await expect(continuity.getByText("Scegli quali capsule arrivano anche se non ci sei")).toBeVisible();
   await expect(page.getByRole("region", { name: "Per chi ami" }).getByText("Scrivi una capsula →")).toBeVisible();
   await expect(page.getByText("Nessuna scadenza da ricordare.")).toBeVisible();
 
@@ -43,7 +46,7 @@ test("\"Oggi\" mostra la continuità, le capsule per chi ami e le scadenze vicin
   await expect(page.getByRole("link", { name: "Archivio: 0" })).toHaveCount(0);
   await expect(page.getByText("Da tenere d'occhio")).not.toBeVisible();
 
-  // Un passo della continuità porta dove si fa: l'eredità digitale.
+  // Un passo del piano porta dove si fa: l'eredità digitale.
   await continuity.getByRole("link", { name: "Attiva →" }).click();
   await expect(page).toHaveURL(/\/legacy$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Eredità digitale", level: 1 })).toBeVisible();
@@ -79,7 +82,9 @@ test("\"Oggi\" mostra la continuità, le capsule per chi ami e le scadenze vicin
     timeout: 10_000,
   });
 
+  // Maria è una persona e un guardiano: la chiave, la persona e il guardiano fanno 3 su 9, e il pilastro Persone è completo.
   await page.getByRole("link", { name: "Oggi" }).click();
-  await expect(continuity.getByText("1 su 4")).toBeVisible({ timeout: 15_000 });
-  await expect(continuity.getByText("Hai un guardiano che può confermare la tua assenza")).toBeVisible();
+  await expect(continuity.getByText("3 su 9")).toBeVisible({ timeout: 15_000 });
+  await continuity.getByRole("button", { name: "Vedi tutti i passi" }).click();
+  await expect(continuity.getByRole("group", { name: "Persone" }).getByText("2/2")).toBeVisible();
 });

@@ -1,15 +1,15 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Il segno distintivo di Continuità: quanto Hinthial è pronto a far arrivare ciò che sai e ciò che hai a chi resta.
- * Ogni passo fatto è una foglia che si apre sull'albero (Foglia) o una stella che si accende (Notte); in Luce non c'è
+ * Il segno distintivo del piano: quanto Hinthial è pronto a far arrivare ciò che sai e ciò che hai a chi resta.
+ * Ogni pilastro completato è una foglia che si apre sull'albero (Foglia) o una stella che si accende (Notte); in Luce non c'è
  * disegno, resta la barra. Sono due disegni nello stesso posto e li sceglie il CSS in base allo stile attivo (v.
  * `.sig-*` in globals.css), così non dipendono da uno stato React né danno differenze al primo paint.
  *
  * Decorativo (aria-hidden): le stesse informazioni stanno nell'elenco dei passi e nella barra con ruolo `progressbar`.
- * `done[i]` è il passo i-esimo, nell'ordine in cui compaiono nell'elenco; i disegni hanno quattro posti.
+ * `done[i]` è il pilastro i-esimo (v. PLAN_PILLARS); i disegni hanno quattro posti.
  */
-export function ContinuitySign({ done }: { done: boolean[] }) {
+export function PlanSign({ done }: { done: boolean[] }) {
   const on = (i: number) => done[i] === true;
   return (
     <div className="hidden shrink-0 sm:block">

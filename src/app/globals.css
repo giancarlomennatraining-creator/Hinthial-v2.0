@@ -412,10 +412,10 @@ h6 {
 }
 
 /*
- * Il segno distintivo di Continuità (v. ContinuitySign): un albero che mette foglie in Foglia, una costellazione in Notte,
+ * Il segno distintivo del piano (v. PlanSign): un albero che mette foglie in Foglia, una costellazione in Notte,
  * niente in Luce, che ha la sola barra. Si mostrano tutti e si scelgono da qui in base a `data-stile`, così non c'è
  * differenza fra il primo paint e il resto; Foglia vale anche senza attributo. Dove c'è un disegno la barra resta per gli
- * screen reader (role="progressbar") ma non si vede.
+ * screen reader (role="progressbar") ma non si vede. Il disegno c'è da `sm` in su (v. PlanSign): su telefono la barra si vede.
  */
 .sig {
   display: none;
@@ -425,14 +425,16 @@ h6 {
 :root[data-stile="notte"] .sig-notte {
   display: block;
 }
-:root:not([data-stile]) .sig-bar,
-:root[data-stile="foglia"] .sig-bar,
-:root[data-stile="notte"] .sig-bar {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
+@media (min-width: 40rem) {
+  :root:not([data-stile]) .sig-bar,
+  :root[data-stile="foglia"] .sig-bar,
+  :root[data-stile="notte"] .sig-bar {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
 }
 @media (prefers-reduced-motion: no-preference) {
   .sig-leaf-on {

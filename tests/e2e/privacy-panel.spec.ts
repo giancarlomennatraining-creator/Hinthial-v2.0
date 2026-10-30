@@ -33,7 +33,7 @@ test("Impostazioni > Privacy mostra dati reali dell'account e non richiede la ma
   await expect(
     page.getByText("Per ogni contenuto in archivio: a quale categoria, bene e fascicolo"),
   ).toBeVisible();
-  await expect(page.getByText(/^Indicatore di onboarding nella barra: /)).toBeVisible();
+  await expect(page.getByText(/^Indicatore del piano nella barra: /)).toBeVisible();
   await expect(page.getByText("Il contenuto dei tuoi documenti, foto, audio e video")).toBeVisible();
   await expect(
     page.getByText("La tua master password — non lascia mai il tuo dispositivo"),

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { MainNav } from "@/components/layout/MainNav";
 import { UserMenu } from "@/components/layout/UserMenu";
-import { OnboardingStatus } from "@/components/layout/OnboardingStatus";
+import { PlanStatus } from "@/components/layout/PlanStatus";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { BOTTOM_NAV_HREFS, NAV_ITEMS } from "@/components/layout/nav-items";
 import { useMountedTransition } from "@/lib/use-mounted-transition";
@@ -112,7 +112,7 @@ export function MobileNavBar({
             <MainNav items={drawerItems} />
 
             <div className="mt-auto flex flex-col gap-2">
-              <OnboardingStatus />
+              <PlanStatus />
               <UserMenu
                 userId={userId}
                 firstName={firstName}
