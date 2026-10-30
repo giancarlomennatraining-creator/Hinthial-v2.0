@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-30 (163)
+
+### Il cambio pagina, con una dissolvenza
+
+**Cosa fa:** passando da una pagina all'altra dell'app, il contenuto si dissolve invece di cambiare di colpo: esce in 90 millisecondi ed entra in 160. La barra laterale e quella in basso restano ferme. Con "riduci movimento" attivo nel sistema non si muove niente. Dove il browser non supporta le transizioni, l'app funziona come prima.
+
+**Note tecniche:** `src/app/(app)/template.tsx` avvolge il contenuto in `<ViewTransition enter="page-in" exit="page-out" default="none">` (un template e non il layout, perché deve ricrearsi a ogni navigazione; `default="none"` evita che ogni piccolo cambiamento si animi). Le classi `.page-in` e `.page-out` sono in `globals.css`, insieme all'animazione disattivata per l'intera pagina (`root`). Nessuna libreria nuova. Verificato su build di produzione: il browser avvia le animazioni al cambio pagina; 22 e2e di navigazione passati (uno al secondo tentativo, poi 6 su 6 ripetuti senza tentativi). Non guardato a occhio: va visto sul telefono e sul computer.
+
+---
+
 ## 2026-10-30 (162)
 
 ### Privacy e Termini senza segnaposto
