@@ -59,7 +59,7 @@ describe("la scheda di una persona", () => {
     });
     const card = screen.getByRole("region", { name: "Scheda di Marta Rossi" });
     expect(within(card).getByText("3 capsule: 1 arriverà anche se non ci sei, 1 si apre alla propria data, 1 è ancora una bozza.")).toBeInTheDocument();
-    expect(within(card).getByText("Anche prima, se non ci sei più")).toBeInTheDocument();
+    expect(within(card).getByText("Anche prima, se non ci sono più")).toBeInTheDocument();
     expect(within(card).getByText("Alla sua data")).toBeInTheDocument();
     expect(within(card).getByText("Bozza")).toBeInTheDocument();
   });

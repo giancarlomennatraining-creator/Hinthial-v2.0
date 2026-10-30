@@ -393,7 +393,7 @@ function firstNameOf(friend: FriendListItem): string {
 function PersonCapsulesSection({ friend, capsules }: { friend: FriendListItem; capsules: CapsuleListItem[] }) {
   const groups = groupCapsulesForPerson(capsules);
   const rows: { capsule: CapsuleListItem; tag: string; tone: "delivery" | "date" | "draft" }[] = [
-    ...groups.onDelivery.map((capsule) => ({ capsule, tag: "Anche prima, se non ci sei più", tone: "delivery" as const })),
+    ...groups.onDelivery.map((capsule) => ({ capsule, tag: "Anche prima, se non ci sono più", tone: "delivery" as const })),
     ...groups.onDate.map((capsule) => ({ capsule, tag: "Alla sua data", tone: "date" as const })),
     ...groups.drafts.map((capsule) => ({ capsule, tag: "Bozza", tone: "draft" as const })),
   ];

@@ -10,6 +10,16 @@ Registro di tutto ciò che è stato costruito in HINTHIAL, dalla nascita del pro
 
 ---
 
+## 2026-10-30 (161)
+
+### "Anche prima, se non ci sono più": una frase sola
+
+**Cosa fa:** la regola che fa arrivare una capsula anche prima della sua data, quando l'Eredità digitale consegna, si sceglie in due posti: scrivendo la capsula e nella pagina Eredità digitale, "Cosa arriverà". Verificato che sono davvero la stessa regola (un solo campo, `openOnLegacy`, e lo stesso componente nei due moduli) e non due da tenere allineate: cambiarla da una parte la cambia dall'altra. L'unica differenza era nella scheda di una persona in Rubrica, che la chiamava "Anche prima, se non ci sei più" invece di "…se non ci sono più": ora è uguale a capsule ed Eredità digitale.
+
+**Note tecniche:** nessun cambiamento di comportamento; una stringa in `AddressBook` e il test unitario relativo. Non toccate di proposito le frasi di sistema ("arriverà anche se non ci sei", i messaggi di conferma): parlano all'utente, mentre le etichette dei comandi sono nella sua voce.
+
+---
+
 ## 2026-10-30 (160)
 
 ### Gli e2e veloci, anche in CI
