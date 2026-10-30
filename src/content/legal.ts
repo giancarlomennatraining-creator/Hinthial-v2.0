@@ -6,9 +6,8 @@
  * accetta in registrazione (v. lib/auth/actions.ts, `terms_version`).
  */
 export const LEGAL = {
-  controllerName: "[DA COMPILARE: nome e cognome o ragione sociale del titolare]",
-  controllerAddress: "[DA COMPILARE: indirizzo]",
-  contactEmail: "[DA COMPILARE: email per privacy e richieste]",
+  controllerName: "Giancarlo Menna",
+  contactEmail: "giancarlo.menna.training@gmail.com",
   lastUpdated: "15 ottobre 2026",
   version: "2026-10-15",
 } as const;

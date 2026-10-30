@@ -25,7 +25,7 @@ export default function PrivacyPage() {
     >
       <LegalSection title="1. Chi è il titolare">
         <p>
-          Il titolare del trattamento è <LegalValue value={LEGAL.controllerName} />, <LegalValue value={LEGAL.controllerAddress} />.
+          Il titolare del trattamento è <LegalValue value={LEGAL.controllerName} />.
           Per qualsiasi domanda o richiesta sui tuoi dati scrivi a <LegalValue value={LEGAL.contactEmail} />.
         </p>
       </LegalSection>
