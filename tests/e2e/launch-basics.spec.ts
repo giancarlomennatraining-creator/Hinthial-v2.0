@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures";
 // Le basi per il lancio: header di sicurezza, pagine legali raggiungibili senza accesso, 404 nello stile di Hinthial,
 // e la registrazione che chiede di accettare privacy e termini.
 
-test("ogni pagina arriva con gli header di sicurezza, e la CSP ha un nonce nuovo a ogni richiesta", async ({ request }) => {
+test("ogni pagina arriva con gli header di sicurezza, e la CSP ha un nonce nuovo a ogni richiesta @fast", async ({ request }) => {
   const first = await request.get("/");
   const second = await request.get("/login");
   const headers = first.headers();
@@ -20,7 +20,7 @@ test("ogni pagina arriva con gli header di sicurezza, e la CSP ha un nonce nuovo
   expect(nonceOf(csp)).not.toBe(nonceOf(second.headers()["content-security-policy"]));
 });
 
-test("privacy e termini si leggono senza accesso, e la pagina iniziale porta a entrambi", async ({ page }) => {
+test("privacy e termini si leggono senza accesso, e la pagina iniziale porta a entrambi @fast", async ({ page }) => {
   await page.goto("/");
   const footer = page.getByRole("contentinfo");
   await footer.getByRole("link", { name: "Informativa privacy" }).click();
@@ -35,7 +35,7 @@ test("privacy e termini si leggono senza accesso, e la pagina iniziale porta a e
   await expect(page.getByRole("heading", { name: "4. L'Eredità digitale non è un testamento" })).toBeVisible();
 });
 
-test("un indirizzo che non esiste mostra la pagina 404 di Hinthial, con la strada per tornare", async ({ page }) => {
+test("un indirizzo che non esiste mostra la pagina 404 di Hinthial, con la strada per tornare @fast", async ({ page }) => {
   const response = await page.goto("/questa-pagina-non-esiste");
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "Questa pagina non c'è" })).toBeVisible();

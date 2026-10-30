@@ -56,7 +56,7 @@ test("la registrazione crea un account", async ({ page }) => {
   ).toBeVisible({ timeout: 15_000 });
 });
 
-test("le route protette reindirizzano al login se non autenticati", async ({
+test("le route protette reindirizzano al login se non autenticati @fast", async ({
   page,
 }) => {
   await page.goto("/dashboard");
@@ -96,7 +96,7 @@ test("un utente autenticato può navigare la shell e fare logout", async ({
   await expect(page.getByRole("banner").getByRole("link", { name: "Accedi" })).toBeVisible();
 });
 
-test("login con un account esistente porta alla dashboard", async ({
+test("login con un account esistente porta alla dashboard @fast", async ({
   page,
 }) => {
   const user = uniqueTestUser();

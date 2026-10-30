@@ -34,7 +34,7 @@ async function loginAndSetUpEncryption(page: import("@playwright/test").Page) {
   return user;
 }
 
-test("crea, completa ed elimina scadenze", async ({ page }) => {
+test("crea, completa ed elimina scadenze @fast", async ({ page }) => {
   // Real PBKDF2 (600,000 iterations, x2) in-browser during setup can push
   // this past the default 30s test timeout under load.
   test.slow();
